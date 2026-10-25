@@ -3,8 +3,8 @@
  "short_name": "Kaan & Kardelen",
  "start_url": ".",
  "display": "standalone",
- "background_color": "#1a1530",
- "theme_color": "#1a1530",
+ "background_color": "#120e1f",
+ "theme_color": "#120e1f",
  "lang": "tr",
  "icons": [
   {

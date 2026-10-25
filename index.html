@@ -1325,7 +1325,7 @@ window.LZR=null;let lockE=null;
 const LBR=[];
 function place(x,y,w,h){for(let k=0;k<8;k++){let hit=false;for(const r of LBR){if(x-w/2<r.x+r.w&&x+w/2>r.x&&y-h<r.y+r.h&&y>r.y){hit=true;y=r.y-h-2;break}}if(!hit)break}LBR.push({x:x-w/2,y:y-h,w,h});return y}
 function inView(p){return p&&p.x>-60&&p.x<OW+60&&p.y>-60&&p.y<OH+60}
-function compass(){const por=OH>OW*1.05;if(por&&SV.ui!=='klasik')return;const W=por?Math.min(OW*.86,330):clamp(OW*.42,240,520),cx=OW/2,y0=por?Math.round(clamp(OW*.26,96,140)+44):6,H=28,FN="'Chakra Petch',system-ui,sans-serif";
+function compass(){const por=OH>OW*1.05;if(SV.ui!=='klasik')return;const W=por?Math.min(OW*.86,330):clamp(OW*.42,240,520),cx=OW/2,y0=por?Math.round(clamp(OW*.26,96,140)+44):6,H=28,FN="'Chakra Petch',system-ui,sans-serif";
  CAM.getWorldDirection(_vd);const A=dg(azOf(_vd.x,_vd.z)),span=100,k0=Math.floor((A-span/2)/5)*5,fade=dd=>Math.max(0,1-Math.pow(Math.abs(dd)/(span/2),2.2));
  ox.save();const g=ox.createLinearGradient(cx-W/2,0,cx+W/2,0);g.addColorStop(0,'rgba(8,12,10,0)');g.addColorStop(.2,'rgba(8,12,10,.55)');g.addColorStop(.8,'rgba(8,12,10,.55)');g.addColorStop(1,'rgba(8,12,10,0)');ox.fillStyle=g;ox.fillRect(cx-W/2,y0,W,H);
  const g2=ox.createLinearGradient(cx-W/2,0,cx+W/2,0);g2.addColorStop(0,'rgba(255,255,255,0)');g2.addColorStop(.5,'rgba(255,255,255,.5)');g2.addColorStop(1,'rgba(255,255,255,0)');ox.fillStyle=g2;ox.fillRect(cx-W/2,y0+H-1,W,1);
@@ -1344,7 +1344,7 @@ function compass(){const por=OH>OW*1.05;if(por&&SV.ui!=='klasik')return;const W=
 function drawOverlay(dr){
  ox.setTransform(OD,0,0,OD,0,0);ox.clearRect(0,0,OW,OH);if(game!=='play'||window.mapOpen)return;
  const sight=iv===1&&mode==='tank',cab=iv===2&&mode==='tank',fv=1/Math.tan(CAM.fov*Math.PI/360),hf=OH/2*fv,now=performance.now();
- compass();const blind=cab&&window.CAB&&(CAB.st===0||CAB.st===2);
+ const SADE=SV.ui!=='klasik';compass();const blind=cab&&window.CAB&&(CAB.st===0||CAB.st===2);
  // lazer mesafe + kilit
  window.LZR=null;if(sight){const h=rayHit(1800);window.LZR=h}
  lockE=null;{let best=L.cone*(1+.25*SV.U.fcs);for(const e of E){const a=Math.abs(angd(Math.atan2(e.x-P.x,e.z-P.z),P.th))*(e.mark?.25:1);if(a<best){best=a;lockE=e}}}
@@ -1356,19 +1356,21 @@ function drawOverlay(dr){
   for(const{e,d,mid}of vs){const sr=ERD[e.type]*hf/mid.d,hw=clamp(sr*(e.type==='inf'?1.4:1),9,260),hh=clamp(sr*(EHT[e.type]/ERD[e.type]*.55),9,200),f=clamp(e.hp/emx(e),0,1);e._hv=Math.max(f,(e._hv==null?f:e._hv)-dr*.45);
    const lk=lockE===e,tg=cmdTgt===e,col=tg?'#ffffff':e.mark?'#ff8a3a':lk?'#ff3b30':'#ff5a4a',imp=lk||tg||e.mark;
    if(full>=5&&!imp&&f>=1){ox.fillStyle=col;ox.beginPath();ox.moveTo(mid.x,mid.y-hh-3);ox.lineTo(mid.x-5,mid.y-hh-12);ox.lineTo(mid.x+5,mid.y-hh-12);ox.fill();continue}
-   brk(mid.x,mid.y,hw,hh,col,tg||lk?2.6:1.8);
+   brk(mid.x,mid.y,hw,hh,col,tg||lk?2.6:SADE?1.3:1.8);
+   if(SADE&&!imp)continue;
    if(e.type==='inf'&&!imp&&d>85&&f>=1)continue;
    full++;const bw=clamp(hw*1.5,40,110),tn=e.type==='truck'&&e.g.userData&&e.g.userData.tk?'TANKER':ENT[e.type],lab=tn+' · '+Math.round(d)+' m';ox.font='700 '+(sight?13:11.5)+'px "Chakra Petch",system-ui';const tw=Math.max(bw,ox.measureText(lab).width)+4;
    let by=mid.y-hh-10;by=place(mid.x,by+6,tw,24)-6;
    hpBar(mid.x,by,bw,f,e._hv);tx(lab,mid.x,by-9,sight?13:11.5,tg?'#fff':'#ffd9d4');
-   if(tg)tx('◈ HEDEF',mid.x,mid.y+hh+16,12,'#fff');else if(lk&&!(window.AA&&AA.on))tx('◎ KİLİT · NİŞANDA',mid.x,mid.y+hh+16,11.5,'#7dff9a')}}
+   if(tg)tx('◈ HEDEF',mid.x,mid.y+hh+16,12,'#fff');else if(lk&&!(window.AA&&AA.on))tx(SADE?'◎ KİLİT':'◎ KİLİT · NİŞANDA',mid.x,mid.y+hh+16,11.5,'#7dff9a')}}
  // dost tanklar
- if(!blind)for(const a of AL){if(a.dead)continue;const gy=hAt(a.x,a.z),top=proj(a.x,gy+4.3,a.z);if(!top||top.d>420||!inView(top))continue;const w=clamp(2600/top.d,40,84),f=clamp(a.hp/a.mx,0,1);a._hv=Math.max(f,(a._hv==null?f:a._hv)-dr*.45);
+ if(!blind)for(const a of AL){if(a.dead)continue;const gy=hAt(a.x,a.z),top=proj(a.x,gy+4.3,a.z);if(!top||top.d>420||!inView(top))continue;if(SADE){ox.fillStyle='rgba(98,227,160,.9)';ox.strokeStyle='rgba(0,0,0,.6)';ox.lineWidth=1.5;ox.beginPath();ox.moveTo(top.x,top.y+6);ox.lineTo(top.x-5,top.y-2);ox.lineTo(top.x+5,top.y-2);ox.closePath();ox.fill();ox.stroke();continue}const w=clamp(2600/top.d,40,84),f=clamp(a.hp/a.mx,0,1);a._hv=Math.max(f,(a._hv==null?f:a._hv)-dr*.45);
   hpBar(top.x,top.y,w,f,a._hv);tx(a.cs+(a.fire?'':' · SESSİZ'),top.x,top.y-9,11.5,'#9cf5b8');const dd=Math.hypot(a.x-P.x,a.z-P.z);if(dd>35)tx(Math.round(dd)+' m',top.x,top.y+19,10.5,'rgba(190,255,205,.85)')}
  // kendi tankin (3. sahis)
- if(mode==='tank'&&iv===0&&kc.t<=0&&!(window.AA&&AA.on)){const t=proj(P.x,hAt(P.x,P.z)+3.3,P.z);if(inView(t)){const f=clamp(P.hp/P.mx,0,1);P._hv=Math.max(f,(P._hv==null?f:P._hv)-dr*.45);if(f<.999||P._hv<.999)hpBar(t.x,t.y,64,f,P._hv)}}
+ if(!SADE&&mode==='tank'&&iv===0&&kc.t<=0&&!(window.AA&&AA.on)){const t=proj(P.x,hAt(P.x,P.z)+3.3,P.z);if(inView(t)){const f=clamp(P.hp/P.mx,0,1);P._hv=Math.max(f,(P._hv==null?f:P._hv)-dr*.45);if(f<.999||P._hv<.999)hpBar(t.x,t.y,64,f,P._hv)}}
  // yer isimleri (dis gorus)
- if(iv===0){let n=0;const ps=pois().map(p=>({p,d:Math.hypot(p.x-P.x,p.z-P.z)})).sort((a,b)=>a.d-b.d);
+ const lowR=P.hp<P.mx*.5||(typeof TA!=='undefined'&&TA.reduce((a,b)=>a+b,0)<TA0.reduce((a,b)=>a+b,0)*.3);
+ if(iv===0&&(!SADE||lowR||NAV.on)){let n=0;const ps=pois().filter(p=>!SADE||p.k==='İkmal'||(NAV.on&&NAV.to&&NAV.to.id===p.id)).map(p=>({p,d:Math.hypot(p.x-P.x,p.z-P.z)})).sort((a,b)=>a.d-b.d);
   for(const{p,d}of ps){if(d<16||d>320||n>=3)continue;const s=proj(p.x,hAt(p.x,p.z)+(p.k==='İkmal'?7:12),p.z);if(!inView(s))continue;n++;const al=clamp(1.25-d/420,.35,1),r=11;
    ox.globalAlpha=al;ox.fillStyle=p.c;ox.strokeStyle='#fff';ox.lineWidth=2;ox.beginPath();ox.arc(s.x,s.y,r,0,6.3);ox.fill();ox.stroke();ox.fillStyle='#fff';ox.font='700 12px "Chakra Petch",system-ui';ox.textAlign='center';ox.fillText(p.ic,s.x,s.y+4.3);
    tx(p.n,s.x,s.y-r-5,12.5,'#fff');tx(p.k+' · '+Math.round(d)+' m',s.x,s.y+r+14,10.5,'rgba(255,255,255,.85)');ox.globalAlpha=1;
@@ -2457,7 +2459,7 @@ document.head.insertAdjacentHTML('beforeend','<style>#krT{position:fixed;right:c
 '#gkr{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:2px 2px 12px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(242,177,52,.18),rgba(242,177,52,.05));border:1px solid rgba(242,177,52,.45)}#gkr b{font-size:22px;color:#ffd27a;letter-spacing:.5px}#gkr span{font-size:11.5px;opacity:.8;line-height:1.5}'+
 '.uc.ok{border-color:rgba(125,224,122,.55)!important;box-shadow:0 0 0 1px rgba(125,224,122,.25) inset}.uc.ok .ub b:after{content:" · ALINABİLİR";font-size:10px;color:#7de07a;letter-spacing:.5px}</style>');
 const tbox=document.createElement('div');tbox.id='krT';document.body.appendChild(tbox);
-function toast(n,lab){const d=document.createElement('div');d.innerHTML='+'+n+' kredi<small>'+lab+'</small>';tbox.appendChild(d);setTimeout(()=>d.remove(),2200);while(tbox.children.length>4)tbox.firstChild.remove()}
+function toast(n,lab){if(SV.ui!=='klasik'&&n<40)return;const d=document.createElement('div');d.innerHTML='+'+n+' kredi<small>'+lab+'</small>';tbox.appendChild(d);setTimeout(()=>d.remove(),2200);while(tbox.children.length>4)tbox.firstChild.remove()}
 function award(n,lab){if(!n||game!=='play')return;SV.kr+=n;KRM+=n;saveT=1;toast(n,lab||'')}
 window.award=award;
 // imha
@@ -3907,7 +3909,7 @@ const STEPS=[
  {id:'fire',tt:'ATEŞ',tx:'Hedef KİLİTLENDİ! Şimdi ATEŞ tuşuna bas.',kx:'Hedef KİLİTLENDİ! Boşluk ya da sol tık: ateş!',hl:'#uFire',ok:()=>M.shots>0,on:()=>mode==='tank'&&!!lockE},
  {id:'kill',tt:'İMHA ET',tx:'Hedef yok olana kadar ateşe devam et. Her atıştan sonra top birkaç saniyede dolar.',kx:'Hedef yok olana kadar ateşe devam et. Doldurma birkaç saniye sürer.',hl:'#uFire',ok:()=>M.kills>0,on:()=>mode==='tank'},
  {id:'scope',tt:'NİŞANGÂH',tx:'NİŞAN tuşuyla nişangâha geç: uzak hedefler büyür, isabet artar.',kx:'V tuşuyla nişangâha geç.',hl:'#uScope',ok:()=>iv===1,on:()=>mode==='tank'&&iv===0},
- {id:'out',tt:'DIŞ GÖRÜŞ',tx:'Nişangâhtan çıkmak için üstteki DIŞ tuşuna bas.',kx:'Üstteki DIŞ tuşuna bas ya da V ile görüş değiştir.',hl:'#vbar [data-v="0"]',ok:()=>iv===0,on:()=>mode==='tank'&&iv!==0},
+ {id:'out',tt:'DIŞ GÖRÜŞ',tx:'Nişangâhtan çıkmak için en üstteki ✕ ÇIK tuşuna bas.',kx:'Üstteki DIŞ tuşuna bas ya da V ile görüş değiştir.',hl:()=>{const x=document.getElementById('vX');return x&&getComputedStyle(x).display!=='none'?x:document.querySelector('#vbar [data-v="0"]')},ok:()=>iv===0,on:()=>mode==='tank'&&iv!==0},
  {id:'wheel',tt:'MENÜ ÇARKI',tx:'ÇARK tuşuna bas: mermi tipi, harita, Uçangöz ve tüm komutlar burada.',kx:'Tab tuşunu basılı tut: menü çarkı açılır.',hl:'#uWh',ok:()=>!!(window.WHEEL&&WHEEL.open),on:()=>mode==='tank'},
  {id:'drone',tt:'UÇANGÖZ',tx:'Alttaki Uçangöz tuşuna bas: Uçangöz kalkar, düşmanı havadan görürsün.',kx:'C tuşuyla Uçangözü kaldır.',hl:'#abD',ok:()=>mode==='drone',on:()=>mode==='tank'&&dk&&chg>=60},
  {id:'fly',tt:'UÇUŞ',tx:'Sol çubuk: ileri, geri ve yana. Sağ çubuk: dönüş ve irtifa. Biraz uç.',kx:'Oklarla uç, E/Q ile yüksel-alçal.',ok:()=>M.dfly>30,on:()=>mode==='drone'&&DR.on},
@@ -3962,9 +3964,9 @@ FRAME_HOOKS.push(dr=>{
  if(cur&&!cur.cd&&cur.on&&!cur.on()&&!(cur.ok&&cur.ok())){hide();shownAt=now;return}
  if(cur){curT+=dr;let ok=false;if(cur.ok&&cur.ok())ok=true;if(cur.cd&&!cur.on())ok=true;if(ok||curT>(cur.cd?9:14)){if(!cur.cd)doneTip(cur);hide();shownAt=now}place();return}
  if(now-shownAt<6||!SV.tips)return;
- for(const s of DYN){if(s.on()&&now-(lastDyn[s.id]||-999)>s.cd){lastDyn[s.id]=now;show(s);place();return}}
+ if(!(SV.tot&&SV.tot.mis>=3))for(const s of DYN){if(s.on()&&now-(lastDyn[s.id]||-999)>s.cd){lastDyn[s.id]=now;show(s);place();return}}
  if(M.t<2.5)return;
- for(const s of STEPS){if(SV.tipD[s.id])continue;if(s.ok()){doneTip(s);continue}if(s.on()){show(s);place();return}break}});
+ for(const s of STEPS){if(SV.tipD[s.id])continue;if(s.ok()){doneTip(s);continue}if(iv!==0&&s.id!=='out')break;if(s.on()){show(s);place();return}break}});
 // ---------- menu: EGITIM dugmesi + ayarlar ----------
 const tg=document.getElementById('tg');if(tg){const b=document.createElement('button');b.id='tutB';b.innerHTML='<i>🎓</i><span><b>EĞİTİM · ADIM ADIM ÖĞREN</b><small>'+(SV.tutDone?'Tekrar oyna: sürüş, nişan, ateş, Uçangöz':'İlk kez mi oynuyorsun? 3 dakikada her şeyi öğren · +200 kredi')+'</small></span>';b.onclick=()=>startTut();
  const dly=document.getElementById('dly');tg.insertBefore(b,SV.tutDone&&dly?dly.nextSibling:tg.firstChild)}
@@ -4074,7 +4076,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'33',LOGO=window.HISAR_LOGO;
+const VER=+'34',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4275,6 +4277,42 @@ FRAME_HOOKS.push(dr=>{
  if(game==='menu'||game==='pause'){ht-=dr;if(ht<=0){ht=2;heroTxt()}}});
 // kanvas yazilari icin yazi tipini hazirla
 try{document.fonts&&document.fonts.load("600 12px 'Chakra Petch'");document.fonts&&document.fonts.load("700 12px 'Chakra Petch'")}catch(e){}
+})();
+
+
+// ===== m_clean =====
+// ============ SADE EKRAN: oyunda yalniz gerekli tuslar; yazi ve dugme kalabaligi kaldirildi (Ayarlar > Klasik ile hepsi geri gelir) ============
+(function(){
+const S='body.ui-sade';
+document.head.insertAdjacentHTML('beforeend','<style>'+[
+// sol ust: yalniz simge menu + tek satir gorev
+S+' #uMenu span{display:none!important}'+S+' #uMenu{width:44px!important;min-width:0!important;height:44px!important;padding:0!important;justify-content:center!important;border-radius:50%!important}',
+S+' #uSquad{display:none!important}',
+S+' #uInfo{padding:6px 8px!important;max-width:min(230px,58vw)!important}'+S+' #uInfo .ob{padding:5px 9px 6px!important}'+S+' #uInfo .ob b{display:none!important}'+S+' #uInfo .ob span{font-size:13px!important}',
+S+' #krC,'+S+' #wnd,'+S+' #uMapB,'+S+' #chg,'+S+' #dz,'+S+' #whK{display:none!important}',
+// ust gorus seridi: dis gorunumde gizli, diger gorunumlerde yalniz alt satir + CIK
+S+' #vbar .r.m{display:none!important}',
+'#vX{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:10;display:none;-webkit-appearance:none;appearance:none;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:8px 16px;background:rgba(10,13,11,.86);color:#fff;-webkit-text-fill-color:#fff;font:700 12.5px var(--tf,system-ui);letter-spacing:1px;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;touch-action:manipulation}',
+S+'.inplay.sv #vX,'+S+'.inplay.cv #vX,'+S+'.inplay.dv #vX{display:block}',
+S+'.sv #vbar,'+S+'.cv #vbar,'+S+'.dv #vbar{top:calc(54px + env(safe-area-inset-top,0px))!important}',
+// telsiz ve orta yazi: kisa ve tek satir
+S+' #radio{font-size:12px!important;padding:5px 12px!important;max-width:min(420px,64vw)!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+'@media (max-aspect-ratio:1/1){'+S+' #radio{max-width:88vw!important}}',
+S+' #msg{font-size:clamp(15px,2.2vw,20px)!important}'+S+' #hit{font-size:22px!important}',
+// alt kart: hiz + zirh, devir ve hasar bolgeleri yok
+S+' #uStat .ln span:nth-child(2),'+S+' #uStat .dz,'+S+' #uStat .ic{display:none!important}'+S+' #uDock #uStat{width:clamp(118px,16vmin + 60px,170px)!important}',
+// duruma gore tuslar: en fazla 2
+S+' #ctx button:nth-child(n+3){display:none!important}',
+// ipucu karti daha kucuk
+S+' #coach{width:min(340px,calc(100vw - 24px))!important;padding:8px 11px!important}'+S+' #coach span{font-size:12.5px!important}'+S+' #coach i{font-size:19px!important}'
+].join('')+'</style>');
+// gorus disina cikis
+const X=document.createElement('button');X.id='vX';X.textContent='✕ ÇIK · DIŞ GÖRÜŞ';document.body.appendChild(X);
+X.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();iv=0;if(typeof say==='function')say('DIŞ GÖRÜŞ',1);if(window.HAP)HAP(10)});
+// telsiz yazisi kisa sure kalir (ses zaten okuyor)
+const _rd=window.radio;window.radio=function(t){const r=_rd.apply(this,arguments);if(SV.ui!=='klasik'&&typeof radT!=='undefined')radT=Math.min(radT,3.6);return r};
+// ayarlar aciklamasi
+const ux=document.querySelector('#rowUx');if(ux&&ux.nextElementSibling&&ux.nextElementSibling.tagName==='P')ux.nextElementSibling.textContent='Sade: ekranda yalnız sürüş çubuğu, ATEŞ, NİŞAN, ÇARK, Uçangöz, görev satırı ve harita kalır; geri kalan her şey çarkta. Klasik: tüm tuşlar, pusula ve yazılar görünür.';
 })();
 
 </script>

@@ -273,6 +273,9 @@ details.more[open]>summary::before{content:"− ";}
 .labstage .lr2{animation-delay:.6s;}
 .labstage .lr0{fill:rgba(239,125,45,.12);stroke:#ef7d2d;stroke-width:2;}
 @keyframes lpulse{0%{transform:scale(.7);opacity:1}100%{transform:scale(1.45);opacity:0}}
+.labstage .lmk{fill:#ef7d2d;opacity:.75;stroke:#14160f;stroke-width:2;animation:lmkp 1.6s ease-in-out infinite;}
+@keyframes lmkp{50%{opacity:.25}}
+select.inp{font-size:13px;}
 .lmt{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.14em;fill:#6b6f58;}
 .lmt2{font-family:"Saira Condensed",Arial,sans-serif;font-weight:800;font-size:17px;letter-spacing:.06em;fill:#ebe7d6;}
 .lsel{font-family:"Saira Condensed",Arial,sans-serif;font-weight:800;font-size:15px;fill:#ebe7d6;}
@@ -352,6 +355,10 @@ details.more[open]>summary::before{content:"− ";}
       <div class="grp"><div class="lbl">Sahne</div><div class="chips" data-opt="d3"><button data-v="1">3B</button><button data-v="0">2B (hafif)</button></div></div>
       <div class="grp"><div class="lbl">Jiroskopla nişan</div><div class="chips" data-opt="gyro"><button data-v="1">Açık</button><button data-v="0">Kapalı</button></div><p class="note2">Telefonu tüfek gibi tutup hareket ettirerek nişan al; sürükleyerek ince ayar yap.</p><button class="secondary small2" id="btnCenter">Nişanı hedefe ortala</button></div>
       <div class="grp"><div class="lbl">Sesli anlatım</div><div class="chips" data-opt="voice"><button data-v="1">Açık</button><button data-v="0">Kapalı</button></div></div>
+      <div class="grp"><div class="lbl">Anlatıcı sesi</div><div class="chips" data-opt="vgen"><button data-v="erkek">Erkek</button><button data-v="kadin">Kadın</button></div>
+        <label class="lbl" for="vsel" style="margin-top:6px">Telefondaki ses</label><select class="inp" id="vsel"><option value="">Otomatik</option></select>
+        <label class="lbl" for="vrate" style="margin-top:6px">Konuşma hızı (yavaş = daha net)</label><input type="range" id="vrate" min="65" max="110" value="88">
+        <button class="secondary small2" id="vtest">Sesi dene</button><p class="note2" id="vnote"></p></div>
       <div class="grp"><div class="lbl">Atış yardımı</div><div class="chips" data-opt="assist"><button data-v="1">Açık</button><button data-v="0">Kapalı</button></div><p class="note2">Açıkken mermi düşüşü ve rüzgâr otomatik düzeltilir, saçılma azalır, hedefin kenarına gelen mermi de vuruş sayılır. Keskin nişancıda mesafeyi dürbün kendisi ayarlar.</p></div>
       <div class="grp"><div class="lbl">Zorluk</div><div class="chips" data-opt="diff"><button data-v="kolay">Kolay</button><button data-v="normal">Normal</button><button data-v="zor">Zor</button></div><p class="note2">Zor seviyede salınım artar, tutukluk daha sık olur, pop-up hedefler daha kısa kalır.</p></div>
       <div class="grp"><div class="lbl">Titreşim</div><div class="chips" data-opt="vib"><button data-v="1">Açık</button><button data-v="0">Kapalı</button></div></div>
@@ -516,7 +523,7 @@ const BADGES=[
   {k:'dag',n:'Dağ nişancısı',d:'Eğimli atışta 4/5.',c:r=>r.mode==='egim'&&r.hits>=4},
   {k:'termal',n:'Gecenin gözü',d:'Gece görüş görevinde 7/8.',c:r=>r.mode==='gecegorus'&&r.hits>=7},
   {k:'duello',n:'Düellocu',d:'Bir düello oyna.',c:r=>r.mode==='duello'},
-  {k:'lab',n:'Uygulamalı',d:'Dört uygulamalı eğitimi de bitir.',c:()=>['tanitim','soktak','vaziyet','hakimiyet'].every(k=>ST.lab&&ST.lab[k])}
+  {k:'lab',n:'Uygulamalı',d:'Beş uygulamalı eğitimi de bitir.',c:()=>['tanitim','soktak','vaziyet','hakimiyet','kullanim'].every(k=>ST.lab&&ST.lab[k])}
 ];
 const DAILY=[
   {t:"Serbest atışta 300 m ve üstünde 70 puan yap.",c:r=>r.mode==='serbest'&&r.dist>=300&&r.v>=70},
@@ -608,7 +615,7 @@ let ST={shots:0,hits:0,best:{},done:{},xp:0,badges:{},log:[],streak:0,lastDaily:
 try{const j=JSON.parse(localStorage.getItem('poligon-stats-v1')||'null');if(j)ST=Object.assign(ST,j);}catch(e){}
 ST.flags=ST.flags||{};ST.edu=ST.edu||{};ST.sh=ST.sh||[];ST.badges=ST.badges||{};ST.log=ST.log||[];ST.eg=ST.eg||[];
 const saveST=()=>{try{localStorage.setItem('poligon-stats-v1',JSON.stringify(ST));}catch(e){}};
-let OPT={d3:1,gyro:0,voice:1,vib:1,left:0,diff:'kolay',vol:80,motion:0,assist:1,ov:6};
+let OPT={d3:1,gyro:0,voice:1,vib:1,left:0,diff:'kolay',vol:80,motion:0,assist:1,ov:6,vgen:'erkek',vname:'',vrate:.88};
 try{const j=JSON.parse(localStorage.getItem('poligon-ayar-v1')||'null');if(j)OPT=Object.assign(OPT,j);}catch(e){}
 OPT.gyro=0;OPT.motion=0;if(OPT.ov!==6){OPT.ov=6;OPT.diff='kolay';OPT.assist=1;}
 const saveOPT=()=>{try{localStorage.setItem('poligon-ayar-v1',JSON.stringify(OPT));}catch(e){}};
@@ -667,12 +674,24 @@ const dry=()=>click(3000,.02,.15);
 const fanfare=()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,f,.18,.12,'triangle'),i*110));};
 const vib=ms=>{if(!OPT.vib)return;try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}};
 let trVoice=null;
+const MALE_RE=/tolga|erkek|\bmale|ahmet|mehmet|cem\b|murat|kerem|tr-tr-x-(cfs|mfm|tmc)/i,FEM_RE=/yelda|filiz|seda|emel|female|kad[ıi]n|tr-tr-x-(efu|ama)/i;
+function trVoices(){try{return speechSynthesis.getVoices().filter(v=>/^tr/i.test(v.lang));}catch(e){return [];}}
+function pickVoice(){const vs=trVoices();if(OPT.vname){const v=vs.find(v=>v.name===OPT.vname);if(v)return v;}
+  if(OPT.vgen==='kadin')return vs.find(v=>FEM_RE.test(v.name))||vs[0]||null;
+  return vs.find(v=>MALE_RE.test(v.name))||vs.find(v=>!FEM_RE.test(v.name))||vs[0]||null;}
+const SAY_KEEP=/^(MPT|HK|KNT|AK|MP|SAR|TP)$/;
+function sayPrep(t){return String(t).replace(/<[^>]+>/g,' ').replace(/[A-ZÇĞİÖŞÜ]{2,}/g,w=>SAY_KEEP.test(w)?w:w.toLocaleLowerCase('tr-TR')).replace(/\bE'de\b/g,'emniyette').replace(/\b(E|T|S) konumu/g,(m,a)=>({E:'emniyet',T:'tek atış',S:'seri atış'})[a]+' konumu').replace(/~/g,'yaklaşık ').replace(/×/g,' çarpı ').replace(/(\d)\.(\d)/g,'$1 nokta $2');}
+function speakNow(txt){
+  try{speechSynthesis.cancel();const v=pickVoice(),male=OPT.vgen!=='kadin',known=v&&MALE_RE.test(v.name);
+    const parts=sayPrep(txt).split(/(?<=[.!?;:])\s+/).map(x=>x.trim()).filter(Boolean);
+    parts.forEach(p=>{const u=new SpeechSynthesisUtterance(p);u.lang='tr-TR';if(v)u.voice=v;u.rate=OPT.vrate||.88;u.pitch=male?(known?.95:.6):1.05;u.volume=OPT.vol/100;speechSynthesis.speak(u);});}catch(e){}
+}
 function say(txt,delay){
   if(!OPT.voice||!S.sound||!('speechSynthesis' in window))return;
-  setTimeout(()=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang='tr-TR';u.rate=1.04;u.volume=OPT.vol/100;
-    if(!trVoice)trVoice=speechSynthesis.getVoices().find(v=>/^tr/i.test(v.lang))||null;if(trVoice)u.voice=trVoice;speechSynthesis.speak(u);}catch(e){}},delay||0);
+  setTimeout(()=>speakNow(txt),delay||0);
 }
-try{if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>{trVoice=null;};}catch(e){}
+function fillVoices(){const sel=$('vsel');if(!sel)return;const vs=trVoices();sel.innerHTML='<option value="">Otomatik</option>'+vs.map(v=>`<option value="${esc(v.name)}">${esc(v.name)}${MALE_RE.test(v.name)?' (erkek)':FEM_RE.test(v.name)?' (kadın)':''}</option>`).join('');sel.value=OPT.vname||'';$('vnote').textContent=vs.length?`Telefonda ${vs.length} Türkçe ses var. Erkek ses yoksa ses kalınlaştırılır.`:'Telefonda Türkçe ses bulunamadı; ayarlardan Türkçe metin okuma sesini indirebilirsin.';}
+try{if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>{trVoice=null;fillVoices();};}catch(e){}
 
 // ================= İLERLEME =================
 function rankOf(xp){let i=0;for(let k=0;k<RANKS.length;k++)if(xp>=RANKS[k][1])i=k;return{i,n:RANKS[i][0],cur:RANKS[i][1],next:RANKS[i+1]?RANKS[i+1][1]:null};}
@@ -846,14 +865,18 @@ document.querySelectorAll('.chips[data-key]').forEach(el=>el.addEventListener('c
   syncUI();
 }));
 document.querySelectorAll('.chips[data-opt]').forEach(el=>el.addEventListener('click',async e=>{
-  const b=e.target.closest('button');if(!b)return;const k=el.dataset.opt,raw=b.dataset.v,v=k==='diff'?raw:+raw;click(1500,.02,.08);
+  const b=e.target.closest('button');if(!b)return;const k=el.dataset.opt,raw=b.dataset.v,v=(k==='diff'||k==='vgen')?raw:+raw;click(1500,.02,.08);
   if(k==='gyro'&&v){const ok=await enableGyro();if(!ok){toast('Jiroskop izni alınamadı',1500);syncUI();return;}}
   OPT[k]=v;saveOPT();
   if(k==='d3'){if(v&&!G3)init3D();$('view3d').hidden=!(v&&G3);if(v&&!G3)toast('3B bu cihazda açılamadı',1400);}
+  if(k==='vgen'){OPT.vname='';saveOPT();fillVoices();speakNow(v==='kadin'?'Kadın sesi seçildi.':'Erkek sesi seçildi.');}
   if(k==='gyro')toast(v?'Telefonu tüfek gibi tut ve hareket ettir':'Jiroskop kapalı',1300);
   if(k==='motion'&&v){const ok=await enableMotion();if(!ok){OPT.motion=0;saveOPT();toast('Hareket sensörü izni alınamadı',1500);syncUI();return;}toast('Yerinde koşarak ilerle; çömel ya da yere yat',1600);}
   syncUI();
 }));
+$('vsel').addEventListener('change',e=>{OPT.vname=e.target.value;saveOPT();});
+$('vrate').addEventListener('input',e=>{OPT.vrate=+e.target.value/100;saveOPT();});
+$('vtest').addEventListener('click',()=>{audio();speakNow('Kurma kolunu sonuna kadar geri çek ve bırak. Mandal emniyette.');});
 $('vol').addEventListener('input',e=>{OPT.vol=+e.target.value;if(master)master.gain.value=OPT.vol/100;saveOPT();});
 $('btnCenter').addEventListener('click',()=>{const t0=S.targets[0];if(t0){S.aimX=tX(t0);S.aimY=tY(t0);}toast('Nişan hedefe alındı',800);});
 $('btnSet').addEventListener('click',()=>{$('sheet2').classList.toggle('open');});
@@ -861,7 +884,7 @@ $('sheetClose').addEventListener('click',()=>$('sheet2').classList.remove('open'
 function syncUI(){
   document.querySelectorAll('.chips[data-key]').forEach(el=>{const raw=S[el.dataset.key],v=String(raw==='diz2'?'diz':raw);[...el.children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false'));});
   document.querySelectorAll('.chips[data-opt]').forEach(el=>{const v=String(OPT[el.dataset.opt]);[...el.children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false'));});
-  $('vol').value=OPT.vol;
+  $('vol').value=OPT.vol;$('vrate').value=Math.round((OPT.vrate||.88)*100);if($('vsel').options.length<2)fillVoices();
   const lock=S.mode!=='serbest';
   ['wTarget','wDist','wGez','wPos','wSup'].forEach(id=>$(id).classList.toggle('locked',lock));
   $('wSight').classList.toggle('locked',S.mode==='hata'||!!R_().scopeOnly||!!R_().noScope);
@@ -2197,13 +2220,14 @@ function onMotion2(e){
 // ================= UYGULAMALI EĞİTİM (dokun-öğren) =================
 const thump=()=>{noise('lowpass',170,.7,.14);tone(80,50,.1,.25);};
 const breath=inh=>{noise('bandpass',inh?1100:700,.16,1.1);};
-const PNAME={namlu:'Namlu',arpacik:'Arpacık',gez:'Gez',kkol:'Kurma kolu',mandal:'Ateş ayar mandalı',mkol:'Ateş ayar mandalı',tetik:'Tetik',sarjor:'Şarjör',smandal:'Şarjör mandalı',kabza:'Kabza ve tetik grubu',dipcik:'Dipçik',elk:'El kundağı',govde:'Gövde',ust:'Üst gövde',alt:'Alt gövde',mek:'Mekanizma (kilit) grubu',pim:'Dipçik pimleri',arkapim:'Arka pim',onpim:'Ön pim',ray:'Ray',nefes:'Nefes',
+const PNAME={ayak:'Çatal ayak',ayakm:'Ayak açma mandalı',ktm:'Kilit tutma mandalı',toz:'Toz kapağı',j_muz:'Namlu',namlu:'Namlu',arpacik:'Arpacık',gez:'Gez',kkol:'Kurma kolu',mandal:'Ateş ayar mandalı',mkol:'Ateş ayar mandalı',tetik:'Tetik',sarjor:'Şarjör',smandal:'Şarjör mandalı',kabza:'Kabza ve tetik grubu',dipcik:'Dipçik',elk:'El kundağı',govde:'Gövde',ust:'Üst gövde',alt:'Alt gövde',mek:'Mekanizma (kilit) grubu',pim:'Dipçik pimleri',arkapim:'Arka pim',onpim:'Ön pim',ray:'Ray',nefes:'Nefes',
   j_hd:'Baş ve yanak',j_sh:'Omuz ve dipçik',j_eb:'Sağ dirsek',j_ef:'Sol dirsek',j_hb:'Sağ el',j_hf:'Sol el',j_hip:'Kalça',j_kb:'Sağ diz',j_kf:'Sol diz',j_fb:'Sağ ayak',j_ff:'Sol ayak',destek:'Destek'};
 const LAB_INFO={
   tanitim:{n:'Silah tanıtımı',k:'Parça parça',d:'Parçalara sırayla dokun; her birinin adını ve ne işe yaradığını sesli anlatır. Mandalı çevir, kurma kolunu çek, şarjörü çıkar.'},
   soktak:{n:'Söküp takma',k:'Uygulamalı',d:'Yanıp sönen parçaya dokun, söküp örtüye koy. Sonra aynı parçalara dokunarak geri tak. Her adım sesli.'},
   vaziyet:{n:'Atış vaziyetleri',k:'Doğru duruş',d:'Yatarak, diz çökerek, ayakta, destekli ve tabanca vaziyetinde vücudun her noktasına dokun; doğrusunu ve sık yapılan hatayı anlatır.'},
-  hakimiyet:{n:'Silah hâkimiyeti',k:'Sesli · adım adım',d:'Şarjör tak, doldur, emniyet, nefes, tetik, tutukluk giderme, boşaltma. Her hareketin sesini duyarak dokuna dokuna yap.'}
+  hakimiyet:{n:'Hâkimiyet esasları',k:'Sesli · 10 esas',d:'Sağlam vaziyet, dipçik, kabza, el kundağı, dirsekler, yanak kaynağı, nefes, nişan, tetik ve takip. Askerin üstünde her noktaya dokunarak öğren.'},
+  kullanim:{n:'Doldurma ve tutukluk',k:'Sesli · adım adım',d:'Şarjör tak, doldur, emniyet, tek atış, tetik, tutukluk giderme (vur, çek, bak, ateş) ve boşaltma. Her hareketin sesini duyarak yap.'}
 };
 let LB=null;
 const RG='<defs><linearGradient id="lgM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#43473a"/><stop offset="1" stop-color="#1c1e18"/></linearGradient><linearGradient id="lgP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2f25"/><stop offset="1" stop-color="#15160f"/></linearGradient></defs>';
@@ -2238,10 +2262,12 @@ function svgAR(extra){
 <g data-p="kabza"><path d="M330 198 L374 198 L358 292 Q334 300 310 290 Z" fill="url(#lgP)"/><path d="M374 200 Q380 238 424 238 L458 214" fill="none" stroke="#1d1f18" stroke-width="7"/><path data-p="tetik" data-o="402 200" d="M400 200 Q411 214 405 229" fill="none" stroke="#7a7d6c" stroke-width="6" stroke-linecap="round"/></g>
 ${selG(352,180)}
 <g data-p="smandal"><circle cx="447" cy="205" r="7.5" fill="#6a6d5c" stroke="#111209" stroke-width="2"/></g>
+<g data-p="ktm" data-o="463 176"><rect x="456" y="164" width="13" height="24" rx="3" fill="#6a6d5c" stroke="#111209" stroke-width="2"/></g>
 <g data-p="arkapim" data-o="290 178"><circle cx="290" cy="178" r="7" fill="#9a9c8a"/></g>
 <g data-p="onpim" data-o="535 182"><circle cx="535" cy="182" r="7" fill="#9a9c8a"/></g>
-<g data-p="ust" data-o="535 182"><rect x="270" y="116" width="290" height="46" rx="5" fill="url(#lgM)"/><rect x="420" y="126" width="90" height="22" rx="3" fill="#191a14"/><g data-p="ray"><rect x="270" y="104" width="482" height="13" fill="#2c2f25"/>${teeth}</g>
+<g data-p="ust" data-o="535 182"><rect x="270" y="116" width="290" height="46" rx="5" fill="url(#lgM)"/><rect x="420" y="126" width="90" height="22" rx="3" fill="#050604"/><g data-p="toz" data-o="465 148"><rect x="420" y="126" width="90" height="22" rx="3" fill="#2a2d22" stroke="#4a4d40" stroke-width="1.5"/></g><g data-p="ray"><rect x="270" y="104" width="482" height="13" fill="#2c2f25"/>${teeth}</g>
 <g data-p="elk"><rect x="560" y="116" width="200" height="62" rx="9" fill="url(#lgP)"/>${slots}</g>
+<g data-p="ayak" data-o="702 184"><rect x="702" y="176" width="128" height="8" rx="3" fill="#0f100b"/><rect x="702" y="186" width="122" height="7" rx="3" fill="#24271d"/><circle cx="830" cy="180" r="6" fill="#0f100b"/></g><g data-p="ayakm"><circle cx="702" cy="184" r="8" fill="#6a6d5c" stroke="#111209" stroke-width="2"/></g>
 <g data-p="namlu"><rect x="760" y="134" width="160" height="13" fill="#15160f"/><rect x="916" y="128" width="38" height="24" rx="3" fill="#15160f"/><rect x="926" y="133" width="4" height="14" fill="#3d4230"/><rect x="938" y="133" width="4" height="14" fill="#3d4230"/></g>
 <g data-p="gez"><path d="M290 100 L294 74 L322 74 L326 100 Z" fill="#24271d"/><circle cx="308" cy="84" r="5" fill="#0b0c08"/></g>
 <g data-p="arpacik"><path d="M722 100 L726 80 L746 80 L750 100 Z" fill="#24271d"/><rect x="733" y="66" width="6" height="16" fill="#111209"/></g></g>
@@ -2249,6 +2275,7 @@ ${selG(352,180)}
 </g>${extra||''}</svg>`;
 }
 const isAR=k=>k==='mpt76'||k==='mpt55';
+function ayakToggle(){const o=LB.PS.ayak&&LB.PS.ayak.r;lmv('ayak',{r:o?0:84});click(1200,.04,.25);setTimeout(()=>click(900,.04,.2),500);}
 // ---------- adımlar ----------
 const KK=()=>isAR(LB.rf)?{x:-40}:{x:-130};
 const kurma=(back=true)=>{lmv('kkol',Object.assign({},KK()));boltSnd();setTimeout(()=>{lmv('kkol',{x:0});click(1300,.04,.25);},back?650:300);};
@@ -2270,7 +2297,13 @@ function tanitimSteps(rf){
     ar?{hot:'ust',h:'Üst ve alt gövde',d:'Üst gövde namluyu ve mekanizmayı, alt gövde tetik grubunu ve şarjör yuvasını taşır. İki pimle birleşir; sökmede menteşe gibi açılır.'}
       :{hot:'govde',h:'Gövde',d:`Mekanizma burada çalışır. ${R.name} ${R.mech} sistemle çalışır.`},
     {hot:'kabza',h:'Kabza',d:'Atış eli kabzayı yüksekten ve sıkıca kavrar; el ile kabza arasında boşluk kalmaz. Tetiği çekerken kabzayı sıkma, sadece parmak hareket eder.'},
-    {hot:'dipcik',h:'Dipçik',act:thump,d:'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Yanak dipçiğe her atışta aynı noktadan değer.'}
+    {hot:'dipcik',h:'Dipçik',act:thump,d:ar?'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Boyu ayarlanabilir; yanak dipçiğe her atışta aynı noktadan değer.':'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Yanak dipçiğe her atışta aynı noktadan değer.'},
+    ar?{hot:'ayak',h:'Çatal ayak',act:ayakToggle,d:'El kundağının altındaki katlanır ayaklardır. Yatarak atışta açılır, tüfeği yere sağlam oturtur ve namluyu sakinleştirir. Yürürken kundağın altına katlanır.'}:null,
+    ar?{hot:'ayakm',h:'Ayak açma mandalı',act:ayakToggle,d:'Bu mandala basınca çatal ayak serbest kalır, açılır ya da katlanır. Bırakınca ayak o konumda kilitlenir.'}:null,
+    ar?{hot:'ktm',h:'Kilit tutma mandalı',act:()=>{click(1100,.04,.25);setTimeout(boltSnd,250);},d:'Son mermi atılınca mekanizmayı açık tutar; böylece şarjörün bittiğini anlarsın. Yeni şarjörü taktıktan sonra bu mandala basınca mekanizma kapanır ve fişek sürülür.'}:null,
+    ar?{hot:'toz',h:'Toz kapağı',act:()=>{lmv('toz',{y:20,o:.4});click(1600,.03,.2);setTimeout(()=>lmv('toz',{y:0,o:1}),900);},d:'Boş kovanın atıldığı pencereyi kapatır, mekanizmaya toz ve çamur girmesini önler. İlk atışta kendiliğinden açılır.'}:null,
+    ar?{hot:'arkapim',h:'Arka birleştirme pimi',d:'Üst ve alt gövdeyi arkadan birleştirir. Sökmede ilk bu pim itilir, gövde menteşe gibi açılır.'}:{hot:'pim',h:'Dipçik pimleri',d:'Dipçiği ve kabzayı gövdeye bağlayan pimlerdir. Sökmede itilerek çıkarılır; kaybolmaması için hemen örtüye konur.'},
+    ar?{hot:'onpim',h:'Ön birleştirme pimi',d:'Gövdelerin menteşe noktasıdır. Bu pim de itilince üst ve alt gövde tamamen ayrılır.'}:null
   ].filter(Boolean);
 }
 function soktakSteps(rf){
@@ -2304,6 +2337,18 @@ function soktakSteps(rf){
   S2.push({k:'Takma',hot:'sarjor',h:'Şarjörü tak',act:()=>{lmv('sarjor',{x:0,y:0});setTimeout(magIn,750);},d:'Şarjörü yuvasına oturt, aşağı çekerek kilitlendiğini kontrol et. Silah hazır, emniyette.'});
   return S1.concat(S2);
 }
+const ESAS=[
+  {k:'1 · Vaziyet',hot:'j_hip',h:'Sağlam atış vaziyeti',d:'Tüfeği kaslar değil kemikler taşır, kaslar gevşek kalır. Doğal nişan hattını bul: nişan al, gözünü kapat, bir nefes al ver, gözünü aç. Namlu hedeften kaydıysa kolla zorlama, bütün vücudu kaydırarak düzelt.'},
+  {k:'2 · Dipçik',hot:'j_sh',h:'Dipçiği omuza yerleştirme',act:thump,d:'Dipçik omuz çukuruna sıkıca ve her atışta aynı yere oturur. Gevşek dipçik tepmeyi sertleştirir ve vuruşları dağıtır.'},
+  {k:'3 · Kabza',hot:'j_hb',h:'Kabzayı kavrama',d:'Atış eli kabzayı yüksekten ve sıkıca kavrar, tüfeği hafifçe omza doğru çeker. Tetik parmağı serbest kalır, kabzaya değmez.'},
+  {k:'4 · El kundağı',hot:'j_hf',h:'El kundağını taşıma',d:'Destek eli kundağı gevşekçe taşır, sıkmaz. Sıkılan kundak namluyu yana çeker.'},
+  {k:'5 · Dirsekler',hot:'j_ef',h:'Dirseklerin yeri',d:'Destek elinin dirseği tüfeğin tam altında durur. Atış elinin dirseği dengeyi tamamlar. İki dirsek ve omuzlar sağlam bir üçgen kurar.'},
+  {k:'6 · Yanak',hot:'j_hd',h:'Yanak kaynağı',d:'Yanak dipçiğe her seferinde aynı noktadan değer, baş dik ve rahat. Göz gezden hep aynı uzaklıkta kalır; değişirse vuruş noktası da değişir.'},
+  {k:'7 · Nefes',hot:'nefes',h:'Nefes kontrolü',act:()=>{breath(1);setTimeout(()=>breath(0),1200);},d:'Normal nefes al, ver. Nefes verişinin sonundaki iki üç saniyelik doğal duraklamada ateş et. Nefesi uzun tutma; birkaç saniye sonra görüş bulanıklaşır ve titreme başlar, o zaman nefesi yeniden al.'},
+  {k:'8 · Nişan',hot:'j_muz',h:'Nişan alma',d:'Gez, arpacık ve hedef aynı hatta. Göz arpacığa odaklanır, arpacık net, hedef hafif bulanıktır. Arpacık gezin tam ortasında olmalı.'},
+  {k:'9 · Tetik',hot:'j_hb',h:'Tetik düşürme',act:()=>{shotSound();vib(30);},d:'Parmağın ilk boğumuyla tetiği düz geriye, yavaş ve kesintisiz çek. Patlamanın ne zaman olacağını bilmemelisin. Ani çekiş ya da patlamayı bekleyip irkilmek mermiyi saptırır.'},
+  {k:'10 · Takip',hot:'j_sh',h:'Atış sonrası takip',d:'Ateşten sonra tetiği hemen bırakma, vaziyeti ve nişanı bir an koru. Sonra tetiği yavaşça bırak. Takip, atış sırasında yapılan hareketleri en aza indirir.'}
+];
 function hakimiyetSteps(){
   return [
     {k:'Hazırlık',hot:'mandal',h:'Emniyeti kontrol et',act:()=>{selTo(-48);setTimeout(()=>selTo(-60),250);},d:'Mandal E konumunda. Namlu her zaman atış istikametinde, parmak tetik dışında.'},
@@ -2376,7 +2421,7 @@ function svgPose(v){
   const hot=k=>{const p=px(P[k.slice(2)]);return `<circle data-p="${k}" cx="${p[0]}" cy="${p[1]}" r="20" fill="transparent"/>`;};
   const xs=Object.values(P).map(v=>X0+v[0]*s),ys=Object.values(P).map(v=>G-v[1]*s);let vx=Math.min(...xs)-90,vw=Math.max(...xs)+90-vx;const vy=Math.min(...ys)-110,vh=G+36-vy;if(vw<520){vx-=(520-vw)/2;vw=520;}
   const nb=`<g data-p="nefes"><circle cx="${vx+vw-44}" cy="${vy+44}" r="34" fill="#22251a" stroke="#3d4230" stroke-width="2"/><text x="${vx+vw-44}" y="${vy+50}" text-anchor="middle" class="lmt2">NEFES</text></g>`;
-  const J=['j_hd','j_sh','j_eb','j_ef','j_hb','j_hf','j_hip','j_kb','j_kf','j_fb','j_ff'].filter(k=>P[k.slice(2)]);
+  const J=['j_hd','j_sh','j_eb','j_ef','j_hb','j_hf','j_hip','j_kb','j_kf','j_fb','j_ff','j_muz'].filter(k=>P[k.slice(2)]);
   return `<svg viewBox="${vx.toFixed(0)} ${vy.toFixed(0)} ${vw.toFixed(0)} ${vh.toFixed(0)}" xmlns="http://www.w3.org/2000/svg"><rect x="-500" y="${G}" width="2000" height="60" fill="#3a3f2a"/><line x1="-500" y1="${G}" x2="1500" y2="${G}" stroke="#5a6040" stroke-width="2"/>
   ${sup}<g id="lrifle">${L('hip','kb',30,'#3e4a28')}${L('kb','fb',26,'#3e4a28')}${foot('fb')}${L('sh','eb',20,'#3e4a28')}${L('eb','hb',17,'#3e4a28')}
   ${L('hip','sh',46,'#4f5c33')}${L('hip','kf',30,'#56653a')}${L('kf','ff',26,'#56653a')}${foot('ff')}
@@ -2386,16 +2431,16 @@ function svgPose(v){
 }
 // ---------- motor ----------
 function labPart(id){return document.querySelector('#labStage [data-p="'+id+'"]');}
-function lmv(id,o,delay){const f=()=>{if(!LB)return;const e=labPart(id);if(!e)return;const c=Object.assign({x:0,y:0,r:0,o:1},LB.PS[id]||{},o);LB.PS[id]=c;e.style.transform=`translate(${c.x}px,${c.y}px) rotate(${c.r}deg)`;e.style.opacity=c.o;if(LB.def.steps[LB.i]&&LB.ph==='wait')labRing();};delay?setTimeout(f,delay):f();}
+function lmv(id,o,delay){const f=()=>{if(!LB)return;const e=labPart(id);if(!e)return;const c=Object.assign({x:0,y:0,r:0,o:1},LB.PS[id]||{},o);LB.PS[id]=c;e.style.transform=`translate(${c.x}px,${c.y}px) rotate(${c.r}deg)`;e.style.opacity=c.o;if(!LB.def.free&&LB.def.steps[LB.i]&&LB.ph==='wait')labRing();};delay?setTimeout(f,delay):f();}
 function labRing(){
   const ring=document.querySelector('#labStage #lring'),hit=document.querySelector('#labStage #lhit');if(!ring)return;
-  const st=LB.def.steps[LB.i],e=st&&LB.ph==='wait'&&st.hot&&labPart(st.hot);
-  if(!e){ring.style.display='none';hit.style.display='none';return;}
+  const st=LB.def.steps[LB.i],fid=LB.def.free?LB.focus:(st&&LB.ph==='wait'&&st.hot),e=fid&&labPart(fid);
+  if(!e){ring.style.display='none';hit.style.display='none';if(LB.def.free&&LB.camC){LB.camC=null;labCam();}return;}
   let b;try{b=e.getBBox();}catch(x){return;}
   let x=b.x+b.width/2,y=b.y+b.height/2;for(let a=e;a&&a.tagName!=='svg';a=a.parentNode){const c=a.dataset&&LB.PS[a.dataset.p];if(c){x+=c.x;y+=c.y;}}
   const r=Math.max(26,Math.min(60,Math.max(b.width,b.height)/2+10));
   LB.camC=[x,y];labCam();
-  ring.style.display='';hit.style.display='';ring.setAttribute('transform',`translate(${x} ${y})`);ring.querySelectorAll('circle').forEach(c=>c.setAttribute('r',r));hit.setAttribute('cx',x);hit.setAttribute('cy',y);hit.setAttribute('r',Math.max(40,r+14));
+  ring.style.display='';hit.style.display=LB.def.free?'none':'';ring.setAttribute('transform',`translate(${x} ${y})`);ring.querySelectorAll('circle').forEach(c=>c.setAttribute('r',r));hit.setAttribute('cx',x);hit.setAttribute('cy',y);hit.setAttribute('r',Math.max(40,r+14));
 }
 function labCam(){
   if(!LB||!LB.vb0)return;const svg=$('labStage').querySelector('svg');if(!svg)return;const r=svg.getBoundingClientRect(),[bx,by,bw,bh]=LB.vb0;let t=[bx,by,bw,bh];
@@ -2405,7 +2450,7 @@ function labCam(){
 }
 function labOpen(key,def){
   $('modal').hidden=true;if(!$('menu').hidden)closeMenu();
-  LB={key,def,i:0,ph:'wait',PS:{},prevRifle:S.rifle,rf:def.rf};
+  LB={key,def,i:0,ph:'wait',PS:{},prevRifle:S.rifle,rf:def.rf,seen:new Set(),focus:null,cur:null};
   if(def.rf)S.rifle=def.rf;
   $('labT').textContent=def.title;$('labStage').innerHTML=def.svg;
   const svg=$('labStage').querySelector('svg');
@@ -2417,7 +2462,19 @@ function labOpen(key,def){
   $('lab').hidden=false;audio();labShow();
 }
 function labDots(){const n=LB.def.steps.length;$('labP').innerHTML=n>24?`${Math.min(LB.i+1,n)}/${n}`:`<span class="ldots">${LB.def.steps.map((_,j)=>`<i class="${j<LB.i||(j===LB.i&&LB.ph!=='wait')?'on':j===LB.i?'cur':''}"></i>`).join('')}</span>`;}
+function labMarks(){
+  const svg=$('labStage').querySelector('svg');if(!svg||!LB)return;let g=svg.querySelector('#lmarks');if(!g){svg.insertAdjacentHTML('beforeend','<g id="lmarks" pointer-events="none"></g>');g=svg.querySelector('#lmarks');}
+  g.innerHTML=LB.def.steps.filter(st=>!LB.seen.has(st.hot)).map(st=>{const e=labPart(st.hot);if(!e)return '';let b;try{b=e.getBBox();}catch(x){return '';}let x=b.x+b.width/2,y=b.y+b.height/2;for(let a=e;a&&a.tagName!=='svg';a=a.parentNode){const c=a.dataset&&LB.PS[a.dataset.p];if(c){x+=c.x;y+=c.y;}}return `<circle class="lmk" cx="${x}" cy="${y}" r="7"/>`;}).join('');
+}
+function labFree(){
+  LB.ph='free';LB.seen=LB.seen||new Set();const n=LB.def.steps.length,k=LB.seen.size;
+  $('labK').textContent=`Serbest keşif · ${k}/${n} parça`;
+  if(!LB.focus){$('labH').textContent=k?'Başka bir yere dokun':'İstediğin yere dokun';$('labD').innerHTML='<span class="muted">Turuncu noktalar henüz dinlemediğin yerler. Dokunduğun yerin adını ve ne işe yaradığını anlatırım. Boş bir yere dokunursan görüntü uzaklaşır.</span>';$('labSay').hidden=true;}
+  $('labNext').textContent=k>=n?'Bitir':'Bitir ('+k+'/'+n+')';
+  $('labP').innerHTML='';setTimeout(labMarks,40);labRing();
+}
 function labShow(){
+  if(LB.def.free){labFree();return;}
   const st=LB.def.steps[LB.i];LB.ph='wait';
   $('labK').textContent=(st.k?st.k+' · ':'')+`Adım ${LB.i+1}/${LB.def.steps.length}`;
   $('labH').textContent=st.h;$('labD').innerHTML=`<span class="muted">Yanıp sönen yere dokun${st.hot&&PNAME[st.hot]?': '+PNAME[st.hot].toLowerCase():''}.</span>`;
@@ -2432,6 +2489,14 @@ function labDo(){
   $('labNext').textContent=LB.i<LB.def.steps.length-1?'İleri':'Bitir';$('labSay').hidden=false;labDots();
 }
 function labTap(e){
+  if(LB&&LB.def.free&&LB.ph==='free'){
+    let p=e.target.closest&&e.target.closest('[data-p]'),st=null;
+    while(p&&!st){let id=p.dataset.p;if(id==='mkol')id='mandal';st=LB.def.steps.find(x=>x.hot===id);if(!st)p=p.parentNode&&p.parentNode.closest?p.parentNode.closest('[data-p]'):null;}
+    if(!st){LB.focus=null;labRing();labFree();return;}
+    LB.focus=st.hot;LB.cur=st;LB.seen.add(st.hot);labRing();
+    try{st.act&&st.act();}catch(x){}if(!st.act)click(1800,.03,.12);
+    $('labH').textContent=st.h;$('labD').textContent=st.d;$('labSay').hidden=false;say(st.h+'. '+st.d,st.act?300:0);vib(12);labFree();setTimeout(labMarks,950);return;
+  }
   if(!LB||LB.ph!=='wait')return;const st=LB.def.steps[LB.i],hot=st.hot&&labPart(st.hot);
   if(e.target.id==='lhit'||(hot&&hot.contains(e.target))){labDo();return;}
   const p=e.target.closest&&e.target.closest('[data-p]');
@@ -2442,22 +2507,24 @@ function labEnd(){
   const it=EDU_FLAT.find(x=>x.id==='lab_'+LB.key);if(it)eduDone(it,[]);saveST();
   $('labK').textContent='Tamamlandı';$('labH').textContent=LB.def.title;
   $('labD').innerHTML=(LB.def.end||'Bütün adımları bitirdin.')+(first?' <span class="okc">+30 XP</span>':'');
-  $('labNext').textContent='Kapat';$('labSay').hidden=false;$('labSay').textContent='Baştan';labRing();LB.camC=null;labCam();fanfare();say('Tamamlandı.');
+  LB.focus=null;$('labNext').textContent='Kapat';$('labSay').hidden=false;$('labSay').textContent='Baştan';labRing();LB.camC=null;labCam();const mk=document.querySelector('#lmarks');if(mk)mk.innerHTML='';fanfare();say('Tamamlandı.');
 }
 function labClose(){try{speechSynthesis.cancel();}catch(e){}$('lab').hidden=true;if(LB){S.rifle=LB.prevRifle;}LB=null;$('labSay').textContent='Tekrar dinle';openMenu();}
 $('labX').addEventListener('click',()=>{click(1400,.03,.1);labClose();});
-$('labNext').addEventListener('click',()=>{if(!LB)return;if(LB.ph==='wait')labDo();else if(LB.ph==='end')labClose();else if(LB.i<LB.def.steps.length-1){LB.i++;labShow();}else labEnd();});
-$('labSay').addEventListener('click',()=>{if(!LB)return;if(LB.ph==='end'){const k=LB.key,d=LB.def;$('labSay').textContent='Tekrar dinle';S.rifle=LB.prevRifle;labOpen(k,d.remake());return;}const st=LB.def.steps[LB.i];say(st.h+'. '+st.d);});
+$('labNext').addEventListener('click',()=>{if(!LB)return;if(LB.ph==='free'){labEnd();return;}if(LB.ph==='wait')labDo();else if(LB.ph==='end')labClose();else if(LB.i<LB.def.steps.length-1){LB.i++;labShow();}else labEnd();});
+$('labSay').addEventListener('click',()=>{if(!LB)return;if(LB.ph==='end'){const k=LB.key,d=LB.def;$('labSay').textContent='Tekrar dinle';S.rifle=LB.prevRifle;labOpen(k,d.remake());return;}const st=LB.def.free?LB.cur:LB.def.steps[LB.i];if(st)say(st.h+'. '+st.d);});
 function specRows(R){return `<div class="tbl"><table><tbody><tr><td>Sınıf</td><td>${CLS[R.cls]}</td></tr><tr><td>Üretim</td><td>${R.maker}</td></tr><tr><td>Çap</td><td>${R.cal}</td></tr><tr><td>Şarjör</td><td>${R.magTxt}</td></tr><tr><td>Çalışma</td><td>${R.mech}</td></tr>${R.rpm?`<tr><td>Atış hızı</td><td>dakikada ~${R.rpm}</td></tr>`:''}</tbody></table></div>`;}
 function labDef(key,arg){
   const mk=()=>labDef(key,arg);
-  if(key==='tanitim'){const R=RIFLES[arg];return {title:'Silah tanıtımı · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:tanitimSteps(arg),end:`${R.name} parçalarını tanıdın.`+(WF[arg]&&WF[arg].src?`<div class="lphoto">${wImg(arg,'lphimg')}${wCredit(arg)}</div>`:'')+specRows(R),remake:mk};}
+  if(key==='tanitim'){const R=RIFLES[arg];return {free:1,title:'Silah tanıtımı · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:tanitimSteps(arg),end:`${R.name} parçalarını tanıdın.`+(WF[arg]&&WF[arg].src?`<div class="lphoto">${wImg(arg,'lphimg')}${wCredit(arg)}</div>`:'')+specRows(R),remake:mk};}
   if(key==='soktak'){const R=RIFLES[arg];return {title:'Söküp takma · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:soktakSteps(arg),end:'Silahı söküp yeniden taktın ve işlev kontrolünü yaptın. Sıra eğitim için sadeleştirilmiştir; kendi silahının kullanıcı kitabındaki sıra esastır.',remake:mk};}
-  if(key==='hakimiyet'){const R=RIFLES[arg];return {title:'Silah hâkimiyeti · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(NEFES),steps:hakimiyetSteps(),init:()=>{lmv('sarjor',{x:330,y:140});lmv('mkol',{r:-60});},end:'Doldurmadan boşaltmaya bütün atış sırasını uyguladın. Tutukluk giderme sırasını unutma: vur, çek, bak, ateş et.',remake:mk};}
-  if(key==='vaziyet'){const v=VZ[arg];return {title:'Atış vaziyeti · '+v.n,svg:svgPose(v),steps:v.steps,end:`${v.n} vaziyetini adım adım uyguladın. Diğer vaziyetleri de dene, sonra Serbest atışta ${v.n.toLowerCase()} seri at.`,remake:mk};}
+  if(key==='hakimiyet'){return {title:'Tüfeğe hâkimiyet esasları',svg:svgPose({pose:'prone'}),steps:ESAS,end:'On esası uyguladın. Bunları Serbest atışta yatarak dene; grup sıklaştıkça esaslar oturmuş demektir.',remake:mk};}
+  if(key==='kullanim'){const R=RIFLES[arg];return {title:'Doldurma ve tutukluk · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(NEFES),steps:hakimiyetSteps(),init:()=>{lmv('sarjor',{x:330,y:140});lmv('mkol',{r:-60});},end:'Doldurmadan boşaltmaya bütün atış sırasını uyguladın. Tutukluk giderme sırasını unutma: vur, çek, bak, ateş et.',remake:mk};}
+  if(key==='vaziyet'){const v=VZ[arg];return {free:1,title:'Atış vaziyeti · '+v.n,svg:svgPose(v),steps:v.steps,end:`${v.n} vaziyetini adım adım uyguladın. Diğer vaziyetleri de dene, sonra Serbest atışta ${v.n.toLowerCase()} seri at.`,remake:mk};}
 }
 function labPick(key){
   const L=LAB_INFO[key];
+  if(key==='hakimiyet'){labOpen('hakimiyet',labDef('hakimiyet'));return;}
   if(key==='vaziyet'){modal({eye:'Uygulamalı eğitim',title:L.n,intro:'Hangi vaziyeti çalışmak istersin?',html:`<div class="lpick">${Object.keys(VZ).map(k=>`<button class="secondary" data-v="${k}">${VZ[k].n}${ST.lab&&ST.lab['vz_'+k]?' ✓':''}</button>`).join('')}</div>`,buttons:[{label:'Menü',fn:openMenu}]});
     $('mNote').querySelectorAll('[data-v]').forEach(b=>b.addEventListener('click',()=>{click(1400,.03,.1);const k=b.dataset.v;ST.lab=ST.lab||{};ST.lab['vz_'+k]=1;labOpen('vaziyet',labDef('vaziyet',k));}));return;}
   const list=['hk33','g3','mpt76','mpt55'];
@@ -2476,11 +2543,12 @@ const EDU=[
   {id:'m1',n:'1. Silahı tanı',items:[
     {id:'lab_tanitim',type:'lab',lab:'tanitim',t:'Silah tanıtımı (dokun-öğren)'},
     {id:'d_emniyet',type:'ders',t:'Atış emniyeti'},
-    {id:'lab_soktak',type:'lab',lab:'soktak',t:'Söküp takma (uygulamalı)'}]},
+    {id:'lab_soktak',type:'lab',lab:'soktak',t:'Söküp takma (uygulamalı)'},
+    {id:'lab_kullanim',type:'lab',lab:'kullanim',t:'Doldurma ve tutukluk (sesli)'}]},
   {id:'m2',n:'2. Nişan ve duruş',items:[
     {id:'lab_vaziyet',type:'lab',lab:'vaziyet',t:'Atış vaziyetleri'},
     {id:'d_nisan',type:'ders',t:'Doğru nişan alma'},
-    {id:'lab_hakimiyet',type:'lab',lab:'hakimiyet',t:'Silah hâkimiyeti (sesli)'}]},
+    {id:'lab_hakimiyet',type:'lab',lab:'hakimiyet',t:'Hâkimiyet esasları'}]},
   {id:'m3',n:'3. Atışa çık',items:[
     {id:'ogretim',type:'mode',mode:'ogretim',t:'Öğretim atışı',req:"3 cm'lik grup",ok:r=>r.ok},
     {id:'s100',type:'mode',mode:'serbest',cfg:{target:'gogus',dist:100,pos:'prone',sup:'rest'},t:'100 m göğüs · yatarak destekli',req:'en az 50 puan',ok:r=>r.v>=50},
@@ -2720,7 +2788,7 @@ setTimeout(()=>wLoadAll(false),1500);window.addEventListener('online',()=>wLoadA
 
 <script>
 (()=>{
-const VER=6,btn=document.getElementById('upd');
+const VER=7,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

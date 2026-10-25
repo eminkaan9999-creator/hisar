@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15111f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kaan & Kardelen">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="ikon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Kaan &amp; Kardelen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: tek ekranlı uygulama — kapak → görev haritası (zikzak yol) → anı kartı + mini görev → final mektubu.
+   Gece mavisi-mor zemin, Patara gün batımı turuncusu vurgu. Tek tema (gece) bilerek seçildi. */
+:root{
+  --gece:#15111f; --gece2:#211a31; --gece3:#2c2340;
+  --gunes:#f3a04a; --gul:#ec7f92; --krem:#f7ecdc; --sis:#ab9fbd; --cizgi:#3d3254;
+  --iyi:#7fd3a4;
+  --f-baslik:"DM Serif Display", Georgia, "Times New Roman", serif;
+  --f-govde:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--gece);color:var(--krem);font-family:var(--f-govde);font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--gece)}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gunes);outline-offset:3px}
+.ekran{min-height:100%;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.ic{max-width:620px;margin:0 auto}
+.mono{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+h1,h2,h3{font-family:var(--f-baslik);font-weight:400;text-wrap:balance;margin:0;line-height:1.1}
+
+/* yıldızlı arka plan */
+#gok{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+/* KAPAK */
+.kapak{display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px;padding-top:28px}
+.ciftyuz{position:relative;width:230px;height:150px}
+.yuz{width:132px;height:132px;border-radius:50%;object-fit:cover;border:3px solid var(--krem);position:absolute;top:0;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.yuz.o{left:0}
+.yuz.ben{right:0}
+.ciftyuz .kalp{position:absolute;left:50%;top:92px;transform:translateX(-50%);font-size:34px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));animation:atis 1.4s ease-in-out infinite}
+@keyframes atis{0%,100%{transform:translateX(-50%) scale(1)}15%{transform:translateX(-50%) scale(1.2)}30%{transform:translateX(-50%) scale(1)}}
+.kapak h1{font-size:clamp(44px,12vw,72px)}
+.kapak h1 em{color:var(--gunes);font-style:italic}
+.kapak p{max-width:42ch;color:var(--sis);margin:0}
+.sayac{display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+.sayac div{display:flex;flex-direction:column;align-items:center}
+.sayac b{font-family:var(--f-baslik);font-size:34px;font-weight:400;color:var(--krem);font-variant-numeric:tabular-nums}
+.sayac span{font-size:12px;color:var(--sis)}
+.btn{background:var(--gunes);color:#2a1606;border:0;border-radius:999px;padding:14px 26px;font-weight:700;font-size:16px;box-shadow:0 8px 24px rgba(243,160,74,.28);transition:transform .15s}
+.btn:active{transform:scale(.97)}
+.btn.ikincil{background:transparent;color:var(--krem);border:1.5px solid var(--cizgi);box-shadow:none}
+.btn[disabled]{opacity:.4;cursor:default}
+
+/* ÜST BAR */
+.ustbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--gece) 88%,transparent);backdrop-filter:blur(8px);margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--cizgi)}
+.ustbar .ic{display:flex;align-items:center;gap:12px}
+.rozet{width:40px;height:40px;border-radius:50%;background:var(--gece3);display:grid;place-items:center;font-size:20px;flex:none;border:1.5px solid var(--gunes)}
+.rutbe{flex:1;min-width:0}
+.rutbe b{display:block;font-family:var(--f-baslik);font-weight:400;font-size:19px;line-height:1.1}
+.rutbe small{color:var(--sis);font-size:12px}
+.ilerleme{height:4px;background:var(--cizgi);border-radius:4px;margin-top:6px;overflow:hidden}
+.ilerleme i{display:block;height:100%;background:linear-gradient(90deg,var(--gul),var(--gunes));width:0;transition:width .6s}
+
+/* HARİTA */
+.harita-bas{padding-block:22px 10px}
+.harita-bas h2{font-size:32px}
+.harita-bas p{color:var(--sis);margin:6px 0 0}
+.yol{position:relative;display:flex;flex-direction:column;gap:14px;padding-block:18px}
+.yol::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px dashed var(--cizgi);transform:translateX(-1px)}
+.durak{position:relative;width:calc(50% - 26px);display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--gece2);border:1px solid var(--cizgi);border-radius:16px;padding:12px 14px;transition:transform .15s,border-color .2s}
+.durak:nth-child(odd){align-self:flex-start}
+.durak:nth-child(even){align-self:flex-end}
+.durak::after{content:"";position:absolute;top:22px;width:14px;height:14px;border-radius:50%;background:var(--gece);border:2px solid var(--cizgi)}
+.durak:nth-child(odd)::after{right:-34px}
+.durak:nth-child(even)::after{left:-34px}
+.durak .mono{color:var(--sis);font-size:10.5px}
+.durak b{font-family:var(--f-baslik);font-weight:400;font-size:18px;line-height:1.15}
+.durak .durum{font-size:12px;color:var(--sis)}
+.durak.tamam{border-color:color-mix(in srgb,var(--gunes) 50%,var(--cizgi))}
+.durak.tamam::after{background:var(--gunes);border-color:var(--gunes)}
+.durak.tamam .durum{color:var(--gunes)}
+.durak.aktif{border-color:var(--gul);box-shadow:0 0 0 3px color-mix(in srgb,var(--gul) 25%,transparent)}
+.durak.aktif::after{background:var(--gul);border-color:var(--gul);animation:nabiz 1.6s infinite}
+@keyframes nabiz{0%{box-shadow:0 0 0 0 rgba(236,127,146,.6)}100%{box-shadow:0 0 0 12px rgba(236,127,146,0)}}
+.durak.kilitli{opacity:.45;cursor:default}
+.durak:not(.kilitli):active{transform:scale(.98)}
+.durak .mini{display:flex;margin-top:4px}
+.durak .mini img{width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gece2)}
+.durak .mini img+img{margin-left:-8px}
+
+/* ANI KARTI */
+.geri{background:none;border:0;color:var(--sis);padding:6px 0;display:inline-flex;gap:6px;align-items:center;font-size:14px}
+.ani{display:flex;flex-direction:column;gap:18px;padding-top:8px}
+.ani .mono{color:var(--gunes)}
+.ani h2{font-size:clamp(32px,8vw,44px)}
+.ani .metin{font-size:17px;color:var(--krem);max-width:60ch}
+.ani .metin p{margin:0 0 10px}
+.balon{align-self:flex-start;max-width:88%;background:#1f3a33;color:#eaf6f0;border-radius:4px 16px 16px 16px;padding:10px 14px 8px;position:relative;font-size:15.5px}
+.balon.ben{align-self:flex-end;background:#3a2f1f;color:#fbefd9;border-radius:16px 4px 16px 16px}
+.balon .kim{display:block;font-size:12px;font-weight:700;color:var(--iyi);margin-bottom:2px}
+.balon.ben .kim{color:var(--gunes)}
+.balon .saat{display:block;text-align:right;font-family:var(--f-mono);font-size:10.5px;opacity:.6;margin-top:4px}
+.galeri{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:calc(-1*max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px));padding-bottom:6px}
+.galeri img{height:300px;width:auto;max-width:82vw;object-fit:cover;border-radius:14px;scroll-snap-align:center;flex:none;background:var(--gece3)}
+.galeri.tek img{max-width:100%;width:100%;height:auto;max-height:520px}
+video{width:100%;max-height:560px;border-radius:14px;background:#000;display:block}
+.cizim{height:200px;border-radius:14px;background:linear-gradient(180deg,#f6b77b 0%,#e98e86 45%,#7e5a8f 100%);position:relative;overflow:hidden}
+.cizim span{position:absolute;font-size:34px;animation:uc 9s linear infinite}
+@keyframes uc{0%{transform:translateY(40px)}50%{transform:translateY(-14px)}100%{transform:translateY(40px)}}
+.cizim .vadi{position:absolute;bottom:0;left:0;right:0;height:60px;background:radial-gradient(60px 50px at 10% 100%,#5b3b52 98%,transparent),radial-gradient(80px 60px at 35% 100%,#4d3248 98%,transparent),radial-gradient(70px 55px at 62% 100%,#5b3b52 98%,transparent),radial-gradient(90px 64px at 90% 100%,#4d3248 98%,transparent)}
+
+/* GÖREV KUTUSU */
+.gorev{background:var(--gece2);border:1px solid var(--cizgi);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.gorev .baslik{display:flex;align-items:center;gap:10px}
+.gorev .baslik .mono{color:var(--gul)}
+.gorev h3{font-size:22px}
+.secenekler{display:grid;gap:10px}
+.secenek{background:var(--gece3);border:1.5px solid var(--cizgi);border-radius:12px;padding:12px 14px;text-align:left;transition:border-color .2s,background .2s}
+.secenek.dogru{border-color:var(--iyi);background:color-mix(in srgb,var(--iyi) 18%,var(--gece3))}
+.secenek.yanlis{border-color:var(--gul);animation:salla .35s}
+@keyframes salla{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.ipucu{color:var(--gul);font-size:14px;min-height:1.2em;margin:0}
+.oyunalani{position:relative;width:100%;border-radius:14px;overflow:hidden;background:var(--gece3);touch-action:none;user-select:none}
+.oyunalani canvas{display:block;width:100%;height:100%}
+.kalpler{height:300px}
+.kalpler button{position:absolute;border:0;background:none;font-size:34px;padding:6px;animation:suz 3s ease-in-out infinite;transition:transform .2s,opacity .3s}
+@keyframes suz{50%{translate:0 -8px}}
+.kalpler button.alindi{transform:scale(1.8);opacity:0;pointer-events:none}
+.sayi{font-family:var(--f-mono);font-size:13px;color:var(--sis)}
+.kartlar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kart{aspect-ratio:3/4;max-width:100%;border:0;padding:0;border-radius:10px;position:relative;perspective:600px;background:none}
+.kart .yuzler{position:absolute;inset:0;transition:transform .45s;transform-style:preserve-3d}
+.kart.acik .yuzler{transform:rotateY(180deg)}
+.kart .on,.kart .arka{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.kart .on{background:var(--gece3) repeating-linear-gradient(45deg,transparent 0 8px,rgba(243,160,74,.08) 8px 16px);display:grid;place-items:center;font-size:22px;border:1.5px solid var(--cizgi)}
+.kart .arka{transform:rotateY(180deg);background-size:cover;background-position:center}
+.kart.esli .arka{box-shadow:0 0 0 2px var(--iyi)}
+.bulmaca{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;aspect-ratio:4/3;max-width:100%}
+.parca{border:0;padding:0;border-radius:4px;background-size:300% 300%;transition:outline .1s}
+.parca.secili{outline:3px solid var(--gunes);outline-offset:-3px}
+.kazi{aspect-ratio:3/4;max-height:460px;margin-inline:auto}
+.kazi img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.kazi canvas{position:absolute;inset:0}
+.yakala{height:340px}
+.mesafe{height:8px;background:var(--cizgi);border-radius:8px;overflow:hidden}
+.mesafe i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gunes),var(--gul));transition:width .3s}
+
+.bitti{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:8px 0}
+.madalya{font-size:56px;animation:dus .7s cubic-bezier(.2,1.6,.4,1)}
+@keyframes dus{from{transform:translateY(-40px) scale(.4);opacity:0}}
+.bitti p{margin:0;color:var(--sis)}
+
+/* FİNAL */
+.mektup{background:var(--krem);color:#2b2033;border-radius:6px;padding:28px 22px;font-size:17px;line-height:1.7;box-shadow:0 20px 50px rgba(0,0,0,.5);position:relative}
+.mektup h2{font-size:30px;margin-bottom:12px;color:#2b2033}
+.mektup p{margin:0 0 12px}
+.mektup .imza{font-family:var(--f-baslik);font-style:italic;font-size:24px;text-align:right;margin:0}
+.kolaj{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kolaj img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.sozler{display:grid;gap:10px}
+.soz{display:flex;gap:12px;align-items:flex-start;background:var(--gece2);border:1px solid var(--cizgi);border-radius:14px;padding:12px 14px}
+.soz span{font-size:22px}
+.konfeti{position:fixed;top:-20px;font-size:22px;pointer-events:none;z-index:20;animation:yagmur linear forwards}
+@keyframes yagmur{to{transform:translateY(110vh) rotate(540deg)}}
+.dipnot{color:var(--sis);font-size:13px;text-align:center}
+.gunun{width:100%;max-width:460px;text-align:left;background:var(--gece2);border:1px solid var(--cizgi);border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;position:relative}
+.gunun.ozel{border-color:var(--gul);box-shadow:0 0 0 3px color-mix(in srgb,var(--gul) 22%,transparent)}
+.gunun .ust{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.gunun .ust .mono{color:var(--gul)}
+.gunun .ust small{color:var(--sis);font-size:12px}
+.gunun blockquote{margin:0;font-family:var(--f-baslik);font-size:21px;line-height:1.35;color:var(--krem);white-space:pre-line;text-wrap:pretty}
+.gunun.siir blockquote{font-size:19px;font-style:italic;line-height:1.5}
+.gunun .imza2{color:var(--sis);font-size:13px;text-align:right}
+.gerisayim{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.gerisayim span{background:var(--gece2);border:1px solid var(--cizgi);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--sis)}
+.gerisayim b{color:var(--gunes);font-weight:600;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:420px){.durak{width:calc(50% - 20px);padding:10px 11px}.durak:nth-child(odd)::after{right:-28px}.durak:nth-child(even)::after{left:-28px}.durak b{font-size:16px}.galeri img{height:260px}}
+</style>
+
+</head>
+<body>
+<canvas id="gok" aria-hidden="true"></canvas>
+<main id="uygulama"></main>
+
+<script>
+(function(){
+const U = n => (window.MEDYA && MEDYA[n]) || ("media/p/"+n+".jpg");
+const V = p => (window.MEDYA && MEDYA[p]) || p;
+const BASLANGIC = new Date(2021,7,2);
+const RUTBELER = ["Yeni başlayan","Tatlı yolcu","Minik kalp","Şapşik","Civciv","Hatıra avcısı","Prenses","Şebelek","Minnak","Yavrum","Bal","Güzelim","Bitanem","Gözümün nuru","Hayatımın anlamı","Kalbimin sahibi"];
+const ROZET = ["🤍","🤍","🩷","🩷","🩷","💗","💗","💗","💖","💖","💖","💞","💞","💞","💞","❤️‍🔥"];
+
+/* ---------- DURAKLAR ---------- */
+const D = [
+ {id:"baslangic", tarih:"2 Ağustos 2021", baslik:"Her şey burada başladı",
+  metin:["Bir yıldönümü tarihi: 2 Ağustos 2021. O günden beri aradan dört yılı aşkın zaman geçti, iki şehir, bir harp okulu, bir de Şırnak girdi araya.","Bu oyunun her durağı bizden bir parça. Her görevi bitirdiğinde bir kalp kazanacaksın ve seviyen yükselecek. Sonunda sana bir mektup bekliyor."],
+  balon:[{kim:"Kaan",ben:1,t:"Hayatımda ilk defa çarpıldım, gerçi seni ilk gördüğümde de böyle olmuştum",s:"18.12.2025 · 22:49"}],
+  foto:["opucuk"],
+  gorev:{tip:"kalp",baslik:"Kalpleri topla",aciklama:"Ekrandaki 10 kalbin hepsine dokun. Hepsi senin."}},
+
+ {id:"teğmen", tarih:"Ağustos 2024", baslik:"Harp Okulu bitti, teğmen oldum",
+  metin:["Yıllarca süren harp okulu Ağustos 2024'te bitti. Kılıçlar çekildi, omzuma ilk rütbem takıldı.","Eylül'de tank okulunun açılış töreni vardı. O gün sana tören kıyafetimle yazdım, sen de beni hiç rahat bırakmadın."],
+  balon:[{kim:"Kaan",ben:1,t:"İlk rütbem",s:"14.09.2024 · 18:35"},{kim:"Kardelen",t:"Tamam teğmensin ndkdkd",s:"24.09.2024 · 22:39"},{kim:"Kaan",ben:1,t:"Mezuniyet fotolarım. Kılıçla olanlar",s:"29.10.2024 · 00:22"}],
+  gorev:{tip:"soru",soru:"Harp okulundan mezun olunca omzuma hangi rütbe takıldı?",sec:["Asteğmen","Teğmen","Üsteğmen"],dogru:1,ipucu:"Sen bana hâlâ bununla takılıyorsun."}},
+
+ {id:"devrim", tarih:"3 Eylül 2024", baslik:"Bugün devrim yaşandı",
+  metin:["Yeni telefonum geldi ve bu sohbet o akşam başladı. İlk mesajı sen attın.","O günden bugüne bu sohbette 181.892 mesaj var. 1.297 kez \"seviyorum\" yazmışız: ben 670, sen 627. Yani azıcık öndeyim.","Sen bana 912 kez \"kocam\", 373 kez \"şapşik\" demişsin. Ben de sana bir lakabı tam 1.203 kez söylemişim."],
+  balon:[{kim:"Kardelen",t:"Bugün devrim yaşandı not al kdkdkd",s:"03.09.2024 · 19:27"},{kim:"Kaan",ben:1,t:"Minnakim. Ben geldimm. Yeni telefonumlaaa",s:"03.09.2024 · 19:46"},{kim:"Kardelen",t:"Kocamın telefonu şakamı",s:"03.09.2024 · 19:48"}],
+  gorev:{tip:"soru",soru:"Bu sohbette sana en çok hangi lakapla seslenmişim? (1.203 kez)",sec:["Prensesim","Civcivim","Minnakım"],dogru:2,ipucu:"Sohbetteki ikinci mesajım bu kelimeyle başlıyor."}},
+
+ {id:"yilbasi", tarih:"31 Aralık 2024", baslik:"Dördüncü yılımıza girerken",
+  metin:["Yılbaşı gecesi ikimiz ayrı evlerdeydik ama mesajlar hiç durmadı. O gece 611 mesaj atmışız, ertesi gün 953.","Tam 00:00'da ilk mesaj senden geldi."],
+  balon:[{kim:"Kaan",ben:1,t:"Yeni yıla nasıl girersen öyle geçermiş. Ben yemek masasinda gircem",s:"31.12.2024 · 23:43"},{kim:"Kardelen",t:"İnsan beni düşünür. Ah ah",s:"31.12.2024 · 23:44"},{kim:"Kaan",ben:1,t:"Yemegide kiskanmazsin be yavrum",s:"31.12.2024 · 23:44"},{kim:"Kaan",ben:1,t:"4.yılımıza girecez",s:"31.12.2024 · 23:45"},{kim:"Kardelen",t:"Sende benim iyi ki hayatımdasın",s:"01.01.2025 · 00:00"}],
+  gorev:{tip:"soru",soru:"Yeni yılı seni mi düşünerek karşıladım? Senin iddiana göre neyin başında karşıladım?",sec:["Yemek masasının","Televizyonun","Balkonun"],dogru:0,ipucu:"Yemeği bile kıskandın."}},
+
+ {id:"ocak", tarih:"27–29 Ocak 2025", baslik:"Mesaj atmadığımız üç gün",
+  metin:["Bu sohbetin en sessiz günleri 27, 28 ve 29 Ocak 2025. Neredeyse hiç mesaj yok, çünkü yan yanaydık.","Sinema, metro, gece yürüyüşü, ağacın önünde o fotoğraf. Hepsi bu videoda."],
+  video:"media/ocak2025.mp4", poster:"media/ocak2025.jpg",
+  gorev:{tip:"izle",baslik:"Videoyu izle",aciklama:"O üç günü bir daha yaşa, sonra görevi tamamla."}},
+
+ {id:"dogumgunu25", tarih:"1 Şubat 2025", baslik:"İyi ki doğdun, gözümün nuru",
+  metin:["Senin doğum günün. Mesajımı gece yarısını beklemeden gönderdim, bir de sana küçük bir video hazırlamıştım. İşte o video."],
+  balon:[{kim:"Kaan",ben:1,t:"Yavrummm, bitanemmm, güzelimmm, hayatımın anlamı, küçük civcivim, minnakım, herşeyim seni çok ama çok seviyorum… İyi ki doğdun bitanemmm, iyi ki girdin hayatıma, en uzak mesafelerde de yanında olduğumu unutma, her daim kalbimdesin",s:"31.01.2025 · 23:58"},{kim:"Kardelen",t:"Sende iyi ki varsın her yaşım seninle ailemle mutlu huzurlu sağlıklı geçer inşallah",s:"01.02.2025 · 00:06"}],
+  video:"media/dogumgunu2025.mp4", poster:"media/dogumgunu2025.jpg",
+  gorev:{tip:"soru",soru:"O doğum günü mesajını saat kaçta gönderdim?",sec:["00:00","23:58","00:15"],dogru:1,ipucu:"Gece yarısını beklemeye sabrım yetmedi."}},
+
+ {id:"kura", tarih:"26–27 Mart 2025", baslik:"Kura günü",
+  metin:["Tank okulunun sonu: 26 Mart'ta kura çekildi, 27 Mart'ta tören yapıldı. Sonra Isparta'da bir eğitim daha, ardından ilk görev yerim.","O gece sana yazdığım mesajın sonundaki surat her şeyi anlatıyor."],
+  balon:[{kim:"Kaan",ben:1,t:"Yarinda kuram var🥺",s:"25.03.2025 · 18:12"},{kim:"Kaan",ben:1,t:"Yavrum tören bitti 1 saate çıkarım",s:"27.03.2025 · 12:46"}],
+  gorev:{tip:"soru",soru:"Kurada ilk görev yerim neresi çıktı?",sec:["Isparta","Çorum","Şırnak"],dogru:2,ipucu:"Cudi Dağı'nın olduğu şehir."}},
+
+ {id:"eskisehir", tarih:"Bahar 2025 · Eskişehir", baslik:"Masal şatosunun önünde",
+  metin:["Sazova'daki Masal Şatosu, çiçek açan ağaçlar, deri ceketlerimiz ve göl kenarında gün batımı.","Sen sonradan bana şöyle diyecektin: \"İki dakika şatoyu çektin, öldün.\" Ama bu fotoğraflar o iki dakikaya değdi."],
+  foto:["sato1","sato2","opucuk"],
+  balon:[{kim:"Kardelen",t:"İki dk şatoyu çektin öldün",s:"07.12.2025 · 03:29"}],
+  gorev:{tip:"hafiza",baslik:"Hafıza kartları",aciklama:"Kartları çevir, aynı fotoğrafları eşleştir."}},
+
+ {id:"nevsehir", tarih:"Mayıs 2025 · Nevşehir", baslik:"En sevdiğin yer",
+  metin:["Mayıs'ta Kapadokya'ya gittik. Otel seçerken bile \"balonları görüyor mu\" diye bakıyorduk.","Sonra defalarca söyledin: en rahat ettiğin yer Nevşehir'di, otelimiz her yere yakındı."],
+  cizim:true,
+  balon:[{kim:"Kardelen",t:"Burda balonları görüyorda",s:"15.05.2025 · 21:43"},{kim:"Kardelen",t:"Birdaha gidicem kapadokyaya",s:"16.05.2025 · 23:31"},{kim:"Kardelen",t:"Benim nevşehir fav yerim",s:"08.01.2026 · 00:15"}],
+  gorev:{tip:"soru",soru:"Gezdiğimiz yerler arasında senin favorin hangisi?",sec:["Eskişehir","Nevşehir","Antalya"],dogru:1,ipucu:"\"Eskişehir soğuktu\" demiştin."}},
+
+ {id:"sampiyon", tarih:"Mayıs 2025", baslik:"Şampiyonluk gecesi",
+  metin:["İzindeydim ve Galatasaray şampiyon oldu. Formalarımızı giydik, bayrağı aldık, meydana koştuk. Meşaleler, duman, dev ekran.","Bir yıl sonra yine şampiyon olduk ama ben nöbetteydim. O gece sana şunu yazdım:"],
+  foto:["gs4","gs6","gs2","gs5","gs1","gs3"],
+  balon:[{kim:"Kaan",ben:1,t:"Yine şampiyon olduk. Beraber dördüncü şampiyonluğumuz",s:"09.05.2026 · 23:16"}],
+  gorev:{tip:"soru",soru:"2026 şampiyonluğu bizim beraber kaçıncı şampiyonluğumuzdu?",sec:["İkinci","Üçüncü","Dördüncü"],dogru:2,ipucu:"Mesajda yazıyor, bir daha oku."}},
+
+ {id:"balo", tarih:"28–29 Mayıs 2025", baslik:"Pembe elbise ve senin mezuniyetin",
+  metin:["28 Mayıs akşamı balo vardı. Pembe elbisenle çimenlerin üstünde dans ettik. Ertesi sabah plaketini aldın, okulu dereceyle bitirdin.","Ondan birkaç gün sonra Şırnak'a gidecektim. Ama önce oradaydım, çünkü bunu kaçıramazdım."],
+  balon:[{kim:"Kaan",ben:1,t:"En buyuk hayalimdi mezuniyetine gelebilmek",s:"06.07.2025 · 01:26"},{kim:"Kaan",ben:1,t:"Her türlü sen okulu dereceyle bitirmiş, plaketini almış bir insansın",s:"17.06.2025 · 22:44"}],
+  video:"media/balo.mp4", poster:"media/balo.jpg",
+  gorev:{tip:"kazi",baslik:"Kazı ve gör",aciklama:"Parmağınla ekranı kazı, altındaki fotoğraf ortaya çıksın.",foto:"balo"}},
+
+ {id:"sirnak", tarih:"Haziran 2025 · Şırnak", baslik:"Cudi'den sana",
+  metin:["3 Haziran'da valizimle Şırnak'a gittim. Cudi'de, sonra Cizre'de görev. Sıcak, uykusuz nöbetler ve bazen hiç çekmeyen bir telefon.","1 Temmuz'da hayatımda ilk defa bir askerime rütbe taktım. O kadar uzaktaydım ki aramızdaki mesafeyi kalplerle kapatmak gerekiyordu."],
+  balon:[{kim:"Kaan",ben:1,t:"Aşkım hattım çekmiyor haberin olsun yazamazsam kızma. Seni çok ama çok seviyorum, iyi ki varsın aşkım, sen olmasan ne yapacağımı bilmiyorum",s:"03.08.2025 · 00:27"},{kim:"Kardelen",t:"Hamarat kocam",s:"31.08.2025 · 01:24"}],
+  gorev:{tip:"yakala",baslik:"Mesafeyi kapat",aciklama:"Benim yüzümü parmağınla sağa sola kaydır, düşen 12 kalbi yakala. Her kalp seni bana biraz daha yaklaştırır."}},
+
+ {id:"dogumgunum", tarih:"27 Ekim 2025", baslik:"Benim doğum günüm",
+  metin:["Ben işten geç döndüm, sen çoktan uyumuştun. Ama mesajın gece yarısını dört geçe gelmişti bile. Telefonu açınca bunu okudum:"],
+  balon:[{kim:"Kardelen",t:"Canım sevgilim hayatımın anlamıııı, canımın içi senin varlığınla hayattayım, seninle mutluyum, seninle var oldum… senin her haline aşığım, o miniko hallerine aşığım, seni çok seviyorum sevgilim… iyi ki doğdun iyi ki benimlesin 🥹💗",s:"27.10.2025 · 00:04"},{kim:"Kaan",ben:1,t:"Uyudun biliyorum bir tanem, geç geldim ama işlerim çok yoğundu. Seni çok ama çok seviyorum bebeğim",s:"27.10.2025 · 00:29"}],
+  foto:["gol2","gol1"],
+  gorev:{tip:"soru",soru:"Mesajında benim hangi hallerime aşık olduğunu yazdın?",sec:["Şapşik hallerine","Miniko hallerine","Asker hallerine"],dogru:1,ipucu:"Küçücük, tatlı bir kelime."}},
+
+ {id:"dogumgunu26", tarih:"1 Şubat 2026", baslik:"Doğum günümüz",
+  metin:["Bu sohbetteki en uzun aşk mesajı. Şubat'ın ilk dakikasında, tam 00:00'da gönderdim."],
+  balon:[{kim:"Kaan",ben:1,t:"Aşkımmm, hayatımın anlamı, prensesim, şebelekimmm, yavrummm; iyi ki doğdun bir tanem, iyi ki hayatımdasın. Bütün dileklerimin, dualarımın, hayallerimin, geleceğimin yani hayatımın her anında hep yan yana olmak, gülüşünle gülümsemek, bakışınla hayat bulmak istiyorum. Senden sonra ben yeniden doğduğum için aslında bugün benim de doğum günüm sayılır, o yüzden doğum günümüz kutlu olsun aşkımmmm. Her daim seni çok ama çok seveceğim, her zaman yanında ve arkanda olacağım…❤️",s:"01.02.2026 · 00:00"}],
+  gorev:{tip:"soru",soru:"Neden 1 Şubat'ın benim de doğum günüm sayıldığını yazdım?",sec:["Çünkü aynı burçtayız","Çünkü senden sonra yeniden doğdum","Çünkü pastayı ben yedim"],dogru:1,ipucu:"Mesajın ortasında yazıyor."}},
+
+ {id:"antalya", tarih:"Ağustos 2026 · Antalya", baslik:"Rüya gibi bir tatil",
+  metin:["Aylarca otel baktık, planı sen yaptın: Aspendos'u öne çekelim, Patara'da antik kent de varmış. Sonra 25–29 Ağustos arası telefonlara neredeyse hiç bakmadık.","Aspendos'un tiyatrosunda öpücük pozu, Antalya Bahçe'de konser ve iki bardak, Patara kumullarında güneş batarken bir öpücük."],
+  foto:["patara","aspendos","konser","icecek"],
+  balon:[{kim:"Kardelen",t:"Ama aspendos tiyatro yerini işte öne çekebiliriz",s:"17.08.2026 · 22:55"},{kim:"Kaan",ben:1,t:"İzniyle ilk haftası çok güzeldi vallahi, iyi tatil yaptık ha, rüya gibiydi ya",s:"13.09.2026 · 21:35"}],
+  gorev:{tip:"bulmaca",baslik:"Gün batımını birleştir",aciklama:"İki parçaya sırayla dokunarak yerlerini değiştir. Patara fotoğrafını tamamla.",foto:"patara"}}
+];
+
+/* ---------- DURUM ---------- */
+let tamam = new Set();
+try{ const k = JSON.parse(localStorage.getItem("gorev-minnak")||"[]"); k.forEach(x=>tamam.add(x)); }catch(e){}
+function kaydet(){ try{ localStorage.setItem("gorev-minnak", JSON.stringify([...tamam])); }catch(e){} }
+const app = document.getElementById("uygulama");
+const el = (h)=>{ const t=document.createElement("template"); t.innerHTML=h.trim(); return t.content.firstElementChild; };
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function gunSay(){ return Math.floor((Date.now()-BASLANGIC)/864e5); }
+function rutbe(){ return RUTBELER[Math.min(tamam.size, RUTBELER.length-1)]; }
+
+/* ---------- GÜNÜN SÖZÜ ---------- */
+const SOZLER = [
+ "Günaydın minnakım. Bugün de dünyanın en güzel kızı sensin, kontrol ettim.",
+ "Adım Kaan, kalbimin adı Kardelen.",
+ "Şırnak ile senin aran kaç kilometre bilmiyorum. Bildiğim tek şey, aklımın her gece sana yürüdüğü.",
+ "181.892 mesaj yazdık, hâlâ sana söyleyecek sözüm bitmedi.",
+ "Bugün kendine iyi bak. Benim en kıymetli emanetim sensin.",
+ "Nevşehir'de balonlar havalandı ama benim kalbim seni ilk gördüğüm gün havalanmıştı.",
+ "Gülüşün, nöbet kulübemin penceresine vuran güneş gibi.",
+ "Sana seviyorum demek için bahane aramıyorum. Ama bugün de bir bahanem var: bugün.",
+ "Ne kadar uzakta olursam olayım, en yakınımdasın.",
+ "\"Şapşik\" deyip gülüşün var ya, bütün günümü kurtarıyor.",
+ "Patara'da güneş batarken öptüğün yanağım hâlâ seni soruyor.",
+ "Bir gün bu mesajları torunlarımıza okuyacağız, hazırlıklı ol.",
+ "Masal şatosunun önünde anladım: masal sensin, şato sadece dekor.",
+ "Yorulduğun her an aklına şu gelsin: arkanda ben varım.",
+ "Galatasaray şampiyon olunca sevinirim, sen gülünce mutlu olurum. Arada çok fark var.",
+ "Seni düşünmeden geçen tek bir günüm olmadı. Tutanak tutsalar ispat ederim.",
+ "Kahven sıcak, günün güzel, kalbin hafif olsun bitanem.",
+ "Sen hayatımın en güzel tesadüfü değil, en güzel kararısın.",
+ "Bugün özlemek serbest. Senin için kontenjan sınırsız.",
+ "Gözlerine bakmak, eve dönmek gibi.",
+ "İyi ki 2 Ağustos 2021 diye bir gün var.",
+ "Bütün nöbetler biter, bütün yollar sana çıkar.",
+ "Sen benim izin günümsün.",
+ "Pembe elbisenle dans ettiğimiz o gece, hâlâ en sevdiğim şarkı.",
+ "Bana \"kocam\" demen, beni dünyanın en gururlu adamı yapıyor.",
+ "Bugün bir şey başarmana gerek yok. Sen zaten benim en büyük başarımsın.",
+ "Hattın çekmediği gecelerde bile sesin kulağımda.",
+ "Dünyanın neresinde olursam olayım, adresim sensin.",
+ "Seninle yemek yemek, en sıradan akşamı bayram yapıyor.",
+ "Kızdığında bile tatlısın. Bunu sana söylemeyi hep unutuyorum.",
+ "Bugün aynaya bir bak. Sevdiğim kadın orada duruyor.",
+ "Listemizde Kapadokya ikinci tur, bol deniz ve bir düğün var. Sırayla hepsi.",
+ "Seninle zaman başka akıyor. Üç gün mesaj atmadık, çünkü yan yanaydık.",
+ "En uzun mesafe bile tek bir sarılmayla kapanıyor.",
+ "Bugün seni dünden çok seviyorum. Yarın bugünden çok seveceğim.",
+ "Civcivim, minnakım, prensesim… Hangi isimle seslensem hepsi sana çıkıyor.",
+ "Bir sabah uyanacağız ve günaydını mesajla değil, yüz yüze diyeceğiz.",
+ "Benim için dünyanın merkezi bir harita noktası değil, senin olduğun yer.",
+ "İyi geceler minnakım. Rüyanda da nöbetteyim, merak etme.",
+ "Hayatımda bir sürü emir aldım. En sevdiğim hâlâ senin \"Dinlen hadi sen\" demen."
+];
+const SIIRLER = [
+ "Uzakta bir dağ var, adı Cudi,\nGece olunca yıldızlar seni sorar.\nHer birine aynı cevabı veririm:\nBenim en parlak yıldızım kalbimde durur.",
+ "Sabah oldu, güneş pencereni bulsun,\nRüzgâr saçlarına selamımı getirsin.\nBugün nereye gidersen git minnakım,\nBil ki Kaan seni dünyadan çok sevsin.",
+ "Kumların üstünde güneş battı,\nSen yanağıma bir öpücük bıraktın.\nO akşamdan beri her gün batımında\nGökyüzü senin adını yazıyor sanki.",
+ "Bir şato gördüm masallardan çıkma,\nKuleleri maviydi, bahçesi çiçekli.\nDönüp yanımdaki kıza baktığımda\nAnladım, asıl masal yanımdaydı.",
+ "Nöbet uzun, gece soğuk,\nTelsiz susar, rüzgâr konuşur.\nCebimdeki fotoğrafına bakarım,\nİçimde bir bahar başlar o an.",
+ "Balonlar havalandı Kapadokya'da,\nBiri kırmızı, biri gülüşün renginde.\nBir gün yine gideceğiz, söz,\nBu sefer ellerin hep elimde.",
+ "Yazdığım her \"seviyorum\" bir tuğla,\nYüz binlerce mesajla bir ev ördük.\nKapısında ikimizin adı yazıyor,\nPenceresinde hep aynı ışık: sen.",
+ "Kızınca kaşların çatılır,\nGülünce dünya yumuşar.\nBen ikisine de aşığım,\nÇünkü ikisi de sensin.",
+ "Gece yarısı, telefon elimde,\nBir mesaj yazıyorum, siliyorum yeniden.\nSonunda en sade haliyle gönderiyorum:\nSeni çok seviyorum, hep, en baştan.",
+ "Rütbeler değişir, şehirler değişir,\nTayinler gelir, kuralar çekilir.\nAma bir şey hiç değişmez minnakım:\nHer yol, eninde sonunda sana çıkar.",
+ "Şampiyonluk gecesi meşaleler yandı,\nHerkes kupaya baktı, ben sana.\nBayrağı sen tutuyordun, kalbimi ben,\nO gece ikimiz de kazandık aslında.",
+ "Bir pembe elbise, bir yeşil çimen,\nKulağımda müzik, kollarımda sen.\nÖmrüm boyunca tek şarkı seçsem\nO geceyi seçerdim, hiç düşünmeden.",
+ "Bugün yağmur yağsa da üzülme,\nBulutlar da bir gün dağılır elbet.\nSen yeter ki gülümse minnakım,\nBen güneşi senin yüzünden bilirim.",
+ "Ne çok yol yürüdük seninle:\nAnkara, Eskişehir, Nevşehir, Antalya.\nAma en güzel yolculuk,\nSenin kalbinden benimkine giden o kısa yol.",
+ "Gözlerini kapat, üçe kadar say,\nSıcacık, uzun bir sarılma düşün.\nİşte o benim, buradayım,\nMesafeler sadece haritada var.",
+ "Sen uyurken ben nöbetteyim,\nSen uyanınca belki ben uyurum.\nAma aynı gökyüzüne bakıyoruz,\nAynı aya, aynı yıldızlara, aynı sevgiyle."
+];
+function bugun(){ const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
+function ozelGun(t){
+  const g=t.getDate(), a=t.getMonth()+1, y=t.getFullYear();
+  if(a===8&&g===2) return {etiket:"Yıldönümümüz 💍",metin:`Bugün yıldönümümüz! ${y-2021} yıl önce bugün her şey başladı. İyi ki o gün vardı, iyi ki sen varsın. Mutlu yıllar aşkım.`};
+  if(a===2&&g===1) return {etiket:"Doğum günün 🎂",metin:"İyi ki doğdun minnakım. Senden sonra ben de yeniden doğdum, o yüzden bugün ikimizin doğum günü. Doğum günümüz kutlu olsun."};
+  if(a===10&&g===27) return {etiket:"Bugün özel bir gün 🎉",metin:"Bugün kocanın doğum günü. Unutmadın değil mi? Ona sarılmayı unutma, o seni zaten hiç unutmuyor."};
+  if(a===2&&g===14) return {etiket:"Sevgililer Günü ❤️",metin:"Bütün günler senin günün ama bugün resmi olarak da öyle. Sevgililer Günümüz kutlu olsun minnakım."};
+  if(a===1&&g===1) return {etiket:"Yeni yıl ✨",metin:"Yeni yıla nasıl girersen öyle geçermiş. Bu yıl da seninle girdim, o yüzden bu yıl da çok güzel geçecek."};
+  return null;
+}
+function gununKarti(){
+  const t=bugun(), oz=ozelGun(t);
+  const tarih=t.toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"});
+  if(oz) return `<div class="gunun ozel"><div class="ust"><span class="mono">${oz.etiket}</span><small>${tarih}</small></div><blockquote>${esc(oz.metin)}</blockquote><span class="imza2">Kaan</span></div>`;
+  const n=Math.floor((t-BASLANGIC)/864e5);
+  const siir = n%3===2;
+  const metin = siir ? SIIRLER[Math.floor(n/3)%SIIRLER.length] : SOZLER[(n-Math.floor(n/3))%SOZLER.length];
+  return `<div class="gunun ${siir?"siir":""}"><div class="ust"><span class="mono">${siir?"Günün şiiri":"Günün sözü"}</span><small>${tarih}</small></div><blockquote>${esc(metin)}</blockquote><span class="imza2">Kaan · Yarın yenisi gelecek</span></div>`;
+}
+function geriSayim(){
+  const t=bugun();
+  const gunler=[["Yıldönümümüze",7,2],["Doğum gününe",1,1],["Sevgililer Günü'ne",1,14],["Benim doğum günüme",9,27]];
+  return gunler.map(([ad,a,g])=>{
+    let h=new Date(t.getFullYear(),a,g); if(h<t) h=new Date(t.getFullYear()+1,a,g);
+    const k=Math.round((h-t)/864e5);
+    return {ad,k};
+  }).sort((x,y)=>x.k-y.k).slice(0,2).map(o=>`<span>${o.ad} <b>${o.k===0?"bugün!":o.k+" gün"}</b></span>`).join("");
+}
+
+/* ---------- KAPAK ---------- */
+function kapak(){
+  const g=gunSay();
+  app.innerHTML="";
+  const s=el(`<section class="ekran"><div class="ic kapak">
+    <div class="ciftyuz"><img class="yuz o" src="${U("yuz_o")}" alt="Sen"><img class="yuz ben" src="${U("yuz_ben")}" alt="Ben"><span class="kalp" aria-hidden="true">❤️</span></div>
+    <span class="mono" style="color:var(--gunes)">Bizim hikâyemiz · 2 Ağustos 2021'den beri</span>
+    <h1>Kaan <em>&amp;</em> Kardelen</h1>
+    <p>2 Ağustos 2021'den bu yana birlikte geçen her güzel anı, haritada bir durak oldu. Her durakta seni küçük bir görev bekliyor.</p>
+    <div class="sayac">
+      <div><b>${g.toLocaleString("tr-TR")}</b><span>gündür beraberiz</span></div>
+      <div><b>181.892</b><span>mesaj</span></div>
+      <div><b>1.297</b><span>kez "seviyorum"</span></div>
+    </div>
+    ${gununKarti()}
+    <div class="gerisayim">${geriSayim()}</div>
+    <button class="btn" id="basla">${tamam.size? "Göreve devam et" : "Göreve başla"}</button>
+    ${tamam.size? `<span class="dipnot">${tamam.size}/${D.length} görev tamam · Seviye: ${rutbe()}</span>`:""}
+  </div></section>`);
+  app.appendChild(s);
+  s.querySelector("#basla").onclick=harita;
+  scrollTo(0,0);
+}
+
+/* ---------- ÜST BAR ---------- */
+function ustbar(){
+  const n=tamam.size;
+  return `<div class="ustbar"><div class="ic">
+    <div class="rozet" aria-hidden="true">${ROZET[Math.min(n,ROZET.length-1)]}</div>
+    <div class="rutbe"><small>Seviyen</small><b>${rutbe()}</b>
+      <div class="ilerleme"><i style="width:${n/D.length*100}%"></i></div></div>
+    <span class="sayi">${n}/${D.length}</span>
+  </div></div>`;
+}
+
+/* ---------- HARİTA ---------- */
+function harita(odak){
+  app.innerHTML="";
+  const ilkAcik = D.findIndex(d=>!tamam.has(d.id));
+  const s=el(`<section class="ekran">${ustbar()}<div class="ic">
+    <div class="harita-bas"><span class="mono" style="color:var(--sis)">Görev haritası</span><h2>Bizim yolumuz</h2>
+    <p>${ilkAcik===-1? "Bütün görevler tamam. Final seni bekliyor." : "Sıradaki durağa dokun. Kilitliler, öncekini bitirince açılır."}</p></div>
+    <div class="yol"></div>
+    <div style="display:flex;justify-content:center;padding-top:10px"><button class="btn" id="final" ${ilkAcik===-1?"":"disabled"}>${ilkAcik===-1?"Finali aç 💌":"🔒 Final: bütün görevleri bitir"}</button></div>
+  </div></section>`);
+  const yol=s.querySelector(".yol");
+  D.forEach((d,i)=>{
+    const ok=tamam.has(d.id), aktif=i===ilkAcik, kilit=!ok && !aktif;
+    const b=el(`<button class="durak ${ok?"tamam":""} ${aktif?"aktif":""} ${kilit?"kilitli":""}" ${kilit?'aria-disabled="true"':""} data-i="${i}">
+      <span class="mono">${esc(d.tarih)}</span><b>${esc(d.baslik)}</b>
+      <span class="durum">${ok?"✓ Kalp kazanıldı":aktif?"Şimdi burası":"🔒 Kilitli"}</span>
+      ${aktif?`<span class="mini"><img src="${U("yuz_o")}" alt=""><img src="${U("yuz_ben")}" alt=""></span>`:""}
+    </button>`);
+    b.onclick=()=>{ if(!kilit) durak(i); };
+    yol.appendChild(b);
+  });
+  s.querySelector("#final").onclick=()=>{ if(ilkAcik===-1) final(); };
+  app.appendChild(s);
+  const hedef = yol.children[odak ?? (ilkAcik===-1?D.length-1:ilkAcik)];
+  requestAnimationFrame(()=>{ if(hedef && (odak!==undefined || ilkAcik>1)) hedef.scrollIntoView({block:"center"}); else scrollTo(0,0); });
+}
+
+/* ---------- DURAK ---------- */
+function durak(i){
+  const d=D[i];
+  app.innerHTML="";
+  let medya="";
+  if(d.foto) medya+=`<div class="galeri ${d.foto.length===1?"tek":""}">${d.foto.map(f=>`<img src="${U(f)}" alt="" loading="lazy">`).join("")}</div>`;
+  if(d.cizim) medya+=`<div class="cizim" aria-hidden="true"><span style="left:12%;top:30px">🎈</span><span style="left:42%;top:12px;animation-delay:-3s">🎈</span><span style="left:70%;top:44px;animation-delay:-6s">🎈</span><span style="left:85%;top:10px;font-size:22px;animation-delay:-2s">🎈</span><div class="vadi"></div></div>`;
+  if(d.video) medya+=`<video src="${V(d.video)}" poster="${V(d.poster)}" controls playsinline preload="metadata"></video>`;
+  const balonlar=(d.balon||[]).map(b=>`<div class="balon ${b.ben?"ben":""}"><span class="kim">${esc(b.kim)}</span>${esc(b.t)}<span class="saat">${esc(b.s)}</span></div>`).join("");
+  const s=el(`<section class="ekran">${ustbar()}<div class="ic"><div class="ani">
+    <button class="geri" id="geri">← Haritaya dön</button>
+    <span class="mono">Durak ${i+1} · ${esc(d.tarih)}</span>
+    <h2>${esc(d.baslik)}</h2>
+    <div class="metin">${d.metin.map(p=>`<p>${esc(p)}</p>`).join("")}</div>
+    ${medya}
+    ${balonlar?`<div style="display:flex;flex-direction:column;gap:8px">${balonlar}</div>`:""}
+    <div class="gorev" id="gorev"></div>
+  </div></div></section>`);
+  app.appendChild(s);
+  s.querySelector("#geri").onclick=()=>harita(i);
+  scrollTo(0,0);
+  const kutu=s.querySelector("#gorev");
+  if(tamam.has(d.id)) return bittiGoster(kutu,i,true);
+  const g=d.gorev;
+  kutu.innerHTML=`<div class="baslik"><span class="mono">Görev ${i+1}</span></div><h3>${esc(g.baslik||"Soru")}</h3>${g.aciklama?`<p style="margin:0;color:var(--sis)">${esc(g.aciklama)}</p>`:""}<div id="oyun"></div>`;
+  const alan=kutu.querySelector("#oyun");
+  const bitir=()=>{ tamam.add(d.id); kaydet(); setTimeout(()=>bittiGoster(kutu,i,false),450); };
+  ({soru:oyunSoru,kalp:oyunKalp,izle:oyunIzle,hafiza:oyunHafiza,kazi:oyunKazi,yakala:oyunYakala,bulmaca:oyunBulmaca})[g.tip](alan,g,bitir,s);
+}
+function bittiGoster(kutu,i,eski){
+  const son=i===D.length-1;
+  kutu.innerHTML=`<div class="bitti"><div class="madalya">💖</div><h3>${eski?"Bu görev zaten tamam":"Görev tamamlandı!"}</h3>
+   <p>${eski?"Kalbin duruyor.":`Yeni seviyen: <b style="color:var(--gunes)">${rutbe()}</b>`}</p>
+   <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px">
+    <button class="btn ikincil" id="h">Haritaya dön</button>
+    ${son? (tamam.size===D.length?`<button class="btn" id="n">Finali aç 💌</button>`:"") : `<button class="btn" id="n">Sıradaki durak →</button>`}
+   </div></div>`;
+  if(!eski) konfeti(18);
+  kutu.querySelector("#h").onclick=()=>harita(i);
+  const n=kutu.querySelector("#n");
+  if(n) n.onclick=()=> son? final() : (tamam.has(D[i].id) ? durak(i+1) : null);
+  // ustbar güncelle
+  const ub=document.querySelector(".ustbar"); if(ub) ub.outerHTML=ustbar();
+}
+
+/* ---------- OYUNLAR ---------- */
+function oyunSoru(alan,g,bitir){
+  alan.innerHTML=`<h3 style="font-size:20px;margin-bottom:12px">${esc(g.soru)}</h3><div class="secenekler"></div><p class="ipucu" aria-live="polite"></p>`;
+  const sc=alan.querySelector(".secenekler"), ip=alan.querySelector(".ipucu");
+  let bitti=false;
+  g.sec.forEach((t,k)=>{
+    const b=el(`<button class="secenek">${esc(t)}</button>`);
+    b.onclick=()=>{ if(bitti) return;
+      if(k===g.dogru){ bitti=true; b.classList.add("dogru"); ip.style.color="var(--iyi)"; ip.textContent="Doğru! 💛"; bitir(); }
+      else { b.classList.remove("yanlis"); void b.offsetWidth; b.classList.add("yanlis"); ip.textContent="İpucu: "+g.ipucu; }
+    };
+    sc.appendChild(b);
+  });
+}
+function oyunKalp(alan,g,bitir){
+  alan.innerHTML=`<div class="oyunalani kalpler"></div><p class="sayi" style="margin:8px 0 0">0 / 10</p>`;
+  const a=alan.querySelector(".kalpler"), say=alan.querySelector(".sayi");
+  const renk=["❤️","💖","💗","💓","💘","💝","❤️","💕","💞","💗"];
+  let n=0;
+  renk.forEach((k,j)=>{
+    const b=el(`<button aria-label="Kalp">${k}</button>`);
+    b.style.left=(6+Math.random()*76)+"%"; b.style.top=(6+Math.random()*72)+"%"; b.style.animationDelay=(-Math.random()*3)+"s";
+    b.onclick=()=>{ b.classList.add("alindi"); n++; say.textContent=n+" / 10"; if(n===10) bitir(); };
+    a.appendChild(b);
+  });
+}
+function oyunIzle(alan,g,bitir,s){
+  alan.innerHTML=`<button class="btn" id="izledim">İzledim, görevi tamamla</button>`;
+  const v=s.querySelector("video"); if(v){ v.scrollIntoView({block:"center",behavior:"smooth"}); }
+  alan.querySelector("#izledim").onclick=bitir;
+}
+function karistir(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function oyunHafiza(alan,g,bitir){
+  const fotolar=["sato1","sato2","opucuk","gol1","gs4","patara"];
+  const deste=karistir([...fotolar,...fotolar]);
+  alan.innerHTML=`<div class="kartlar"></div><p class="sayi" style="margin:8px 0 0">0 / 6 eş</p>`;
+  const k=alan.querySelector(".kartlar"), say=alan.querySelector(".sayi");
+  let acik=[], es=0, kilit=false;
+  deste.forEach(f=>{
+    const b=el(`<button class="kart" aria-label="Kart"><div class="yuzler"><div class="on">❤</div><div class="arka" style="background-image:url(${U(f)})"></div></div></button>`);
+    b.dataset.f=f;
+    b.onclick=()=>{
+      if(kilit||b.classList.contains("acik")) return;
+      b.classList.add("acik"); acik.push(b);
+      if(acik.length===2){
+        kilit=true;
+        if(acik[0].dataset.f===acik[1].dataset.f){ acik.forEach(x=>x.classList.add("esli")); acik=[]; kilit=false; es++; say.textContent=es+" / 6 eş"; if(es===6) bitir(); }
+        else setTimeout(()=>{ acik.forEach(x=>x.classList.remove("acik")); acik=[]; kilit=false; },850);
+      }
+    };
+    k.appendChild(b);
+  });
+}
+function oyunKazi(alan,g,bitir){
+  alan.innerHTML=`<div class="oyunalani kazi"><img src="${U(g.foto)}" alt="Balo"><canvas></canvas></div>`;
+  const kutu=alan.querySelector(".kazi"), c=kutu.querySelector("canvas"), x=c.getContext("2d");
+  let bitti=false, sayac=0;
+  function ciz(){
+    const r=kutu.getBoundingClientRect(); const dpr=devicePixelRatio||1;
+    c.width=r.width*dpr; c.height=r.height*dpr; x.scale(dpr,dpr);
+    const gr=x.createLinearGradient(0,0,r.width,r.height); gr.addColorStop(0,"#f3a04a"); gr.addColorStop(1,"#ec7f92");
+    x.fillStyle=gr; x.fillRect(0,0,r.width,r.height);
+    x.fillStyle="rgba(42,22,6,.75)"; x.font="600 20px Figtree, sans-serif"; x.textAlign="center";
+    x.fillText("Burayı kazı 💗",r.width/2,r.height/2);
+    x.globalCompositeOperation="destination-out";
+  }
+  requestAnimationFrame(ciz);
+  function kaz(e){
+    const r=c.getBoundingClientRect();
+    x.beginPath(); x.arc(e.clientX-r.left,e.clientY-r.top,26,0,Math.PI*2); x.fill();
+    if(++sayac%12===0) kontrol();
+  }
+  function kontrol(){
+    if(bitti) return;
+    const d=x.getImageData(0,0,c.width,c.height).data; let bos=0,top=0;
+    for(let i=3;i<d.length;i+=64){ top++; if(d[i]===0) bos++; }
+    if(bos/top>0.5){ bitti=true; c.style.transition="opacity .6s"; c.style.opacity=0; bitir(); }
+  }
+  let bas=false;
+  c.addEventListener("pointerdown",e=>{bas=true;c.setPointerCapture(e.pointerId);kaz(e);});
+  c.addEventListener("pointermove",e=>{ if(bas) kaz(e); });
+  c.addEventListener("pointerup",()=>{bas=false;kontrol();});
+}
+function oyunYakala(alan,g,bitir){
+  alan.innerHTML=`<div class="mesafe" aria-hidden="true"><i></i></div><p class="sayi" style="margin:0">Şırnak ↔ Sen · 0 / 12 kalp</p><div class="oyunalani yakala"><canvas></canvas></div><button class="btn" id="bas">Başlat</button>`;
+  const kutu=alan.querySelector(".yakala"), c=kutu.querySelector("canvas"), x=c.getContext("2d"), say=alan.querySelector(".sayi"), bar=alan.querySelector(".mesafe i");
+  const yuz=new Image(); yuz.src=U("yuz_ben");
+  let W,H, px, kalpler=[], n=0, calis=false, son=0, uret=0;
+  function boyut(){ const r=kutu.getBoundingClientRect(); const dpr=devicePixelRatio||1; W=r.width;H=r.height; c.width=W*dpr;c.height=H*dpr; x.setTransform(dpr,0,0,dpr,0,0); if(px===undefined) px=W/2; }
+  boyut();
+  function cizim(){
+    x.clearRect(0,0,W,H);
+    x.font="28px serif"; x.textAlign="center"; x.textBaseline="middle";
+    kalpler.forEach(k=>x.fillText(k.e,k.x,k.y));
+    const R=30, y=H-R-10;
+    x.save(); x.beginPath(); x.arc(px,y,R,0,Math.PI*2); x.closePath(); x.clip();
+    if(yuz.complete) x.drawImage(yuz,px-R,y-R,R*2,R*2); else {x.fillStyle="#f7ecdc";x.fill();}
+    x.restore(); x.strokeStyle="#f3a04a"; x.lineWidth=3; x.beginPath(); x.arc(px,y,R,0,Math.PI*2); x.stroke();
+  }
+  function dongu(t){
+    if(!calis) return;
+    const dt=Math.min(40,t-(son||t)); son=t;
+    uret-=dt; if(uret<=0){ kalpler.push({x:20+Math.random()*(W-40),y:-20,v:0.12+Math.random()*0.1+n*0.006,e:["❤️","💖","💗","💘"][Math.floor(Math.random()*4)]}); uret=650-n*18; }
+    const y0=H-40;
+    kalpler=kalpler.filter(k=>{ k.y+=k.v*dt; if(Math.abs(k.y-y0)<30 && Math.abs(k.x-px)<38){ n++; say.textContent="Şırnak ↔ Sen · "+n+" / 12 kalp"; bar.style.width=(100-n/12*100)+"%"; return false;} return k.y<H+30; });
+    cizim();
+    if(n>=12){ calis=false; x.clearRect(0,0,W,H); x.font="600 22px Figtree, sans-serif"; x.fillStyle="#f7ecdc"; x.fillText("Mesafe kapandı 💞",W/2,H/2); bitir(); return; }
+    requestAnimationFrame(dongu);
+  }
+  function hareket(e){ const r=c.getBoundingClientRect(); px=Math.max(30,Math.min(W-30,e.clientX-r.left)); if(!calis) cizim(); }
+  c.addEventListener("pointerdown",e=>{c.setPointerCapture(e.pointerId);hareket(e);});
+  c.addEventListener("pointermove",e=>{ if(e.buttons||e.pointerType!=="mouse"||calis) hareket(e); });
+  yuz.onload=cizim; cizim();
+  const b=alan.querySelector("#bas");
+  b.onclick=()=>{ if(calis) return; calis=true; son=0; b.hidden=true; requestAnimationFrame(dongu); };
+}
+function oyunBulmaca(alan,g,bitir){
+  let sira; do{ sira=karistir([0,1,2,3,4,5,6,7,8]); }while(sira.every((v,i)=>v===i));
+  alan.innerHTML=`<div class="bulmaca"></div><p class="sayi" style="margin:8px 0 0">Bir parçaya, sonra yerine geçeceği parçaya dokun.</p>`;
+  const k=alan.querySelector(".bulmaca"); let secili=null, bitti=false;
+  function ciz(){
+    k.innerHTML="";
+    sira.forEach((p,i)=>{
+      const b=el(`<button class="parca" aria-label="Parça ${i+1}"></button>`);
+      b.style.backgroundImage=`url(${U(g.foto)})`;
+      b.style.backgroundPosition=`${(p%3)*50}% ${Math.floor(p/3)*50}%`;
+      if(secili===i) b.classList.add("secili");
+      b.onclick=()=>{ if(bitti) return;
+        if(secili===null){ secili=i; ciz(); return; }
+        [sira[secili],sira[i]]=[sira[i],sira[secili]]; secili=null; ciz();
+        if(sira.every((v,j)=>v===j)){ bitti=true; k.style.gap="0"; bitir(); }
+      };
+      k.appendChild(b);
+    });
+  }
+  ciz();
+}
+
+/* ---------- FİNAL ---------- */
+function final(){
+  app.innerHTML="";
+  const s=el(`<section class="ekran">${ustbar()}<div class="ic" style="display:flex;flex-direction:column;gap:22px;padding-top:16px">
+    <button class="geri" id="geri" style="align-self:flex-start">← Haritaya dön</button>
+    <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
+      <div class="ciftyuz" style="transform:scale(.8)"><img class="yuz o" src="${U("yuz_o")}" alt=""><img class="yuz ben" src="${U("yuz_ben")}" alt=""><span class="kalp" aria-hidden="true">❤️</span></div>
+      <span class="mono" style="color:var(--gunes)">Bütün görevler tamam · Seviye: Kalbimin sahibi</span>
+      <h2 style="font-size:clamp(34px,9vw,48px)">Sana bir mektup var</h2>
+    </div>
+    <article class="mektup">
+      <h2>Kardelen'im, minnakım,</h2>
+      <p>2 Ağustos 2021'den beri ${gunSay().toLocaleString("tr-TR")} gün geçti. Bu sürede ben teğmen oldum, sen okulunu dereceyle bitirdin. Aramıza Şırnak girdi, hattın çekmediği geceler girdi. Ama 181.892 mesajın hiçbirinde yalnız değildim.</p>
+      <p>Şatonun önünde, şampiyonluk gecesinin dumanında, pembe elbisenle dans ederken ve Patara'da güneş batarken hep aynı şeyi düşündüm: iyi ki sen.</p>
+      <p>Sana söz verdim: ilk evlendiğimizde gezeceğiz. Nevşehir'e bir daha gideceğiz, balonları bu sefer gökyüzünde göreceğiz. Bir de düğünümüz olacak, sen istediğin için.</p>
+      <p>Senden sonra ben yeniden doğdum. O yüzden bu oyunun her durağı aslında ikimizin.</p>
+      <p class="imza">Seni çok ama çok seven,<br>Kocan, Kaan</p>
+    </article>
+    <div class="kolaj">${["sato2","gs4","balo","patara","aspendos","gol2","opucuk","konser","sato1"].map(f=>`<img src="${U(f)}" alt="" loading="lazy">`).join("")}</div>
+    <div><span class="mono" style="color:var(--sis)">Sözlerimiz</span><h3 style="font-size:24px;margin:6px 0 12px">Sıradaki görevler</h3>
+    <div class="sozler">
+      <div class="soz"><span>🎈</span><div><b>Nevşehir, ikinci tur</b><br><span style="font-size:14px;color:var(--sis)">"Birdaha gidicem kapadokyaya" demiştin. Gidiyoruz.</span></div></div>
+      <div class="soz"><span>🌊</span><div><b>Daha az gezi, daha çok deniz</b><br><span style="font-size:14px;color:var(--sis)">Antalya'dan sonra kendime verdiğim söz.</span></div></div>
+      <div class="soz"><span>⭐</span><div><b>2027: Üsteğmen</b><br><span style="font-size:14px;color:var(--sis)">Omzuma o yıldızı taktığımda yanımda sen olacaksın.</span></div></div>
+      <div class="soz"><span>💍</span><div><b>Bir düğünümüz olacak</b><br><span style="font-size:14px;color:var(--sis)">"En azından bir düğünümüz olsun isterim" demiştin. Olacak.</span></div></div>
+    </div></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn ikincil" id="bastan">Baştan oyna</button>
+      <button class="btn" id="kalp">Bir kalp daha ❤️</button>
+    </div>
+    <p class="dipnot">Kaan &amp; Kardelen için yapıldı. 2 Ağustos 2021 – bugün ve sonrası.</p>
+  </div></section>`);
+  app.appendChild(s);
+  scrollTo(0,0);
+  konfeti(40);
+  s.querySelector("#geri").onclick=()=>harita();
+  s.querySelector("#kalp").onclick=()=>konfeti(30);
+  const bb=s.querySelector("#bastan");
+  bb.onclick=()=>{
+    if(bb.dataset.onay){ tamam.clear(); kaydet(); kapak(); }
+    else { bb.dataset.onay=1; bb.textContent="Emin misin? Kalpler sıfırlanır"; setTimeout(()=>{ if(bb.isConnected){ delete bb.dataset.onay; bb.textContent="Baştan oyna"; } },3000); }
+  };
+}
+
+function konfeti(n){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const e=["❤️","💖","💗","💞","✨","💛"];
+  for(let i=0;i<n;i++){
+    const s=document.createElement("span"); s.className="konfeti"; s.textContent=e[i%e.length];
+    s.style.left=Math.random()*100+"vw"; s.style.animationDuration=(2.2+Math.random()*2)+"s"; s.style.animationDelay=(Math.random()*.6)+"s";
+    document.body.appendChild(s); setTimeout(()=>s.remove(),5000);
+  }
+}
+
+/* ---------- YILDIZLI GÖK ---------- */
+(function(){
+  const c=document.getElementById("gok"), x=c.getContext("2d"); let yildiz=[];
+  function boy(){ const d=devicePixelRatio||1; c.width=innerWidth*d; c.height=innerHeight*d; c.style.width=innerWidth+"px"; c.style.height=innerHeight+"px"; x.setTransform(d,0,0,d,0,0);
+    yildiz=Array.from({length:Math.round(innerWidth*innerHeight/9000)},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.2+.2,f:Math.random()*6})); ciz(0); }
+  function ciz(t){ x.clearRect(0,0,innerWidth,innerHeight);
+    const g=x.createLinearGradient(0,innerHeight*.55,0,innerHeight); g.addColorStop(0,"rgba(243,160,74,0)"); g.addColorStop(1,"rgba(236,127,146,.10)"); x.fillStyle=g; x.fillRect(0,0,innerWidth,innerHeight);
+    yildiz.forEach(s=>{ x.globalAlpha=.35+.35*Math.sin(t/1400+s.f); x.fillStyle="#f7ecdc"; x.beginPath(); x.arc(s.x,s.y,s.r,0,7); x.fill(); }); x.globalAlpha=1; }
+  boy(); addEventListener("resize",boy);
+  if(!matchMedia("(prefers-reduced-motion: reduce)").matches){ (function d(t){ ciz(t); requestAnimationFrame(d); })(0); }
+})();
+
+kapak();
+})();
+</script>
+
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}</script>
+</body></html>

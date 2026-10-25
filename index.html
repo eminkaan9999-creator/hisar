@@ -3982,6 +3982,196 @@ if(!SV.tutDone&&!(SV.tot&&SV.tot.mis>0)){const b=document.getElementById('tutB')
 })();
 
 
+// ===== m_world =====
+// ============ CANLI DUNYA: tank suspansiyonu, palet izleri, devrilen/parcalanan agaclar, ruzgarda salinan agaclar, cokme animasyonlu binalar ============
+(function(){
+const PI=Math.PI,RN=Math.random,rr=(a,b)=>a+RN()*(b-a),FX=window.FXP;
+function snd(f){try{if(typeof AC!=='undefined'&&AC&&AU)f(AC.currentTime)}catch(e){}}
+// ---------------- AGACLAR ----------------
+const TR=[];
+for(const o of S.children){if(!o.isGroup||o.children.length!==4)continue;const k=o.children[0];if(!k.geometry||k.geometry.type!=='CylinderGeometry'||!k.geometry.parameters||Math.abs(k.geometry.parameters.radiusTop-.3)>1e-3)continue;if(o.children[1].geometry.type!=='ConeGeometry')continue;
+ TR.push({g:o,x:o.position.x,z:o.position.z,s:o.scale.x,st:0,a:0,v:0,ax:new THREE.Vector3(1,0,0),ph:RN()*6.28,q0:o.quaternion.clone()})}
+window.TREES=TR;
+const _q=new THREE.Quaternion(),_ax=new THREE.Vector3();
+function fell(t,dir,f){if(t.st)return;t.st=1;t.v=f||.6;t.a=.02;t.dir=dir;t.ax.set(Math.cos(dir),0,-Math.sin(dir));t.t=0;
+ snd(T=>{nburst(T,.12,{type:'highpass',f:2400,v:.12});tone(T,.7,{f0:320,f1:70,v:.05,type:'sawtooth'})});if(window.HAP&&Math.hypot(t.x-P.x,t.z-P.z)<8)HAP(25)}
+function shatter(t,bx,bz){if(t.st===3)return;t.st=3;const g=t.g;for(let i=1;i<4;i++)g.children[i].visible=false;g.children[0].scale.y=.32;g.children[0].position.y=.5;g.quaternion.copy(t.q0);
+ const y=hAt(t.x,t.z);for(let i=0;i<14;i++){const a=RN()*6.28,s=rr(3,9);FX.puff&&FX.puff(t.x,y+rr(2,6)*t.s,t.z,Math.cos(a)*s,rr(1,5),Math.sin(a)*s,rr(1.2,2.2),.6,2.2,0x3d6e36,0x2a4a26,.8,1.5)}
+ FX.dirt&&FX.dirt(t.x,t.z,.8)}
+function landed(t){const L=6*t.s,y=hAt(t.x,t.z);for(let i=1;i<=5;i++){const d=L*i/5,x=t.x+Math.sin(t.dir)*d,z=t.z+Math.cos(t.dir)*d;FX.puff&&FX.puff(x,hAt(x,z)+.4,z,rr(-1.5,1.5),rr(.5,1.6),rr(-1.5,1.5),rr(1.4,2.4),1,3.6,0xa89470,0xc8b896,.5,1.6)}
+ snd(T=>{tone(T,.35,{f0:90,f1:38,v:.16});nburst(T,.3,{type:'lowpass',f:500,v:.1})});if(Math.hypot(t.x-P.x,t.z-P.z)<25)shake=Math.max(shake,.12)}
+// patlama: yakin agac parcalanir, cevresi devrilir
+const _bb=window.bigBoom;window.bigBoom=function(x,z,r){const res=_bb.apply(this,arguments);for(const t of TR){if(t.st===3)continue;const d=Math.hypot(t.x-x,t.z-z);if(d<r*.55+1)shatter(t,x,z);else if(d<r*1.5+2&&!t.st)fell(t,Math.atan2(t.x-x,t.z-z),1.2+r*.12)}return res};
+// ---------------- BINA COKMESI ----------------
+const COL=[];
+const _cl=window.collapse;window.collapse=function(c){const r=_cl.apply(this,arguments);if(c&&c.g){c.g.scale.y=1;COL.push({c,t:0});const y=hAt(c.x,c.z);
+ for(let i=0;i<18;i++){const a=RN()*6.28,s=rr(2,6);FX.puff&&FX.puff(c.x+Math.cos(a)*c.r*.5,y+rr(.5,4),c.z+Math.sin(a)*c.r*.5,Math.cos(a)*s,rr(.5,3),Math.sin(a)*s,rr(3,5),2,rr(7,11),0x9a8c74,0xb8ac94,.7,.9)}
+ for(let i=0;i<3;i++)FX.dirt&&FX.dirt(c.x+rr(-c.r,c.r)*.5,c.z+rr(-c.r,c.r)*.5,1.1);if(Math.hypot(c.x-P.x,c.z-P.z)<60)shake=Math.max(shake,.35);
+ snd(T=>{nburst(T,1.4,{type:'lowpass',f:700,v:.22});tone(T,1.1,{f0:70,f1:30,v:.2})})}return r};
+// ---------------- PALET IZLERI ----------------
+const NM=720;const MG2=new THREE.PlaneGeometry(.62,1.05);MG2.rotateX(-PI/2);
+const MM=new THREE.MeshBasicMaterial({color:0x2c2318,transparent:true,opacity:.34,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
+const IM=new THREE.InstancedMesh(MG2,MM,NM);IM.frustumCulled=false;IM.count=0;IM.layers.set(2);S.add(IM);let mi=0;
+const _m=new THREE.Matrix4(),_p=new THREE.Vector3(),_s=new THREE.Vector3(1,1,1),_qq=new THREE.Quaternion(),_e=new THREE.Euler(0,0,0,'YXZ');
+function mark(x,z,h){const y=hAt(x,z);if(y<-1.1)return;const gf=hAt(x+Math.sin(h),z+Math.cos(h))-hAt(x-Math.sin(h),z-Math.cos(h)),gs=hAt(x+Math.cos(h),z-Math.sin(h))-hAt(x-Math.cos(h),z+Math.sin(h));
+ _e.set(-Math.atan2(gf,2),h,Math.atan2(gs,2));_qq.setFromEuler(_e);_p.set(x,y+.06,z);_m.compose(_p,_qq,_s);IM.setMatrixAt(mi,_m);mi=(mi+1)%NM;if(IM.count<NM)IM.count++;IM.instanceMatrix.needsUpdate=true}
+function trackMarks(o,st,half,step){if(o.h==null||!Number.isFinite(o.x))return;const d=Math.hypot(o.x-st.x,o.z-st.z);if(d>6){st.x=o.x;st.z=o.z;return}st.a+=d;st.x=o.x;st.z=o.z;
+ while(st.a>step){st.a-=step;const sn=Math.sin(o.h),cs=Math.cos(o.h);for(const sd of[-1,1])mark(o.x+cs*sd*half,o.z-sn*sd*half,o.h)}}
+const pst={x:P.x,z:P.z,a:0};
+// ---------------- SUSPANSIYON ----------------
+const SU={p:0,pv:0,r:0,rv:0,fw:0,acc:0,lh:P.h,lx:P.x,lz:P.z};window.SUSP=SU;
+const _up=window.update;window.update=function(dt){_up.apply(this,arguments);if(!(dt>0)||game!=='play')return;
+ const dx=P.x-SU.lx,dz=P.z-SU.lz;SU.lx=P.x;SU.lz=P.z;const fw=(dx*Math.sin(P.h)+dz*Math.cos(P.h))/dt,tr=angd(P.h,SU.lh)/dt;SU.lh=P.h;
+ if(Math.abs(fw)>30){SU.fw=0;return}const acc=(fw-SU.fw)/dt;SU.fw+=(fw-SU.fw)*Math.min(1,dt*10);SU.acc+=(acc-SU.acc)*Math.min(1,dt*6);
+ const pt=Math.max(-.055,Math.min(.055,-SU.acc*.011)),rt=Math.max(-.04,Math.min(.04,-tr*SU.fw*.0045));
+ SU.pv+=(-70*(SU.p-pt)-8*SU.pv)*dt;SU.p+=SU.pv*dt;SU.rv+=(-60*(SU.r-rt)-7*SU.rv)*dt;SU.r+=SU.rv*dt;
+ const sp=Math.abs(SU.fw);if(sp>1.5&&RN()<dt*sp*.5)SU.pv+=(RN()-.5)*sp*.05;
+ const t=performance.now()/1000,vib=(.0012+Math.min(sp,12)*.00018)*Math.sin(t*67)+.0008*Math.sin(t*41);
+ const k=iv===1?.25:1;P.g.rotation.x+=(SU.p+vib)*k;P.g.rotation.z+=SU.r*k};
+// ---------------- her kare ----------------
+let swT=0;const pt0={x:0,z:0};
+FRAME_HOOKS.push(dr=>{
+ if(game!=='play')return;const dt=(window.BCAM&&BCAM.on&&BCAM.live)?dr*BCAM.ts:dr;
+ // agac carpma: oyuncu, dusman ve dost tanklari
+ const movers=[P];for(const e of E)if(e.type==='tank'||e.type==='apc'||e.type==='truck')movers.push(e);if(typeof AL!=='undefined')for(const a of AL)if(!a.dead)movers.push(a);
+ for(const t of TR){if(t.st)continue;for(const m of movers){const dx=t.x-m.x,dz=t.z-m.z;if(Math.abs(dx)>4.5||Math.abs(dz)>4.5)continue;const d=Math.hypot(dx,dz);if(d<2.5+t.s*.35){const mh=m.h!=null?m.h:0;let dir=Math.atan2(dx,dz);if(m===P&&Math.abs(SU.fw)>.8)dir=P.h+(SU.fw<0?PI:0)+rr(-.3,.3);fell(t,dir,.5+Math.abs(m===P?SU.fw:3)*.08);if(m===P)shake=Math.max(shake,.15);break}}}
+ // dusen agaclar
+ for(const t of TR){if(t.st!==1)continue;t.v+=(1.8+5.5*Math.sin(t.a))*dt;t.a+=t.v*dt;if(t.a>=1.42){t.a=1.42;if(Math.abs(t.v)>.6){landed(t);t.v=-t.v*.22}else{t.st=2;t.v=0}}
+  _q.setFromAxisAngle(t.ax,t.a);t.g.quaternion.copy(t.q0).premultiply(_q)}
+ // ruzgarda salinma (yakindaki ayakta agaclar)
+ const W=window.WIND,ws=W?Math.min(1,W.s/9):.2,tt=performance.now()/1000;swT+=dr;if(ws>.05){const wd=W?Math.atan2(W.x,W.z):0;_ax.set(Math.cos(wd),0,-Math.sin(wd));
+  for(const t of TR){if(t.st)continue;const dx=t.x-CAM.position.x,dz=t.z-CAM.position.z;if(dx*dx+dz*dz>140*140)continue;const a=(.006+.018*ws)*(1+.5*Math.sin(tt*.7+t.ph))*Math.sin(tt*(1.1+ws)+t.ph)+.01*ws;_q.setFromAxisAngle(_ax,a);t.g.quaternion.copy(t.q0).premultiply(_q)}}
+ // bina cokmesi
+ for(let i=COL.length-1;i>=0;i--){const k=COL[i];k.t+=dt;const f=Math.min(1,k.t/.85),e=f*f;k.c.g.scale.y=1-(1-.28)*e;k.c.g.rotation.z=Math.sin(k.t*30)*.01*(1-f);if(f>=1){k.c.g.scale.y=.28;k.c.g.rotation.z=0;COL.splice(i,1)}}
+ // palet izleri
+ trackMarks(P,pst,1.42,.8);
+ for(const e of E){if(e.type!=='tank'&&e.type!=='apc')continue;e._tm=e._tm||{x:e.x,z:e.z,a:0};trackMarks(e,e._tm,1.35,1.3)}
+ if(typeof AL!=='undefined')for(const a of AL){if(a.dead)continue;a._tm=a._tm||{x:a.x,z:a.z,a:0};trackMarks(a,a._tm,1.42,1.3)}});
+// yeni gorevde agaclari ve izleri sifirla
+const _ie=window.initExtra;window.initExtra=function(){_ie.apply(this,arguments);for(const t of TR){t.st=0;t.a=0;t.v=0;t.g.quaternion.copy(t.q0);for(let i=1;i<4;i++)t.g.children[i].visible=true;t.g.children[0].scale.y=1;t.g.children[0].position.y=1.5}
+ IM.count=0;mi=0;pst.x=P.x;pst.z=P.z;pst.a=0;SU.p=SU.pv=SU.r=SU.rv=SU.fw=SU.acc=0;SU.lx=P.x;SU.lz=P.z;SU.lh=P.h;COL.length=0};
+})();
+
+
+// ===== m_sound =====
+// ============ MUZIK VE SES: catismada yukselen dinamik muzik (Web Audio sentez), zafer/yenilgi muzigi, vites degisimi, muzik/efekt ses ayari, zengin murettebat konusmalari ============
+(function(){
+const ldx=(k,d)=>{try{const j=JSON.parse(localStorage.getItem('m60v2')||'null');return j&&j[k]!=null?j[k]:d}catch(e){return d}};
+SV.musV=ldx('musV',40);SV.sfxV=ldx('sfxV',100);
+const mf=m=>440*Math.pow(2,(m-69)/12),RN=Math.random;
+// ---------------- MUZIK MOTORU ----------------
+const BPM=96,BEAT=60/BPM,S16=BEAT/4,BAR=BEAT*4;
+const CH=[[50,53,57],[50,53,57],[46,50,53],[48,52,55],[50,53,57],[46,50,53],[43,46,50],[45,49,52]];// Dm Dm Bb C Dm Bb Gm A
+const ROOT=[38,38,34,36,38,34,31,33];
+const MOT=[[0,62],[2,65],[4,69],[6,67],[8,65],[10,64],[12,62],[14,57]];// iki olculuk motif (16'lik adim, nota)
+let M=null,step=0,nextT=0,I=.15,It=.15,lastCombat=-99,fan=0;
+function build(){if(M||typeof AC==='undefined'||!AC)return;try{
+ const out=AC.createGain();out.gain.value=0;out.connect(AC.destination);
+ const dl=AC.createDelay(1);dl.delayTime.value=BEAT*.75;const fb=AC.createGain();fb.gain.value=.32;const dlg=AC.createGain();dlg.gain.value=.35;dl.connect(fb);fb.connect(dl);dl.connect(dlg);dlg.connect(out);
+ const L={};for(const k of['pad','arp','bass','drum','taiko','brass','sting'])L[k]=AC.createGain(),L[k].gain.value=0,L[k].connect(out);L.arp.connect(dl);L.brass.connect(dl);L.sting.gain.value=1;
+ let nb=AC.createBuffer(1,AC.sampleRate*.5|0,AC.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=RN()*2-1;
+ M={out,L,nb};nextT=AC.currentTime+.1;step=0}catch(e){M=null}}
+function env(g,t,a,v,dur){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.exponentialRampToValueAtTime(.0008,t+dur)}
+function osc(type,f,t,dur,v,dest,lp,a){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);let n=o;if(lp){const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=lp;o.connect(fl);n=fl}n.connect(g);g.connect(dest);env(g,t,a||.005,v,dur);o.start(t);o.stop(t+dur+.05);return o}
+function noise(t,dur,v,dest,type,f,q){const s=AC.createBufferSource();s.buffer=M.nb;const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;if(q)fl.Q.value=q;const g=AC.createGain();s.connect(fl);fl.connect(g);g.connect(dest);env(g,t,.002,v,dur);s.start(t);s.stop(t+dur+.02)}
+function kick(t,v){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.18);o.connect(g);g.connect(M.L.drum);env(g,t,.002,v,.38);o.start(t);o.stop(t+.42)}
+function snare(t,v){noise(t,.16,v,M.L.drum,'highpass',1400);osc('triangle',190,t,.09,v*.5,M.L.drum)}
+function taiko(t,v){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(55,t+.35);o.connect(g);g.connect(M.L.taiko);env(g,t,.003,v,.7);o.start(t);o.stop(t+.75);noise(t,.05,v*.3,M.L.taiko,'lowpass',900)}
+function sched(s,t){const bar=(s>>4)%8,st=s%16,ch=CH[bar];
+ if(st===0){for(const n of ch){for(const dt of[-6,6]){const o=osc('sawtooth',mf(n),t,BAR*1.02,.045,M.L.pad,900,.7);o.detune.value=dt}}osc('sine',mf(ROOT[bar]),t,BAR,.09,M.L.pad,300,.4)}
+ if(st%2===0){const p=[0,1,2,1,0,2,1,2][(st/2)|0];osc('triangle',mf(ch[p]+12),t,.34,.07,M.L.arp,2600)}
+ if(st%2===0){const oc=(st===6||st===14)?12:0;osc('sawtooth',mf(ROOT[bar]+oc),t,.22,.16,M.L.bass,340)}
+ noise(t,.03,st%4===2?.05:.025,M.L.bass,'highpass',7500);
+ if(st===0||st===8||st===10)kick(t,.5);if(st===4||st===12)snare(t,.32);else if(st%2===1&&RN()<.35)snare(t,.07);
+ if(st===0||st===6||(bar%2===1&&st===12))taiko(t,.45);
+ if(bar%2===0){const q=MOT.find(q=>q[0]===st);if(q){osc('sawtooth',mf(q[1]),t,S16*2.6,.06,M.L.brass,1500,.02);osc('square',mf(q[1]-12),t,S16*2.6,.03,M.L.brass,900,.02)}}}
+// zafer / yenilgi
+function sting(ok){build();if(!M)return;const t=AC.currentTime+.05,dst=M.L.sting;
+ if(ok){[62,66,69,74].forEach((n,i)=>{osc('sawtooth',mf(n),t+i*.16,i===3?1.6:.3,.09,dst,2200,.01);osc('square',mf(n-12),t+i*.16,i===3?1.6:.3,.04,dst,1200,.01)});kick(t,.6);kick(t+.64,.6)}
+ else{[50,53,57].forEach(n=>osc('sawtooth',mf(n-12),t,2.6,.06,dst,500,.5));taiko(t,.6);taiko(t+.9,.4)}fan=performance.now()+3500}
+window.MUSIC={sting,get I(){return I}};
+// yogunluk: catisma olaylari
+const _f=window.fire;window.fire=function(){const n0=shells.length;const r=_f.apply(this,arguments);if(shells.length>n0)lastCombat=performance.now();return r};
+const _h=window.hitP;window.hitP=function(){lastCombat=performance.now();return _h.apply(this,arguments)};
+const _eg=window.endGame;window.endGame=function(ok){const was=game==='play';const r=_eg.apply(this,arguments);if(was)sting(!!ok);return r};
+// eski basit muzigi kapat
+window.musicUp=function(){};
+// zamanlayici
+setInterval(()=>{if(!M){if(typeof AC!=='undefined'&&AC&&AC.state==='running')build();return}
+ const now=performance.now();let tg;if(game==='play'){let near=0;for(const e of E)if(Math.hypot(e.x-P.x,e.z-P.z)<95&&spotted(e))near++;tg=now-lastCombat<8000?1:near?.62:.36;if(P.hp<P.mx*.3)tg=1}else if(game==='menu'||game==='over')tg=.12;else tg=.2;
+ It=tg;I+=(It-I)*.06;
+ const L=M.L,T=AC.currentTime,c=(v)=>Math.max(0,Math.min(1,v));
+ L.pad.gain.setTargetAtTime(.55,T,.5);L.arp.gain.setTargetAtTime(c(1.1-I)*.8+.1,T,.5);L.bass.gain.setTargetAtTime(c((I-.25)*2.2),T,.5);L.drum.gain.setTargetAtTime(c((I-.5)*2.4),T,.4);L.taiko.gain.setTargetAtTime(c((I-.7)*3.3),T,.4);L.brass.gain.setTargetAtTime(c((I-.8)*5),T,.5);
+ const duck=(window.CREW&&CREW.busy)?.5:1,fanOn=now<fan?.25:1,vol=sndOn?SV.musV/100:0;M.out.gain.setTargetAtTime(.5*vol*duck*fanOn*(game==='pause'?.6:1),T,.25);
+ if(vol<=0){nextT=T+.1;return}
+ while(nextT<T+.16){if(nextT<T-.05)nextT=T+.02;sched(step,nextT);nextT+=S16;step=(step+1)%128}},30);
+// ilk dokunusta ses motorunu ac (menude de muzik calsin)
+const wakeA=()=>{try{if(typeof initAudio==='function')initAudio();else if(typeof AC!=='undefined'&&AC&&AC.state!=='running')AC.resume()}catch(e){}};
+for(const ev of['pointerup','touchend','keydown'])addEventListener(ev,wakeA,{capture:true,passive:true});
+// ---------------- EFEKT SESI ----------------
+setInterval(()=>{if(typeof MG!=='undefined'&&MG){const v=(sndOn?.6:0)*SV.sfxV/100;if(Math.abs(MG.gain.value-v)>.005)MG.gain.value=v}},250);
+// ---------------- VITES ----------------
+let gear=1,shiftT=0;const GR=[[0,3],[3,6.5],[6.5,13]];
+const _su=window.sndUpdate;window.sndUpdate=function(mv,tn){try{if(mode==='tank'){const v=window.SUSP?Math.abs(SUSP.fw):(window.__spd||0),thr=Math.abs(mv)>.08;let g=v<2.8?1:v<6.2?2:3;
+  if(g!==gear&&performance.now()-shiftT>700){if(g>gear&&thr&&typeof AC!=='undefined'&&AC&&typeof nburst==='function'){const t=AC.currentTime;nburst(t,.08,{type:'bandpass',f:900,q:2,v:.07});tone(t,.12,{f0:120,f1:60,v:.09})}gear=g;shiftT=performance.now()}
+  const lo=GR[gear-1][0],hi=GR[gear-1][1],k=Math.max(0,Math.min(1,(v-lo)/(hi-lo)));let R=v<.3&&!thr?.18:.32+k*.58+(thr?.06:0);if(performance.now()-shiftT<260)R-=.12;
+  P.rpmK=R-(.18+Math.abs(mv)*.75+Math.abs(tn)*.35)}else P.rpmK=0}catch(e){}return _su.apply(this,arguments)};
+window.GEAR=()=>gear;
+// ---------------- MURETTEBAT CESITLILIGI ----------------
+if(window.CREW){const say0=CREW.say.bind(CREW),pick=a=>a[(RN()*a.length)|0];
+ const VAR=[[/^Atış!$/,['Atış!','Ateş!','Gidiyor!','Ateş ediyorum!','Atış, atış!']],
+  [/^Yüklendi! (.+) hazır\.$/,m=>[m[0],'Dolduruldu, '+m[1]+' hazır!','Mermi sürüldü, hazır!',m[1]+' yüklendi, ateşe hazır!']],
+  [/^Vurulduk!$|^İsabet aldık!$|^Darbe aldık, devam!$/,['Vurulduk!','İsabet aldık!','Darbe aldık, devam!','Zırh dayandı, devam ediyoruz!','Bize ateş ediyorlar!']],
+  [/^Hedef imha edildi!$|^Tam isabet, hedef yanıyor!$|^Vurduk! Hedef imha\.$/,['Hedef imha edildi!','Tam isabet, hedef yanıyor!','Vurduk! Hedef imha.','Hedef etkisiz!','İşte bu! Sıradaki!','Hedef tamamen yok edildi!']]];
+ CREW.say=function(t,pr,key,cool){for(const[re,alt]of VAR){const m=String(t).match(re);if(m){t=pick(typeof alt==='function'?alt(m):alt);break}}return say0(t,pr,key,cool)};
+ // iska geri bildirimi: hedefe kilitliyken yere dusen mermi
+ const _imp=window.impact;window.impact=function(s,x,y,z,e){const r=_imp.apply(this,arguments);try{if(!e&&s&&s.lk&&E.includes(s.lk)&&mode==='tank'&&!s._ms){s._ms=1;const dT=Math.hypot(s.lk.x-(s.d0?s.d0.x:P.x),s.lk.z-(s.d0?s.d0.z:P.z)),dI=Math.hypot(x-(s.d0?s.d0.x:P.x),z-(s.d0?s.d0.z:P.z));
+   CREW.say(dI<dT-8?pick(['Kısa düştü!','Kısa! Biraz yükselt.','Önüne düştü!']):dI>dT+8?pick(['Uzun gitti!','Üstünden geçti!','Uzun! Biraz indir.']):pick(['Iska! Yandan geçti.','Kaçtı, tekrar!']),1,'miss',3)}}catch(_){}return r};
+ const _fi=window.fire;window.fire=function(){const n0=shells.length;const r=_fi.apply(this,arguments);if(shells.length>n0&&typeof lockE!=='undefined'&&lockE)shells[shells.length-1].lk=lockE;return r};
+ // sakin anlarda telsiz/murettebat sohbeti
+ const IDLE=['Bölge sakin görünüyor, gözünüzü dört açın.','Ufukta hareket yok.','Telsiz açık, komuta dinlemede.','Herkes yerinde, devam ediyoruz.','Sürücü, hızını koru.','Nişancı, taret serbest.','Dürbünle tarıyorum, şimdilik temiz.'];let idleT=performance.now()+40000;
+ setInterval(()=>{if(game!=='play'||mode!=='tank'||CREW.busy)return;const now=performance.now();if(now-lastCombat<20000){idleT=Math.max(idleT,now+25000);return}if(now>idleT){idleT=now+45000+RN()*30000;CREW.say(pick(IDLE),1,'idle',30)}},2000)}
+// ---------------- AYARLAR ----------------
+const ta=document.getElementById('ta');if(ta){ta.insertAdjacentHTML('beforeend','<h3>MÜZİK VE SES</h3>'+
+ '<div class="vol"><label>🎵 Müzik <b id="mvL">'+SV.musV+'</b></label><input type="range" id="mvR" min="0" max="100" step="5" value="'+SV.musV+'"></div>'+
+ '<div class="vol"><label>💥 Efektler <b id="svL">'+SV.sfxV+'</b></label><input type="range" id="svR" min="0" max="100" step="5" value="'+SV.sfxV+'"></div>'+
+ '<p>Müzik çatışmada yükselir, sakin anlarda yumuşar; görev sonunda zafer ya da yenilgi müziği çalar. Mürettebat konuşurken müzik kısılır.</p>');
+ document.head.insertAdjacentHTML('beforeend','<style>.vol{display:flex;align-items:center;gap:12px;margin:6px 2px}.vol label{flex:0 0 108px;font:700 13px var(--tf,system-ui)}.vol label b{color:var(--ta,#ffb547);margin-left:4px}.vol input{flex:1;accent-color:#ffb547;height:28px}</style>');
+ const mv=document.getElementById('mvR'),sv=document.getElementById('svR');
+ mv.oninput=()=>{SV.musV=+mv.value;document.getElementById('mvL').textContent=SV.musV;save();wakeA()};sv.oninput=()=>{SV.sfxV=+sv.value;document.getElementById('svL').textContent=SV.sfxV;save()}}
+})();
+
+
+// ===== m_gyro =====
+// ============ JIROSKOPLA NISAN: telefonu egerek ince nisan (iPhone izin ister) ============
+(function(){
+const ldx=(k,d)=>{try{const j=JSON.parse(localStorage.getItem('m60v2')||'null');return j&&j[k]!=null?j[k]:d}catch(e){return d}};
+SV.gyro=ldx('gyro',0);SV.gyS=ldx('gyS',1);SV.gyI=ldx('gyI',0);
+let perm=!(window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function'),lastT=0,sy=0,sp=0,got=0;
+async function ask(){if(perm)return true;try{const r=await DeviceMotionEvent.requestPermission();perm=r==='granted';if(!perm)say('Jiroskop izni verilmedi · iPhone ayarlarından izin ver',2.5);return perm}catch(e){say('Jiroskop açılamadı',2);return false}}
+function active(){if(!SV.gyro||!perm||game!=='play'||mode!=='tank')return false;if(window.WHEEL&&WHEEL.open)return false;if(window.PHOTO&&PHOTO.on)return false;return SV.gyro===2?(iv===0||iv===1):iv===1}
+addEventListener('devicemotion',e=>{const r=e.rotationRate;if(!r)return;got=1;const now=performance.now(),dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;if(!dt||!active())return;
+ const ang=screen.orientation&&screen.orientation.angle!=null?screen.orientation.angle:(window.orientation||0),D=Math.PI/180,b=(r.beta||0)*D,g=(r.gamma||0)*D;
+ let dy,dp;if(ang===90){dy=b;dp=g}else if(ang===270||ang===-90){dy=-b;dp=-g}else{dy=g;dp=-b}
+ if(SV.gyI)dy=-dy;sy+=(dy-sy)*.5;sp+=(dp-sp)*.5;const dz=.03,k=SV.gyS;
+ if(Math.abs(sy)>dz)yaw+=(sy-Math.sign(sy)*dz)*dt*k;if(Math.abs(sp)>dz)pitch=clamp(pitch+(sp-Math.sign(sp)*dz)*dt*k,.08,1.3)},{passive:true});
+window.GYRO={ask,active,get ok(){return perm&&got},_f(){perm=true}};
+// cark: hizli ac/kapat
+const ICG='<rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M3 8.5a10 10 0 000 7M21 8.5a10 10 0 010 7"/><path d="M11 18.5h2"/>';
+(window.WHEEL_XP=window.WHEEL_XP||[]).push(c=>c==='tank'&&('ontouchstart' in window||navigator.maxTouchPoints>0)?[{id:'gy',t:'JİROSKOP',d:SV.gyro?'Açık · kapatmak için seç':'Telefonu eğerek nişan al',ic:ICG,on:()=>!!SV.gyro,act:async()=>{if(SV.gyro){SV.gyro=0}else{if(!await ask())return;SV.gyro=1}save();apply();say(SV.gyro?'JİROSKOP AÇIK · nişangâhta telefonu eğ':'JİROSKOP KAPALI',1.6)}}]:[]);
+// ayarlar
+const ta=document.getElementById('ta');
+function apply(){if(!ta)return;ta.querySelectorAll('[data-gy]').forEach(b=>{const[k,v]=b.dataset.gy.split(':');b.classList.toggle('sel',+SV[k]===+v)});const l=document.getElementById('gyL');if(l)l.textContent=SV.gyS.toFixed(1)+'×'}
+if(ta){ta.insertAdjacentHTML('beforeend','<h3>JİROSKOP NİŞAN</h3>'+
+ '<div class="row"><button data-gy="gyro:0">Kapalı</button><button data-gy="gyro:1">📱 Nişangâhta</button><button data-gy="gyro:2">Her zaman</button></div>'+
+ '<div class="vol"><label>Hassasiyet <b id="gyL"></b></label><input type="range" id="gyR" min="0.4" max="2.5" step="0.1" value="'+SV.gyS+'"></div>'+
+ '<div class="row"><button data-gy="gyI:0">Yön normal</button><button data-gy="gyI:1">↔ Yönü ters çevir</button></div>'+
+ '<p>Telefonu hafifçe sağa-sola çevir ya da eğ: taret ve nişan onu izler. Parmakla nişan almaya devam edebilirsin; jiroskop ince ayar içindir.</p>');
+ ta.querySelectorAll('[data-gy]').forEach(b=>b.onclick=async()=>{const[k,v]=b.dataset.gy.split(':');if(k==='gyro'&&+v&&!await ask())return;SV[k]=+v;save();apply()});
+ const gr=document.getElementById('gyR');gr.oninput=()=>{SV.gyS=+gr.value;save();apply()};apply()}
+})();
+
+
 // ===== m_mapui =====
 // ============ TAM EKRAN HARITA: arazi, kareler, yollar, yer adlari, birlikler, rota cizme, isaret koyma (G) ============
 (function(){
@@ -4076,7 +4266,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'34',LOGO=window.HISAR_LOGO;
+const VER=+'35',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+

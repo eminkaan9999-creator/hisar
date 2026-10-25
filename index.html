@@ -2046,7 +2046,8 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
  // kule cephane rafi (sol arka): yalitkan raf + 8 mermi (APDS/HEAT/HEP/WP)
  const rx=1.0,rz=-1.02;B(.82,.05,.62,rx,-.8,rz,0x2f3631);B(.82,.05,.62,rx,-.32,rz,0x2f3631);B(.04,.95,.62,rx+.43,-.35,rz,0x2f3631);
  for(const dz of[-.3,.3])B(.82,.04,.035,rx,.12,rz+dz,0x2f3631);for(const dx of[-.4,.4])B(.035,.95,.035,rx+dx,-.35,rz+.3,0x2f3631);
- const rd=(x,z,k)=>{Cy(.064,.068,.5,x,-.53,z,BRS,'y',12);Cy(.074,.074,.03,x,-.78,z,0x8a6f2a,'y',12);Cy(.016,.016,.006,x,-.795,z,0x6a5420,'y',8);Cy(.05,.064,.34,x,-.11,z,[0x33383a,0x6d7a4a,0xc9a53c,0xe0e0d8][k],'y',12);Cy(.0,.05,.18,x,.15,z,[0x1c1e20,0xd8782a,0xd8c84a,0xf0f0f0][k],'y',12);Cy(.052,.052,.025,x,-.24,z,0xd8c84a,'y',12)};
+ const OGV=new THREE.LatheGeometry([[.05,0],[.05,.03],[.046,.08],[.036,.125],[.022,.16],[.008,.185],[0,.19]].map(a=>new THREE.Vector2(a[0],a[1])),14);
+ const rd=(x,z,k)=>{Cy(.064,.068,.5,x,-.53,z,BRS,'y',12);Cy(.074,.074,.03,x,-.78,z,0x8a6f2a,'y',12);Cy(.016,.016,.006,x,-.795,z,0x6a5420,'y',8);Cy(.05,.064,.34,x,-.11,z,[0x33383a,0x6d7a4a,0xc9a53c,0xe0e0d8][k],'y',12);SI.geo(OGV,x,.06,z,[0x1c1e20,0xd8782a,0xd8c84a,0xf0f0f0][k]);Cy(.052,.052,.025,x,-.24,z,0xd8c84a,'y',12)};
  for(let r=0;r<2;r++)for(let c=0;c<4;c++)rd(rx-.2+r*.28,rz+.24-c*.16,(r*4+c)%4);
  for(const dz of[-.24,.0,.24])B(.6,.035,.03,rx,-.2,rz+dz-.08,TAN);
  hot('TOP CEPHANE RAFI','Yalıtkan raf · APDS / HEAT / HEP / WP (toplam 63 adet)',rx,-.1,rz);
@@ -4172,389 +4173,6 @@ if(ta){ta.insertAdjacentHTML('beforeend','<h3>JİROSKOP NİŞAN</h3>'+
 })();
 
 
-// ===== m_paint =====
-// m_paint.js – tank boyama sistemi (renk, desen, rütbe rozetleri)
-window.PAINT={
-  colors:{
-    'Türk Yeşili':{hex:'#2D5016',rgb:[45,80,22]},
-    'Çöl Sarısı':{hex:'#D4A574',rgb:[212,165,116]},
-    'Kış Beyazı':{hex:'#F5F5F0',rgb:[245,245,240]},
-    'Siyah':{hex:'#1a1a1a',rgb:[26,26,26]}
-  },
-  desens:['Normal','Çizgili','Çiçekli'],
-  rütbeler:{
-    0:'Asker',
-    1:'Erbaş',
-    2:'Başçavuş',
-    3:'Binbaşı',
-    4:'Yüzbaşı',
-    5:'Teğmen',
-    6:'Üsteğmen'
-  },
-  apply:function(P){
-    if(!SV.tank)SV.tank={color:0,desen:0,ad:'Tank',rütbe:0};
-    const c=PAINT.colors[Object.keys(PAINT.colors)[SV.tank.color]];
-    const r=c.rgb;
-    if(P.mat){
-      P.mat.color.setRGB(r[0]/255,r[1]/255,r[2]/255);
-      if(SV.tank.desen===1)P.mat.map.offset.y+=.02; // çizgili
-    }
-  },
-  addUI:function(){
-    const mp=document.querySelector('#mp');
-    if(!mp)return;
-    let tab=document.querySelector('#pnt');
-    if(!tab){
-      tab=document.createElement('div');
-      tab.id='pnt';
-      tab.className='tab';
-      tab.innerHTML=`
-<div class="sc" style="padding:1rem;gap:1rem;display:flex;flex-direction:column">
-<div>
-  <label>Renk:</label>
-  <select id="pntCol" style="width:100%;padding:.5rem">
-    ${Object.keys(PAINT.colors).map((k,i)=>`<option value="${i}" ${SV.tank?.color===i?'selected':''}>${k}</option>`).join('')}
-  </select>
-</div>
-<div>
-  <label>Desen:</label>
-  <select id="pntDes" style="width:100%;padding:.5rem">
-    ${PAINT.desens.map((d,i)=>`<option value="${i}" ${SV.tank?.desen===i?'selected':''}>${d}</option>`).join('')}
-  </select>
-</div>
-<div>
-  <label>Çağrı Adı:</label>
-  <input id="pntAd" type="text" value="${SV.tank?.ad||'Tank'}" style="width:100%;padding:.5rem;box-sizing:border-box" maxlength="16" />
-</div>
-<div style="color:#888;font-size:.9rem">
-  Rütbe: <span id="pntRank">${PAINT.rütbeler[SV.tank?.rütbe||0]}</span>
-</div>
-</div>
-      `;
-      mp.appendChild(tab);
-      document.querySelector('#pntCol').addEventListener('change',e=>{
-        SV.tank.color=+e.target.value;
-        PAINT.apply(P);
-        save();
-      });
-      document.querySelector('#pntDes').addEventListener('change',e=>{
-        SV.tank.desen=+e.target.value;
-        PAINT.apply(P);
-        save();
-      });
-      document.querySelector('#pntAd').addEventListener('input',e=>{
-        SV.tank.ad=e.target.value;
-        save();
-      });
-    }
-  }
-};
-FRAME_HOOKS.push(()=>{
-  if(game==='menu'&&!document.querySelector('#pnt'))PAINT.addUI();
-});
-window.fn=window.fn||{};
-const oldInitPaint=window.fn.initExtra;
-window.fn.initExtra=function(){
-  if(oldInitPaint)oldInitPaint.apply(this,arguments);
-  PAINT.apply(P);
-};
-
-
-// ===== m_weather =====
-// m_weather.js – hava durumu sistemi (yağmur, kar, gece)
-window.WEATHER={
-  modes:['Açık','Yağmurlu','Karlı','Gece'],
-  mode:0,
-  rainSys:null,
-  snowSys:null,
-  init:function(mode=0){
-    WEATHER.mode=mode||SV.weather||0;
-    // yağmur parçacıkları
-    const rainGeo=new THREE.BufferGeometry();
-    const rainPts=new Float32Array(300*3);
-    for(let i=0;i<300;i++){
-      rainPts[i*3]=Math.random()*200-100;
-      rainPts[i*3+1]=50+Math.random()*80;
-      rainPts[i*3+2]=Math.random()*200-100;
-    }
-    rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPts,3));
-    const rainMat=new THREE.PointsMaterial({size:.1,color:0x8899ff,transparent:true,opacity:.4});
-    WEATHER.rainSys=new THREE.Points(rainGeo,rainMat);
-    WEATHER.rainSys.layers.set(2);
-    SC.add(WEATHER.rainSys);
-    // kar parçacıkları
-    const snowGeo=new THREE.BufferGeometry();
-    const snowPts=new Float32Array(200*3);
-    for(let i=0;i<200;i++){
-      snowPts[i*3]=Math.random()*200-100;
-      snowPts[i*3+1]=20+Math.random()*100;
-      snowPts[i*3+2]=Math.random()*200-100;
-    }
-    snowGeo.setAttribute('position',new THREE.BufferAttribute(snowPts,3));
-    const snowMat=new THREE.PointsMaterial({size:.2,color:0xffffff,transparent:true,opacity:.6});
-    WEATHER.snowSys=new THREE.Points(snowGeo,snowMat);
-    WEATHER.snowSys.layers.set(2);
-    SC.add(WEATHER.snowSys);
-    WEATHER.update();
-  },
-  update:function(){
-    const m=WEATHER.mode;
-    // fog ayarı
-    if(m===1){
-      SC.fog.far=150;
-      SC.fog.color.setHex(0xaabbcc);
-    }else if(m===2){
-      SC.fog.far=120;
-      SC.fog.color.setHex(0xf0f0f0);
-    }else if(m===3){
-      SC.fog.far=200;
-      SC.fog.color.setHex(0x0a0a1a);
-    }else{
-      SC.fog.far=500;
-      SC.fog.color.setHex(0x87ceeb);
-    }
-    // light ayarı
-    if(m===3){
-      for(const light of SC.children){
-        if(light.isDirectionalLight){
-          light.intensity=.3;
-        }
-      }
-      // spot light (helikopter ışığı)
-      let spot=SC.getObjectByName('spotLight');
-      if(!spot){
-        spot=new THREE.SpotLight(0xffff99,.5,400,Math.PI/4,.5,1);
-        spot.position.set(0,80,-50);
-        spot.name='spotLight';
-        SC.add(spot);
-      }
-    }else{
-      for(const light of SC.children){
-        if(light.isDirectionalLight)light.intensity=.8;
-      }
-    }
-    // parçacık görünürlüğü
-    if(WEATHER.rainSys)WEATHER.rainSys.visible=(m===1);
-    if(WEATHER.snowSys)WEATHER.snowSys.visible=(m===2);
-  }
-};
-const oldInitWeather=window.fn?.initExtra;
-window.fn=window.fn||{};
-window.fn.initExtra=function(){
-  if(oldInitWeather)oldInitWeather.apply(this,arguments);
-  if(!WEATHER.rainSys)WEATHER.init(SV.weather||0);
-};
-FRAME_HOOKS.push((dt)=>{
-  if(WEATHER.mode===1&&WEATHER.rainSys){
-    const pos=WEATHER.rainSys.geometry.attributes.position.array;
-    for(let i=0;i<pos.length;i+=3){
-      pos[i+1]-=dt*20; // yağmur düşüş hızı
-      if(pos[i+1]<0)pos[i+1]=80;
-    }
-    WEATHER.rainSys.geometry.attributes.position.needsUpdate=true;
-  }
-  if(WEATHER.mode===2&&WEATHER.snowSys){
-    const pos=WEATHER.snowSys.geometry.attributes.position.array;
-    for(let i=0;i<pos.length;i+=3){
-      pos[i+1]-=dt*3; // kar düşüş hızı
-      pos[i]+=Math.sin(pos[i+1]*.1)*dt; // salınım
-      if(pos[i+1]<0)pos[i+1]=100;
-    }
-    WEATHER.snowSys.geometry.attributes.position.needsUpdate=true;
-  }
-});
-
-
-// ===== m_impact =====
-// m_impact.js – mermi deliği ve çatlak sistemi
-window.HOLES={
-  map:new Map(), // key: "x,z", value: count
-  add:function(x,z){
-    const k=Math.round(x)+','+Math.round(z);
-    HOLES.map.set(k,(HOLES.map.get(k)||0)+1);
-  },
-  isHit:function(x,z){
-    return HOLES.map.has(Math.round(x)+','+Math.round(z));
-  },
-  clear:function(){
-    HOLES.map.clear();
-  }
-};
-const oldHitP=window.fn?.hitP;
-window.fn=window.fn||{};
-window.fn.hitP=function(x,z,tx,tz){
-  if(oldHitP)oldHitP.apply(this,arguments);
-  // zemin delikleri kaydet
-  HOLES.add(x,z);
-};
-// zemin görünürlüğü ayarla (opsiyonel – shader ya da decal sistem gerekli)
-// şimdilik basit: delik sayısını loglayın
-console.log('[IMPACT] Delik sistemi aktif');
-
-
-// ===== m_swarm =====
-// m_swarm.js – uçangöz sürüsü sistemi
-window.SWARM={
-  active:false,
-  drones:[],
-  toggle:function(){
-    SWARM.active=!SWARM.active;
-    if(SWARM.active&&SWARM.drones.length===0)SWARM.spawn();
-    return SWARM.active;
-  },
-  spawn:function(){
-    // 3 drone ekle (ana + 2 yan)
-    const offsets=[
-      {x:8,y:0,z:0},
-      {x:-8,y:2,z:-5},
-      {x:-8,y:-2,z:5}
-    ];
-    for(let i=0;i<3;i++){
-      const d={
-        offset:offsets[i],
-        pos:{x:0,y:0,z:0},
-        rot:{x:0,y:0,z:0}
-      };
-      SWARM.drones.push(d);
-    }
-  },
-  updatePositions:function(mainPos,mainRot){
-    for(const d of SWARM.drones){
-      // ana drone'u takip et
-      d.pos.x=mainPos.x+d.offset.x*Math.cos(mainRot.y)-d.offset.z*Math.sin(mainRot.y);
-      d.pos.y=mainPos.y+d.offset.y;
-      d.pos.z=mainPos.z+d.offset.x*Math.sin(mainRot.y)+d.offset.z*Math.cos(mainRot.y);
-      d.rot=mainRot;
-    }
-  },
-  fire:function(){
-    if(!SWARM.active)return;
-    // 3 drone'dan mermi çıkar
-    for(const d of SWARM.drones){
-      // mermi düştür (ammo -= 1)
-      if(P.am>0)P.am--;
-    }
-  }
-};
-// ateş wrapper – sürü ateş kontrolü
-const oldFire=window.fn?.fire;
-window.fn=window.fn||{};
-window.fn.fire=function(){
-  if(oldFire)oldFire.apply(this,arguments);
-  SWARM.fire();
-};
-// frame hook – sürü konumları
-FRAME_HOOKS.push((dt)=>{
-  if(SWARM.active&&P){
-    SWARM.updatePositions(P.p,P.g);
-    // UI: mühimmat göstergesi "×4" göster
-    const ammoEl=document.querySelector('#uAm');
-    if(ammoEl)ammoEl.textContent='MERMI: '+P.am+' ×4';
-  }
-});
-
-
-// ===== m_fire =====
-// m_fire.js – tank yangını söndürme sistemi (OKS)
-window.FIRE={
-  burning:false,
-  suppressing:false,
-  suppressTime:0,
-  suppressDur:6,
-  check:function(P){
-    if(P.h<20&&!FIRE.burning&&!FIRE.suppressing){
-      FIRE.burning=true;
-      FIRE.playFireSound();
-    }
-  },
-  suppress:function(){
-    if(FIRE.burning&&!FIRE.suppressing){
-      FIRE.suppressing=true;
-      FIRE.suppressTime=0;
-      FIRE.playSuppressionSound();
-      P.h+=25; // kısmi iyileştirme
-      if(P.h>50)P.h=50;
-    }
-  },
-  update:function(dt){
-    if(FIRE.suppressing){
-      FIRE.suppressTime+=dt;
-      if(FIRE.suppressTime>=FIRE.suppressDur){
-        FIRE.suppressing=false;
-        FIRE.burning=false;
-        FIRE.suppressTime=0;
-      }
-    }
-  },
-  playFireSound:function(){
-    // motor yangını sesi (basit tone)
-    if(AC){
-      const osc=AC.createOscillator();
-      osc.frequency.value=150;
-      const env=AC.createGain();
-      env.connect(AC.destination);
-      osc.connect(env);
-      env.gain.setValueAtTime(.2,AC.currentTime);
-      env.gain.exponentialRampToValueAtTime(.01,AC.currentTime+3);
-      osc.start();
-      osc.stop(AC.currentTime+3);
-    }
-  },
-  playSuppressionSound:function(){
-    // OKS sesi (tiz ffft)
-    if(AC){
-      const osc=AC.createOscillator();
-      osc.frequency.value=800;
-      osc.type='triangle';
-      const env=AC.createGain();
-      env.connect(AC.destination);
-      osc.connect(env);
-      env.gain.setValueAtTime(.3,AC.currentTime);
-      env.gain.linearRampToValueAtTime(0,AC.currentTime+.8);
-      osc.start();
-      osc.stop(AC.currentTime+.8);
-    }
-  }
-};
-// hurt wrapper – yangın tetik
-const oldHurt=window.fn?.hurt;
-window.fn=window.fn||{};
-window.fn.hurt=function(dmg){
-  if(oldHurt)oldHurt.apply(this,arguments);
-  FIRE.check(P);
-};
-// frame hook
-FRAME_HOOKS.push((dt)=>{
-  if(P)FIRE.update(dt);
-  if(FIRE.burning&&FIRE.suppressing){
-    // parçacık efekti: beyaz duman
-    const pos=P.p;
-    // ekran shake
-    const shake=Math.sin(FIRE.suppressTime*20)*.02;
-    CAM.position.x+=shake;
-  }
-});
-// UI buton
-const addFireBtn=()=>{
-  let btn=document.querySelector('#fireBtn');
-  if(!btn&&document.querySelector('#uWhl')){
-    btn=document.createElement('button');
-    btn.id='fireBtn';
-    btn.textContent='OKS';
-    btn.style.cssText='position:fixed;bottom:80px;right:20px;padding:.5rem 1rem;background:#FFB300;color:#000;border:none;border-radius:.25rem;cursor:pointer;font-weight:700;font-size:.9rem';
-    btn.addEventListener('click',()=>{
-      FIRE.suppress();
-      btn.style.opacity='0.5';
-      setTimeout(()=>btn.style.opacity='1',1000);
-    });
-    document.body.appendChild(btn);
-  }
-};
-FRAME_HOOKS.push(()=>{
-  if(game==='play')addFireBtn();
-});
-
-
 // ===== m_mapui =====
 // ============ TAM EKRAN HARITA: arazi, kareler, yollar, yer adlari, birlikler, rota cizme, isaret koyma (G) ============
 (function(){
@@ -4649,7 +4267,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'36',LOGO=window.HISAR_LOGO;
+const VER=+'37',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4886,6 +4504,102 @@ X.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();iv=0;if(ty
 const _rd=window.radio;window.radio=function(t){const r=_rd.apply(this,arguments);if(SV.ui!=='klasik'&&typeof radT!=='undefined')radT=Math.min(radT,3.6);return r};
 // ayarlar aciklamasi
 const ux=document.querySelector('#rowUx');if(ux&&ux.nextElementSibling&&ux.nextElementSibling.tagName==='P')ux.nextElementSibling.textContent='Sade: ekranda yalnız sürüş çubuğu, ATEŞ, NİŞAN, ÇARK, Uçangöz, görev satırı ve harita kalır; geri kalan her şey çarkta. Klasik: tüm tuşlar, pusula ve yazılar görünür.';
+})();
+
+
+// ===== m_real =====
+// ============ GERCEKCI GORUNUM: fiziksel malzeme + gok yansimasi + dogal renk paleti + yeni zemin/cimen ============
+(function(){
+const LO=()=>typeof qlv!=='undefined'&&qlv==='dusuk';
+// ---- 1) zemin dokusu: ince, yumusak, tekrar etmeyen gorunum (piksel kareler yerine)
+const zc=document.createElement('canvas');zc.width=zc.height=512;{const g=zc.getContext('2d'),n=512;g.fillStyle='#c4c2b8';g.fillRect(0,0,n,n);
+ const id=g.getImageData(0,0,n,n),d=id.data;for(let i=0;i<d.length;i+=4){const v=(Math.random()-.5)*26;d[i]+=v;d[i+1]+=v;d[i+2]+=v*.8}g.putImageData(id,0,0);
+ for(let i=0;i<260;i++){const x=Math.random()*n,y=Math.random()*n,r=6+Math.random()*40;const gr=g.createRadialGradient(x,y,0,x,y,r);const dk=Math.random()<.5;gr.addColorStop(0,dk?'rgba(70,60,40,.16)':'rgba(255,250,235,.12)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2)}
+ g.lineCap='round';for(let i=0;i<5200;i++){const x=Math.random()*n,y=Math.random()*n,l=3+Math.random()*9,a=-Math.PI/2+(Math.random()-.5)*1.3,dk=Math.random()<.55;
+  g.strokeStyle=dk?'rgba(40,46,22,'+(.15+Math.random()*.25)+')':'rgba(235,232,200,'+(.1+Math.random()*.2)+')';g.lineWidth=.6+Math.random()*1.1;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}
+ for(let i=0;i<900;i++){g.fillStyle='rgba('+(90+Math.random()*60|0)+','+(80+Math.random()*50|0)+','+(60+Math.random()*40|0)+','+(.25+Math.random()*.4)+')';g.beginPath();g.arc(Math.random()*n,Math.random()*n,.6+Math.random()*1.8,0,7);g.fill()}}
+const ZT=new THREE.CanvasTexture(zc);ZT.wrapS=ZT.wrapT=THREE.RepeatWrapping;ZT.repeat.set(150,150);ZT.anisotropy=Math.min(8,R.capabilities.getMaxAnisotropy());
+// ---- 2) dogal zemin renkleri (kuru ot, zeytin yesili, toprak lekeleri, kaya)
+function vn(x,z){return Math.sin(x*.013+1.7)*Math.cos(z*.011-.4)+.5*Math.sin(x*.041-z*.033+2.1)+.25*Math.cos(x*.093+z*.081)}
+{const p=gg.attributes.position,ca=gg.attributes.color.array;
+ for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),h=hAt(x,z),sl=Math.abs(hAt(x+4,z)-h)+Math.abs(hAt(x,z+4)-h),rk=clamp((sl-1.5)/1.6,0,1),n=vn(x,z),dry=clamp(.45+n*.35+h*.04,0,1),dirt=clamp((vn(x*1.9+50,z*1.9-30)-.75)*1.6,0,1)*.8,wet=clamp((-h-.6)/2.2,0,1),j=(Math.random()-.5)*.03;
+  let r=.36+.17*dry,gC=.42+.08*dry,b=.22+.04*dry;                                   // zeytin -> kuru ot
+  r+=(.46-r)*dirt;gC+=(.39-gC)*dirt;b+=(.29-b)*dirt;                                 // toprak lekesi
+  r+=(.5-r)*rk;gC+=(.49-gC)*rk;b+=(.46-b)*rk;                                        // kayalik
+  r*=1-.35*wet;gC*=1-.3*wet;b*=1-.25*wet;                                            // dere kenari islak
+  ca[i*3]=r+j;ca[i*3+1]=gC+j;ca[i*3+2]=b+j}gg.attributes.color.needsUpdate=true}
+gr.material.map=ZT;gr.material.needsUpdate=true;
+// ---- 3) cimen: sivri koniler yerine ince yaprakli tutamlar, renk cesitliligi
+{const pos=[],col=[];const N=7;for(let k=0;k<N;k++){const a=k/N*Math.PI*2+Math.random()*.5,lean=.12+Math.random()*.2,hgt=.35+Math.random()*.4,w=.035,cx=Math.cos(a),cz=Math.sin(a),px=-cz*w,pz=cx*w,tx=cx*lean,tz=cz*lean;
+  pos.push(-px+cx*.03,0,-pz+cz*.03, px+cx*.03,0,pz+cz*.03, tx,hgt,tz);col.push(.72,.76,.66, .72,.76,.66, 1.18,1.16,1.02)}
+ const tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));tg.setAttribute('color',new THREE.Float32BufferAttribute(col,3));tg.computeVertexNormals();
+ {const nm=tg.attributes.normal;for(let i=0;i<nm.count;i++)nm.setXYZ(i,0,1,0)}               // yukari normal: yumusak, parlamasiz
+ gm.geometry.dispose();gm.geometry=tg;gm.material=new THREE.MeshLambertMaterial({color:0xffffff,vertexColors:true,side:THREE.DoubleSide});gm.material.userData.keepL=1;
+ const c=new THREE.Color(),d=new THREE.Object3D();
+ for(let i=0;i<GN;i++){gm.getMatrixAt(i,d.matrix);d.matrix.decompose(d.position,d.quaternion,d.scale);if(d.scale.x>0){d.position.y-=.33;d.rotation.set((Math.random()-.5)*.15,Math.random()*6.28,(Math.random()-.5)*.15);const s=.6+Math.random()*.6;d.scale.set(s,s*(.8+Math.random()*.6),s);d.updateMatrix();gm.setMatrixAt(i,d.matrix)}
+  const n=vn(d.position.x,d.position.z),dry=clamp(.45+n*.35,0,1);c.setRGB(.36+.2*dry,.42+.08*dry,.2+.05*dry).multiplyScalar(.85+Math.random()*.3);gm.setColorAt(i,c)}
+ gm.instanceMatrix.needsUpdate=true;if(gm.instanceColor)gm.instanceColor.needsUpdate=true}
+// ---- 4) Lambert -> fiziksel (Standard) malzeme, YERINDE (eski referanslar calismaya devam eder)
+const STD=new THREE.MeshStandardMaterial(),SKIP=new Set(['type','uuid','id','version','defines']);
+const _hsl={};
+function conv(m,opt){if(!m||!m.isMeshLambertMaterial||(m.userData&&m.userData.keepL))return;
+ for(const k of Object.keys(STD))if(!(k in m)&&!SKIP.has(k)){const v=STD[k];m[k]=v&&v.clone?v.clone():v}
+ Object.setPrototypeOf(m,THREE.MeshStandardMaterial.prototype);m.type='MeshStandardMaterial';m.defines={STANDARD:''};
+ delete m.combine;delete m.reflectivity;delete m.specularMap;
+ const tank=opt&&opt.tank;m.roughness=tank?(m.map?.62:.58):.92;m.metalness=tank?.32:0;m.envMapIntensity=tank?.9:.55;
+ if(!tank&&!m.vertexColors&&!m.map){m.color.getHSL(_hsl);if(_hsl.h>.12&&_hsl.h<.45){_hsl.s*=.68;_hsl.l*=.92;m.color.setHSL(_hsl.h,_hsl.s,_hsl.l)}}   // yesilleri dogallastir
+ if(tank&&m.map)m.color.setRGB(.8,.82,.74);if(m.emissive&&m.emissive.getHex()===0)m.emissiveIntensity=1;m.needsUpdate=true}
+function convObj(o,opt){o.traverse(c=>{if(c.isMesh&&c!==gm){const mm=Array.isArray(c.material)?c.material:[c.material];for(const m of mm)conv(m,opt||(c.userData&&c.userData.tank?{tank:1}:null))}})}
+window.REAL={on:!LO(),conv,convObj};
+if(!REAL.on)return;
+// tank modelleri: metal boya (biraz parlak, kenarlardan gok yansir)
+const tagT=g=>{if(g&&g.traverse){g.traverse(c=>{if(c.isMesh)c.userData.tank=1});convObj(g,{tank:1})}return g};
+{const a=window.mkM60;window.mkM60=function(){return tagT(a.apply(this,arguments))}}
+{const a=window.mkTank;if(a)window.mkTank=function(){return tagT(a.apply(this,arguments))}}
+window.shad=function(g){g.traverse(o=>{if(o.isMesh&&(o.material.isMeshLambertMaterial||o.material.isMeshStandardMaterial)){o.castShadow=true;o.receiveShadow=true}});return g};
+tagT(P.g);
+// sahneye eklenen her sey otomatik donusur + seyrek tarama (sonradan gruba eklenenler)
+{const add=S.add;S.add=function(){for(const o of arguments)if(o&&o.traverse)convObj(o);return add.apply(this,arguments)}}
+convObj(S);try{R.compile(S,CAM)}catch(e){}setInterval(()=>{if(game==='play')convObj(S)},2500);
+// ---- 5) gok yansimasi (PMREM): hava durumuna gore yeniden uretilir
+const pm=new THREE.PMREMGenerator(R);let envRT=null;
+const ES=new THREE.Scene(),EU={top:{value:new THREE.Color()},hor:{value:new THREE.Color()},gnd:{value:new THREE.Color()},sd:{value:new THREE.Vector3(.4,.8,.3).normalize()},sc:{value:new THREE.Color()}};
+ES.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,uniforms:EU,depthWrite:false,
+ vertexShader:'varying vec3 v;void main(){v=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+ fragmentShader:'uniform vec3 top,hor,gnd,sc,sd;varying vec3 v;void main(){vec3 n=normalize(v);float y=n.y;vec3 c=y>0.?mix(hor,top,pow(clamp(y,0.,1.),.55)):mix(hor,gnd,clamp(-y*4.,0.,1.));float s=max(dot(n,sd),0.);c+=sc*(pow(s,400.)*12.+pow(s,8.)*.25);gl_FragColor=linearToOutputTexel(vec4(c,1.));}'})));
+function mkEnv(){const top=skyU.top.value,hor=skyU.bot.value;EU.top.value.copy(top);EU.hor.value.copy(hor);EU.gnd.value.copy(hemi.groundColor).multiplyScalar(.6);EU.sc.value.copy(sun.color).multiplyScalar(Math.min(1.2,sun.intensity));
+ EU.sd.value.copy(sun.position).normalize();if(envRT)envRT.dispose();envRT=pm.fromScene(ES,.02);S.environment=envRT.texture}
+// ---- 6) isik: daha guclu, sicak gunes + zayif ortam -> belirgin golge ve hacim
+const LX={gunduz:{bg:0xb3c4d0,top:0x4d7bb0,hi:.42,hg:0x5b503c,sun:1.25,sc:0xfff0da,fog:[70,430]},aksam:{hi:.38,sun:1.05},gece:{hi:.22,sun:.3},sis:{hi:.55,sun:.45},yagmur:{hi:.45,sun:.4}};
+{const a=window.setW;window.setW=function(w){a.apply(this,arguments);const o=LX[w]||{};
+ if(o.bg!=null){skyU.bot.value.set(o.bg);S.background.set(o.bg);S.fog.color.set(o.bg)}if(o.top!=null)skyU.top.value.set(o.top);if(o.fog){S.fog.near=o.fog[0];S.fog.far=o.fog[1]}
+ if(o.hi!=null)hemi.intensity=o.hi;if(o.hg!=null)hemi.groundColor.set(o.hg);if(o.sun!=null)sun.intensity=o.sun;if(o.sc!=null)sun.color.set(o.sc);
+ try{mkEnv()}catch(e){console.warn(e)}}}
+sun.shadow.bias=-.0004;sun.shadow.normalBias=.03;
+
+setW(typeof wx!=='undefined'?wx:'gunduz');
+S.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)});
+})();
+
+
+// ===== m_tidy =====
+// ============ SADELESTIRME + KABIN GERCEKLIGI ============
+(function(){
+const st=document.createElement('style');st.textContent=
+ '#mt{display:none!important}'+                                   // menu: uzun tanitim yazisi
+ '.kh{display:none!important}'+                                   // gorev kartindaki tus listesi (menude ve egitimde var)
+ '#cabH span{display:none!important}'+                              // kabin alt satirindaki tus listesi
+ 'body.kab #vgn{opacity:1!important;background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.55) 100%)!important}';
+document.head.appendChild(st);
+// kabin icindeyken dunya isaretleri (hedef cercevesi, isim, ok) duvarin icinden gorunmesin
+setTimeout(()=>{const d=document.getElementById('dly');if(d&&d.parentElement)d.parentElement.appendChild(d)},0);   // gunluk gorevler: gorev seciminin altina
+let bob=0;
+{const d0=window.drawOverlay;window.drawOverlay=function(dr){if(game==='play'&&mode==='tank'&&iv===2){ox.setTransform(1,0,0,1,0,0);ox.clearRect(0,0,OV.width,OV.height);return}return d0(dr)}}
+FRAME_HOOKS.push(dr=>{const cab=game==='play'&&mode==='tank'&&iv===2;document.body.classList.toggle('kab',cab);
+ if(!cab)return;try{ox.setTransform(1,0,0,1,0,0);ox.clearRect(0,0,OV.width,OV.height)}catch(e){}
+ // motor titresimi + yol sarsintisi (kabin kamerasi)
+ const v=Math.abs(P.v||0);bob+=dr*(18+v*2);const k=.0016+Math.min(v,12)*.00045;
+ CAM.position.y+=Math.sin(bob*1.7)*k;CAM.position.x+=Math.sin(bob*1.13)*k*.6;CAM.rotation.z+=Math.sin(bob*.9)*k*.5});
 })();
 
 </script>

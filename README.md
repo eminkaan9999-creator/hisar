@@ -4,6 +4,8 @@ M60A3 tank ve Uçangöz harekât simülatörü. Tarayıcıda çalışır; telefo
 
 **Oyna:** https://eminkaan9999-creator.github.io/hisar/
 
+**Poligon (piyade tüfeği atış simülatörü):** https://eminkaan9999-creator.github.io/hisar/poligon/ — ayrı uygulama olarak ana ekrana eklenir.
+
 ## Telefona kurulum
 - **iPhone:** bağlantıyı Safari'de aç → Paylaş → **Ana Ekrana Ekle**.
 - **Android:** Chrome'da aç → menü → **Uygulamayı yükle**.

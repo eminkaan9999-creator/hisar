@@ -3349,6 +3349,161 @@ if(ta){ta.insertAdjacentHTML('beforeend','<h3>MÜRETTEBAT VE KAMERA</h3>'+
 })();
 
 
+// ===== m_stats =====
+// ============ GOREV KARNESI, MADALYALAR, PROFIL KARTI ============
+(function(){
+const ldx=(k,d)=>{try{const j=JSON.parse(localStorage.getItem('m60v2')||'null');return j&&j[k]!=null?j[k]:d}catch(e){return d}};
+SV.med=ldx('med',{});SV.tot=Object.assign({tk:0,inf:0,all:0,heli:0,drn:0,km:0,mis:0,win:0,shots:0,hits:0,bestWave:0,longest:0},ldx('tot',{}));
+const MED=[
+ {id:'ilk',ic:'🩸',n:'İlk Kan',d:'İlk düşmanını imha et.',kr:50},
+ {id:'kes',ic:'🎯',n:'Keskin Nişancı',d:'200 metreden uzağa isabet ettir.',kr:200},
+ {id:'tav',ic:'🛡️',n:'Tank Avcısı',d:'Toplam 10 tank imha et.',kr:250},
+ {id:'tav2',ic:'⚔️',n:'Zırh Kıran',d:'Toplam 50 tank imha et.',kr:600},
+ {id:'hav',ic:'✈️',n:'Hava Savunması',d:'Bir saldırı helikopterini düşür.',kr:200},
+ {id:'ucg',ic:'🚁',n:'Uçangöz Ustası',d:'Uçangözle toplam 5 hedef imha et.',kr:200},
+ {id:'ser',ic:'🔥',n:'Seri Atıcı',d:'10 saniye içinde 3 hedef imha et.',kr:150},
+ {id:'sag',ic:'🫡',n:'Sağ Kalan',d:'Zırhın %80 üstündeyken görevi bitir.',kr:150},
+ {id:'kus',ic:'💯',n:'Kusursuz',d:'En az 5 atışla %100 isabetle görevi bitir.',kr:300},
+ {id:'tem',ic:'🪖',n:'Temizlikçi',d:'Toplam 25 piyade etkisiz hale getir.',kr:150},
+ {id:'day',ic:'🌊',n:'Dayanıklı',d:'Dalga savaşında 5. dalgaya ulaş.',kr:250},
+ {id:'sur',ic:'🛣️',n:'Yol Kurdu',d:'Toplam 5 km sür.',kr:100},
+ {id:'gor',ic:'🏅',n:'Görev Adamı',d:'10 görevi başarıyla tamamla.',kr:300}];
+window.MEDALS=MED;
+let ST=null;function fresh(){ST={t0:performance.now(),shots:0,hits:0,kills:0,byType:{},longest:0,dmg:0,meds:[],times:[],kr0:SV.kr,drv:0}}fresh();
+function persist(){save();try{const j=JSON.parse(localStorage.getItem('m60v2')||'{}');j.med=SV.med;j.tot=SV.tot;localStorage.setItem('m60v2',JSON.stringify(j))}catch(e){}}
+// ---- madalya bildirimi
+document.head.insertAdjacentHTML('beforeend','<style>'+
+'#medT{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translate(-50%,-20px);z-index:36;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:16px;background:linear-gradient(180deg,rgba(60,46,14,.95),rgba(28,22,8,.95));border:1px solid #ffd27a;box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 24px rgba(255,200,90,.3);font-family:system-ui,-apple-system,sans-serif;color:#fff}#medT.on{opacity:1;transform:translate(-50%,0)}#medT i{font-size:34px;font-style:normal}#medT b{display:block;font-size:11px;letter-spacing:2px;color:#ffd27a}#medT span{display:block;font-size:17px;font-weight:900}#medT small{display:block;font-size:12px;opacity:.8}'+
+'#rep{position:fixed;inset:0;z-index:34;display:none;align-items:center;justify-content:center;background:rgba(4,6,3,.82);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#eef5e2;padding:12px;box-sizing:border-box;overflow:auto}#rep.on{display:flex}'+
+'#rep .c{box-sizing:border-box;margin:auto 0;width:min(520px,100%);border-radius:20px;background:linear-gradient(180deg,#1d2618,#11160f);border:1px solid rgba(214,236,190,.25);box-shadow:0 24px 70px rgba(0,0,0,.6);padding:20px 18px 16px;animation:repIn .45s cubic-bezier(.2,.9,.25,1.15)}@keyframes repIn{from{transform:scale(.85) translateY(20px);opacity:0}}'+
+'#rep h2{margin:0;text-align:center;font-size:22px;letter-spacing:1.5px}#rep h2.ok{color:#9ff08a}#rep h2.no{color:#ff8a7a}#rep .sub{text-align:center;font-size:12.5px;opacity:.7;margin:4px 0 8px}'+
+'#rep .st{display:flex;justify-content:center;gap:10px;margin:6px 0 12px}#rep .st i{font-size:40px;font-style:normal;filter:grayscale(1) brightness(.5);transform:scale(.6);transition:all .35s cubic-bezier(.2,.9,.25,1.5)}#rep .st i.on{filter:none;transform:scale(1);text-shadow:0 0 18px rgba(255,200,80,.7)}'+
+'#rep .g{display:grid;grid-template-columns:1fr 1fr;gap:7px}#rep .g div{padding:9px 11px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(214,236,190,.14)}#rep .g small{display:block;font-size:10.5px;letter-spacing:1px;opacity:.65;font-weight:700}#rep .g b{display:block;font-size:19px;font-weight:900;margin-top:2px}#rep .g .kr b{color:#ffd27a}'+
+'#rep .rk{margin:12px 2px 4px;font-size:12px;font-weight:700}#rep .rk u{display:block;height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:5px;text-decoration:none}#rep .rk u s{display:block;height:100%;width:0;background:linear-gradient(90deg,#7de07a,#ffd27a);transition:width 1.2s ease-out}'+
+'#rep .md{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}#rep .md span{padding:6px 10px;border-radius:999px;background:rgba(255,210,122,.14);border:1px solid rgba(255,210,122,.5);font-size:12px;font-weight:800}'+
+'#rep .bt{display:flex;gap:8px;margin-top:14px}#rep .bt button{flex:1;padding:13px;border-radius:12px;border:0;font:900 14px system-ui;cursor:pointer;touch-action:manipulation}#rep .bt .a{background:linear-gradient(180deg,#ffd27a,#e48a1e);color:#1d1406}#rep .bt .b{background:rgba(255,255,255,.1);color:#eef5e2}'+
+'#rb2{cursor:pointer}#prof,#prof *{box-sizing:border-box}#prof .c{width:100%}#prof .ml div{min-width:0}#prof .ml{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;margin-top:10px}#prof .ml div{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(214,236,190,.14)}#prof .ml div.no{opacity:.42;filter:grayscale(1)}#prof .ml i{font-size:24px;font-style:normal}#prof .ml b{display:block;font-size:12.5px}#prof .ml small{display:block;font-size:10.5px;opacity:.7;line-height:1.3}'+
+'</style>');
+const mt=document.createElement('div');mt.id='medT';document.body.appendChild(mt);let mq=[],mBusy=0;
+function showMed(m){mq.push(m);if(!mBusy)nextMed()}
+function nextMed(){const m=mq.shift();if(!m){mBusy=0;return}mBusy=1;mt.innerHTML='<i>'+m.ic+'</i><div><b>MADALYA KAZANILDI</b><span>'+m.n+'</span><small>'+m.d+' · +'+m.kr+' kredi</small></div>';mt.classList.add('on');if(window.CREW)CREW.say('Madalya: '+m.n,1,'med',1);if(typeof sndBip==='function')sndBip();
+ setTimeout(()=>{mt.classList.remove('on');setTimeout(nextMed,350)},2600)}
+function grant(id){if(SV.med[id])return;const m=MED.find(q=>q.id===id);if(!m)return;SV.med[id]=Date.now();SV.kr+=m.kr;if(ST)ST.meds.push(m);persist();showMed(m)}
+window.grantMedal=grant;
+// ---- olay kancalari
+const _fire=window.fire;window.fire=function(){const n0=shells.length;const r=_fire.apply(this,arguments);if(mode==='tank'&&shells.length>n0){ST.shots++;SV.tot.shots++;const s=shells[shells.length-1];if(!s.d0)s.d0={x:P.x,z:P.z}}return r};
+const _imp=window.impact;window.impact=function(s,x,y,z,e){if(e&&s&&!s.cnt){s.cnt=1;ST.hits++;SV.tot.hits++;const d=s.d0?Math.hypot(x-s.d0.x,z-s.d0.z):0;if(d>ST.longest)ST.longest=d;if(d>SV.tot.longest)SV.tot.longest=Math.round(d);if(d>=200)grant('kes')}return _imp.apply(this,arguments)};
+const _k=window.killE;window.killE=function(e){const was=e&&E.includes(e);const r=_k.apply(this,arguments);
+ if(was&&!E.includes(e)&&game==='play'){ST.kills++;ST.byType[e.type]=(ST.byType[e.type]||0)+1;SV.tot.all++;if(e.type==='tank')SV.tot.tk++;if(e.type==='inf')SV.tot.inf++;if(mode==='drone')SV.tot.drn++;
+  grant('ilk');if(SV.tot.tk>=10)grant('tav');if(SV.tot.tk>=50)grant('tav2');if(SV.tot.inf>=25)grant('tem');if(SV.tot.drn>=5)grant('ucg');
+  const now=performance.now();ST.times.push(now);ST.times=ST.times.filter(t=>now-t<10000);if(ST.times.length>=3)grant('ser')}return r};
+const _hp=window.hitP;window.hitP=function(k,p){const h0=P.hp;const r=_hp.apply(this,arguments);ST.dmg+=Math.max(0,h0-P.hp);return r};
+let lx=P.x,lz=P.z;
+FRAME_HOOKS.push(dr=>{if(game!=='play')return;const d=Math.hypot(P.x-lx,P.z-lz);lx=P.x;lz=P.z;if(d<5){ST.drv+=d;SV.tot.km+=d/1000;if(SV.tot.km>=5)grant('sur')}
+ if(window.HELI)for(const h of HELI)if((h.st==='down'||h.st==='dead')&&!h._cnt){h._cnt=1;SV.tot.heli++;grant('hav')}
+ if(mis==='dalga'&&wave>SV.tot.bestWave){SV.tot.bestWave=wave;if(wave>=5)grant('day')}});
+const _ie=window.initExtra;window.initExtra=function(){_ie.apply(this,arguments);fresh();lx=P.x;lz=P.z};
+// ---- karne
+const rep=document.createElement('div');rep.id='rep';document.body.appendChild(rep);
+const fmtT=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const TRN={tank:'tank',apc:'zırhlı',bunker:'sığınak',aa:'uçaksavar',arty:'topçu',inf:'piyade',mgn:'MG',truck:'kamyon',radar:'radar',fuel:'depo',bridge:'köprü'};
+function nextRank(){let cur=RANKS[0],nx=null;for(let i=0;i<RANKS.length;i++){if(SV.xp>=RANKS[i][0]){cur=RANKS[i];nx=RANKS[i+1]||null}}return{cur,nx}}
+const _eg=window.endGame;window.endGame=function(ok,txt){const was=game==='play';const kr0=ST.kr0,xp0=SV.xp;const r=_eg.apply(this,arguments);if(!was)return r;
+ SV.tot.mis++;if(ok){SV.tot.win++;if(P.hp>P.mx*.8)grant('sag');if(ST.shots>=5&&ST.hits>=ST.shots)grant('kus');if(SV.tot.win>=10)grant('gor')}
+ persist();
+ const acc=ST.shots?Math.round(ST.hits/ST.shots*100):0,dur=(performance.now()-ST.t0)/1000;
+ let stars=0;if(mis==='dalga')stars=wave>=6?3:wave>=4?2:wave>=2?1:0;else if(ok)stars=1+(acc>=50?1:0)+(P.hp>P.mx*.5?1:0);
+ const earned=SV.kr-kr0,kl=Object.keys(ST.byType).map(k=>ST.byType[k]+' '+TRN[k]).join(' · ')||'—';
+ const{cur,nx}=nextRank(),pf=nx?Math.min(100,(SV.xp-cur[0])/(nx[0]-cur[0])*100):100;
+ rep.innerHTML='<div class="c"><h2 class="'+(ok||mis==='dalga'&&stars?'ok':'no')+'">'+(mis==='dalga'?'DALGA '+wave+' · HAREKÂT SONA ERDİ':ok?'GÖREV TAMAMLANDI':'GÖREV BAŞARISIZ')+'</h2><div class="sub">'+MI[mis].n+' · '+L.n+(txt?' · '+txt:'')+'</div>'+
+  '<div class="st">'+[0,1,2].map(i=>'<i data-s="'+i+'">★</i>').join('')+'</div>'+
+  '<div class="g"><div><small>SKOR</small><b data-cnt="'+score+'">0</b></div><div class="kr"><small>KAZANILAN KREDİ</small><b data-cnt="'+earned+'" data-pre="+">0</b></div>'+
+  '<div><small>İSABET ORANI</small><b>'+acc+'%</b></div><div><small>ATIŞ / İSABET</small><b>'+ST.shots+' / '+ST.hits+'</b></div>'+
+  '<div><small>İMHA</small><b data-cnt="'+ST.kills+'">0</b></div><div><small>EN UZAK İSABET</small><b>'+Math.round(ST.longest)+' m</b></div>'+
+  '<div><small>ALINAN HASAR</small><b>'+Math.round(ST.dmg)+'</b></div><div><small>SÜRE</small><b>'+fmtT(dur)+'</b></div></div>'+
+  '<div class="sub" style="margin-top:8px">'+kl+'</div>'+
+  '<div class="rk">RÜTBE: '+cur[1]+(nx?' → '+nx[1]+' · '+SV.xp+' / '+nx[0]+' XP':' · en yüksek rütbe')+'<u><s></s></u></div>'+
+  (ST.meds.length?'<div class="md">'+ST.meds.map(m=>'<span>'+m.ic+' '+m.n+'</span>').join('')+'</div>':'')+
+  '<div class="bt"><button class="a" data-r="again">↻ TEKRAR OYNA</button><button class="b" data-r="menu">MENÜ</button></div></div>';
+ rep.classList.add('on');
+ setTimeout(()=>{rep.querySelectorAll('.st i').forEach((s,i)=>setTimeout(()=>{if(i<stars){s.classList.add('on');if(typeof sndBip==='function')sndBip()}},i*320));const s=rep.querySelector('.rk u s');if(s)s.style.width=pf+'%'},250);
+ rep.querySelectorAll('[data-cnt]').forEach(b=>{const v=+b.dataset.cnt,pre=b.dataset.pre||'';const t0=performance.now();const f=()=>{const k=Math.min(1,(performance.now()-t0)/1100);b.textContent=pre+Math.round(v*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)};f()});
+ rep.querySelector('[data-r="again"]').onclick=()=>{rep.classList.remove('on');reset(lvSel)};rep.querySelector('[data-r="menu"]').onclick=()=>rep.classList.remove('on');
+ if(window.CREW)setTimeout(()=>CREW.say(ok?'Görev tamamlandı. İyi iş çıkardınız.':'Görev başarısız. Tekrar deneyelim.',2,'end',1),300);
+ return r};
+// ---- profil karti (rutbe rozetine dokun)
+const prof=document.createElement('div');prof.id='prof';prof.className='';prof.style.cssText='';document.body.appendChild(prof);prof.id='rep2';
+prof.setAttribute('style','position:fixed;inset:0;z-index:34;display:none;align-items:center;justify-content:center;background:rgba(4,6,3,.82);padding:12px;box-sizing:border-box;overflow:auto;font-family:system-ui,-apple-system,sans-serif;color:#eef5e2');
+function openProf(){const{cur,nx}=nextRank(),pf=nx?Math.min(100,(SV.xp-cur[0])/(nx[0]-cur[0])*100):100,T=SV.tot,got=MED.filter(m=>SV.med[m.id]).length;
+ prof.innerHTML='<div id="prof" style="width:min(560px,100%);margin:auto 0"><div class="c" style="border-radius:20px;background:linear-gradient(180deg,#1d2618,#11160f);border:1px solid rgba(214,236,190,.25);padding:18px">'+
+  '<div style="display:flex;align-items:center;gap:12px"><img src="'+(window.HISAR_LOGO||'')+'" style="width:58px;height:58px"><div style="flex:1"><div style="font:900 20px system-ui">'+cur[1].toUpperCase()+'</div><div style="font-size:12px;opacity:.75">'+SV.xp+' XP · '+SV.kr.toLocaleString('tr-TR')+' kredi · '+got+'/'+MED.length+' madalya</div></div><button data-x style="border:0;border-radius:999px;padding:9px 14px;background:rgba(255,255,255,.1);color:#fff;font:800 13px system-ui">✕</button></div>'+
+  '<div style="margin:12px 0 4px;font-size:12px;font-weight:700">'+(nx?'Sonraki rütbe: '+nx[1]+' · '+(nx[0]-SV.xp)+' XP kaldı':'En yüksek rütbedesin')+'</div><div style="height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden"><div style="height:100%;width:'+pf+'%;background:linear-gradient(90deg,#7de07a,#ffd27a)"></div></div>'+
+  '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;font-size:11px;text-align:center">'+
+  [['Tank',T.tk],['Toplam imha',T.all],['Piyade',T.inf],['Helikopter',T.heli],['Görev',T.win+'/'+T.mis],['İsabet',T.shots?Math.round(T.hits/T.shots*100)+'%':'—'],['En uzak',T.longest+' m'],['En iyi dalga',T.bestWave||'—'],['Sürülen',T.km.toFixed(1)+' km']].map(q=>'<div style="padding:8px 4px;border-radius:10px;background:rgba(255,255,255,.05)"><b style="display:block;font-size:16px">'+q[1]+'</b>'+q[0]+'</div>').join('')+'</div>'+
+  '<div style="margin-top:14px;font:800 11px system-ui;letter-spacing:2px;color:#ffd27a">MADALYALAR</div><div class="ml">'+MED.map(m=>'<div class="'+(SV.med[m.id]?'':'no')+'"><i>'+m.ic+'</i><span><b>'+m.n+'</b><small>'+m.d+' · '+m.kr+' kr</small></span></div>').join('')+'</div></div></div>';
+ prof.style.display='flex';prof.querySelector('[data-x]').onclick=()=>prof.style.display='none';prof.onclick=e=>{if(e.target===prof)prof.style.display='none'}}
+window.openProfile=openProf;
+const rb=document.getElementById('rb2');if(rb){rb.title='Profil ve madalyalar';rb.addEventListener('click',openProf)}
+})();
+
+
+// ===== m_ctx =====
+// ============ DURUMA GORE TUSLAR (M85, ikmal, Ucangoz), SOL EL DUZENI, ARAYUZ BOYUTU, FPS ============
+(function(){
+const ldx=(k,d)=>{try{const j=JSON.parse(localStorage.getItem('m60v2')||'null');return j&&j[k]!=null?j[k]:d}catch(e){return d}};
+SV.lefty=ldx('lefty',0);SV.usz=ldx('usz',1);SV.fps=ldx('fps',0);
+document.head.insertAdjacentHTML('beforeend','<style>'+
+'#ctx{position:fixed;right:calc(12px + env(safe-area-inset-right,0px));top:calc(var(--mm,150px) + 24px + env(safe-area-inset-top,0px));z-index:8;display:none;flex-direction:column;align-items:flex-end;gap:7px;pointer-events:none}body.inplay #ctx{display:flex}'+
+'#ctx button{pointer-events:auto;-webkit-appearance:none;appearance:none;display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:999px;border:1px solid rgba(255,210,122,.7);background:linear-gradient(180deg,rgba(60,46,14,.95),rgba(28,22,8,.95));color:#ffe2a0;-webkit-text-fill-color:#ffe2a0;font:900 12px system-ui,-apple-system,sans-serif;letter-spacing:.4px;box-shadow:0 4px 14px rgba(0,0,0,.45);cursor:pointer;touch-action:manipulation;animation:ctxIn .35s cubic-bezier(.2,.9,.25,1.4)}'+
+'#ctx button.p{animation:ctxIn .35s cubic-bezier(.2,.9,.25,1.4),ctxP 1.1s ease-in-out .35s infinite}#ctx button.r{border-color:#ff7a6a;background:linear-gradient(180deg,rgba(80,22,16,.95),rgba(36,10,8,.95));color:#ffd0c8;-webkit-text-fill-color:#ffd0c8}'+
+'@keyframes ctxIn{from{transform:translateX(40px);opacity:0}}@keyframes ctxP{50%{box-shadow:0 0 0 5px rgba(255,210,122,.25),0 4px 14px rgba(0,0,0,.45)}}'+
+'@media (max-aspect-ratio:1/1){#ctx{top:calc(var(--mm,120px) + 18px)}}'+
+// sol el duzeni: surus sagda, ates kumesi solda
+'body.lefty.tc #uPad{left:auto!important;right:calc(14px + env(safe-area-inset-right,0px))!important}'+
+'body.lefty.tc #uFire{right:auto!important;left:calc(14px + env(safe-area-inset-left,0px))!important}'+
+'body.lefty.tc #uScope{right:auto!important;left:calc(14px + (var(--fire) - var(--scp))/2 + env(safe-area-inset-left,0px))!important}'+
+'body.lefty.tc #uWh{right:auto!important;left:calc(14px + var(--fire) + 14px + env(safe-area-inset-left,0px))!important}'+
+'body.lefty.tc #uSw,body.lefty.tc #uEye{right:auto!important;left:calc(14px + var(--fire) + 14px + env(safe-area-inset-left,0px))!important}'+
+'body.lefty.tc #uDock{left:calc(40px + var(--fire) + var(--scp) + env(safe-area-inset-left,0px))!important;right:calc(var(--pad) + 28px + env(safe-area-inset-right,0px))!important}'+
+'@media (max-aspect-ratio:1/1){body.lefty.tc #uDock{left:calc(10px + env(safe-area-inset-left,0px))!important;right:calc(10px + env(safe-area-inset-right,0px))!important}}'+
+'body.lefty #kmd .st.l{left:auto;right:9%}body.lefty #kmd .st.r{right:auto;left:9%}'+
+// arayuz boyutu
+'body.usz0{--pad:clamp(100px,25vmin,150px);--fire:clamp(56px,14.5vmin,80px);--scp:clamp(48px,11.5vmin,66px);--tile:clamp(32px,7.4vmin,46px)}'+
+'body.usz2{--pad:clamp(132px,35vmin,200px);--fire:clamp(74px,20vmin,104px);--scp:clamp(60px,15.5vmin,84px);--tile:clamp(42px,9.8vmin,60px)}body.usz2 #vbar button{font-size:13px;padding:9px 13px}'+
+'#fpsC{position:fixed;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(var(--dockTop,76px) + 4px);z-index:8;display:none;font:800 11px ui-monospace,monospace;color:#9ff08a;text-shadow:0 1px 2px #000;pointer-events:none}body.inplay.fpsOn #fpsC{display:block}'+
+'</style>');
+const C=document.createElement('div');C.id='ctx';document.body.appendChild(C);
+const F=document.createElement('div');F.id='fpsC';document.body.appendChild(F);
+let key='';
+function low(){const tot=TA.reduce((a,b)=>a+b,0),max=TA0.reduce((a,b)=>a+b,0);return P.hp<P.mx*.4||tot<max*.25||TA[st]<=0}
+const A={
+ aa:{t:'✈ M85 UÇAKSAVAR',c:'p',f:()=>window.setAA&&setAA(1)},
+ aaOff:{t:'⤺ ANA TOPA DÖN',c:'',f:()=>window.setAA&&setAA(0)},
+ sup:{t:'⛽ İKMALE GİT',c:'r',f:()=>window.UI&&UI.navSupply()},
+ navOff:{t:'✕ ROTAYI KAPAT',c:'',f:()=>{if(typeof stopNav==='function')stopNav('Navigasyon kapatıldı.')}},
+ drone:{t:'🚁 UÇANGÖZÜ KALDIR',c:'',f:()=>sw()},
+ ret:{t:'⌂ UÇANGÖZÜ ÇAĞIR',c:'',f:()=>recall()},
+ shell:{t:'⇄ MERMİ BİTTİ · DEĞİŞTİR',c:'r',f:()=>window.UI&&UI.nextShell()}};
+FRAME_HOOKS.push(dr=>{if(game!=='play'){if(key){key='';C.innerHTML=''}return}
+ const ks=[];const air=(window.HELI&&HELI.some(h=>h.st==='in'||h.st==='orbit'))||(typeof ED!=='undefined'&&ED.some(d=>!d.dead));
+ if(mode==='tank'){if(window.AA&&AA.on)ks.push('aaOff');else if(air)ks.push('aa');if(TA[st]<=0&&TA.some(v=>v>0))ks.push('shell');
+  const nearSup=Math.hypot(P.x-SUP.x,P.z-SUP.z)<16;if(low()&&!nearSup&&!(NAV.on&&NAV.to&&NAV.to.id==='ik'))ks.push('sup');if(NAV.on)ks.push('navOff');
+  if(DR.on&&!DR.rt&&mode==='tank')ks.push('ret')}
+ const k=ks.join(',');if(k!==key){key=k;C.innerHTML=ks.map(q=>'<button data-k="'+q+'" class="'+A[q].c+'">'+A[q].t+'</button>').join('');C.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();A[b.dataset.k].f();key=''}))}});
+// fps
+let fa=0,fn=0;FRAME_HOOKS.push(dr=>{fa+=dr;fn++;if(fa>.5){if(SV.fps)F.textContent=Math.round(fn/fa)+' FPS';fa=fn=0}});
+// ayarlar
+function apply(){document.body.classList.toggle('lefty',!!SV.lefty);for(let i=0;i<3;i++)document.body.classList.toggle('usz'+i,SV.usz===i);document.body.classList.toggle('fpsOn',!!SV.fps);
+ document.querySelectorAll('[data-cx]').forEach(b=>{const[k,v]=b.dataset.cx.split(':');b.classList.toggle('sel',+SV[k]===+v)})}
+const ta=document.getElementById('ta');if(ta){ta.insertAdjacentHTML('beforeend','<h3>DOKUNMATİK DÜZEN</h3>'+
+ '<div class="row"><button data-cx="lefty:0">Sağ el (ateş sağda)</button><button data-cx="lefty:1">Sol el (ateş solda)</button></div>'+
+ '<div class="row" style="margin-top:6px"><button data-cx="usz:0">Küçük tuşlar</button><button data-cx="usz:1">Normal</button><button data-cx="usz:2">Büyük tuşlar</button></div>'+
+ '<div class="row" style="margin-top:6px"><button data-cx="fps:0">FPS gizli</button><button data-cx="fps:1">FPS göster</button></div>');
+ ta.querySelectorAll('[data-cx]').forEach(b=>b.onclick=()=>{const[k,v]=b.dataset.cx.split(':');SV[k]=+v;save();apply()})}
+apply();
+})();
+
+
 // ===== m_mapui =====
 // ============ TAM EKRAN HARITA: arazi, kareler, yollar, yer adlari, birlikler, rota cizme, isaret koyma (G) ============
 (function(){
@@ -3443,7 +3598,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'30',LOGO=window.HISAR_LOGO;
+const VER=+'31',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+

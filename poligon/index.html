@@ -207,6 +207,36 @@ input[type=range]{width:100%;accent-color:var(--accent);}
 .tbl th,.tbl td{border-bottom:1px solid var(--line);padding:6px 7px;text-align:left;vertical-align:top;white-space:nowrap;}
 .tbl th{color:var(--muted);font-weight:600;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;}
 .hlink{color:var(--accent);}
+.eduhead{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;}
+.eduhead>div{flex:1;display:flex;flex-direction:column;gap:4px;}
+.eduhead b{font-family:var(--display);font-weight:800;font-size:22px;}
+.emod{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:6px;overflow:hidden;}
+.emod summary{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;cursor:pointer;font-family:var(--display);font-weight:800;font-size:18px;list-style:none;}
+.emod summary::-webkit-details-marker{display:none;}
+.eitems{display:flex;flex-direction:column;gap:5px;padding:0 10px 10px;}
+.eitem{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--fg);font-family:var(--mono);font-size:12px;text-align:left;cursor:pointer;}
+.eitem .ek{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);}
+.eitem .er{color:var(--muted);font-size:11px;text-align:right;}
+.eitem.ok{border-color:#4f6a33;} .eitem.ok .er{color:var(--ok);font-size:15px;}
+.eitem.next{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+.lesson{font-size:13px;line-height:1.6;color:var(--fg);}
+.lesson p{color:var(--fg);margin:0 0 10px;}
+.lesson ol,.lesson ul{margin:0 0 10px;padding-left:20px;display:flex;flex-direction:column;gap:6px;}
+.lesson b{color:#fff;}
+.dg{width:100%;max-width:340px;height:auto;display:block;margin:6px 0 12px;background:#1b1d15;border-radius:8px;}
+.dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;fill:#ebe7d6;}
+.qcv{width:100%;height:auto;border-radius:8px;margin-bottom:8px;}
+.qopts{display:flex;flex-direction:column;gap:6px;}
+.qo{text-transform:none;font-family:var(--mono);font-weight:400;font-size:13px;text-align:left;}
+.qo.right{border-color:var(--ok);color:var(--ok);} .qo.wrong{border-color:var(--bad);color:var(--bad);}
+.jam button.wrong{border-color:var(--bad);color:var(--bad);}
+.qfb{margin-top:8px;display:flex;flex-direction:column;gap:8px;}
+.qfb p{margin:0;color:var(--fg);}
+.rpcv{width:100%;max-width:300px;height:auto;display:block;margin:0 auto;border-radius:8px;}
+.recs{display:flex;flex-direction:column;gap:6px;margin-top:5px;}
+.rec{display:flex;flex-direction:column;gap:5px;background:var(--panel2);border-radius:8px;padding:8px 10px;font-size:12px;}
+.rbtn{align-self:flex-start;font-size:13px;padding:6px 10px;text-transform:none;}
+.kl{color:var(--accent);font-weight:600;letter-spacing:0;text-transform:none;font-size:11px;}
 .rcard{flex-basis:206px;}
 .rtag{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
 .rtag.yerli{color:var(--ok);}
@@ -258,7 +288,7 @@ input[type=range]{width:100%;accent-color:var(--accent);}
     <div class="hint" id="hint">Sürükle: nişan al · ATEŞ: vur · DÜRBÜN: nişangâhı değiştir</div>
     <div class="runbox" id="runbox" hidden><div class="lbl" id="runLbl">Koşu</div><div class="big2" id="runVal">0:00</div></div>
     <div class="quiz" id="quiz" hidden><div class="lbl" id="qLbl"></div><div class="qtxt" id="qTxt"></div><div class="qbtns" id="qBtns"></div></div>
-    <div class="kpanel" id="kpanel" hidden><div class="lbl" id="kInfo">Hedef 0/5</div><div class="lbl" style="margin-top:3px">Dürbün ayarı</div><div class="kstep"><button id="kMinus" aria-label="Azalt">−</button><b id="kVal">500 m</b><button id="kPlus" aria-label="Artır">+</button></div><div class="khint">Boy 1,5 m · mesafe = 1500 ÷ milyem</div></div>
+    <div class="kpanel" id="kpanel" hidden><div class="lbl" id="kInfo">Hedef 0/5</div><div class="lbl" style="margin-top:3px">Dürbün ayarı</div><div class="kstep"><button id="kMinus" aria-label="Azalt">−</button><b id="kVal">500 m</b><button id="kPlus" aria-label="Artır">+</button></div><div class="khint" id="kHint">Boy 1,5 m · mesafe = 1500 ÷ milyem</div></div>
     <div class="toast" id="toast"></div>
 
     <div class="sheet2 wrap" id="sheet2">
@@ -315,9 +345,11 @@ input[type=range]{width:100%;accent-color:var(--accent);}
       <button class="primary" id="menuClose">Atışa başla</button>
     </div>
     <section class="sec rankrow" id="rankCard"></section>
+    <section class="sec"><h3>Eğitim programı</h3><div id="eduBox"></div></section>
     <section class="sec plan" id="planCard" hidden></section>
     <section class="sec"><h3>Tüfek</h3><div class="rifles" id="rifles"></div></section>
     <section class="sec"><h3>Görevler</h3><div class="modes" id="modes"></div></section>
+    <section class="sec"><h3>Atış raporu</h3><div class="btns"><button class="secondary" id="repBtn">Kişisel atış raporunu aç</button></div><span class="small muted" id="repInfo"></span></section>
     <section class="sec"><h3>Rozetler</h3><div class="badges" id="badges"></div></section>
     <section class="sec"><h3>Atış defteri</h3><div id="logBox"></div></section>
     <section class="sec"><h3>Eğitmen</h3><p class="small muted" style="margin:0 0 8px">Askerlerine görev planı gönder, sonuçlarını tek tabloda gör. Sunucu gerekmez; her şey bağlantılarla taşınır.</p><div class="btns"><button class="secondary" id="egPlan">Görev planı oluştur</button><button class="secondary" id="egRes">Sonuç tablosu</button></div><span class="small muted" id="egCount"></span></section>
@@ -387,10 +419,26 @@ const TASKS={
     tip:'Gece iki gözünü de açık tut. Lambanın yandığı yeri aklında tut; sönükken de nişanını bozma.'},
   duello:{name:'Düello',short:'Düello',kind:'İki kişilik',card:"Aynı telefonda sırayla 5'er atış; aynı rüzgâr, aynı hedef. Kazananı sonuç ekranı söyler.",tags:['2 atıcı','5 + 5 atım','200 m'],target:'gogus',pos:'prone',sup:'free',
     desc:"İki atıcı aynı telefonla sırayla, 200 m'deki göğüs hedefine 5'er atış yapar. Rüzgâr ve koşullar ikisi için de aynıdır. Puanı yüksek olan kazanır.",
-    tip:'İlk atıcı bitirince telefonu ikinci atıcıya ver.'}
+    tip:'İlk atıcı bitirince telefonu ikinci atıcıya ver.'},
+  egim:{name:'Eğimli atış',short:'Eğimli atış',kind:'Keskin nişancı kursu',card:'Yokuş yukarı ve aşağıdaki hedefte eğik mesafeyi yatay mesafeye çevir, dürbünü ona göre ayarla.',tags:['5 hedef','300–600 m','KNT-76'],target:'boy',pos:'prone',sup:'rest',rifle:'knt76',
+    desc:'Lazer mesafe ölçer eğik mesafeyi, eğim ölçer açıyı gösterir. Mermi düşüşünü yatay mesafe belirler: yatay mesafe = eğik mesafe × cos(eğim). Dürbünü yatay mesafeye ayarla. Her hedefe 2 atış hakkın var.',
+    tip:"Çarpanlar: 15° → 0,97 · 20° → 0,94 · 25° → 0,91 · 30° → 0,87 · 35° → 0,82. Eğik mesafeye ayar yaparsan mermi yüksek vurur; yukarı ya da aşağı fark etmez."},
+  karsi:{name:'Karşı keskin nişancı',short:'Karşı nişancı',kind:'Keskin nişancı kursu',card:'Arazide gizlenmiş düşman nişancıyı dürbünle bul ve etkisiz hâle getir.',tags:['3 nişancı','300–500 m','90 sn'],target:'bas',pos:'prone',sup:'rest',rifle:'knt76',
+    desc:'Arazide çalılar arasına gizlenmiş 3 düşman nişancı var. Her birini 90 saniye içinde bul ve vur. Dürbün camındaki güneş yansıması zaman zaman parlar; onu yakala. Mesafe 300–500 m.',
+    tip:'Araziyi soldan sağa, yakından uzağa şeritler hâlinde tara. Parlama gördüğün yeri yakındaki bir çalıya göre aklında tut, sonra dürbünü oraya çevir.'},
+  gecegorus:{name:'Gece görüş ve termal',short:'Gece görüş',kind:'Gece atışları',card:'Karanlıkta gece görüş (GGC) ve termal dürbünle kalkan hedefleri vur; iki cihazı karşılaştır.',tags:['8 hedef','50–200 m','GGC · termal'],target:'gogus',pos:'prone',sup:'rest',night:1,
+    desc:'Zifiri karanlıkta 8 hedef farklı mesafelerde kalkacak. DÜRBÜN düğmesiyle gece görüş cihazı (ortamdaki az ışığı yükseltir), beyaz-sıcak termal ve siyah-sıcak termal (ısıyı görür) arasında geçebilirsin.',
+    tip:'Termalde insan vücudu çevresinden sıcak olduğu için hemen seçilir ama ayrıntı azdır. Gece görüşte ayrıntı vardır, karanlık gölgelerde hedef kaybolabilir.'},
+  q_emniyet:{name:'Emniyet sınavı',short:'Emniyet sınavı',kind:'Sınav',quiz:'emniyet',card:'',tags:[]},
+  q_tanima:{name:'Silah tanıma sınavı',short:'Silah tanıma',kind:'Sınav',quiz:'tanima',card:'',tags:[]},
+  q_ruzgar:{name:'Rüzgâr okuma sınavı',short:'Rüzgâr sınavı',kind:'Sınav',quiz:'ruzgar',card:'',tags:[]},
+  q_milyem:{name:'Milyem ve mesafe sınavı',short:'Milyem sınavı',kind:'Sınav',quiz:'milyem',card:'',tags:[]},
+  q_egim:{name:'Eğim hesabı sınavı',short:'Eğim sınavı',kind:'Sınav',quiz:'egim',card:'',tags:[]},
+  mekanik:{name:'Sökme ve takma',short:'Sökme-takma',kind:'Mekanik',quiz:'mekanik',card:'',tags:[]}
 };
-const MODE_ORDER=['serbest','tabanca','popup','hareket','keskin','hata','ogretim','sifirlama','guc','dayan','gece','duello'];
-const PLAN_MODES=['ogretim','sifirlama','guc','dayan','gece','popup','hareket','keskin','hata'];
+const MODE_ORDER=['serbest','tabanca','popup','hareket','keskin','egim','karsi','hata','ogretim','sifirlama','guc','dayan','gece','gecegorus','duello'];
+const MULTI=['popup','hareket','keskin','egim','karsi','gecegorus'];
+const PLAN_MODES=['q_emniyet','q_tanima','mekanik','hata','ogretim','sifirlama','guc','dayan','gece','gecegorus','popup','hareket','tabanca','q_ruzgar','q_milyem','keskin','q_egim','egim','karsi'];
 const QERR={dogru:'Doğru nişan',acisal:'Açısal hata',paralel:'Paralel hata',yan:'Tüfeği yan tutma',nokta:'Yanlış nişan noktası'};
 const DIRS=[['sağa',1,0],['sola',-1,0],['yukarı',0,-1],['aşağı',0,1]];
 const RELOAD=2.4;
@@ -413,6 +461,11 @@ const BADGES=[
   {k:'hata',n:'Hatasız göz',d:'Nişan hataları istasyonunda 10/10.',c:r=>r.mode==='hata'&&r.v>=10},
   {k:'tabanca',n:'Tabancacı',d:'Tabanca atışında 80 ve üstü puan.',c:r=>r.mode==='tabanca'&&r.v>=80},
   {k:'yerli',n:'Yerli ve milli',d:'Yerli bir silahla görev başar.',c:r=>r.ok&&!!RIFLES[S.rifle].yerli},
+  {k:'ogrenci',n:'İlk ders',d:'Eğitim programında ilk adımı tamamla.',c:()=>Object.keys(ST.edu||{}).length>=1},
+  {k:'mezun',n:'Mezun',d:'Eğitim programının tamamını bitir.',c:()=>eduAllDone()},
+  {k:'gozcu',n:'Gözcü',d:'Karşı keskin nişancıda 3/3.',c:r=>r.mode==='karsi'&&r.hits>=3},
+  {k:'dag',n:'Dağ nişancısı',d:'Eğimli atışta 4/5.',c:r=>r.mode==='egim'&&r.hits>=4},
+  {k:'termal',n:'Gecenin gözü',d:'Gece görüş görevinde 7/8.',c:r=>r.mode==='gecegorus'&&r.hits>=7},
   {k:'duello',n:'Düellocu',d:'Bir düello oyna.',c:r=>r.mode==='duello'},
   {k:'seri3',n:'Disiplin',d:'Günlük görevi 3 gün üst üste yap.',c:()=>(ST.streak||0)>=3},
   {k:'seri7',n:'Demir disiplin',d:'Günlük görevi 7 gün üst üste yap.',c:()=>(ST.streak||0)>=7}
@@ -505,7 +558,7 @@ const S={mode:'serbest',rifle:'hk33',dist:200,target:'diz',gez:200,pos:'prone',s
 for(let i=0;i<10;i++)S.clouds.push({x:rnd()*520-260,y:-(12+rnd()*70),w:22+rnd()*60});
 let ST={shots:0,hits:0,best:{},done:{},xp:0,badges:{},log:[],streak:0,lastDaily:'',dailyDone:'',flags:{},plan:null,name:'',eg:[]};
 try{const j=JSON.parse(localStorage.getItem('poligon-stats-v1')||'null');if(j)ST=Object.assign(ST,j);}catch(e){}
-ST.flags=ST.flags||{};ST.badges=ST.badges||{};ST.log=ST.log||[];ST.eg=ST.eg||[];
+ST.flags=ST.flags||{};ST.edu=ST.edu||{};ST.sh=ST.sh||[];ST.badges=ST.badges||{};ST.log=ST.log||[];ST.eg=ST.eg||[];
 const saveST=()=>{try{localStorage.setItem('poligon-stats-v1',JSON.stringify(ST));}catch(e){}};
 let OPT={d3:1,gyro:0,voice:1,vib:1,left:0,diff:'normal',vol:80};
 try{const j=JSON.parse(localStorage.getItem('poligon-ayar-v1')||'null');if(j)OPT=Object.assign(OPT,j);}catch(e){}
@@ -515,7 +568,8 @@ const trees=[];for(let i=0;i<220;i++)trees.push(0.4+Math.random()*0.9+Math.sin(i
 const phase=[...Array(6)].map(()=>Math.random()*10);
 const eye=()=>POS[S.pos].eye;
 function aimH(type){const g=TG[type];return g&&g.aim!==undefined?(g.aim+25)/100:type==='halka'?1.0:.5;}
-const tX=t=>t.x*1000/t.d,tY=t=>(eye()-aimH(t.type))*1000/t.d;
+const tX=t=>t.x*1000/t.d,tY=t=>Math.atan((eye()+(S.E||0)-aimH(t.type)-(t.h0||0))/t.d)*1000;
+const tK=t=>t.kx?t:{kx:t.d/1000,ky:t.d/1000};
 const mkT=(x,type,d)=>({x,type,d:d||S.dist,up:1,state:'static',t:0,wob:0,vx:0});
 const VH=()=>S.mode==='hata'?H*.6:H,VCY=()=>S.mode==='hata'?H*.31:H/2;
 const R_=()=>RIFLES[S.rifle];
@@ -528,14 +582,14 @@ const gezFor=D=>clamp(Math.round(D/100)*100,100,400);
 function taskDist(mode){
   const ak=S.rifle==='ak';
   switch(mode){
-    case 'tabanca':return 10;case 'hata':case 'duello':return 200;case 'gece':return 50;case 'popup':case 'hareket':return 150;case 'keskin':return 600;
+    case 'tabanca':return 10;case 'egim':case 'karsi':return 400;case 'gecegorus':return 120;case 'hata':case 'duello':return 200;case 'gece':return 50;case 'popup':case 'hareket':return 150;case 'keskin':return 600;
     case 'ogretim':case 'sifirlama':return ak?20:25;
     case 'guc':return ak?130:S.rifle==='mpt76'?(S.sight==='optic'?400:300):200;
     case 'dayan':return ak?130:S.rifle==='mpt76'?300:200;
   }
   return S.dist;
 }
-const limitFor=m=>m==='serbest'?10:(m==='ogretim'||m==='sifirlama')?3:(m==='duello'||m==='tabanca')?5:(m==='popup'||m==='hareket'||m==='keskin')?1e9:m==='hata'?0:2;
+const limitFor=m=>m==='serbest'?10:(m==='ogretim'||m==='sifirlama')?3:(m==='duello'||m==='tabanca')?5:MULTI.includes(m)?1e9:m==='hata'?0:2;
 const dkey=d=>{d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 function daily(){const k=dkey();let h=0;for(const c of k)h=(h*31+c.charCodeAt(0))>>>0;return DAILY[h%DAILY.length];}
 
@@ -625,9 +679,10 @@ function buildMenu(){
   MODE_ORDER.forEach((k,i)=>{
     const T=TASKS[k],b=document.createElement('button');b.className='mcard';b.style.animationDelay=(i*40)+'ms';
     b.innerHTML=`<span class="k">${T.kind}</span><span class="n">${T.name}</span><span class="d">${T.card}</span><span class="tags">${T.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</span>${bestTxt(k)}`;
-    b.addEventListener('click',()=>{click(1400,.03,.12);closeMenu();startMode(k);});
+    b.addEventListener('click',()=>{click(1400,.03,.12);closeMenu();S.edu=null;startMode(k);});
     mm.appendChild(b);
   });
+  buildEdu();
   // plan
   const pc=$('planCard');
   if(ST.plan){
@@ -637,7 +692,7 @@ function buildMenu(){
       <div class="plist">${P.t.map(m=>{const x=res[m];return `<button class="pitem ${x?(x.ok?'ok':'no'):''}" data-m="${m}"><span>${TASKS[m].name}</span><span>${x?(x.ok?'Başarılı · ':'Başarısız · ')+esc(x.t||''):'Bekliyor'}</span></button>`;}).join('')}</div>
       <label class="lbl" for="pname">Adın</label><input class="inp" id="pname" maxlength="40" value="${esc(ST.name||'')}" placeholder="Ad Soyad">
       <div class="btns"><button class="primary" id="pSend">Sonucu gönder</button><button class="secondary" id="pDrop">Planı kaldır</button></div>`;
-    pc.querySelectorAll('.pitem').forEach(b=>b.addEventListener('click',()=>{const m=b.dataset.m;if(P.r&&m!=='keskin')S.rifle=P.r;closeMenu();startMode(m);}));
+    pc.querySelectorAll('.pitem').forEach(b=>b.addEventListener('click',()=>{const m=b.dataset.m;if(P.r&&!TASKS[m].rifle)S.rifle=P.r;closeMenu();S.edu=null;if(TASKS[m].quiz)startEdu({id:m,type:TASKS[m].quiz==='mekanik'?'mekanik':'quiz',bank:TASKS[m].quiz,t:TASKS[m].name,pass:QPASS[TASKS[m].quiz]});else startMode(m);}));
     $('pname').addEventListener('input',e=>{ST.name=e.target.value;saveST();});
     $('pSend').addEventListener('click',sendPlanResult);
     $('pDrop').addEventListener('click',e=>{const b=e.currentTarget;if(!b.dataset.arm){b.dataset.arm=1;b.textContent='Emin misin?';return;}ST.plan=null;saveST();buildMenu();});
@@ -656,6 +711,7 @@ function buildMenu(){
   $('stats').innerHTML=`<div class="sbox"><span class="lbl">Toplam atış</span><b>${ST.shots}</b></div><div class="sbox"><span class="lbl">İsabet oranı</span><b>%${acc}</b></div><div class="sbox"><span class="lbl">Başarılı görev</span><b>${done}</b></div><div class="sbox"><span class="lbl">Rozet</span><b>${Object.keys(ST.badges).length}/${BADGES.length}</b></div>`;
   $('resetStats').textContent='Kayıtları sıfırla';$('resetStats').dataset.arm='';
   $('egCount').textContent=ST.eg.length?`${ST.eg.length} sonuç kayıtlı`:'';
+  $('repBtn').disabled=!(ST.sh&&ST.sh.length>=5);$('repInfo').textContent=ST.sh&&ST.sh.length>=5?`${ST.sh.length} atış üzerinden`:'Rapor için en az 5 atış gerekli';
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function getPhoto(k){try{return localStorage.getItem('poligon-foto-'+k);}catch(e){return null;}}
@@ -667,8 +723,9 @@ function openMenu(){buildMenu();const m=$('menu');m.hidden=false;requestAnimatio
 function closeMenu(){const m=$('menu');m.classList.remove('show');setTimeout(()=>{m.hidden=true;},220);}
 $('btnMenu').addEventListener('click',openMenu);$('modeChip').addEventListener('click',openMenu);
 $('menuClose').addEventListener('click',()=>{audio();closeMenu();});
-$('resetStats').addEventListener('click',e=>{const b=e.currentTarget;if(!b.dataset.arm){b.dataset.arm='1';b.textContent='Emin misin? Tekrar dokun, silinsin';return;}const keep={plan:ST.plan,name:ST.name,eg:ST.eg};ST=Object.assign({shots:0,hits:0,best:{},done:{},xp:0,badges:{},log:[],streak:0,lastDaily:'',dailyDone:'',flags:{}},keep);saveST();buildMenu();toast('Kayıtlar silindi',900);});
+$('resetStats').addEventListener('click',e=>{const b=e.currentTarget;if(!b.dataset.arm){b.dataset.arm='1';b.textContent='Emin misin? Tekrar dokun, silinsin';return;}const keep={plan:ST.plan,name:ST.name,eg:ST.eg};ST=Object.assign({shots:0,hits:0,best:{},done:{},xp:0,badges:{},log:[],streak:0,lastDaily:'',dailyDone:'',flags:{},edu:{},sh:[]},keep);saveST();buildMenu();toast('Kayıtlar silindi',900);});
 $('egPlan').addEventListener('click',planForm);
+$('repBtn').addEventListener('click',showReport);
 $('egRes').addEventListener('click',()=>egPanel(''));
 
 // ================= PAYLAŞIM =================
@@ -777,8 +834,10 @@ function syncUI(){
   $('modeChip').textContent=TASKS[S.mode].name;
   $('sightSm').textContent=S.sight==='optic'?'dürbün '+(R_().scopeX||4)+'×':'gez-arpacık';
   $('ctls').classList.toggle('left',!!OPT.left);
-  $('kpanel').hidden=S.mode!=='keskin';
-  const v3=$('view3d');v3.hidden=!(OPT.d3&&G3);v3.style.filter=S.sight==='iron'&&!S.night?'blur(.7px)':'none';
+  $('kpanel').hidden=!['keskin','egim','karsi'].includes(S.mode);
+  const v3=$('view3d');v3.hidden=!(OPT.d3&&G3);v3.style.visibility=S.sensor==='termal'||S.sensor==='termalB'?'hidden':'visible';
+  v3.style.filter=S.sensor==='ggc'?'grayscale(1) sepia(1) hue-rotate(55deg) saturate(3.2) brightness(.9) contrast(1.15)':S.sight==='iron'&&!S.night?'blur(.7px)':'none';
+  $('sightSm').textContent=S.mode==='gecegorus'?({ggc:'gece görüş',termal:'termal · beyaz',termalB:'termal · siyah'}[S.sensor]||''):$('sightSm').textContent;
 }
 function updateInfo(){
   const R=R_(),D=S.dist;
@@ -786,6 +845,10 @@ function updateInfo(){
   if(S.mode==='popup')t='Pop-up göğüs, diz, boy · 50–300 m · gez muharebe nişangâhında (300 m)';
   else if(S.mode==='hareket')t='Raylı boy hedefi · 100–200 m · yürüyen ve koşan';
   else if(S.mode==='keskin')t='Boy hedefi · mesafe bilinmiyor (450–800 m) · dürbün ayarı '+S.gez+' m';
+  else if(S.mode==='egim')t='Boy hedefi · eğik mesafe 300–600 m · eğim ±10–35° · dürbün ayarı '+S.gez+' m';
+  else if(S.mode==='karsi')t='Gizlenmiş nişancı · 300–500 m · 3 nişancı';
+  else if(S.mode==='gecegorus')t='Pop-up göğüs ve diz · 50–200 m · gece görüş ve termal';
+  else if(!S.targets[0])t='';
   else{const tt=S.targets[0].type;let drop='';
     if(D>=100){const dc=Math.round((dropAt(R,D)-dropAt(R,S.gez))*D/10);drop=Math.abs(dc)<2?' · gez mesafeye uygun':` · gez ${S.gez} m: ≈${Math.abs(dc)} cm ${dc>0?'alçak':'yüksek'} vurur`;}
     t=`${TG[tt].name}${S.target==='diz2'?' ×2':''} (${TG[tt].size}) · ${D} m${drop}`;}
@@ -808,7 +871,7 @@ function onMotion(e){
   const k=17.4533*dt;let ya=r.gamma||0,pa=r.beta||0;
   const ang=(screen.orientation&&screen.orientation.angle)||window.orientation||0;
   if(ang===90){const t=ya;ya=-pa;pa=t;}else if(ang===-90||ang===270){const t=ya;ya=pa;pa=-t;}
-  S.aimX=clamp(S.aimX-ya*k,-90,90);S.aimY=clamp(S.aimY-pa*k,-60,60);
+  const ly=S.mode==='egim'?800:60;S.aimX=clamp(S.aimX-ya*k,-90,90);S.aimY=clamp(S.aimY-pa*k,-ly,ly);
 }
 const canAim=()=>$('menu').hidden&&$('modal').hidden&&S.mode!=='hata';
 
@@ -829,8 +892,10 @@ function setup(quiet){
   else if(S.target==='diz2')S.target='diz';
   if(S.mode==='popup'||S.mode==='hareket')S.gez=300;
   if(S.mode==='keskin')S.gez=500;
+  if(S.mode==='egim')S.gez=400;
+  if(S.mode==='karsi')S.gez=400;
   S.night=!!T.night;
-  const multi=S.mode==='popup'||S.mode==='hareket'||S.mode==='keskin';
+  const multi=MULTI.includes(S.mode);
   S.targets=multi?[]:S.target==='diz2'?[mkT(-.725,'diz'),mkT(.725,'diz')]:[mkT(0,S.target)];
   syncUI();resetSeries(quiet);
   if(G3)rebuild3D();
@@ -839,7 +904,9 @@ function resetSeries(quiet){
   const R=R_();
   newSeed(S.forceSeed);S.forceSeed=null;
   Object.assign(S,{shots:[],prev:[],marks:[],puffs:[],phase:0,attempt:0,done:false,started:S.mode==='serbest'||(S.mode==='duello'&&S.duel&&S.duel.p===1),ammo:R.mag,reload:0,run:null,timeLeft:null,hr0:72,tShoot:performance.now(),tSeries:performance.now(),quiz:null,pop:null,mv:null,ks:null,jam:null,windHit:false,lastRes:null});
-  if(S.mode==='keskin'||S.mode==='hareket'||S.mode==='popup')S.targets=[];
+  S.E=0;S.sensor=S.mode==='gecegorus'?'ggc':null;S.bushes=[];S.eg=null;S.cs=null;S.gg=null;
+  if(MULTI.includes(S.mode))S.targets=[];
+  if(S.mode==='karsi')makeBushes();
   else S.targets.forEach(t=>{t.wob=0;t.d=S.dist;});
   S.trig.down=false;
   S.wind={h:1+Math.floor(wr()*12),s:Math.round(wr()*(S.dist<100?30:S.mode==='keskin'?50:60))/10};
@@ -847,7 +914,7 @@ function resetSeries(quiet){
   S.g1=wr()*10;S.g2=wr()*10;S.wnow=S.wind.s;
   S.zeroErr=S.mode==='sifirlama'?{x:(wr()<.5?-1:1)*(1+wr()*1.2),y:(wr()<.5?-1:1)*(.8+wr()*1.2)}:{x:0,y:0};
   const t0=S.targets[0];
-  const bx=t0?tX(t0):0,by=t0?tY(t0):(eye()-.6)*1000/(S.mode==='keskin'?600:150);
+  const bx=t0?tX(t0):0,by=t0?tY(t0):(eye()-.6)*1000/(S.mode==='keskin'?600:S.mode==='karsi'?400:150);
   S.aimX=bx+(wr()<.5?-1:1)*(.8+wr()*1.2)*(S.mode==='keskin'?.3:1);S.aimY=by-.5-wr()*.8;
   S.mis={x:0,y:0};S.cant=0;
   $('quiz').hidden=true;$('modal').hidden=true;$('runbox').hidden=true;
@@ -881,6 +948,9 @@ function brief(){
   let rows;
   if(S.mode==='popup')rows=[['Tüfek',R.name],['Hedefler','göğüs, diz, boy · pop-up'],['Mesafe','50–300 m'],['Duruş','Yatarak · desteksiz'],['Gez','muharebe (300 m)'],['Hedef sayısı','12']];
   else if(S.mode==='hareket')rows=[['Tüfek',R.name],['Hedef','boy · ray üzerinde'],['Mesafe','100–200 m'],['Hız','yürüyen 1,4 m/s · koşan 3 m/s'],['Gez','muharebe (300 m)'],['Geçiş','8']];
+  else if(S.mode==='egim')rows=[['Tüfek','KNT-76 · dürbün 10×'],['Hedef','boy (1,5 m)'],['Eğik mesafe','300–600 m'],['Eğim','±10–35°'],['Hedef sayısı','5 · her birine 2 atış']];
+  else if(S.mode==='karsi')rows=[['Tüfek','KNT-76 · dürbün 10×'],['Hedef','gizlenmiş nişancı (baş)'],['Mesafe','300–500 m'],['Süre','her nişancı için 90 sn'],['Nişancı sayısı','3']];
+  else if(S.mode==='gecegorus')rows=[['Tüfek',R.name],['Cihaz','gece görüş · termal'],['Hedefler','göğüs, diz · pop-up'],['Mesafe','50–200 m'],['Hedef sayısı','8']];
   else if(S.mode==='keskin')rows=[['Tüfek','KNT-76 · dürbün 10×'],['Hedef','boy (1,5 m)'],['Mesafe','bilinmiyor, 450–800 m'],['Duruş','Yatarak · destekli'],['Hedef sayısı','5 · her birine 2 atış']];
   else{const t=S.targets[0].type;
     rows=[['Tüfek',R.name],['Hedef',TG[t].name+(S.target==='diz2'?' ×2':'')+' · '+TG[t].size],['Mesafe',S.dist+' m'],['Duruş',POS[T.pos].name+' · '+(T.sup==='rest'?'destekli':'desteksiz')],['Atım',S.mode==='sifirlama'?'3 + 3':S.mode==='hata'?'10 nişan resmi':S.mode==='duello'?"5'er atış, 2 atıcı":limitFor(S.mode)+' atım']];}
@@ -896,6 +966,9 @@ function startTask(){
   if(S.mode==='popup'){S.pop={total:12,spawned:0,clock:0,next:2.6,hits:0,missed:0,rts:[],score:0};toast('Hazır ol',1000);say('Atış istikametinde kimse var mı? Hedefler kalkıyor. Ateş serbest!');}
   else if(S.mode==='hareket'){S.mv={pass:0,total:8,hits:0,res:[],next:2.4,clock:0};toast('Hazır ol',1000);say('Hareketli hedef. Ateş serbest!');}
   else if(S.mode==='keskin'){S.ks={i:0,total:5,hits:0,res:[],next:1.2,clock:0,cur:null};toast('Hedefi ara',1000);say('Keskin nişancı. Hedefi bul, mesafeyi hesapla.');}
+  else if(S.mode==='egim'){S.eg={i:0,total:5,hits:0,res:[],next:1.0,clock:0,cur:null};toast('Eğimi ölç',1000);say('Eğimli atış. Yatay mesafeyi hesapla.');}
+  else if(S.mode==='karsi'){S.cs={i:0,total:3,hits:0,res:[],next:.6,clock:0,cur:null};toast('Araziyi tara',1000);say('Karşı keskin nişancı. Araziyi tara.');}
+  else if(S.mode==='gecegorus'){S.gg={total:8,spawned:0,clock:0,next:2.4,hits:0,missed:0};toast('Gece görüş açık',1000);say('Gece atışı. Ateş serbest!');}
   else if(S.night){S.timeLeft=T.time;toast('Ateş serbest',900);say('Atış istikametinde kimse var mı? Ateş serbest!');}
   else{toast('Ateş serbest',800);say('Atış istikametinde kimse var mı? Ateş serbest!');}
 }
@@ -907,7 +980,8 @@ function reload(){
   if(S.reload>0||S.done||S.mode==='hata')return;if(S.ammo===R_().mag){toast('Şarjör dolu',700);return;}
   S.reload=RELOAD;S.trig.down=false;toast('Şarjör değiştiriliyor',900);
 }
-function toggleSight(){if(S.mode==='hata'||S.sAnim)return;if(R_().scopeOnly){toast('KNT-76 yalnızca dürbünle kullanılır',1100);return;}if(R_().noScope){toast('Tabancada dürbün yok',1000);return;}S.sAnim={t:0,sw:false};click(800,.05,.12);}
+function toggleSight(){if(S.mode==='hata'||S.sAnim)return;
+  if(S.mode==='gecegorus'){S.sensor=S.sensor==='ggc'?'termal':S.sensor==='termal'?'termalB':'ggc';click(900,.05,.12);toast({ggc:'Gece görüş',termal:'Termal · beyaz sıcak',termalB:'Termal · siyah sıcak'}[S.sensor],900);syncUI();return;}if(R_().scopeOnly){toast('KNT-76 yalnızca dürbünle kullanılır',1100);return;}if(R_().noScope){toast('Tabancada dürbün yok',1000);return;}S.sAnim={t:0,sw:false};click(800,.05,.12);}
 function fireDown(){
   audio();
   if(S.mode==='hata'){toast('Bu istasyonda atış yok',900);return;}
@@ -942,12 +1016,17 @@ let drag=null;
 cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};cv.setPointerCapture(e.pointerId);$('sheet2').classList.remove('open');});
 cv.addEventListener('pointermove',e=>{
   if(!drag||S.mode==='hata')return;const p=pxm();
-  S.aimX=clamp(S.aimX+(e.clientX-drag.x)/p*.55,-90,90);S.aimY=clamp(S.aimY+(e.clientY-drag.y)/p*.55,-60,60);
+  const ly=S.mode==='egim'?800:60;S.aimX=clamp(S.aimX+(e.clientX-drag.x)/p*.55,-90,90);S.aimY=clamp(S.aimY+(e.clientY-drag.y)/p*.55,-ly,ly);
   drag={x:e.clientX,y:e.clientY};
 });
 cv.addEventListener('pointerup',()=>{drag=null;});cv.addEventListener('pointercancel',()=>{drag=null;});
-function kpanel(){if(S.mode!=='keskin')return;$('kVal').textContent=S.gez+' m';$('kInfo').textContent=S.ks?`Hedef ${Math.min(S.ks.i+(S.ks.cur?1:0),S.ks.total)}/${S.ks.total} · ${S.ks.hits} vuruş`:'Hedef 0/5';}
-function adjGez(d){S.gez=clamp(S.gez+d,300,900);click(1700,.02,.1);kpanel();updateInfo();}
+function kpanel(){
+  if(S.mode!=='keskin'&&S.mode!=='egim'&&S.mode!=='karsi')return;$('kVal').textContent=S.gez+' m';
+  if(S.mode==='keskin'){$('kInfo').textContent=S.ks?`Hedef ${Math.min(S.ks.i+(S.ks.cur?1:0),S.ks.total)}/${S.ks.total} · ${S.ks.hits} vuruş`:'Hedef 0/5';$('kHint').textContent='Boy 1,5 m · mesafe = 1500 ÷ milyem';}
+  else if(S.mode==='egim'){const c=S.eg&&S.eg.cur;$('kInfo').innerHTML=c?`Hedef ${S.eg.i+1}/5 · <b class="kl">Lazer ${c.L} m · Eğim ${c.th>0?'+':'−'}${Math.abs(c.th)}°</b>`:'Hedef '+(S.eg?S.eg.i:0)+'/5';$('kHint').textContent='Yatay mesafe = eğik mesafe × cos(eğim)';}
+  else{const c=S.cs&&S.cs.cur;$('kInfo').textContent=c?`Nişancı ${S.cs.i+1}/3 · kalan ${Math.ceil(c.left)} sn`:'Nişancı '+(S.cs?S.cs.i:0)+'/3';$('kHint').textContent='Göğüs genişliği 0,45 m · baş 0,32 m';}
+}
+function adjGez(d){S.gez=clamp(S.gez+(S.mode==='egim'?d/2:d),200,900);click(1700,.02,.1);kpanel();updateInfo();}
 $('kMinus').addEventListener('click',()=>adjGez(-50));$('kPlus').addEventListener('click',()=>adjGez(50));
 
 // ================= BALİSTİK =================
@@ -962,6 +1041,7 @@ function fire(){
   if(S.reload>0||S.shots.length>=limitFor(S.mode))return;
   if(S.ammo<=0){dry();toast("Şarjör boş: ŞARJÖR'e bas",1300);S.trig.down=false;return;}
   if(S.mode==='keskin'&&(!S.ks||!S.ks.cur||S.ks.cur.shots>=2))return;
+  if(S.mode==='egim'&&(!S.eg||!S.eg.cur||S.eg.cur.shots>=2))return;
   const jp=DIFF[OPT.diff].jam;
   if(jp&&S.mode!=='ogretim'&&S.mode!=='sifirlama'&&rnd()<jp){S.ammo--;S.trig.down=false;dry();vib(60);openJam();return;}
   S.ammo--;const now=performance.now();S.lastShot=now;
@@ -972,14 +1052,15 @@ function fire(){
   const at=d=>({x:ax+gx+drift(d)+S.zeroErr.x,y:ay+gy+dropRel(d)+S.zeroErr.y});
   const cand=S.targets.filter(t=>t.state==='static'||(t.state==='up'&&!t.hit)||(t.state==='rising'&&t.up>.6)).sort((a,b)=>a.d-b.d);
   let hit=null,lx=0,ly=0,ip=null;
-  for(const t of cand){const p=at(t.d),tof=t.d/R.v,txa=t.x+(t.vx||0)*tof,llx=p.x*t.d/1000-txa,lly=(p.y-tY(t))*t.d/1000;if(hitLocal(t.type,llx,lly)){hit=t;lx=llx;ly=lly;ip=p;break;}}
+  for(const t of cand){const p=at(t.d),tof=t.d/R.v,txa=t.x+(t.vx||0)*tof,k=tK(t),llx=p.x*k.kx-txa,lly=(p.y-tY(t))*k.ky;if(hitLocal(t.type,llx,lly)){hit=t;lx=llx;ly=lly;ip=p;break;}}
   const ref=hit||cand[0]||S.targets[0]||{x:0,d:S.dist,type:'gogus'};
   const pr=ip||at(ref.d);
   const tofR=ref.d/R.v,refX=ref.x+(ref.vx||0)*tofR;
-  const mx=hit?(lx+refX):(pr.x*ref.d/1000),my=(pr.y-tY(ref))*ref.d/1000;
+  const rk=tK(ref),mx=hit?(lx+refX):(pr.x*rk.kx),my=(pr.y-tY(ref))*rk.ky;
   if(S.mode==='keskin'&&S.ks.cur)S.ks.cur.shots++;
+  if(S.mode==='egim'&&S.eg.cur)S.eg.cur.shots++;
   S.shots.push({mx,my,tg:hit,lx,ly,sc:hit&&S.mode!=='popup'?shotScore(hit.type,lx,ly):0,ix:pr.x,iy:pr.y,d:ref.d,
-    mis:Math.hypot(S.mis.x,S.mis.y),cant:S.cant*180/Math.PI,t0:now,arr:now+tofR*1000,pending:true,ks:S.ks&&S.ks.cur});
+    mis:Math.hypot(S.mis.x,S.mis.y),cant:S.cant*180/Math.PI,t0:now,arr:now+tofR*1000,pending:true,ks:(S.ks&&S.ks.cur)||(S.eg&&S.eg.cur)||null,sight:S.sight});
   const P=POS[S.pos],sr=S.sup==='rest'?.85:1;
   S.recY-=R.kick*(.8+rnd()*.4)*P.rec*sr;S.recX+=(rnd()-.5)*R.kick*.6*P.rec*sr;
   S.post=1;S.flash=1;FIG.kick=1;FIG.brass.push({t:0,vx:-70-rnd()*50,vy:-150-rnd()*70,x:0,y:0,r:rnd()*6});
@@ -989,7 +1070,7 @@ function fire(){
 }
 function arrive(s){
   const now=performance.now();
-  s.pending=false;ST.shots++;
+  s.pending=false;ST.shots++;logShot(s);
   if(s.tg){
     ST.hits++;s.tg.wob=1;
     if(s.d>=300&&windEff(S.wind.h)===1&&S.wnow>=4)S.windHit=true;
@@ -998,8 +1079,12 @@ function arrive(s){
         s.tg.hit=true;s.tg.state='falling';s.tg.t=0;s.sc=pts;S.pop.hits++;S.pop.rts.push(rt);S.pop.score+=pts;toast('Vuruş +'+pts,700);}
     }else if(S.mode==='hareket'){
       if(!s.tg.hit){s.tg.hit=true;s.tg.state='falling';s.tg.t=0;s.tg.vx=0;S.mv.hits++;S.mv.res.push({d:s.tg.d,v:s.tg.speed,hit:true});toast('Vuruş',700);}
-    }else if(S.mode==='keskin'){
-      const k=s.ks;if(k&&!k.hit){k.hit=true;S.ks.hits++;s.tg.state='falling';s.tg.t=0;toast('Vuruş · '+s.tg.d+' m',1000);}
+    }else if(S.mode==='keskin'||S.mode==='egim'){
+      const k=s.ks,M=S.mode==='keskin'?S.ks:S.eg;if(k&&!k.hit){k.hit=true;M.hits++;s.tg.state='falling';s.tg.t=0;toast('Vuruş · '+(k.L||s.tg.d)+' m',1000);}
+    }else if(S.mode==='karsi'){
+      if(!s.tg.hit&&S.cs&&S.cs.cur){s.tg.hit=true;s.tg.state='falling';s.tg.t=0;S.cs.hits++;S.cs.res.push({d:s.tg.d,t:90-S.cs.cur.left,ok:true});S.cs.cur=null;S.cs.next=S.cs.clock+2;toast('Nişancı etkisiz · '+s.tg.d+' m',1300);kpanel();}
+    }else if(S.mode==='gecegorus'){
+      if(!s.tg.hit){s.tg.hit=true;s.tg.state='falling';s.tg.t=0;S.gg.hits++;toast('Vuruş',700);}
     }else if(s.tg.type==='kagit')toast('Kâğıtta',600);
     else toast(S.mode==='serbest'||S.mode==='duello'||S.mode==='tabanca'?s.sc+' puan':'Vuruş',750);
     hitSound(s.d);
@@ -1119,10 +1204,12 @@ function chalNote(v){if(!S.challenge)return '';const c=S.challenge.v;return v>c?
 function resultModal(o,res){
   const lines=progress(res);S.lastRes=res;
   const ch=chalNote(res.v);if(ch)lines.unshift(ch);
+  const eb=eduCheck(res,lines);
   const btns=[{label:'Tekrar',primary:true,fn:()=>{S.duel=null;setup();}}];
   if(['serbest','popup','hareket','keskin'].includes(S.mode))btns.push({label:'Meydan oku',keep:1,fn:challengeLink});
   btns.push({label:'Menü',fn:openMenu});
   o.buttons=o.buttons||btns;
+  if(eb)o.buttons=[eb].concat(o.buttons.filter(b=>b.label!=='Meydan oku')).slice(0,3);
   o.foot=`<div class="xpline">${lines.map(l=>`<span>${esc(l)}</span>`).join('')}</div>`;
   modal(o);
 }
@@ -1171,6 +1258,24 @@ function showResult(timeUp){
     resultModal({eye:'Keskin nişancı · KNT-76',title:band(sc)+(nb&&sc>0?' · yeni rekor':''),num:K.hits,suffix:'<small>/'+K.total+'</small>',
       rows:[['Atış',S.shots.length+''],['Rüzgâr','saat '+S.wind.h+' · '+S.wind.s.toFixed(1)+' m/s (değişken)'],['Rekor',ST.best.keskin.t]],notes},
       Object.assign(base,{v:sc,t:K.hits+'/'+K.total,hits:K.hits,ok:K.hits>=3,rec:nb,scoreable:1}));
+  }else if(S.mode==='egim'){
+    const K=S.eg,sc=Math.round(K.hits/K.total*100),nb=record('egim',sc,K.hits+'/'+K.total,'high');if(K.hits>=3)markDone('egim');
+    const notes=K.res.map((r,i)=>{const err=r.g-r.dh;return `${i+1}. hedef: eğik ${r.L} m, eğim ${r.th>0?'+':'−'}${Math.abs(r.th)}°, yatay ${r.dh} m · ayarın ${r.g} m · ${r.hit?'vuruş':'ıska'}${!r.hit&&Math.abs(err)>=40?(err>0?' (fazla ayar: yüksek vurdu)':' (eksik ayar: alçak vurdu)'):''}`;});
+    notes.push('Yatay mesafe = eğik mesafe × cos(eğim). Eğik mesafeye ayar yaparsan mermi yüksek vurur.');
+    resultModal({eye:'Eğimli atış · KNT-76',title:band(sc)+(nb&&sc>0?' · yeni rekor':''),num:K.hits,suffix:'<small>/'+K.total+'</small>',rows:[['Atış',S.shots.length+''],['Rekor',ST.best.egim.t]],notes},
+      Object.assign(base,{v:sc,t:K.hits+'/'+K.total,hits:K.hits,ok:K.hits>=3,rec:nb,scoreable:1}));
+  }else if(S.mode==='karsi'){
+    const C=S.cs,sc=Math.round(C.hits/C.total*100),nb=record('karsi',sc,C.hits+'/'+C.total,'high');if(C.hits>=2)markDone('karsi');
+    const notes=C.res.map((r,i)=>`${i+1}. nişancı ${r.d} m · ${r.ok?'bulundu, '+Math.round(r.t)+' sn':'bulunamadı'}`);
+    notes.push('Gözetlemede araziyi şeritlere böl; önce yakın şeridi soldan sağa, sonra uzak şeridi tara. Parlama, hareket ve düzgün çizgiler gizlenmiş kişiyi ele verir.');
+    resultModal({eye:'Karşı keskin nişancı',title:band(sc)+(nb&&sc>0?' · yeni rekor':''),num:C.hits,suffix:'<small>/3</small>',rows:[['Atış',S.shots.length+''],['Rekor',ST.best.karsi.t]],notes},
+      Object.assign(base,{v:sc,t:C.hits+'/3',hits:C.hits,ok:C.hits>=2,rec:nb,scoreable:1}));
+  }else if(S.mode==='gecegorus'){
+    const P=S.gg,sc=Math.round(P.hits/P.total*100),nb=record('gecegorus',sc,P.hits+'/'+P.total,'high');if(P.hits>=5)markDone('gecegorus');
+    resultModal({eye:'Gece görüş ve termal · '+R.name,title:band(sc)+(nb&&sc>0?' · yeni rekor':''),num:P.hits,suffix:'<small>/'+P.total+'</small>',plot:true,
+      rows:[['Kaçan hedef',P.missed+''],['Atış',S.shots.length+''],['Rekor',ST.best.gecegorus.t]],
+      notes:['Gece görüş cihazı ortamdaki az ışığı yükseltir; tam karanlıkta ve sisli havada zayıflar.','Termal dürbün ısıyı görür; ışığa ihtiyaç duymaz, duman ve hafif sisi geçer ama camın arkasını göremez.','Namlu alevi gece görüş cihazında parlar; atıştan sonra görüntü bir an bozulur.']},
+      Object.assign(base,{v:sc,t:P.hits+'/'+P.total,hits:P.hits,ok:P.hits>=5,rec:nb,scoreable:1}));
   }else if(S.mode==='duello'){
     const D=S.duel||{sc:[0,0],hits:[0,0]},a=D.sc[0],b=D.sc[1];
     const title=a>b?'1. atıcı kazandı':b>a?'2. atıcı kazandı':'Berabere';
@@ -1256,7 +1361,48 @@ function modeTick(dt,now){
       if(G3)rebuild3D();
     }
     if(K.i>=K.total&&!K.cur&&!S.shots.some(s=>s.pending)&&!S.targets.length)finish();
+  }else if(S.mode==='egim'&&S.eg){
+    const K=S.eg;K.clock+=dt;tickTargets(dt,now);
+    if(K.cur&&!S.shots.some(s=>s.pending)&&(K.cur.hit||K.cur.shots>=2)&&!K.cur.closed){
+      K.cur.closed=true;K.res.push({L:K.cur.L,th:K.cur.th,dh:K.cur.dh,g:S.gez,hit:!!K.cur.hit});
+      const tg=S.targets.find(t=>t.ks===K.cur);if(tg&&tg.state!=='falling'){tg.state='lowering';tg.t=0;}
+      K.i++;K.next=K.clock+1.6;K.cur=null;kpanel();
+    }
+    if(!K.cur&&K.i<K.total&&K.clock>=K.next&&!S.targets.length){
+      const L=300+50*Math.floor(wr()*7),thA=10+Math.floor(wr()*26),th=(wr()<.5?1:-1)*thA,rad=thA*Math.PI/180,dh=Math.round(L*Math.cos(rad)),hgt=L*Math.sin(rad);
+      const t=mkT(0,'boy',dh);t.state='rising';t.up=0;
+      if(th>0){t.h0=hgt;S.E=0;}else{t.h0=0;S.E=hgt;}
+      t.kx=L/1000;t.ky=dh/(1000*Math.cos(rad)*Math.cos(rad));t.x=((wr()*2-1)*6)*L/1000;
+      K.cur={L,th,dh,shots:0,hit:false};t.ks=K.cur;S.targets.push(t);S.dist=dh;
+      S.aimX=tX(t)+(wr()-.5)*4;S.aimY=tY(t)+(wr()-.5)*4;kpanel();tone(150,240,.3,.05,'sawtooth');if(G3)rebuild3D();
+    }
+    if(K.i>=K.total&&!K.cur&&!S.shots.some(s=>s.pending)&&!S.targets.length)finish();
+  }else if(S.mode==='karsi'&&S.cs){
+    const C=S.cs;C.clock+=dt;tickTargets(dt,now);
+    if(C.cur){C.cur.left-=dt;C.cur.gl-=dt;if(C.cur.gl<0){C.cur.glint=now;C.cur.gl=4+wr()*4;}
+      if(C.cur.left<=0){C.res.push({d:C.cur.d,ok:false});const tg=S.targets.find(t=>!t.hit);if(tg){tg.state='lowering';tg.t=0;}C.cur=null;C.next=C.clock+2;toast('Düşman nişancı yer değiştirdi',1400);say('Hedef kaçtı.');kpanel();}
+      if(now-hudT<90)kpanel();}
+    if(!C.cur&&C.i<C.total&&C.clock>=C.next&&!S.targets.some(t=>t.state!=='gone'&&!t.hit)){
+      if(C.res.length>C.i)C.i=C.res.length;
+      if(C.i<C.total){const cand=S.bushes.filter(b=>b.d>=300&&b.d<=500&&!b.used),bu=cand[Math.floor(wr()*cand.length)]||S.bushes[0];bu.used=1;
+        const t=mkT(bu.x+(wr()<.5?-1:1)*bu.r*.55,'bas',bu.d+1.2);t.state='up';t.up=1;t.ghillie=1;S.targets.push(t);
+        C.cur={d:t.d,left:90,gl:1.5+wr()*2,glint:0,tg:t};kpanel();if(G3)rebuild3D();}
+    }
+    if(C.res.length>=C.total&&!S.shots.some(s=>s.pending))finish();
+  }else if(S.mode==='gecegorus'&&S.gg){
+    const P=S.gg;P.clock+=dt;
+    const gone=tickTargets(dt,now);gone.forEach(t=>{if(t.timeout&&!t.hit){P.missed++;toast('Hedef indi',650);}});
+    if(P.spawned<P.total&&!S.targets.length&&P.clock>=P.next){
+      const type=wr()<.6?'gogus':'diz',d=[50,75,100,150,200][Math.floor(wr()*5)],t=mkT(((wr()*2-1)*20)*d/1000,type,d);
+      t.up=0;t.state='rising';t.dur=(6+wr()*2)*DIFF[OPT.diff].pop;S.targets.push(t);P.spawned++;P.next=P.clock+1.2+wr()*1.4;if(G3)rebuild3D();
+    }
+    if(P.spawned>=P.total&&!S.targets.length&&!S.shots.some(s=>s.pending))finish();
   }else tickTargets(dt,now);
+}
+function makeBushes(){
+  S.bushes=[];
+  for(let i=0;i<46;i++){const d=150+Math.floor(wr()*380),ang=(wr()*2-1)*42;S.bushes.push({x:ang*d/1000,d,r:.6+wr()*1.1,h:.7+wr()*.9,c:wr()});}
+  S.bushes.sort((a,b)=>b.d-a.d);
 }
 function spawnPop(i){
   const P=S.pop,types=['gogus','gogus','diz','diz','boy','bas'],ds=[50,75,100,150,200,250,300];
@@ -1328,6 +1474,9 @@ function hud(){
   if(S.mode==='hata')sc=S.quiz?`${S.quiz.score} doğru`:'Başlamadı';
   else if(S.mode==='popup')sc=S.pop?`Hedef ${S.pop.spawned}/12 · ${S.pop.hits} vuruş`:'Başlamadı';
   else if(S.mode==='hareket')sc=S.mv?`Geçiş ${S.mv.pass}/8 · ${S.mv.hits} vuruş`:'Başlamadı';
+  else if(S.mode==='egim')sc=S.eg?`Hedef ${Math.min(S.eg.i+(S.eg.cur?1:0),5)}/5 · ${S.eg.hits} vuruş`:'Başlamadı';
+  else if(S.mode==='karsi')sc=S.cs?`Nişancı ${Math.min(S.cs.res.length+(S.cs.cur?1:0),3)}/3 · ${S.cs.hits} bulundu`:'Başlamadı';
+  else if(S.mode==='gecegorus')sc=S.gg?`Hedef ${S.gg.spawned}/8 · ${S.gg.hits} vuruş`:'Başlamadı';
   else if(S.mode==='keskin')sc=S.ks?`Hedef ${Math.min(S.ks.i+(S.ks.cur?1:0),5)}/5 · ${S.ks.hits} vuruş`:'Başlamadı';
   else if(S.targets[0]&&S.targets[0].type==='kagit'){const g=group(done);sc=`Atış ${n}/3`+(n>=2?` · grup ${g.d.toFixed(1)} cm`:'');}
   else if(S.mode==='serbest'||S.mode==='duello'||S.mode==='tabanca'){const tot=done.reduce((a,s)=>a+s.sc,0)+(S.mode==='tabanca'&&S.phase?S.p1||0:0),lim=limitFor(S.mode);sc=`${n}/${lim} · ${tot} puan`+(ls?` · son ${ls.tg?ls.sc:'ıska'}`:'');}
@@ -1353,15 +1502,17 @@ const FLAG={d:90,x:-2.2,h:4};
 function dFarNow(){return Math.max(S.dist,S.mode==='popup'?300:0,S.mode==='hareket'?200:0,S.mode==='keskin'?800:0,...S.targets.map(t=>t.d));}
 function render(now){
   if(!W)resize();
-  const P=POS[S.pos],e=P.eye,R=R_();
+  const P=POS[S.pos],e=P.eye+(S.E||0),R=R_();
   ctx.setTransform(dpr,0,0,dpr,0,0);
   const p=pxm(),CY=VCY(),VR=Math.min(W,VH());
   const shx=(rnd()-.5)*S.flash*R.kick,shy=(rnd()-.5)*S.flash*R.kick;
   const camX=S.aimX+swX+S.recX,camY=S.aimY+swY+S.recY;
   const X=x=>W/2+(x-camX)*p+shx,Y=y=>CY+(y-camY)*p+shy;
   const dFar=dFarNow();
-  const use3=!!(G3&&OPT.d3);
-  if(use3){ctx.clearRect(0,0,W,H);render3D(camX-shx/p,camY-shy/p,p,CY,now,dFar);}
+  const therm=S.sensor==='termal'||S.sensor==='termalB';
+  const use3=!!(G3&&OPT.d3)&&!therm;
+  if(therm){renderThermal(X,Y,p,e,now,dFar);}
+  else if(use3){ctx.clearRect(0,0,W,H);render3D(camX-shx/p,camY-shy/p,p,CY,now,dFar);}
   else{
   const hy=Y(0);
   let g=ctx.createLinearGradient(0,hy-VR*1.3,0,hy);g.addColorStop(0,'#6d95bb');g.addColorStop(.65,'#b7cbd5');g.addColorStop(1,'#e2e7de');
@@ -1377,7 +1528,7 @@ function render(now){
   for(let qx=-30;qx<W+30;qx+=step){const wx=Math.floor((qx-W/2)/p+camX);ctx.lineTo(qx,hy-trees[((wx%220)+220)%220]*p*1.3);}
   ctx.lineTo(W+30,hy+1);ctx.fill();
   g=ctx.createLinearGradient(0,hy,0,hy+VR);g.addColorStop(0,'#a4a77b');g.addColorStop(.18,'#879155');g.addColorStop(1,'#4e592b');
-  ctx.fillStyle=g;ctx.fillRect(-30,hy,W+60,H+60);
+  ctx.fillStyle=g;ctx.fillRect(-30,hy,W+60,Math.max(H+60,H-hy+60));
   for(let dd=25;dd<=Math.min(860,dFar+50);dd+=25){const y=Y(e*1000/dd);ctx.fillStyle=`rgba(45,55,22,${.28*(1-dd/900)})`;ctx.fillRect(-30,y,W+60,Math.max(1,p*e*1000/dd*.012));}
   ctx.strokeStyle='rgba(235,231,214,.2)';ctx.lineWidth=1.2;
   const ds=[3,5,8,12,20,35,60,100,160,250,350,dFar+8];
@@ -1385,26 +1536,30 @@ function render(now){
   const db=dFar+8,gyB=Y(e*1000/db),topB=Y((e-3)*1000/db);
   g=ctx.createLinearGradient(0,topB,0,gyB);g.addColorStop(0,'#9c845a');g.addColorStop(1,'#77623f');
   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(X(-90*1000/db),gyB);ctx.bezierCurveTo(X(-55*1000/db),topB,X(55*1000/db),topB,X(90*1000/db),gyB);ctx.fill();
-  if(S.mode!=='keskin')for(let dd=50;dd<=dFar+1;dd+=50){const pm=p*1000/dd,bx=X(6*1000/dd),by=Y(e*1000/dd),bw=.7*pm,bh=.45*pm;if(bw<4||bx<-50||bx>W+50)continue;
+  if(!['keskin','egim','karsi'].includes(S.mode))for(let dd=50;dd<=dFar+1;dd+=50){const pm=p*1000/dd,bx=X(6*1000/dd),by=Y(e*1000/dd),bw=.7*pm,bh=.45*pm;if(bw<4||bx<-50||bx>W+50)continue;
     ctx.fillStyle='#3a3f2a';ctx.fillRect(bx-Math.max(1,.04*pm)/2,by-.9*pm,Math.max(1,.04*pm),.9*pm);
     ctx.fillStyle='#f2d24a';ctx.fillRect(bx-bw/2,by-.9*pm-bh,bw,bh);
     if(bw>16){ctx.fillStyle='#1b1c16';ctx.font=`800 ${bh*.62}px "Saira Condensed","Arial Narrow",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(dd,bx,by-.9*pm-bh/2);}}
   if(S.mode==='hareket')for(const dd of [100,150,200]){const y=Y(e*1000/dd);ctx.fillStyle='rgba(60,50,35,.7)';ctx.fillRect(X(-dd*.03*1000/dd),y-1,(dd*.06*1000/dd)*p,Math.max(1.5,p*1000/dd*.05));}
   drawFlag(X,Y,p,e,now);
+  for(const tg of S.targets)if(tg.h0>1){const cy=Y(Math.atan((e-tg.h0*1.35)/(tg.d*1.35))*1000);const g2=ctx.createLinearGradient(0,cy,0,H);g2.addColorStop(0,'#8a8f5c');g2.addColorStop(.25,'#7a7f4c');g2.addColorStop(1,'#565c30');ctx.fillStyle=g2;ctx.fillRect(-30,cy,W+60,H+60);ctx.fillStyle='rgba(60,70,30,.4)';for(let i=0;i<40;i++){const rx=(i*97.3%W),ry=cy+((i*53.1)%Math.max(10,H-cy));ctx.fillRect(rx,ry,6,2);}}
   const list=[];
-  if(S.targets.length===1&&!['popup','hareket','keskin'].includes(S.mode)){const t0=S.targets[0];[-4,4].forEach(o=>list.push({x:o,d:t0.d,type:t0.type,up:1,wob:0,deco:1}));}
+  if(S.targets.length===1&&!MULTI.includes(S.mode)){const t0=S.targets[0];[-4,4].forEach(o=>list.push({x:o,d:t0.d,type:t0.type,up:1,wob:0,deco:1}));}
   S.targets.forEach(tg=>list.push(tg));
+  (S.bushes||[]).forEach(b=>list.push({bush:b,d:b.d}));
   list.sort((a,b)=>b.d-a.d);
-  for(const tg of list){const pm=p*1000/tg.d;drawTarget(ctx,X(tX(tg)),Y(tY(tg)),pm,tg.type,tg.deco?[]:holesFor(tg),{up:tg.up,wob:tg.wob*Math.sin(now/1000*30)});}
+  for(const tg of list){if(tg.bush){drawBush2D(X,Y,p,e,tg.bush);continue;}const pm=p*1000/tg.d;drawTarget(ctx,X(tX(tg)),Y(tY(tg)),pm,tg.type,tg.deco?[]:holesFor(tg),{up:tg.up,wob:tg.wob*Math.sin(now/1000*30),ghillie:tg.ghillie});}
   }
   // ortak katman
-  if(use3){for(const tg of S.targets){for(const h of holesFor(tg)){if(h.old||h.age>=2)continue;const hx=X((tg.x+h.x)*1000/tg.d),hy2=Y(tY(tg)+h.y*1000/tg.d),r=Math.max(3,R.hole*p*1000/tg.d/2);
+  if(S.sensor==='ggc'&&!use3){ctx.save();ctx.globalCompositeOperation='saturation';ctx.fillStyle='#808080';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='multiply';ctx.fillStyle='#7fe07f';ctx.fillRect(0,0,W,H);ctx.restore();}
+  if(S.mode==='karsi'&&S.cs&&S.cs.cur&&now-S.cs.cur.glint<260){const tg=S.cs.cur.tg,gx=X(tX(tg)),gy=Y(tY(tg)-.06*1000/tg.d),a=1-(now-S.cs.cur.glint)/260;ctx.save();ctx.globalCompositeOperation='lighter';const rr=7+p*.4,gg=ctx.createRadialGradient(gx,gy,0,gx,gy,rr*2);gg.addColorStop(0,`rgba(255,255,240,${a})`);gg.addColorStop(1,'rgba(255,255,240,0)');ctx.fillStyle=gg;ctx.fillRect(gx-rr*2,gy-rr*2,rr*4,rr*4);ctx.strokeStyle=`rgba(255,255,255,${a})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(gx-rr*2,gy);ctx.lineTo(gx+rr*2,gy);ctx.moveTo(gx,gy-rr*2);ctx.lineTo(gx,gy+rr*2);ctx.stroke();ctx.restore();}
+  if(use3){for(const tg of S.targets){const kk=tK(tg);for(const h of holesFor(tg)){if(h.old||h.age>=2)continue;const hx=X((tg.x+h.x)/kk.kx),hy2=Y(tY(tg)+h.y/kk.ky),r=Math.max(3,R.hole*p*1000/tg.d/2);
     ctx.strokeStyle=`rgba(239,125,45,${1-h.age/2})`;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(hx,hy2,r+3+h.age*10,0,Math.PI*2);ctx.stroke();}}}
   for(const q of S.puffs){const a=1-q.t;ctx.fillStyle=`rgba(150,125,90,${a*.7})`;ctx.beginPath();ctx.arc(X(q.x+q.vx*q.t*3),Y(q.y+q.vy*q.t*3),(2+q.t*10)*(p/6)*(150/Math.max(40,q.d)),0,Math.PI*2);ctx.fill();}
   for(const k of S.marks){const a=1-(now-k.t)/1800,x=X(k.x),y=Y(k.y),r=7;ctx.strokeStyle=`rgba(224,88,79,${a})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.stroke();}
-  if(S.night){
+  if(S.night&&!S.sensor){
     ctx.fillStyle='rgba(4,7,14,.93)';ctx.fillRect(-30,-30,W+60,H+60);
-    const t0=S.targets[0],on=S.started&&!S.done&&((now-S.tShoot)/1000%6)<1;
+    const t0=S.mode==='gece'?S.targets[0]:null,on=S.started&&!S.done&&((now-S.tShoot)/1000%6)<1;
     if(t0&&on){const pm=p*1000/t0.d,lx=X(tX(t0)),ly=Y(tY(t0)-.12*1000/t0.d);
       ctx.globalAlpha=.32;drawTarget(ctx,X(tX(t0)),Y(tY(t0)),pm,t0.type,holesFor(t0),{});ctx.globalAlpha=1;
       ctx.globalCompositeOperation='lighter';const rr=Math.max(26,pm*.7),lg=ctx.createRadialGradient(lx,ly,0,lx,ly,rr);
@@ -1420,8 +1575,9 @@ function render(now){
   ctx.save();ctx.translate(0,lower);
   if(S.sight==='optic')drawScope(p);else drawIron(R.iron,qv?{x:qv.ox,y:qv.oy}:sightOff(),qv?qv.cant:S.cant);
   ctx.restore();
-  if(S.flash>0){ctx.fillStyle=S.night?`rgba(255,200,130,${S.flash*.55})`:`rgba(255,190,110,${S.flash*.26})`;ctx.fillRect(0,0,W,H);}
-  if(['popup','hareket','keskin'].includes(S.mode))for(const tg of S.targets){if(tg.state!=='up'&&tg.state!=='rising')continue;
+  if(S.sensor){sensorFx(now);}
+  if(S.flash>0){ctx.fillStyle=S.sensor==='ggc'?`rgba(200,255,200,${S.flash*.8})`:S.night?`rgba(255,200,130,${S.flash*.55})`:`rgba(255,190,110,${S.flash*.26})`;ctx.fillRect(0,0,W,H);}
+  if(['popup','hareket','keskin','egim','gecegorus'].includes(S.mode)&&!(S.mode==='gecegorus'&&!S.sensor))for(const tg of S.targets){if(tg.state!=='up'&&tg.state!=='rising')continue;
     const px=X(tX(tg)),py=Y(tY(tg));if(px>14&&px<W-14&&py>14&&py<H-14)continue;
     const ex=clamp(px,22,W-22),ey=clamp(py,22,H-22),a=Math.atan2(py-ey,px-ex),pul=.6+.4*Math.sin(now/120);
     ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.fillStyle=`rgba(239,125,45,${pul})`;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-8,-10);ctx.lineTo(-3,0);ctx.lineTo(-8,10);ctx.closePath();ctx.fill();ctx.restore();}
@@ -1456,10 +1612,11 @@ function drawTarget(c,x,y,pm,type,holes,o){
   if(PATHS[type]){
     const k=pm/100,A=TG[type].aim;
     if(!o.card){c.fillStyle='#6b5a3b';const lw=Math.max(1,3*k);c.fillRect(-16.5*k,A*k,lw,25*k);c.fillRect(13.5*k,A*k,lw,25*k);}
-    c.save();c.scale(k,k);c.fillStyle='#6f7b4b';c.fill(PATHS[type]);c.clip(PATHS[type]);
-    if(pm>8)for(const b of CAMO[type]){c.fillStyle=b.c;c.beginPath();c.ellipse(b.x,b.y,b.rx,b.ry,b.a,0,Math.PI*2);c.fill();}
+    if(o.hot){c.save();c.scale(k,k);c.shadowColor=o.hot==='B'?'#000':'#fff';c.shadowBlur=14;c.fillStyle=o.hot==='B'?'#0a0a0a':'#f4f4f4';c.fill(PATHS[type]);c.restore();c.restore();return;}
+    c.save();c.scale(k,k);c.fillStyle=o.ghillie?'#4c5135':'#6f7b4b';c.fill(PATHS[type]);c.clip(PATHS[type]);
+    if(pm>8)for(const b of CAMO[type]){c.fillStyle=o.ghillie?(b.c==='#cfc8b1'?'#6b6440':b.c==='#5e5c7a'?'#3d4228':b.c):b.c;c.beginPath();c.ellipse(b.x,b.y,b.rx,b.ry,b.a,0,Math.PI*2);c.fill();}
     c.restore();
-    c.save();c.scale(k,k);c.lineWidth=(o.tex?2:1)/k;c.strokeStyle='#2d3320';c.stroke(PATHS[type]);c.restore();
+    if(!o.ghillie){c.save();c.scale(k,k);c.lineWidth=(o.tex?2:1)/k;c.strokeStyle='#2d3320';c.stroke(PATHS[type]);c.restore();}
   }else if(type==='halka'){
     if(!o.card){c.fillStyle='#6b5a3b';c.fillRect(-.36*pm,.4*pm,Math.max(1,.04*pm),.6*pm);c.fillRect(.32*pm,.4*pm,Math.max(1,.04*pm),.6*pm);}
     c.fillStyle='#e9e4d0';c.fillRect(-.4*pm,-.4*pm,.8*pm,.8*pm);
@@ -1668,7 +1825,7 @@ function drawT3(grp,force){
   if(!force&&n===u.n)return;u.n=n;
   const c=u.cvs.getContext('2d'),info=u.info;
   c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,u.cvs.width,u.cvs.height);
-  drawTarget(c,u.cvs.width/2,info.aimY*info.ppm,info.ppm,u.tg.type,holes,{card:true,tex:true});
+  drawTarget(c,u.cvs.width/2,info.aimY*info.ppm,info.ppm,u.tg.type,holes,{card:true,tex:true,ghillie:u.tg.ghillie});
   u.tex.needsUpdate=true;
 }
 function rebuild3D(){
@@ -1684,6 +1841,11 @@ function rebuild3D(){
   G3.trees3.instanceMatrix.needsUpdate=true;
   G3.boards.forEach(b=>{b.g.visible=S.mode!=='keskin'&&b.d<=dFar+1;});
   G3.rails.forEach(r=>{r.visible=S.mode==='hareket';});
+  (G3.extra||[]).forEach(m=>G3.sc.remove(m));G3.extra=[];
+  const T3=THREE;
+  for(const tg of S.targets)if(tg.h0>1){const m=new T3.Mesh(new T3.ConeGeometry(tg.d*1.345,tg.h0*1.35,40),new T3.MeshLambertMaterial({color:0x838a55,flatShading:true}));m.position.set(tg.x,tg.h0*1.35/2,-tg.d*1.35);m.receiveShadow=true;G3.sc.add(m);G3.extra.push(m);}
+  if(S.bushes&&S.bushes.length){const bm=[new T3.MeshLambertMaterial({color:0x4f5a33,flatShading:true}),new T3.MeshLambertMaterial({color:0x5d6238,flatShading:true}),new T3.MeshLambertMaterial({color:0x3f4a2a,flatShading:true})];
+    for(const b of S.bushes){const m=new T3.Mesh(new T3.IcosahedronGeometry(b.r,1),bm[Math.floor(b.c*3)]);m.scale.set(1.3,b.h/b.r,1);m.position.set(b.x,b.h*.5,-b.d);m.castShadow=true;G3.sc.add(m);G3.extra.push(m);}}
 }
 function render3D(camX,camY,p,CY,now,dFar){
   const G=G3,r=G.r,cam=G.cam;
@@ -1692,8 +1854,8 @@ function render3D(camX,camY,p,CY,now,dFar){
   const alive=new Set(S.targets);
   for(const [tg,g] of G.objs)if(!alive.has(tg)){G.sc.remove(g);G.objs.delete(tg);}
   for(const tg of S.targets){let g=G.objs.get(tg);if(!g){g=makeT3(tg,false);G.objs.set(tg,g);}
-    drawT3(g,false);
-    g.position.set(tg.x,0,-tg.d);
+    drawT3(g,false);if(g.userData.ghillie!==!!tg.ghillie){g.userData.ghillie=!!tg.ghillie;drawT3(g,true);}
+    g.position.set(tg.x,tg.h0||0,-tg.d);
     g.rotation.x=-(1-(tg.up==null?1:tg.up))*Math.PI/2*.97;
     g.rotation.z=tg.wob*Math.sin(now/1000*30)*.07;
     g.visible=tg.state!=='gone';}
@@ -1709,11 +1871,11 @@ function render3D(camX,camY,p,CY,now,dFar){
   for(const c of G.clouds){c.position.x+=(wl*1.4+.5)*.016;if(c.position.x>1800)c.position.x=-1800;if(c.position.x<-1800)c.position.x=1800;}
   // güneş gölgesi hedef bölgesine
   const ref=S.targets[0]||{x:0,d:S.dist};
-  G.sun.position.set(ref.x-22,40,-ref.d+18);G.sun.target.position.set(ref.x,0,-ref.d);
+  G.sun.position.set(ref.x-22,40+(ref.h0||0),-ref.d+18);G.sun.target.position.set(ref.x,ref.h0||0,-ref.d);
   // kamera
   const f=p*1000,Hf=2*Math.max(CY,H-CY),offY=Hf/2-CY;
   cam.aspect=W/Hf;cam.fov=2*Math.atan(Hf/2/f)*180/Math.PI;cam.setViewOffset(W,Hf,0,offY,W,H);cam.updateProjectionMatrix();
-  cam.position.set(0,eye(),0);cam.rotation.y=-camX/1000;cam.rotation.x=-camY/1000;
+  cam.position.set(0,eye()+(S.E||0),0);cam.rotation.y=-camX/1000;cam.rotation.x=-camY/1000;
   r.render(G.sc,cam);
 }
 
@@ -1855,6 +2017,269 @@ function quizEnd(){
     buttons:[{label:'Tekrar',primary:true,fn:()=>{$('modal').hidden=true;quizStart();}},{label:'Menü',fn:openMenu}]},{mode:'hata',v:sc,t:sc+'/10',hits:0,ok:sc>=7,rec:nb});
 }
 
+// ================= EĞİTİM PROGRAMI =================
+const QPASS={emniyet:7,tanima:6,ruzgar:5,milyem:5,egim:4,mekanik:1};
+const EDU=[
+  {id:'m1',n:'1. Temel bilgiler',items:[
+    {id:'d_emniyet',type:'ders',t:'Atış emniyeti'},
+    {id:'q_emniyet',type:'quiz',bank:'emniyet',t:'Emniyet sınavı',req:'en az 7/8'},
+    {id:'q_tanima',type:'quiz',bank:'tanima',t:'Silah tanıma sınavı',req:'en az 6/8'},
+    {id:'mekanik',type:'mekanik',bank:'mekanik',t:'Sökme ve takma',req:'en çok 2 hata'}]},
+  {id:'m2',n:'2. Nişancılık esasları',items:[
+    {id:'d_nisan',type:'ders',t:'Doğru nişan alma'},
+    {id:'hata',type:'mode',mode:'hata',t:'Nişan hataları istasyonu',req:'en az 7/10',ok:r=>r.v>=7},
+    {id:'d_hakimiyet',type:'ders',t:'Tüfeğe hâkimiyet ve tetik'},
+    {id:'ogretim',type:'mode',mode:'ogretim',t:'1 · Öğretim atışı',req:"3 cm'lik grup",ok:r=>r.ok}]},
+  {id:'m3',n:'3. Sıfırlama ve mesafe',items:[
+    {id:'d_sifir',type:'ders',t:'Sıfırlama ve gez ayarı'},
+    {id:'sifirlama',type:'mode',mode:'sifirlama',t:'2 · Test ve sıfırlama',req:'görevi tamamla',ok:r=>r.ok},
+    {id:'s100',type:'mode',mode:'serbest',cfg:{target:'gogus',dist:100,pos:'prone',sup:'rest'},t:'100 m göğüs · yatarak destekli',req:'en az 60 puan',ok:r=>r.v>=60},
+    {id:'s300',type:'mode',mode:'serbest',cfg:{target:'diz',dist:300,pos:'prone',sup:'free'},t:'300 m diz · yatarak desteksiz',req:'en az 50 puan',ok:r=>r.v>=50}]},
+  {id:'m4',n:'4. Atış duruşları',items:[
+    {id:'d_durus',type:'ders',t:'Nişan vaziyetleri'},
+    {id:'s_diz',type:'mode',mode:'serbest',cfg:{target:'gogus',dist:100,pos:'kneel',sup:'free'},t:'100 m göğüs · diz çökerek',req:'en az 50 puan',ok:r=>r.v>=50},
+    {id:'s_ayakta',type:'mode',mode:'serbest',cfg:{target:'gogus',dist:100,pos:'stand',sup:'free'},t:'100 m göğüs · ayakta',req:'en az 40 puan',ok:r=>r.v>=40},
+    {id:'s_ayaktaD',type:'mode',mode:'serbest',cfg:{target:'gogus',dist:100,pos:'stand',sup:'rest'},t:'100 m göğüs · ayakta destekli',req:'en az 60 puan',ok:r=>r.v>=60}]},
+  {id:'m5',n:'5. Muharebe atışları',items:[
+    {id:'guc',type:'mode',mode:'guc',t:'3 · Güç kazandırma',req:'en az 1 vuruş',ok:r=>r.ok},
+    {id:'dayan',type:'mode',mode:'dayan',t:'3 · Dayanıklılık',req:'en az 1 vuruş',ok:r=>r.ok},
+    {id:'popup',type:'mode',mode:'popup',t:'Muharebe atışı',req:'en az 60 puan',ok:r=>r.v>=60},
+    {id:'hareket',type:'mode',mode:'hareket',t:'Hareketli hedef',req:'en az 4/8',ok:r=>r.hits>=4}]},
+  {id:'m6',n:'6. Gece atışları',items:[
+    {id:'d_gece',type:'ders',t:'Gece görme ve gece cihazları'},
+    {id:'gece',type:'mode',mode:'gece',t:'4 · Tek er gece atışı',req:'en az 1 vuruş',ok:r=>r.ok},
+    {id:'gecegorus',type:'mode',mode:'gecegorus',t:'Gece görüş ve termal',req:'en az 5/8',ok:r=>r.hits>=5}]},
+  {id:'m7',n:'7. Tabanca',items:[
+    {id:'d_tabanca',type:'ders',t:'Tabancayla atış'},
+    {id:'tabanca',type:'mode',mode:'tabanca',t:'Tabanca atışı',req:'en az 60 puan',ok:r=>r.v>=60}]},
+  {id:'m8',n:'8. Keskin nişancı kursu',items:[
+    {id:'d_ruzgar',type:'ders',t:'Rüzgârı okumak'},
+    {id:'q_ruzgar',type:'quiz',bank:'ruzgar',t:'Rüzgâr okuma sınavı',req:'en az 5/6'},
+    {id:'d_milyem',type:'ders',t:'Milyemle mesafe tahmini'},
+    {id:'q_milyem',type:'quiz',bank:'milyem',t:'Milyem ve mesafe sınavı',req:'en az 5/6'},
+    {id:'keskin',type:'mode',mode:'keskin',t:'Keskin nişancı',req:'en az 3/5',ok:r=>r.hits>=3},
+    {id:'d_egim',type:'ders',t:'Eğimli atış'},
+    {id:'q_egim',type:'quiz',bank:'egim',t:'Eğim hesabı sınavı',req:'en az 4/5'},
+    {id:'egim',type:'mode',mode:'egim',t:'Eğimli atış',req:'en az 3/5',ok:r=>r.hits>=3},
+    {id:'karsi',type:'mode',mode:'karsi',t:'Karşı keskin nişancı',req:'en az 2/3',ok:r=>r.hits>=2}]}
+];
+const EDU_FLAT=EDU.flatMap(m=>m.items.map(it=>Object.assign(it,{mod:m.id})));
+const eduAllDone=()=>EDU_FLAT.every(it=>ST.edu&&ST.edu[it.id]);
+function eduNext(id){const i=EDU_FLAT.findIndex(x=>x.id===id);return EDU_FLAT.slice(i+1).find(x=>!ST.edu[x.id])||null;}
+function eduFirstOpen(){return EDU_FLAT.find(x=>!ST.edu[x.id])||null;}
+function eduDone(it,lines){
+  if(!ST.edu[it.id]){ST.edu[it.id]=Date.now();ST.xp=(ST.xp||0)+40;}
+  const m=EDU.find(x=>x.id===it.mod);if(m&&m.items.every(x=>ST.edu[x.id])&&!ST.edu['mod_'+m.id]){ST.edu['mod_'+m.id]=Date.now();ST.xp+=150;if(lines)lines.push(m.n+' modülü tamamlandı · +150 XP');setTimeout(()=>{fanfare();say(m.n.replace(/^\d+\.\s*/,'')+' modülü tamamlandı.');},800);}
+  for(const b of BADGES){if(!ST.badges[b.k]&&(b.k==='ogrenci'||b.k==='mezun')){try{if(b.c({})){ST.badges[b.k]=Date.now();if(lines)lines.push('Yeni rozet: '+b.n);}}catch(e){}}}
+  saveST();
+}
+function eduCheck(res,lines){
+  const it=S.edu;if(!it||it.type!=='mode'||it.mode!==S.mode)return null;
+  if(it.cfg&&(S.target!==it.cfg.target||S.dist!==it.cfg.dist||S.pos!==it.cfg.pos||S.sup!==it.cfg.sup)){lines.push('Eğitim şartlarına uymayan seri; ayarlar değiştirildi.');return null;}
+  if(it.ok(res)){eduDone(it,lines);lines.push('Eğitim: '+it.t+' tamamlandı');const nx=eduNext(it.id);return nx?{label:'Sonraki: '+(nx.type==='ders'?'ders':nx.type==='quiz'?'sınav':'uygulama'),primary:true,fn:()=>startEdu(nx)}:{label:'Eğitim tamam',primary:true,fn:openMenu};}
+  lines.push('Eğitim şartı: '+it.req+'. Tekrar dene.');
+  return {label:'Tekrar dene',primary:true,fn:()=>startEdu(it)};
+}
+function buildEdu(){
+  const box=$('eduBox');if(!box)return;
+  const total=EDU_FLAT.length,done=EDU_FLAT.filter(x=>ST.edu[x.id]).length,nx=eduFirstOpen();
+  box.innerHTML=`<div class="eduhead"><div><span class="lbl">İlerleme</span><b>${done}/${total} adım</b><div class="xpbar"><i style="width:${Math.round(done/total*100)}%"></i></div></div>${nx?`<button class="primary" id="eduGo">${done?'Devam et':'Başla'}</button>`:'<span class="okc small">Eğitim tamamlandı</span>'}</div>`+
+    EDU.map(m=>{const md=m.items.filter(x=>ST.edu[x.id]).length,open=nx&&nx.mod===m.id;return `<details class="emod" ${open?'open':''}><summary><span>${m.n}</span><span class="small ${md===m.items.length?'okc':'muted'}">${md}/${m.items.length}</span></summary><div class="eitems">${m.items.map(it=>`<button class="eitem ${ST.edu[it.id]?'ok':''} ${nx&&nx.id===it.id?'next':''}" data-id="${it.id}"><span class="ek">${it.type==='ders'?'Ders':it.type==='quiz'?'Sınav':it.type==='mekanik'?'Alıştırma':'Uygulama'}</span><span class="et">${it.t}</span><span class="er">${ST.edu[it.id]?'✓':it.req||'oku'}</span></button>`).join('')}</div></details>`;}).join('');
+  const go=$('eduGo');if(go)go.addEventListener('click',()=>startEdu(eduFirstOpen()));
+  box.querySelectorAll('.eitem').forEach(b=>b.addEventListener('click',()=>startEdu(EDU_FLAT.find(x=>x.id===b.dataset.id))));
+}
+function startEdu(it){
+  if(!it)return;click(1400,.03,.12);
+  if(it.type==='ders'){showLesson(it);return;}
+  if(it.type==='quiz'){startQuiz(it.bank,it);return;}
+  if(it.type==='mekanik'){startMekanik(it);return;}
+  closeMenu();
+  if(it.cfg){S.mode='serbest';S.challenge=null;S.duel=null;if(isPistol(S.rifle)||RIFLES[S.rifle].cls!=='tufek')S.rifle='mpt76';Object.assign(S,{target:it.cfg.target,dist:it.cfg.dist,pos:it.cfg.pos,sup:it.cfg.sup});S.gez=it.cfg.dist>=100?gezFor(it.cfg.dist):S.gez;if(R_().scopeOnly||R_().noScope)S.sight='iron';setup(true);S.edu=it;
+    modal({eye:'Eğitim · uygulama',title:it.t,intro:`Şart: ${it.req}. ${POS[it.cfg.pos].name}, ${it.cfg.sup==='rest'?'destekli':'desteksiz'}, ${TG[it.cfg.target].name.toLowerCase()} ${it.cfg.dist} m. Ayarları değiştirme; değiştirirsen seri eğitime sayılmaz.`,notes:[LESSON_TIP[it.id]||'Arpacığı gezin ortasında tut, tetiği yavaşça düşür.'],buttons:[{label:'Başla',primary:true,fn:()=>{$('modal').hidden=true;toast('Ateş serbest',800);say('Ateş serbest!');}},{label:'Menü',fn:openMenu}]});
+    return;}
+  startMode(it.mode);S.edu=it;
+}
+const LESSON_TIP={s100:'Destekli yatarak en sabit duruştur. Grubun sıkı olmasına odaklan.',s300:'300 m\'de gez 300\'e bağlı. Rüzgârı bayraktan oku ve pay ver.',s_diz:'Sol dirsek sol dizin hemen önüne, kemik kemiğe yaslanır.',s_ayakta:'Ayakta salınım büyüktür; namlu hedefin üzerinden geçerken değil, ağırlaşıp durduğu anda tetiği düşür.',s_ayaktaD:'Destek sağlamken salınım çok azalır; siperi, duvarı, ağacı kullan.'};
+// ---------- dersler ----------
+const SV={
+  nisan:`<svg viewBox="0 0 220 120" class="dg"><circle cx="60" cy="60" r="44" fill="none" stroke="#a6a38c" stroke-width="10"/><circle cx="60" cy="62" r="20" fill="none" stroke="#16170f" stroke-width="3"/><rect x="58" y="60" width="4" height="40" fill="#16170f"/><path d="M48 44 a12 12 0 0 1 24 0 v6 h10 v20 h-44 v-20 h10z" fill="#6f7b4b" opacity=".85"/><circle cx="60" cy="60" r="2" fill="#ef7d2d"/><text x="118" y="30" class="dt">Gez yuvarlağı</text><text x="118" y="56" class="dt">Arpacık ortada,</text><text x="118" y="70" class="dt">ucu nişan noktasında</text><text x="118" y="96" class="dt">Hedef hafif bulanık</text></svg>`,
+  hata:`<svg viewBox="0 0 220 110" class="dg"><circle cx="45" cy="50" r="32" fill="none" stroke="#a6a38c" stroke-width="7"/><rect x="58" y="44" width="4" height="34" fill="#e0584f"/><text x="14" y="104" class="dt">Açısal hata</text><circle cx="160" cy="50" r="32" fill="none" stroke="#a6a38c" stroke-width="7"/><rect x="158" y="50" width="4" height="30" fill="#16170f"/><rect x="170" y="22" width="22" height="28" rx="4" fill="#6f7b4b" opacity=".85"/><text x="122" y="104" class="dt">Paralel hata</text></svg>`,
+  saat:`<svg viewBox="0 0 220 130" class="dg"><circle cx="65" cy="65" r="52" fill="none" stroke="#3d4230" stroke-width="2"/><path d="M65 65 L65 13 A52 52 0 0 1 110 39 Z" fill="#e8c25a" opacity=".55"/><path d="M65 65 L110 39 A52 52 0 0 1 110 91 Z" fill="#ef7d2d" opacity=".75"/><path d="M65 65 L110 91 A52 52 0 0 1 65 117 Z" fill="#e8c25a" opacity=".55"/><path d="M65 65 L65 117 A52 52 0 0 1 20 91 Z" fill="#e8c25a" opacity=".55"/><path d="M65 65 L20 91 A52 52 0 0 1 20 39 Z" fill="#ef7d2d" opacity=".75"/><path d="M65 65 L20 39 A52 52 0 0 1 65 13 Z" fill="#e8c25a" opacity=".55"/><text x="60" y="10" class="dt">12</text><text x="114" y="69" class="dt">3</text><text x="60" y="128" class="dt">6</text><text x="6" y="69" class="dt">9</text><text x="136" y="40" class="dt"><tspan fill="#ef7d2d">■</tspan> tam tesirli</text><text x="136" y="60" class="dt"><tspan fill="#e8c25a">■</tspan> yarım tesirli</text><text x="136" y="80" class="dt">beyaz: tesirsiz</text></svg>`,
+  milyem:`<svg viewBox="0 0 220 120" class="dg"><line x1="10" y1="60" x2="130" y2="60" stroke="#ebe7d6"/><line x1="70" y1="5" x2="70" y2="115" stroke="#ebe7d6"/>${[1,2,3,4].map(i=>`<circle cx="70" cy="${60-i*12}" r="2" fill="#ebe7d6"/><circle cx="70" cy="${60+i*12}" r="2" fill="#ebe7d6"/><circle cx="${70+i*12}" cy="60" r="2" fill="#ebe7d6"/><circle cx="${70-i*12}" cy="60" r="2" fill="#ebe7d6"/>`).join('')}<rect x="76" y="30" width="9" height="30" rx="3" fill="#6f7b4b"/><text x="138" y="40" class="dt">Boy hedefi</text><text x="138" y="54" class="dt">2,5 milyem</text><text x="138" y="78" class="dt">1500 ÷ 2,5</text><text x="138" y="92" class="dt">= 600 m</text></svg>`,
+  egim:`<svg viewBox="0 0 220 120" class="dg"><path d="M15 105 L175 105 L175 25 Z" fill="none" stroke="#a6a38c" stroke-width="2"/><line x1="15" y1="105" x2="175" y2="25" stroke="#ef7d2d" stroke-width="3"/><text x="70" y="58" class="dt" fill="#ef7d2d">eğik mesafe (lazer)</text><text x="70" y="118" class="dt">yatay mesafe = eğik × cos θ</text><text x="40" y="100" class="dt">θ</text><rect x="171" y="12" width="8" height="14" fill="#6f7b4b"/></svg>`
+};
+const LESSONS={
+  d_emniyet:{t:'Atış emniyeti',h:`<p>Poligonda kazaların neredeyse tamamı birkaç basit kurala uyulmamasından olur. Bu kurallar her silah ve her atış için geçerlidir.</p><ol><li><b>Her silahı dolu kabul et.</b> Boşalttığını bilsen bile.</li><li><b>Namluyu yalnızca atış istikametine çevir.</b> Vurmak istemediğin hiçbir şeye, bir an bile.</li><li><b>Parmağın tetik dışında, gövdeye paralel dursun.</b> Ancak nişan alıp atışa karar verince tetiğe gider.</li><li><b>Hedefini ve arkasını tanı.</b> Mermi hedefi geçebilir ya da ıskalayabilir.</li><li><b>Atış müdürünün komutlarına uy.</b> "Atış istikametinde kimse var mı?" sorusundan sonra "Ateş serbest!" verilir. "Ateş kes!" duyduğun an ateşi kes ve silahı emniyete al.</li><li><b>Tutuklukta namlu hedef yönünde kalır.</b> Tutukluğu gidermek için silahı başka yöne çevirme.</li><li><b>Atıştan sonra boşalt ve kontrol et.</b> Şarjörü çıkar, fişek yatağına bak, emniyete al.</li></ol>`},
+  d_nisan:{t:'Doğru nişan alma',h:`<p><b>Nişan hattı</b> göz, gez, arpacık ve nişan noktasından geçen düz çizgidir. Doğru nişan resminde arpacık gez yuvarlağının tam ortasındadır ve arpacığın ucu nişan noktasına değer.</p>${SV.nisan}<p><b>Göz arpacığa odaklanır.</b> Göz aynı anda gezi, arpacığı ve hedefi net göremez. Arpacık net, hedef hafif bulanık olmalıdır. Hedefe bakarsan arpacığın gez içindeki küçük kaymalarını fark edemezsin.</p><p><b>Baskın göz:</b> İki gözün açıkken başparmağınla uzak bir noktayı göster, sonra sol gözünü kapat. Başparmak yerinde kalıyorsa sağ gözün baskındır. Tetiği yazı yazdığın elle çek ve o taraftaki gözle nişan al.</p>${SV.hata}<p><b>Açısal hata:</b> Arpacık gezin ortasında değildir. Namlu o yöne bakar ve sapma mesafeyle büyür. Arpacığın gez içinde 1 mm kayması 200 m'de yaklaşık 35 cm sapma yapar.</p><p><b>Paralel hata:</b> Gez ve arpacık doğru hizalıdır ama nişan hattı nişan noktasından kaymıştır. Sapma kayma kadardır, mesafeyle büyümez. Bu yüzden açısal hata çok daha tehlikelidir.</p>`},
+  d_hakimiyet:{t:'Tüfeğe hâkimiyet ve tetik',h:`<p>İnsan vücudu atışı zorlaştırır: kaslar titrer, heyecan ve patlama korkusu refleksler doğurur. Tüfeğe hâkimiyet esasları bunları en aza indirir.</p><ol><li><b>Sağlam duruş:</b> Kemikler taşır, kaslar dinlenir. Kas gerginliği titreme demektir.</li><li><b>Dipçik omuz çukurunda:</b> Her atımda aynı yere, sıkıca.</li><li><b>Kabza kavrama:</b> El ile kabza arasında boşluk kalmaz. İşaret parmağının ikinci boğumu kabzaya değmez.</li><li><b>Kaynak:</b> Yanak dipçiğe her seferinde aynı yerden, fazla bastırmadan dayanır. Göz ile gez arasında yaklaşık 7–8 cm kalır.</li><li><b>Nefes kontrolü:</b> Nefesi rahatça ver ve doğal boşlukta kes. 4–5. saniyede tetik boşluğunu al, 5–9. saniyeler arasında tetiği düşür. 9 saniye geçtiyse yeniden nefes al.</li><li><b>Tetik:</b> Parmak ucunun etli kısmıyla, tam geriye, yavaş ve artan baskıyla çekilir. Atışın ne zaman olacağını bilmemek (sürpriz atış) irkilmeyi önler.</li></ol><p><b>Vuruş deseninden hata okuma:</b> Dikey dağılma genelde nefes kontrolünden, yatay dağılma tetiğe yandan baskıdan ya da ani tetikten olur. Gelişigüzel dağılma ise odak kaybından ve gerginlikten kaynaklanır.</p>`},
+  d_sifir:{t:'Sıfırlama ve gez ayarı',h:`<p>Her atıcı tüfeği biraz farklı tutar ve nişan alır. <b>Sıfırlama</b>, nişangâhı atıcının kendi vuruş noktasına göre ayarlamaktır.</p><ol><li>25 m'den, yatarak destekli, aynı nişan noktasına tek tek 3 atım.</li><li>Vuruşlar 3 cm'lik bir daire içinde toplanmalı. Dağınık grupla sıfırlama yapılmaz; önce atış hatası düzeltilir.</li><li>Grubun merkezi ile nişan noktası arasındaki fark ölçülür ve nişangâh grubu nişan noktasına taşıyacak yönde ayarlanır.</li><li>3 atımla kontrol edilir.</li></ol><p><b>Gez ayarı:</b> Mermi uçarken düşer. Gez hedefin mesafesine bağlanmazsa mermi alçak ya da yüksek vurur. Bu simülatörde tüfeğine göre yaklaşık değerler:</p>${gezTable()}`},
+  d_durus:{t:'Nişan vaziyetleri',h:`<p>Duruş ne kadar alçak ve destekliyse namlu o kadar sakin durur. Arazi, örtü ve düşman durumu hangi duruşun alınacağını belirler.</p><ul><li><b>Yatarak:</b> En sabit duruştur. Vücut hedef hattıyla küçük bir açı yapar, sağ bacak hafifçe karına çekilir. Uzun mesafede ve zaman varken tercih edilir.</li><li><b>Diz çökerek:</b> Yataktan hızlı alınır, yüksek otun ya da alçak bir örtünün üstünden atış sağlar. Sol dirsek sol dizin hemen önüne gelir; kemik kemiğe dayanır.</li><li><b>Ayakta:</b> En az sabit duruştur, hızlı ve yakın atışlar içindir. Mümkünse bir duvar, ağaç ya da siper kenarından destek alınır.</li><li><b>Destekli atış:</b> Kum torbası, siper, sırt çantası ya da bir duvar her duruşta salınımı büyük ölçüde azaltır.</li></ul><p>Simülatörde salınım yatarak en az, ayakta en fazladır; destek her duruşta salınımı yarıya indirir.</p>`},
+  d_gece:{t:'Gece görme ve gece cihazları',h:`<p><b>Karanlığa uyum:</b> Göz karanlığa 20–30 dakikada tam alışır. Beyaz ışığa bir kez bakmak bu uyumu bozar; bu yüzden gece kırmızı ışık kullanılır.</p><p><b>Eksen dışı bakış:</b> Gece bir cisme doğrudan bakınca kaybolabilir. Hemen yanına bakarsan gözün kenar kısmı onu daha iyi görür.</p><p><b>İki göz açık:</b> Gece iki gözünü de açık tutmak görüş alanını ve derinlik algısını artırır.</p><p><b>Gece görüş cihazı (GGC):</b> Ortamdaki az ışığı (ay, yıldız) yükseltir, görüntü yeşildir ve ayrıntı vardır. Tam karanlıkta, yoğun sis ve dumanda zayıflar. Parlak bir ışık (namlu alevi gibi) görüntüyü bir an bozar.</p><p><b>Termal dürbün:</b> Işığa ihtiyaç duymaz, ısıyı görür. İnsan ve sıcak araç çevresinden parlak (beyaz-sıcak) ya da koyu (siyah-sıcak) görünür. Hafif sis ve dumanı geçer ama camın arkasını göremez ve ayrıntı azdır.</p>`},
+  d_tabanca:{t:'Tabancayla atış',h:`<ul><li><b>Kavrama:</b> Atış eli kabzayı yüksekten kavrar, destek eli boşluğu doldurur. İki başparmak öne bakar.</li><li><b>Duruş:</b> Ayaklar omuz genişliğinde, dizler hafif bükük, gövde hafifçe öne.</li><li><b>Nişan resmi:</b> Arpacık gez yuvasının tam ortasında, üst kenarları aynı hizada. Arpacığın iki yanındaki ışık boşlukları eşit.</li><li><b>Tetik:</b> Düz geriye ve kesintisiz çekilir. Tetiği çekerken bileği aşağı kırmak (patlamayı beklemek) tabancada en sık hatadır; sağ elini kullananlarda vuruşlar sol alta toplanır.</li><li><b>Mesafe:</b> Tabancanın kısa nişan hattı yüzünden küçük nişan hataları bile büyür. 25 m'de 1 mm'lik bir kayma birkaç santim sapma yapar.</li></ul>`},
+  d_ruzgar:{t:'Rüzgârı okumak',h:`<p>Uzun mesafede mermiyi en çok etkileyen hava şartı rüzgârdır. Etkisi mesafeyle birlikte hızla büyür; mermi yavaşladıkça rüzgâr onu daha çok iter.</p>${SV.saat}<p><b>Saat yöntemi:</b> Atıcı saatin merkezinde, hedef saat 12 yönündedir.</p><ul><li><b>Tam tesirli:</b> 3 ve 9 yönünden esen rüzgâr.</li><li><b>Yarım tesirli:</b> 1, 2, 4, 5, 7, 8, 10 ve 11 yönlerinden esen rüzgâr.</li><li><b>Tesirsiz:</b> 6 ve 12 yönünden esen rüzgâr.</li></ul><p><b>Yön:</b> Rüzgâr sağdan (saat 3) esiyorsa mermiyi sola iter, sen sağa pay verirsin. Soldan esiyorsa tersi.</p><p><b>Rüzgârı nereden okursun:</b> Bayrak ve rüzgâr tulumu, ağaç ve ot hareketi, toz ve duman, sıcakta dürbünde görülen hava titremesi (miraj).</p>`},
+  d_milyem:{t:'Milyemle mesafe tahmini',h:`<p><b>1 milyem</b>, 1000 m'deki 1 m'lik büyüklüğün gördüğü açıdır. 100 m'de 10 cm, 500 m'de 50 cm eder.</p>${SV.milyem}<p><b>Formül:</b> Mesafe (m) = Hedefin gerçek boyu (m) × 1000 ÷ dürbündeki milyem boyu.</p><ul><li>Boy hedefi 1,5 m: 2 milyem → 750 m, 2,5 → 600 m, 3 → 500 m, 5 → 300 m.</li><li>Göğüs hedefi 0,5 m: 1 milyem → 500 m.</li><li>Diz hedefi 0,76 m: 1,9 milyem → yaklaşık 400 m.</li></ul><p>Ölçerken hedefin bir ucunu bir milyem noktasına oturt, diğer ucun kaçıncı noktaya geldiğini say. Yarım milyemlik ara çizgiler hassasiyeti artırır.</p>`},
+  d_egim:{t:'Eğimli atış',h:`<p>Yerçekimi mermiyi her zaman dikey olarak çeker. Bu yüzden mermi düşüşünü eğik mesafe değil, <b>yatay mesafe</b> belirler.</p>${SV.egim}<p><b>Yatay mesafe = eğik mesafe × cos(eğim açısı)</b></p><ul><li>10° → ×0,98 · 15° → ×0,97 · 20° → ×0,94</li><li>25° → ×0,91 · 30° → ×0,87 · 35° → ×0,82 · 45° → ×0,71</li></ul><p>Örnek: Lazer 500 m, eğim 30° gösteriyor. 500 × 0,87 ≈ 435 m. Dürbünü 435 m'ye ayarlarsın.</p><p><b>Yukarı ya da aşağı fark etmez:</b> İki durumda da eğik mesafeye ayar yaparsan mermi yüksek vurur.</p>`}
+};
+function gezTable(){const R=RIFLES.mpt76,H=RIFLES.hk33;return `<div class="tbl"><table><thead><tr><th>Gez 100'deyken</th><th>200 m</th><th>300 m</th><th>400 m</th></tr></thead><tbody><tr><td>MPT-76</td>${[200,300,400].map(d=>`<td>${Math.round(dropAt(R,d)*d/10)} cm alçak</td>`).join('')}</tr><tr><td>HK33</td>${[200,300,400].map(d=>`<td>${Math.round(dropAt(H,d)*d/10)} cm alçak</td>`).join('')}</tr></tbody></table></div>`;}
+function showLesson(it){
+  const L=LESSONS[it.id];const nx=eduNext(it.id);
+  modal({eye:'Eğitim · ders',title:L.t,html:`<div class="lesson">${L.h}</div>`,buttons:[{label:nx?'Anladım, devam':'Anladım',primary:true,fn:()=>{const lines=[];eduDone(it,lines);if(lines.length)toast(lines[0],1400);nx?startEdu(nx):openMenu();}},{label:'Menü',fn:openMenu}]});
+  const sh=document.querySelector('.sheet');if(sh)sh.scrollTop=0;
+}
+// ---------- sınavlar ----------
+const QB={
+  emniyet:()=>shuffle([
+    {q:'Boşalttığından emin olduğun bir tüfeğe nasıl davranırsın?',o:['Dolu kabul ederim','Boş olduğu için serbestçe tutarım','Namluyu istediğim yöne çeviririm'],a:0,e:'Her silah dolu kabul edilir; kazaların çoğu "boş sanılan" silahla olur.'},
+    {q:'Parmağın ne zaman tetiğe gider?',o:['Silahı elime aldığım an','Nişan alıp atışa karar verdiğimde','Atış hattına yürürken'],a:1,e:'O ana kadar parmak tetik dışında, gövdeye paralel durur.'},
+    {q:'"Ateş kes!" komutunu duyunca ne yaparsın?',o:['Şarjördeki fişekleri bitiririm','Hemen ateşi keser, silahı emniyete alırım','Son atışımı yapıp dururum'],a:1,e:'Komut duyulduğu an uygulanır; tek bir atış bile yapılmaz.'},
+    {q:'Atış başlamadan atış müdürü ne sorar?',o:['"Atış istikametinde kimse var mı?"','"Herkes hazır mı?"','"Kaç fişeğiniz var?"'],a:0,e:'Atış istikametinde kimsenin olmadığından emin olunmadan ateş serbest verilmez.'},
+    {q:'Tutukluk olunca namlu nereye bakar?',o:['Yere','Hedef yönüne','Eğiticiye'],a:1,e:'Tutukluk giderilirken de namlu atış istikametinde kalır.'},
+    {q:'Atış bittikten sonra ilk yapacağın iş nedir?',o:['Silahı kılıfa koymak','Şarjörü çıkarıp fişek yatağını kontrol etmek','Hedefe bakmaya gitmek'],a:1,e:'Boşaltma ve kontrol yapılmadan silah teslim edilmez, hedefe gidilmez.'},
+    {q:'Hedefin arkasında ne olduğu neden önemlidir?',o:['Önemli değildir','Mermi hedefi geçebilir ya da ıskalayabilir','Sadece gece önemlidir'],a:1,e:'Hedefini ve arkasını tanı: ıskalanan ya da delip geçen mermi bir yere gider.'},
+    {q:'Silah elindeyken arkadaşın seni çağırdı. Ne yaparsın?',o:['Silahla birlikte ona dönerim','Namluyu atış istikametinde tutar, önce silahı emniyete alırım','Silahı yere bırakırım'],a:1,e:'Namlu hiçbir durumda atış istikameti dışına çevrilmez.'}
+  ]).slice(0,8),
+  tanima:()=>{
+    const looks={hk33:'A',mpt55:'A',mp5:'A',mpt76:'B',g3:'C',ak:'D',knt76:'E',yavuz16:'F',tp9:'F',sar9:'F'};
+    const ks=shuffle(Object.keys(RIFLES)).slice(0,6),out=[];
+    for(const k of ks){const others=shuffle(Object.keys(RIFLES).filter(x=>looks[x]!==looks[k])).slice(0,3);const opts=shuffle([k,...others]);
+      out.push({q:'Çizimdeki silah hangisi?',o:opts.map(x=>RIFLES[x].name),a:opts.indexOf(k),e:`${RIFLES[k].name}: ${RIFLES[k].cal}, ${RIFLES[k].magTxt} şarjör, ${RIFLES[k].maker}. ${tellLook(k)}`,draw:c=>{c.fillStyle='#d9d3bb';c.fillRect(0,0,400,140);if(RIFLES[k].cls==='tabanca')drawPistol(c,[130,52],[300,52],330,k);else drawRifle(c,[22,58],[384,58],270,k,{scope:!!RIFLES[k].scopeOnly});}});}
+    const cal=shuffle(['mpt76','mpt55','ak','yavuz16'])[0],cals=['5.56×45 mm','7.62×51 mm','7.62×39 mm','9×19 mm'];
+    out.push({q:`${RIFLES[cal].name} hangi fişeği kullanır?`,o:cals,a:cals.indexOf(RIFLES[cal].cal),e:`${RIFLES[cal].name} ${RIFLES[cal].cal} fişek kullanır.`});
+    const yo=['MPT-76','G-3','Kaleşnikof','MP5'];out.push({q:"Hangisi MKE'nin kendi tasarımı olan yerli piyade tüfeğidir?",o:yo,a:0,e:'MPT-76 ve MPT-55 MKE tasarımıdır. G-3, HK33 ve MP5 MKE\'de lisansla üretilmiştir.'});
+    return out;},
+  ruzgar:()=>{const out=[];const hs=shuffle([1,2,3,4,5,7,8,9,10,11,6,12]);
+    for(let i=0;i<6;i++){const h=hs[i],e=windEff(h),sg=windSign(h),tp=i%3;
+      if(tp===0||sg===0)out.push({q:`Rüzgâr saat ${h} yönünden esiyor. Tesiri nedir?`,o:['Tam tesirli','Yarım tesirli','Tesirsiz'],a:e===1?0:e?1:2,e:`3 ve 9 tam, 6 ve 12 tesirsiz, diğer saatler yarım tesirlidir. Saat ${h}: ${e===1?'tam':e?'yarım':'tesirsiz'}.`});
+      else if(tp===1)out.push({q:`Rüzgâr saat ${h} yönünden esiyor. Mermi hangi yöne sapar?`,o:['Sola','Sağa','Sapmaz'],a:sg<0?0:1,e:`Rüzgâr ${sg<0?'sağdan esip mermiyi sola':'soldan esip mermiyi sağa'} iter.`});
+      else out.push({q:`Rüzgâr saat ${h} yönünden esiyor. Nişanı hangi yöne kaydırırsın (pay verirsin)?`,o:['Sola','Sağa','Kaydırmam'],a:sg<0?1:0,e:`Mermi ${sg<0?'sola':'sağa'} sapacağı için ${sg<0?'sağa':'sola'} pay verilir.`});}
+    return out;},
+  milyem:()=>{const out=[];const tg=[['Boy hedefi',1.5],['Göğüs hedefi',.5],['Diz hedefi',.76]];
+    for(let i=0;i<6;i++){const [n,sz]=tg[i%3],d=[300,350,400,450,500,600,700,750,800][Math.floor(rnd()*9)],mil=Math.round(sz*1000/d*10)/10,real=Math.round(sz*1000/mil/10)*10;
+      const opts=shuffle([real,real+100,Math.max(100,real-100),real+200].map(x=>x+' m'));
+      out.push({q:`${n} (${String(sz).replace('.',',')} m) dürbünde ${String(mil).replace('.',',')} milyem görünüyor. Mesafe yaklaşık kaç metredir?`,o:opts,a:opts.indexOf(real+' m'),e:`${String(sz).replace('.',',')} × 1000 ÷ ${String(mil).replace('.',',')} ≈ ${real} m.`});}
+    return out;},
+  egim:()=>{const out=[];for(let i=0;i<5;i++){const L=[300,350,400,450,500,550,600][Math.floor(rnd()*7)],th=[15,20,25,30,35][Math.floor(rnd()*5)],dh=Math.round(L*Math.cos(th*Math.PI/180)/10)*10;
+      const opts=shuffle([dh,L,Math.round(L*Math.sin(th*Math.PI/180)/10)*10,dh+60].map(x=>x+' m'));
+      out.push({q:`Lazer ${L} m, eğim ölçer ${rnd()<.5?'+':'−'}${th}° gösteriyor. Dürbünü kaç metreye ayarlarsın?`,o:opts,a:opts.indexOf(dh+' m'),e:`${L} × cos ${th}° (${Math.cos(th*Math.PI/180).toFixed(2).replace('.',',')}) ≈ ${dh} m. Yön fark etmez.`});}
+    return out;}
+};
+function tellLook(k){return {hk33:'Kavisli 30\'luk şarjör, siyah polimer.',mpt55:'Kısa namlulu, kavisli şarjörlü 5.56 tüfek.',mp5:'Kısa, kompakt makineli tabanca.',mpt76:'Kısa düz 20\'lik şarjör.',g3:'Uzun düz 20\'lik şarjör.',ak:'Ahşap dipçik ve kundak, belirgin kavisli şarjör.',knt76:'Büyük dürbün ve iki ayak.',yavuz16:'Metal sürgülü 9 mm tabanca.',tp9:'Polimer gövdeli 9 mm tabanca.',sar9:'Polimer gövdeli 9 mm tabanca.'}[k]||'';}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startQuiz(bank,it){S.qz={bank,it,qs:QB[bank](),i:0,score:0,ans:false};showQ();}
+function showQ(){
+  const Z=S.qz,q=Z.qs[Z.i];Z.ans=false;
+  modal({eye:(it=>it?it.t:'Sınav')(Z.it)+` · ${Z.i+1}/${Z.qs.length}`,title:q.q,html:(q.draw?'<canvas id="qCv" width="400" height="140" class="qcv"></canvas>':'')+`<div class="qopts">${q.o.map((o,i)=>`<button class="secondary qo" data-i="${i}">${o}</button>`).join('')}</div><div id="qFb" class="qfb"></div>`,buttons:[]});
+  if(q.draw)q.draw($('qCv').getContext('2d'));
+  document.querySelectorAll('.qo').forEach(b=>b.addEventListener('click',()=>qAnswer(+b.dataset.i)));
+}
+function qAnswer(i){
+  const Z=S.qz,q=Z.qs[Z.i];if(Z.ans)return;Z.ans=true;const ok=i===q.a;if(ok)Z.score++;
+  document.querySelectorAll('.qo').forEach(b=>{const k=+b.dataset.i;if(k===q.a)b.classList.add('right');else if(k===i)b.classList.add('wrong');b.disabled=true;});
+  ok?tone(880,1320,.15,.15):tone(300,180,.2,.15);
+  $('qFb').innerHTML=`<p><b class="${ok?'okc':'noc'}">${ok?'Doğru.':'Yanlış.'}</b> ${q.e}</p><button class="primary" id="qNext">${Z.i+1<Z.qs.length?'Sonraki soru':'Sonucu gör'}</button>`;
+  $('qNext').addEventListener('click',()=>{Z.i++;if(Z.i<Z.qs.length)showQ();else qFinish();});
+}
+function qFinish(){
+  const Z=S.qz,n=Z.qs.length,pass=Z.score>=(QPASS[Z.bank]||Math.ceil(n*.75)),it=Z.it;const lines=[];
+  const mode='q_'+Z.bank;
+  if(pass&&it&&EDU_FLAT.find(x=>x.id===it.id))eduDone(EDU_FLAT.find(x=>x.id===it.id),lines);
+  const pl=progress({mode,v:Z.score,t:Z.score+'/'+n,hits:0,ok:pass});
+  const nx=it?eduNext(it.id):null;
+  modal({eye:(it?it.t:'Sınav'),title:pass?'Geçtin':'Geçemedin',num:Z.score,suffix:`<small>/${n}</small>`,intro:pass?'':`Geçmek için en az ${QPASS[Z.bank]}/${n} gerekiyor. Dersi tekrar okuyup yeniden dene.`,foot:`<div class="xpline">${lines.concat(pl).map(l=>`<span>${esc(l)}</span>`).join('')}</div>`,
+    buttons:pass?[{label:nx?'Devam':'Menü',primary:true,fn:()=>nx?startEdu(nx):openMenu()},{label:'Menü',fn:openMenu}]:[{label:'Tekrar',primary:true,fn:()=>startQuiz(Z.bank,it)},{label:'Ders',fn:()=>{const d=EDU_FLAT.find(x=>x.type==='ders'&&x.mod===(it&&it.mod));d?showLesson(d):openMenu();}}]});
+}
+// ---------- sökme-takma ----------
+const MEK={
+  tufek:{n:'Piyade tüfeği',s:['Silahı emniyete al, namlu atış istikametinde','Şarjörü çıkar','Kurma kolunu çekip fişek yatağının boş olduğunu kontrol et','Gövde birleştirme pimini çıkar, gövdeyi aç','Mekanizma grubunu ve kurma kolunu çıkar','Parçaları temiz bir örtü üzerine sırayla diz'],
+    t:['Kurma kolunu ve mekanizma grubunu yerine tak','Gövdeyi kapat, birleştirme pimini tak','Kurma kolunu çekip bırakarak işlev kontrolü yap','Silahı emniyete al','Şarjörü tak']},
+  tabanca:{n:'Tabanca',s:['Namluyu güvenli yöne çevir, parmağı tetikten çek','Şarjörü çıkar','Sürgüyü geri çekip fişek yatağının boş olduğunu kontrol et','Sürgü sökme mandalını indir','Sürgüyü gövdeden ileri doğru ayır','Sürgü yayını ve namluyu sürgüden çıkar'],
+    t:['Namluyu ve sürgü yayını sürgüye yerleştir','Sürgüyü gövdeye arkaya doğru geçir','Sürgüyü çekip bırakarak işlev kontrolü yap','Şarjörü tak']}
+};
+function startMekanik(it){
+  modal({eye:'Eğitim · alıştırma',title:'Sökme ve takma',intro:'Adımları doğru sırayla seç. Önce sökme, sonra takma. Sıra eğitim için sadeleştirilmiştir; her silahın kendi kullanıcı kitabındaki sıra esastır.',
+    buttons:[{label:'Piyade tüfeği',primary:true,fn:()=>runMek(it,'tufek')},{label:'Tabanca',fn:()=>runMek(it,'tabanca')}]});
+}
+function runMek(it,w){
+  const M=MEK[w],st={it,w,ph:'s',step:0,err:0,t0:performance.now()};
+  const draw=()=>{const list=M[st.ph],order=st.order||(st.order=shuffle(list.map((_,i)=>i)));
+    modal({eye:M.n+' · '+(st.ph==='s'?'sökme':'takma'),title:`${st.step+1}. adım hangisi?`,html:`<div class="jam" id="mekBox">${order.map(i=>`<button class="secondary ${i<st.step?'done':''}" data-i="${i}" ${i<st.step?'disabled':''}>${i<st.step?(i+1)+'. ':''}${list[i]}</button>`).join('')}</div><p class="small muted" style="margin-top:8px">Hata: ${st.err}</p>`,buttons:[]});
+    $('mekBox').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const i=+b.dataset.i;
+      if(i===st.step){st.step++;click(700+st.step*80,.05,.2);
+        if(st.step>=list.length){if(st.ph==='s'){st.ph='t';st.step=0;st.order=null;toast('Söküldü. Şimdi tak.',1100);draw();}else done();}else draw();}
+      else{st.err++;tone(260,160,.18,.15);b.classList.add('wrong');setTimeout(()=>b.classList.remove('wrong'),400);toast('Sıra yanlış',650);const p=document.querySelector('#mekBox+p');if(p)p.textContent='Hata: '+st.err;}});};
+  const done=()=>{const sec=(performance.now()-st.t0)/1000,pass=st.err<=2,lines=[];
+    const eit=EDU_FLAT.find(x=>x.id==='mekanik');if(pass&&eit)eduDone(eit,lines);
+    const pl=progress({mode:'mekanik',v:Math.max(0,10-st.err),t:`${st.err} hata · ${Math.round(sec)} sn`,hits:0,ok:pass});
+    record('mekanik_'+w,Math.round(sec),Math.round(sec)+' sn','low');
+    const nx=eduNext('mekanik');
+    modal({eye:'Sökme ve takma · '+M.n,title:pass?'Başarılı':'Tekrar dene',big:`${st.err}<small> hata · ${Math.round(sec)} sn</small>`,intro:pass?'':'En çok 2 hata yapmalısın.',foot:`<div class="xpline">${lines.concat(pl).map(l=>`<span>${esc(l)}</span>`).join('')}</div>`,
+      buttons:pass?[{label:nx&&it?'Devam':'Menü',primary:true,fn:()=>nx&&it?startEdu(nx):openMenu()},{label:'Diğer silah',fn:()=>runMek(it,w==='tufek'?'tabanca':'tufek')}]:[{label:'Tekrar',primary:true,fn:()=>runMek(it,w)},{label:'Menü',fn:openMenu}]});};
+  draw();
+}
+// ---------- atış raporu ----------
+function logShot(s){
+  if(!s.d)return;const k=s.tg?tK(s.tg):{kx:s.d/1000,ky:s.d/1000};
+  const dx=s.tg?s.lx/k.kx:(s.mx-(S.targets[0]?S.targets[0].x:0))/k.kx,dy=s.tg?s.ly/k.ky:s.my/k.ky;
+  ST.sh.push([Math.round(dx*100)/100,Math.round(dy*100)/100,s.tg?1:0,s.mis>.22?1:0,Math.abs(s.cant)>3?1:0,S.pos[0],S.mode,RIFLES[S.rifle].cls,windEff(S.wind.h)&&S.wnow>=2&&s.d>=200?1:0]);
+  if(ST.sh.length>500)ST.sh=ST.sh.slice(-500);
+}
+function showReport(){
+  const A=ST.sh;if(!A||A.length<5)return;
+  const n=A.length,hit=A.filter(r=>r[2]).length,mx=A.reduce((a,r)=>a+r[0],0)/n,my=A.reduce((a,r)=>a+r[1],0)/n;
+  const sd=(i,m)=>Math.sqrt(A.reduce((a,r)=>a+(r[i]-m)*(r[i]-m),0)/n),sx=sd(0,mx),sy=sd(1,my);
+  const ang=A.filter(r=>r[3]).length/n,cant=A.filter(r=>r[4]).length/n,windSh=A.filter(r=>r[8]),windMiss=windSh.length?windSh.filter(r=>!r[2]).length/windSh.length:0;
+  const byPos={};for(const r of A){const k=r[5];byPos[k]=byPos[k]||[0,0];byPos[k][0]++;if(r[2])byPos[k][1]++;}
+  const posN={s:'Ayakta',k:'Diz çökerek',p:'Yatarak'};
+  const rec=[];
+  if(ang>.12)rec.push(['Arpacığı gezde ortalamakta zorlanıyorsun (atışların %'+Math.round(ang*100)+'\'inde açısal hata).','d_nisan']);
+  if(cant>.1)rec.push(['Tüfeği yan tutuyorsun (atışların %'+Math.round(cant*100)+'\'i).','d_nisan']);
+  if(sy>sx*1.5&&sy>.4)rec.push(['Vuruşların dikeyde dağılıyor; nefes ve tetik zamanlamasına çalış.','d_hakimiyet']);
+  else if(sx>sy*1.5&&sx>.4)rec.push(['Vuruşların yatayda dağılıyor; tetiği tam geriye ve yavaş çek.','d_hakimiyet']);
+  if(Math.hypot(mx,my)>.35)rec.push([`Vuruşların ortalamada ${Math.abs(mx).toFixed(1).replace('.',',')} milyem ${mx>0?'sağa':'sola'}, ${Math.abs(my).toFixed(1).replace('.',',')} milyem ${my>0?'aşağı':'yukarı'} kayıyor. Nişan noktası ve sıfırlama alışkanlığını kontrol et.`,'d_sifir']);
+  if(windSh.length>=4&&windMiss>.5)rec.push(['Rüzgârlı uzun atışlarda ıskaların %'+Math.round(windMiss*100)+'. Rüzgâr okumaya çalış.','d_ruzgar']);
+  if(byPos.s&&byPos.s[0]>=5&&byPos.s[1]/byPos.s[0]<.5)rec.push(['Ayakta isabetin düşük; destekli ayakta atışla başla.','d_durus']);
+  if(!rec.length)rec.push(['Belirgin bir hata deseni yok. Mesafeyi ve zorluğu artırarak devam et.','']);
+  const html=`<canvas id="rpCv" width="300" height="300" class="rpcv"></canvas><p class="small muted" style="margin:4px 0 8px">Son ${n} atışın hedef merkezine göre yeri (milyem). Yeşil isabet, kırmızı ıska; çizgiler 1 milyem aralıklı.</p>`+
+    `<div class="rows">${[['İsabet oranı','%'+Math.round(hit/n*100)],['Ortalama kayma',`${Math.abs(mx).toFixed(2)} ${mx>0?'sağ':'sol'} · ${Math.abs(my).toFixed(2)} ${my>0?'aşağı':'yukarı'}`],['Dağılım (yatay · dikey)',`${sx.toFixed(2)} · ${sy.toFixed(2)} milyem`],['Açısal hata','%'+Math.round(ang*100)],['Yan tutma','%'+Math.round(cant*100)]].concat(Object.keys(byPos).map(k=>[posN[k]+' isabet','%'+Math.round(byPos[k][1]/byPos[k][0]*100)+' ('+byPos[k][0]+' atış)'])).map(([a,b])=>`<span>${a}</span><span>${b}</span>`).join('')}</div>`+
+    `<div class="lbl" style="margin-top:10px">Önerilen çalışma</div><div class="recs">${rec.map(([t,id])=>`<div class="rec"><span>${t}</span>${id?`<button class="secondary rbtn" data-id="${id}">${LESSONS[id].t}</button>`:''}</div>`).join('')}</div>`;
+  modal({eye:'Kişisel atış raporu',title:'Atış raporun',html,buttons:[{label:'Kapat',primary:true,fn:()=>{$('modal').hidden=true;}},{label:'Menü',fn:openMenu}]});
+  const c=$('rpCv').getContext('2d'),W2=300,sc=W2/10;c.fillStyle='#1b1d15';c.fillRect(0,0,W2,W2);
+  c.strokeStyle='#3d4230';c.lineWidth=1;for(let i=-5;i<=5;i++){c.beginPath();c.moveTo(W2/2+i*sc,0);c.lineTo(W2/2+i*sc,W2);c.moveTo(0,W2/2+i*sc);c.lineTo(W2,W2/2+i*sc);c.stroke();}
+  c.strokeStyle='#a6a38c';c.beginPath();c.moveTo(W2/2,0);c.lineTo(W2/2,W2);c.moveTo(0,W2/2);c.lineTo(W2,W2/2);c.stroke();
+  for(const r of A){const x=W2/2+clamp(r[0],-5,5)*sc,y=W2/2+clamp(r[1],-5,5)*sc;c.fillStyle=r[2]?'rgba(163,200,107,.55)':'rgba(224,88,79,.55)';c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fill();}
+  c.strokeStyle='#ef7d2d';c.lineWidth=2;c.beginPath();c.arc(W2/2+mx*sc,W2/2+my*sc,6,0,Math.PI*2);c.stroke();
+  c.beginPath();c.ellipse(W2/2+mx*sc,W2/2+my*sc,Math.max(3,sx*sc*2),Math.max(3,sy*sc*2),0,0,Math.PI*2);c.setLineDash([4,3]);c.stroke();c.setLineDash([]);
+  document.querySelectorAll('.rbtn').forEach(b=>b.addEventListener('click',()=>startEdu(EDU_FLAT.find(x=>x.id===b.dataset.id))));
+}
+// ---------- termal, gece görüş, çalı ----------
+function renderThermal(X,Y,p,e,now,dFar){
+  const BH=S.sensor==='termalB',hy=Y(0);
+  let g=ctx.createLinearGradient(0,hy-H,0,hy);g.addColorStop(0,'#0c0c0c');g.addColorStop(1,'#1d1d1d');ctx.fillStyle=g;ctx.fillRect(-30,-30,W+60,Math.max(0,hy+30));
+  hills(Y,p,S.aimX,'#202020',7,6,.011,1.3);
+  ctx.fillStyle='#171717';ctx.beginPath();ctx.moveTo(-30,hy+1);const step=Math.max(4,p*1.2);
+  for(let qx=-30;qx<W+30;qx+=step){const wx=Math.floor((qx-W/2)/p+S.aimX);ctx.lineTo(qx,hy-trees[((wx%220)+220)%220]*p*1.3);}ctx.lineTo(W+30,hy+1);ctx.fill();
+  g=ctx.createLinearGradient(0,hy,0,hy+H*.8);g.addColorStop(0,'#2a2a2a');g.addColorStop(1,'#3e3e3e');ctx.fillStyle=g;ctx.fillRect(-30,hy,W+60,H+60);
+  const db=dFar+8,gyB=Y(e*1000/db),topB=Y((e-3)*1000/db);ctx.fillStyle='#333';ctx.beginPath();ctx.moveTo(X(-90*1000/db),gyB);ctx.bezierCurveTo(X(-55*1000/db),topB,X(55*1000/db),topB,X(90*1000/db),gyB);ctx.fill();
+  const list=S.targets.slice().sort((a,b)=>b.d-a.d);
+  for(const tg of list){const pm=p*1000/tg.d;drawTarget(ctx,X(tX(tg)),Y(tY(tg)),pm,tg.type,[],{up:tg.up,wob:tg.wob*Math.sin(now/1000*30),hot:'W',card:true});}
+  if(BH){ctx.save();ctx.globalCompositeOperation='difference';ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.restore();}
+}
+function sensorFx(now){
+  const cx=W/2,cy=VCY(),r=Math.min(W,VH())*.49;
+  ctx.save();
+  for(let i=0;i<260;i++){ctx.fillStyle=S.sensor==='ggc'?`rgba(180,255,180,${rnd()*.12})`:`rgba(255,255,255,${rnd()*.08})`;ctx.fillRect(rnd()*W,rnd()*H,1.5,1.5);}
+  ctx.fillStyle='#050805';ctx.beginPath();ctx.rect(0,0,W,H);ctx.arc(cx,cy,r,0,Math.PI*2,true);ctx.fill();
+  const g=ctx.createRadialGradient(cx,cy,r*.75,cx,cy,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.75)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=S.sensor==='ggc'?'rgba(150,255,150,.8)':'rgba(255,255,255,.8)';ctx.font='600 10px "IBM Plex Mono",monospace';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(S.sensor==='ggc'?'GGC':'TERMAL '+(S.sensor==='termalB'?'SİYAH':'BEYAZ'),cx-r*.6,cy-r*.78);
+  ctx.restore();
+}
+function drawBush2D(X,Y,p,e,b){
+  const pm=p*1000/b.d,x=X(b.x*1000/b.d),gy=Y(e*1000/b.d);if(pm*b.r<1.2)return;
+  const cols=['#4f5a33','#5d6238','#3f4a2a'],c=cols[Math.floor(b.c*3)];
+  ctx.fillStyle=c;for(let i=0;i<5;i++){const ox=(i-2)*b.r*.45*pm,oy=-b.h*pm*(.45+((i*37)%10)/40);ctx.beginPath();ctx.ellipse(x+ox,gy+oy,b.r*.55*pm,b.h*.5*pm,0,0,Math.PI*2);ctx.fill();}
+}
+
 // ================= BAŞLAT =================
 resize();
 if(OPT.d3)init3D();
@@ -1865,10 +2290,9 @@ requestAnimationFrame(frame);
 })();
 
 </script>
-
 <script>
 (()=>{
-const VER=3,btn=document.getElementById('upd');
+const VER=4,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

@@ -2283,7 +2283,7 @@ window.drawScope=function(o,W,H,lockE){
 // ---- Kontroller sekmesi (guncel)
 {const kl=document.querySelector('#tk .kl');if(kl)kl.innerHTML=
  '<b>Tank:</b> W/S veya ↑↓ ileri-geri · A/D veya ←→ dönüş · fare: kule ve top (önce ekrana tıkla) · Boşluk / sol tık: ateş · 1 APDS · 2 HEAT · 3 HEP · 4 WP<br>'+
- '<b>Görüş (V):</b> dış görüş → nişangâh → kabin içi<br>'+
+ '<b>Görüş (V):</b> dış görüş → nişangâh → kabin içi → sürücü mahalli (direksiyon, vites, göstergeler)<br>'+
  '<b>Nişangâh:</b> Y görüş değiştir (TTS gündüz · TTS termal · M105D teleskop) · U BLK/WHT HOT · I WFOV/NFOV · L lazer mesafe ölçer (XM21 serbest atışta ilave yükselişi kendisi verir) · tekerlek yakınlaştırır<br>'+
  '<b>Kabin içi:</b> J istasyon (nişancı · komutan · doldurucu · kapak açık) · K parça adları (eğitim notundaki yer ve görevleri) · Shift + fare serbest bakış<br>'+
  '<b>Uçangöz:</b> C/Tab tank⇄Uçangöz · WASD/oklar uç · E/Q yüksel-alçal · Boşluk bomba · H ısı kamerası · F nişandaki hedefi işaretle · M en yakını işaretle · X kamikaze · R tanka geri çağır (platforma iner, şarj olur)<br>'+
@@ -2659,6 +2659,104 @@ try{renderGar()}catch(e){}
 })();
 
 
+// ===== m_drive =====
+// ============ SURUCU BOLMESI: govdede surucu mahalli (T-direksiyon, hiz kolu, pedallar, gostergeler, periskoplar) ============
+// Gorus sirasi (V): dis -> nisangah -> kabin (kule) -> SURUCU -> dis
+(function(){
+const X=window.M60X,Soup=X.Soup,PI=Math.PI;
+const DRV={m60:{z:2.05,H:1.6},leo1:{z:2.3,H:1.5},t72:{z:2.1,H:1.42},leo2:{z:2.55,H:1.55},m1:{z:2.25,H:1.45},altay:{z:2.45,H:1.58}};
+const WALL=0xaeb2a5,FLR=0x3b3e39,OLV=0x4f573d,GRY=0x6c727a,STL=0x868c92,DK=0x26292c,BLK=0x17191b,RUB=0x1a1b1c,RED=0xa3261d,SEAT=0x2b3126,PNL=0x2b302b,BRS=0xb39443,YEL=0xd8b23a;
+const LAMP=[{p:[0,0,0],i:.55,R:1.2}];
+function bake(S,amb,lp){const p=S.p,n=S.n,c=S.c;for(let i=0;i<c.length;i+=3){const x=p[i],y=p[i+1],z=p[i+2],nx=n[i],ny=n[i+1],nz=n[i+2];let r=amb*(.75+.4*(.5+.5*ny));
+  const dx=lp[0]-x,dy=lp[1]-y,dz=lp[2]-z,d2=dx*dx+dy*dy+dz*dz,d=Math.sqrt(d2)||1,nd=Math.max(0,(nx*dx+ny*dy+nz*dz)/d);r+=.6*(.2+.8*nd)/(1+d2/1.3);
+  c[i]=Math.min(1,c[i]*r);c[i+1]=Math.min(1,c[i+1]*r);c[i+2]=Math.min(1,c[i+2]*r*1.02)}return S}
+const MAT=new THREE.MeshBasicMaterial({vertexColors:true});
+// ---- gosterge paneli dokusu (canli)
+const gc=document.createElement('canvas');gc.width=512;gc.height=200;const gx=gc.getContext('2d'),GT=new THREE.CanvasTexture(gc);
+function dial(cx,cy,r,v,mx,lab,unit,red){gx.save();gx.translate(cx,cy);gx.fillStyle='#0c0f0b';gx.beginPath();gx.arc(0,0,r,0,7);gx.fill();gx.strokeStyle='#7d8a72';gx.lineWidth=3;gx.stroke();
+ gx.strokeStyle='#e6ecd8';gx.lineWidth=2;for(let i=0;i<=10;i++){const a=-PI*1.25+i/10*PI*1.5,r0=i%5?r*.8:r*.7;gx.beginPath();gx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);gx.lineTo(Math.cos(a)*r*.92,Math.sin(a)*r*.92);gx.stroke()}
+ if(red){gx.strokeStyle='#d0402a';gx.lineWidth=5;gx.beginPath();gx.arc(0,0,r*.86,-PI*1.25+PI*1.5*red,PI*.25);gx.stroke()}
+ const a=-PI*1.25+clamp(v/mx,0,1)*PI*1.5;gx.strokeStyle='#ffb040';gx.lineWidth=3.5;gx.beginPath();gx.moveTo(0,0);gx.lineTo(Math.cos(a)*r*.82,Math.sin(a)*r*.82);gx.stroke();gx.fillStyle='#333';gx.beginPath();gx.arc(0,0,5,0,7);gx.fill();
+ gx.fillStyle='#cfdcb8';gx.font='bold '+Math.round(r*.26)+'px monospace';gx.textAlign='center';gx.fillText(lab,0,r*.45);gx.font=Math.round(r*.2)+'px monospace';gx.fillText(unit,0,r*.68);gx.restore()}
+let G={spd:0,rpm:650,gear:'N',oil:0,tmp:60,fuel:100,bat:26};
+function drawPanel(){gx.fillStyle='#262b24';gx.fillRect(0,0,512,200);gx.fillStyle='#1b1f19';gx.fillRect(6,6,500,188);
+ dial(80,92,62,G.spd,72,'HIZ','km/sa');dial(220,92,62,G.rpm,3000,'DEVİR','d/dk',.8);
+ dial(338,60,34,G.oil,100,'YAĞ','',0);dial(338,140,34,G.tmp,120,'ISI','°C',.82);dial(428,60,34,G.fuel,100,'YAKIT','%',0);dial(428,140,34,G.bat,30,'AKÜ','V',0);
+ gx.fillStyle='#0a1209';gx.fillRect(150,160,140,30);gx.fillStyle='#ffb040';gx.font='bold 22px monospace';gx.textAlign='center';gx.fillText('VİTES '+G.gear,220,183);
+ const lt=[['MOTOR',G.rpm>600?'#3fe070':'#552'],['FREN',G.brk?'#ff4030':'#511'],['YAĞ',G.oil<20&&G.rpm>600?'#ff4030':'#511']];lt.forEach((q,i)=>{gx.fillStyle=q[1];gx.beginPath();gx.arc(486,40+i*45,9,0,7);gx.fill()});
+ GT.needsUpdate=true}
+drawPanel();
+// ---- surucu bolmesi geometrisi (govde yerel)
+function build(d){const S=new Soup(),E=new Soup(),zd=d.z,H=d.H,top=H-.06,y0=.45,zf=zd+.62,zb=zd-.85,xw=.72;
+ const Q=(a,b,c,e,col,h)=>S.quad(a,b,c,e,col,h);
+ // zemin, tavan, yan duvarlar, arka
+ Q([xw,y0,zb],[-xw,y0,zb],[-xw,y0,zf+.25],[xw,y0,zf+.25],FLR,[0,1,0]);
+ Q([xw,top,zb],[xw,top,zf-.05],[-xw,top,zf-.05],[-xw,top,zb],WALL,[0,-1,0]);
+ for(const s of[1,-1])Q([s*xw,y0,zb],[s*xw,top,zb],[s*xw,top,zf+.3],[s*xw,y0,zf+.3],WALL,[-s,0,0]);
+ Q([xw,y0,zb],[-xw,y0,zb],[-xw,top,zb],[xw,top,zb],0x6a6e64,[0,0,1]);
+ // on duvar: alt egik bolum + periskop sirasi (3 pencere) + ust kayis
+ Q([xw,y0,zf+.25],[-xw,y0,zf+.25],[-xw,top-.225,zf-.004],[xw,top-.225,zf-.004],WALL,[0,.4,-1]);for(const s of[1,-1])Q([s*xw,top-.24,zf],[s*xw,y0,zf+.25],[s*xw,y0,zf+.32],[s*xw,top,zf+.08],WALL,[-s,0,0]);
+ const wy0=top-.24,wy1=top-.07;const W=[[-.4,-.15],[-.12,.12],[.15,.4]];
+ let px=-xw;for(const[a,b]of[...W].sort((p,q)=>p[0]-q[0])){Q([px,wy0,zf],[a,wy0,zf],[a,wy1,zf-.03],[px,wy1,zf-.03],WALL,[0,0,-1]);px=b}Q([px,wy0,zf],[xw,wy0,zf],[xw,wy1,zf-.03],[px,wy1,zf-.03],WALL,[0,0,-1]);
+ Q([-xw,wy1,zf-.03],[xw,wy1,zf-.03],[xw,top,zf-.05],[-xw,top,zf-.05],WALL,[0,0,-1]);
+ for(const[a,b]of W){S.box(b-a+.05,.03,.12,(a+b)/2,wy0-.01,zf+.03,DK);S.box(b-a+.05,.03,.12,(a+b)/2,wy1+.01,zf+.01,DK);for(const x of[a,b])S.box(.025,wy1-wy0+.04,.12,x,(wy0+wy1)/2,zf+.02,DK)}
+ // kapak (tavanda) ve tutamak
+ S.cyl(.32,.32,.02,0,top-.01,zd-.15,0x9da195,'y',20);S.rod([-.2,top-.06,zd-.15],[.2,top-.06,zd-.15],.014,GRY,6);S.box(.06,.06,.12,.26,top-.05,zd-.3,DK);
+ // gosterge paneli (pencerelerin altinda, hafif egik)
+ S.box(1.0,.36,.12,0,top-.48,zf-.06,PNL,-.35);
+ // sol duvar: ana salter paneli + YSC (yangin sondurme) kollari; sag: mermi rafi (govde)
+ S.box(.08,.3,.4,xw-.05,top-.55,zd+.15,PNL);for(let i=0;i<4;i++)S.rod([xw-.09,top-.5,zd+.02+i*.09],[xw-.13,top-.45,zd+.02+i*.09],.008,STL,6);E.box(.01,.02,.02,xw-.09,top-.62,zd+.25,0x3fe070);
+ for(const z of[zd+.3,zd+.45]){S.rod([xw-.08,.95,z],[xw-.2,.95,z],.015,RED,6);S.box(.04,.08,.14,xw-.22,.95,z,RED)}
+ for(let r=0;r<3;r++)for(let c=0;c<3;c++){S.cyl(.066,.066,.5,-xw+.12+c*.15,.62+r*.15,zd-.25,BRS,'z',10);S.cyl(.0,.05,.16,-xw+.12+c*.15,.62+r*.15,zd+.08,0x33383a,'z',10)}
+ S.box(.5,.04,.6,-xw+.27,.53,zd-.25,0x2f3631);
+ // koltuk
+ S.box(.48,.08,.42,0,.72,zd-.42,SEAT);S.box(.46,.5,.08,0,.98,zd-.66,SEAT,.18);S.cyl(.04,.04,.25,0,.58,zd-.42,GRY,'y',8);
+ // kapakta lamba
+ E.box(.12,.02,.06,0,top-.01,zd-.55,0xfff3c4);
+ bake(S,.55,[0,top-.1,zd-.5]);
+ const g=new THREE.Group();g.add(new THREE.Mesh(S.mesh(null,false),MAT),new THREE.Mesh(E.mesh(null,false),new THREE.MeshBasicMaterial({vertexColors:true})));
+ // gosterge yuzu
+ const pm=new THREE.Mesh(new THREE.PlaneGeometry(.88,.34),new THREE.MeshBasicMaterial({map:GT}));pm.position.set(0,top-.48,zf-.125);pm.rotation.set(-.35,PI,0);g.add(pm);
+ // T-direksiyon (orta kolonda, panelin altinda)
+ const yoke=new THREE.Group();yoke.position.set(0,.86,zd+.42);g.add(yoke);const Y=new Soup();
+ Y.rod([0,0,0],[0,-.45,.12],.03,DK,8);Y.box(.62,.045,.06,0,.02,0,DK);for(const s of[-1,1]){Y.cyl(.022,.022,.12,s*.3,.06,0,RUB,'y',8);Y.sph(.026,.026,.026,s*.3,.13,0,RUB,8)}Y.box(.08,.06,.08,0,0,0,STL);
+ bake(Y,.6,[0,.5,-.6]);yoke.add(new THREE.Mesh(Y.mesh(null,false),MAT));
+ // hiz kolu (sag, -x)
+ const gl=new THREE.Group();gl.position.set(-.34,.78,zd+.05);g.add(gl);const GLv=new Soup();GLv.rod([0,0,0],[0,.32,0],.014,STL,6);GLv.sph(.04,.04,.04,0,.34,0,BLK,10);bake(GLv,.6,[0,.5,-.4]);gl.add(new THREE.Mesh(GLv.mesh(null,false),MAT));
+ const gb=new Soup();gb.box(.12,.06,.28,-.34,.76,zd+.05,PNL);gb.box(.02,.005,.22,-.34,.792,zd+.05,0x111111);bake(gb,.6,[0,1,zd]);g.add(new THREE.Mesh(gb.mesh(null,false),MAT));
+ // pedallar
+ const pd=[];for(const[x,c]of[[.13,GRY],[-.13,STL]]){const p=new THREE.Group();p.position.set(x,.5,zf+.05);const ps=new Soup();ps.box(.12,.2,.03,0,.1,0,c);ps.rod([0,.0,0],[0,.12,-.08],.012,DK,6);bake(ps,.6,[0,.5,-.5]);p.add(new THREE.Mesh(ps.mesh(null,false),MAT));g.add(p);pd.push(p)}
+ g.userData={yoke,gl,pd,head:new THREE.Vector3(0,top-.2,zd-.08),zd,top};g.visible=false;return g}
+let DG=null,DK_='';
+function ensure(){const k=(P.g.userData&&P.g.userData.kind)||'m60';if(DG&&DK_===k&&DG.parent===P.g)return;if(DG&&DG.parent)DG.parent.remove(DG);DG=build(DRV[k]||DRV.m60);DK_=k;P.g.add(DG)}
+ensure();
+const _ap=window.applyTank;if(_ap)window.applyTank=function(){const r=_ap.apply(this,arguments);DG=null;ensure();return r};
+// ---- gorus sirasi: kabin -> surucu -> dis
+const _cv=window.cycleView;window.cycleView=function(){if(game!=='play'||mode!=='tank')return _cv.apply(this,arguments);
+ if(iv===2){iv=3;say('SÜRÜCÜ MAHALLİ · W/S gaz-fren · A/D direksiyon',1.6);sndBip();return}if(iv===3){iv=0;say('DIŞ GÖRÜŞ',1);sndBip();return}return _cv.apply(this,arguments)};
+window.driverView=()=>{if(game==='play'&&mode==='tank'){iv=3;say('SÜRÜCÜ MAHALLİ',1.3);sndBip()}};
+// ---- kamera
+const _p=new THREE.Vector3(),_t=new THREE.Vector3(),_ic=window.ivCam;
+window.ivCam=function(){if(iv!==3)return _ic.apply(this,arguments);ensure();P.g.updateMatrixWorld(true);const u=DG.userData,t=performance.now()/1000,mv=Math.min(1,Math.abs(G.spd)/40);
+ _p.copy(u.head);_p.x+=Math.sin(t*7.3)*.006*mv;_p.y+=Math.sin(t*11)*.008*mv;_t.set(_p.x+(window.CAB?CAB.hy*0:0),_p.y+.02,_p.z+3);
+ P.g.localToWorld(_p);P.g.localToWorld(_t);CAM.position.copy(_p);CAM.lookAt(_t);if(CAM.fov!==78||CAM.near!==.03){CAM.fov=78;CAM.near=.03;CAM.updateProjectionMatrix()}
+ if(window.CABIN&&CABIN.IG.visible)CABIN.show(false)};
+// ---- canli animasyon: direksiyon, vites, pedallar, gostergeler
+document.head.insertAdjacentHTML('beforeend','<style>body.dv #cross{display:none}#drvH{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dockTop,76px) + 10px);z-index:7;display:none;pointer-events:none;font:700 12px system-ui,sans-serif;color:#e9f0dc;background:rgba(8,12,6,.62);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:5px 12px;white-space:nowrap}body.dv.inplay #drvH{display:block}</style>');
+const hh=document.createElement('div');hh.id='drvH';document.body.appendChild(hh);
+let lx=P.x,lz=P.z,pt=0,acc=0,hullHid=false;
+FRAME_HOOKS.push(dr=>{const on=game==='play'&&mode==='tank'&&iv===3;document.body.classList.toggle('dv',on);if(DG)DG.visible=on;if(on!==hullHid){hullHid=on;for(const c of P.g.children)if(c.isMesh&&c!==P.heat){if(on){c._dvv=c.visible;c.visible=false}else if(c._dvv!=null){c.visible=c._dvv;c._dvv=null}}}if(on)for(const f of fx){const p=f.m.position;if(Math.abs(p.x-P.x)<4.5&&Math.abs(p.z-P.z)<4.5)f.m.visible=false}if(typeof gm!=='undefined'&&gm){if(on&&gm.visible){gm.visible=false;gm._dvh=1}else if(!on&&gm._dvh){gm.visible=true;gm._dvh=0}}if(!on&&iv===3&&mode!=='tank')iv=0;
+ if(game!=='play')return;const dx=P.x-lx,dz=P.z-lz;lx=P.x;lz=P.z;const v=dr>0?(dx*Math.sin(P.h)+dz*Math.cos(P.h))/dr:0;G.spd+=((v*3.6)-G.spd)*Math.min(1,4*dr);
+ const thr=Math.abs(giy),turn=gix;G.rpm+=((650+Math.min(1,Math.abs(G.spd)/45)*1700+thr*600)-G.rpm)*Math.min(1,3*dr);
+ G.gear=G.spd<-1.5?'R':Math.abs(G.spd)<1&&thr<.1?'N':Math.abs(G.spd)<14?'L':'H';G.oil=G.rpm>600?40+G.rpm/60:0;G.tmp+=((70+thr*25)-G.tmp)*dr*.05;G.fuel=Math.max(5,100-tP*.02);G.bat=G.rpm>600?27.5:24.5;G.brk=thr<.05&&Math.abs(G.spd)>2;
+ if(!DG||!on)return;const u=DG.userData;u.yoke.rotation.z+=((-turn*.55)-u.yoke.rotation.z)*Math.min(1,8*dr);
+ const ga={R:-.45,N:-.15,L:.12,H:.42}[G.gear];u.gl.rotation.x+=(ga-u.gl.rotation.x)*Math.min(1,8*dr);
+ u.pd[1].rotation.x+=((giy>0?.35:0)-u.pd[1].rotation.x)*Math.min(1,10*dr);u.pd[0].rotation.x+=((giy<0||G.brk?.35:0)-u.pd[0].rotation.x)*Math.min(1,10*dr);
+ pt+=dr;if(pt>.1){pt=0;drawPanel()}
+ const t='SÜRÜCÜ · '+Math.abs(Math.round(G.spd))+' km/sa · VİTES '+G.gear+' · '+Math.round(G.rpm/10)*10+' d/dk · V: dış görüş';if(hh.textContent!==t)hh.textContent=t});
+})();
+
+
 // ===== m_layout =====
 // ============ ALT CUBUK DUZENI: durum paneli + yetenekler + muhimmat tek "dok" icinde, ekran boyutuna gore akar (ust uste binmez) ============
 (function(){
@@ -2798,8 +2896,9 @@ function items(){const hasAl=typeof AL!=='undefined'&&AL.some(a=>!a.dead),map=!!
   {id:'lb',t:'PARÇA ADLARI',d:'Eğitim notundaki yer ve görevler',ic:IC.info,on:()=>!!CAB.lab,act:()=>{CAB.lab=!CAB.lab}},
   {id:'lk',t:'SERBEST BAKIŞ',d:'Sürükleyince baş döner',ic:IC.look,on:()=>!!CAB.look,act:()=>{CAB.look=!CAB.look}},
   {id:'sg',t:'NİŞANGÂH',d:'TTS nişangâha geç',ic:IC.sight,act:()=>{iv=1;zm=22;say('NİŞANGÂH',1)}},
+  window.driverView&&{id:'dv',t:'SÜRÜCÜ',d:'Sürücü mahalli: direksiyon, vites',ic:IC.tank,act:()=>driverView()},
   {id:'ex',t:'DIŞ GÖRÜŞ',d:'Kabinden çık',ic:IC.exit,act:()=>{iv=0;say('DIŞ GÖRÜŞ',1)}},
-  {id:'mu',t:'MENÜ',d:'Oyunu duraklat',ic:IC.menu,act:()=>openMenu()}]);
+  {id:'mu',t:'MENÜ',d:'Oyunu duraklat',ic:IC.menu,act:()=>openMenu()}].filter(Boolean));
  return shells().concat([
   {id:'vw',t:'GÖRÜŞ',d:'Dış → nişangâh → kabin içi',ic:IC.eye,act:()=>cycleView()},
   window.setAA&&{id:'aa',t:'M85',d:'Helikopter, Uçangöz, piyade',ic:IC.aa,on:()=>!!(window.AA&&AA.on),col:'#7de07a',act:()=>setAA(!AA.on)},
@@ -2888,7 +2987,7 @@ FRAME_HOOKS.push(()=>{const b=document.querySelector('#uFire b');if(b){const sn=
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'26',LOGO=window.HISAR_LOGO;
+const VER=+'27',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+

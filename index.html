@@ -2186,7 +2186,7 @@ function setMode(m){SGT.m=m;const now=performance.now()/1000;
 // ---- AN/VVG-2 lazer mesafe olcucu
 function lase(){if(game!=='play'||mode!=='tank'||iv!==1)return;const h=window.LZR;sndBip();
  if(h&&h.d>0){window.LAS={d:h.d,t:performance.now(),e:h.e||null};say('LAZER · '+Math.round(h.d)+' m'+(h.e?' · HEDEF':''),1.1)}else{window.LAS={d:0,t:performance.now()};say('LAZER · MESAFE YOK',1)}}
-window.lase=lase;
+window.lase=lase;window.sgSet=m=>{if(SGT.m!==m)setMode(m)};window.sgAct=act;
 addEventListener('keydown',e=>{if(game!=='play'||mode!=='tank'||iv!==1||e.repeat)return;const k=e.key.toLowerCase();
  if(k==='y'){act('m');e.stopImmediatePropagation()}else if(k==='u'){act('pol');e.stopImmediatePropagation()}else if(k==='i'){act('fv');e.stopImmediatePropagation()}else if(k==='l'){lase();e.stopImmediatePropagation()}},true);
 // ---- XM21: taze lazer mesafesi varsa serbest atislara ilave yukselis (hedef kilidi yoksa)
@@ -3048,6 +3048,101 @@ const ta=document.getElementById('ta');if(ta){ta.insertAdjacentHTML('beforeend',
 })();
 
 
+// ===== m_ret =====
+// ============ TANKA DONUS ANIMASYONU: Ucangozden TANK'a gecince Ucangoz uca uca platforma doner ve iner (kamera takip eder) ============
+// Tekrar TANK / Tab: animasyonu atla, hemen tanka gec (Ucangoz kendi doner).
+(function(){
+const R={on:0,land:0,cp:new THREE.Vector3(),lk:new THREE.Vector3(),init:0,lt:performance.now(),was:0};window.RET=R;
+const _sw=window.sw;
+window.sw=function(){if(game==='play'&&mode==='drone'&&DR.on&&!DR.fall){
+  if(!DR.rt||!R.on){DR.rt=1;R.on=1;R.init=0;say('UÇANGÖZ TANKA DÖNÜYOR · tekrar bas: hemen tanka geç',2);radio('Uçangöz otomatik pilotla tanka dönüyor, platforma inecek.');if(typeof sndBip==='function')sndBip();return}
+  R.on=0;}return _sw.apply(this,arguments)};
+const _rc=window.recall;window.recall=function(){const r=_rc.apply(this,arguments);R.on=DR.rt&&mode==='drone'?1:0;R.init=0;return r};
+const pad=new THREE.Vector3(),tg=new THREE.Vector3(),cp=new THREE.Vector3(),lk=new THREE.Vector3();
+function padPos(){pad.set(P.x-Math.sin(P.h)*DOCKD,hAt(P.x,P.z)+1.95,P.z-Math.cos(P.h)*DOCKD);return pad}
+const _cu=window.camUpdate;
+window.camUpdate=function(){_cu();const now=performance.now(),dt=Math.min(.05,(now-R.lt)/1000);R.lt=now;
+ // inis algila
+ if(R.was&&!DR.on&&dk){R.land=R.wc?1.6:0;R.init=0;if(typeof dust==='function'){const p=padPos();for(let i=0;i<6;i++)dust(p.x+rnd(-1,1),p.z+rnd(-1,1),0xd8d0c0,.5,1.2,p.y+.2,1.2)}say('UÇANGÖZ PLATFORMA İNDİ · şarj oluyor',1.8);if(typeof sndBip==='function')sndBip()}
+ R.was=DR.on&&DR.rt;R.wc=R.on&&mode==='drone';
+ if(kc&&kc.t>0)return;
+ let k=0;
+ if(R.on&&mode==='drone'&&DR.on&&DR.rt){padPos();const dx=pad.x-DR.x,dz=pad.z-DR.z,d=Math.hypot(dx,dz)||1,ux=dx/d,uz=dz/d,near=clamp(1-d/40,0,1);
+  tg.set(DR.x-ux*(9-near*4)+uz*3,DR.y+3.5-near*1.2,DR.z-uz*(9-near*4)-ux*3);lk.set(DR.x+(pad.x-DR.x)*.35,DR.y+(pad.y-DR.y)*.35,DR.z+(pad.z-DR.z)*.35);k=1;
+  DR.g.visible=true;DR.g.scale.setScalar(1);if(CAM.fov!==60){CAM.fov=60;CAM.updateProjectionMatrix()}}
+ else if(R.land>0&&mode==='tank'&&iv===0){R.land-=dt;padPos();const b=Math.sin(P.h),c=Math.cos(P.h);tg.set(pad.x-b*5.5+c*2.5,pad.y+3.2,pad.z-c*5.5-b*2.5);lk.copy(pad);k=1;if(R.land<=0)R.init=0}
+ if(!k){R.init=0;return}
+ if(!R.init){R.cp.copy(CAM.position);CAM.getWorldDirection(R.lk);R.lk.multiplyScalar(10).add(CAM.position);R.init=1}
+ const a=1-Math.exp(-3.2*dt);R.cp.lerp(tg,a);R.lk.lerp(lk,1-Math.exp(-5*dt));
+ const gy=hAt(R.cp.x,R.cp.z)+1;if(R.cp.y<gy)R.cp.y=gy;CAM.position.copy(R.cp);CAM.lookAt(R.lk)};
+// bilgi: kumanda / carkta
+FRAME_HOOKS.push(()=>{if(R.on&&!(mode==='drone'&&DR.on&&DR.rt))R.on=0});
+const _ie=window.initExtra;window.initExtra=function(){_ie.apply(this,arguments);R.on=0;R.land=0;R.was=0;R.init=0};
+})();
+
+
+// ===== m_vbar =====
+// ============ GORUS CUBUGU: DIS · NISAN · KABIN · SURUCU (her zaman ekranda) + bolume gore alt satir; menude ✕ DEVAM ============
+(function(){
+const IC={
+ out:'<path d="M3 15.5h18l-1.8 3.5H4.8L3 15.5z"/><path d="M6.5 15.5v-3h9.6l1.6 3M11 12.5V9.4h5.8M16.8 9.4h5"/>',
+ sight:'<circle cx="12" cy="12" r="8.4"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>',
+ cab:'<path d="M7 4v9h9l1.5 7M7 13l-1.5 7M10 9h6"/>',
+ drv:'<circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="2.2"/><path d="M3.6 10.5h6.2M14.2 10.5h6.2M12 14.2v6.2"/>'};
+const svg=k=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+IC[k]+'</svg>';
+document.head.insertAdjacentHTML('beforeend','<style>'+
+'#vbar{position:fixed;left:50%;transform:translateX(-50%);top:58px;z-index:9;display:none;flex-direction:column;align-items:center;gap:5px;pointer-events:none;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}body.inplay.vbOn #vbar{display:flex}'+
+'#vbar .r{display:flex;gap:3px;padding:3px;border-radius:13px;background:rgba(12,17,10,.86);border:1px solid rgba(214,236,190,.28);box-shadow:0 4px 14px rgba(0,0,0,.4);pointer-events:auto;max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:none}#vbar .r::-webkit-scrollbar{display:none}'+
+'#vbar button{-webkit-appearance:none;appearance:none;flex:none;border:0;border-radius:10px;background:none;color:#eef5e2;-webkit-text-fill-color:#eef5e2;font:800 11.5px system-ui,-apple-system,sans-serif;letter-spacing:.3px;padding:7px 11px;display:flex;align-items:center;gap:5px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;white-space:nowrap}'+
+'#vbar button svg{width:16px;height:16px;flex:none}#vbar button.on{background:linear-gradient(180deg,#ffd27a,#e48a1e);color:#1d1406;-webkit-text-fill-color:#1d1406}#vbar button.t{opacity:.55}#vbar button.t.on{opacity:1}#vbar button:active{transform:scale(.94)}'+
+'#vbar .s button{padding:6px 9px;font-size:10.5px}#vbar .s:empty{display:none}'+
+'@media (max-width:520px){#vbar button{padding:7px 8px;font-size:10.5px}#vbar button svg{width:14px;height:14px}#vbar .s{flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 20px)}#vbar .s button{padding:6px 8px;font-size:10px}}'+
+// eski kabin/nisangah dugme gruplari artik bu cubukta
+'body.vbOn #cabB,body.vbOn #sgB{display:none!important}'+
+// menu: sabit kapat tusu, iOS yukseklik
+'.ov{height:100%;height:100dvh;bottom:auto!important}'+
+'#mX{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));z-index:30;display:none;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;border:1px solid rgba(255,210,122,.6);background:rgba(12,17,10,.92);color:#ffd27a;-webkit-text-fill-color:#ffd27a;font:900 13px system-ui,-apple-system,sans-serif;letter-spacing:.5px;box-shadow:0 4px 14px rgba(0,0,0,.5);cursor:pointer;touch-action:manipulation}body.paused #mX{display:flex}'+
+'@media (max-width:640px),(max-height:520px){body.paused #menu .hd{padding-right:112px}body.paused #rb2{display:none}}'+
+'</style>');
+const B=document.createElement('div');B.id='vbar';B.innerHTML='<div class="r m"></div><div class="r s"></div>';document.body.appendChild(B);
+const RM=B.querySelector('.m'),RS=B.querySelector('.s');
+const VIEWS=[[0,'DIŞ','out'],[1,'NİŞAN','sight'],[2,'KABİN','cab'],[3,'SÜRÜCÜ','drv']];
+RM.innerHTML=VIEWS.map(v=>'<button data-v="'+v[0]+'">'+svg(v[2])+v[1]+'</button>').join('');
+const NAMES=['DIŞ GÖRÜŞ','NİŞANGÂH','KABİN İÇİ','SÜRÜCÜ MAHALLİ'];
+function go(v){if(game!=='play'||mode!=='tank')return;if(window.AA&&AA.on)setAA(0);if(window.WHEEL&&WHEEL.open)WHEEL.hide(false);
+ if(v===iv){if(v===2&&window.CAB){CAB.hy=CAB.hp=0}return}
+ iv=v;if(v===1)zm=22;if(v===2&&window.CAB){CAB.hy=CAB.hp=0}say(NAMES[v],1.1);if(typeof sndBip==='function')sndBip()}
+RM.addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b)go(+b.dataset.v)});
+const STN=['NİŞANCI','KOMUTAN','DOLDURUCU','KAPAK AÇIK'];
+let subKey='';
+function sub(){let k='',h='';
+ if(iv===1&&window.SGT){k='s'+SGT.m+SGT.pol+SGT.fv;h=['GÜNDÜZ','TERMAL','M105D'].map((n,i)=>'<button data-sg="'+i+'" class="'+(SGT.m===i?'on':'')+'">'+n+'</button>').join('')+
+  (SGT.m===1?'<button data-sa="pol">'+(SGT.pol?'BLK HOT':'WHT HOT')+'</button><button data-sa="fv">'+(SGT.fv?'NFOV':'WFOV')+'</button>':'')+'<button data-sa="las">⌖ LAZER</button>'}
+ else if(iv===2&&window.CAB){k='c'+CAB.st+(+!!CAB.lab)+(+!!CAB.look);h=STN.map((n,i)=>'<button data-st="'+i+'" class="'+(CAB.st===i?'on':'')+'">'+n+'</button>').join('')+
+  '<button data-ct="lab" class="t'+(CAB.lab?' on':'')+'">ⓘ ADLAR</button><button data-ct="look" class="t'+(CAB.look?' on':'')+'">👁 BAKIŞ</button>'}
+ if(k!==subKey){subKey=k;RS.innerHTML=h}}
+RS.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.sg!=null&&window.sgSet)sgSet(+b.dataset.sg);
+ else if(b.dataset.sa==='las'){window.lase&&lase()}else if(b.dataset.sa&&window.sgAct)sgAct(b.dataset.sa);
+ else if(b.dataset.st!=null){CAB.st=+b.dataset.st;CAB.hy=CAB.hp=0;say('KABİN · '+STN[CAB.st],1.1);if(typeof sndBip==='function')sndBip()}
+ else if(b.dataset.ct==='lab')CAB.lab=!CAB.lab;else if(b.dataset.ct==='look')CAB.look=!CAB.look;subKey='';sub()});
+// konum: pusulanin altina; telsiz ve buyuk mesaj cubugun altina
+const radio=document.getElementById('radio'),msg=document.getElementById('msg');
+let t=0,shown=false;
+FRAME_HOOKS.push(dr=>{const on=game==='play'&&mode==='tank'&&!window.mapOpen;document.body.classList.toggle('vbOn',on);document.body.classList.toggle('paused',game==='pause');
+ if(!on){if(shown){shown=false;radio&&radio.style.removeProperty('top');msg&&msg.style.removeProperty('top')}return}shown=true;
+ RM.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',+b.dataset.v===iv&&!(window.AA&&AA.on)));sub();
+ t+=dr;if(t<.25)return;t=0;
+ const W=innerWidth,H=innerHeight,por=H>W*1.05,top=por?Math.round(clamp(W*.26,96,140)+44)+48:60;B.style.top=top+'px';
+ const r=B.getBoundingClientRect(),bot=Math.round(r.bottom);
+ if(radio)radio.style.setProperty('top',(bot+8)+'px','important');const rh=radio&&getComputedStyle(radio).opacity>.05?radio.offsetHeight+14:0;
+ if(msg)msg.style.setProperty('top',Math.max(H*(por?.36:.22),bot+44+rh)+'px','important')});
+// menu ✕ DEVAM
+const X=document.createElement('button');X.id='mX';X.innerHTML='✕ DEVAM';document.body.appendChild(X);
+X.addEventListener('click',e=>{e.preventDefault();if(game==='pause')closeMenu()});
+})();
+
+
 // ===== m_mapui =====
 // ============ TAM EKRAN HARITA: arazi, kareler, yollar, yer adlari, birlikler, rota cizme, isaret koyma (G) ============
 (function(){
@@ -3142,7 +3237,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'28',LOGO=window.HISAR_LOGO;
+const VER=+'29',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -3165,8 +3260,8 @@ box.innerHTML='<button id="updB"><svg viewBox="0 0 24 24" fill="none" stroke="cu
 if(mt)mt.parentNode.insertBefore(box,mt.nextSibling);
 const btn=box.querySelector('#updB'),inf=box.querySelector('#updI');
 async function update(){btn.classList.add('spin');btn.querySelector('span').textContent='GÜNCELLENİYOR…';
- try{if('serviceWorker' in navigator){const rs=await navigator.serviceWorker.getRegistrations();for(const r of rs){try{await r.update()}catch(e){}try{await r.unregister()}catch(e){}}}}catch(e){}
- try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}
+ try{if('serviceWorker' in navigator){const rs=(await navigator.serviceWorker.getRegistrations()).filter(r=>!/\/poligon\//.test(r.scope));for(const r of rs){try{await r.update()}catch(e){}try{await r.unregister()}catch(e){}}}}catch(e){}
+ try{if(window.caches){const ks=(await caches.keys()).filter(k=>k.startsWith('hisar-v'));await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}
  const u=new URL(location.href);if(/^https?:/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.hostname)){u.searchParams.set('v',Date.now().toString(36));location.replace(u.toString())}else location.reload()}
 const FILE=location.protocol==='file:'||location.protocol==='content:';
 if(FILE){inf.innerHTML='Sürüm <b>'+VER+'</b> · yeni gelen <b>HISAR-SIMULATOR.html</b> dosyasını eskisinin üzerine kaydet, sonra GÜNCELLE\'ye bas · kayıtların korunur'}

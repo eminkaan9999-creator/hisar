@@ -4267,7 +4267,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'40',LOGO=window.HISAR_LOGO;
+const VER=+'41',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4604,22 +4604,24 @@ const NZ=`float wzH(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*4375
 float wzN(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
  return mix(mix(mix(wzH(i),wzH(i+vec3(1,0,0)),f.x),mix(wzH(i+vec3(0,1,0)),wzH(i+vec3(1,1,0)),f.x),f.y),mix(mix(wzH(i+vec3(0,0,1)),wzH(i+vec3(1,0,1)),f.x),mix(wzH(i+vec3(0,1,1)),wzH(i+vec3(1,1,1)),f.x),f.y),f.z);}
 float wzF(vec3 p){return wzN(p)*.6+wzN(p*2.7+3.1)*.3+wzN(p*7.3-1.7)*.1;}`;
-function patch(m,amt){m.userData.wz=1;m.onBeforeCompile=sh=>{
+const WZU=window.WZU={dirt:{value:.2},wet:{value:0}};
+function patch(m,amt){m.userData.wz=1;m.onBeforeCompile=sh=>{sh.uniforms.uDirt=WZU.dirt;sh.uniforms.uWet=WZU.wet;
  sh.vertexShader='attribute float wy;varying float vWy;varying vec3 vOP;varying vec3 vON;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWy=wy+position.y;vOP=position+vec3(0.,wy,0.);vON=normal;');
- sh.fragmentShader='varying float vWy;varying vec3 vOP;varying vec3 vON;\n'+NZ+'\n'+sh.fragmentShader
+ sh.fragmentShader='uniform float uDirt,uWet;varying float vWy;varying vec3 vOP;varying vec3 vON;\n'+NZ+'\n'+sh.fragmentShader
   .replace('#include <map_fragment>',`#include <map_fragment>
  float wn=wzF(vOP*2.2),wd=wzF(vOP*.7+5.);
  float up=clamp(vON.y,0.,1.),dn=clamp(-vON.y,0.,1.);
  float dust=smoothstep(1.25,.12,vWy)*(.45+.55*wd)+up*.32*smoothstep(.35,.75,wn);
  float mud=smoothstep(.75,.05,vWy)*smoothstep(.4,.7,wd);
  float stk=smoothstep(.62,.9,wzN(vec3(vOP.x*14.,vOP.y*.9,vOP.z*14.)))*(1.-up)*(1.-dn);
- dust=clamp(dust*${amt.toFixed(2)},0.,.82);
+ dust=clamp(dust*${amt.toFixed(2)}*(.5+.9*uDirt),0.,.85);mud*=.55+.9*uDirt;
  diffuseColor.rgb*=.78+.34*wn;
  diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.52,.47,.37)*(.8+.3*wn),dust);
  diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.23,.19,.14),mud*.7);
  diffuseColor.rgb*=1.-.24*stk;
- diffuseColor.rgb*=1.-.5*dn;`)
-  .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n roughnessFactor=mix(roughnessFactor,1.,max(dust,mud));');
+ diffuseColor.rgb*=1.-.5*dn;
+ diffuseColor.rgb*=1.-.22*uWet;`)
+  .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n roughnessFactor=mix(roughnessFactor,1.,max(dust,mud));roughnessFactor=mix(roughnessFactor,.22,uWet*(1.-.6*max(dust,mud)));');
  };m.customProgramCacheKey=()=>'wz'+amt;m.needsUpdate=true;return m}
 {const cl=THREE.Material.prototype.clone;THREE.Material.prototype.clone=function(){const c=cl.call(this);if(this.userData&&this.userData.wz){c.onBeforeCompile=this.onBeforeCompile;c.customProgramCacheKey=this.customProgramCacheKey}return c}}
 const MC=new Map();
@@ -4891,6 +4893,48 @@ if(typeof setQ==='function'&&matchMedia('(pointer:coarse)').matches){
   gm.count=lo?1800:hi?GN:3200;rocks.visible=true;window.FXQ=lo?.55:hi?1.25:1;
   document.querySelectorAll('[data-q]').forEach(b=>b.classList.toggle('sel',b.dataset.q===q))};
  try{setQ(qlv)}catch(e){}}
+})();
+
+
+// ===== m_more2 =====
+// ============ DAHA FAZLA GERCEKLIK 2: surdukce kirlenme, yagmurda islaklik, gece farlari, fren lambasi, doldurucu kollari, kabinde boguk ses, surucude sarsinti ============
+(function(){
+const _v=new THREE.Vector3();
+// ---------- 1) kir ve islaklik (tum M60 boyalari ortak) ----------
+let lx=P.x,lz=P.z;
+FRAME_HOOKS.push(dr=>{const W=window.WZU;if(!W)return;
+ if(game==='play'){const d=Math.hypot(P.x-lx,P.z-lz);if(d<5)W.dirt.value=Math.min(1,W.dirt.value+d*.0016)}lx=P.x;lz=P.z;
+ const wt=typeof wx!=='undefined'&&wx==='yagmur'?1:0;W.wet.value+=(wt-W.wet.value)*Math.min(1,dr*(wt?.25:.06));
+ if(wt&&game==='play')W.dirt.value=Math.max(.25,W.dirt.value-dr*.004)});                  // yagmur tozu yavasca yikar
+{const ie=window.initExtra;if(ie)window.initExtra=function(){const r=ie.apply(this,arguments);if(window.WZU)WZU.dirt.value=.2;return r}}
+// ---------- 2) farlar (gece/sis) + fren ve geri lambasi ----------
+function glowTex(r,g,b){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.18,`rgba(${r},${g},${b},.9)`);gr.addColorStop(.5,`rgba(${r},${g},${b},.25)`);gr.addColorStop(1,`rgba(${r},${g},${b},0)`);x.fillStyle=gr;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)}
+const HG=new THREE.SpriteMaterial({map:glowTex(255,238,190),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:0}),TG=new THREE.SpriteMaterial({map:glowTex(255,40,30),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:0});
+const SP=new THREE.SpotLight(0xfff1d0,0,85,.5,.65,1.3);SP.castShadow=false;const SPT=new THREE.Object3D();
+let LG=null;
+function lamps(){if(LG&&LG.parent===P.g)return;LG=new THREE.Group();
+ for(const s of[1,-1]){const h=new THREE.Sprite(HG);h.position.set(s*1.62,1.6,3.26);h.scale.set(.9,.9,1);LG.add(h);const t=new THREE.Sprite(TG);t.position.set(s*1.0,1.3,-3.52);t.scale.set(.55,.55,1);LG.add(t)}
+ SP.position.set(0,1.75,3.3);SPT.position.set(0,-.5,22);LG.add(SP,SPT);SP.target=SPT;P.g.add(LG)}
+lamps();let sp0=0,brk=0;
+FRAME_HOOKS.push(dr=>{lamps();const n=typeof wx!=='undefined'&&(wx==='gece'||wx==='sis'),on=n&&game==='play'&&mode==='tank';
+ SP.intensity+=((on?(wx==='gece'?2.4:1.2):0)-SP.intensity)*Math.min(1,4*dr);HG.opacity=Math.min(1,SP.intensity/1.6)*(iv===2||iv===3?0:1);
+ const v=window.__spd||0,gy=typeof giy==='number'?giy:0;brk=(gy<-.05||(Math.abs(sp0)-Math.abs(v))/Math.max(dr,1e-3)>3)?1:Math.max(0,brk-dr*3);sp0=v;
+ TG.opacity=(n?.35:0)+brk*.75});
+// ---------- 3) doldurucunun kollari mermiyi tasir ----------
+if(window.CABIN){const RD=CABIN.gI.children.find(o=>o.isGroup&&o.userData&&o.userData.og);
+ if(RD){const GM=new THREE.MeshBasicMaterial({color:0x2e2c24}),SL=new THREE.MeshBasicMaterial({color:0x444a36});
+  for(const[z,yy,rot]of[[-.42,-.06,.2],[-.08,.07,-.15]]){const h=new THREE.Group();const p=new THREE.Mesh(new THREE.SphereGeometry(.05,10,8),GM);p.scale.set(1.2,.9,1.4);h.add(p);
+   const a=new THREE.Mesh(new THREE.CylinderGeometry(.042,.052,.42,10),SL);a.rotation.z=Math.PI/2+rot;a.position.set(.23,.03,0);h.add(a);h.position.set(.07,yy,z);h.traverse(o=>{if(o.isMesh)o.frustumCulled=false});RD.add(h)}}}
+// ---------- 4) kabin/surucu: dis sesler bogulur (zirh icinden) ----------
+let LP=null;
+FRAME_HOOKS.push(dr=>{if(typeof AC==='undefined'||!AC||typeof MG==='undefined'||!MG)return;
+ if(!LP){try{LP=AC.createBiquadFilter();LP.type='lowpass';LP.frequency.value=20000;LP.Q.value=.5;MG.disconnect();MG.connect(LP);LP.connect(AC.destination)}catch(e){LP=0;return}}
+ if(!LP)return;const ins=game==='play'&&mode==='tank'&&(iv===2||iv===3);const f=ins?1800:20000,c=LP.frequency.value;if(Math.abs(c-f)>50)LP.frequency.value=c+(f-c)*Math.min(1,dr*5)});
+// ---------- 5) surucu: yol sarsintisi direksiyon ve kamerada ----------
+let tb=0;
+FRAME_HOOKS.push(dr=>{if(iv!==3||game!=='play')return;const d=(P.g.children||[]).find(o=>o.userData&&o.userData.yoke);if(!d)return;const v=Math.min(1,Math.abs(window.__spd||0)/9);tb+=dr*(20+v*25);
+ d.userData.yoke.rotation.z+=Math.sin(tb*1.7)*.012*v+(Math.random()-.5)*.02*v;d.userData.yoke.position.y=.86+Math.sin(tb*2.3)*.004*v});
+{const ic=window.ivCam;window.ivCam=function(){const r=ic.apply(this,arguments);if(iv===3){const v=Math.min(1,Math.abs(window.__spd||0)/9),k=v*.006;CAM.rotateX(Math.sin(tb*1.9)*k+(Math.random()-.5)*k*.6);CAM.rotateZ(Math.sin(tb*1.1)*k*.6)}return r}}
 })();
 
 </script>

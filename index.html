@@ -4267,7 +4267,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'38',LOGO=window.HISAR_LOGO;
+const VER=+'39',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4719,6 +4719,59 @@ FRAME_HOOKS.push(()=>{if(iv!==3)return;const d=(P.g.children||[]).find(o=>o.user
   h.position.set(s*.3,.09,-.015);d.userData.yoke.add(h)}
  const gh=new THREE.Mesh(new THREE.SphereGeometry(.045,10,8),GM);gh.scale.set(1.1,1,1.3);gh.position.set(0,.36,-.02);d.userData.gl.add(gh);d.userData.hands=1});
 
+})();
+
+
+// ===== m_more =====
+// ============ DAHA FAZLA GERCEKLIK: egzoz dumani, ayrintili palet, kabinde barut dumani + geri tepme sarsintisi, gece kirmizi isik, nisanci/komutan elleri ============
+(function(){
+const _v=new THREE.Vector3(),_d=new THREE.Vector3(),FX=window.FXP;
+const rr=(a,b)=>a+Math.random()*(b-a);
+// ---------- 1) EGZOZ: rolantide ince gri duman, gaz verince koyu, ani gazda siyah puf ----------
+let exT=0,thr0=0;
+FRAME_HOOKS.push(dr=>{if(game!=="play"||!FX||!FX.puff||mode!=="tank")return;if(iv===1)return;
+ const thr=Math.min(1,Math.abs(typeof giy==='number'?giy:0)),kick=Math.max(0,thr-thr0);thr0+=(thr-thr0)*Math.min(1,6*dr);
+ exT-=dr;if(exT>0&&kick<.25)return;exT=thr>.1?.07:.16;
+ const g=P.g,bk=kick>.25;for(const s of[1,-1]){_v.set(s*.62,1.02,-3.58);g.localToWorld(_v);_d.set(s*.2,.9,-1.6).applyQuaternion(g.quaternion);
+  const k=bk?1.6:.6+thr*.9;FX.puff(_v.x,_v.y,_v.z,_d.x*k+rr(-.2,.2),_d.y*k+rr(0,.4),_d.z*k+rr(-.2,.2),rr(1.6,2.8)*(bk?1.3:1),rr(.3,.5),rr(2.2,3.4)*(bk?1.5:1),bk?0x161514:thr>.3?0x2c2b29:0x4a4946,bk?0x55524c:0x8f8c86,bk?.7:.26+thr*.3,.35)}});
+// ---------- 2) PALET: lastik pabuclar, orta kilavuz dis, uc baglantilar, asinmis celik, camur ----------
+function trkCv(){const W=512,H=128,k=document.createElement('canvas');k.width=W;k.height=H;const c=k.getContext('2d');
+ c.fillStyle='#0d0e0f';c.fillRect(0,0,W,H);const L=W/4;
+ for(let i=0;i<4;i++){const x=i*L;
+  c.fillStyle='#2c2f32';c.fillRect(x+6,6,L-12,H-12);                                               // celik govde
+  for(const y0 of[12,H/2+8]){const gr=c.createLinearGradient(0,y0,0,y0+H/2-28);gr.addColorStop(0,'#2a2b2c');gr.addColorStop(.5,'#1b1c1d');gr.addColorStop(1,'#121314');c.fillStyle=gr;c.fillRect(x+14,y0,L-28,H/2-28)} // lastik pabuclar
+  c.fillStyle='#4f5357';c.fillRect(x+L/2-9,8,18,H-16);c.fillStyle='#6f757a';c.fillRect(x+L/2-7,10,5,H-20);   // orta kilavuz
+  c.fillStyle='#5b6065';c.fillRect(x+2,4,10,H-8);c.fillRect(x+L-12,4,10,H-8);c.fillStyle='#8a9096';c.fillRect(x+3,6,3,H-12);  // uc baglantilar (parlak asinma)
+  for(const y of[16,H-24]){c.fillStyle='#3d4145';c.fillRect(x+3,y,8,8);c.fillStyle='#9aa0a6';c.fillRect(x+5,y+2,3,3)}         // civata
+ }
+ for(let i=0;i<70;i++){const x=Math.random()*W,y=Math.random()*H,r=6+Math.random()*22,gr=c.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(78,64,44,.5)');gr.addColorStop(1,'rgba(78,64,44,0)');c.fillStyle=gr;c.fillRect(x-r,y-r,r*2,r*2)} // camur
+ return k}
+{const G=window.M60GEO&&window.M60GEO();if(G&&G.tex){const cv=trkCv();G.tex.image=cv;G.tex.anisotropy=Math.min(8,R.capabilities.getMaxAnisotropy());G.tex.needsUpdate=true;
+ const up=g=>{const u=g&&g.userData;if(u&&u.tt)for(const t of u.tt){if(t.image!==cv){t.image=cv;t.anisotropy=G.tex.anisotropy;t.needsUpdate=true}}};up(P.g);
+ const mk=window.mkM60;window.mkM60=function(){const g=mk.apply(this,arguments);up(g);return g};
+ FRAME_HOOKS.push(()=>{if(P.g.userData.tt&&P.g.userData.tt[0]&&P.g.userData.tt[0].image!==cv)up(P.g)})}}
+// ---------- 3) KABIN: atista barut dumani (vantilator emer), geri tepme sarsintisi ----------
+const fm=document.createElement('div');fm.id='fume';document.body.appendChild(fm);
+document.head.insertAdjacentHTML('beforeend','<style>#fume{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0;background:radial-gradient(ellipse at 50% 60%,rgba(150,140,120,.55),rgba(90,84,72,.75));mix-blend-mode:normal}</style>');
+let fa=0,rec0=0,kick=0;
+FRAME_HOOKS.push(dr=>{const cab=game==='play'&&mode==='tank'&&iv===2;const r=P.rec||0;if(r>rec0+.3&&cab){fa=Math.min(.62,fa+.5);kick=1}rec0=r;
+ fa=Math.max(0,fa-dr*(fa>.3?.12:.2));kick=Math.max(0,kick-dr*4);const o=cab?fa:0;if(Math.abs(+fm.style.opacity-o)>.005)fm.style.opacity=o.toFixed(3)});
+{const ic=window.ivCam;window.ivCam=function(){const r=ic.apply(this,arguments);if(iv===2&&kick>0){const k=kick*kick;CAM.rotateX(k*.05);CAM.rotateZ((Math.random()-.5)*k*.03);CAM.rotateY((Math.random()-.5)*k*.02)}return r}}
+// ---------- 4) GECE: kule ici kirmizi muharebe isigi ----------
+if(window.CABIN){const RED=new THREE.Color(.66,.2,.17),WH=new THREE.Color(1,1,1);
+ FRAME_HOOKS.push(()=>{if(!CABIN.IG.visible)return;const n=typeof wx!=='undefined'&&wx==='gece';const t=n?RED:WH;
+  if(CABIN.MW&&!CABIN.MW.color.equals(t))CABIN.MW.color.copy(t);if(CABIN.MF&&!CABIN.MF.color.equals(t))CABIN.MF.color.copy(t);if(n&&CABIN.MV)CABIN.MV.color.copy(RED).multiplyScalar(1+Math.max(0,(P.rec||0)-.35)*1.3)})}
+// ---------- 5) NISANCI ve KOMUTAN elleri, kumanda tutamaklari ile birlikte hareket eder ----------
+if(window.CABIN){const GM=new THREE.MeshBasicMaterial({color:0x2e2c24}),GM2=new THREE.MeshBasicMaterial({color:0x3b3a2f}),SL=new THREE.MeshBasicMaterial({color:0x3f4433});
+ function glove(s){const h=new THREE.Group();const p=new THREE.Mesh(new THREE.SphereGeometry(.045,10,8),GM);p.scale.set(1,1.2,1.3);h.add(p);
+  const th=new THREE.Mesh(new THREE.CylinderGeometry(.014,.016,.06,8),GM2);th.position.set(-s*.035,.035,.02);th.rotation.z=s*.9;h.add(th);
+  const fa=new THREE.Mesh(new THREE.CylinderGeometry(.04,.05,.32,10),SL);fa.position.set(s*.02,.06,-.17);fa.rotation.x=1.15;h.add(fa);return h}
+ const GH=new THREE.Group();GH.position.set(-.56,.1,.44);for(const s of[-1,1]){const h=glove(s);h.position.x=s*.13;GH.add(h)}
+ const CH=new THREE.Group();CH.position.set(-1.0,.13,-.66);const hc=glove(1);hc.rotation.y=-.9;CH.add(hc);
+ for(const g of[GH,CH]){g.traverse(o=>{if(o.isMesh)o.frustumCulled=false});CABIN.IG.add(g)}
+ let th0=P.th,el0=0;
+ FRAME_HOOKS.push(dr=>{if(!CABIN.IG.visible||dr<=0)return;const w=a=>Math.atan2(Math.sin(a),Math.cos(a));const tv=w(P.th-th0)/dr;th0=P.th;const el=typeof gel==='function'?gel():0,ev=(el-el0)/dr;el0=el;
+  const ty=clamp(-tv*.25,-.35,.35),tx=clamp(ev*.6,-.3,.3);for(const g of[GH,CH]){g.rotation.y+=(ty-g.rotation.y)*Math.min(1,8*dr);g.rotation.x+=(tx-g.rotation.x)*Math.min(1,8*dr)}})}
 })();
 
 

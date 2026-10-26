@@ -4267,7 +4267,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'42',LOGO=window.HISAR_LOGO;
+const VER=+'43',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4992,6 +4992,35 @@ FRAME_HOOKS.push(dr=>{if(game!=='play'){if(ui){ms.innerHTML='';ui=''}ck.classLis
  if(nisT>0){nisT-=dr;if(nisT<=0){nisT=0;if(window.CREW&&CREW.say)CREW.say('Nişangâh değiştirildi.',1,'nok',2)}else h+='<div class="'+(nisT<3.5?'r':'')+'">NİŞANGÂH ÇATLAK <i>değişim '+Math.ceil(nisT)+' sn</i></div>'}
  if(h!==ui){ms.innerHTML=h;ui=h}ck.classList.toggle('on',nisT>0&&iv===1);
  if(dz.eng<=0&&FX&&FX.fire){fT-=dr;if(fT<=0){fT=.09;const v=new THREE.Vector3(rnd(-.6,.6),1.75,-2.5);P.g.localToWorld(v);FX.fire(v.x,v.y,v.z,.7);if(FX.blackSmoke&&Math.random()<.45)FX.blackSmoke(v.x,v.y+.8,v.z,.6)}}});
+})();
+
+
+// ===== m_mob =====
+// ============ MOBIL: gorus satiri sade modda da gorunur (DIS/NISAN/KABIN/SURUCU), kabin satirina SURUCU, iPhone'da guvenilir dokunus ============
+(function(){
+const B=document.getElementById('vbar');if(!B)return;
+document.head.insertAdjacentHTML('beforeend','<style>body.ui-sade #vbar .r.m{display:flex!important}'+
+ '@media (max-width:560px),(max-height:520px){#mp .tabs{flex-wrap:wrap!important;overflow:visible!important;gap:4px!important}#mp .tabs button{flex:1 1 30%!important;min-width:0!important;padding:9px 4px!important;font-size:12px!important}}'+
+ '@media (pointer:coarse){#vbar .r.m button{padding:6px 9px!important;font-size:10.5px!important}#vbar .r.m button svg{width:14px!important;height:14px!important}}'+
+ 'body.paused #radio,body.paused #msg,body.paused #coach,body.paused #modS{visibility:hidden!important}body.paused #mX{display:none!important}'+
+ '#vbar button[data-drv]{color:#ffd27a;-webkit-text-fill-color:#ffd27a}</style>');
+// dokunus: parmak kalkinca hemen calistir; ardindan gelen yerel click'i yut (cift tetik olmasin)
+let syn=0,pd=null;
+function hook(el){if(!el||el._mob)return;el._mob=1;
+ el.addEventListener('pointerdown',e=>{pd={x:e.clientX,y:e.clientY,t:performance.now(),b:e.target.closest('button')}},true);
+ el.addEventListener('pointerup',e=>{const b=e.target.closest('button');if(!b||!pd||pd.b!==b||Math.hypot(e.clientX-pd.x,e.clientY-pd.y)>14)return;pd=null;e.preventDefault();syn=performance.now();b.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}))},true);
+ el.addEventListener('click',e=>{if(e.isTrusted&&performance.now()-syn<700){e.stopImmediatePropagation();e.preventDefault()}},true)}
+hook(B);
+const keep=()=>{hook(document.getElementById('vX'));hook(document.getElementById('mX'));hook(document.getElementById('mRes'))};keep();setTimeout(keep,500);
+// sade modda DIS dugmesi zaten satirda: ustteki "CIK" hapi gizlenir, satirlar en uste cikar; dikey ekranda kabin/surucude gorev karti ve kucuk harita gizlenir
+document.head.insertAdjacentHTML('beforeend','<style>body.ui-sade.vbOn #vX{display:none!important}body.mobIn #vbar{top:calc(8px + env(safe-area-inset-top,0px))!important}'+
+ '@media (orientation:portrait){body.vbOn:not(.mobIn) #vbar{top:calc(146px + env(safe-area-inset-top,0px))!important}body.mobIn #uInfo,body.mobIn #mm,body.mobIn #mmW,body.mobIn #objC{visibility:hidden!important}}</style>');
+FRAME_HOOKS.push(()=>{const on=game==='play'&&mode==='tank'&&(iv===2||iv===3)&&document.body.classList.contains('ui-sade');document.body.classList.toggle('mobIn',on)});
+// telsiz ve buyuk mesaj her zaman gorus cubugunun altinda (baska modul stili sifirlasa da)
+const RA=document.getElementById('radio'),MS=document.getElementById('msg');
+FRAME_HOOKS.push(()=>{if(!document.body.classList.contains('vbOn')||game!=='play')return;const r=B.getBoundingClientRect();if(!r.height)return;const bot=Math.round(r.bottom);
+ if(RA&&RA.style.getPropertyValue('top')!==(bot+8)+'px')RA.style.setProperty('top',(bot+8)+'px','important');
+ if(MS){const t=Math.max(innerHeight*(innerHeight>innerWidth?.36:.24),bot+52)+'px';if(MS.style.getPropertyValue('top')!==t)MS.style.setProperty('top',t,'important')}});
 })();
 
 </script>

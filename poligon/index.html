@@ -764,11 +764,9 @@ function insignia(i){
 function progress(r){
   const lines=[];let xp=(r.hits||0)*2+(r.ok?60:10)+(r.rec?25:0);
   const before=rankOf(ST.xp||0);ST.xp=(ST.xp||0)+xp;const after=rankOf(ST.xp);
-  lines.unshift(`+${xp} XP · ${after.n}`);
   const nb=[];for(const b of BADGES){if(!ST.badges[b.k]){let ok=false;try{ok=b.c(r);}catch(e){}if(ok){ST.badges[b.k]=Date.now();nb.push(b.n);}}}
   if(nb.length)lines.push('Yeni rozet: '+nb.join(', '));
-  if(after.i>before.i){lines.push('Rütbe yükseldi: '+after.n);setTimeout(()=>{fanfare();say('Tebrikler. Yeni rütben: '+after.n);},900);}
-  else if(nb.length)setTimeout(fanfare,700);
+  if(nb.length)setTimeout(fanfare,700);
   ST.log.push({ts:Date.now(),m:r.mode,r:S.rifle,v:r.v,t:r.t,ok:!!r.ok,sc:r.scoreable?r.v:null});
   if(ST.log.length>150)ST.log=ST.log.slice(-150);
   saveST();
@@ -781,7 +779,7 @@ function stat(n,v){return `<span class="stat">${n}<i><b style="width:${Math.roun
 function bestTxt(k){const b=ST.best[k],d=ST.done[k];if(b)return `<span class="bestb">En iyi: ${b.t}</span>`;if(d)return `<span class="bestb">Başarılı: ${d} kez</span>`;return '';}
 function buildMenu(){
   const rk=rankOf(ST.xp||0),pct=rk.next?Math.round(((ST.xp||0)-rk.cur)/(rk.next-rk.cur)*100):100;
-  $('rankCard').innerHTML=`<div class="rk">${insignia(rk.i)}<div class="rk-t"><span class="lbl">Rütbe</span><b>${rk.n}</b><div class="xpbar"><i style="width:${pct}%"></i></div><span class="small muted">${ST.xp||0} XP${rk.next?' · sonraki '+rk.next:''}</span></div></div>`;
+  $('rankCard').innerHTML='';$('rankCard').hidden=true;
   const rr=$('rifles');rr.innerHTML='';
   for(const k in RIFLES){
     const R=RIFLES[k],b=document.createElement('div');b.className='rcard';b.tabIndex=0;b.setAttribute('role','button');b.setAttribute('aria-pressed',S.rifle===k);
@@ -2730,7 +2728,7 @@ function labEnd(){
   LB.ph='end';ST.lab=ST.lab||{};const first=!ST.lab[LB.key];ST.lab[LB.key]=Date.now();if(first)ST.xp=(ST.xp||0)+30;
   const it=EDU_FLAT.find(x=>x.id==='lab_'+LB.key);if(it)eduDone(it,[]);saveST();
   $('labK').textContent='Tamamlandı';$('labH').textContent=LB.def.title;
-  $('labD').innerHTML=(LB.def.end||'Bütün adımları bitirdin.')+(first?' <span class="okc">+30 XP</span>':'');
+  $('labD').innerHTML=(LB.def.end||'Bütün adımları bitirdin.');
   LB.focus=null;if(L3){L3.hot=null;L3.focus=null;L3.marks=[];}$('labNext').textContent='Kapat';$('labSay').hidden=false;$('labSay').textContent='Baştan';labRing();LB.camC=null;labCam();const mk=document.querySelector('#lmarks');if(mk)mk.innerHTML='';fanfare();say('Tamamlandı.');
 }
 function labClose(){l3Dispose();try{speechSynthesis.cancel();}catch(e){}$('lab').hidden=true;if(LB){S.rifle=LB.prevRifle;}LB=null;$('labSay').textContent='Tekrar dinle';openMenu();}
@@ -3087,7 +3085,7 @@ function eduNext(id){const i=EDU_FLAT.findIndex(x=>x.id===id);if(i<0)return null
 function eduFirstOpen(){return EDU_FLAT.find(x=>!ST.edu[x.id])||null;}
 function eduDone(it,lines){
   if(!ST.edu[it.id]){ST.edu[it.id]=Date.now();ST.xp=(ST.xp||0)+40;}
-  const m=EDU.find(x=>x.id===it.mod);if(m&&m.items.every(x=>ST.edu[x.id])&&!ST.edu['mod_'+m.id]){ST.edu['mod_'+m.id]=Date.now();ST.xp+=150;if(lines)lines.push(m.n+' modülü tamamlandı · +150 XP');setTimeout(()=>{fanfare();say(m.n.replace(/^\d+\.\s*/,'')+' modülü tamamlandı.');},800);}
+  const m=EDU.find(x=>x.id===it.mod);if(m&&m.items.every(x=>ST.edu[x.id])&&!ST.edu['mod_'+m.id]){ST.edu['mod_'+m.id]=Date.now();ST.xp+=150;if(lines)lines.push(m.n+' modülü tamamlandı');setTimeout(()=>{fanfare();say(m.n.replace(/^\d+\.\s*/,'')+' modülü tamamlandı.');},800);}
   for(const b of BADGES){if(!ST.badges[b.k]&&(b.k==='ogrenci'||b.k==='mezun')){try{if(b.c({})){ST.badges[b.k]=Date.now();if(lines)lines.push('Yeni rozet: '+b.n);}}catch(e){}}}
   saveST();
 }
@@ -3313,7 +3311,7 @@ setTimeout(()=>wLoadAll(false),1500);
 
 <script>
 (()=>{
-const VER=13,btn=document.getElementById('upd');
+const VER=14,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

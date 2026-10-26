@@ -1,5 +1,5 @@
 // POLİGON servis çalışanı: sayfa ve sürüm bilgisi ağdan (yoksa önbellekten), ikonlar ve yazı tipleri önbellekten
-const C='poligon-v13';
+const C='poligon-v14';
 const STATIC=['../three.min.js','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon-32.png','./manifest.webmanifest'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(STATIC.concat(['./','./index.html'])).catch(()=>{})))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('poligon-')&&k!==C&&k!==C+'-foto'&&!k.endsWith('-foto')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

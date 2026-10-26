@@ -254,6 +254,19 @@ details.more>summary::-webkit-details-marker{display:none;}
 details.more>summary::before{content:"+ ";color:var(--accent);}
 details.more[open]>summary::before{content:"− ";}
 .kpanel.auto .kstep button{visibility:hidden;}
+.tsh{display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0;}
+.tsw{width:92px;height:92px;flex:none;}
+.tsh b{display:block;font-family:var(--display);font-weight:800;font-size:18px;margin:2px 0 4px;}
+.tsh p{margin:0 0 6px;font-size:12px;line-height:1.5;}
+.tsb{font-size:13px;padding:6px 10px;text-transform:none;}
+.kmd{width:100%;height:100%;display:flex;flex-direction:column;gap:10px;padding:6px 4px;}
+.kcmd{background:#0e0f0a;border:1px solid var(--line);border-radius:12px;padding:14px;}
+.kcmd b{display:block;font-family:var(--display);font-weight:800;font-size:clamp(22px,6.5vw,34px);line-height:1.1;margin:4px 0 10px;color:#fff;}
+.kbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;}.kbar i{display:block;height:100%;width:0;background:var(--accent);}
+.kstat{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px;}.kstat span{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color:var(--muted);}.kstat b{color:var(--fg);margin-left:4px;}
+.kgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:auto;}.kgrid button{padding:14px 4px;font-size:15px;}
+.kgrid button:active{transform:scale(.96);background:var(--accent);color:#14160f;}
+
 .labstage{position:relative;}
 .l3cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
 .l3ring{position:absolute;border-radius:50%;border:3px solid #ef7d2d;box-shadow:0 0 0 4px rgba(239,125,45,.18),0 0 24px rgba(239,125,45,.5);animation:l3p 1.1s ease-in-out infinite;cursor:pointer;}
@@ -565,7 +578,7 @@ const BADGES=[
   {k:'dag',n:'Dağ nişancısı',d:'Eğimli atışta 4/5.',c:r=>r.mode==='egim'&&r.hits>=4},
   {k:'termal',n:'Gecenin gözü',d:'Gece görüş görevinde 7/8.',c:r=>r.mode==='gecegorus'&&r.hits>=7},
   {k:'duello',n:'Düellocu',d:'Bir düello oyna.',c:r=>r.mode==='duello'},
-  {k:'lab',n:'Uygulamalı',d:'Yedi uygulamalı eğitimi de bitir.',c:()=>['tanitim','soktak','vaziyet','hakimiyet','kullanim','nisan','tetik'].every(k=>ST.lab&&ST.lab[k])}
+  {k:'lab',n:'Uygulamalı',d:'Sekiz uygulamalı eğitimi de bitir.',c:()=>['tanitim','soktak','vaziyet','hakimiyet','kullanim','nisan','tetik','komut'].every(k=>ST.lab&&ST.lab[k])}
 ];
 const DAILY=[
   {t:"Serbest atışta 300 m ve üstünde 70 puan yap.",c:r=>r.mode==='serbest'&&r.dist>=300&&r.v>=70},
@@ -1300,12 +1313,12 @@ function analyze(shots){
       else if(sdx>1.7*sdy)out.push('Vuruşlar yatay dağılmış. Bu genelde tetiğe yandan baskıdan ya da ani tetikten olur.');
       else out.push('Vuruşlar gelişigüzel dağılmış. Gözünü hedefe değil arpacığa odakla, kaslarını gevşet.');
     }else if(Math.hypot(mx,my)>(D<100?.6:.5)&&S.mode!=='sifirlama')
-      out.push(`Grup nişan noktasının ${Math.round(Math.abs(mx)*D/10)} cm ${mx>0?'sağında':'solunda'}, ${Math.round(Math.abs(my)*D/10)} cm ${my>0?'altında':'üstünde'} toplandı. Nişan noktasını, gezi, rüzgârı ve sıfırlamayı kontrol et.`);
+      out.push(`Grup nişan noktasının ${Math.round(Math.abs(mx)*D/10)} cm ${mx>0?'sağında':'solunda'}, ${Math.round(Math.abs(my)*D/10)} cm ${my>0?'altında':'üstünde'} toplandı. ${OPT.assist?'Aşağıdaki teşhise bak.':'Nişan noktasını, gezi, rüzgârı ve sıfırlamayı kontrol et.'}`);
   }
   const dcg=D>=100?Math.round((dropAt(R,D)-dropAt(R,S.gez))*D/10):0;
-  if(Math.abs(dcg)>=3)out.push(`Gez ${S.gez} m'de, hedef ${D} m'de. Mermi yaklaşık ${Math.abs(dcg)} cm ${dcg>0?'alçak':'yüksek'} vurur; gezi mesafeye bağla.`);
+  if(Math.abs(dcg)>=3&&!OPT.assist)out.push(`Gez ${S.gez} m'de, hedef ${D} m'de. Mermi yaklaşık ${Math.abs(dcg)} cm ${dcg>0?'alçak':'yüksek'} vurur; gezi mesafeye bağla.`);
   const we=windEff(S.wind.h);
-  if(D>=200&&we&&S.wind.s>=2)out.push(`Rüzgâr saat ${S.wind.h} yönünden (${we===1?'tam':'yarım'} tesirli) mermiyi ${windSign(S.wind.h)<0?'sola':'sağa'} itiyor ve şiddeti değişiyor; bayrağı izle, ${windSign(S.wind.h)<0?'sağa':'sola'} pay ver.`);
+  if(D>=200&&we&&S.wind.s>=2&&!OPT.assist)out.push(`Rüzgâr saat ${S.wind.h} yönünden (${we===1?'tam':'yarım'} tesirli) mermiyi ${windSign(S.wind.h)<0?'sola':'sağa'} itiyor ve şiddeti değişiyor; bayrağı izle, ${windSign(S.wind.h)<0?'sağa':'sola'} pay ver.`);
   const miss=shots.filter(s=>!s.tg).length;
   if(!out.length)out.push(miss?`${miss} atış hedefi ıskaladı. Arpacık hedefin üzerine gelmeden ateş etme; nişan noktasını kontrol et.`:'Temiz atış: nişan ve gez-arpacık hizası uyumlu.');
   return out.slice(0,5);
@@ -1324,7 +1337,9 @@ function resultModal(o,res){
   o.buttons=o.buttons||btns;
   if(eb)o.buttons=[eb].concat(o.buttons.filter(b=>b.label!=='Meydan oku')).slice(0,3);
   o.foot=`<div class="xpline">${lines.map(l=>`<span>${esc(l)}</span>`).join('')}</div>`;
+  const TD=['serbest','tabanca','ogretim','duello','gece','guc','dayan'].includes(S.mode)?teshis(S.shots):null;if(TD)o.html=(o.html||'')+teshisHTML(TD);
   modal(o);
+  if(TD){const tb=document.querySelector('#mNote .tsb');if(tb)tb.addEventListener('click',()=>{click(1400,.03,.1);labPick(tb.dataset.lab);});}
 }
 function showResult(timeUp){
   const R=R_(),base={mode:S.mode,pos:S.pos,sup:S.sup,dist:S.dist};
@@ -2397,6 +2412,7 @@ const LAB_ICON={
   hakimiyet:'<svg viewBox="0 0 64 40"><circle cx="32" cy="20" r="15" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="32" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="20" r="2.5" fill="#ef7d2d" class="lif2"/><path d="M32 0v9M32 31v9M12 20h9M43 20h9" stroke="currentColor" stroke-width="2"/></svg>',
   nisan:'<svg viewBox="0 0 64 40"><circle cx="32" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="6"/><rect x="30" y="18" width="4" height="22" fill="#ef7d2d" class="lif2"/></svg>',
   tetik:'<svg viewBox="0 0 64 40"><path d="M20 8h22v10H30l-4 16h-8l4-16h-2z" fill="currentColor" opacity=".85"/><path d="M33 18q4 6 0 12" stroke="#ef7d2d" stroke-width="3" fill="none" stroke-linecap="round" class="lif1"/><circle cx="52" cy="20" r="6" fill="none" stroke="currentColor" stroke-width="2" class="lif2"/></svg>',
+  komut:'<svg viewBox="0 0 64 40"><path d="M8 16h8l12-9v26l-12-9H8z" fill="currentColor" opacity=".85"/><path d="M34 13q6 7 0 14M40 8q11 12 0 24" stroke="#ef7d2d" stroke-width="2.5" fill="none" stroke-linecap="round" class="lif1"/><rect x="48" y="14" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2" class="lif2"/></svg>',
   kullanim:'<svg viewBox="0 0 64 40"><path d="M22 6h14l4 28h-14z" fill="currentColor" opacity=".85"/><path d="M46 12q6 8 0 16M51 8q10 12 0 24" stroke="#ef7d2d" stroke-width="2.5" fill="none" stroke-linecap="round" class="lif1"/></svg>'};
 const LAB_INFO={
   tanitim:{n:'Silah tanıtımı',k:'Parça parça',d:'Parçalara sırayla dokun; her birinin adını ve ne işe yaradığını sesli anlatır. Mandalı çevir, kurma kolunu çek, şarjörü çıkar.'},
@@ -2405,6 +2421,7 @@ const LAB_INFO={
   hakimiyet:{n:'Hâkimiyet esasları',k:'Sesli · 8 esas',d:'Sol el ve kol, dipçik, kabza, sağ kol ve dirsek, kaynak yapma, rahat duruş, nefes kesme, tetik kontrolü. Askerin üstünde her noktaya dokunarak öğren.'},
   nisan:{n:'Nişan resmi',k:'Sürükle · uygula',d:'Arpacığı parmağınla gezin ortasına getir, ucunu hedefe koy, ateş et. Açısal hata yaparsan merminin nereye gittiğini görürsün.'},
   tetik:{n:'Tetik ve nefes',k:'Basılı tut · zamanla',d:'Nişan nefesle iner kalkar. Duraklamayı yakala, tetiği basılı tutarak düzgünce düşür. Ani çekişi ve nefes hatasını anında gösterir.'},
+  komut:{n:'Atış müdürü komutları',k:'Sesli tatbikat',d:'“Şarjör tak, doldur, atış serbest, ateş kes, boşalt, göster.” Komutu duy, süre bitmeden doğru düğmeye bas. Ani “ateş kes” de gelebilir.'},
   kullanim:{n:'Doldurma ve tutukluk',k:'Sesli · adım adım',d:'Şarjör tak, doldur, emniyet, tek atış, tetik, tutukluk giderme (vur, çek, bak, ateş) ve boşaltma. Her hareketin sesini duyarak yap.'}
 };
 let LB=null;
@@ -2715,7 +2732,7 @@ function labEnd(){
 function labClose(){l3Dispose();try{speechSynthesis.cancel();}catch(e){}$('lab').hidden=true;if(LB){S.rifle=LB.prevRifle;}LB=null;$('labSay').textContent='Tekrar dinle';openMenu();}
 $('labX').addEventListener('click',()=>{click(1400,.03,.1);labClose();});
 $('labNext').addEventListener('click',()=>{if(!LB)return;if(LB.custom&&LB.ph==='custom'){LB.custom.next();return;}if(LB.ph==='free'){labEnd();return;}if(LB.ph==='wait')labDo();else if(LB.ph==='end')labClose();else if(LB.i<LB.def.steps.length-1){LB.i++;labShow();}else labEnd();});
-$('labSay').addEventListener('click',()=>{if(!LB)return;if(LB.custom&&LB.ph==='custom'){LB.custom.say();return;}if(LB.ph==='end'&&LB.def.custom){const k=LB.key;S.rifle=LB.prevRifle;(k==='nisan'?labNisan:labTetik)();return;}if(LB.ph==='end'){const k=LB.key,d=LB.def;$('labSay').textContent='Tekrar dinle';S.rifle=LB.prevRifle;labOpen(k,d.remake());return;}const st=LB.def.free?LB.cur:LB.def.steps[LB.i];if(st)say(st.h+'. '+st.d);});
+$('labSay').addEventListener('click',()=>{if(!LB)return;if(LB.custom&&LB.ph==='custom'){LB.custom.say();return;}if(LB.ph==='end'&&LB.def.custom){const k=LB.key;S.rifle=LB.prevRifle;({nisan:labNisan,tetik:labTetik,komut:labKomut})[k]();return;}if(LB.ph==='end'){const k=LB.key,d=LB.def;$('labSay').textContent='Tekrar dinle';S.rifle=LB.prevRifle;labOpen(k,d.remake());return;}const st=LB.def.free?LB.cur:LB.def.steps[LB.i];if(st)say(st.h+'. '+st.d);});
 function specRows(R){return `<div class="tbl"><table><tbody><tr><td>Sınıf</td><td>${CLS[R.cls]}</td></tr><tr><td>Üretim</td><td>${R.maker}</td></tr><tr><td>Çap</td><td>${R.cal}</td></tr><tr><td>Şarjör</td><td>${R.magTxt}</td></tr><tr><td>Çalışma</td><td>${R.mech}</td></tr>${R.rpm?`<tr><td>Atış hızı</td><td>dakikada ~${R.rpm}</td></tr>`:''}</tbody></table></div>`;}
 function labDef(key,arg){
   const mk=()=>labDef(key,arg);
@@ -2730,6 +2747,7 @@ function labPick(key){
   if(key==='hakimiyet'){labOpen('hakimiyet',labDef('hakimiyet'));return;}
   if(key==='nisan'){labNisan();return;}
   if(key==='tetik'){labTetik();return;}
+  if(key==='komut'){labKomut();return;}
   if(key==='vaziyet'){modal({eye:'Uygulamalı eğitim',title:L.n,intro:'Hangi vaziyeti çalışmak istersin?',html:`<div class="lpick">${Object.keys(VZ).map(k=>`<button class="secondary" data-v="${k}">${VZ[k].n}${ST.lab&&ST.lab['vz_'+k]?' ✓':''}</button>`).join('')}</div>`,buttons:[{label:'Menü',fn:openMenu}]});
     $('mNote').querySelectorAll('[data-v]').forEach(b=>b.addEventListener('click',()=>{click(1400,.03,.1);const k=b.dataset.v;ST.lab=ST.lab||{};ST.lab['vz_'+k]=1;labOpen('vaziyet',labDef('vaziyet',k));}));return;}
   const list=['hk33','g3','mpt76','mpt55'];
@@ -2863,6 +2881,86 @@ function l3Tap(e){
   labTap({target:el||document.createElement('i')});
 }
 
+// ================= ATIŞ HATASI TEŞHİSİ =================
+const TESHIS=[
+  {n:'Yukarı',loc:'yukarıda',why:'Nefes verişini bitirmeden ateş ediyor ya da yanağı dipçikte kaydırıyorsun; göz–gez mesafesi değişince vuruş yükselir. Ateşten sonra namluyu kaldırmak da yukarı gönderir.',fix:'Kaynağı her atışta aynı noktaya yap, nefes verişinin sonundaki duraklamada ateş et, takipte nişanı koru.',lab:'hakimiyet'},
+  {n:'Sağ üst',loc:'sağ üstte',why:'Geri tepmeyi bekleyip omzunu öne itiyorsun ya da dipçik omuz çukuruna tam oturmuyor.',fix:'Dipçiği omuz çukuruna sıkıca yerleştir, patlamayı bekleme; tetik düşerken vücut hareketsiz kalsın.',lab:'hakimiyet'},
+  {n:'Sağ',loc:'sağda',why:'Tetiğe parmak ucuyla, az giriyorsun ya da başparmakla kabzayı yana itiyorsun.',fix:'Tetiğe birinci boğumla yerleş, tetiği düz geriye çek; başparmak kabzayı sadece sarsın.',lab:'tetik'},
+  {n:'Sağ alt',loc:'sağ altta',why:'Tetik anında bütün elinle kabzayı sıkıyorsun; başparmak baskısı namluyu sağ alta iter.',fix:'Kabzayı önceden sabit bir güçle kavra, tetik çekerken yalnız tetik parmağı hareket etsin.',lab:'tetik'},
+  {n:'Aşağı',loc:'aşağıda',why:'İrkilme: patlamayı bekleyip namluyu düşürüyorsun. Nefes verirken ateş etmek de vuruşu aşağı alır.',fix:'Tetik halkası dolarken patlamanın ne zaman olacağını bilme; tetik çalışmasında sürpriz atışı yakala.',lab:'tetik'},
+  {n:'Sol alt',loc:'sol altta',why:'Ani tetik çekişi: tetiğe vuruyorsun. Sağ elini atış anında sıkmak da sol alta gönderir.',fix:'Önce tetik boşluğunu al, sonra tetiği yavaş ve kesintisiz çek.',lab:'tetik'},
+  {n:'Sol',loc:'solda',why:'Tetik parmağı fazla içeride; ikinci boğumla çekince namlu sola çekilir.',fix:'Parmağın tetikteki yerini düzelt: hafif tetikte birinci boğumun etli kısmı, ağır tetikte birinci boğum.',lab:'tetik'},
+  {n:'Sol üst',loc:'sol üstte',why:'Dipçik omuzda kayıyor ya da sol el el kundağını sıkarak namluyu yönlendiriyor.',fix:'Sol el kundağı sadece taşısın, dipçik omuz çukurunda sabit kalsın.',lab:'hakimiyet'}
+];
+function teshis(shots){
+  const sh=shots.filter(s=>s.d>0);if(sh.length<3)return null;
+  const pts=sh.map(s=>[s.mx*1000/s.d,s.my*1000/s.d]),m=a=>a.reduce((p,v)=>p+v,0)/a.length,cx=m(pts.map(p=>p[0])),cy=m(pts.map(p=>p[1]));
+  const sd=Math.sqrt(m(pts.map(p=>(p[0]-cx)**2+(p[1]-cy)**2))),off=Math.hypot(cx,cy),lim=isPistol(S.rifle)?1.2:.38;
+  if(sd>lim*1.6)return {k:'dag',pts,cx,cy,t:'Dağınık grup',why:'Vuruşlar her yöne dağılmış. Rahat duruş ve nefes kesme oturmamış; kaslar kasılınca namlu sürekli oynar.',fix:'Vaziyeti kemiklerle taşı, doğal nişan hattını bul, nefesi duraklamada kes. Önce grubu sıklaştır, sonra yerine bak.',lab:'hakimiyet'};
+  if(off<lim)return {k:'ok',pts,cx,cy,t:'Sıkı ve merkezde',why:'Grup sıkı ve nişan noktasında. Hâkimiyet esasları oturmuş.',fix:'Aynı düzeni koruyarak daha uzak mesafe ya da daha zor vaziyet dene.',lab:null};
+  const ang=(Math.atan2(cx,-cy)*180/Math.PI+360)%360,i=Math.round(ang/45)%8,T=TESHIS[i];
+  return {k:i,pts,cx,cy,t:'Grup '+T.loc+' toplanıyor',why:T.why+(OPT.assist?'':' Atış yardımı kapalıyken gez ayarını ve rüzgârı da kontrol et.'),fix:T.fix,lab:T.lab};
+}
+function teshisHTML(D){
+  const sec=[...Array(8)].map((_,i)=>{const a0=(i*45-22.5-90)*Math.PI/180,a1=(i*45+22.5-90)*Math.PI/180;return `<path d="M50 50 L${50+42*Math.cos(a0)} ${50+42*Math.sin(a0)} A42 42 0 0 1 ${50+42*Math.cos(a1)} ${50+42*Math.sin(a1)} Z" fill="${D.k===i?'rgba(239,125,45,.55)':'rgba(255,255,255,.04)'}" stroke="#3d4230"/>`;}).join('');
+  const sc=26/Math.max(1,...D.pts.map(p=>Math.hypot(p[0],p[1]))),dots=D.pts.map(p=>`<circle cx="${50+p[0]*sc}" cy="${50+p[1]*sc}" r="2" fill="#ebe7d6"/>`).join('');
+  const lab=D.lab?`<button class="secondary tsb" data-lab="${D.lab}">Çalış: ${LAB_INFO[D.lab].n}</button>`:'';
+  return `<div class="tsh"><svg viewBox="0 0 100 100" class="tsw">${sec}<circle cx="50" cy="50" r="13" fill="${D.k==='ok'?'rgba(163,200,107,.5)':D.k==='dag'?'rgba(224,88,79,.35)':'rgba(255,255,255,.05)'}" stroke="#3d4230"/>${dots}<circle cx="${50+D.cx*sc}" cy="${50+D.cy*sc}" r="3.5" fill="#ef7d2d" stroke="#14160f"/></svg>
+  <div><span class="lbl">Teşhis</span><b>${D.t}</b><p>${D.why}</p><p class="okc">${D.fix}</p>${lab}</div></div>`;
+}
+// ================= ATIŞ MÜDÜRÜ KOMUT TATBİKATI =================
+function labKomut(){
+  customLab('komut','Atış müdürü komutları',st=>{
+    const B=[['yat','Yat'],['kalk','Kalk'],['sarjor','Şarjör tak'],['cikar','Şarjör çıkar'],['kurma','Kurma kolu'],['E','Mandal E'],['T','Mandal T'],['ates','Ateş'],['goster','Göster']];
+    const K={i:0,err:0,ok:0,t0:0,st:{pos:'ayakta',mag:0,ch:0,sel:'E'},seq:[],shots:0,need:0,alive:true,times:[]};
+    const seq=[
+      {c:'Atıcılar mevzilere! Yatarak atış vaziyeti al!',a:['yat'],tm:5},
+      {c:'Şarjör tak!',a:['sarjor'],tm:4},
+      {c:'Doldur!',a:['kurma'],tm:4},
+      {c:'Emniyete al!',a:['E'],tm:4},
+      {c:'Hedef karşıda. Atış serbest!',a:['T','ates','ates','ates'],tm:9,fire:1},
+      {c:'Ateş kes! Ateş kes! Ateş kes!',a:['E'],tm:3,cease:1},
+      {c:'Atış serbest!',a:['T','ates','ates'],tm:7,fire:1},
+      {c:'Ateş kes!',a:['E'],tm:3,cease:1},
+      {c:'Şarjörleri çıkar!',a:['cikar'],tm:4},
+      {c:'Silahları boşalt!',a:['kurma'],tm:4},
+      {c:'Göster!',a:['goster'],tm:4},
+      {c:'Silah boş, emniyette. Ayağa kalk!',a:['kalk'],tm:4}];
+    if(rnd()<.6){const j=4;seq.splice(j+1,0,{c:'Dikkat! Atış istikametinde personel var! Ateş kes!',a:['E'],tm:2.5,cease:1,surprise:1},{c:'İstikamet temiz. Atış serbest!',a:['T','ates'],tm:6,fire:1});seq[j].a=['T','ates'];}
+    K.seq=seq;
+    st.innerHTML=`<div class="kmd"><div class="kcmd"><span class="lbl" id="kmK">Komut</span><b id="kmC">Hazır ol</b><div class="kbar"><i id="kmB"></i></div></div>
+      <div class="kstat" id="kmS"></div><div class="kgrid">${B.map(([k,n])=>`<button class="secondary" data-a="${k}">${n}</button>`).join('')}</div></div>`;
+    const stat=()=>{const s=K.st;$('kmS').innerHTML=`<span>Vaziyet <b>${s.pos}</b></span><span>Şarjör <b>${s.mag?'takılı':'yok'}</b></span><span>Fişek yatağı <b>${s.ch?'dolu':'boş'}</b></span><span>Mandal <b class="${s.sel==='E'?'okc':'noc'}">${s.sel}</b></span>`;};
+    const cur=()=>K.seq[K.i];
+    const issue=()=>{K.idle=false;const c=cur();if(!c){finish();return;}K.need=0;K.t0=performance.now();$('kmK').textContent=`Komut ${K.i+1}/${K.seq.length}`;$('kmC').textContent=c.c;tone(c.cease?1100:700,c.cease?900:700,.12,.08,'square');say(c.c);
+      $('labH').textContent=c.cease?'Hemen ateşi kes':'Komutu uygula';$('labD').textContent='Komutu duy, doğru düğmeye bas. '+(c.fire?'Önce mandalı T’ye al, sonra ateş et.':'');};
+    const act=(a)=>{const s=K.st;
+      if(a==='yat')s.pos='yatarak';if(a==='kalk')s.pos='ayakta';if(a==='sarjor'){if(s.mag){bad('Şarjör zaten takılı');return;}s.mag=1;magIn();}
+      if(a==='cikar'){if(!s.mag){bad('Şarjör takılı değil');return;}s.mag=0;magOut();}
+      if(a==='kurma'){boltSnd();s.ch=s.mag?1:0;}
+      if(a==='E'||a==='T'){s.sel=a;click(1500,.03,.2);}
+      if(a==='goster'){click(1800,.03,.12);}
+      if(a==='ates'){if(s.sel==='E'){dry();bad('Mandal emniyette, tetik çekilmez');return;}if(!s.ch){dry();bad('Fişek yatağı boş');return;}shotSound();vib(25);K.shots++;}
+      stat();return true;};
+    const silent=a=>{const s=K.st;if(a==='yat')s.pos='yatarak';if(a==='kalk')s.pos='ayakta';if(a==='sarjor')s.mag=1;if(a==='cikar')s.mag=0;if(a==='kurma')s.ch=s.mag?1:0;if(a==='E'||a==='T')s.sel=a;};
+    const bad=m=>{K.err++;tone(240,160,.2,.18);vib(60);toast('Hata: '+m,1300);};
+    const press=a=>{if(!K.alive||K.idle)return;const c=cur();if(!c){return;}
+      const exp=c.a[K.need];
+      if(a!==exp){if(c.cease&&a==='ates')bad('“Ateş kes!” komutundan sonra ateş edilmez');else bad(`Beklenen: ${B.find(b=>b[0]===exp)[1]}`);return;}
+      if(!act(a))return;K.need++;
+      if(K.need>=c.a.length){K.ok++;K.times.push((performance.now()-K.t0)/1000);K.i++;K.t0=0;K.idle=true;setTimeout(issue,c.cease?900:600);}};
+    st.querySelector('.kgrid').addEventListener('click',e=>{const b=e.target.closest('button');if(b)press(b.dataset.a);});
+    const loop=()=>{if(!LB||LB.key!=='komut'||!K.alive)return;const c=cur();if(c&&K.t0){const k=(performance.now()-K.t0)/1000/c.tm;$('kmB').style.width=Math.min(100,k*100)+'%';$('kmB').style.background=k>.75?'var(--bad)':'var(--accent)';
+        if(k>=1){K.err++;toast('Geç kaldın: '+c.c.replace(/!.*/,'!'),1200);tone(240,160,.2,.18);for(let j=K.need;j<c.a.length;j++)silent(c.a[j]);stat();K.i++;K.t0=0;K.idle=true;setTimeout(issue,700);}}
+      requestAnimationFrame(loop);};
+    const finish=()=>{K.alive=false;const tot=K.seq.length,avg=K.times.length?K.times.reduce((a,b)=>a+b,0)/K.times.length:0,sc=Math.max(0,Math.round(100-K.err*12-Math.max(0,avg-1.5)*8));
+      LB.def.end=`${tot} komutta <b>${K.err} hata</b>, ortalama tepki <b>${avg.toFixed(1)} sn</b> · puan <b>${sc}/100</b>. ${K.err?'“Ateş kes!” en önemli komuttur: duyduğun an parmağını tetikten çek ve emniyete al.':'Komutlara hatasız uydun.'}`;labEnd();};
+    stat();setTimeout(issue,900);loop();
+    $('labK').textContent='Tatbikat';$('labH').textContent='Komutları dinle';$('labD').textContent='Atış müdürü komut verecek. Süre bitmeden doğru düğmeye bas. “Ateş kes!” gelince hemen mandalı E’ye al.';$('labNext').textContent='Bitir';
+    return {next:()=>{if(K.alive)finish();},say:()=>{const c=cur();if(c)say(c.c);}};
+  });
+}
+
 // ================= ETKİLEŞİMLİ ÇALIŞMALAR: nişan resmi, tetik ve nefes =================
 const SIL_G='M-22 0 L-22 -16 L-20 -20 L-10 -23 L-6 -26 L6 -26 L10 -23 L20 -20 L22 -16 L22 0 Z';
 const dirTR=(dx,dy)=>{const h=Math.abs(dx)>4?(dx>0?'sağa':'sola'):'',v=Math.abs(dy)>4?(dy>0?'aşağı':'yukarı'):'';return [v,h].filter(Boolean).join(' ve ')||'ortaya';};
@@ -2963,7 +3061,8 @@ const EDU=[
     {id:'lab_tanitim',type:'lab',lab:'tanitim',t:'Silah tanıtımı (dokun-öğren)'},
     {id:'d_emniyet',type:'ders',t:'Atış emniyeti'},
     {id:'lab_soktak',type:'lab',lab:'soktak',t:'Söküp takma (uygulamalı)'},
-    {id:'lab_kullanim',type:'lab',lab:'kullanim',t:'Doldurma ve tutukluk (sesli)'}]},
+    {id:'lab_kullanim',type:'lab',lab:'kullanim',t:'Doldurma ve tutukluk (sesli)'},
+    {id:'lab_komut',type:'lab',lab:'komut',t:'Atış müdürü komutları'}]},
   {id:'m2',n:'2. Nişan ve duruş',items:[
     {id:'lab_vaziyet',type:'lab',lab:'vaziyet',t:'Atış vaziyetleri'},
     {id:'d_nisan',type:'ders',t:'Doğru nişan alma'},
@@ -3210,7 +3309,7 @@ setTimeout(()=>wLoadAll(false),1500);
 
 <script>
 (()=>{
-const VER=11,btn=document.getElementById('upd');
+const VER=12,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

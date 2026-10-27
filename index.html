@@ -4267,7 +4267,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'43',LOGO=window.HISAR_LOGO;
+const VER=+'44',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -5018,9 +5018,43 @@ document.head.insertAdjacentHTML('beforeend','<style>body.ui-sade.vbOn #vX{displ
 FRAME_HOOKS.push(()=>{const on=game==='play'&&mode==='tank'&&(iv===2||iv===3)&&document.body.classList.contains('ui-sade');document.body.classList.toggle('mobIn',on)});
 // telsiz ve buyuk mesaj her zaman gorus cubugunun altinda (baska modul stili sifirlasa da)
 const RA=document.getElementById('radio'),MS=document.getElementById('msg');
-FRAME_HOOKS.push(()=>{if(!document.body.classList.contains('vbOn')||game!=='play')return;const r=B.getBoundingClientRect();if(!r.height)return;const bot=Math.round(r.bottom);
+let pT=0;FRAME_HOOKS.push(dr=>{pT+=dr;if(pT<.2)return;pT=0;if(!document.body.classList.contains('vbOn')||game!=='play')return;const r=B.getBoundingClientRect();if(!r.height)return;const bot=Math.round(r.bottom);
  if(RA&&RA.style.getPropertyValue('top')!==(bot+8)+'px')RA.style.setProperty('top',(bot+8)+'px','important');
  if(MS){const t=Math.max(innerHeight*(innerHeight>innerWidth?.36:.24),bot+52)+'px';if(MS.style.getPropertyValue('top')!==t)MS.style.setProperty('top',t,'important')}});
+})();
+
+
+// ===== m_leak =====
+// ============ BELLEK SIZINTISI ONLEME: sahneden kaldirilan nesnelerin geometrileri 3 sn sonra (geri eklenmediyse) bellekten silinir ============
+(function(){
+const PEND=new Map();
+const skip=g=>!g||(g.userData&&g.userData.sh)||(typeof DGEO!=='undefined'&&g===DGEO)||(typeof BGEO!=='undefined'&&g===BGEO)||g.isInstancedBufferGeometry;
+{const r0=S.remove;S.remove=function(){for(const o of arguments)if(o&&o.isObject3D&&o!==P.g)PEND.set(o,performance.now());return r0.apply(this,arguments)}}
+function sweep(){const now=performance.now();let n=0;
+ for(const[o,t]of PEND){if(now-t<3000)continue;PEND.delete(o);if(o.parent)continue;
+  o.traverse(c=>{const g=c.geometry;if(c.isMesh&&!skip(g)&&!g.__dsp){g.__dsp=1;g.dispose();n++}const u=c.userData;if(u&&u.tt&&!u.__ttd){u.__ttd=1;for(const t of u.tt)t.dispose()}})}
+ return n}
+setInterval(()=>{try{sweep()}catch(e){}},2000);
+// yeniden eklenirse isaret kalksin (geometri cizimde otomatik yeniden yuklenir)
+{const a0=S.add;S.add=function(){for(const o of arguments){if(o&&o.isObject3D){PEND.delete(o);o.traverse(c=>{if(c.geometry&&c.geometry.__dsp)c.geometry.__dsp=0})}}return a0.apply(this,arguments)}}
+window.LEAK={PEND,sweep};
+})();
+
+
+// ===== m_batch =====
+// ============ CIZIM CAGRISI AZALTMA: her agacin 3 konisi tek parcaya birlestirilir (devrilme/parcalanma kodu 4 cocuk bekledigi icin yuvalar korunur) ============
+(function(){
+if(!window.TREES||!TREES.length)return;
+let MG=null;const MAT=new Map();
+function merge(ch){const P=[],N=[];for(const c of ch){c.updateMatrix();const g=c.geometry.index?c.geometry.toNonIndexed():c.geometry.clone();g.applyMatrix4(c.matrix);P.push(...g.attributes.position.array);N.push(...g.attributes.normal.array);g.dispose()}
+ const m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.Float32BufferAttribute(P,3));m.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));m.computeBoundingSphere();m.userData.sh=1;return m}
+let n=0;
+for(const t of TREES){const g=t.g;if(!g||g.children.length!==4)continue;const c=g.children;if(c[1].userData.mrg||c[1].geometry.type!=='ConeGeometry')continue;
+ if(!MG)MG=merge([c[1],c[2],c[3]]);
+ const m0=c[1].material,key=m0.color?m0.color.getHex():0;if(!MAT.has(key))MAT.set(key,m0);
+ const ms=new THREE.Mesh(MG,MAT.get(key));ms.castShadow=true;ms.receiveShadow=c[1].receiveShadow;ms.userData.mrg=1;
+ const old=[c[1],c[2],c[3]];for(const o of old)g.remove(o);g.add(ms,new THREE.Object3D(),new THREE.Object3D());n++}
+window.BATCH={trees:n};
 })();
 
 </script>

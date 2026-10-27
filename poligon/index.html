@@ -516,16 +516,16 @@ select.inp{font-size:13px;}
 'use strict';
 // ================= VERİ =================
 const RIFLES={
-  hk33:{maker:'MKE lisanslı üretim',cls:'tufek',name:'HK33',cal:'5.56×45 mm',mag:30,magTxt:"30'luk",mech:'makaralı gecikmeli geri tepme',rpm:750,disp:.28,kick:2.6,recov:9,drop:{100:0,200:.35,300:1.0,400:2.1},wind:.035,hole:.0057,iron:'hk',tone:1500,magStyle:'curve',guard:.24,v:780},
-  mpt76:{maker:'MKE · yerli',yerli:1,cls:'tufek',name:'MPT-76',cal:'7.62×51 mm',mag:20,magTxt:"20'lik",mech:'gaz pistonlu, döner kilitli',rpm:650,disp:.2,kick:5.2,recov:6,drop:{100:0,200:.5,300:1.27,400:2.4},wind:.03,hole:.0078,iron:'mpt',tone:900,magStyle:'short',guard:.27,v:720},
-  mpt55:{maker:'MKE · yerli',yerli:1,cls:'tufek',name:'MPT-55',cal:'5.56×45 mm',mag:30,magTxt:"30'luk",mech:'gaz pistonlu, döner kilitli',rpm:700,disp:.26,kick:2.5,recov:9.5,drop:{100:0,200:.35,300:1.0,400:2.1},wind:.035,hole:.0057,iron:'mpt',tone:1550,magStyle:'curve',guard:.25,v:780},
-  g3:{maker:'MKE lisanslı üretim',cls:'tufek',name:'G-3',cal:'7.62×51 mm',mag:20,magTxt:"20'lik",mech:'makaralı gecikmeli geri tepme',rpm:600,disp:.24,kick:5.6,recov:6,drop:{100:0,200:.5,300:1.27,400:2.4},wind:.03,hole:.0078,iron:'hk',tone:950,magStyle:'straight',guard:.27,v:720},
-  ak:{maker:'yabancı',cls:'tufek',name:'Kaleşnikof',cal:'7.62×39 mm',mag:30,magTxt:"30'luk",mech:'gaz pistonlu, döner kilitli',rpm:600,disp:.45,kick:3.6,recov:7.5,drop:{100:0,200:.95,300:2.35,400:4.4},wind:.05,hole:.0078,iron:'ak',tone:1100,magStyle:'ak',guard:.22,wood:1,v:600},
-  knt76:{maker:'MKE · yerli',yerli:1,cls:'keskin',name:'KNT-76',cal:'7.62×51 mm',mag:10,magTxt:"10'luk",mech:'keskin nişancı tüfeği, yarı otomatik',rpm:0,semi:1,disp:.09,kick:4.6,recov:6,drop:{100:0,200:.5,300:1.27,400:2.4,500:3.8,600:5.5,700:7.6,800:10.1},wind:.028,hole:.0078,iron:'none',scopeOnly:1,scopeX:10,tone:880,magStyle:'short',guard:.3,v:790},
-  mp5:{maker:'MKE lisanslı üretim',cls:'mt',name:'MP5',cal:'9×19 mm',mag:30,magTxt:"30'luk",mech:'makineli tabanca, makaralı gecikmeli',rpm:800,disp:.5,kick:1.8,recov:11,drop:{100:0,150:1.2,200:3},wind:.06,hole:.009,iron:'hk',tone:1250,magStyle:'curve',guard:.18,v:380,swayK:1.05},
-  yavuz16:{maker:'MKE · yerli',yerli:1,cls:'tabanca',name:'Yavuz 16',cal:'9×19 mm',mag:16,magTxt:"16'lık",mech:'tabanca, kısa geri tepmeli, yarı otomatik',rpm:0,semi:1,disp:.75,kick:3.2,recov:12,drop:{25:0,50:.4,100:2},wind:.06,hole:.009,iron:'pistol',tone:1300,v:350,swayK:1.5,noScope:1},
-  tp9:{maker:'Canik · yerli',yerli:1,cls:'tabanca',name:'Canik TP9SF',cal:'9×19 mm',mag:18,magTxt:"18'lik",mech:'tabanca, kısa geri tepmeli, polimer gövde',rpm:0,semi:1,disp:.68,kick:2.9,recov:13,drop:{25:0,50:.4,100:2},wind:.06,hole:.009,iron:'pistol',tone:1350,v:350,swayK:1.45,noScope:1},
-  sar9:{maker:'Sarsılmaz · yerli',yerli:1,cls:'tabanca',name:'Sarsılmaz SAR9',cal:'9×19 mm',mag:17,magTxt:"17'lik",mech:'tabanca, kısa geri tepmeli, polimer gövde',rpm:0,semi:1,disp:.72,kick:3.0,recov:12.5,drop:{25:0,50:.4,100:2},wind:.06,hole:.009,iron:'pistol',tone:1320,v:350,swayK:1.5,noScope:1}
+  hk33:{len:'920–940 mm',bar:'390 mm',kg:'3,65 kg',rng:'200–400 m (gez-arpacık)',vel:950,maker:'MKE lisanslı üretim',cls:'tufek',name:'HK33',cal:'5.56×45 mm',mag:30,magTxt:"30'luk",mech:'makaralı gecikmeli geri tepme',rpm:750,disp:.28,kick:2.6,recov:9,drop:{100:0,200:.35,300:1.0,400:2.1},wind:.035,hole:.0057,iron:'hk',tone:1500,magStyle:'curve',guard:.24,v:950},
+  mpt76:{len:'900–1000 mm (dipçik ayarlı)',bar:'406 mm',kg:'4,1 kg (MH ~3,75 kg)',rng:'600 m',vel:800,maker:'MKE · yerli',yerli:1,cls:'tufek',name:'MPT-76',cal:'7.62×51 mm',mag:20,magTxt:"20'lik",mech:'kısa stroklu gaz pistonlu, döner kilitli',rpm:700,disp:.2,kick:5.2,recov:6,drop:{100:0,200:.5,300:1.27,400:2.4},wind:.03,hole:.0078,iron:'mpt',tone:900,magStyle:'short',guard:.27,v:800},
+  mpt55:{len:'—',bar:'370 mm',kg:'3,3 kg',rng:'—',vel:900,maker:'MKE · yerli',yerli:1,cls:'tufek',name:'MPT-55',cal:'5.56×45 mm',mag:30,magTxt:"30'luk",mech:'gaz pistonlu, döner kilitli',rpm:700,disp:.26,kick:2.5,recov:9.5,drop:{100:0,200:.35,300:1.0,400:2.1},wind:.035,hole:.0057,iron:'mpt',tone:1550,magStyle:'curve',guard:.25,v:780},
+  g3:{len:'1025 mm',bar:'450 mm',kg:'4,38 kg',rng:'400 m (gez-arpacık)',vel:800,maker:'MKE lisanslı üretim',cls:'tufek',name:'G-3',cal:'7.62×51 mm',mag:20,magTxt:"20'lik",mech:'makaralı gecikmeli geri tepme',rpm:550,disp:.24,kick:5.6,recov:6,drop:{100:0,200:.5,300:1.27,400:2.4},wind:.03,hole:.0078,iron:'hk',tone:950,magStyle:'straight',guard:.27,v:800},
+  ak:{len:'880 mm',bar:'415 mm',kg:'3,3 kg',rng:'300 m',vel:715,maker:'yabancı',cls:'tufek',name:'Kaleşnikof',cal:'7.62×39 mm',mag:30,magTxt:"30'luk",mech:'uzun stroklu gaz pistonlu, döner kilitli',rpm:600,disp:.45,kick:3.6,recov:7.5,drop:{100:0,200:.95,300:2.35,400:4.4},wind:.05,hole:.0078,iron:'ak',tone:1100,magStyle:'ak',guard:.22,wood:1,v:715},
+  knt76:{len:'1020 mm',bar:'508 mm',kg:'4,7 kg',rng:'800 m',vel:800,maker:'MKE · yerli',yerli:1,cls:'keskin',name:'KNT-76',cal:'7.62×51 mm',mag:10,magTxt:"10'luk",mech:'keskin nişancı tüfeği, yarı otomatik',rpm:0,semi:1,disp:.09,kick:4.6,recov:6,drop:{100:0,200:.5,300:1.27,400:2.4,500:3.8,600:5.5,700:7.6,800:10.1},wind:.028,hole:.0078,iron:'none',scopeOnly:1,scopeX:10,tone:880,magStyle:'short',guard:.3,v:800},
+  mp5:{len:'680 mm',bar:'225 mm',kg:'2,54 kg',rng:'200 m',vel:400,maker:'MKE lisanslı üretim',cls:'mt',name:'MP5',cal:'9×19 mm',mag:30,magTxt:"30'luk",mech:'makineli tabanca, makaralı gecikmeli',rpm:800,disp:.5,kick:1.8,recov:11,drop:{100:0,150:1.2,200:3},wind:.06,hole:.009,iron:'hk',tone:1250,magStyle:'curve',guard:.18,v:400,swayK:1.05},
+  yavuz16:{len:'217 mm',bar:'—',kg:'850 g',rng:'50 m',vel:350,maker:'MKE · yerli',yerli:1,cls:'tabanca',name:'Yavuz 16',cal:'9×19 mm',mag:16,magTxt:"16'lık",mech:'tabanca, kısa geri tepmeli, yarı otomatik',rpm:0,semi:1,disp:.75,kick:3.2,recov:12,drop:{25:0,50:.4,100:2},wind:.06,hole:.009,iron:'pistol',tone:1300,v:350,swayK:1.5,noScope:1},
+  tp9:{len:'—',bar:'113 mm (4,46")',kg:'—',rng:'50 m',vel:360,maker:'Canik · yerli',yerli:1,cls:'tabanca',name:'Canik TP9SF',cal:'9×19 mm',mag:18,magTxt:"18'lik",mech:'tabanca, kısa geri tepmeli, polimer gövde',rpm:0,semi:1,disp:.68,kick:2.9,recov:13,drop:{25:0,50:.4,100:2},wind:.06,hole:.009,iron:'pistol',tone:1350,v:350,swayK:1.45,noScope:1},
+  sar9:{len:'193 mm',bar:'113 mm',kg:'790 g',rng:'50 m',vel:360,maker:'Sarsılmaz · yerli',yerli:1,cls:'tabanca',name:'Sarsılmaz SAR9',cal:'9×19 mm',mag:17,magTxt:"17'lik",mech:'tabanca, kısa geri tepmeli, polimer gövde',rpm:0,semi:1,disp:.72,kick:3.0,recov:12.5,drop:{25:0,50:.4,100:2},wind:.06,hole:.009,iron:'pistol',tone:1320,v:350,swayK:1.5,noScope:1}
 };
 const CLS={tufek:'Piyade tüfeği',keskin:'Keskin nişancı tüfeği',mt:'Makineli tabanca',tabanca:'Tabanca'};
 const isPistol=k=>RIFLES[k].cls==='tabanca';
@@ -1224,14 +1224,15 @@ function fire(){
   if(jp&&S.mode!=='ogretim'&&S.mode!=='sifirlama'&&rnd()<jp){S.ammo--;S.trig.down=false;dry();vib(60);openJam();return;}
   S.ammo--;const now=performance.now();S.lastShot=now;
   const op=sightOff(),mf=S.sight==='iron'?1.75:.4,pp=pxm();
-  const ax=S.aimX+swX+S.recX+op.x/pp+S.mis.x*mf+S.cant*3*(1+dropAt(R,S.gez));
-  const ay=S.aimY+swY+S.recY+op.y/pp+S.mis.y*mf+Math.abs(S.cant)*.5;
+  const hid=OPT.assist?0:1;
+  const ax=S.aimX+swX+S.recX+op.x/pp+(S.mis.x*mf+S.cant*3*(1+dropAt(R,S.gez)))*hid;
+  const ay=S.aimY+swY+S.recY+op.y/pp+(S.mis.y*mf+Math.abs(S.cant)*.5)*hid;
   const dk=OPT.assist?.55:1,gx=gauss()*R.disp*dk,gy=gauss()*R.disp*dk;
   const at=d=>({x:ax+gx+drift(d)+S.zeroErr.x,y:ay+gy+dropRel(d)+S.zeroErr.y});
   const blk=S.mode==='parkur'&&coverBlock(ay+gy);
   const cand=blk?[]:S.targets.filter(t=>t.state==='static'||(t.state==='up'&&!t.hit)||(t.state==='rising'&&t.up>.6)).sort((a,b)=>a.d-b.d);
   let hit=null,lx=0,ly=0,ip=null;
-  for(const t of cand){const p=at(t.d),tof=t.d/R.v,txa=t.x+(t.vx||0)*tof,k=tK(t),llx=p.x*k.kx-txa,lly=(p.y-tY(t))*k.ky;if(hitLocal(t.type,llx,lly)){hit=t;lx=llx;ly=lly;ip=p;break;}if(OPT.assist){const rr=.07;let ok=null;for(let a=0;a<8&&!ok;a++){const qx=llx+Math.cos(a*Math.PI/4)*rr,qy=lly+Math.sin(a*Math.PI/4)*rr;if(hitLocal(t.type,qx,qy))ok=[(llx+qx)/2,(lly+qy)/2];}if(ok&&hitLocal(t.type,ok[0],ok[1])){hit=t;lx=ok[0];ly=ok[1];ip=p;break;}if(ok){hit=t;lx=llx+(ok[0]-llx)*2;ly=lly+(ok[1]-lly)*2;ip=p;break;}}}
+  for(const t of cand){const p=at(t.d),tof=t.d/R.v,txa=t.x+(t.vx||0)*tof,k=tK(t),llx=p.x*k.kx-txa,lly=(p.y-tY(t))*k.ky;if(hitLocal(t.type,llx,lly)){hit=t;lx=llx;ly=lly;ip=p;break;}if(OPT.assist){const rr=Math.max(.07,7/pp*t.d/1000);let ok=null;for(let a=0;a<8&&!ok;a++){const qx=llx+Math.cos(a*Math.PI/4)*rr,qy=lly+Math.sin(a*Math.PI/4)*rr;if(hitLocal(t.type,qx,qy))ok=[(llx+qx)/2,(lly+qy)/2];}if(ok&&hitLocal(t.type,ok[0],ok[1])){hit=t;lx=ok[0];ly=ok[1];ip=p;break;}if(ok){hit=t;lx=llx+(ok[0]-llx)*2;ly=lly+(ok[1]-lly)*2;ip=p;break;}}}
   const ref=hit||cand[0]||S.targets[0]||{x:0,d:S.dist,type:'gogus'};
   const pr=ip||at(ref.d);
   const tofR=ref.d/R.v,refX=ref.x+(ref.vx||0)*tofR;
@@ -1269,7 +1270,7 @@ function arrive(s){
       if(!s.tg.hit){s.tg.hit=true;s.tg.state='falling';s.tg.t=0;S.gg.hits++;toast('Vuruş',700);}
     }else if(s.tg.type==='kagit')toast('Kâğıtta',600);
     else toast(S.mode==='serbest'||S.mode==='duello'||S.mode==='tabanca'?s.sc+' puan':'Vuruş',750);
-    hitSound(s.d);dust3D(s.tg.x+s.lx,(s.tg.h0||0)+aimH(s.tg.type)-s.ly,-(s.tg.d+.5+(S.pz||0)),s.d,4);S.hfx=S.hfx||[];S.hfx.push({x:s.ix,y:s.iy,t:now,d:s.d,parts:[...Array(10)].map(()=>({a:rnd()*Math.PI*2,v:.4+rnd()*.8,r:1+rnd()*2}))});
+    S.hm=performance.now();hitSound(s.d);dust3D(s.tg.x+s.lx,(s.tg.h0||0)+aimH(s.tg.type)-s.ly,-(s.tg.d+.5+(S.pz||0)),s.d,4);S.hfx=S.hfx||[];S.hfx.push({x:s.ix,y:s.iy,t:now,d:s.d,parts:[...Array(10)].map(()=>({a:rnd()*Math.PI*2,v:.4+rnd()*.8,r:1+rnd()*2}))});
   }else if(s.blk){if(S.fp)S.fp.blocked++;toast('Mermi sipere çarptı',900);noise('bandpass',500,.45,.08);
   }else{
     S.marks.push({x:s.ix,y:s.iy,t:now});{const wy=eye()+(S.E||0)-s.iy*s.d/1000;dust3D(s.ix*s.d/1000,Math.max(0,wy),-(s.d+(wy>0?1.5:0)+(S.pz||0)),s.d,7);}
@@ -1624,7 +1625,7 @@ function frame(now){
   S.wnow=Math.max(0,S.wind.s*(1+.32*Math.sin(ts*.29+S.g1)+.18*Math.sin(ts*1.07+S.g2)+.12*Math.sin(ts*2.3+S.g1*2)));
   const hr=S.run?S.hr0:72+(S.hr0-72)*Math.exp(-(now-S.tShoot)/1000/35);S.hr=hr;
   const hrF=1+(hr-72)/70;
-  let f=P.sway*(S.sup==='rest'?.45:1)*hrF*.35*DF.sway*(OPT.gyro?.4:1)*(R.swayK||1);
+  let f=P.sway*(S.sup==='rest'?.45:1)*hrF*.35*DF.sway*(OPT.gyro?.4:1)*(R.swayK||1)*(OPT.assist?.7:1);
   S.post=Math.max(0,S.post-dt*1.4);f*=1+S.post*.6;
   S.amp+=(1.8*f-S.amp)*Math.min(1,dt*3);
   swX=S.amp*(Math.sin(t*.9+phase[0])*.55+Math.sin(t*2.3+phase[1])*.3+Math.sin(t*5.3+phase[2])*.15);
@@ -1784,6 +1785,7 @@ function render(now){
     const fg=ctx.createRadialGradient(fx,fy,0,fx,fy,rr);fg.addColorStop(0,`rgba(255,245,200,${a})`);fg.addColorStop(.3,`rgba(255,180,70,${a*.75})`);fg.addColorStop(1,'rgba(255,120,20,0)');ctx.fillStyle=fg;ctx.beginPath();
     for(let i=0;i<10;i++){const an=i/10*Math.PI*2+S.lastShot,l=i%2?rr*.35:rr*(.8+((i*37)%10)/25);ctx.lineTo(fx+Math.cos(an)*l,fy+Math.sin(an)*l*.7);}ctx.closePath();ctx.fill();ctx.restore();}
   drawFlare(X,Y,use3);
+  const lowR0=S.fp&&S.fp.zoom<.6;if(OPT.assist&&!lowR0&&S.sight!=='optic'&&!S.reload&&S.mode!=='hata'){const o2=sightOff(),dx=W/2+o2.x,dy=VCY()+o2.y;ctx.fillStyle='rgba(25,211,197,.95)';ctx.beginPath();ctx.arc(dx,dy,2.4,0,Math.PI*2);ctx.fill();}
   const lowR=S.fp&&S.fp.zoom<.6,kick=S.post*S.post*Math.min(W,H)*.05;
   if(lowR)drawLowReady(now);
   else{ctx.save();ctx.translate(0,lower-kick);if(kick){ctx.translate(W/2,VCY());ctx.rotate(-S.post*S.post*.02);ctx.translate(-W/2,-VCY());}
@@ -1792,6 +1794,7 @@ function render(now){
   if(S.reload>0&&OPT.gq!=='dusuk'&&!lowR)drawReloadFP(1-S.reload/RELOAD);
   drawBrassFP(Math.min(.05,(now-(S.lastBr||now))/1000));S.lastBr=now;
   havaOverlay(now);
+  if(S.hm&&now-S.hm<420){const k=(now-S.hm)/420,cx=W/2,cy=VCY(),a=1-k,g=10+k*6,l=9;ctx.strokeStyle=`rgba(25,211,197,${a})`;ctx.lineWidth=3;ctx.beginPath();for(const [sx,sy] of [[1,1],[1,-1],[-1,1],[-1,-1]]){ctx.moveTo(cx+sx*g,cy+sy*g);ctx.lineTo(cx+sx*(g+l),cy+sy*(g+l));}ctx.stroke();}
   if(S.fp)hrVignette();
   if(S.sensor){sensorFx(now);}
   if(S.flash>0){ctx.fillStyle=S.sensor==='ggc'?`rgba(200,255,200,${S.flash*.8})`:S.night?`rgba(255,200,130,${S.flash*.55})`:`rgba(255,190,110,${S.flash*.26})`;ctx.fillRect(0,0,W,H);}
@@ -2536,9 +2539,9 @@ function tanitimSteps(rf){
   return [
     {hot:'namlu',h:'Namlu',d:'Merminin içinden geçtiği borudur. İçindeki yivler mermiye dönüş kazandırır, böylece mermi uçuşta yalpalamaz. Ucundaki alev gizleyici ağız alevini dağıtır, gece atıcının yerini belli etmez.'},
     {hot:'arpacik',h:'Arpacık',d:'Nişan hattının ön noktasıdır. Nişan alırken göz arpacığa odaklanır. Etrafındaki koruyucu, arpacığı darbelerden korur.'},
-    {hot:'gez',h:'Gez',d:ar?'Nişan hattının arka noktasıdır. Raya takılı katlanır gezde küçük ve büyük delik vardır; göz deliğin ortasından bakar.':'Nişan hattının arka noktasıdır. Döner tamburlu gezde mesafeye göre farklı delikler vardır: yakında açık gez, 200, 300 ve 400 m için delikler.'},
+    {hot:'gez',h:'Gez',d:ar?'Nişan hattının arka noktasıdır. Üst raya takılı katlanır gezdir; göz deliğin ortasından bakar. Ray üzerine dürbün ya da kırmızı nokta da takılır.':'Nişan hattının arka noktasıdır. Döner tamburlu gezin dört konumu var: 1 numara açık V gez yakın mesafe ve kötü görüş içindir; 2, 3 ve 4 numaralı delikler 200, 300 ve 400 metre içindir. V gez ile 200 metre deliği aynı noktaya vurur.'},
     ar?{hot:'ray',h:'Ray',d:'Gövdenin üstündeki dişli kızaktır. Dürbün, gece görüş cihazı ya da kırmızı nokta nişangâh buraya takılır.'}:null,
-    {hot:'kkol',h:'Kurma kolu',act:()=>kurma(),d:ar?'Gövdenin arka üstündeki T biçimli koldur. Geri çekip bırakınca mekanizma fişek yatağına fişek sürer. Atış sırasında yerinden oynamaz.':'Namlunun üstündeki tüpte, sol öndedir. Geri çekip bırakınca mekanizma fişek yatağına fişek sürer. Kolu bırak, eliyle ileri itme.'},
+    {hot:'kkol',h:'Kurma kolu',act:()=>kurma(),d:ar?'Gövdenin arka üstündeki T biçimli koldur. Geri çekip bırakınca mekanizma fişek yatağına fişek sürer. Atış sırasında yerinden oynamaz; mandalı sağ taraftadır.':'Namlunun üstündeki tüpte, sol öndedir. Geri çekip bırakınca mekanizma fişek yatağına fişek sürer. Kolu bırak, eliyle ileri itme.'},
     {hot:'mandal',h:'Ateş ayar mandalı',act:()=>{selTo(0);setTimeout(()=>selTo(60),700);setTimeout(()=>selTo(-60),1400);},d:'E emniyet: tetik çekilmez. T tek atış: her tetik çekişinde bir mermi. S seri atış: tetik basılı kaldıkça atış sürer. Atışa karar verene kadar mandal daima E\'de.'},
     {hot:'tetik',h:'Tetik',act:()=>{lmv('tetik',{r:14});dry();setTimeout(()=>lmv('tetik',{r:0}),300);},d:'İşaret parmağının ilk boğumuyla düz geriye, yavaş ve kesintisiz çekilir. Nişan alıp atışa karar vermeden parmak tetiğe girmez, gövdeye paralel durur.'},
     {hot:'smandal',h:'Şarjör mandalı',act:()=>{magOut();lmv('sarjor',{y:90,o:.5});setTimeout(()=>{lmv('sarjor',{y:0,o:1});magIn();},1200);},d:'Basınca şarjör serbest kalır ve çıkar. Yeni şarjör takılınca “tık” sesiyle kilitlenir.'},
@@ -2547,8 +2550,8 @@ function tanitimSteps(rf){
     ar?{hot:'ust',h:'Üst ve alt gövde',d:'Üst gövde namluyu ve mekanizmayı, alt gövde tetik grubunu ve şarjör yuvasını taşır. İki pimle birleşir; sökmede menteşe gibi açılır.'}
       :{hot:'govde',h:'Gövde',d:`Mekanizma burada çalışır. ${R.name} ${R.mech} sistemle çalışır.`},
     {hot:'kabza',h:'Kabza',d:'Atış eli kabzayı yüksekten ve sıkıca kavrar; el ile kabza arasında boşluk kalmaz. Tetiği çekerken kabzayı sıkma, sadece parmak hareket eder.'},
-    {hot:'dipcik',h:'Dipçik',act:thump,d:ar?'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Boyu ayarlanabilir; yanak dipçiğe her atışta aynı noktadan değer.':'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Yanak dipçiğe her atışta aynı noktadan değer.'},
-    ar?{hot:'ayak',h:'Çatal ayak',act:ayakToggle,d:'El kundağının altındaki katlanır ayaklardır. Yatarak atışta açılır, tüfeği yere sağlam oturtur ve namluyu sakinleştirir. Yürürken kundağın altına katlanır.'}:null,
+    {hot:'dipcik',h:'Dipçik',act:thump,d:ar?'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Boyu 12 kademede ayarlanır; yanak dipçiğe her atışta aynı noktadan değer.':'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Yanak dipçiğe her atışta aynı noktadan değer.'},
+    ar?{hot:'ayak',h:'Çatal ayak',act:ayakToggle,d:'El kundağının altındaki katlanır ayaklardır. Yatarak atışta açılır, tüfeği yere sağlam oturtur ve namluyu sakinleştirir. Katlıyken ön tutamak olarak da kullanılır.'}:null,
     ar?{hot:'ayakm',h:'Ayak açma mandalı',act:ayakToggle,d:'Bu mandala basınca çatal ayak serbest kalır, açılır ya da katlanır. Bırakınca ayak o konumda kilitlenir.'}:null,
     ar?{hot:'ktm',h:'Kilit tutma mandalı',act:()=>{click(1100,.04,.25);setTimeout(boltSnd,250);},d:'Son mermi atılınca mekanizmayı açık tutar; böylece şarjörün bittiğini anlarsın. Yeni şarjörü taktıktan sonra bu mandala basınca mekanizma kapanır ve fişek sürülür.'}:null,
     ar?{hot:'toz',h:'Toz kapağı',act:()=>{lmv('toz',{y:20,o:.4});click(1600,.03,.2);setTimeout(()=>lmv('toz',{y:0,o:1}),900);},d:'Boş kovanın atıldığı pencereyi kapatır, mekanizmaya toz ve çamur girmesini önler. İlk atışta kendiliğinden açılır.'}:null,
@@ -2564,12 +2567,12 @@ function soktakSteps(rf){
   if(!ar){
     S1.push({k:'Sökme',hot:'pim',h:'Dipçik pimlerini çıkar',act:()=>{click(900,.04,.22);lmv('pim',{y:-40});lmv('pim',{x:420,y:300},450);},d:'Gövdenin arkasındaki iki pimi it ve çıkar. Pimleri kaybetmemek için hemen örtüye koy.'});
     S1.push({k:'Sökme',hot:'dipcik',h:'Dipçiği çıkar',act:()=>{noise('bandpass',900,.3,.12);lmv('dipcik',{x:-60});lmv('dipcik',{x:-10,y:262},500);},d:'Dipçiği geriye doğru çekerek gövdeden ayır.'});
+    S1.push({k:'Sökme',hot:'mek',h:'Mekanizmayı çıkar',act:()=>{boltSnd();lmv('mek',{x:-240});lmv('mek',{x:150,y:322},650);},d:'Dipçik çıkınca gövdenin arkası açılır. Kurma kolunu geri çekerek mekanizma (kilit) grubunu arkadan dışarı al.'});
     S1.push({k:'Sökme',hot:'kabza',h:'Kabzayı (tetik grubunu) çıkar',act:()=>{noise('bandpass',1100,.3,.1);lmv('kabza',{r:22});lmv('kabza',{x:-30,y:150,r:0},550);},d:'Kabzayı aşağı doğru döndürerek gövdeden çıkar. Ateş ayar mandalı ve tetik bu grupla birlikte gelir.'});
-    S1.push({k:'Sökme',hot:'mek',h:'Mekanizmayı çıkar',act:()=>{boltSnd();lmv('mek',{x:-240});lmv('mek',{x:150,y:322},650);},d:'Mekanizma (kilit) grubunu gövdenin arkasından geriye doğru çekip çıkar.'});
     S1.push({k:'Sökme',hot:'elk',h:'El kundağını çıkar',act:()=>{noise('bandpass',700,.3,.12);lmv('elk',{y:40});lmv('elk',{x:-110,y:248},450);},d:'El kundağı pimini çıkar, kundağı öne ve aşağı doğru ayır. Saha temizliği için bu kadarı yeter.'});
     S2.push({k:'Takma',hot:'elk',h:'El kundağını tak',act:()=>{lmv('elk',{x:0,y:0});click(800,.05,.25);},d:'Kundağı namlunun altına yerleştir, pimini tak.'});
-    S2.push({k:'Takma',hot:'mek',h:'Mekanizmayı yerleştir',act:()=>{lmv('mek',{x:-240,y:0});setTimeout(()=>{lmv('mek',{x:0});boltSnd();},650);},d:'Mekanizma grubunu gövdenin arkasından ileri doğru it, yerine otursun.'});
     S2.push({k:'Takma',hot:'kabza',h:'Kabzayı tak',act:()=>{lmv('kabza',{x:0,y:0,r:22});setTimeout(()=>{lmv('kabza',{r:0});click(700,.05,.3);},600);},d:'Kabzanın ön ucunu gövdeye tak, yukarı döndürerek oturt.'});
+    S2.push({k:'Takma',hot:'mek',h:'Mekanizmayı yerleştir',act:()=>{lmv('mek',{x:-240,y:0});setTimeout(()=>{lmv('mek',{x:0});boltSnd();},650);},d:'Mekanizma grubunu gövdenin arkasından ileri doğru it, yerine otursun.'});
     S2.push({k:'Takma',hot:'dipcik',h:'Dipçiği tak',act:()=>{lmv('dipcik',{x:-60,y:0});setTimeout(()=>{lmv('dipcik',{x:0});thump();},550);},d:'Dipçiği gövdeye doğru it, deliklerin hizalandığını gör.'});
     S2.push({k:'Takma',hot:'pim',h:'Pimleri tak',act:()=>{lmv('pim',{x:0,y:-40});setTimeout(()=>{lmv('pim',{y:0});click(900,.04,.25);},500);},d:'İki pimi deliklere sonuna kadar it.'});
   }else{
@@ -2788,11 +2791,11 @@ function labClose(){l3Dispose();try{speechSynthesis.cancel();}catch(e){}$('lab')
 $('labX').addEventListener('click',()=>{labClose();});
 $('labNext').addEventListener('click',()=>{if(!LB)return;if(LB.custom&&LB.ph==='custom'){LB.custom.next();return;}if(LB.ph==='free'){labEnd();return;}if(LB.ph==='wait')labDo();else if(LB.ph==='end')labClose();else if(LB.i<LB.def.steps.length-1){LB.i++;labShow();}else labEnd();});
 $('labSay').addEventListener('click',()=>{if(!LB)return;if(LB.custom&&LB.ph==='custom'){LB.custom.say();return;}if(LB.ph==='end'&&LB.def.custom){const k=LB.key;S.rifle=LB.prevRifle;({nisan:labNisan,tetik:labTetik,komut:labKomut})[k]();return;}if(LB.ph==='end'){const k=LB.key,d=LB.def;$('labSay').textContent='Tekrar dinle';S.rifle=LB.prevRifle;labOpen(k,d.remake());return;}const st=LB.def.free?LB.cur:LB.def.steps[LB.i];if(st)say(st.h+'. '+st.d);});
-function specRows(R){return `<div class="tbl"><table><tbody><tr><td>Sınıf</td><td>${CLS[R.cls]}</td></tr><tr><td>Üretim</td><td>${R.maker}</td></tr><tr><td>Çap</td><td>${R.cal}</td></tr><tr><td>Şarjör</td><td>${R.magTxt}</td></tr><tr><td>Çalışma</td><td>${R.mech}</td></tr>${R.rpm?`<tr><td>Atış hızı</td><td>dakikada ~${R.rpm}</td></tr>`:''}</tbody></table></div>`;}
+function specRows(R){return `<div class="tbl"><table><tbody><tr><td>Sınıf</td><td>${CLS[R.cls]}</td></tr>${R.len&&R.len!=='—'?`<tr><td>Uzunluk</td><td>${R.len}</td></tr>`:''}${R.bar&&R.bar!=='—'?`<tr><td>Namlu</td><td>${R.bar}</td></tr>`:''}${R.kg&&R.kg!=='—'?`<tr><td>Ağırlık</td><td>${R.kg}</td></tr>`:''}${R.rng&&R.rng!=='—'?`<tr><td>Etkili menzil</td><td>${R.rng}</td></tr>`:''}${R.vel?`<tr><td>Namlu çıkış hızı</td><td>~${R.vel} m/s</td></tr>`:''}<tr><td>Üretim</td><td>${R.maker}</td></tr><tr><td>Çap</td><td>${R.cal}</td></tr><tr><td>Şarjör</td><td>${R.magTxt}</td></tr><tr><td>Çalışma</td><td>${R.mech}</td></tr>${R.rpm?`<tr><td>Atış hızı</td><td>dakikada ~${R.rpm}</td></tr>`:''}</tbody></table></div>`;}
 function labDef(key,arg){
   const mk=()=>labDef(key,arg);
   if(key==='tanitim'){const R=RIFLES[arg];return {free:1,title:'Silah tanıtımı · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:tanitimSteps(arg),end:`${R.name} parçalarını tanıdın.`+(WF[arg]&&WF[arg].src?`<div class="lphoto">${wImg(arg,'lphimg')}${wCredit(arg)}</div>`:'')+specRows(R),remake:mk};}
-  if(key==='soktak'){const R=RIFLES[arg];return {title:'Söküp takma · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:soktakSteps(arg),end:'Silahı söküp yeniden taktın ve işlev kontrolünü yaptın. Sıra eğitim için sadeleştirilmiştir; kendi silahının kullanıcı kitabındaki sıra esastır.',remake:mk};}
+  if(key==='soktak'){const R=RIFLES[arg];return {title:'Söküp takma · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:soktakSteps(arg),end:'Silahı söküp yeniden taktın ve işlev kontrolünü yaptın. Sıra eğitim için sadeleştirilmiştir; kendi silahının kullanıcı kitabındaki sıra esastır.'+(isAR(arg)?'':'<div class="lphoto"><img class="lphimg" alt="Sökülmüş G3A3" src="https://commons.wikimedia.org/wiki/Special:FilePath/G3A3_disassembled.jpg?width=800" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"><a class="wcred" href="https://commons.wikimedia.org/wiki/File:G3A3_disassembled.jpg" target="_blank" rel="noopener">Gerçek fotoğraf: sökülmüş G3A3 (HK33 ile aynı ana gruplar) · Wikimedia Commons</a></div>'),remake:mk};}
   if(key==='hakimiyet'){return {pose:1,title:'Tüfeğe hâkimiyet esasları',svg:svgPose({pose:'prone'}),steps:ESAS,end:'Sekiz esası uyguladın. Bunları Serbest atışta yatarak dene; grup sıklaştıkça esaslar oturmuş demektir.',remake:mk};}
   if(key==='kullanim'){const R=RIFLES[arg];return {title:'Doldurma ve tutukluk · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(NEFES),steps:hakimiyetSteps(),init:()=>{lmv('sarjor',{x:330,y:140});lmv('mkol',{r:-60});},end:'Doldurmadan boşaltmaya bütün atış sırasını uyguladın. Tutukluk giderme sırasını unutma: vur, çek, bak, ateş et.',remake:mk};}
   if(key==='vaziyet'){const v=VZ[arg];return {pose:1,free:1,title:'Atış vaziyeti · '+v.n,svg:svgPose(v),steps:v.steps,end:`${v.n} vaziyetini adım adım uyguladın. Diğer vaziyetleri de dene, sonra Serbest atışta ${v.n.toLowerCase()} seri at.`,remake:mk};}
@@ -2857,6 +2860,9 @@ function l3Geo(el){
     const s=mk(subs[0]);for(let k=1;k<subs.length;k++){const h=new T.Path();subs[k].forEach(([a,b],j)=>j?h.lineTo(a,b):h.moveTo(a,b));s.holes.push(h);}return {shape:s,size:20};}
   return null;
 }
+const L3_STEEL={namlu:1,mek:1,pim:1,arkapim:1,onpim:1,mkol:1,tetik:1,ayak:1,kkol:1,smandal:1,ktm:1,ayakm:1};
+let L3_NOISE=null;
+function l3Noise(){if(L3_NOISE)return L3_NOISE;const c=cvTex(128,128,(x,w,h)=>{const im=x.createImageData(w,h);for(let i=0;i<im.data.length;i+=4){const v=110+rnd()*120;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}x.putImageData(im,0,0);});const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(.06,.06);L3_NOISE=t;return t;}
 function l3Build(svg){
   const T=THREE,root=new T.Group(),mats=[];
   const partOf=el=>{for(let a=el;a&&a.tagName!=='svg';a=a.parentNode)if(a.dataset&&a.dataset.p)return a.dataset.p;return null;};
@@ -2867,7 +2873,9 @@ function l3Build(svg){
         walk(el,grp,p||part);continue;}
       const geo=l3Geo(el),col=l3Color(el);if(!geo||!col)continue;
       const pid=partOf(el),dep=L3_DEPTH[pid]||24,zc=L3_SIDE[pid]||0;
-      const mat=new T.MeshStandardMaterial({color:col.c,metalness:col.m,roughness:col.r,side:T.DoubleSide,transparent:true,opacity:+(el.getAttribute('opacity')||1)});mat.userData.op=mat.opacity;mats.push(mat);
+      const steel=L3_STEEL[pid]&&col.m<.5&&!/^#[6-9a-f]/i.test(col.c),poly=!steel&&col.m<.3;
+      const mat=new T.MeshStandardMaterial({color:steel?'#3c4043':col.c,metalness:steel?.88:col.m>.5?.7:col.m,roughness:steel?.3:col.m>.5?.38:.72,envMapIntensity:steel?1.1:.6,side:T.DoubleSide,transparent:true,opacity:+(el.getAttribute('opacity')||1)});
+      if(poly){mat.bumpMap=l3Noise();mat.bumpScale=.35;mat.roughnessMap=l3Noise();}mat.userData.op=mat.opacity;mats.push(mat);
       let mesh;
       if(geo.tube){const gs=geo.tube.map(pts=>{const cp=new T.CurvePath();for(let k=1;k<pts.length;k++)cp.add(new T.LineCurve3(new T.Vector3(pts[k-1][0],pts[k-1][1],zc),new T.Vector3(pts[k][0],pts[k][1],zc)));return new T.TubeGeometry(cp,Math.max(4,pts.length*2),geo.r,8,false);});
         mesh=new T.Group();gs.forEach(gg=>mesh.add(new T.Mesh(gg,mat)));}
@@ -2883,7 +2891,10 @@ function l3Init(svg){
   L3={r,parts:{},anim:{},yaw:-.35,pitch:.18,dist:1,tYaw:-.35,tPitch:.18,zoom:1,tz:1,focus:null,tf:null,hot:null,marks:[],recoil:0,t0:performance.now()};
   r.setPixelRatio(Math.min(devicePixelRatio||1,2));r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;
   const sc=new T.Scene();L3.sc=sc;const cam=new T.PerspectiveCamera(30,1,1,20000);L3.cam=cam;
-  sc.add(new T.HemisphereLight(0xf2efe2,0x2a2e20,.75));const dl=new T.DirectionalLight(0xfff3dc,1.1);dl.position.set(-300,-500,900);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);
+  try{const es=new T.Scene();const sg=new T.SphereGeometry(100,32,16),cs=[];const pa=sg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i)/100;const v=y>0?.55+.45*y:.12+.1*(1+y);cs.push(v,v,v*1.04);}sg.setAttribute('color',new T.Float32BufferAttribute(cs,3));es.add(new T.Mesh(sg,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide})));
+    for(const [x,y,z,w,h] of [[-60,40,40,50,30],[70,20,-30,30,50],[0,80,0,60,60]]){const pl=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide}));pl.position.set(x,y,z);pl.lookAt(0,0,0);es.add(pl);}
+    const pm=new T.PMREMGenerator(r);sc.environment=pm.fromScene(es,.04).texture;pm.dispose();}catch(e){}
+  sc.add(new T.HemisphereLight(0xf2efe2,0x2a2e20,.55));const dl=new T.DirectionalLight(0xfff3dc,1.1);dl.position.set(-300,-500,900);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);
   const sh=dl.shadow.camera;sh.left=-600;sh.right=600;sh.top=400;sh.bottom=-400;sh.near=10;sh.far=3000;dl.shadow.bias=-.0005;L3.dl=dl;sc.add(dl);sc.add(dl.target);
   const rim=new T.DirectionalLight(0xb8d0ff,.35);rim.position.set(600,400,-500);sc.add(rim);
   const world=new T.Group();world.scale.set(1,-1,1);sc.add(world);L3.world=world;
@@ -3368,7 +3379,7 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
 
 <script>
 (()=>{
-const VER=15,btn=document.getElementById('upd');
+const VER=16,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

@@ -514,6 +514,7 @@ select.inp{font-size:13px;}
 <script>
 (()=>{
 'use strict';
+try{document.documentElement.lang='tr';}catch(e){}
 // ================= VERİ =================
 const RIFLES={
   hk33:{len:'920–940 mm',bar:'390 mm',kg:'3,65 kg',rng:'200–400 m (gez-arpacık)',vel:950,maker:'MKE lisanslı üretim',cls:'tufek',name:'HK33',cal:'5.56×45 mm',mag:30,magTxt:"30'luk",mech:'makaralı gecikmeli geri tepme',rpm:750,disp:.28,kick:2.6,recov:9,drop:{100:0,200:.35,300:1.0,400:2.1},wind:.035,hole:.0057,iron:'hk',tone:1500,magStyle:'curve',guard:.24,v:950},
@@ -2342,9 +2343,9 @@ function nextQ(){
   const ks=Object.keys(QERR),k=ks[Math.floor(rnd()*ks.length)],d=DIRS[Math.floor(rnd()*4)];
   const q={k,d,ox:0,oy:0,cant:0,ax:0,ay:0},Rr=Math.min(W,VH())*.44,p=pxm(),t0=S.targets[0];
   if(k==='acisal'){q.ox=d[1]*Rr*.13;q.oy=d[2]*Rr*.13;}
-  else if(k==='paralel'){q.ax=d[1]*1.35;q.ay=d[2]*1.7;}
+  else if(k==='paralel'){q.ax=d[1]*2.8;q.ay=d[2]*2.6;}
   else if(k==='yan'){q.cant=(rnd()<.5?-1:1)*(.14+rnd()*.06);}
-  else if(k==='nokta'){q.up=rnd()<.5;q.ay=q.up?-1.3:.75;}
+  else if(k==='nokta'){q.up=rnd()<.5;q.ay=q.up?-2.4:1.8;}
   S.aimX=tX(t0)+q.ax-q.ox/p;S.aimY=tY(t0)+q.ay-q.oy/p;
   Q.q=q;Q.ans=false;qPanel();
 }
@@ -3405,7 +3406,7 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
 
 <script>
 (()=>{
-const VER=17,btn=document.getElementById('upd');
+const VER=18,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

@@ -548,7 +548,7 @@ const TASKS={
     tip:'Ekran kenarındaki turuncu oklar görüş dışındaki hedefi gösterir. Yakın hedeflerde mermi biraz yüksek vurur; göğsün altına nişan al.'},
   hareket:{name:'Hareketli hedef',short:'Hareketli',kind:'Raylı hedef',card:'Yürüyen ve koşan hedefe, mermi uçuş süresini hesaba katarak önden nişan al.',tags:['8 geçiş','100–200 m','Yatarak destekli'],target:'boy',pos:'prone',sup:'rest',
     desc:'Boy hedefi ray üzerinde yürüyerek ya da koşarak geçecek. Mermi hedefe varana kadar hedef ilerlediği için önüne nişan alman gerekir. 8 geçiş var; her geçişte istediğin kadar atış yapabilirsin, ilk vuruş sayılır.',
-    tip:'Yürüyen hedefte yaklaşık yarım gövde, koşan hedefte yaklaşık bir gövde önüne nişan al. Uzaklaştıkça pay artar.'},
+    tip:'Atış yardımı açıkken önden pay otomatik verilir; artıyı hedefin üstünde tut. Yardımı kapatırsan yürüyen hedefte yaklaşık yarım gövde, koşan hedefte bir gövde önüne nişan al.'},
   keskin:{name:'Keskin nişancı',short:'Keskin nişancı',kind:'KNT-76 · uzun menzil',card:'Dürbünle 450–800 m\'deki hedefi bul ve vur. Mesafe ve rüzgârı dürbün otomatik hesaplar.',tags:['5 hedef','450–800 m','Dürbün 10×'],target:'boy',pos:'prone',sup:'rest',rifle:'knt76',
     desc:'5 boy hedefi 450–800 m arasında belirecek. Atış yardımı açıkken dürbün mesafeyi ölçüp ayarı kendisi yapar, rüzgârı da düzeltir: sen hedefi bul, artıyı göğsüne koy, tetiği yavaşça düşür. Her hedefe 2 atış hakkın var.',
     tip:'Hesabı kendin yapmak istersen Ayarlar → Atış yardımı → Kapalı. O zaman mesafe = 1500 ÷ hedefin milyem boyu.'},
@@ -1102,7 +1102,7 @@ function resetSeries(quiet){
 // ================= MODAL =================
 function countUp(el,to,suffix,dec){
   const t0=performance.now(),dur=700;
-  const step=now=>{const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);el.innerHTML=(to*e).toFixed(dec||0)+suffix;if(k<1)requestAnimationFrame(step);};
+  const step=now=>{const k=Math.max(0,Math.min(1,(now-t0)/dur)),e=1-Math.pow(1-k,3);el.innerHTML=(to*e).toFixed(dec||0)+suffix;if(k<1)requestAnimationFrame(step);};
   requestAnimationFrame(step);
 }
 function modal({eye='',title,big='',num=null,suffix='',dec=0,plot=false,rows=[],notes=[],intro='',html='',foot='',buttons=[]}){
@@ -1233,10 +1233,10 @@ function fire(){
   const blk=S.mode==='parkur'&&coverBlock(ay+gy);
   const cand=blk?[]:S.targets.filter(t=>t.state==='static'||(t.state==='up'&&!t.hit)||(t.state==='rising'&&t.up>.6)).sort((a,b)=>a.d-b.d);
   let hit=null,lx=0,ly=0,ip=null;
-  for(const t of cand){const p=at(t.d),tof=t.d/R.v,txa=t.x+(t.vx||0)*tof,k=tK(t),llx=p.x*k.kx-txa,lly=(p.y-tY(t))*k.ky;if(hitLocal(t.type,llx,lly)){hit=t;lx=llx;ly=lly;ip=p;break;}if(OPT.assist){const rr=Math.max(.07,7/pp*t.d/1000);let ok=null;for(let a=0;a<8&&!ok;a++){const qx=llx+Math.cos(a*Math.PI/4)*rr,qy=lly+Math.sin(a*Math.PI/4)*rr;if(hitLocal(t.type,qx,qy))ok=[(llx+qx)/2,(lly+qy)/2];}if(ok&&hitLocal(t.type,ok[0],ok[1])){hit=t;lx=ok[0];ly=ok[1];ip=p;break;}if(ok){hit=t;lx=llx+(ok[0]-llx)*2;ly=lly+(ok[1]-lly)*2;ip=p;break;}}}
+  for(const t of cand){const p=at(t.d),tof=t.d/R.v,txa=t.x+(t.vx||0)*tof*(OPT.assist?0:1),k=tK(t),llx=p.x*k.kx-txa,lly=(p.y-tY(t))*k.ky;if(hitLocal(t.type,llx,lly)){hit=t;lx=llx;ly=lly;ip=p;break;}if(OPT.assist){const rr=Math.max(.07,7/pp*t.d/1000);let ok=null;for(let a=0;a<8&&!ok;a++){const qx=llx+Math.cos(a*Math.PI/4)*rr,qy=lly+Math.sin(a*Math.PI/4)*rr;if(hitLocal(t.type,qx,qy))ok=[(llx+qx)/2,(lly+qy)/2];}if(ok&&hitLocal(t.type,ok[0],ok[1])){hit=t;lx=ok[0];ly=ok[1];ip=p;break;}if(ok){hit=t;lx=llx+(ok[0]-llx)*2;ly=lly+(ok[1]-lly)*2;ip=p;break;}}}
   const ref=hit||cand[0]||S.targets[0]||{x:0,d:S.dist,type:'gogus'};
   const pr=ip||at(ref.d);
-  const tofR=ref.d/R.v,refX=ref.x+(ref.vx||0)*tofR;
+  const tofR=ref.d/R.v,refX=ref.x+(ref.vx||0)*tofR*(OPT.assist?0:1);
   const rk=tK(ref),mx=hit?(lx+refX):(pr.x*rk.kx),my=(pr.y-tY(ref))*rk.ky;
   if(S.mode==='keskin'&&S.ks.cur)S.ks.cur.shots++;
   if(S.mode==='egim'&&S.eg.cur)S.eg.cur.shots++;
@@ -3406,7 +3406,7 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
 
 <script>
 (()=>{
-const VER=18,btn=document.getElementById('upd');
+const VER=19,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

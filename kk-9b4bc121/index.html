@@ -128,6 +128,17 @@ h1,h2{font-family:var(--f-serif);font-weight:500;margin:0;line-height:1;text-wra
 .netlik span{position:absolute;top:-6px;width:4px;height:22px;margin-left:-2px;border-radius:2px;background:#fff;box-shadow:0 0 8px #000}
 .deklansor{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);transform:translateX(-50%);min-width:0;width:74px;height:74px;padding:0;font-size:28px;pointer-events:auto}
 .vizor small{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 146px);text-align:center;color:#fff;text-shadow:0 1px 6px #000;font-size:13px;letter-spacing:.08em}
+.guncel-band{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;gap:10px;padding:12px 12px 12px 16px;border-radius:16px;background:rgba(18,14,31,.92);border:1px solid rgba(255,207,138,.35);box-shadow:0 10px 30px #0008;color:var(--krem);transform:translateY(140%);transition:transform .45s cubic-bezier(.2,.8,.2,1);pointer-events:auto;font-family:var(--f-ui)}
+.guncel-band.gor{transform:none}
+.guncel-band span{flex:1;display:flex;flex-direction:column;gap:2px}
+.guncel-band small{color:var(--sis);font-size:12px}
+.guncel-band .kapat{width:32px;height:32px;border-radius:50%;color:var(--sis);background:rgba(255,255,255,.06)}
+.guncel-perde{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(10,8,18,.88);color:var(--krem);font-family:var(--f-ui);text-align:center}
+.guncel-perde div{display:flex;flex-direction:column;gap:6px}
+.guncel-perde b{font-family:var(--f-serif);font-size:30px;font-weight:500}
+.guncel-perde small{color:var(--sis);font-size:13px}
+.tost{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));z-index:70;transform:translate(-50%,20px);opacity:0;transition:all .35s ease;padding:10px 16px;border-radius:999px;background:rgba(18,14,31,.92);color:var(--krem);font:500 14px var(--f-ui);border:1px solid rgba(255,255,255,.12);pointer-events:none}
+.tost.gor{opacity:1;transform:translate(-50%,0)}
 </style>
 
 </head>
@@ -1934,6 +1945,32 @@ function kurulumIpucu(){
   const ust=katman.querySelector('.menu > div'); if(ust) ust.appendChild(d); else katman.appendChild(d);
 }
 
+
+/* ================= GÜNCELLEME (telefondan) ================= */
+const SURUM="2026.10.28-152047";
+async function sunucuSurumu(){ try{ const r=await fetch("surum.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const j=await r.json(); return j.surum||null; }catch(e){ return null; } }
+function tost(t){ const d=el(`<div class="tost">${t}</div>`); document.body.appendChild(d); requestAnimationFrame(()=>d.classList.add("gor")); setTimeout(()=>{ d.classList.remove("gor"); setTimeout(()=>d.remove(),500); },2600); }
+async function guncelle(){
+  const d=el(`<div class="guncel-perde"><div><b>Güncelleniyor…</b><small>Yeni sürüm indiriliyor, birkaç saniye sürebilir</small></div></div>`); document.body.appendChild(d);
+  try{ if("serviceWorker" in navigator){ const rs=await navigator.serviceWorker.getRegistrations(); for(const r of rs){ try{ await r.update(); }catch(e){} } } }catch(e){}
+  try{ const ks=await caches.keys(); await Promise.all(ks.filter(k=>k.startsWith("kk-")).map(k=>caches.delete(k))); }catch(e){}
+  setTimeout(()=>location.reload(),300);
+}
+function guncellemeBandi(){
+  if(document.querySelector(".guncel-band")) return;
+  const b=el(`<div class="guncel-band"><span><b>Yeni güncelleme var</b><small>Dokun, oyun kendini yenilesin</small></span><button class="btn kucuk">Güncelle</button><button class="kapat" aria-label="Sonra">✕</button></div>`);
+  b.querySelector(".btn").onclick=guncelle; b.querySelector(".kapat").onclick=()=>b.remove();
+  document.body.appendChild(b); requestAnimationFrame(()=>b.classList.add("gor"));
+}
+async function guncellemeKontrol(elle){
+  if(/claude\.ai|claudeusercontent/.test(location.hostname)) { if(elle) tost("Bu sürüm zaten en güncel hâliyle açılıyor"); return; }
+  const s=await sunucuSurumu();
+  if(s&&s!==SURUM){ if(elle) guncelle(); else guncellemeBandi(); return; }
+  if(elle) tost(s?"Oyun güncel ✓":"İnternet yok, sonra tekrar dene");
+}
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") guncellemeKontrol(false); });
+setInterval(()=>guncellemeKontrol(false),10*60*1000);
+
 /* ================= MENÜ ================= */
 const Menu={
   async ac(){
@@ -1956,6 +1993,7 @@ const Menu={
           <button class="btn ince kucuk" id="album">📷 Albüm${kayit.album?` (${Object.keys(kayit.album).length})`:""}</button>
           ${kayit.bitti[6]?`<button class="btn ince kucuk" id="final">✦ Son sayfa</button>`:""}
           <button class="btn ince kucuk" id="ses">${kayit.ses?"♪":"✕"}</button>
+          <button class="btn ince kucuk" id="guncelle" aria-label="Güncellemeleri denetle">⟳ Güncelle</button>
         </div>
       </div>
     </div>`);
@@ -1963,6 +2001,7 @@ const Menu={
     d.querySelectorAll(".bolum").forEach(b=>b.onclick=()=>{ Ses.baslat(); const B=BOLUMLER[+b.dataset.no-1]; if(acik(B.no)) bolumAc(B); });
     d.querySelector("#ses").onclick=e=>{ Ses.baslat(); Ses.sesAc(!kayit.ses); e.target.textContent=kayit.ses?"♪":"✕"; };
     d.querySelector("#album").onclick=()=>Album.ac();
+    d.querySelector("#guncelle").onclick=()=>guncellemeKontrol(true);
     const f=d.querySelector("#final"); if(f) f.onclick=()=>gecis(()=>Final.ac());
     kurulumIpucu();
   }
@@ -2027,7 +2066,8 @@ function dongu(t){
   try{ await avatarlariYukle(MODEL_KOK,p=>{ cub.style.width=(p*100).toFixed(0)+"%"; }); }
   catch(e){ console.error(e); yk.querySelector(".yk-yazi").textContent="Yüklenemedi. İnternet bağlantını kontrol edip tekrar aç."; return; }
   cub.style.width="100%"; await bekle(250);
-  await Menu.ac(); yk.classList.add("bitti"); setTimeout(()=>yk.remove(),900); PERDE.classList.remove("kapali"); requestAnimationFrame(dongu); })();
+  await Menu.ac(); yk.classList.add("bitti"); setTimeout(()=>yk.remove(),900); PERDE.classList.remove("kapali"); requestAnimationFrame(dongu);
+  setTimeout(()=>guncellemeKontrol(false),1500); })();
 window.__oyun3d={B1,B2,B3,B4,B5,B6,Menu,Final,bolumAc,Girdi,kayit,Kamera,camera,get bolum(){return bolum;},get kilit(){return kilit;},get ETK(){return ETK;},get scene(){return scene;},kalabalik,AVATAR,karakter};
 })();
 </script>

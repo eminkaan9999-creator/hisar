@@ -1,0 +1,27 @@
+name: Tetik APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tetik/src/**'
+      - 'tetik/android/**'
+      - 'tetik/build.py'
+      - '.github/workflows/tetik-apk.yml'
+permissions:
+  contents: write
+concurrency:
+  group: tetik-apk
+  cancel-in-progress: true
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SDK bilgisi
+        run: |
+          echo "::notice title=sdk::ANDROID_HOME=$ANDROID_HOME ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "::notice title=build-tools::$(ls $ANDROID_HOME/build-tools | tr '\n' ' ')"
+          echo "::notice title=platforms::$(ls $ANDROID_HOME/platforms | tr '\n' ' ')"
+          echo "::notice title=java::$(java -version 2>&1 | head -1) JAVA_HOME_17=$JAVA_HOME_17_X64"
+          echo "::notice title=tools::$(ls $ANDROID_HOME | tr '\n' ' ') $(ls $ANDROID_HOME/system-images 2>/dev/null | tr '\n' ' ')"
+          echo "::notice title=kvm::$(ls -l /dev/kvm 2>&1)"

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hisar Tetik Sensör Yükleme</title>
+<meta name="theme-color" content="#0a0e0f">
+<link rel="icon" href="favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>
+<style>
+:root{--bg:#0a0e0f;--panel:#11181a;--line:#22302f;--fg:#e4eeec;--muted:#8a9e9b;--accent:#22d3c5;--warn:#f2b33d;--bad:#ef4d55;--good:#3ddc84;
+--display:"Chakra Petch","Arial Narrow",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15.5px;line-height:1.55}
+.wrap{max-width:720px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left))}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);letter-spacing:.12em;font-size:21px;margin:0}
+h2{font-family:var(--display);font-size:15px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 10px}
+a{color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+ol{margin:0;padding-left:22px}
+li{margin:7px 0}
+.install{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+esp-web-install-button{--esp-tools-button-color:#22d3c5;--esp-tools-button-text-color:#04211f;--esp-tools-button-border-radius:10px}
+esp-web-install-button:not(:defined) [slot]{display:none}
+.btn{display:inline-block;font:inherit;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:14px;color:#04211f;background:var(--accent);border:0;border-radius:10px;padding:13px 20px;cursor:pointer}
+.warn{border-left:3px solid var(--warn);padding:10px 12px;background:#141c1d;border-radius:6px}
+.bad{border-left-color:var(--bad)}
+.note{color:var(--muted);font-size:13.5px}
+code{font-family:var(--mono);font-size:13px;background:#162023;padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>HİSAR TETİK · SENSÖR YAZILIMI</h1><a href="./">← Uygulama</a></header>
+  <p class="note">M5StickC Plus2'ye HİSAR sensör yazılımını yükler. Bir kez yapman yeterli. Yazılım hareket sensörünü saniyede 1000 kez okur ve uygulamaya Bluetooth ile saniyede 200 ölçüm gönderir.</p>
+
+  <div class="card">
+    <h2>Gerekenler</h2>
+    <ol>
+      <li>Bir <b>bilgisayar</b> (Windows, Mac ya da Linux) ve <b>Chrome</b> ya da <b>Edge</b> tarayıcısı. Telefondan ve Safari'den yükleme yapılamaz.</li>
+      <li>Veri aktarabilen bir <b>USB-C kablo</b> (sadece şarj eden kablolar çalışmaz).</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Yükleme</h2>
+    <ol>
+      <li>Sensörü USB-C kabloyla bilgisayara tak.</li>
+      <li>Aşağıdaki <b>Yükle</b> düğmesine bas. Açılan pencerede listeden sensörü seç (adı genelde <code>USB Single Serial</code>, <code>CH9102</code> ya da <code>USB JTAG</code> diye görünür) ve <b>Bağlan</b>'a bas.</li>
+      <li><b>Install / Yükle</b>'yi onayla. Yaklaşık 1 dakika sürer, bitene kadar kabloyu çıkarma.</li>
+      <li>Bitince sensörün ekranında <b>HISAR TETIK</b> ve <b>BEKLIYOR</b> yazar. Hazır.</li>
+    </ol>
+    <div class="install" style="margin-top:14px">
+      <esp-web-install-button manifest="firmware/manifest.json">
+        <button slot="activate" class="btn">Yükle</button>
+        <span slot="unsupported"><p class="warn bad">Bu tarayıcı USB üzerinden yüklemeyi desteklemiyor. Bilgisayarda <b>Chrome</b> ya da <b>Edge</b> ile aç.</p></span>
+        <span slot="not-allowed"><p class="warn bad">Sayfa güvenli bağlantı (https) ile açılmalı.</p></span>
+      </esp-web-install-button>
+      <p class="note" id="loadNote">Yükleme aracı hazırlanıyor…</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Sorun olursa</h2>
+    <ul>
+      <li><b>Listede sensör yok:</b> Başka bir kablo dene. Windows'ta görünmüyorsa M5Stack'in USB sürücüsünü (CH9102) kur: <a href="https://docs.m5stack.com/" target="_blank" rel="noopener">docs.m5stack.com</a> › Download › USB Driver.</li>
+      <li><b>Bağlanamadı:</b> Sensörün yan güç düğmesine 2 saniye basarak aç, tekrar dene.</li>
+      <li><b>Sensörü kapatmak:</b> Yan B düğmesine 2 saniye bas. Ön A düğmesi ekranı aydınlatır.</li>
+      <li><b>Uygulamaya bağlanmak:</b> iPhone'da <b>Bluefy</b> tarayıcısıyla, Android'de Chrome ile uygulamayı aç ve <b>Sensör</b>'e bas.</li>
+    </ul>
+    <p class="note">Yazılım kaynağı ve derlenmiş dosya: <a href="https://github.com/eminkaan9999-creator/hisar/tree/main/tetik/sensor" target="_blank" rel="noopener">GitHub › tetik/sensor</a>. Sürüm 1 · M5Unified 0.2.2 · NimBLE-Arduino 1.4.2 · ESP32 Arduino 2.0.17.</p>
+  </div>
+</div>
+<script>
+(()=>{const note=document.getElementById('loadNote');let ok=false;
+customElements.whenDefined('esp-web-install-button').then(()=>{ok=true;note.textContent='Yükleme aracı hazır.';});
+setTimeout(()=>{if(!ok){note.textContent='Yükleme aracı açılamadı. İnternet bağlantını kontrol edip sayfayı yenile.';note.style.color='var(--warn)';}},10000);})();
+</script>
+</body>
+</html>

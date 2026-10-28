@@ -326,6 +326,14 @@ details.more[open]>summary::before{content:"− ";}
 .l3marks i{position:absolute;width:12px;height:12px;border-radius:50%;background:#19d3c5;border:2px solid #060809;pointer-events:none;animation:lmkp 1.6s ease-in-out infinite;}
 .l3hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(20,22,15,.8);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:11px;color:var(--muted);pointer-events:none;transition:opacity .6s;white-space:nowrap;}
 .l3hint.out{opacity:0;}
+.l3flip{position:absolute;right:10px;bottom:10px;background:rgba(6,8,9,.84);border:1px solid var(--line);border-radius:999px;color:var(--fg);font:600 12px/1 var(--display,Arial),Arial,sans-serif;letter-spacing:.04em;padding:8px 13px;cursor:pointer;}
+.l3flip:active{transform:scale(.96);}
+.l3nef{position:absolute;right:12px;top:12px;width:66px;height:66px;border-radius:50%;background:#0e1416;border:2px solid #22353a;color:#ebe7d6;font:800 14px "Saira Condensed",Arial,sans-serif;letter-spacing:.06em;cursor:pointer;}
+.l3nef.hot{border-color:#19d3c5;box-shadow:0 0 0 4px rgba(25,211,197,.18),0 0 24px rgba(25,211,197,.5);animation:l3p 1.1s ease-in-out infinite;}
+.labstage svg.l2d [data-side="R"]{display:none;}
+.labstage svg.l2d #lmir text{transform-box:fill-box;transform-origin:center;transform:scaleX(-1);}
+.lmk2{font-family:"Saira Condensed",Arial,sans-serif;font-weight:800;}
+.labstage svg .no2{display:none;}
 
 .bcam .hud,.bcam .fig,.bcam #kpanel,.bcam .figw,.bcam #fig,.bcam #timer,.bcam .hint{opacity:0!important;transition:opacity .2s;}
 .splash{position:fixed;inset:0;z-index:90;background:radial-gradient(70% 50% at 50% 45%,#0b2b2d 0,#040607 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .55s,transform .55s;}
@@ -555,7 +563,7 @@ const TASKS={
     tip:'Tabancada gez ve arpacığın üst kenarları aynı hizada, arpacık gezin tam ortasında olmalı. Tetiği düz geriye çek, bileği kırma.'},
   popup:{name:'Muharebe atışı',short:'Muharebe',kind:'Pop-up hedefler',card:'Farklı mesafelerde kalkan hedefleri inmeden vur. Hız ve isabet puanlanır.',tags:['12 hedef','50–300 m','Yatarak'],pos:'prone',sup:'free',
     desc:'12 pop-up hedef farklı mesafe ve yönlerde kalkacak. Her biri birkaç saniye ayakta kalır, vurulunca devrilir. Gez muharebe nişangâhında (300 m). Hızlı ve isabetli vuruş daha çok puan getirir.',
-    tip:'Ekran kenarındaki turuncu oklar görüş dışındaki hedefi gösterir. Yakın hedeflerde mermi biraz yüksek vurur; göğsün altına nişan al.'},
+    tip:'Ekran kenarındaki turkuaz oklar görüş dışındaki hedefi gösterir. Yakın hedeflerde mermi biraz yüksek vurur; göğsün altına nişan al.'},
   hareket:{name:'Hareketli hedef',short:'Hareketli',kind:'Raylı hedef',card:'Yürüyen ve koşan hedefe, mermi uçuş süresini hesaba katarak önden nişan al.',tags:['8 geçiş','100–200 m','Yatarak destekli'],target:'boy',pos:'prone',sup:'rest',
     desc:'Boy hedefi ray üzerinde yürüyerek ya da koşarak geçecek. Mermi hedefe varana kadar hedef ilerlediği için önüne nişan alman gerekir. 8 geçiş var; her geçişte istediğin kadar atış yapabilirsin, ilk vuruş sayılır.',
     tip:'Atış yardımı açıkken önden pay otomatik verilir; artıyı hedefin üstünde tut. Yardımı kapatırsan yürüyen hedefte yaklaşık yarım gövde, koşan hedefte bir gövde önüne nişan al.'},
@@ -854,7 +862,7 @@ function buildMenu(){
     b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.click();}});
     b.addEventListener('click',()=>{S.rifle=k;[...rr.children].forEach(x=>x.setAttribute('aria-pressed',x===b));if((S.mode==='keskin'&&k!=='knt76')||(S.mode==='tabanca'&&!isPistol(k))||(S.mode!=='serbest'&&S.mode!=='tabanca'&&isPistol(k)))S.mode='serbest';setup(true);});
     rr.appendChild(b);
-    const cvx=b.querySelector('canvas');if(cvx){if(R.cls==='tabanca')drawPistol(cvx.getContext('2d'),[120,40],[290,40],320,k);else drawRifle(cvx.getContext('2d'),[22,48],[384,48],270,k,{scope:!!R.scopeOnly});}
+    const cvx=b.querySelector('canvas');if(cvx){if(R.cls==='tabanca')drawPistol(cvx.getContext('2d'),[120,40],[290,40],320,k);else{const cc=cvx.getContext('2d'),rd=()=>{cc.clearRect(0,0,400,120);const gr=cc.createRadialGradient(200,62,10,200,62,190);gr.addColorStop(0,'rgba(170,205,205,.16)');gr.addColorStop(1,'rgba(170,205,205,0)');cc.fillStyle=gr;cc.fillRect(0,0,400,120);drawRifle(cc,[34,40],[366,40],270,k,{scope:!!R.scopeOnly,cb:rd});};rd();}}
   }
   buildLabs();
   const mm=$('modes');mm.innerHTML='';const m2=$('modes2');m2.innerHTML='';
@@ -2015,16 +2023,18 @@ function drawBrassFP(dt){S.fpb=(S.fpb||[]).filter(b=>{b.t+=dt;b.vy+=1500*dt;b.x+
 function drawReloadFP(k){
   const u=Math.min(W,H)/400,a=Math.sin(Math.PI*k),ar=isAR(S.rifle);
   ctx.save();ctx.translate(W*.5,H*1.05-a*H*.6);ctx.rotate(-.24+Math.sin(k*Math.PI*2)*.04);ctx.scale(u,u);
+  const RK=S.rifle,bi=rifImg(RK,'b'),mi=bi&&rifImg(RK,'m');
+  if(bi&&mi){drawRifImg(ctx,bi,RK,[-160,0],[290,0]);}else{
   ctx.fillStyle='#1b1d16';ctx.fillRect(-60,-16,250,32);ctx.fillRect(170,-8,120,16);ctx.fillStyle='#24271e';ctx.fillRect(-160,-26,100,50);ctx.fillStyle='#2b2e24';ctx.fillRect(-60,-22,250,6);
-  ctx.fillStyle='#1d1f18';ctx.beginPath();ctx.moveTo(10,16);ctx.lineTo(40,16);ctx.quadraticCurveTo(52,60,70,92);ctx.lineTo(40,100);ctx.quadraticCurveTo(28,60,10,16);ctx.fill();
-  const mag=(dx,dy,rot,al)=>{ctx.save();ctx.globalAlpha=al;ctx.translate(80+dx,16+dy);ctx.rotate(rot);ctx.fillStyle='#34382b';ctx.strokeStyle='#6a6e58';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(34,0);if(ar){ctx.lineTo(40,64);ctx.lineTo(8,68);}else{ctx.quadraticCurveTo(44,40,64,74);ctx.lineTo(36,84);ctx.quadraticCurveTo(18,44,0,0);}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();};
+  ctx.fillStyle='#1d1f18';ctx.beginPath();ctx.moveTo(10,16);ctx.lineTo(40,16);ctx.quadraticCurveTo(52,60,70,92);ctx.lineTo(40,100);ctx.quadraticCurveTo(28,60,10,16);ctx.fill();}
+  const mag=(dx,dy,rot,al)=>{if(bi&&mi){const q=450/840,px=-160+(RIF_MAG[RK][0]-80)*q,py=(RIF_MAG[RK][1]-RIF_Y0[RK])*q;ctx.save();ctx.globalAlpha=al;ctx.translate(px+dx,py+dy);ctx.rotate(rot);ctx.translate(-px,-py);drawRifImg(ctx,mi,RK,[-160,0],[290,0]);ctx.restore();return;}ctx.save();ctx.globalAlpha=al;ctx.translate(80+dx,16+dy);ctx.rotate(rot);ctx.fillStyle='#34382b';ctx.strokeStyle='#6a6e58';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(34,0);if(ar){ctx.lineTo(40,64);ctx.lineTo(8,68);}else{ctx.quadraticCurveTo(44,40,64,74);ctx.lineTo(36,84);ctx.quadraticCurveTo(18,44,0,0);}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();};
   let hx=140,hy=14;
   if(k<.24){mag(0,0,0,1);const q=k/.24;hx=140-q*45;hy=14+q*40;}
   else if(k<.42){const q=(k-.24)/.18;mag(q*10,q*q*140,q*.6,1-q);hx=95;hy=54+q*20;}
   if(k>=.3&&k<.6){const q=(k-.3)/.3;mag(0,(1-q)*120,(1-q)*.3,1);hx=96;hy=54+(1-q)*110;}
   else if(k>=.6){mag(0,0,0,1);if(k<.72){hx=96;hy=54;}else if(k<.92){const q=Math.min(1,(k-.72)/.12);const tx=ar?-40:200,ty=ar?-30:-26;hx=96+(tx-96)*q;hy=54+(ty-54)*q;if(k>.84){hx+=(ar?-1:-1)*Math.min(1,(k-.84)/.05)*30;}}else{const q=(k-.92)/.08;hx=(ar?-40:200)+(140-(ar?-40:200))*q;hy=-26+40*q;}}
   ctx.fillStyle='#4f5c33';ctx.beginPath();ctx.moveTo(hx-10,hy+10);ctx.lineTo(hx-80,hy+260);ctx.lineTo(hx+40,hy+260);ctx.lineTo(hx+22,hy+12);ctx.fill();
-  ctx.restore();ctx.save();ctx.translate(W*.5,H*1.05-a*H*.6);ctx.rotate(-.24+Math.sin(k*Math.PI*2)*.04);ctx.scale(u,u);fpHand(hx,hy,30,18,.3,true);fpHand(-90,28,26,16,-.2,true);ctx.restore();
+  ctx.restore();ctx.save();ctx.translate(W*.5,H*1.05-a*H*.6);ctx.rotate(-.24+Math.sin(k*Math.PI*2)*.04);ctx.scale(u,u);fpHand(hx,hy,30,18,.3,true);fpHand(bi&&mi?-14:-90,bi&&mi?40:28,26,16,-.2,true);ctx.restore();
 }
 function drawFlare(X,Y,use3){
   const h=havaNow();if(!h.sunS||S.night||S.sensor)return;const smx=use3?-519:-140,smy=use3?-143:-45,sx=X(smx),sy=Y(smy),m=Math.max(W,H);
@@ -2354,6 +2364,9 @@ function drawPistol(c,b,m,sc,key,noMag){
   c.restore();
 }
 function drawRifle(c,b,m,sc,key,o){
+  o=o||{};const im=rifImg(key,o.noMag?'b':'f',o.cb);
+  if(im){drawRifImg(c,im,key,b,m);if(o.scope){const L=Math.hypot(m[0]-b[0],m[1]-b[1]),a=Math.atan2(m[1]-b[1],m[0]-b[0]),u=v=>v*L,h=v=>v*sc;c.save();c.translate(b[0],b[1]);c.rotate(a);c.fillStyle='#111213';c.fillRect(u(.3),-h(.125),u(.24),h(.045));c.fillRect(u(.28),-h(.14),u(.05),h(.07));c.fillRect(u(.51),-h(.135),u(.05),h(.06));c.restore();}return;}
+  if(o.cb)o.cb=null;
   const R=RIFLES[key],dx=m[0]-b[0],dy=m[1]-b[1],L=Math.hypot(dx,dy),a=Math.atan2(dy,dx);
   c.save();c.translate(b[0],b[1]);c.rotate(a);
   const u=v=>v*L,h=v=>v*sc,ms=R.magStyle,wood=R.wood?'#6b4a2b':'#16170f',mt='#16170f';
@@ -2478,13 +2491,14 @@ function drawLowReady(now){
   const F=S.fp,a=Math.min(1,F.speed/4),b=Math.abs(Math.sin(F.bob))*14*a+F.land*30,bx=Math.cos(F.bob*.5)*12*a;
   const u=Math.min(W,H)/400;
   ctx.save();ctx.translate(W*.66+bx,H*.86+b);ctx.rotate(-.38+Math.sin(F.bob*.5)*.03*a);ctx.scale(u,u);
+  const ri=rifImg(S.rifle,'f');if(ri)drawRifImg(ctx,ri,S.rifle,[-150,0],[280,0]);else{
   ctx.fillStyle='#14150f';ctx.fillRect(-60,-15,250,30);ctx.fillRect(170,-7,110,14);ctx.fillRect(268,-14,6,10);
   ctx.fillStyle='#22241b';ctx.fillRect(-150,-24,100,48);
-  ctx.fillStyle='#1a1b15';ctx.beginPath();ctx.moveTo(10,14);ctx.lineTo(40,14);ctx.quadraticCurveTo(52,60,70,92);ctx.lineTo(40,100);ctx.quadraticCurveTo(28,60,10,14);ctx.fill();
+  ctx.fillStyle='#1a1b15';ctx.beginPath();ctx.moveTo(10,14);ctx.lineTo(40,14);ctx.quadraticCurveTo(52,60,70,92);ctx.lineTo(40,100);ctx.quadraticCurveTo(28,60,10,14);ctx.fill();}
   ctx.fillStyle='#4f5c33';ctx.beginPath();ctx.ellipse(120,34,62,26,-.1,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#b98d68';ctx.beginPath();ctx.ellipse(118,10,30,17,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#4f5c33';ctx.beginPath();ctx.ellipse(-70,60,70,34,.3,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#b98d68';ctx.beginPath();ctx.ellipse(-62,26,26,18,.2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#4f5c33';ctx.beginPath();ctx.ellipse(ri?-20:-70,ri?74:60,70,34,.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#b98d68';ctx.beginPath();ctx.ellipse(ri?-8:-62,ri?38:26,26,18,.2,0,Math.PI*2);ctx.fill();
   ctx.restore();
   if(F.phase==='move'&&S.started){const c=COVERS[F.ci];if(c){const cd=Math.max(0,c.z-1.1-S.pz);ctx.fillStyle='rgba(20,22,15,.75)';ctx.fillRect(W/2-90,H*.58,180,26);ctx.fillStyle='#ebe7d6';ctx.font='600 12px "IBM Plex Mono",monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`${c.n} · ${cd.toFixed(0)} m`,W/2,H*.58+13);}}
 }
@@ -2526,7 +2540,7 @@ function onMotion2(e){
 // ================= UYGULAMALI EĞİTİM (dokun-öğren) =================
 const thump=()=>{noise('lowpass',170,.7,.14);tone(80,50,.1,.25);};
 const breath=inh=>{noise('bandpass',inh?1100:700,.16,1.1);};
-const PNAME={ayak:'Çatal ayak',ayakm:'Ayak açma mandalı',ktm:'Kilit tutma mandalı',toz:'Toz kapağı',j_muz:'Namlu',namlu:'Namlu',arpacik:'Arpacık',gez:'Gez',kkol:'Kurma kolu',mandal:'Ateş ayar mandalı',mkol:'Ateş ayar mandalı',tetik:'Tetik',sarjor:'Şarjör',smandal:'Şarjör mandalı',kabza:'Kabza ve tetik grubu',dipcik:'Dipçik',elk:'El kundağı',govde:'Gövde',ust:'Üst gövde',alt:'Alt gövde',mek:'Mekanizma (kilit) grubu',pim:'Dipçik pimleri',arkapim:'Arka pim',onpim:'Ön pim',ray:'Ray',nefes:'Nefes',
+const PNAME={ayak:'Tutamaklı çatal ayak',ayakb:'Çatal ayak',ayakm:'Ayak açma düğmesi',atim:'Kovan atma penceresi',sbtn:'Şarjör düğmesi',itici:'İtici',ktm:'Kilit tutma mandalı',toz:'Toz kapağı',j_muz:'Namlu',namlu:'Namlu',arpacik:'Arpacık',gez:'Gez',kkol:'Kurma kolu',mandal:'Ateş ayar mandalı',mkol:'Ateş ayar mandalı',tetik:'Tetik',sarjor:'Şarjör',smandal:'Şarjör mandalı',kabza:'Kabza ve tetik grubu',dipcik:'Dipçik',elk:'El kundağı',govde:'Gövde',ust:'Üst gövde',alt:'Alt gövde',mek:'Mekanizma (kilit) grubu',pim:'Dipçik pimleri',arkapim:'Arka pim',onpim:'Ön pim',ray:'Ray',nefes:'Nefes',
   j_hd:'Baş ve yanak',j_sh:'Omuz ve dipçik',j_eb:'Sağ dirsek',j_ef:'Sol dirsek',j_hb:'Sağ el',j_hf:'Sol el',j_hip:'Kalça',j_kb:'Sağ diz',j_kf:'Sol diz',j_fb:'Sağ ayak',j_ff:'Sol ayak',destek:'Destek'};
 const LAB_ICON={
   tanitim:'<svg viewBox="0 0 64 40"><path d="M4 18h10l30-4h14v4h-6v4l-12 2-4 10h-6l2-9H18l-8 6H4z" fill="currentColor" opacity=".85"/><circle cx="46" cy="27" r="8" fill="none" stroke="#19d3c5" stroke-width="2.5"/><path d="M52 33l6 6" stroke="#19d3c5" stroke-width="3" stroke-linecap="round"/></svg>',
@@ -2538,7 +2552,7 @@ const LAB_ICON={
   komut:'<svg viewBox="0 0 64 40"><path d="M8 16h8l12-9v26l-12-9H8z" fill="currentColor" opacity=".85"/><path d="M34 13q6 7 0 14M40 8q11 12 0 24" stroke="#19d3c5" stroke-width="2.5" fill="none" stroke-linecap="round" class="lif1"/><rect x="48" y="14" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2" class="lif2"/></svg>',
   kullanim:'<svg viewBox="0 0 64 40"><path d="M22 6h14l4 28h-14z" fill="currentColor" opacity=".85"/><path d="M46 12q6 8 0 16M51 8q10 12 0 24" stroke="#19d3c5" stroke-width="2.5" fill="none" stroke-linecap="round" class="lif1"/></svg>'};
 const LAB_INFO={
-  tanitim:{n:'Silah tanıtımı',k:'Parça parça',d:'Parçalara sırayla dokun; her birinin adını ve ne işe yaradığını sesli anlatır. Mandalı çevir, kurma kolunu çek, şarjörü çıkar.'},
+  tanitim:{n:'Silah tanıtımı',k:'Gerçek ölçülerle',d:'Gerçek ölçülerle çizilmiş tüfeği parmağınla çevir; dokunduğun parçanın adını ve ne işe yaradığını sesli anlatır. Mandalı çevir, kurma kolunu çek, şarjörü çıkar.'},
   soktak:{n:'Söküp takma',k:'Uygulamalı',d:'Yanıp sönen parçaya dokun, söküp örtüye koy. Sonra aynı parçalara dokunarak geri tak. Her adım sesli.'},
   vaziyet:{n:'Atış vaziyetleri',k:'Doğru duruş',d:'Yatarak, diz çökerek, ayakta, destekli ve tabanca vaziyetinde vücudun her noktasına dokun; doğrusunu ve sık yapılan hatayı anlatır.'},
   hakimiyet:{n:'Hâkimiyet esasları',k:'Sesli · 8 esas',d:'Sol el ve kol, dipçik, kabza, sağ kol ve dirsek, kaynak yapma, rahat duruş, nefes kesme, tetik kontrolü. Askerin üstünde her noktaya dokunarak öğren.'},
@@ -2548,113 +2562,357 @@ const LAB_INFO={
   kullanim:{n:'Doldurma ve tutukluk',k:'Sesli · adım adım',d:'Şarjör tak, doldur, emniyet, tek atış, tetik, tutukluk giderme (vur, çek, bak, ateş) ve boşaltma. Her hareketin sesini duyarak yap.'}
 };
 let LB=null;
-const RG='<defs><filter id="lsh" x="-10%" y="-10%" width="120%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="7"/><feOffset dy="12" result="o"/><feComponentTransfer><feFuncA type="linear" slope=".45"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="lgH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/></linearGradient><linearGradient id="lgM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#43473a"/><stop offset="1" stop-color="#1c1e18"/></linearGradient><linearGradient id="lgP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2f25"/><stop offset="1" stop-color="#15160f"/></linearGradient></defs>';
+// ================= GERÇEK ÖLÇÜLÜ TÜFEK ÇİZİMLERİ (mm, oranlar birebir) =================
+// Model uzayı: namlu +x, y aşağı, z+ = tüfeğin SAĞ yüzü. 2B görünüm sol yüzü (aynalı) gösterir.
+const RIF_Y0={},RIF_MAG={};
+const RG=`<defs><filter id="lsh" x="-10%" y="-10%" width="120%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="6"/><feOffset dy="10" result="o"/><feComponentTransfer><feFuncA type="linear" slope=".5"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<linearGradient id="gS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#474b50"/><stop offset=".45" stop-color="#2b2e31"/><stop offset="1" stop-color="#161719"/></linearGradient>
+<linearGradient id="gP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#393b3e"/><stop offset=".5" stop-color="#1f2022"/><stop offset="1" stop-color="#101011"/></linearGradient>
+<linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#43474c"/><stop offset=".5" stop-color="#26292c"/><stop offset="1" stop-color="#141517"/></linearGradient>
+<linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#121314"/><stop offset=".28" stop-color="#5a5f64"/><stop offset=".44" stop-color="#2e3134"/><stop offset="1" stop-color="#0b0b0c"/></linearGradient>
+<linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d2d6da"/><stop offset=".5" stop-color="#8f9499"/><stop offset="1" stop-color="#4c5055"/></linearGradient>
+<linearGradient id="gM" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2f271d"/><stop offset=".5" stop-color="#4a3d2c"/><stop offset="1" stop-color="#2a2219"/></linearGradient>
+<linearGradient id="gR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d1d1d"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient>
+<linearGradient id="gBr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6c784"/><stop offset=".5" stop-color="#bb924f"/><stop offset="1" stop-color="#7a5826"/></linearGradient></defs>`;
 const MAT='<rect x="20" y="338" width="960" height="170" rx="14" fill="#232719" stroke="#22353a" stroke-dasharray="7 7"/><text x="38" y="364" class="lmt">TEMİZLİK ÖRTÜSÜ</text>';
 const NEFES='<g data-p="nefes"><circle cx="916" cy="56" r="36" fill="#0e1416" stroke="#22353a" stroke-width="2"/><text x="916" y="62" text-anchor="middle" class="lmt2">NEFES</text></g>';
-function selG(cx,cy){return `<g data-p="mandal"><circle cx="${cx}" cy="${cy}" r="13" fill="#26291f" stroke="#6a6d5c" stroke-width="2"/><g data-p="mkol" data-o="${cx} ${cy}"><rect x="${cx-4}" y="${cy-27}" width="8" height="27" rx="3" fill="#cfc8b1"/></g><text x="${cx-30}" y="${cy-24}" class="lsel">E</text><text x="${cx-4}" y="${cy-34}" class="lsel">T</text><text x="${cx+22}" y="${cy-24}" class="lsel">S</text></g>`;}
-function svgHK(extra){
-  const slots=[...Array(6)].map((_,i)=>`<rect x="${582+i*29}" y="138" width="17" height="34" rx="5" fill="#111209"/>`).join('');
-  return `<svg viewBox="0 40 1000 475" xmlns="http://www.w3.org/2000/svg">${RG}${MAT}<g id="lrifle" filter="url(#lsh)">
-<g data-p="mek" data-o="400 150"><rect x="300" y="128" width="172" height="44" rx="6" fill="#5c5f50"/><rect x="304" y="133" width="164" height="6" fill="#74776a"/><rect x="472" y="136" width="34" height="28" rx="4" fill="#77796a"/><circle cx="489" cy="150" r="5" fill="#2a2c24"/></g>
-<g data-p="dipcik" data-o="160 160"><path d="M40 92 L66 92 L268 126 L268 192 L66 234 L40 234 Z" fill="url(#lgP)"/><rect x="40" y="92" width="15" height="142" rx="3" fill="#0d0e0a"/><path d="M120 130 L250 140 L250 178 L120 190 Z" fill="#000" opacity=".12"/></g>
-<g data-p="govde"><rect x="262" y="100" width="546" height="19" rx="9" fill="#24271d"/><rect x="262" y="116" width="302" height="80" rx="6" fill="url(#lgM)"/><path d="M276 124 H552 M276 188 H552" stroke="#5a5e4c" stroke-width="2"/><rect x="430" y="132" width="90" height="26" rx="3" fill="#191a14"/></g>
-<g data-p="pim" data-o="280 160"><circle cx="280" cy="138" r="6.5" fill="#9a9c8a"/><circle cx="280" cy="180" r="6.5" fill="#9a9c8a"/></g>
-<g data-p="gez" data-o="300 90"><rect x="280" y="94" width="40" height="10" rx="2" fill="#24271d"/><rect x="284" y="70" width="32" height="26" rx="6" fill="#33362b" stroke="#55584a" stroke-width="1.5"/>${[0,1,2,3,4,5,6].map(i=>`<rect x="${287+i*4}" y="72" width="1.6" height="22" fill="#1d1f18"/>`).join("")}<circle cx="300" cy="83" r="3" fill="#0b0c08"/><text x="300" y="66" text-anchor="middle" class="lsel" style="font-size:9px">1·2·3·4</text></g>
-<g data-p="arpacik"><path d="M786 102 L792 88 L806 88 L812 102 Z" fill="#24271d"/><circle cx="799" cy="76" r="12" fill="none" stroke="#33362b" stroke-width="5"/><path d="M797.5 70 L800.5 70 L802 90 L796 90 Z" fill="#111209"/></g>
-<g data-p="kkol" data-o="705 96"><rect x="700" y="84" width="10" height="20" rx="2" fill="#111209"/><circle cx="705" cy="81" r="8" fill="#111209"/></g>
-<g data-p="elk" data-o="662 155"><rect x="562" y="120" width="200" height="70" rx="12" fill="url(#lgP)"/>${slots}</g>
-<g data-p="namlu"><rect x="762" y="140" width="170" height="14" fill="#15160f"/><rect x="930" y="134" width="40" height="26" rx="3" fill="#15160f"/><rect x="940" y="139" width="4" height="16" fill="#22353a"/><rect x="950" y="139" width="4" height="16" fill="#22353a"/><rect x="960" y="139" width="4" height="16" fill="#22353a"/></g>
-<g data-p="smandal"><circle cx="455" cy="207" r="7.5" fill="#6a6d5c" stroke="#111209" stroke-width="2"/></g>
-<g data-p="sarjor" data-o="505 250"><path d="M474 196 L536 196 Q548 252 592 302 L540 322 Q500 262 474 196 Z" fill="url(#lgP)"/><path d="M490 214 L530 214 M500 240 L544 238 M514 266 L560 262 M530 290 L575 285" stroke="#2c2f25" stroke-width="3"/></g>
-<g data-p="kabza" data-o="470 200"><rect x="322" y="194" width="150" height="18" rx="4" fill="#1d1f18"/><path d="M350 210 L394 210 L376 300 Q352 308 328 298 Z" fill="url(#lgP)"/><path d="M394 212 Q398 252 448 250 L464 212" fill="none" stroke="#1d1f18" stroke-width="7"/><path data-p="tetik" data-o="420 212" d="M418 212 Q429 226 422 241" fill="none" stroke="#7a7d6c" stroke-width="6" stroke-linecap="round"/>${selG(345,176)}</g>
-</g>${extra||''}</svg>`;
+function pwMap(st){return v=>{if(!st)return v;for(let i=1;i<st.length;i++){if(v<=st[i][0]||i===st.length-1){const a=st[i-1],b=st[i];return a[1]+(v-a[0])*(b[1]-a[1])/(b[0]-a[0]);}}return v;};}
+// ölçek: tüfek boyu 840 birime sığar; mx/gy başka bir modelin ölçüleriyle yeniden haritalamak için
+function GB(L,top,bot,mx,gy){
+  mx=mx||(v=>v);gy=gy||1;
+  const k=840/L,x0=500-L*k/2,y0=197-(top+bot)/2*k,f=v=>Math.round(v*100)/100,B={k};
+  B.X=v=>f(x0+mx(v)*k);B.Y=v=>f(y0+v*gy*k);B.K=v=>f(v*gy*k);
+  B.Xu=v=>f(x0+v*k);B.Yu=v=>f(y0+v*k);B.Ku=v=>f(v*k);
+  B.at=(o,u)=>{if(!o)return '';const K=u?B.Ku:B.K,X=u?B.Xu:B.X,Y=u?B.Yu:B.Y;let s='';
+    if(o.f)s+=` fill="${o.f}"`;if(o.s)s+=` stroke="${o.s}" stroke-width="${K(o.sw||1)}"${o.f?'':' fill="none"'}`;
+    if(o.op!=null)s+=` opacity="${o.op}"`;if(o.fr)s+=' fill-rule="evenodd"';if(o.lc)s+=' stroke-linecap="round"';
+    if(o.z)s+=` data-z="${K(o.z[0])} ${K(o.z[1])}"`;if(o.cyl)s+=` data-cyl="${o.cyl}"`;if(o.r2!=null)s+=` data-r2="${K(o.r2)}"`;
+    if(o.ring)s+=` data-ring="${o.ring}" data-t="${K(o.t||2)}"`;if(o.m)s+=` data-mat="${o.m}"`;if(o.side)s+=` data-side="${o.side}"`;
+    if(o.bev!=null)s+=` data-bev="${K(o.bev)}"`;if(o.no3)s+=' data-no3d="1"';if(o.multi)s+=' data-multi="1"';
+    if(o.ry)s+=` data-ry="${o.ry}"`;if(o.splay)s+=` data-splay="${o.splay}"`;
+    if(o.pv)s+=` data-pv="${X(o.pv[0])} ${Y(o.pv[1])} ${K(o.pv[2])}"`;if(o.dec!=null)s+=` data-dec="${K(o.dec)}"`;if(o.tex)s+=` data-tex="${o.tex.toFixed(2)}"`;if(o.anc)s+=' data-anc="1"';if(o.no2)s+=' class="no2"';
+    return s;};
+  B.R=(x,y,w,h,o,u)=>{const X=u?B.Xu:B.X,Y=u?B.Yu:B.Y,K=u?B.Ku:B.K,xa=X(x),xb=X(x+w);return `<rect x="${xa}" y="${Y(y)}" width="${f(xb-xa)}" height="${K(h)}"${o&&o.rx?` rx="${K(o.rx)}"`:''}${B.at(o,u)}/>`;};
+  B.C=(cx,cy,r,o,u)=>`<circle cx="${(u?B.Xu:B.X)(cx)}" cy="${(u?B.Yu:B.Y)(cy)}" r="${(u?B.Ku:B.K)(r)}"${B.at(o,u)}/>`;
+  const dd=(X,Y)=>(...a)=>{let s='',i=0;const n={M:2,L:2,Q:4,C:6,Z:0};while(i<a.length){const c=a[i++];s+=c;for(let j=0;j<n[c];j+=2){s+=X(a[i])+','+Y(a[i+1])+' ';i+=2;}}return s.trim();};
+  B.D=dd(B.X,B.Y);B.Du=dd(B.Xu,B.Yu);
+  B.PL=(pts,u)=>{const X=u?B.Xu:B.X,Y=u?B.Yu:B.Y;return pts.map((p,i)=>(i?'L':'M')+X(p[0])+','+Y(p[1])).join(' ')+' Z';};
+  B.P=(d,o,u)=>`<path d="${d}"${B.at(o,u)}/>`;
+  B.T=(x,y,s,fs,o)=>`<text x="${B.X(x)}" y="${B.Y(y)}" font-size="${B.K(fs)}" text-anchor="middle" class="lmk2"${B.at(o)}>${s}</text>`;
+  B.G=(p,o,inner,u)=>`<g data-p="${p}"${o?` data-o="${(u?B.Xu:B.X)(o[0])} ${(u?B.Yu:B.Y)(o[1])}${o[2]!=null?' '+(u?B.Ku:B.K)(o[2]):''}"`:''}>${inner}</g>`;
+  // kol (mandal) yolu: pivot, açı (derece, ekran: 0=+x, + saat yönü), boy, kök/uç genişliği
+  B.lever=(px,py,a,len,w0,w1)=>{const c=Math.cos(a*Math.PI/180),s=Math.sin(a*Math.PI/180),nx=-s,ny=c,tx=px+c*len,ty=py+s*len;
+    return B.D('M',px+nx*w0/2,py+ny*w0/2,'L',tx+nx*w1/2,ty+ny*w1/2,'Q',tx+c*w1*.9,ty+s*w1*.9,tx-nx*w1/2,ty-ny*w1/2,'L',px-nx*w0/2,py-ny*w0/2,'Z');};
+  return B;
 }
-function svgAR(extra){
-  const teeth=[...Array(24)].map((_,i)=>`<rect x="${273+i*20}" y="99" width="12" height="6" fill="#24271d"/>`).join('');
-  const slots=[...Array(5)].map((_,i)=>`<rect x="${584+i*34}" y="134" width="22" height="28" rx="5" fill="#111209"/>`).join('');
-  return `<svg viewBox="0 40 1000 475" xmlns="http://www.w3.org/2000/svg">${RG}${MAT}<g id="lrifle" filter="url(#lsh)">
-<g data-p="mek" data-o="535 182"><rect x="292" y="124" width="170" height="32" rx="5" fill="#5c5f50"/><rect x="296" y="128" width="162" height="5" fill="#74776a"/><rect x="462" y="130" width="28" height="20" rx="3" fill="#77796a"/></g>
-<g data-p="dipcik" data-o="190 160"><rect x="110" y="138" width="166" height="24" rx="6" fill="#24271d"/><path d="M38 104 L158 112 L158 180 L64 236 L38 236 Z" fill="url(#lgP)"/><rect x="38" y="104" width="15" height="132" rx="3" fill="#0d0e0a"/></g>
-<g data-p="alt"><path d="M270 160 L560 160 L560 198 L532 198 L532 214 L460 214 L460 198 L270 198 Z" fill="url(#lgM)"/><path d="M282 192 H452" stroke="#5a5e4c" stroke-width="2"/></g>
-<g data-p="sarjor" data-o="495 260"><path d="M462 214 L528 214 Q535 262 552 306 L494 314 Q480 264 462 214 Z" fill="url(#lgP)"/><path d="M474 236 L530 236 M480 262 L538 262 M488 288 L546 288" stroke="#2c2f25" stroke-width="3"/></g>
-<g data-p="kabza"><path d="M330 198 L374 198 L358 292 Q334 300 310 290 Z" fill="url(#lgP)"/><path d="M374 200 Q380 238 424 238 L458 214" fill="none" stroke="#1d1f18" stroke-width="7"/><path data-p="tetik" data-o="402 200" d="M400 200 Q411 214 405 229" fill="none" stroke="#7a7d6c" stroke-width="6" stroke-linecap="round"/></g>
-${selG(352,180)}
-<g data-p="smandal"><circle cx="447" cy="205" r="7.5" fill="#6a6d5c" stroke="#111209" stroke-width="2"/></g>
-<g data-p="ktm" data-o="463 176"><rect x="456" y="164" width="13" height="24" rx="3" fill="#6a6d5c" stroke="#111209" stroke-width="2"/></g>
-<g data-p="arkapim" data-o="290 178"><circle cx="290" cy="178" r="7" fill="#9a9c8a"/></g>
-<g data-p="onpim" data-o="535 182"><circle cx="535" cy="182" r="7" fill="#9a9c8a"/></g>
-<g data-p="ust" data-o="535 182"><rect x="270" y="116" width="290" height="46" rx="5" fill="url(#lgM)"/><rect x="420" y="126" width="90" height="22" rx="3" fill="#050604"/><g data-p="toz" data-o="465 148"><rect x="420" y="126" width="90" height="22" rx="3" fill="#2a2d22" stroke="#4a4d40" stroke-width="1.5"/></g><g data-p="ray"><rect x="270" y="104" width="482" height="13" fill="#2c2f25"/>${teeth}</g>
-<g data-p="elk"><rect x="560" y="116" width="200" height="62" rx="9" fill="url(#lgP)"/>${slots}</g>
-<g data-p="ayak" data-o="702 184"><rect x="702" y="176" width="128" height="8" rx="3" fill="#0f100b"/><rect x="702" y="186" width="122" height="7" rx="3" fill="#24271d"/><circle cx="830" cy="180" r="6" fill="#0f100b"/></g><g data-p="ayakm"><circle cx="702" cy="184" r="8" fill="#6a6d5c" stroke="#111209" stroke-width="2"/></g>
-<g data-p="namlu"><rect x="760" y="134" width="160" height="13" fill="#15160f"/><rect x="916" y="128" width="38" height="24" rx="3" fill="#15160f"/><rect x="926" y="133" width="4" height="14" fill="#22353a"/><rect x="938" y="133" width="4" height="14" fill="#22353a"/></g>
-<g data-p="gez"><rect x="284" y="96" width="48" height="9" rx="2" fill="#1d1f18"/><circle cx="292" cy="100" r="2.5" fill="#55584a"/><path d="M297 97 L299 68 L319 68 L321 97 Z" fill="#2a2d23"/><circle cx="309" cy="78" r="4" fill="#0b0c08"/><rect x="292" y="70" width="4" height="27" rx="1.5" fill="#24271d"/><rect x="322" y="70" width="4" height="27" rx="1.5" fill="#24271d"/><circle cx="333" cy="88" r="4" fill="#3d4034"/></g>
-<g data-p="arpacik"><path d="M716 104 L726 74 L746 74 L756 104 Z M729 96 L743 96 L740 82 L732 82 Z" fill="#24271d" fill-rule="evenodd"/><rect x="734" y="60" width="4" height="16" fill="#111209"/><rect x="725" y="58" width="3" height="18" rx="1" fill="#24271d"/><rect x="744" y="58" width="3" height="18" rx="1" fill="#24271d"/></g></g>
-<g data-p="kkol" data-o="535 182"><rect x="234" y="111" width="48" height="12" rx="3" fill="#111209"/><rect x="230" y="105" width="11" height="24" rx="3" fill="#111209"/></g>
-</g>${extra||''}</svg>`;
+// eğri/düz şarjör: üst orta (cx,y0), ön-arka genişlik w, eğrilik yarıçapı Rm (0=düz), boy S — son çıktı ölçülerinde
+function magGeo(B,o){
+  const n=16,F=[],Rr=[],at=(s,inset)=>{let x,y,nx,ny;if(o.Rm>0){const th=s/o.Rm;x=o.cx+o.Rm*(1-Math.cos(th));y=o.y0+o.Rm*Math.sin(th);nx=Math.cos(th);ny=-Math.sin(th);}else{x=o.cx;y=o.y0+s;nx=1;ny=0;}const hw=o.w/2-(inset||0);return {x,y,nx,ny,tx:-ny,ty:nx,f:[x+nx*hw,y+ny*hw],r:[x-nx*hw,y-ny*hw]};};
+  for(let i=0;i<=n;i++){const p=at(o.S*i/n);F.push(p.f);Rr.push(p.r);}
+  const body=[...F,...Rr.slice().reverse()];
+  const e=at(o.S),e0=at(o.S-6);const bp=[[e0.x+e0.nx*(o.w/2+1.6),e0.y+e0.ny*(o.w/2+1.6)],[e.x+e.nx*(o.w/2+1.6)+e.tx*1.5,e.y+e.ny*(o.w/2+1.6)+e.ty*1.5],[e.x-e.nx*(o.w/2+1.6)+e.tx*1.5,e.y-e.ny*(o.w/2+1.6)+e.ty*1.5],[e0.x-e0.nx*(o.w/2+1.6),e0.y-e0.ny*(o.w/2+1.6)]];
+  const mid=at(o.S*.55);
+  return {body,bp,at,c:[mid.x,mid.y]};
+}
+// ---------- HK33 / G3 (makaralı gecikmeli) ----------
+const HKX={g3:{st:[[0,0],[245,262],[269,287],[364,392],[410,440],[421,449],[495,538],[525,580],[678,780],[731,839],[749,859],[771,881],[868,965],[920,1025]],gy:1.09}};
+function svgHK(key,extra){
+  const g3=key==='g3',V=g3?HKX.g3:null,gy=V?V.gy:1,L=g3?1025:920;
+  const B=GB(L,-58*gy,g3?200:199,pwMap(V&&V.st),gy),{R,C,P,D,G,T}=B;
+  const sE=245,top=-31,bot=19,tY=-21,tR=10.5,sF=525,m0=421,m1=495,mB=38,brc=488,fb0=731,fb1=771,fsX=749,sl=-48,ringR=9.5,
+    drX=263,drW=13,drR=11,drA=-41.5,khX=678,khL=33,slot0=572,hg0=527,hgB=24,fh0=868,mz=878,bR=8.3,bR2=7.6,fhR=11,zr=17,zs=19,zh=23;
+  const port=[428,490,-22,-6];
+  // şarjör (son ölçülerde)
+  const mg=g3?{cx:493,y0:2*gy,w:80,Rm:0,S:178,z:14.2}:{cx:458,y0:2,w:66,Rm:480,S:205,z:12.6};
+  const M=magGeo(B,mg);RIF_Y0[key]=B.Y(0);RIF_MAG[key]=[B.Xu(mg.cx),B.Yu(mg.y0+38)];
+  const ribs=[.3,.5,.7,.88].map(t=>{const a=M.at(mg.S*t,5);return B.Du('M',a.r[0],a.r[1],'L',a.f[0],a.f[1]);}).join(' ');
+  const mag=B.G('sarjor',M.c,
+    B.P(B.PL(M.body,1),{f:'url(#gS)',z:[-mg.z,mg.z],bev:2,m:'paint'},1)+
+    B.P(ribs,{s:'#0d0e0f',sw:1.6,op:.7,no3:1},1)+
+    B.P(B.Du('M',M.at(10,mg.w*.5-2).f[0],M.at(10,mg.w*.5-2).f[1],'L',M.at(mg.S-8,mg.w*.5-2).f[0],M.at(mg.S-8,mg.w*.5-2).f[1]),{s:'#5d6166',sw:1,op:.6,no3:1},1)+
+    B.P(B.PL(M.bp,1),{f:'#1d1e20',z:[-mg.z-1.4,mg.z+1.4],bev:1.2,m:'paint'},1),1);
+  const knurl=[-55,-28,0,28,55].map(a=>R(drX+.8,drA+drR*Math.sin(a*Math.PI/180)-.35,drW-1.6,.7,{f:'#0a0a0b',op:.85,no3:1})).join('');
+  const vents=[0,1,2,3,4,5,6].map(i=>C(hg0+44+i*24,4,2.6,{f:'#050505',z:[-zh-.25,-zh+.7],m:'dark'})+C(hg0+44+i*24,4,2.6,{f:'#050505',z:[zh-.7,zh+.25],side:'R',m:'dark'})).join('');
+  const selP=[320,21];
+  const s=`<svg viewBox="0 40 1000 475" xmlns="http://www.w3.org/2000/svg">${RG}${MAT}<g id="lmir"><g id="lrifle" filter="url(#lsh)">
+${G('mek',null,
+  R(300,-10,92,9,{cyl:'x',f:'url(#gC)',m:'steel'})+[...Array(11)].map((_,i)=>R(303+i*8,-11,2.2,11,{f:'#0b0c0d',op:.8,no3:1})).join('')+
+  P(D('M',392,-16,'Q',392,-19,395,-19,'L',483,-19,'Q',486,-19,486,-16,'L',486,8,'Q',486,11,483,11,'L',395,11,'Q',392,11,392,8,'Z'),{f:'url(#gB)',z:[-13,13],bev:2,m:'bright'})+
+  R(486,-11,12,22,{rx:3,f:'url(#gB)',z:[-11,11],m:'bright'})+C(491,0,3.6,{f:'#a7acb1',z:[-14.5,14.5],m:'bright'})+
+  R(486,tY-7,khX-4-486,14,{cyl:'x',f:'url(#gB)',m:'bright'})+
+  R(port[0]+5,port[2]+3,port[1]-port[0]-10,port[3]-port[2]-6,{rx:1.5,f:'url(#gB)',z:[zr+.05,zr+.42],side:'R',m:'bright'}))}
+${mag}
+${G('dipcik',[sE,0],
+  P(D('M',sE+6,top,'L',17,top,'Q',14,top,14,top+3,'L',14,97,'Q',14,100,17,100,'Q',130,58,sE-12,bot+16,'L',sE+6,bot+16,'Z'),{f:'url(#gP)',z:[-zs,zs],bev:6,m:'poly'})+
+  P(D('M',22,top+2,'L',sE,top+2),{s:'#fff',sw:1.4,op:.07,no3:1})+
+  P(D('M',14,top+1,'L',14,99,'L',3,99,'Q',0,99,0,95,'L',0,top+5,'Q',0,top+1,3,top+1,'Z'),{f:'url(#gR)',z:[-zs-1,zs+1],bev:4,m:'rubber'})+
+  [0,1,2,3,4,5].map(i=>R(1,top+12+i*19,12,1.4,{f:'#000',op:.5,no3:1})).join(''))}
+${G('govde',null,
+  R(brc,-bR,fb0+2-brc,2*bR,{cyl:'x',f:'url(#gC)',m:'steel'})+
+  R(sF-24,tY-tR,fb0+3-(sF-24),2*tR,{cyl:'x',f:'url(#gC)',m:'paint'})+
+  P(D('M',sE,top+3,'Q',sE,top,sE+3,top,'L',sF,top,'L',sF,bot,'L',m1,bot,'L',m1+1,mB-3,'Q',m1+1,mB,m1-2,mB,'L',m0+2,mB,'Q',m0-1,mB,m0-1,mB-3,'L',m0,bot,'L',sE,bot,'Z'),{f:'url(#gS)',z:[-zr,zr],bev:3,m:'paint',anc:1})+
+  R(sE+14,-4,sF-sE-34,6,{rx:3,f:'url(#gS)',z:[-zr-1,zr+1],bev:1.2,m:'paint'})+
+  P(D('M',sE+16,-4.2,'L',sF-22,-4.2),{s:'#fff',sw:1,op:.12,no3:1})+P(D('M',sE+16,2.3,'L',sF-22,2.3),{s:'#000',sw:1.2,op:.5,no3:1})+
+  P(D('M',sE+4,top+1.2,'L',sF-2,top+1.2),{s:'#fff',sw:1.2,op:.1,no3:1})+
+  [300,468].map(x=>R(x,top-.3,9,3.2,{f:'#08090a',z:[-zr-.3,-zr+2.2],m:'dark'})+R(x,top-.3,9,3.2,{f:'#08090a',z:[zr-2.2,zr+.3],side:'R',m:'dark'})).join('')+
+  P(D('M',slot0,tY-2.5,'L',khX+6,tY-2.5,'L',khX+6,tY+2.5,'L',slot0,tY+2.5,'Z')+' '+D('M',slot0,tY-6.5,'L',slot0+5,tY-6.5,'L',slot0+5,tY-2,'L',slot0,tY-2,'Z'),{f:'#060606',z:[-tR-.45,-tR+1.4],multi:1,side:'L',m:'dark'}))}
+${G('elk',[630,6],
+  P(D('M',hg0,tY+tR-1.5,'L',fb0-1,tY+tR-1.5,'Q',fb0+1,tY+tR-1.5,fb0+1,tY+tR+3,'L',fb0+1,hgB-6,'Q',fb0+1,hgB-2,fb0-4,hgB-2,'L',hg0+34,hgB,'Q',hg0+16,hgB+4,hg0+4,hgB+3,'Q',hg0,hgB+2,hg0,hgB-3,'Z'),{f:'url(#gP)',z:[-zh,zh],bev:9,m:'poly'})+
+  P(D('M',hg0+6,tY+tR+1,'L',fb0-4,tY+tR+1),{s:'#fff',sw:1.3,op:.08,no3:1})+vents+
+  C(sF-8,bot-6,2.8,{f:'url(#gB)',z:[-zr-1.4,zr+1.4],m:'bright'}))}
+${G('namlu',null,
+  R(fb1-2,-bR2-.4,mz-(fb1-2),2*(bR2+.4),{cyl:'x',r2:bR2,f:'url(#gC)',m:'steel'})+
+  R(fh0,-fhR,920-fh0,2*fhR,{ring:'x',t:2.4,f:'url(#gC)',m:'steel'})+
+  R(mz-.6,-(g3?3.9:2.9),1.2,g3?7.8:5.8,{cyl:'x',f:'#000',m:'dark'})+
+  R(fh0+10,-1.6,36,3.2,{rx:1.6,f:'#050505',z:[-fhR-.35,-fhR+1.1],m:'dark'})+R(fh0+10,-1.6,36,3.2,{rx:1.6,f:'#050505',z:[fhR-1.1,fhR+.35],side:'R',m:'dark'})+
+  R(fh0+10,-fhR-.35,36,.9,{f:'#050505',z:[-1.6,1.6],m:'dark'}))}
+${G('arpacik',null,
+  P(D('M',fb0,tY-tR+.5,'L',fb1,tY-tR+.5,'L',fb1,bR+3,'Q',fb1,bR+7,fb1-5,bR+7,'L',fb0+6,bR+7,'Q',fb0,bR+7,fb0,bR+2,'Z'),{f:'url(#gS)',z:[-13,13],bev:2,m:'paint'})+
+  R(fb1,tY-6.5,7,13,{cyl:'x',f:'url(#gC)',m:'steel'})+
+  P(D('M',fsX-9,tY-tR+.5,'L',fsX+9,tY-tR+.5,'L',fsX+5,sl+ringR-.5,'L',fsX-5,sl+ringR-.5,'Z'),{f:'url(#gS)',z:[-5,5],bev:1,m:'paint'})+
+  R(fsX-1.2,sl-.6,2.4,ringR+.6,{f:'#17181a',z:[-1.2,1.2],m:'steel'})+
+  R(fsX-4.5,sl-ringR,9,2*ringR,{ring:'x',t:1.8,f:'url(#gS)',m:'paint'})+
+  P(D('M',fsX-4,sl-ringR+1.5,'L',fsX+4,sl-ringR+1.5),{s:'#fff',sw:1,op:.18,no3:1}))}
+${G('gez',null,
+  P(D('M',drX-7,top+.5,'L',drX+drW+15,top+.5,'L',drX+drW+15,top-4,'Q',drX+drW+15,top-6,drX+drW+13,top-6,'L',drX-5,top-6,'Q',drX-7,top-6,drX-7,top-4,'Z'),{f:'url(#gS)',z:[-11,11],bev:1.5,m:'paint'})+
+  R(drX,drA-drR,drW,2*drR,{rx:2,cyl:'x',f:'url(#gC)',m:'steel'})+knurl+R(drX-.25,sl-1.3,drW+.5,2.6,{cyl:'x',f:'#000',z:[-.1,.1],m:'dark',no2:1})+
+  C(drX+drW+9,top-3,2.4,{f:'#6d7176',z:[-12.5,12.5],m:'steel'}))}
+${G('atim',null,R(port[0],port[2],port[1]-port[0],port[3]-port[2],{rx:2.5,f:'#070708',z:[zr-.3,zr+.3],side:'R',m:'dark'}))}
+${G('kabza',[410,19],
+  P(D('M',sE+6,12,'L',410,12,'L',410,19,'L',405,27,'L',404,32,'L',341,34,'L',296,40,'L',264,40,'L',sE+8,37,'Q',sE+6,36,sE+6,33,'Z'),{f:'url(#gP)',z:[-17.6,17.6],bev:2.5,m:'poly'})+
+  P(D('M',341,30,'Q',337,48,334,64,'Q',332,74,327,82,'Q',322,96,320,112,'Q',318,130,316,138,'Q',314,143,309,143,'L',282,140,'Q',276,139,277,133,'Q',284,96,291,62,'Q',293,50,290,44,'L',296,30,'Z'),{f:'url(#gP)',z:[-15,15],bev:5,m:'poly'})+
+  P(D('M',406,28,'Q',406,54,397,60,'Q',390,65,379,65,'L',350,65,'Q',338,65,334,56,'L',333,40,'L',341,31,'Z')+' '+D('M',399,33,'Q',399,49,392,54,'Q',386,58,378,58,'L',352,58,'Q',344,58,341,52,'L',341,36,'Z'),{f:'url(#gP)',fr:1,z:[-9,9],bev:2,m:'poly'})+
+  P(D('M',330,86,'Q',318,92,318,118)+' '+D('M',326,100,'Q',314,108,315,128),{s:'#000',sw:1,op:.35,no3:1})+
+  G('tetik',[364,31],P(D('M',361,31,'L',368,31,'Q',372,43,363,54,'L',358,53,'Q',364,43,361,31,'Z'),{f:'url(#gB)',z:[-4,4],m:'steel'}))+
+  G('mandal',null,
+    T(300.1,6.6,'E',7,{f:'#e9e9e9',dec:-zr-.3,side:'L'})+T(293,23.4,'T',7,{f:'#e05a4f',dec:-17.9,side:'L'})+T(300.1,40,'S',7,{f:'#e05a4f',dec:-15.3,side:'L'})+
+    C(selP[0],selP[1],5.6,{f:'url(#gS)',z:[-18.8,-17.4],side:'L',m:'paint',anc:1})+
+    G('mkol',selP,P(B.lever(selP[0],selP[1],220,21,7.5,5),{f:'url(#gS)',z:[-19.8,-18.4],side:'L',m:'paint'})+C(selP[0],selP[1],2,{f:'#5b5f64',z:[-20.2,-19.6],side:'L',m:'steel'}))))}
+${G('smandal',[416,20],P(D('M',412,20,'L',420,20,'L',420,36,'Q',420,42,415,42,'L',413,41,'Q',412,40,412,38,'Z'),{f:'url(#gS)',z:[-6,6],bev:1,m:'paint'}))}
+${G('sbtn',null,C(417,24,4.4,{f:'#3a3d41',z:[zr,zr+2.8],side:'R',m:'paint'}))}
+${G('pim',[253,4],
+  C(sE+7,-16,3.1,{f:'url(#gB)',z:[-zr-1.6,zr+1.6],m:'bright'})+C(sE+7,-16,4.1,{f:'#a3a8ad',z:[-zr-2.3,-zr-1],side:'L',m:'bright'})+
+  C(sE+11,26,3.1,{f:'url(#gB)',z:[-zr-1.6,zr+1.6],m:'bright'})+C(sE+11,26,4.1,{f:'#a3a8ad',z:[-zr-2.3,-zr-1],side:'L',m:'bright'}))}
+${G('kkol',[khX,tY,-tR],
+  R(khX-3,tY-4,9,8,{rx:2,f:'#141516',z:[-tR-3.5,-tR+1],side:'L',m:'paint'})+
+  R(khX,tY-3.6,khL,7.2,{rx:3.6,f:'url(#gS)',z:[-tR-5.2,-tR-2.2],side:'L',m:'paint'})+
+  C(khX+khL-2.5,tY,4.6,{f:'#202124',z:[-tR-7,-tR-1.6],side:'L',m:'paint'}))}
+</g></g>${extra||''}</svg>`;
+  return s;
+}
+// ---------- MPT-76 / MPT-55 (kısa stroklu gaz pistonlu, AR yerleşimi) ----------
+const ARX={mpt55:{st:[[0,0],[190,178],[256,246],[268,258],[348,323],[383,356],[482,426],[487,436],[785,700],[810,722],[866,782],[920,830]],gy:.87}};
+function railPath(B,x0,x1,yb,yt,ys,down){const a=['M',x0,yb,'L',x0,ys];let x=x0+1.5;while(x+4.7<=x1-1.5){a.push('L',x,ys,'L',x,yt,'L',x+4.7,yt,'L',x+4.7,ys);x+=10;}a.push('L',x1,ys,'L',x1,yb,'Z');return B.D(...a);}
+function slotsPath(B,x0,x1,y0,y1){let s='',x=x0+2;while(x+5.3<=x1-2){s+=B.D('M',x,y0,'L',x+5.3,y0,'L',x+5.3,y1,'L',x,y1,'Z')+' ';x+=10;}return s.trim();}
+function svgAR(key,extra){
+  const m55=key==='mpt55',V=m55?ARX.mpt55:null,gy=V?V.gy:1,L=m55?830:920;
+  const B=GB(L,-79*gy,m55?192:213,pwMap(V&&V.st),gy),{R,C,P,D,G,T}=B;
+  const mg=m55?{cx:391,y0:7,w:64,Rm:520,S:190,z:12}:{cx:432.5,y0:8,w:84,Rm:1100,S:206,z:14.5};
+  const M=magGeo(B,mg);RIF_Y0[key]=B.Y(0);RIF_MAG[key]=[B.Xu(mg.cx),B.Yu(mg.y0+66)];
+  let inner='';
+  if(!m55){const st=[];for(let i=0;i<=16;i++){const a=M.at(14+(mg.S-34)*i/16,4.5);st.push(a.f);}const sr=[];for(let i=16;i>=0;i--){const a=M.at(14+(mg.S-34)*i/16,4.5);sr.push(a.r);}
+    inner=B.P(B.PL(st.concat(sr),1),{f:'url(#gBr)',z:[-9.5,9.5],bev:1,m:'brass',tex:6.3*B.k},1)+[...Array(24)].map((_,i)=>{const a=M.at(16+i*6.3,5);return B.P(B.Du('M',a.r[0],a.r[1],'L',a.f[0],a.f[1]),{s:'#5b4320',sw:.9,op:.75,no3:1},1);}).join('');}
+  const tex=[.62,.7,.78,.86].map(t=>{const a=M.at(mg.S*t,6);return B.Du('M',a.r[0],a.r[1],'L',a.f[0],a.f[1]);}).join(' ');
+  const mag=B.G('sarjor',M.c,inner+
+    B.P(B.PL(M.body,1),{f:m55?'url(#gP)':'url(#gM)',op:m55?null:.74,z:[-mg.z,mg.z],bev:2,m:m55?'poly':'clear'},1)+
+    B.P(tex,{s:'#000',sw:1.6,op:.35,no3:1},1)+
+    B.P(B.PL(M.bp,1),{f:'#151617',z:[-mg.z-1.4,mg.z+1.4],bev:1.2,m:'poly'},1),1);
+  const fp=[479,23],rp=[278,24],selP=[304,36];
+  const vents=y=>[0,1,2,3,4,5].map(i=>B.D('M',518+i*44,y,'L',532+i*44,y,'Q',534+i*44,y,534+i*44,y+2,'Q',534+i*44,y+4,532+i*44,y+4,'L',518+i*44,y+4,'Q',516+i*44,y+4,516+i*44,y+2,'Q',516+i*44,y,518+i*44,y,'Z')).join(' ');
+  const s=`<svg viewBox="0 40 1000 475" xmlns="http://www.w3.org/2000/svg">${RG}${MAT}<g id="lmir"><g id="lrifle" filter="url(#lsh)">
+${mag}
+${G('mek',fp,
+  P(D('M',290,-13,'Q',290,-16,293,-16,'L',465,-16,'Q',468,-16,468,-13,'L',468,6,'Q',468,9,465,9,'L',293,9,'Q',290,9,290,6,'Z'),{f:'url(#gB)',z:[-12,12],bev:2,m:'bright'})+
+  R(452,-21,16,5,{rx:1.5,f:'url(#gB)',z:[-5,5],m:'bright'})+
+  R(468,-8,16,16,{cyl:'x',f:'url(#gB)',m:'bright'})+
+  R(402,-7,62,16,{rx:1.5,f:'url(#gB)',z:[15.05,15.4],side:'R',m:'bright'}))}
+${G('kkol',fp,
+  R(272,-23.5,204,5,{f:'#26292c',z:[-6,6],m:'alu'})+
+  P(D('M',247,-27,'L',270,-27,'L',270,-19,'L',249,-19,'Q',247,-19,247,-21,'Z'),{f:'url(#gA)',z:[-24,24],bev:1.5,m:'alu',anc:1})+
+  P(D('M',248,-26.5,'L',263,-26.5,'L',263,-20,'L',250,-20,'Z'),{f:'#34383c',z:[-27,-23],bev:.8,side:'L',m:'alu'}))}
+${G('dipcik',[220,0],
+  R(176,-18,80,30,{cyl:'x',f:'url(#gC)',m:'alu'})+
+  R(249,-19.5,7,33,{cyl:'x',f:'url(#gS)',m:'steel'})+
+  P(D('M',255.5,-19,'L',259,-19,'L',259,14,'L',255.5,14,'Z'),{f:'url(#gS)',z:[-17,17],m:'steel'})+
+  P(D('M',190,-20,'L',150,-23.5,'L',42,-26,'Q',17,-27,14,-23,'L',14,104,'Q',14,110,22,109,'Q',100,74,158,30,'L',176,27,'Q',186,26,188,19,'L',192,14,'L',192,-16,'Q',192,-20,190,-20,'Z')+' '+D('M',30,72,'L',46,64,'Q',50,62,51,66,'L',52,74,'Q',52,78,48,79,'L',32,84,'Q',28,85,28,81,'L',28,76,'Q',28,73,30,72,'Z'),{f:'url(#gP)',fr:1,z:[-20,20],bev:6,m:'poly'})+
+  P(D('M',40,-24,'L',186,-19),{s:'#fff',sw:1.3,op:.08,no3:1})+
+  P(D('M',160,27,'L',184,27,'L',184,32,'Q',184,34,182,34,'L',162,34,'Q',160,34,160,32,'Z'),{f:'#111213',z:[-7,7],bev:1,m:'poly'})+
+  P(D('M',14,-25,'L',14,106,'L',4,108,'Q',0,108,0,103,'L',0,-20,'Q',0,-26,6,-27,'Z'),{f:'url(#gR)',z:[-22,22],bev:4,m:'rubber'}))}
+${G('alt',null,
+  P(D('M',255,-19,'L',270,-19,'L',270,17,'L',487,17,'L',487,26,'Q',487,30,484,31,'L',482,73,'Q',482,77,478,77,'L',386,77,'Q',383,77,383,73,'L',383,50,'L',380,47,'L',340,47,'L',300,45,'L',290,41,'L',266,31,'L',255,27,'Z'),{f:'url(#gA)',z:[-16,16],bev:2.5,m:'alu'})+
+  P(D('M',384,40,'L',484,31,'L',482,73,'Q',482,77,478,77,'L',386,77,'Q',383,77,383,73,'Z'),{f:'url(#gA)',z:[-18.5,18.5],bev:2,m:'alu'})+
+  P(D('M',272,18.5,'L',485,18.5),{s:'#fff',sw:1,op:.1,no3:1})+P(D('M',386,74.5,'L',479,74.5),{s:'#fff',sw:1,op:.08,no3:1})+
+  P(D('M',383,47,'L',383,63,'Q',383,68,378,68,'L',343,68,'Q',334,68,333,60,'L',333,50,'L',338,50,'L',338,58,'Q',339,62,343,62,'L',375,62,'Q',378,62,378,59,'L',378,47,'Z'),{f:'url(#gA)',z:[-8,8],bev:1.5,m:'alu'}))}
+${G('kabza',null,
+  P(D('M',340,46,'Q',337,58,332,68,'Q',327,80,324,92,'Q',319,112,316,128,'L',312,149,'Q',311,154,306,154,'L',276,152,'Q',270,151,271,145,'Q',280,100,290,64,'Q',292,54,286,47,'L',282,42,'L',300,42,'Z'),{f:'url(#gP)',z:[-14,14],bev:5,m:'poly'})+
+  [0,1,2,3,4,5,6].map(i=>P(D('M',290-i*2.2,70+i*11,'L',318-i*2.4,74+i*11),{s:'#000',sw:.9,op:.28,no3:1})).join('')+
+  G('tetik',[350,40],P(D('M',347,40,'L',354,40,'Q',357,52,349,62,'L',345,61,'Q',350,52,347,40,'Z'),{f:'url(#gB)',z:[-4,4],m:'steel'})))}
+${G('ust',fp,
+  R(465,-10,320,20,{cyl:'x',f:'url(#gC)',m:'steel'})+
+  P(D('M',268,-22,'L',487,-22,'L',487,17,'L',271,17,'Q',268,17,268,14,'Z'),{f:'url(#gA)',z:[-15,15],bev:2.5,m:'alu',anc:1})+
+  P(D('M',270,-20.5,'L',486,-20.5),{s:'#fff',sw:1.1,op:.12,no3:1})+
+  R(398,-10,70,22,{rx:2,f:'#060607',z:[14.9,15.25],side:'R',m:'dark'})+
+  P(D('M',372,-19,'L',394,-15,'L',394,3,'L',377,3,'Q',372,3,372,-2,'Z'),{f:'url(#gA)',z:[14,21],bev:2,side:'R',m:'alu'})+
+  R(396,12.5,74,3,{cyl:'x',f:'#55595e',z:[15.2,16.8],side:'R',m:'steel'})+
+  G('elk',null,
+    R(487,-22,298,52,{rx:4,f:'url(#gA)',z:[-25,25],bev:4,m:'alu'})+
+    P(vents(-17)+' '+vents(21),{f:'#060607',z:[-25.3,-24.4],multi:1,m:'dark'})+P(vents(-17)+' '+vents(21),{f:'#060607',z:[24.4,25.3],multi:1,side:'R',m:'dark'})+
+    R(496,-6.5,282,21,{f:'url(#gA)',z:[-31,-24],bev:1,m:'alu'})+R(496,-6.5,282,21,{f:'url(#gA)',z:[24,31],bev:1,side:'R',m:'alu'})+
+    P(slotsPath(B,496,778,-6.5,14.5),{f:'#0a0b0c',z:[-31.35,-30.5],multi:1,m:'dark'})+P(slotsPath(B,496,778,-6.5,14.5),{f:'#0a0b0c',z:[30.5,31.35],multi:1,side:'R',m:'dark'})+
+    P(railPath(B,496,778,30,38,35.5),{f:'url(#gA)',z:[-10.6,10.6],bev:.6,m:'alu'})+
+    R(779,-21,7,50,{rx:3,f:'#1d1f22',z:[-24,24],bev:2,m:'alu'}))+
+  G('ray',null,P(railPath(B,268,778,-22,-30,-27.5),{f:'url(#gA)',z:[-10.6,10.6],bev:.6,m:'alu'})+P(D('M',269,-25,'L',777,-25),{s:'#000',sw:.8,op:.4,no3:1}))+
+  R(785,-22,25,34,{rx:3,f:'url(#gS)',z:[-14,14],bev:2,m:'steel'})+
+  G('namlu',null,
+    R(810,-9.5,62,19,{cyl:'x',r2:9,f:'url(#gC)',m:'steel'})+
+    R(866,-11.5,54,23,{ring:'x',t:2.4,f:'url(#gC)',m:'steel'})+
+    R(871.4,-3.9,1.2,7.8,{cyl:'x',f:'#000',m:'dark'})+
+    R(874,-7.4,36,3,{rx:1.5,f:'#050505',z:[-10.7,-9.5],m:'dark'})+R(874,4.4,36,3,{rx:1.5,f:'#050505',z:[-10.7,-9.5],m:'dark'})+
+    R(874,-7.4,36,3,{rx:1.5,f:'#050505',z:[9.5,10.7],side:'R',m:'dark'})+R(874,4.4,36,3,{rx:1.5,f:'#050505',z:[9.5,10.7],side:'R',m:'dark'})+
+    R(874,-11.95,36,.9,{f:'#050505',z:[-1.5,1.5],m:'dark'}))+
+  G('gez',null,
+    R(270,-36,32,6,{rx:1.5,f:'url(#gA)',z:[-11,11],bev:1,m:'alu'})+
+    R(283,-74,6,38,{f:'#18191b',z:[-2.5,2.5],m:'alu'})+R(282.7,-67.6,6.6,3.2,{cyl:'x',f:'#000',z:[-.1,.1],m:'dark',no2:1})+
+    P(D('M',274,-36,'L',298,-36,'L',295,-75,'Q',294,-78,291,-78,'L',281,-78,'Q',278,-78,277,-75,'Z')+' '+D('M',279,-41,'L',293,-41,'L',291,-71,'L',281,-71,'Z'),{f:'url(#gA)',fr:1,z:[-10,-7],bev:.6,side:'L',m:'alu'})+
+    P(D('M',274,-36,'L',298,-36,'L',295,-75,'Q',294,-78,291,-78,'L',281,-78,'Q',278,-78,277,-75,'Z')+' '+D('M',279,-41,'L',293,-41,'L',291,-71,'L',281,-71,'Z'),{f:'url(#gA)',fr:1,z:[7,10],bev:.6,side:'R',m:'alu'})+
+    C(286,-46,4.6,{f:'url(#gS)',z:[-12.5,12.5],m:'steel'}))+
+  G('arpacik',null,
+    R(786,-30,24,8,{f:'url(#gA)',z:[-10.6,10.6],m:'alu'})+
+    R(788,-36,22,6,{rx:1.5,f:'url(#gA)',z:[-11,11],bev:1,m:'alu'})+
+    C(792,-36,3,{f:'url(#gS)',z:[-10,10],m:'steel'})+
+    R(798.5,-67,3,31,{f:'#141516',z:[-1.5,1.5],m:'steel'})+
+    P(D('M',790,-36,'L',808,-36,'L',805,-74,'Q',804,-77,801,-77,'L',797,-77,'Q',794,-77,793,-74,'Z')+' '+D('M',794,-41,'L',804,-41,'L',802.5,-68,'L',795.5,-68,'Z'),{f:'url(#gA)',fr:1,z:[-9,-6],bev:.6,side:'L',m:'alu'})+
+    P(D('M',790,-36,'L',808,-36,'L',805,-74,'Q',804,-77,801,-77,'L',797,-77,'Q',794,-77,793,-74,'Z')+' '+D('M',794,-41,'L',804,-41,'L',802.5,-68,'L',795.5,-68,'Z'),{f:'url(#gA)',fr:1,z:[6,9],bev:.6,side:'R',m:'alu'}))+
+  G('itici',null,
+    R(338,-11,34,15,{cyl:'x',f:'url(#gA)',z:[14.5,29.5],pv:[355,-3.5,22],ry:35,side:'R',m:'alu'})+
+    R(330,-12.5,9,18,{cyl:'x',f:'url(#gS)',z:[14.5,29.5],pv:[355,-3.5,22],ry:35,side:'R',m:'steel'}))+
+  G('toz',[397,14,16],
+    R(396,-11,74,25,{rx:2,f:'url(#gA)',z:[15.3,16.5],bev:.5,side:'R',m:'alu'})+
+    R(452,-3,9,7,{rx:2,f:'#2b2e31',z:[16.3,17.4],side:'R',m:'alu'}))+
+  G('ayak',null,
+    G('ayakb',null,
+      R(697,62,10,90,{rx:5,f:'url(#gS)',z:[-11,-3],pv:[702,62,-7],splay:-18,m:'steel'})+
+      R(697,62,10,90,{rx:5,f:'url(#gS)',z:[3,11],pv:[702,62,7],splay:18,m:'steel'}))+
+    R(679,38,48,9,{rx:2,f:'url(#gP)',z:[-13,13],bev:1.5,m:'poly'})+
+    P(D('M',684,47,'L',722,47,'Q',725,47,725,51,'L',721,148,'Q',720,154,714,154,'L',690,154,'Q',684,154,683,148,'L',681,51,'Q',681,47,684,47,'Z'),{f:'url(#gP)',z:[-16,16],bev:6,m:'poly'})+
+    [0,1,2,3,4,5,6,7].map(i=>P(D('M',683.5,62+i*10,'L',722.5,62+i*10),{s:'#000',sw:1,op:.32,no3:1})).join('')+
+    G('ayakm',null,R(721,119,5,10,{cyl:'x',f:'#33373b',z:[-5,5],m:'alu'}))))}
+${G('ktm',[391,30],P(D('M',372,19,'L',381,19,'L',382,42,'Q',382,46,378,46,'L',375,46,'Q',372,46,372,42,'Z'),{f:'url(#gA)',z:[-19.2,-16],bev:1,side:'L',m:'alu'})+[0,1,2].map(i=>P(D('M',373.5,24+i*5,'L',380.5,24+i*5),{s:'#000',sw:.8,op:.5,no3:1,side:'L'})).join(''))}
+${G('smandal',null,
+  C(376,53,5.5,{f:'#2d3034',z:[16,20],side:'R',m:'alu'})+
+  P(D('M',366,49,'L',381,49,'Q',383,49,383,51,'L',383,55,'Q',383,57,381,57,'L',366,57,'Z'),{f:'#2d3034',z:[-19.4,-16],bev:.8,side:'L',m:'alu'}))}
+${G('mandal',null,
+  T(334,40,'E',7,{f:'#e9e9e9',dec:-16.2,side:'L'})+T(304,25,'T',7,{f:'#e05a4f',dec:-16.2,side:'L'})+T(274,40,'S',7,{f:'#e05a4f',dec:-16.2,side:'L'})+
+  C(selP[0],selP[1],6,{f:'url(#gS)',z:[-18,-16],side:'L',m:'steel',anc:1})+C(selP[0],selP[1],5,{f:'url(#gS)',z:[16,17.6],side:'R',m:'steel'})+
+  G('mkol',selP,P(B.lever(selP[0],selP[1],0,22,7.5,5.2),{f:'url(#gS)',z:[-19.6,-17.8],side:'L',m:'steel'})+P(B.lever(selP[0],selP[1],0,14,6,4.6),{f:'url(#gS)',z:[17.4,19],side:'R',m:'steel'})+C(selP[0],selP[1],2,{f:'#5b5f64',z:[-20,-19.4],side:'L',m:'steel'})))}
+${G('arkapim',rp,C(rp[0],rp[1],3.3,{f:'url(#gB)',z:[-16.6,16.6],m:'bright'})+C(rp[0],rp[1],4.4,{f:'#9da2a7',z:[16.2,17.8],side:'R',m:'bright'}))}
+${G('onpim',fp,C(fp[0],fp[1],3.3,{f:'url(#gB)',z:[-16.6,16.6],m:'bright'})+C(fp[0],fp[1],4.4,{f:'#9da2a7',z:[16.2,17.8],side:'R',m:'bright'}))}
+</g></g>${extra||''}</svg>`;
+  return s;
 }
 const isAR=k=>k==='mpt76'||k==='mpt55';
-function ayakToggle(){const o=LB.PS.ayak&&LB.PS.ayak.r;lmv('ayak',{r:o?0:84});click(1200,.04,.25);setTimeout(()=>click(900,.04,.2),500);}
+// gerçek çizimi tuvale (kart, sınav, şarjör değiştirme) aktarmak için resim: sağ yüz (namlu sağda)
+const RIMG={};
+function rifImg(k,mode,cb){if(!isAR(k)&&k!=='hk33'&&k!=='g3')return null;const id=k+'|'+(mode||'f');let o=RIMG[id];
+  if(!o){o=RIMG[id]={img:new Image(),ok:false,cbs:[]};
+    const st='<style>[data-side="L"],.no2{display:none}'+(mode==='b'?'[data-p="sarjor"]{display:none}':'')+(mode==='m'?'#lrifle>g:not([data-p="sarjor"]){display:none}':'')+'</style>';
+    const sv=labSvg(k).replace(MAT,'').replace('<svg viewBox="0 40 1000 475" xmlns="http://www.w3.org/2000/svg">','<svg viewBox="70 52 860 290" width="1720" height="580" xmlns="http://www.w3.org/2000/svg">'+st).replace(' filter="url(#lsh)"','');
+    o.img.onload=()=>{o.ok=true;const c=o.cbs;o.cbs=[];c.forEach(f=>{try{f();}catch(e){}});};o.img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sv);}
+  if(o.ok)return o.img;if(cb)o.cbs.push(cb);return null;}
+function drawRifImg(c,img,k,b,m){const L=Math.hypot(m[0]-b[0],m[1]-b[1]),a=Math.atan2(m[1]-b[1],m[0]-b[0]),s=L/840,y0=RIF_Y0[k]||197;c.save();c.translate(b[0],b[1]);c.rotate(a);c.drawImage(img,-10*s,-(y0-52)*s,860*s,290*s);c.restore();}
+const labSvg=(k,extra)=>(isAR(k)?svgAR:svgHK)(k,extra);
+
+function ayakToggle(){const o=LB.PS.ayakb&&LB.PS.ayakb.y;lmv('ayakb',{y:o?0:82});click(1200,.04,.25);setTimeout(()=>click(900,.04,.2),420);}
+// örtü üzerinde parçalar için yer planı (gerçek boyutlarına göre üst üste binmeden)
+function matPlan(ids){
+  const out={},placed=[],M={x0:40,x1:960,y0:368,y1:506};
+  const items=ids.map(id=>{const e=labPart(id);if(!e)return null;let b;try{b=e.getBBox();}catch(x){return null;}const rot=id==='sarjor'?-90:0;return {id,e,b,rot,w:rot?b.height:b.width,h:rot?b.width:b.height};}).filter(Boolean).sort((a,b)=>b.h-a.h||b.w-a.w);
+  for(const it of items){let best=null;
+    for(let y=M.y0;y+it.h<=M.y1+.5&&!best;y+=4)for(let x=M.x0;x+it.w<=M.x1;x+=6){if(!placed.some(q=>x<q.x+q.w+12&&x+it.w+12>q.x&&y<q.y+q.h+8&&y+it.h+8>q.y)){best={x,y};break;}}
+    if(!best)best={x:M.x0,y:M.y0};placed.push({x:best.x,y:best.y,w:it.w,h:it.h});
+    const o=(it.e.dataset.o||'').split(' ').map(Number),c=[it.b.x+it.b.width/2,it.b.y+it.b.height/2];let cc=c;
+    if(it.rot&&o.length>=2){const a=it.rot*Math.PI/180,dx=c[0]-o[0],dy=c[1]-o[1];cc=[o[0]+dx*Math.cos(a)-dy*Math.sin(a),o[1]+dx*Math.sin(a)+dy*Math.cos(a)];}
+    out[it.id]={x:best.x+it.w/2-cc[0],y:best.y+it.h/2-cc[1],r:it.rot};}
+  return out;
+}
+const matPos=id=>{if(!LB)return {};LB.mat=LB.mat||{};if(!LB.mat[id])Object.assign(LB.mat,matPlan([id]));return LB.mat[id]||{};};
 // ---------- adımlar ----------
-const KK=()=>isAR(LB.rf)?{x:-40}:{x:-130};
-const kurma=(back=true)=>{lmv('kkol',Object.assign({},KK()));boltSnd();setTimeout(()=>{lmv('kkol',{x:0});click(1300,.04,.25);},back?650:300);};
-const selTo=a=>{lmv('mkol',{r:a});click(1500,.03,.22);};
+const KK=()=>({x:{mpt76:-76,mpt55:-62,g3:-113}[LB.rf]||-97});
+const kurma=(back=true)=>{
+  if(isAR(LB.rf)){lmv('kkol',KK());boltSnd();setTimeout(()=>{lmv('kkol',{x:0});click(1300,.04,.25);},back?650:300);return;}
+  // HK: katlanır kolu aç, geri çek, bırak, katla
+  lmv('kkol',{ry:90});click(1700,.03,.15);
+  setTimeout(()=>{lmv('kkol',Object.assign({ry:90},KK()));boltSnd();},240);
+  setTimeout(()=>{lmv('kkol',{x:0,ry:90});click(1300,.04,.25);},back?950:640);
+  setTimeout(()=>lmv('kkol',{ry:0}),back?1600:1250);};
+// mandal: -60=E, 0=T, 60=S (sanal); gerçek açı tüfeğe göre (HK geriye bakan kol, MPT ileri bakan kol)
+const selR=a=>(a+60)/60*(LB&&isAR(LB.rf)?-90:-40);
+const selTo=a=>{lmv('mkol',{r:selR(a)});click(1500,.03,.22);};
 function recoil(){if(L3)L3.recoil=1;const g=document.querySelector('#labStage #lrifle');if(!g)return;g.style.transition='transform .05s';g.style.transform='translate(-16px,-5px) rotate(-1.4deg)';g.style.transformBox='view-box';g.style.transformOrigin='300px 160px';setTimeout(()=>{g.style.transition='transform .35s ease-out';g.style.transform='';},70);}
+const magDrop=()=>{magOut();lmv('sarjor',{y:90,o:.5});setTimeout(()=>{lmv('sarjor',{y:0,o:1});magIn();},1200);};
 function tanitimSteps(rf){
   const R=RIFLES[rf],ar=isAR(rf);
   return [
-    {hot:'namlu',h:'Namlu',d:'Merminin içinden geçtiği borudur. İçindeki yivler mermiye dönüş kazandırır, böylece mermi uçuşta yalpalamaz. Ucundaki alev gizleyici ağız alevini dağıtır, gece atıcının yerini belli etmez.'},
-    {hot:'arpacik',h:'Arpacık',d:'Nişan hattının ön noktasıdır. Nişan alırken göz arpacığa odaklanır. Etrafındaki koruyucu, arpacığı darbelerden korur.'},
-    {hot:'gez',h:'Gez',d:ar?'Nişan hattının arka noktasıdır. Üst raya takılı katlanır gezdir; göz deliğin ortasından bakar. Ray üzerine dürbün ya da kırmızı nokta da takılır.':'Nişan hattının arka noktasıdır. Döner tamburlu gezin dört konumu var: 1 numara açık V gez yakın mesafe ve kötü görüş içindir; 2, 3 ve 4 numaralı delikler 200, 300 ve 400 metre içindir. V gez ile 200 metre deliği aynı noktaya vurur.'},
-    ar?{hot:'ray',h:'Ray',d:'Gövdenin üstündeki dişli kızaktır. Dürbün, gece görüş cihazı ya da kırmızı nokta nişangâh buraya takılır.'}:null,
-    {hot:'kkol',h:'Kurma kolu',act:()=>kurma(),d:ar?'Gövdenin arka üstündeki T biçimli koldur. Geri çekip bırakınca mekanizma fişek yatağına fişek sürer. Atış sırasında yerinden oynamaz; mandalı sağ taraftadır.':'Namlunun üstündeki tüpte, sol öndedir. Geri çekip bırakınca mekanizma fişek yatağına fişek sürer. Kolu bırak, eliyle ileri itme.'},
-    {hot:'mandal',h:'Ateş ayar mandalı',act:()=>{selTo(0);setTimeout(()=>selTo(60),700);setTimeout(()=>selTo(-60),1400);},d:'E emniyet: tetik çekilmez. T tek atış: her tetik çekişinde bir mermi. S seri atış: tetik basılı kaldıkça atış sürer. Atışa karar verene kadar mandal daima E\'de.'},
+    {hot:'namlu',h:'Namlu',d:ar?'Merminin içinden geçtiği borudur. İçindeki yivler mermiye dönüş kazandırır, mermi uçuşta yalpalamaz. Ucundaki kafes biçimli alev gizleyici ağız alevini dağıtır; geceleri atıcının yerini belli etmez.':'Merminin içinden geçtiği borudur. İçindeki yivler mermiye dönüş kazandırır, mermi uçuşta yalpalamaz. Ucundaki yarıklı alev gizleyici ağız alevini dağıtır; tüfek bombası da bunun üzerine takılır.'},
+    {hot:'arpacik',h:'Arpacık',d:ar?'Gaz bloğunun üstündeki katlanır arpacıktır. İki kulağın arasındaki direk nişan hattının ön noktasıdır. Dürbün kullanılırken yatırılabilir.':'Nişan hattının ön noktasıdır. Arpacık yuvarlak bir tünelin içindedir; tünel arpacığı darbeye karşı korur ve gezle ortalamayı kolaylaştırır.'},
+    {hot:'gez',h:'Gez',d:ar?'Üst raya takılı katlanır delikli gezdir. Göz deliğin ortasından bakar. Yandaki düğmeyle yükseklik ayarlanır. Raya dürbün ya da kırmızı nokta takılınca yedek nişangâh olarak kalır.':'Döner tamburlu gezdir. Tambur namlu doğrultusundaki ekseni etrafında döner, üstte kalan konum geçerlidir. 1 açık V gezdir; yakın mesafe ve kötü görüş içindir. 2, 3 ve 4 numaralı delikler 200, 300 ve 400 metre içindir.'},
+    ar?{hot:'ray',h:'Ray',d:'Üst gövde ve el kundağı boyunca uzanan dişli kızaktır. Dürbün, gece görüş ya da kırmızı nokta nişangâh üst raya takılır. El kundağının yan ve alt raylarına fener, lazer ve tutamak bağlanır.'}:null,
+    {hot:'kkol',h:'Kurma kolu',side:ar?null:'L',act:()=>kurma(),d:ar?'Gövdenin arka üstündeki T biçimli koldur. Sonuna kadar geri çekip bırakınca mekanizma fişek yatağına fişek sürer. Atış sırasında kol yerinde durur.':'Namlunun üstündeki kurma kolu yuvasında, sol öndedir. Katlanır kolu aç, sonuna kadar geri çek ve bırak; mekanizma fişek yatağına fişek sürer. Kolu eliyle ileri itme. Geride yukarıdaki çentiğe takarsan mekanizma açık kalır.'},
+    {hot:'mandal',h:'Ateş ayar mandalı',side:ar?null:'L',act:()=>{selTo(0);setTimeout(()=>selTo(60),700);setTimeout(()=>selTo(-60),1400);},d:(ar?'Tüfeğin iki yanında da vardır. ':'Sol taraftadır, başparmakla aşağı doğru çevrilir. ')+'E emniyet: tetik çekilmez. T tek atış: her tetik çekişinde bir mermi. S seri atış: tetik basılı kaldıkça atış sürer. Atışa karar verene kadar mandal daima E\'de.'},
     {hot:'tetik',h:'Tetik',act:()=>{lmv('tetik',{r:14});dry();setTimeout(()=>lmv('tetik',{r:0}),300);},d:'İşaret parmağının ilk boğumuyla düz geriye, yavaş ve kesintisiz çekilir. Nişan alıp atışa karar vermeden parmak tetiğe girmez, gövdeye paralel durur.'},
-    {hot:'smandal',h:'Şarjör mandalı',act:()=>{magOut();lmv('sarjor',{y:90,o:.5});setTimeout(()=>{lmv('sarjor',{y:0,o:1});magIn();},1200);},d:'Basınca şarjör serbest kalır ve çıkar. Yeni şarjör takılınca “tık” sesiyle kilitlenir.'},
-    {hot:'sarjor',h:'Şarjör',d:`${R.name} şarjörü ${R.magTxt}, ${R.cal} fişek alır. Takınca hafifçe aşağı çekerek yerine oturduğunu kontrol et.`},
-    {hot:'elk',h:'El kundağı',d:'Destek eli burayı kavrar. Isınan namluya dokunmadan tutmanı sağlar. Tüfeği sıkma, sadece taşı.'},
+    {hot:'smandal',h:'Şarjör mandalı',act:magDrop,d:ar?'Şarjör yuvasının arkasında, iki yandadır. Basınca şarjör serbest kalır ve düşer. Yeni şarjör takılınca “tık” sesiyle kilitlenir.':'Şarjör yuvasıyla tetik korkuluğu arasındaki kanattır. İleri itince şarjör serbest kalır; iki elle de kullanılır. Yeni şarjör “tık” sesiyle kilitlenir.'},
+    ar?null:{hot:'sbtn',h:'Şarjör düğmesi',side:'R',act:magDrop,d:'Şarjör yuvasının sağ arkasındaki düğmedir. Sağ elin işaret parmağıyla basılır; kanatlı mandalla aynı işi yapar.'},
+    {hot:'sarjor',h:'Şarjör',d:`${R.name} şarjörü ${R.magTxt}, ${R.cal} fişek alır.`+(rf==='mpt76'?' Yarı saydamdır; kalan fişeği dışarıdan görürsün.':'')+' Takınca hafifçe aşağı çekerek yerine oturduğunu kontrol et.'},
+    {hot:'elk',h:'El kundağı',d:ar?'Destek eli burayı kavrar. Isınan namluya dokunmadan tutmanı sağlar. Dört yanındaki raylara aksesuar takılır. Tüfeği sıkma, sadece taşı.':'Destek eli burayı kavrar. Isınan namluya dokunmadan tutmanı sağlar; üzerindeki delikler namluyu soğutur. Tüfeği sıkma, sadece taşı.'},
     ar?{hot:'ust',h:'Üst ve alt gövde',d:'Üst gövde namluyu ve mekanizmayı, alt gövde tetik grubunu ve şarjör yuvasını taşır. İki pimle birleşir; sökmede menteşe gibi açılır.'}
-      :{hot:'govde',h:'Gövde',d:`Mekanizma burada çalışır. ${R.name} ${R.mech} sistemle çalışır.`},
+      :{hot:'govde',h:'Gövde',d:`Saç levhadan preslenmiş gövdedir; mekanizma içinde çalışır. ${R.name} ${R.mech} sistemle çalışır.`},
+    ar?null:{hot:'atim',h:'Kovan atma penceresi',side:'R',d:'Gövdenin sağındadır. Atıştan sonra boş kovan buradan sağa doğru kuvvetle fırlar. Sağındaki arkadaşına dikkat et; solak atış yapılmaz.'},
     {hot:'kabza',h:'Kabza',d:'Atış eli kabzayı yüksekten ve sıkıca kavrar; el ile kabza arasında boşluk kalmaz. Tetiği çekerken kabzayı sıkma, sadece parmak hareket eder.'},
-    {hot:'dipcik',h:'Dipçik',act:thump,d:ar?'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Boyu 12 kademede ayarlanır; yanak dipçiğe her atışta aynı noktadan değer.':'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Yanak dipçiğe her atışta aynı noktadan değer.'},
-    ar?{hot:'ayak',h:'Çatal ayak',act:ayakToggle,d:'El kundağının altındaki katlanır ayaklardır. Yatarak atışta açılır, tüfeği yere sağlam oturtur ve namluyu sakinleştirir. Katlıyken ön tutamak olarak da kullanılır.'}:null,
-    ar?{hot:'ayakm',h:'Ayak açma mandalı',act:ayakToggle,d:'Bu mandala basınca çatal ayak serbest kalır, açılır ya da katlanır. Bırakınca ayak o konumda kilitlenir.'}:null,
-    ar?{hot:'ktm',h:'Kilit tutma mandalı',act:()=>{click(1100,.04,.25);setTimeout(boltSnd,250);},d:'Son mermi atılınca mekanizmayı açık tutar; böylece şarjörün bittiğini anlarsın. Yeni şarjörü taktıktan sonra bu mandala basınca mekanizma kapanır ve fişek sürülür.'}:null,
-    ar?{hot:'toz',h:'Toz kapağı',act:()=>{lmv('toz',{y:20,o:.4});click(1600,.03,.2);setTimeout(()=>lmv('toz',{y:0,o:1}),900);},d:'Boş kovanın atıldığı pencereyi kapatır, mekanizmaya toz ve çamur girmesini önler. İlk atışta kendiliğinden açılır.'}:null,
-    ar?{hot:'arkapim',h:'Arka birleştirme pimi',d:'Üst ve alt gövdeyi arkadan birleştirir. Sökmede ilk bu pim itilir, gövde menteşe gibi açılır.'}:{hot:'pim',h:'Dipçik pimleri',d:'Dipçiği ve kabzayı gövdeye bağlayan pimlerdir. Sökmede itilerek çıkarılır; kaybolmaması için hemen örtüye konur.'},
+    {hot:'dipcik',h:'Dipçik',act:thump,d:ar?'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Boyu kademeli olarak ayarlanır; yanak dipçiğe her atışta aynı noktadan değer.':'Omuz çukuruna yerleşir ve tepmeyi omuza dağıtır. Üst çizgisi gövdeyle düzdür, tepme omuza düz gelir. Yanak dipçiğe her atışta aynı noktadan değer.'},
+    ar?{hot:'ayak',h:'Tutamaklı çatal ayak',act:ayakToggle,d:'El kundağının altındaki ön tutamaktır. İçinde iki ayak saklıdır; yatarak atışta ayaklar açılır, tüfeği yere sağlam oturtur ve namluyu sakinleştirir. Kapalıyken ön tutamak olarak kavranır.'}:null,
+    ar?{hot:'ayakm',h:'Ayak açma düğmesi',act:ayakToggle,d:'Tutamağın önündeki düğmedir. Basınca ayaklar yayla dışarı çıkar ve açılır. Kapatmak için ayakları birbirine yaklaştırıp tutamağın içine it.'}:null,
+    ar?{hot:'ktm',h:'Kilit tutma mandalı',side:'L',act:()=>{click(1100,.04,.25);setTimeout(boltSnd,250);},d:'Son mermi atılınca mekanizmayı açık tutar; böylece şarjörün bittiğini anlarsın. Yeni şarjörü taktıktan sonra bu mandala basınca mekanizma kapanır ve fişek sürülür.'}:null,
+    ar?{hot:'toz',h:'Toz kapağı',side:'R',act:()=>{lmv('toz',{rx:-150});click(1600,.03,.2);setTimeout(()=>lmv('toz',{rx:0}),1700);},d:'Sağdaki kovan atma penceresini kapatır, mekanizmaya toz ve çamur girmesini önler. Mekanizma ilk hareket edince kendiliğinden açılır. Atış bitince kapatılır.'}:null,
+    ar?{hot:'itici',h:'İtici',side:'R',act:()=>{click(900,.05,.25);setTimeout(()=>click(700,.04,.2),120);},d:'Gövdenin sağ arkasındaki düğmedir. Mekanizma kir yüzünden tam kapanmazsa avuçla ileri itilerek kilitlenmesi sağlanır.'}:null,
+    ar?{hot:'arkapim',h:'Arka birleştirme pimi',d:'Üst ve alt gövdeyi arkadan birleştirir. Sökmede soldan sağa doğru itilir; pim düşmez, yuvasında kalır. Gövde ön pimin etrafında menteşe gibi açılır.'}:{hot:'pim',h:'Dipçik pimleri',d:'Dipçiği ve kabzayı gövdeye bağlayan iki pimdir. Sökmede itilerek çıkarılır; kaybolmaması için hemen örtüye konur.'},
     ar?{hot:'onpim',h:'Ön birleştirme pimi',d:'Gövdelerin menteşe noktasıdır. Bu pim de itilince üst ve alt gövde tamamen ayrılır.'}:null
   ].filter(Boolean);
 }
 function soktakSteps(rf){
   const ar=isAR(rf),S1=[],S2=[];
+  const MP=()=>{if(!LB.matAll){LB.matAll=1;LB.mat=Object.assign(LB.mat||{},matPlan(ar?['sarjor','mek','kkol']:['dipcik','mek','kabza','elk','sarjor','pim']));}return LB.mat;};
+  const toMat=(id,d)=>lmv(id,Object.assign({o:1},MP()[id]),d);
   S1.push({k:'Sökme',hot:'mandal',h:'Emniyete al',act:()=>selTo(-60),d:'Namlu atış istikametinde, parmak tetik dışında. Mandalı E konumuna getir. Her silahı dolu kabul et.'});
-  S1.push({k:'Sökme',hot:'smandal',h:'Şarjörü çıkar',act:()=>{magOut();lmv('sarjor',{x:330,y:140,o:1});},d:'Şarjör mandalına bas, şarjörü çıkar ve örtüye koy.'});
+  S1.push({k:'Sökme',hot:'smandal',h:'Şarjörü çıkar',act:()=>{magOut();lmv('sarjor',{y:70});toMat('sarjor',520);},d:'Şarjör mandalına bas, şarjörü çıkar ve örtüye koy.'});
   S1.push({k:'Sökme',hot:'kkol',h:'Fişek yatağını kontrol et',act:()=>kurma(),d:'Kurma kolunu geri çek, fişek yatağına bak: boş olmalı. Sonra kolu bırak.'});
   if(!ar){
-    S1.push({k:'Sökme',hot:'pim',h:'Dipçik pimlerini çıkar',act:()=>{click(900,.04,.22);lmv('pim',{y:-40});lmv('pim',{x:420,y:300},450);},d:'Gövdenin arkasındaki iki pimi it ve çıkar. Pimleri kaybetmemek için hemen örtüye koy.'});
-    S1.push({k:'Sökme',hot:'dipcik',h:'Dipçiği çıkar',act:()=>{noise('bandpass',900,.3,.12);lmv('dipcik',{x:-60});lmv('dipcik',{x:-10,y:262},500);},d:'Dipçiği geriye doğru çekerek gövdeden ayır.'});
-    S1.push({k:'Sökme',hot:'mek',h:'Mekanizmayı çıkar',act:()=>{boltSnd();lmv('mek',{x:-240});lmv('mek',{x:150,y:322},650);},d:'Dipçik çıkınca gövdenin arkası açılır. Kurma kolunu geri çekerek mekanizma (kilit) grubunu arkadan dışarı al.'});
-    S1.push({k:'Sökme',hot:'kabza',h:'Kabzayı (tetik grubunu) çıkar',act:()=>{noise('bandpass',1100,.3,.1);lmv('kabza',{r:22});lmv('kabza',{x:-30,y:150,r:0},550);},d:'Kabzayı aşağı doğru döndürerek gövdeden çıkar. Ateş ayar mandalı ve tetik bu grupla birlikte gelir.'});
-    S1.push({k:'Sökme',hot:'elk',h:'El kundağını çıkar',act:()=>{noise('bandpass',700,.3,.12);lmv('elk',{y:40});lmv('elk',{x:-110,y:248},450);},d:'El kundağı pimini çıkar, kundağı öne ve aşağı doğru ayır. Saha temizliği için bu kadarı yeter.'});
-    S2.push({k:'Takma',hot:'elk',h:'El kundağını tak',act:()=>{lmv('elk',{x:0,y:0});click(800,.05,.25);},d:'Kundağı namlunun altına yerleştir, pimini tak.'});
-    S2.push({k:'Takma',hot:'kabza',h:'Kabzayı tak',act:()=>{lmv('kabza',{x:0,y:0,r:22});setTimeout(()=>{lmv('kabza',{r:0});click(700,.05,.3);},600);},d:'Kabzanın ön ucunu gövdeye tak, yukarı döndürerek oturt.'});
-    S2.push({k:'Takma',hot:'mek',h:'Mekanizmayı yerleştir',act:()=>{lmv('mek',{x:-240,y:0});setTimeout(()=>{lmv('mek',{x:0});boltSnd();},650);},d:'Mekanizma grubunu gövdenin arkasından ileri doğru it, yerine otursun.'});
-    S2.push({k:'Takma',hot:'dipcik',h:'Dipçiği tak',act:()=>{lmv('dipcik',{x:-60,y:0});setTimeout(()=>{lmv('dipcik',{x:0});thump();},550);},d:'Dipçiği gövdeye doğru it, deliklerin hizalandığını gör.'});
-    S2.push({k:'Takma',hot:'pim',h:'Pimleri tak',act:()=>{lmv('pim',{x:0,y:-40});setTimeout(()=>{lmv('pim',{y:0});click(900,.04,.25);},500);},d:'İki pimi deliklere sonuna kadar it.'});
+    S1.push({k:'Sökme',hot:'pim',h:'Dipçik pimlerini çıkar',act:()=>{click(900,.04,.22);lmv('pim',{y:-12,z:-48});toMat('pim',650);},d:'Gövdenin arkasındaki iki pimi it ve çıkar. Pimleri kaybetmemek için hemen örtüye koy.'});
+    S1.push({k:'Sökme',hot:'dipcik',h:'Dipçiği çıkar',act:()=>{noise('bandpass',900,.3,.12);lmv('dipcik',{x:-70});toMat('dipcik',560);},d:'Dipçiği geriye doğru çekerek gövdeden ayır.'});
+    S1.push({k:'Sökme',hot:'mek',h:'Mekanizmayı çıkar',act:()=>{boltSnd();lmv('mek',{x:-300});toMat('mek',720);},d:'Dipçik çıkınca gövdenin arkası açılır. Kurma kolunu geri çekerek mekanizma (kilit) grubunu arkadan dışarı al.'});
+    S1.push({k:'Sökme',hot:'kabza',h:'Kabzayı (tetik grubunu) çıkar',act:()=>{noise('bandpass',1100,.3,.1);lmv('kabza',{r:-22});toMat('kabza',620);},d:'Kabzanın arkasını aşağı doğru döndür, öndeki kancasından kurtarıp gövdeden ayır. Ateş ayar mandalı ve tetik bu grupla birlikte gelir.'});
+    S1.push({k:'Sökme',hot:'elk',h:'El kundağını çıkar',act:()=>{noise('bandpass',700,.3,.12);lmv('elk',{y:30,r:-3});toMat('elk',520);},d:'El kundağı pimini çıkar, kundağı aşağı doğru ayır. Saha temizliği için bu kadarı yeter.'});
+    S2.push({k:'Takma',hot:'elk',h:'El kundağını tak',act:()=>{lmv('elk',{x:0,y:0,r:0});click(800,.05,.25);},d:'Kundağı namlunun altına yerleştir, pimini tak.'});
+    S2.push({k:'Takma',hot:'kabza',h:'Kabzayı tak',act:()=>{lmv('kabza',{x:0,y:0,r:-22});setTimeout(()=>{lmv('kabza',{r:0});click(700,.05,.3);},650);},d:'Kabzanın ön kancasını gövdeye tak, arkasını yukarı döndürerek oturt.'});
+    S2.push({k:'Takma',hot:'mek',h:'Mekanizmayı yerleştir',act:()=>{lmv('mek',{x:-300,y:0,r:0});setTimeout(()=>{lmv('mek',{x:0});boltSnd();},700);},d:'Mekanizma grubunu gövdenin arkasından ileri doğru it, yerine otursun.'});
+    S2.push({k:'Takma',hot:'dipcik',h:'Dipçiği tak',act:()=>{lmv('dipcik',{x:-70,y:0,r:0});setTimeout(()=>{lmv('dipcik',{x:0});thump();},600);},d:'Dipçiği gövdeye doğru it, deliklerin hizalandığını gör.'});
+    S2.push({k:'Takma',hot:'pim',h:'Pimleri tak',act:()=>{lmv('pim',{x:0,y:-12,z:-48,r:0});setTimeout(()=>{lmv('pim',{y:0,z:0});click(900,.04,.25);},600);},d:'İki pimi deliklere sonuna kadar it.'});
   }else{
-    S1.push({k:'Sökme',hot:'arkapim',h:'Arka pimi it',act:()=>{click(900,.04,.22);lmv('arkapim',{y:-22,o:.6});lmv('arkapim',{x:420,y:290,o:1},450);},d:'Arka birleştirme pimini sağdan sola doğru it. Pim tamamen düşmez, tutucusunda kalır; burada görmen için örtüye koyduk.'});
-    S1.push({k:'Sökme',hot:'ust',h:'Üst gövdeyi aç',act:()=>{['ust','mek','kkol'].forEach(i=>lmv(i,{r:-11}));noise('bandpass',800,.25,.12);},d:'Üst gövdeyi ön pimin etrafında menteşe gibi yukarı aç.'});
-    S1.push({k:'Sökme',hot:'mek',h:'Kurma kolu ve mekanizmayı çıkar',act:()=>{boltSnd();lmv('mek',{x:-230});lmv('kkol',{x:-120});setTimeout(()=>{lmv('mek',{x:-200,y:300,r:0});lmv('kkol',{x:120,y:320,r:0});},650);},d:'Kilit taşıyıcıyı (mekanizma) biraz geri çek, ardından kurma kolunu ve mekanizmayı birlikte arkadan çıkar.'});
-    S1.push({k:'Sökme',hot:'onpim',h:'Ön pimi it, gövdeleri ayır',act:()=>{click(900,.04,.22);lmv('onpim',{x:220,y:280});lmv('ust',{x:50,y:-70,r:0},450);},d:'Ön pimi de it; üst ve alt gövde birbirinden ayrılır. Saha temizliği için bu kadarı yeter.'});
-    S2.push({k:'Takma',hot:'ust',h:'Gövdeleri birleştir',act:()=>{lmv('ust',{x:0,y:0,r:-11});setTimeout(()=>{lmv('onpim',{x:0,y:0});click(900,.04,.25);},600);},d:'Üst gövdenin ön ucunu alt gövdeye yerleştir, ön pimi tak.'});
-    S2.push({k:'Takma',hot:'mek',h:'Mekanizma ve kurma kolunu tak',act:()=>{lmv('kkol',{x:-120,y:0,r:-11});lmv('mek',{x:-230,y:0,r:-11});setTimeout(()=>{lmv('mek',{x:0});lmv('kkol',{x:0});boltSnd();},650);},d:'Önce kurma kolunu, sonra mekanizmayı yuvasına sür ve ileri it.'});
-    S2.push({k:'Takma',hot:'ust',h:'Üst gövdeyi kapat',act:()=>{['ust','mek','kkol'].forEach(i=>lmv(i,{r:0}));thump();},d:'Üst gövdeyi aşağı indir, alt gövdeye otursun.'});
-    S2.push({k:'Takma',hot:'arkapim',h:'Arka pimi tak',act:()=>{lmv('arkapim',{x:0,y:0,o:1});click(900,.04,.25);},d:'Arka pimi soldan sağa doğru it, kilitlensin.'});
+    const back=(d,r)=>({x:-d*Math.cos(r*Math.PI/180),y:-d*Math.sin(r*Math.PI/180),r});
+    S1.push({k:'Sökme',hot:'arkapim',h:'Arka pimi it',act:()=>{click(900,.04,.22);lmv('arkapim',{z:15,o:.45});},d:'Arka birleştirme pimini soldan sağa doğru it. Pim tamamen çıkmaz, sağ tarafta tutucusunda kalır.'});
+    S1.push({k:'Sökme',hot:'ust',h:'Üst gövdeyi aç',act:()=>{['ust','mek','kkol'].forEach(i=>lmv(i,{r:11}));noise('bandpass',800,.25,.12);},d:'Üst gövdeyi ön pimin etrafında menteşe gibi yukarı aç.'});
+    S1.push({k:'Sökme',hot:'mek',h:'Mekanizma ve kurma kolunu çıkar',act:()=>{boltSnd();lmv('mek',back(170,11));lmv('kkol',back(115,11));setTimeout(()=>{toMat('mek');toMat('kkol');},720);},d:'Kurma kolunu biraz geri çek, mekanizmayı (kilit taşıyıcıyı) arkadan çıkar. Sonra kurma kolunu aşağı indirip yuvasından al.'});
+    S1.push({k:'Sökme',hot:'onpim',h:'Ön pimi it, gövdeleri ayır',act:()=>{click(900,.04,.22);lmv('onpim',{z:15,o:.45});lmv('ust',{x:40,y:-62,r:0},450);},d:'Ön pimi de soldan sağa it; üst ve alt gövde birbirinden ayrılır. Saha temizliği için bu kadarı yeter.'});
+    S2.push({k:'Takma',hot:'ust',h:'Gövdeleri birleştir',act:()=>{lmv('ust',{x:0,y:0,r:11});setTimeout(()=>{lmv('onpim',{z:0,o:1});click(900,.04,.25);},650);},d:'Üst gövdenin ön ucunu alt gövdeye yerleştir, ön pimi geri it.'});
+    S2.push({k:'Takma',hot:'mek',h:'Kurma kolu ve mekanizmayı tak',act:()=>{lmv('kkol',back(115,11));lmv('mek',back(170,11));setTimeout(()=>{lmv('kkol',{x:0,y:0,r:11});lmv('mek',{x:0,y:0,r:11});boltSnd();},720);},d:'Önce kurma kolunu yuvasına yerleştir, sonra mekanizmayı sür ve ikisini birlikte ileri it.'});
+    S2.push({k:'Takma',hot:'ust',h:'Üst gövdeyi kapat',act:()=>{['ust','mek','kkol'].forEach(i=>lmv(i,{x:0,y:0,r:0}));thump();},d:'Üst gövdeyi aşağı indir, alt gövdeye otursun.'});
+    S2.push({k:'Takma',hot:'arkapim',h:'Arka pimi tak',act:()=>{lmv('arkapim',{z:0,o:1});click(900,.04,.25);},d:'Arka pimi sağdan sola doğru it, yerine kilitlensin.'});
   }
   S2.push({k:'Takma',hot:'kkol',h:'İşlev kontrolü',act:()=>kurma(),d:'Kurma kolunu çekip bırak. Mekanizma serbestçe ileri gidip kilitlenmeli.'});
   S2.push({k:'Takma',hot:'mandal',h:'Emniyet ve tetik kontrolü',act:()=>{selTo(-60);setTimeout(()=>{lmv('tetik',{r:5});dry();setTimeout(()=>lmv('tetik',{r:0}),200);},500);},d:'Mandal E\'deyken tetik çekilmemeli. Kontrol tamam.'});
-  S2.push({k:'Takma',hot:'sarjor',h:'Şarjörü tak',act:()=>{lmv('sarjor',{x:0,y:0});setTimeout(magIn,750);},d:'Şarjörü yuvasına oturt, aşağı çekerek kilitlendiğini kontrol et. Silah hazır, emniyette.'});
+  S2.push({k:'Takma',hot:'sarjor',h:'Şarjörü tak',act:()=>{lmv('sarjor',{x:0,y:0,r:0});setTimeout(magIn,780);},d:'Şarjörü yuvasına oturt, aşağı çekerek kilitlendiğini kontrol et. Silah hazır, emniyette.'});
   return S1.concat(S2);
 }
+
 const ESAS=[
   {k:'1 · Sol el ve sol kol',hot:'j_hf',h:'Sol el ve sol kol kullanımı',d:'Sol el el kundağını kavrar ve tüfeği taşır; sıkmaz. Sol dirsek tüfeğin altında durur. Gerekiyorsa askı kayışını koluna dolayıp ondan destek al; kayış tüfeği omza doğru gerer ve namluyu sakinleştirir.'},
   {k:'2 · Dipçik',hot:'j_sh',h:'Dipçiği omuz çukuruna yerleştirme',act:thump,d:'Dipçik omuz çukuruna tam oturur. Tam oturan dipçik geri tepmeyi azaltır ve silahın sabit kalmasını sağlar. Her atışta aynı yere yerleştir.'},
@@ -2668,7 +2926,7 @@ const ESAS=[
 function hakimiyetSteps(){
   return [
     {k:'Hazırlık',hot:'mandal',h:'Emniyeti kontrol et',act:()=>{selTo(-48);setTimeout(()=>selTo(-60),250);},d:'Mandal E konumunda. Namlu her zaman atış istikametinde, parmak tetik dışında.'},
-    {k:'Hazırlık',hot:'sarjor',h:'Şarjörü tak',act:()=>{lmv('sarjor',{x:0,y:0});setTimeout(magIn,760);},d:'Şarjörü yuvasına oturt ve “tık” sesini duy. Hafifçe aşağı çekerek kilitlendiğini kontrol et.'},
+    {k:'Hazırlık',hot:'sarjor',h:'Şarjörü tak',act:()=>{lmv('sarjor',{x:0,y:0,r:0});setTimeout(magIn,760);},d:'Şarjörü yuvasına oturt ve “tık” sesini duy. Hafifçe aşağı çekerek kilitlendiğini kontrol et.'},
     {k:'Hazırlık',hot:'kkol',h:'Doldur',act:()=>kurma(),d:'Kurma kolunu sonuna kadar geri çek ve bırak. Kol kendi gücüyle ileri gider, fişek yatağa sürülür. Kolu eliyle ileri itme.'},
     {k:'Nişan',hot:'dipcik',h:'Dipçiği omuza yerleştir',act:thump,d:'Dipçik omuz çukuruna sıkıca oturur. Yanak dipçiğe her seferinde aynı yerden değer.'},
     {k:'Nişan',hot:'gez',h:'Gezden bak',d:'Göz gez deliğinin ortasından bakar. Her atışta göz gezden aynı uzaklıkta durmalı.'},
@@ -2682,7 +2940,7 @@ function hakimiyetSteps(){
     {k:'Tutukluk',hot:'kkol',h:'Çek',act:()=>kurma(),d:'Kurma kolunu sonuna kadar çek, arızalı fişek dışarı atılır. Kolu bırak, yeni fişek sürülsün.'},
     {k:'Tutukluk',hot:'tetik',h:'Bak ve ateş et',act:()=>{lmv('tetik',{r:14});shotSound();recoil();vib(30);setTimeout(()=>lmv('tetik',{r:0}),400);},d:'Nişanı yeniden al ve tetiği düşür. Yine ateş almazsa namluyu hedefte tut ve durumu atış müdürüne bildir.'},
     {k:'Bitiş',hot:'mandal',h:'Emniyete al',act:()=>selTo(-60),d:'Atış biter bitmez ilk iş mandalı E konumuna getir.'},
-    {k:'Bitiş',hot:'smandal',h:'Şarjörü çıkar',act:()=>{magOut();lmv('sarjor',{x:330,y:140});},d:'Şarjör mandalına bas, şarjörü çıkar.'},
+    {k:'Bitiş',hot:'smandal',h:'Şarjörü çıkar',act:()=>{magOut();lmv('sarjor',{y:70});lmv('sarjor',Object.assign({o:1},matPos('sarjor')),520);},d:'Şarjör mandalına bas, şarjörü çıkar.'},
     {k:'Bitiş',hot:'kkol',h:'Boşalt ve göster',act:()=>kurma(),d:'Kurma kolunu geri çek, fişek yatağının boş olduğunu gör ve atış müdürüne göster: “Silah boş, emniyette.”'}
   ];
 }
@@ -2730,7 +2988,7 @@ let LB_POSE=null;
 function poseFig(P,X0,G,s,pis){
   const px=p=>[X0+p[0]*s,G-p[1]*s],L=(a,b,w,c)=>{const A=px(P[a]),B=px(P[b]);return `<line x1="${A[0].toFixed(1)}" y1="${A[1].toFixed(1)}" x2="${B[0].toFixed(1)}" y2="${B[1].toFixed(1)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;};
   const hd=px(P.hd),bt=px(P.butt),mz=px(P.muz),ang=Math.atan2(mz[1]-bt[1],mz[0]-bt[0])*180/Math.PI,foot=k=>{const f=px(P[k]);return `<rect x="${f[0]-12}" y="${f[1]-9}" width="30" height="13" rx="5" fill="#2a2418"/>`;};
-  const rifle=pis?`<rect x="${mz[0]-34}" y="${mz[1]-9}" width="38" height="11" rx="2" fill="#15160f"/>`:`<g transform="rotate(${ang.toFixed(2)} ${bt[0].toFixed(1)} ${bt[1].toFixed(1)})"><rect x="${bt[0]-8}" y="${bt[1]-8}" width="${Math.hypot(mz[0]-bt[0],mz[1]-bt[1])+8}" height="13" rx="4" fill="#15160f"/><path d="M${bt[0]+92} ${bt[1]+5} l14 0 l10 34 l-14 4 z" fill="#15160f"/></g>`;
+  const rifle=pis?`<rect x="${mz[0]-34}" y="${mz[1]-9}" width="38" height="11" rx="2" fill="#15160f"/>`:(()=>{const ln=Math.hypot(mz[0]-bt[0],mz[1]-bt[1])+8;return `<g transform="translate(${(bt[0]-8).toFixed(1)} ${bt[1].toFixed(1)}) rotate(${ang.toFixed(2)}) translate(0 ${(-22*ln/920).toFixed(1)})">${rifleSil(ln)}</g>`;})();
   return `${L('hip','kb',30,'#3e4a28')}${L('kb','fb',26,'#3e4a28')}${foot('fb')}${L('sh','eb',20,'#3e4a28')}${L('eb','hb',17,'#3e4a28')}${L('hip','sh',46,'#4f5c33')}${L('hip','kf',30,'#56653a')}${L('kf','ff',26,'#56653a')}${foot('ff')}<circle cx="${hd[0]}" cy="${hd[1]}" r="21" fill="#b98d68"/><path d="M${hd[0]-25} ${hd[1]-2} A25 25 0 0 1 ${hd[0]+25} ${hd[1]-2} Z" fill="#4f5c33"/>${rifle}${L('sh','ef',20,'#5d6c3f')}${L('ef','hf',17,'#5d6c3f')}<circle cx="${px(P.hf)[0]}" cy="${px(P.hf)[1]}" r="9" fill="#b98d68"/><circle cx="${px(P.hb)[0]}" cy="${px(P.hb)[1]}" r="9" fill="#b98d68"/>`;
 }
 function poseAnim(){
@@ -2748,6 +3006,20 @@ function poseAnim(){
     LB.poseR=requestAnimationFrame(loop);};
   if(fromK!==A.v.pose){fig.innerHTML=poseFig(F,A.X0,A.G,A.s,false);}loop();
 }
+// vaziyet çizimlerindeki tüfek: HK33 dış hatları (mm; dipçik dibi orijinde, namlu +x, namlu ekseni y=0)
+function rifleSil(len){
+  const k=len/920,f=v=>(v*k).toFixed(1),d=(...a)=>a.map(v=>typeof v==='string'?v:f(v)).join(' ');
+  const mg=[];for(let i=0;i<=8;i++){const th=205*i/8/480;mg.push([458+480*(1-Math.cos(th))+33*Math.cos(th),480*Math.sin(th)-33*Math.sin(th)]);}
+  const mr=[];for(let i=8;i>=0;i--){const th=205*i/8/480;mr.push([458+480*(1-Math.cos(th))-33*Math.cos(th),480*Math.sin(th)+33*Math.sin(th)]);}
+  const mp='M'+mg.concat(mr).map(q=>f(q[0])+' '+f(q[1])).join(' L')+' Z';
+  return `<g fill="#17191b"><path d="${mp}" fill="#1d1f21"/>`+
+    `<path d="${d('M',0,-31,'L',525,-31,'L',525,19,'L',495,19,'L',495,38,'L',421,38,'L',421,19,'L',245,19,'Q',130,58,14,100,'L',0,100,'Z')}"/>`+
+    `<path d="${d('M',500,-31.5,'L',771,-31.5,'L',771,15,'L',731,15,'L',731,22,'L',545,26,'L',527,26,'L',527,19,'L',500,19,'Z')}" fill="#1b1d1f"/>`+
+    `<path d="${d('M',744,-31,'L',754,-31,'L',754,-57,'L',744,-57,'Z')}"/><rect x="${f(263)}" y="${f(-52)}" width="${f(13)}" height="${f(22)}"/>`+
+    `<path d="${d('M',771,-8,'L',870,-7.6,'L',870,7.6,'L',771,8,'Z')}"/><rect x="${f(868)}" y="${f(-11)}" width="${f(52)}" height="${f(22)}"/>`+
+    `<path d="${d('M',251,12,'L',410,12,'L',406,60,'Q',390,65,350,65,'Q',336,64,334,64,'Q',322,96,316,138,'Q',314,143,309,143,'L',282,140,'Q',276,139,277,133,'Q',284,96,291,62,'L',296,40,'L',251,37,'Z')}" fill="#1b1d1f"/>`+
+    `<path d="${d('M',0,-28,'L',14,-28,'L',14,98,'L',0,98,'Z')}" fill="#0c0c0c"/></g>`;
+}
 function svgPose(v){
   const P=POSES[v.pose],s=200,G=440;let mn=9,mx=-9;for(const k in P){mn=Math.min(mn,P[k][0]);mx=Math.max(mx,P[k][0]);}
   const X0=500-(mn+mx)/2*s,px=p=>[X0+p[0]*s,G-p[1]*s],L=(a,b,w,c)=>{const A=px(P[a]),B=px(P[b]);return `<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;};
@@ -2755,7 +3027,7 @@ function svgPose(v){
   const ang=Math.atan2(mz[1]-bt[1],mz[0]-bt[0])*180/Math.PI;
   let sup='';if(v.support){const hf=px(P.hf);sup=`<g data-p="destek"><ellipse cx="${hf[0]+6}" cy="${G-16}" rx="62" ry="22" fill="#8f7d55"/><ellipse cx="${hf[0]+6}" cy="${G-34}" rx="56" ry="18" fill="#a08a5c"/><path d="M${hf[0]-40} ${G-30} Q${hf[0]+6} ${G-46} ${hf[0]+52} ${G-30}" stroke="#6f6040" stroke-width="2" fill="none"/></g>`;}
   const foot=k=>{const f=px(P[k]);return `<rect x="${f[0]-12}" y="${f[1]-9}" width="30" height="13" rx="5" fill="#2a2418"/>`;};
-  const rifle=pis?`<rect x="${mz[0]-34}" y="${mz[1]-9}" width="38" height="11" rx="2" fill="#15160f"/>`:`<g transform="rotate(${ang} ${bt[0]} ${bt[1]})"><rect x="${bt[0]-8}" y="${bt[1]-8}" width="${Math.hypot(mz[0]-bt[0],mz[1]-bt[1])+8}" height="13" rx="4" fill="#15160f"/><path d="M${bt[0]+92} ${bt[1]+5} l14 0 l10 34 l-14 4 z" fill="#15160f"/></g>`;
+  const rifle=pis?`<rect x="${mz[0]-34}" y="${mz[1]-9}" width="38" height="11" rx="2" fill="#15160f"/>`:(()=>{const ln=Math.hypot(mz[0]-bt[0],mz[1]-bt[1])+8;return `<g transform="translate(${bt[0]-8} ${bt[1]}) rotate(${ang}) translate(0 ${(-22*ln/920).toFixed(1)})">${rifleSil(ln)}</g>`;})();
   const hot=k=>{const p=px(P[k.slice(2)]);return `<circle data-p="${k}" cx="${p[0]}" cy="${p[1]}" r="20" fill="transparent"/>`;};
   const xs=Object.values(P).map(v=>X0+v[0]*s),ys=Object.values(P).map(v=>G-v[1]*s);let vx=Math.min(...xs)-90,vw=Math.max(...xs)+90-vx;const vy=Math.min(...ys)-110,vh=G+36-vy;if(vw<520){vx-=(520-vw)/2;vw=520;}
   const nb=`<g data-p="nefes"><circle cx="${vx+vw-44}" cy="${vy+44}" r="34" fill="#0e1416" stroke="#22353a" stroke-width="2"/><text x="${vx+vw-44}" y="${vy+50}" text-anchor="middle" class="lmt2">NEFES</text></g>`;
@@ -2771,20 +3043,29 @@ function svgPose(v){
 // ---------- motor ----------
 function labPart(id){return document.querySelector('#labStage [data-p="'+id+'"]');}
 function lmv(id,o,delay){const f=()=>{if(!LB)return;const e=labPart(id);if(!e)return;const pv=LB.PS[id]||{y:0};const c=Object.assign({x:0,y:0,r:0,o:1},LB.PS[id]||{},o);if(o.y!=null&&Math.abs(o.y-(pv.y||0))>120)setTimeout(()=>{noise('lowpass',420,.35,.07);tone(140,90,.06,.12);},640);LB.PS[id]=c;e.style.transform=`translate(${c.x}px,${c.y}px) rotate(${c.r}deg)`;e.style.opacity=c.o;if(L3)l3Set(id,c);if(!LB.def.free&&LB.def.steps[LB.i]&&LB.ph==='wait')labRing();};delay?setTimeout(f,delay):f();}
+function partXY(id,raw){const e=labPart(id);if(!e)return null;const a=e.querySelector('[data-anc]')||e;let b;try{b=a.getBBox();}catch(x){return null;}
+  let x=b.x+b.width/2,y=b.y+b.height/2;for(let q=a;q&&q.tagName!=='svg';q=q.parentNode){const c=q.dataset&&LB.PS[q.dataset.p];if(c){x+=c.x;y+=c.y;}}if(LB.flip&&!raw)x=LB.flip-x;return [x,y,b];}
+// dokunulan noktaya en yakın parça işareti (küçük parçaları kolay seçmek için)
+function nearStep(cx,cy){if(!LB)return null;let best=null;const seen=new Set(),svg=$('labStage').querySelector('svg'),sr=$('labStage').getBoundingClientRect(),side=L3?(Math.cos(L3.yaw)<0?'L':'R'):'L';
+  for(const st of LB.def.steps){const id=st.hot;if(!id||seen.has(id))continue;seen.add(id);if(LB.side&&LB.side[id]&&LB.side[id]!==side)continue;let sx,sy;
+    if(L3){const p=l3Proj(id);if(!p)continue;sx=sr.left+p.x;sy=sr.top+p.y;}else{const q=partXY(id);if(!q||!svg)continue;const pt=svg.createSVGPoint();pt.x=q[0];pt.y=q[1];const m=svg.getScreenCTM();if(!m)continue;const r=pt.matrixTransform(m);sx=r.x;sy=r.y;}
+    const d=Math.hypot(sx-cx,sy-cy);if(!best||d<best.d)best={d,st};}
+  return best;}
 function labRing(){
   const ring=document.querySelector('#labStage #lring'),hit=document.querySelector('#labStage #lhit');if(!ring)return;
   const st=LB.def.steps[LB.i],fid=LB.def.free?LB.focus:(st&&LB.ph==='wait'&&st.hot),e=fid&&labPart(fid);
   if(!e){ring.style.display='none';hit.style.display='none';if(L3){L3.hot=null;L3.focus=null;}if(LB.def.free&&LB.camC){LB.camC=null;labCam();}return;}
-  let b;try{b=e.getBBox();}catch(x){return;}
-  let x=b.x+b.width/2,y=b.y+b.height/2;for(let a=e;a&&a.tagName!=='svg';a=a.parentNode){const c=a.dataset&&LB.PS[a.dataset.p];if(c){x+=c.x;y+=c.y;}}
+  const q=partXY(fid,true);if(!q)return;let [x,y,b]=q;
   const r=Math.max(26,Math.min(60,Math.max(b.width,b.height)/2+10));
-  if(L3){L3.hot=fid;L3.focus=[x,y];ring.style.display='none';hit.style.display='none';return;}
-  LB.camC=[x,y];labCam();
+  const psz=Math.max(b.width,b.height);
+  if(L3){if(!LB.def.free)l3Face(LB.side&&LB.side[fid]);L3.hot=fid;L3.focus=[x,y];L3.fz=LB.def.free?(psz<40?.42:.5):(psz<40?.32:psz<110?.42:.55);ring.style.display='none';hit.style.display='none';return;}
+  if(LB.flip)x=LB.flip-x;
+  LB.camC=[x,y];LB.camS=psz;labCam();
   ring.style.display='';hit.style.display=LB.def.free?'none':'';ring.setAttribute('transform',`translate(${x} ${y})`);ring.querySelectorAll('circle').forEach(c=>c.setAttribute('r',r));hit.setAttribute('cx',x);hit.setAttribute('cy',y);hit.setAttribute('r',Math.max(40,r+14));
 }
 function labCam(){
   if(!LB||!LB.vb0||L3||(LB.poseA&&!LB.poseA.done))return;const svg=$('labStage').querySelector('svg');if(!svg)return;const r=svg.getBoundingClientRect(),[bx,by,bw,bh]=LB.vb0;let t=[bx,by,bw,bh];
-  if(LB.zoom&&LB.camC&&r.height>r.width*.8){const w=Math.round(bw*.6);t=[clamp(LB.camC[0]-w/2,bx,bx+bw-w),by,w,bh];}
+  if(LB.zoom&&LB.camC&&r.height>r.width*.8){const w=Math.round(bw*(LB.camS<50&&!LB.def.free?.42:.6));t=[clamp(LB.camC[0]-w/2,bx,bx+bw-w),by,w,bh];}
   const f=LB.vb.slice(),t0=performance.now();cancelAnimationFrame(LB.camR);
   const st=()=>{if(!LB)return;const k=Math.min(1,(performance.now()-t0)/480),e=1-Math.pow(1-k,3);LB.vb=f.map((v,i)=>v+(t[i]-v)*e);svg.setAttribute('viewBox',LB.vb.map(v=>v.toFixed(1)).join(' '));if(k<1)LB.camR=requestAnimationFrame(st);};st();
 }
@@ -2799,7 +3080,8 @@ function labOpen(key,def){
   svg.insertAdjacentHTML('beforeend','<g id="lring" pointer-events="none"><circle class="lr" r="30"/><circle class="lr lr2" r="30"/><circle class="lr0" r="30"/></g><circle id="lhit" r="48" fill="transparent"/>');
   svg.addEventListener('click',labTap);
   if(def.init){svg.querySelectorAll('[data-p]').forEach(e=>e.style.transition='none');def.init();requestAnimationFrame(()=>requestAnimationFrame(()=>svg.querySelectorAll('[data-p]').forEach(e=>e.style.transition='')));}
-  if(def.rf)l3Init(svg);
+  LB.side={};(def.steps||[]).forEach(x=>{if(x.side)LB.side[x.hot]=x.side;});
+  if(def.rf&&!l3Init(svg)){const mr=svg.querySelector('#lmir');if(mr){mr.setAttribute('transform','matrix(-1 0 0 1 1000 0)');svg.classList.add('l2d');LB.flip=1000;}if(def.steps)def.steps=def.steps.filter(x=>x.side!=='R');}
   $('lab').hidden=false;audio();labShow();
   if(def.pose&&LB_POSE){setTimeout(poseAnim,60);}
 }
@@ -2807,12 +3089,12 @@ function labDots(){const n=LB.def.steps.length;$('labP').innerHTML=n>24?`${Math.
 function labMarks(){
   const svg=$('labStage').querySelector('svg');if(!svg||!LB)return;let g=svg.querySelector('#lmarks');if(!g){svg.insertAdjacentHTML('beforeend','<g id="lmarks" pointer-events="none"></g>');g=svg.querySelector('#lmarks');}
   if(L3){L3.marks=LB.def.steps.filter(st=>!LB.seen.has(st.hot)).map(st=>st.hot);g.innerHTML='';return;}
-  g.innerHTML=LB.def.steps.filter(st=>!LB.seen.has(st.hot)).map(st=>{const e=labPart(st.hot);if(!e)return '';let b;try{b=e.getBBox();}catch(x){return '';}let x=b.x+b.width/2,y=b.y+b.height/2;for(let a=e;a&&a.tagName!=='svg';a=a.parentNode){const c=a.dataset&&LB.PS[a.dataset.p];if(c){x+=c.x;y+=c.y;}}return `<circle class="lmk" cx="${x}" cy="${y}" r="7"/>`;}).join('');
+  g.innerHTML=LB.def.steps.filter(st=>!LB.seen.has(st.hot)).map(st=>{const q=partXY(st.hot);if(!q)return '';return `<circle class="lmk" cx="${q[0]}" cy="${q[1]}" r="7"/>`;}).join('');
 }
 function labFree(){
   LB.ph='free';LB.seen=LB.seen||new Set();const n=LB.def.steps.length,k=LB.seen.size;
   $('labK').textContent=`Serbest keşif · ${k}/${n} parça`;
-  if(!LB.focus){$('labH').textContent=k?'Başka bir yere dokun':'İstediğin yere dokun';$('labD').innerHTML='<span class="muted">Turuncu noktalar henüz dinlemediğin yerler. Dokunduğun yerin adını ve ne işe yaradığını anlatırım. Boş bir yere dokunursan görüntü uzaklaşır.</span>';$('labSay').hidden=true;}
+  if(!LB.focus){$('labH').textContent=k?'Başka bir yere dokun':'İstediğin yere dokun';$('labD').innerHTML='<span class="muted">Parlayan noktalar henüz dinlemediğin yerler. Dokunduğun yerin adını ve ne işe yaradığını anlatırım. Boş bir yere dokunursan görüntü uzaklaşır.'+(L3?' Sağ yüzdeki parçalar için “Çevir”e dokun ya da tüfeği parmağınla döndür.':'')+'</span>';$('labSay').hidden=true;}
   $('labNext').textContent=k>=n?'Bitir':'Bitir ('+k+'/'+n+')';
   $('labP').innerHTML='';setTimeout(labMarks,40);labRing();
 }
@@ -2834,7 +3116,8 @@ function labDo(){
 function labTap(e){
   if(LB&&LB.def.free&&LB.ph==='free'){
     let p=e.target.closest&&e.target.closest('[data-p]'),st=null;
-    while(p&&!st){let id=p.dataset.p;if(id==='mkol')id='mandal';st=LB.def.steps.find(x=>x.hot===id);if(!st)p=p.parentNode&&p.parentNode.closest?p.parentNode.closest('[data-p]'):null;}
+    while(p&&!st){let id=p.dataset.p;id=({mkol:'mandal',alt:'ust',ayakb:'ayak'})[id]||id;st=LB.def.steps.find(x=>x.hot===id);if(!st)p=p.parentNode&&p.parentNode.closest?p.parentNode.closest('[data-p]'):null;}
+    if(e.clientX!=null){const nr=nearStep(e.clientX,e.clientY);if(nr&&(nr.d<13||(nr.d<24&&!LB.seen.has(nr.st.hot))||(!st&&nr.d<30)))st=nr.st;}
     if(!st){LB.focus=null;labRing();labFree();return;}
     LB.focus=st.hot;LB.cur=st;LB.seen.add(st.hot);labRing();
     try{st.act&&st.act();}catch(x){}if(!st.act)click(1800,.03,.12);
@@ -2859,10 +3142,10 @@ $('labSay').addEventListener('click',()=>{if(!LB)return;if(LB.custom&&LB.ph==='c
 function specRows(R){return `<div class="tbl"><table><tbody><tr><td>Sınıf</td><td>${CLS[R.cls]}</td></tr>${R.len&&R.len!=='—'?`<tr><td>Uzunluk</td><td>${R.len}</td></tr>`:''}${R.bar&&R.bar!=='—'?`<tr><td>Namlu</td><td>${R.bar}</td></tr>`:''}${R.kg&&R.kg!=='—'?`<tr><td>Ağırlık</td><td>${R.kg}</td></tr>`:''}${R.rng&&R.rng!=='—'?`<tr><td>Etkili menzil</td><td>${R.rng}</td></tr>`:''}${R.vel?`<tr><td>Namlu çıkış hızı</td><td>~${R.vel} m/s</td></tr>`:''}<tr><td>Üretim</td><td>${R.maker}</td></tr><tr><td>Çap</td><td>${R.cal}</td></tr><tr><td>Şarjör</td><td>${R.magTxt}</td></tr><tr><td>Çalışma</td><td>${R.mech}</td></tr>${R.rpm?`<tr><td>Atış hızı</td><td>dakikada ~${R.rpm}</td></tr>`:''}</tbody></table></div>`;}
 function labDef(key,arg){
   const mk=()=>labDef(key,arg);
-  if(key==='tanitim'){const R=RIFLES[arg];return {free:1,title:'Silah tanıtımı · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:tanitimSteps(arg),end:`${R.name} parçalarını tanıdın.`+(WF[arg]&&WF[arg].src?`<div class="lphoto">${wImg(arg,'lphimg')}${wCredit(arg)}</div>`:'')+specRows(R),remake:mk};}
-  if(key==='soktak'){const R=RIFLES[arg];return {title:'Söküp takma · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(),steps:soktakSteps(arg),end:'Silahı söküp yeniden taktın ve işlev kontrolünü yaptın. Sıra eğitim için sadeleştirilmiştir; kendi silahının kullanıcı kitabındaki sıra esastır.'+(isAR(arg)?'':'<div class="lphoto"><img class="lphimg" alt="Sökülmüş G3A3" src="https://commons.wikimedia.org/wiki/Special:FilePath/G3A3_disassembled.jpg?width=800" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"><a class="wcred" href="https://commons.wikimedia.org/wiki/File:G3A3_disassembled.jpg" target="_blank" rel="noopener">Gerçek fotoğraf: sökülmüş G3A3 (HK33 ile aynı ana gruplar) · Wikimedia Commons</a></div>'),remake:mk};}
+  if(key==='tanitim'){const R=RIFLES[arg];return {free:1,title:'Silah tanıtımı · '+R.name,rf:arg,svg:labSvg(arg),steps:tanitimSteps(arg),end:`${R.name} parçalarını tanıdın.`+(WF[arg]&&WF[arg].src?`<div class="lphoto">${wImg(arg,'lphimg')}${wCredit(arg)}</div>`:'')+specRows(R),remake:mk};}
+  if(key==='soktak'){const R=RIFLES[arg];return {title:'Söküp takma · '+R.name,rf:arg,svg:labSvg(arg),steps:soktakSteps(arg),end:'Silahı söküp yeniden taktın ve işlev kontrolünü yaptın. Sıra eğitim için sadeleştirilmiştir; kendi silahının kullanıcı kitabındaki sıra esastır.'+(isAR(arg)?'':'<div class="lphoto"><img class="lphimg" alt="Sökülmüş G3A3" src="https://commons.wikimedia.org/wiki/Special:FilePath/G3A3_disassembled.jpg?width=800" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"><a class="wcred" href="https://commons.wikimedia.org/wiki/File:G3A3_disassembled.jpg" target="_blank" rel="noopener">Gerçek fotoğraf: sökülmüş G3A3 (HK33 ile aynı ana gruplar) · Wikimedia Commons</a></div>'),remake:mk};}
   if(key==='hakimiyet'){return {pose:1,title:'Tüfeğe hâkimiyet esasları',svg:svgPose({pose:'prone'}),steps:ESAS,end:'Sekiz esası uyguladın. Bunları Serbest atışta yatarak dene; grup sıklaştıkça esaslar oturmuş demektir.',remake:mk};}
-  if(key==='kullanim'){const R=RIFLES[arg];return {title:'Doldurma ve tutukluk · '+R.name,rf:arg,svg:(isAR(arg)?svgAR:svgHK)(NEFES),steps:hakimiyetSteps(),init:()=>{lmv('sarjor',{x:330,y:140});lmv('mkol',{r:-60});},end:'Doldurmadan boşaltmaya bütün atış sırasını uyguladın. Tutukluk giderme sırasını unutma: vur, çek, bak, ateş et.',remake:mk};}
+  if(key==='kullanim'){const R=RIFLES[arg];return {title:'Doldurma ve tutukluk · '+R.name,rf:arg,svg:labSvg(arg,NEFES),steps:hakimiyetSteps(),init:()=>{lmv('sarjor',Object.assign({o:1},matPos('sarjor')));lmv('mkol',{r:0});},end:'Doldurmadan boşaltmaya bütün atış sırasını uyguladın. Tutukluk giderme sırasını unutma: vur, çek, bak, ateş et.',remake:mk};}
   if(key==='vaziyet'){const v=VZ[arg];return {pose:1,free:1,title:'Atış vaziyeti · '+v.n,svg:svgPose(v),steps:v.steps,end:`${v.n} vaziyetini adım adım uyguladın. Diğer vaziyetleri de dene, sonra Serbest atışta ${v.n.toLowerCase()} seri at.`,remake:mk};}
 }
 function labPick(key){
@@ -2888,6 +3171,9 @@ let L3=null;
 const use3Lab=()=>typeof THREE!=='undefined'&&OPT.gq!=='dusuk'&&!!window.WebGLRenderingContext;
 const L3_DEPTH={govde:40,ust:40,alt:40,dipcik:36,elk:46,sarjor:26,kabza:30,namlu:15,mek:30,ray:30,ayak:12,ayakm:14,pim:10,smandal:10,mandal:10,mkol:8,ktm:10,tetik:8,gez:16,arpacik:14,kkol:14,toz:8,arkapim:10,onpim:10};
 const L3_SIDE={pim:20,smandal:22,mandal:21,mkol:26,ktm:22,toz:22,arkapim:21,onpim:21,ayakm:24};
+// malzeme: renk, metallik, pürüz, doku (kabartma), opaklık
+const L3M={steel:['#25272a',.62,.46],paint:['#26282b',.35,.55],alu:['#202226',.55,.4],poly:['#1b1c1e',0,.8,1],rubber:['#121212',0,.95,1],bright:['#a9adb2',.95,.24],clear:['#3a3128',.05,.14,0,.42],brass:['#b98f4c',.9,.34],dark:['#050505',0,.9]};
+const L3G={gS:'paint',gP:'poly',gA:'alu',gC:'steel',gB:'bright',gM:'clear',gR:'rubber',gBr:'brass'};
 function l3Color(el){let f=el.getAttribute('fill');const st=el.getAttribute('stroke');if((!f||f==='none'||f==='transparent')&&st)f=st;if(!f||f==='none'||f==='transparent')return null;
   if(f.startsWith('url(#lgM'))return {c:'#454a3c',m:.55,r:.42};if(f.startsWith('url(#lgP'))return {c:'#262920',m:.05,r:.78};if(f.startsWith('url'))return null;
   const n=parseInt(f.replace('#','').padEnd(6,'0').slice(0,6),16),lum=((n>>16)&255)+((n>>8)&255)+(n&255);return {c:f,m:lum>330?.6:.2,r:lum>330?.35:.7};}
@@ -2903,69 +3189,96 @@ function l3Path(d){
     else if(C==='V'){push(x,num()+(rel?y:0));}
     else if(C==='Q'){const x1=num()+(rel?x:0),y1=num()+(rel?y:0),x2=num()+(rel?x:0),y2=num()+(rel?y:0),x0=x,y0=y;for(let k=1;k<=8;k++){const t=k/8,u=1-t;push(u*u*x0+2*u*t*x1+t*t*x2,u*u*y0+2*u*t*y1+t*t*y2);}}
     else if(C==='C'){const a1=num()+(rel?x:0),b1=num()+(rel?y:0),a2=num()+(rel?x:0),b2=num()+(rel?y:0),a3=num()+(rel?x:0),b3=num()+(rel?y:0),x0=x,y0=y;for(let k=1;k<=10;k++){const t=k/10,u=1-t;push(u*u*u*x0+3*u*u*t*a1+3*u*t*t*a2+t*t*t*a3,u*u*u*y0+3*u*u*t*b1+3*u*t*t*b2+t*t*t*b3);}}
-    else if(C==='A'){const rx=num();num();num();num();num();const ex=num()+(rel?x:0),ey=num()+(rel?y:0);const cx=(x+ex)/2,cy=(y+ey)/2;for(let k=1;k<=16;k++){const a=k/16*Math.PI;push(cx+(x-cx)*Math.cos(a)-(0)*Math.sin(a),cy+rx*Math.sin(a)*0);}}
+    else if(C==='A'){const rx=num();num();num();num();num();const ex=num()+(rel?x:0),ey=num()+(rel?y:0);const cx=(x+ex)/2,cy=(y+ey)/2;for(let k=1;k<=16;k++){const a=k/16*Math.PI;push(cx+(x-cx)*Math.cos(a),cy+rx*Math.sin(a)*0);}}
     else if(C==='Z'){if(cur){cur.closed=true;x=sx;y=sy;}if(isNum())cmd='L';}
     else i++;
   }
-  return subs;
+  return subs.filter(p=>p.length>1);
 }
 function l3Geo(el){
-  const T=THREE,tag=el.tagName.toLowerCase(),g=a=>+(el.getAttribute(a)||0);
+  const T=THREE,tag=el.tagName.toLowerCase(),g=a=>+(el.getAttribute(a)||0),ds=el.dataset;
   const fill=el.getAttribute('fill'),sw=+(el.getAttribute('stroke-width')||0),strokeOnly=(!fill||fill==='none')&&el.getAttribute('stroke');
   if(fill==='transparent')return null;
+  if(tag==='rect'&&(ds.cyl||ds.ring)){const x=g('x'),y=g('y'),w=g('width'),h=g('height');if(w<=0||h<=0)return null;
+    if(ds.ring){const ro=h/2,ri=Math.max(.3,ro-(+ds.t||2));const gg=new T.LatheGeometry([[ri,-w/2],[ro,-w/2],[ro,w/2],[ri,w/2],[ri,-w/2]].map(([a,b])=>new T.Vector2(a,b)),32);gg.rotateZ(-Math.PI/2);return {geo:gg,c:[x+w/2,y+h/2]};}
+    if(ds.cyl==='y'){return {geo:new T.CylinderGeometry(w/2,w/2,h,24),c:[x+w/2,y+h/2]};}
+    const r1=h/2,r2=ds.r2!=null?+ds.r2:r1,gg=new T.CylinderGeometry(r2,r1,w,28);gg.rotateZ(-Math.PI/2);return {geo:gg,c:[x+w/2,y+h/2]};}
   if(tag==='rect'){const x=g('x'),y=g('y'),w=g('width'),h=g('height'),r=Math.min(g('rx'),w/2-.01,h/2-.01);if(w<=0||h<=0)return null;const s=new T.Shape();
     if(r>0){s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+h-r);s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);s.lineTo(x+r,y+h);s.quadraticCurveTo(x,y+h,x,y+h-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);}else{s.moveTo(x,y);s.lineTo(x+w,y);s.lineTo(x+w,y+h);s.lineTo(x,y+h);s.closePath();}
-    return {shape:s,size:Math.min(w,h)};}
+    return {shapes:[s],size:Math.min(w,h)};}
   if(tag==='circle'||tag==='ellipse'){const cx=g('cx'),cy=g('cy'),rx=tag==='circle'?g('r'):g('rx'),ry=tag==='circle'?g('r'):g('ry');
     if(strokeOnly){const pts=[...Array(33)].map((_,k)=>[cx+Math.cos(k/32*Math.PI*2)*rx,cy+Math.sin(k/32*Math.PI*2)*ry]);return {tube:[pts],r:Math.max(1,sw/2)};}
-    const s=new T.Shape();s.absellipse(cx,cy,rx,ry,0,Math.PI*2,false);return {shape:s,size:Math.min(rx,ry)*2};}
+    const s=new T.Shape();s.absellipse(cx,cy,rx,ry,0,Math.PI*2,false);return {shapes:[s],size:Math.min(rx,ry)*2};}
   if(tag==='path'){const subs=l3Path(el.getAttribute('d')||'');if(!subs.length)return null;
-    if(strokeOnly){if(sw<2.5)return null;return {tube:subs.filter(p=>p.length>1),r:sw/2};}
+    if(strokeOnly){if(sw<2.5)return null;return {tube:subs,r:sw/2};}
     const mk=p=>{const s=new T.Shape();p.forEach(([a,b],k)=>k?s.lineTo(a,b):s.moveTo(a,b));return s;};
-    const s=mk(subs[0]);for(let k=1;k<subs.length;k++){const h=new T.Path();subs[k].forEach(([a,b],j)=>j?h.lineTo(a,b):h.moveTo(a,b));s.holes.push(h);}return {shape:s,size:20};}
+    const bb=p=>{let a=1e9,b=1e9,c=-1e9,d=-1e9;p.forEach(([x,y])=>{a=Math.min(a,x);b=Math.min(b,y);c=Math.max(c,x);d=Math.max(d,y);});return Math.min(c-a,d-b);};
+    if(ds.multi)return {shapes:subs.map(mk),size:Math.min(...subs.map(bb))};
+    const s=mk(subs[0]);for(let k=1;k<subs.length;k++){const h=new T.Path();subs[k].forEach(([a,b],j)=>j?h.lineTo(a,b):h.moveTo(a,b));s.holes.push(h);}return {shapes:[s],size:bb(subs[0])};}
   return null;
 }
-const L3_STEEL={namlu:1,mek:1,pim:1,arkapim:1,onpim:1,mkol:1,tetik:1,ayak:1,kkol:1,smandal:1,ktm:1,ayakm:1};
 let L3_NOISE=null;
-function l3Noise(){if(L3_NOISE)return L3_NOISE;const c=cvTex(128,128,(x,w,h)=>{const im=x.createImageData(w,h);for(let i=0;i<im.data.length;i+=4){const v=110+rnd()*120;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}x.putImageData(im,0,0);});const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(.06,.06);L3_NOISE=t;return t;}
+function l3Noise(){if(L3_NOISE)return L3_NOISE;const c=cvTex(128,128,(x,w,h)=>{const im=x.createImageData(w,h);for(let i=0;i<im.data.length;i+=4){const v=110+rnd()*120;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255;}x.putImageData(im,0,0);});const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(.08,.08);L3_NOISE=t;return t;}
+function l3Decal(el){const T=THREE,s=el.textContent||'',fs=+el.getAttribute('font-size')||8,x=+el.getAttribute('x'),y=+el.getAttribute('y'),z=+el.dataset.dec;
+  const c=cvTex(64,64,(g,w,h)=>{g.fillStyle=el.getAttribute('fill')||'#ddd';g.font='900 52px Arial,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(s,32,35);});
+  const mat=new T.MeshStandardMaterial({map:new T.CanvasTexture(c),transparent:true,roughness:.7,metalness:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});mat.userData.op=1;
+  const m=new T.Mesh(new T.PlaneGeometry(fs*1.25,fs*1.25),mat);m.position.set(x,y-fs*.36,z+(z<0?-.05:.05));if(z<0)m.rotation.y=Math.PI;m.scale.y=-1;m.renderOrder=3;return m;}
 function l3Build(svg){
-  const T=THREE,root=new T.Group(),mats=[];
+  const T=THREE,root=new T.Group(),mats=[],cache={};
   const partOf=el=>{for(let a=el;a&&a.tagName!=='svg';a=a.parentNode)if(a.dataset&&a.dataset.p)return a.dataset.p;return null;};
-  const walk=(node,parent,part)=>{
-    for(const el of node.children){const tag=el.tagName.toLowerCase();if(tag==='defs'||tag==='text'||el.id==='lring'||el.id==='lhit'||el.id==='lmarks')continue;
+  const matFor=(el,pid)=>{let key=el.dataset.mat;const f=el.getAttribute('fill')||'',gm=f.match(/url\(#(\w+)\)/);if(!key&&gm&&L3G[gm[1]])key=L3G[gm[1]];
+    if(key&&L3M[key]){const p=L3M[key],ck=pid+'|'+key;if(cache[ck])return cache[ck];
+      const mat=new T.MeshStandardMaterial({color:p[0],metalness:p[1],roughness:p[2],envMapIntensity:p[1]>.5?1.15:.7,side:T.DoubleSide,transparent:true,opacity:p[4]||1});
+      if(p[3]){mat.bumpMap=l3Noise();mat.bumpScale=.3;}if(el.dataset.tex){const per=+el.dataset.tex,t=new T.CanvasTexture(cvTex(4,32,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#5a4320';g.fillRect(0,h*.78,w,h*.22);}));t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1,1/per);mat.map=t;}mat.userData.op=p[4]||1;mats.push(mat);return cache[ck]=mat;}
+    const col=l3Color(el);if(!col)return null;const ck=pid+'|'+col.c+'|'+(el.getAttribute('opacity')||1);if(cache[ck])return cache[ck];
+    const steel=col.m>.5,mat=new T.MeshStandardMaterial({color:col.c,metalness:steel?.7:col.m,roughness:col.r,envMapIntensity:.7,side:T.DoubleSide,transparent:true,opacity:+(el.getAttribute('opacity')||1)});
+    if(!steel&&col.m<.3){mat.bumpMap=l3Noise();mat.bumpScale=.3;}mat.userData.op=mat.opacity;mats.push(mat);return cache[ck]=mat;};
+  const walk=(node,parent)=>{
+    for(const el of node.children){const tag=el.tagName.toLowerCase();if(tag==='defs'||el.id==='lring'||el.id==='lhit'||el.id==='lmarks')continue;
       if(tag==='g'){let grp=parent;const p=el.dataset.p;
-        if(p){const o=(el.dataset.o||'0 0').split(' ').map(Number);const pv=new T.Group();pv.position.set(o[0],o[1],0);pv.userData={p,o};const inn=new T.Group();inn.position.set(-o[0],-o[1],0);pv.add(inn);parent.add(pv);L3.parts[p]=pv;grp=inn;}
-        walk(el,grp,p||part);continue;}
-      const geo=l3Geo(el),col=l3Color(el);if(!geo||!col)continue;
-      const pid=partOf(el),dep=L3_DEPTH[pid]||24,zc=L3_SIDE[pid]||0;
-      const steel=L3_STEEL[pid]&&col.m<.5&&!/^#[6-9a-f]/i.test(col.c),poly=!steel&&col.m<.3;
-      const mat=new T.MeshStandardMaterial({color:steel?'#3c4043':col.c,metalness:steel?.88:col.m>.5?.7:col.m,roughness:steel?.3:col.m>.5?.38:.72,envMapIntensity:steel?1.1:.6,side:T.DoubleSide,transparent:true,opacity:+(el.getAttribute('opacity')||1)});
-      if(poly){mat.bumpMap=l3Noise();mat.bumpScale=.35;mat.roughnessMap=l3Noise();}mat.userData.op=mat.opacity;mats.push(mat);
-      let mesh;
-      if(geo.tube){const gs=geo.tube.map(pts=>{const cp=new T.CurvePath();for(let k=1;k<pts.length;k++)cp.add(new T.LineCurve3(new T.Vector3(pts[k-1][0],pts[k-1][1],zc),new T.Vector3(pts[k][0],pts[k][1],zc)));return new T.TubeGeometry(cp,Math.max(4,pts.length*2),geo.r,8,false);});
+        if(p){const o=(el.dataset.o||'0 0').split(' ').map(Number);o[2]=o[2]||0;const pv=new T.Group();pv.position.set(o[0],o[1],o[2]);pv.userData={p,o};const inn=new T.Group();inn.position.set(-o[0],-o[1],-o[2]);pv.add(inn);parent.add(pv);L3.parts[p]=pv;grp=inn;}
+        walk(el,grp);continue;}
+      const pid=partOf(el),ds=el.dataset;
+      if(tag==='text'){if(ds.dec!=null){const d=l3Decal(el);d.userData.pid=pid;parent.add(d);}continue;}
+      if(ds.no3d)continue;const geo=l3Geo(el);if(!geo)continue;const mat=matFor(el,pid);if(!mat)continue;
+      let z0,z1;if(ds.z){[z0,z1]=ds.z.split(' ').map(Number);}else{const dep=L3_DEPTH[pid]||24,zc=L3_SIDE[pid]||0;z0=zc-dep/2;z1=zc+dep/2;}
+      const dep=Math.max(.1,z1-z0),zc=(z0+z1)/2;let mesh;
+      if(geo.geo){mesh=new T.Mesh(geo.geo,mat);mesh.position.set(geo.c[0],geo.c[1],zc);}
+      else if(geo.tube){const gs=geo.tube.map(pts=>{const cp=new T.CurvePath();for(let k=1;k<pts.length;k++)cp.add(new T.LineCurve3(new T.Vector3(pts[k-1][0],pts[k-1][1],zc),new T.Vector3(pts[k][0],pts[k][1],zc)));return new T.TubeGeometry(cp,Math.max(4,pts.length*2),geo.r,8,false);});
         mesh=new T.Group();gs.forEach(gg=>mesh.add(new T.Mesh(gg,mat)));}
-      else{const bev=Math.min(3,geo.size*.18,dep*.2);const eg=new T.ExtrudeGeometry(geo.shape,{depth:Math.max(1,dep-bev*2),bevelEnabled:bev>.4,bevelThickness:bev,bevelSize:bev*.8,bevelSegments:2,curveSegments:12});eg.translate(0,0,-dep/2+bev+zc);mesh=new T.Mesh(eg,mat);}
-      mesh.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;m.userData.pid=pid;}});parent.add(mesh);
+      else{const b0=ds.bev!=null?+ds.bev:Math.min(3,geo.size*.18,dep*.2),bev=Math.max(0,Math.min(b0,dep*.45,geo.size*.3));
+        const eg=new T.ExtrudeGeometry(geo.shapes,{depth:Math.max(.05,dep-bev*2),bevelEnabled:bev>.15,bevelThickness:bev,bevelSize:bev,bevelOffset:-bev,bevelSegments:bev>2?4:2,curveSegments:10});
+        eg.translate(0,0,z0+(bev>.15?bev:0));mesh=new T.Mesh(eg,mat);}
+      mesh.traverse(m=>{if(m.isMesh){m.castShadow=mat.userData.op>.9;m.receiveShadow=true;m.userData.pid=pid;}});if(ds.anc){L3.anc=L3.anc||{};L3.anc[pid]=mesh;}
+      if(ds.pv||ds.ry){const c=ds.pv?ds.pv.split(' ').map(Number):[geo.c?geo.c[0]:0,geo.c?geo.c[1]:0,zc];const g2=new T.Group();g2.position.set(c[0],c[1],c[2]);mesh.position.sub(new T.Vector3(c[0],c[1],c[2]));g2.add(mesh);
+        if(ds.ry)g2.rotation.y=+ds.ry*Math.PI/180;if(ds.splay)g2.userData.splay=+ds.splay;parent.add(g2);}
+      else parent.add(mesh);
     }};
-  const rifle=svg.querySelector('#lrifle');walk(rifle,root,null);
+  walk(svg.querySelector('#lrifle'),root);
   return {root,mats};
 }
+const L3_LEFT=Math.PI+.3,L3_RIGHT=.3;
+function l3Face(sd){if(!L3||!sd)return;const cur=Math.cos(L3.tYaw)<0?'L':'R';if(cur===sd)return;const want=sd==='L'?L3_LEFT:L3_RIGHT,n=Math.round((L3.tYaw-want)/(2*Math.PI));L3.tYaw=want+n*2*Math.PI;}
 function l3Init(svg){
   l3Dispose();if(!use3Lab())return false;const T=THREE,st=$('labStage');
   let r;try{const cv=document.createElement('canvas');cv.className='l3cv';st.appendChild(cv);r=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});}catch(e){const c=st.querySelector('.l3cv');if(c)c.remove();return false;}
-  L3={r,parts:{},anim:{},yaw:-.35,pitch:.18,dist:1,tYaw:-.35,tPitch:.18,zoom:1,tz:1,focus:null,tf:null,hot:null,marks:[],recoil:0,t0:performance.now()};
+  L3={r,parts:{},anim:{},yaw:L3_LEFT,pitch:.2,dist:1,tYaw:L3_LEFT,tPitch:.2,zoom:1,tz:1,focus:null,tf:null,hot:null,marks:[],recoil:0,t0:performance.now()};
   r.setPixelRatio(Math.min(devicePixelRatio||1,2));r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;
   const sc=new T.Scene();L3.sc=sc;const cam=new T.PerspectiveCamera(30,1,1,20000);L3.cam=cam;
-  try{const es=new T.Scene();const sg=new T.SphereGeometry(100,32,16),cs=[];const pa=sg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i)/100;const v=y>0?.55+.45*y:.12+.1*(1+y);cs.push(v,v,v*1.04);}sg.setAttribute('color',new T.Float32BufferAttribute(cs,3));es.add(new T.Mesh(sg,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide})));
-    for(const [x,y,z,w,h] of [[-60,40,40,50,30],[70,20,-30,30,50],[0,80,0,60,60]]){const pl=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide}));pl.position.set(x,y,z);pl.lookAt(0,0,0);es.add(pl);}
+  try{const es=new T.Scene();const sg=new T.SphereGeometry(100,32,16),cs=[];const pa=sg.attributes.position;for(let i=0;i<pa.count;i++){const y=pa.getY(i)/100;const v=y>0?.5+.5*y:.1+.1*(1+y);cs.push(v,v*1.01,v*1.03);}sg.setAttribute('color',new T.Float32BufferAttribute(cs,3));es.add(new T.Mesh(sg,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide})));
+    for(const [x,y,z,w,h] of [[-60,40,-40,50,30],[70,20,30,30,50],[0,80,0,60,60],[40,10,-70,40,20]]){const pl=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide}));pl.position.set(x,y,z);pl.lookAt(0,0,0);es.add(pl);}
     const pm=new T.PMREMGenerator(r);sc.environment=pm.fromScene(es,.04).texture;pm.dispose();}catch(e){}
-  sc.add(new T.HemisphereLight(0xf2efe2,0x2a2e20,.55));const dl=new T.DirectionalLight(0xfff3dc,1.1);dl.position.set(-300,-500,900);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);
-  const sh=dl.shadow.camera;sh.left=-600;sh.right=600;sh.top=400;sh.bottom=-400;sh.near=10;sh.far=3000;dl.shadow.bias=-.0005;L3.dl=dl;sc.add(dl);sc.add(dl.target);
-  const rim=new T.DirectionalLight(0xb8d0ff,.35);rim.position.set(600,400,-500);sc.add(rim);
+  const tgt=new T.Vector3(500,-255,0);
+  sc.add(new T.HemisphereLight(0xeef1f4,0x1d2023,.55));
+  const dl=new T.DirectionalLight(0xfff3e0,1.15);dl.position.set(260,260,-1150);dl.target.position.copy(tgt);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);
+  const sh=dl.shadow.camera;sh.left=-700;sh.right=700;sh.top=420;sh.bottom=-420;sh.near=200;sh.far=3200;dl.shadow.bias=-.0006;L3.dl=dl;sc.add(dl,dl.target);
+  const fl=new T.DirectionalLight(0xd4e2ff,.55);fl.position.set(900,320,1000);fl.target.position.copy(tgt);sc.add(fl,fl.target);
+  const rim=new T.DirectionalLight(0xffffff,.4);rim.position.set(500,1000,40);rim.target.position.copy(tgt);sc.add(rim,rim.target);
   const world=new T.Group();world.scale.set(1,-1,1);sc.add(world);L3.world=world;
-  const bt=new T.CanvasTexture(cvTex(512,256,(c,w,h)=>{c.fillStyle='#2b3020';c.fillRect(0,0,w,h);for(let i=0;i<9000;i++){c.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${rnd()*.05})`;c.fillRect(rnd()*w,rnd()*h,2,2);}
-    c.fillStyle='#3a3f2a';c.fillRect(10,h*.62,w-20,h*.34);c.strokeStyle='rgba(235,231,214,.25)';c.setLineDash([8,8]);c.lineWidth=2;c.strokeRect(10,h*.62,w-20,h*.34);c.fillStyle='rgba(235,231,214,.35)';c.font='600 14px monospace';c.fillText('TEMİZLİK ÖRTÜSÜ',22,h*.62+20);}));
-  const board=new T.Mesh(new T.PlaneGeometry(1000,540),new T.MeshStandardMaterial({map:bt,roughness:.95,side:T.DoubleSide}));board.position.set(500,270,-34);board.receiveShadow=true;world.add(board);
+  // masa / temizlik örtüsü: tüfeğin sağ yüzünün arkasında, sol yüzden bakarken görünür
+  const bt=new T.CanvasTexture(cvTex(1024,486,(c,w,h)=>{c.fillStyle='#262b22';c.fillRect(0,0,w,h);for(let i=0;i<16000;i++){c.fillStyle=`rgba(${rnd()<.5?'255,255,255':'0,0,0'},${rnd()*.05})`;c.fillRect(rnd()*w,rnd()*h,2,2);}
+    const y0=h*(298/475),y1=h*(468/475),x0=w*.02,x1=w*.98;c.fillStyle='#343a28';c.fillRect(x0,y0,x1-x0,y1-y0);c.strokeStyle='rgba(235,231,214,.25)';c.setLineDash([12,12]);c.lineWidth=3;c.strokeRect(x0,y0,x1-x0,y1-y0);c.fillStyle='rgba(235,231,214,.35)';c.font='600 22px monospace';c.fillText('TEMİZLİK ÖRTÜSÜ',x0+18,y0+30);}));
+  const board=new T.Mesh(new T.PlaneGeometry(1000,475),new T.MeshStandardMaterial({map:bt,roughness:.95,metalness:0}));board.position.set(500,-277.5,40);board.rotation.y=Math.PI;board.receiveShadow=true;sc.add(board);L3.board=board;
   const b=l3Build(svg);world.add(b.root);L3.mats=b.mats;L3.root=b.root;
   for(const id in LB.PS)l3Set(id,LB.PS[id],true);
   const cv=r.domElement;svg.style.visibility='hidden';
@@ -2973,43 +3286,57 @@ function l3Init(svg){
   cv.addEventListener('pointerdown',e=>{try{cv.setPointerCapture(e.pointerId);}catch(x){}ptrs.set(e.pointerId,[e.clientX,e.clientY]);if(ptrs.size===1)drag={x:e.clientX,y:e.clientY,yaw:L3.tYaw,pitch:L3.tPitch,moved:0};else if(ptrs.size===2){const [a,c]=[...ptrs.values()];pinch={d:Math.hypot(a[0]-c[0],a[1]-c[1]),z:L3.tz};drag=null;}});
   cv.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,[e.clientX,e.clientY]);
     if(pinch&&ptrs.size===2){const [a,c]=[...ptrs.values()];L3.tz=clamp(pinch.z*pinch.d/Math.max(20,Math.hypot(a[0]-c[0],a[1]-c[1])),.3,1.6);}
-    else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved=Math.max(drag.moved,Math.hypot(dx,dy));if(drag.moved>8){L3.tYaw=clamp(drag.yaw-dx*.006,-1.15,1.15);L3.tPitch=clamp(drag.pitch+dy*.004,-.45,.75);}}});
+    else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved=Math.max(drag.moved,Math.hypot(dx,dy));if(drag.moved>8){L3.tYaw=drag.yaw-dx*.007;L3.tPitch=clamp(drag.pitch+dy*.004,-.6,.85);}}});
   const end=e=>{const d=drag;ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(d&&d.moved<=8&&ptrs.size===0)l3Tap(e);drag=null;};
   cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);drag=null;pinch=null;});
   cv.addEventListener('wheel',e=>{e.preventDefault();L3.tz=clamp(L3.tz*(e.deltaY>0?1.1:.9),.3,1.6);},{passive:false});
-  st.insertAdjacentHTML('beforeend','<div class="l3ring" hidden></div><div class="l3marks"></div><div class="l3hint">Döndürmek için sürükle · iki parmakla yakınlaş</div>');
+  st.insertAdjacentHTML('beforeend','<div class="l3ring" hidden></div><div class="l3marks"></div><button class="l3flip" type="button">Çevir · sağ yüz</button><div class="l3hint">Döndürmek için sürükle · iki parmakla yakınlaş</div>'+(svg.querySelector('[data-p="nefes"]')?'<button class="l3nef" type="button">NEFES</button>':''));
   L3.ring=st.querySelector('.l3ring');L3.mk=st.querySelector('.l3marks');L3.ring.addEventListener('click',()=>{if(LB&&LB.ph==='wait')labDo();});
+  L3.flip=st.querySelector('.l3flip');L3.flip.addEventListener('click',()=>{L3.tYaw+=Math.PI;L3.focus=null;click(1400,.02,.12);});
+  L3.nef=st.querySelector('.l3nef');if(L3.nef)L3.nef.addEventListener('click',()=>{const e=labPart('nefes');if(e)labTap({target:e});});
   setTimeout(()=>{const h=st.querySelector('.l3hint');if(h)h.classList.add('out');},3500);
   const loop=()=>{if(!L3)return;l3Frame();L3.raf=requestAnimationFrame(loop);};loop();
   return true;
 }
-function l3Dispose(){if(!L3)return;cancelAnimationFrame(L3.raf);try{L3.r.dispose();L3.sc.traverse(o=>{if(o.geometry)o.geometry.dispose();});}catch(e){}const st=$('labStage');st.querySelectorAll('.l3cv,.l3ring,.l3marks,.l3hint').forEach(e=>e.remove());L3=null;}
-function l3Set(id,c,inst){if(!L3)return;const pv=L3.parts[id];if(!pv)return;const a=L3.anim[id]||{x:0,y:0,r:0,o:1};
-  const from={x:a.x,y:a.y,r:a.r,o:a.o},to={x:c.x||0,y:c.y||0,r:c.r||0,o:c.o==null?1:c.o};
-  L3.anim[id]=Object.assign(inst?to:from,{from,to,t0:performance.now(),dur:inst?0:800,lift:Math.min(70,Math.hypot(to.x-from.x,to.y-from.y)*.3)});}
+function l3Dispose(){if(!L3)return;cancelAnimationFrame(L3.raf);try{L3.r.dispose();L3.sc.traverse(o=>{if(o.geometry)o.geometry.dispose();});}catch(e){}const st=$('labStage');st.querySelectorAll('.l3cv,.l3ring,.l3marks,.l3hint,.l3flip,.l3nef').forEach(e=>e.remove());L3=null;}
+const L3K=['x','y','z','r','rx','ry','o'];
+function l3Set(id,c,inst){if(!L3)return;const pv=L3.parts[id];if(!pv)return;const a=L3.anim[id]||{x:0,y:0,z:0,r:0,rx:0,ry:0,o:1},from={},to={};
+  L3K.forEach(k=>{const d=k==='o'?1:0;from[k]=a[k]!=null?a[k]:d;to[k]=c[k]!=null?c[k]:d;});
+  L3.anim[id]=Object.assign(Object.assign({},inst?to:from),{from,to,t0:performance.now(),dur:inst?0:800,lift:Math.min(70,Math.hypot(to.x-from.x,to.y-from.y)*.3)});}
 function l3Frame(){
   const T=THREE,now=performance.now(),st=$('labStage'),W2=st.clientWidth,H2=st.clientHeight;if(!W2||!H2)return;
-  if(L3.w!==W2||L3.h!==H2){L3.w=W2;L3.h=H2;L3.r.setSize(W2,H2,false);L3.cam.aspect=W2/H2;L3.cam.updateProjectionMatrix();}
-  for(const id in L3.anim){const a=L3.anim[id],pv=L3.parts[id];if(!pv||!a.to)continue;const k=a.dur?Math.min(1,(now-a.t0)/a.dur):1,e=1-Math.pow(1-k,3);
-    a.x=a.from.x+(a.to.x-a.from.x)*e;a.y=a.from.y+(a.to.y-a.from.y)*e;a.r=a.from.r+(a.to.r-a.from.r)*e;a.o=a.from.o+(a.to.o-a.from.o)*e;
-    const o=pv.userData.o;pv.position.set(o[0]+a.x,o[1]+a.y,Math.sin(Math.PI*k)*a.lift);pv.rotation.z=a.r*Math.PI/180;
-    pv.traverse(m=>{if(m.isMesh){m.material.opacity=m.material.userData.op*a.o;m.material.depthWrite=a.o>.95;}});}
-  L3.recoil*=.86;L3.root.position.set(-L3.recoil*18,-L3.recoil*5,0);L3.root.rotation.z=L3.recoil*.03;
-  L3.yaw+=(L3.tYaw-L3.yaw)*.12;L3.pitch+=(L3.tPitch-L3.pitch)*.12;L3.zoom+=(L3.tz-L3.zoom)*.12;
-  const f=L3.focus?L3.focus:[500,215],tf=L3.tf||(L3.tf=f.slice());tf[0]+=(f[0]-tf[0])*.1;tf[1]+=(f[1]-tf[1])*.1;
-  const vf=30*Math.PI/180,hf=2*Math.atan(Math.tan(vf/2)*L3.cam.aspect),need=Math.max(520/Math.tan(hf/2),260/Math.tan(vf/2)),d=need*L3.zoom*(L3.focus?.5:1);
+  let busy=!L3.drawn;
+  if(L3.w!==W2||L3.h!==H2){L3.w=W2;L3.h=H2;L3.r.setSize(W2,H2,false);L3.cam.aspect=W2/H2;L3.cam.updateProjectionMatrix();busy=true;}
+  for(const id in L3.anim){const a=L3.anim[id],pv=L3.parts[id];if(!pv||!a.to||a.done)continue;const k=a.dur?Math.min(1,(now-a.t0)/a.dur):1,e=1-Math.pow(1-k,3);busy=true;if(k>=1)a.done=1;
+    L3K.forEach(q=>{a[q]=a.from[q]+(a.to[q]-a.from[q])*e;});
+    const o=pv.userData.o;pv.position.set(o[0]+a.x,o[1]+a.y,o[2]+a.z-Math.sin(Math.PI*k)*a.lift);pv.rotation.set(a.rx*Math.PI/180,a.ry*Math.PI/180,a.r*Math.PI/180);
+    if(id==='ayakb'){const dp=clamp(a.y/82,0,1);pv.traverse(g=>{if(g.userData&&g.userData.splay)g.rotation.x=g.userData.splay*Math.PI/180*dp;});}
+    pv.traverse(m=>{if(m.isMesh){const op=m.material.userData.op==null?1:m.material.userData.op;m.material.opacity=op*a.o;m.material.depthWrite=a.o>.95&&op>.95;}});}
+  if(L3.recoil>.002){busy=true;L3.recoil*=.86;}else L3.recoil=0;
+  L3.root.position.set(-L3.recoil*18,-L3.recoil*5,0);L3.root.rotation.z=L3.recoil*.03;
+  const f=L3.focus?L3.focus:[500,248],tf=L3.tf||(L3.tf=f.slice());
+  if(Math.abs(L3.tYaw-L3.yaw)>1e-4||Math.abs(L3.tPitch-L3.pitch)>1e-4||Math.abs(L3.tz-L3.zoom)>1e-4||Math.abs(f[0]-tf[0])>.05||Math.abs(f[1]-tf[1])>.05)busy=true;
+  const mk=L3.marks.join(',');if(L3.hot!==L3.lastHot||mk!==L3.lastMk){busy=true;L3.lastHot=L3.hot;L3.lastMk=mk;}
+  if(!busy)return;L3.drawn=true;
+  L3.yaw+=(L3.tYaw-L3.yaw)*.12;L3.pitch+=(L3.tPitch-L3.pitch)*.12;L3.zoom+=(L3.tz-L3.zoom)*.12;tf[0]+=(f[0]-tf[0])*.1;tf[1]+=(f[1]-tf[1])*.1;
+  const side=Math.cos(L3.yaw)<0?'L':'R';if(L3.board)L3.board.visible=side==='L';
+  if(L3.flip&&L3.flipS!==side){L3.flipS=side;L3.flip.textContent=side==='L'?'Çevir · sağ yüz':'Çevir · sol yüz';}
+  const vf=30*Math.PI/180,hf=2*Math.atan(Math.tan(vf/2)*L3.cam.aspect),need=Math.max(455/Math.tan(hf/2),272/Math.tan(vf/2)),d=need*L3.zoom*(L3.focus?(L3.fz||.5):1);
   const tx=tf[0],ty=-tf[1];L3.cam.position.set(tx+Math.sin(L3.yaw)*Math.cos(L3.pitch)*d,ty+Math.sin(L3.pitch)*d,Math.cos(L3.yaw)*Math.cos(L3.pitch)*d);L3.cam.lookAt(tx,ty,0);
   L3.cam.near=Math.max(1,d*.05);L3.cam.far=d*6;L3.cam.updateProjectionMatrix();
   L3.r.render(L3.sc,L3.cam);
-  const proj=id=>{const pv=L3.parts[id];if(!pv)return null;const bx=new T.Box3().setFromObject(pv);if(bx.isEmpty())return null;const c=bx.getCenter(new T.Vector3()),sz=bx.getSize(new T.Vector3());const p=c.clone().project(L3.cam),q=c.clone().add(new T.Vector3(sz.x/2,0,0)).project(L3.cam);return {x:(p.x+1)/2*W2,y:(1-p.y)/2*H2,r:Math.abs(q.x-p.x)/2*W2};};
-  if(L3.hot){const p=proj(L3.hot);if(p){L3.ring.hidden=false;const rr=clamp(p.r+14,28,110);L3.ring.style.cssText=`left:${p.x-rr}px;top:${p.y-rr}px;width:${rr*2}px;height:${rr*2}px`;}}else L3.ring.hidden=true;
-  const mh=L3.marks.map(id=>{const p=proj(id);return p?`<i style="left:${(p.x-6).toFixed(0)}px;top:${(p.y-6).toFixed(0)}px"></i>`:'';}).join('');if(mh!==L3.mh){L3.mh=mh;L3.mk.innerHTML=mh;}
+  const proj=l3Proj;
+  if(L3.nef)L3.nef.classList.toggle('hot',L3.hot==='nefes');
+  if(L3.hot&&L3.hot!=='nefes'){const p=proj(L3.hot);if(p){L3.ring.hidden=false;const rr=clamp(p.r+14,28,110);L3.ring.style.cssText=`left:${p.x-rr}px;top:${p.y-rr}px;width:${rr*2}px;height:${rr*2}px`;}}else L3.ring.hidden=true;
+  const sd=LB&&LB.side||{};
+  const mh=L3.marks.filter(id=>!sd[id]||sd[id]===side).map(id=>{const p=proj(id);return p?`<i style="left:${(p.x-6).toFixed(0)}px;top:${(p.y-6).toFixed(0)}px"></i>`:'';}).join('');if(mh!==L3.mh){L3.mh=mh;L3.mk.innerHTML=mh;}
 }
+function l3Proj(id){const T=THREE,o=(L3.anc&&L3.anc[id])||L3.parts[id];if(!o)return null;const bx=new T.Box3().setFromObject(o);if(bx.isEmpty())return null;const W2=L3.w,H2=L3.h,c=bx.getCenter(new T.Vector3()),sz=bx.getSize(new T.Vector3());const p=c.clone().project(L3.cam),q=c.clone().add(new T.Vector3(sz.x/2,0,0)).project(L3.cam);return {x:(p.x+1)/2*W2,y:(1-p.y)/2*H2,r:Math.abs(q.x-p.x)/2*W2};}
 function l3Tap(e){
   const T=THREE,cv=L3.r.domElement,rc=cv.getBoundingClientRect(),m=new T.Vector2((e.clientX-rc.left)/rc.width*2-1,-(e.clientY-rc.top)/rc.height*2+1),ray=new T.Raycaster();ray.setFromCamera(m,L3.cam);
-  const hits=ray.intersectObjects(L3.root.children,true).filter(h=>h.object.userData.pid&&h.object.material.opacity>.3);
+  const hits=ray.intersectObjects(L3.root.children,true).filter(h=>h.object.userData.pid&&h.object.material.opacity>.3&&h.object.visible);
   const el=hits.length?labPart(hits[0].object.userData.pid):null;
-  labTap({target:el||document.createElement('i')});
+  labTap({target:el||document.createElement('i'),clientX:e.clientX,clientY:e.clientY});
 }
 
 // ================= ATIŞ HATASI TEŞHİSİ =================
@@ -3288,7 +3615,7 @@ const QB={
     const looks={hk33:'A',mpt55:'A',mp5:'A',mpt76:'B',g3:'C',ak:'D',knt76:'E',yavuz16:'F',tp9:'F',sar9:'F'};
     const ks=shuffle(Object.keys(RIFLES)).slice(0,6),out=[];
     for(const k of ks){const others=shuffle(Object.keys(RIFLES).filter(x=>looks[x]!==looks[k])).slice(0,3);const opts=shuffle([k,...others]);
-      out.push({q:'Çizimdeki silah hangisi?',o:opts.map(x=>RIFLES[x].name),a:opts.indexOf(k),e:`${RIFLES[k].name}: ${RIFLES[k].cal}, ${RIFLES[k].magTxt} şarjör, ${RIFLES[k].maker}. ${tellLook(k)}`,draw:c=>{c.fillStyle='#d9d3bb';c.fillRect(0,0,400,140);if(RIFLES[k].cls==='tabanca')drawPistol(c,[130,52],[300,52],330,k);else drawRifle(c,[22,58],[384,58],270,k,{scope:!!RIFLES[k].scopeOnly});}});}
+      out.push({q:'Çizimdeki silah hangisi?',o:opts.map(x=>RIFLES[x].name),a:opts.indexOf(k),e:`${RIFLES[k].name}: ${RIFLES[k].cal}, ${RIFLES[k].magTxt} şarjör, ${RIFLES[k].maker}. ${tellLook(k)}`,draw:c=>{const f=()=>{c.fillStyle='#d9d3bb';c.fillRect(0,0,400,140);if(RIFLES[k].cls==='tabanca')drawPistol(c,[130,52],[300,52],330,k);else drawRifle(c,[34,52],[366,52],270,k,{scope:!!RIFLES[k].scopeOnly,cb:f});};f();}});}
     const cal=shuffle(['mpt76','mpt55','ak','yavuz16'])[0],cals=['5.56×45 mm','7.62×51 mm','7.62×39 mm','9×19 mm'];
     out.push({q:`${RIFLES[cal].name} hangi fişeği kullanır?`,o:cals,a:cals.indexOf(RIFLES[cal].cal),e:`${RIFLES[cal].name} ${RIFLES[cal].cal} fişek kullanır.`});
     const yo=['MPT-76','G-3','Kaleşnikof','MP5'];out.push({q:"Hangisi MKE'nin kendi tasarımı olan yerli piyade tüfeğidir?",o:yo,a:0,e:'MPT-76 ve MPT-55 MKE tasarımıdır. G-3, HK33 ve MP5 MKE\'de lisansla üretilmiştir.'});
@@ -3444,7 +3771,7 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
 
 <script>
 (()=>{
-const VER=20,btn=document.getElementById('upd');
+const VER=21,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

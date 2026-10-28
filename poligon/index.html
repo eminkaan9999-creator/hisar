@@ -254,6 +254,16 @@ details.more>summary::-webkit-details-marker{display:none;}
 details.more>summary::before{content:"+ ";color:var(--accent);}
 details.more[open]>summary::before{content:"− ";}
 .kpanel.auto .kstep button{visibility:hidden;}
+.galov{position:fixed;inset:0;z-index:85;background:rgba(4,6,7,.97);display:flex;flex-direction:column;}
+.galtop{display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top,0px));border-bottom:1px solid var(--line);}
+.galtop b{flex:1;font-family:var(--display);font-weight:800;font-size:18px;}
+.gal{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:14px;touch-action:pan-y pinch-zoom;}
+.gal figure{margin:0;background:#e9e6dc;border-radius:10px;overflow:hidden;}
+.gal img{width:100%;height:auto;display:block;}
+.gal figcaption{background:var(--panel);padding:8px 10px;font-size:11px;color:var(--fg);line-height:1.45;}
+.gal figcaption a{color:var(--muted);}
+.rphoto{cursor:zoom-in;}
+
 .rip{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(25,211,197,.35) 0,rgba(25,211,197,.12) 45%,rgba(25,211,197,0) 70%);transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none;z-index:0;}
 .primary .rip{background:radial-gradient(circle,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 70%);}
 @keyframes rip{to{transform:scale(1);opacity:0}}
@@ -489,7 +499,7 @@ select.inp{font-size:13px;}
 </div>
 
 <div class="splash" id="splash"><svg class="spx" viewBox="0 0 200 200"><circle cx="100" cy="100" r="78" class="sp1"/><circle cx="100" cy="100" r="40" class="sp2"/><path d="M100 6v52M100 142v52M6 100h52M142 100h52" class="sp3"/><circle cx="100" cy="100" r="5" class="sp4"/></svg><div class="spt0">HİSAR</div><div class="spt"><span>P</span><span class="acc"><svg class="ox" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13.5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M20 0v11M20 29v11M0 20h11M29 20h11" stroke="currentColor" stroke-width="3.4"/><circle cx="20" cy="20" r="2.8" fill="currentColor"/></svg></span><span>LİGON</span></div><div class="sps">HK33 · MPT-76 · ATIŞ EĞİTİMİ</div></div>
-<div class="lab" id="lab" hidden><div class="labtop"><button class="iconbtn" id="labX">Kapat</button><b id="labT"></b><span id="labP"></span></div><div class="labstage" id="labStage"></div><div class="labtxt"><div class="lbl" id="labK"></div><h4 id="labH"></h4><p id="labD"></p><div class="labbtns"><button class="secondary" id="labSay" hidden>Tekrar dinle</button><button class="primary" id="labNext">Göster</button></div></div></div>
+<div class="lab" id="lab" hidden><div class="labtop"><button class="iconbtn" id="labX">Kapat</button><b id="labT"></b><button class="iconbtn" id="labPh" hidden>Fotoğraflar</button><span id="labP"></span></div><div class="labstage" id="labStage"></div><div class="labtxt"><div class="lbl" id="labK"></div><h4 id="labH"></h4><p id="labD"></p><div class="labbtns"><button class="secondary" id="labSay" hidden>Tekrar dinle</button><button class="primary" id="labNext">Göster</button></div></div></div>
 <div class="menu" id="menu">
   <div class="menu-in wrap">
     <div class="mhead">
@@ -717,7 +727,7 @@ let ST={shots:0,hits:0,best:{},done:{},xp:0,badges:{},log:[],streak:0,lastDaily:
 try{const j=JSON.parse(localStorage.getItem('poligon-stats-v1')||'null');if(j)ST=Object.assign(ST,j);}catch(e){}
 ST.flags=ST.flags||{};ST.edu=ST.edu||{};ST.sh=ST.sh||[];ST.badges=ST.badges||{};ST.log=ST.log||[];ST.eg=ST.eg||[];
 const saveST=()=>{try{localStorage.setItem('poligon-stats-v1',JSON.stringify(ST));}catch(e){}};
-let OPT={d3:1,gyro:0,voice:1,vib:1,left:0,diff:'kolay',vol:90,motion:0,assist:1,ov:6,vgen:'erkek',vname:'',vrate:.88,bcam:1,hava:'acik',gq:'yuksek'};
+let OPT={d3:1,gyro:0,voice:1,vib:1,left:0,diff:'kolay',vol:90,motion:0,assist:1,ov:6,vgen:'erkek',vname:'',vrate:.88,bcam:1,hava:'acik',gq:'yuksek',real:1};
 try{const j=JSON.parse(localStorage.getItem('poligon-ayar-v1')||'null');if(j)OPT=Object.assign(OPT,j);}catch(e){}
 OPT.gyro=0;OPT.motion=0;if(OPT.ov!==6){OPT.ov=6;OPT.diff='kolay';OPT.assist=1;}
 const saveOPT=()=>{try{localStorage.setItem('poligon-ayar-v1',JSON.stringify(OPT));}catch(e){}};
@@ -839,7 +849,7 @@ function buildMenu(){
     const R=RIFLES[k],b=document.createElement('div');b.className='rcard';b.tabIndex=0;b.setAttribute('role','button');b.setAttribute('aria-pressed',S.rifle===k);
     const ph=getPhoto(k);
     b.innerHTML=`<span class="rtag ${R.yerli?'yerli':''}">${CLS[R.cls]} · ${R.maker}</span><span class="rname">${R.name}</span><span class="rcal">${R.cal} · ${R.magTxt} şarjör</span>${ph?`<img class="rphoto" alt="${R.name} fotoğrafı" src="${ph}">`:(WF[k]&&WF[k].src?wImg(k)+wCredit(k):'<canvas width="400" height="120"></canvas>')}`+stat('Hassasiyet',(1-R.disp)/.9)+stat('Tepme',R.kick/6)+stat('Atış hızı',R.rpm?R.rpm/800:.12)+stat('Şarjör',R.mag/30)+`<label class="phbtn">${ph?'Fotoğrafı değiştir':'Fotoğraf ekle'}<input type="file" accept="image/*" hidden></label>`;
-    const lab=b.querySelector('.phbtn');lab.addEventListener('click',e=>e.stopPropagation());const wc=b.querySelector('.wcred');if(wc)wc.addEventListener('click',e=>e.stopPropagation());
+    const lab=b.querySelector('.phbtn');lab.addEventListener('click',e=>e.stopPropagation());const wc=b.querySelector('.wcred');if(wc)wc.addEventListener('click',e=>e.stopPropagation());const im=b.querySelector('img.rphoto');if(im&&!ph)im.addEventListener('click',e=>{e.stopPropagation();photoView(k);});
     lab.querySelector('input').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)savePhoto(k,f);});
     b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.click();}});
     b.addEventListener('click',()=>{S.rifle=k;[...rr.children].forEach(x=>x.setAttribute('aria-pressed',x===b));if((S.mode==='keskin'&&k!=='knt76')||(S.mode==='tabanca'&&!isPistol(k))||(S.mode!=='serbest'&&S.mode!=='tabanca'&&isPistol(k)))S.mode='serbest';setup(true);});
@@ -893,6 +903,22 @@ async function wLoadAll(force){
   if(wBusy||!navigator.onLine)return;wBusy=true;let ch=false;
   for(const k of Object.keys(WQ)){if(!force&&WF[k]&&(WF[k].src||Date.now()-WF[k].t<864e5))continue;const o=await wFetch(k);WF[k]=o||{t:Date.now()};ch=true;}
   wBusy=false;if(ch){saveWF();if(!$('menu').hidden)buildMenu();}
+}
+const WG={};
+async function wGallery(k){if(WG[k])return WG[k];const Q=WQ[k];if(!Q)return [];
+  try{const r=await fetch(WAPI.replace('iiurlwidth=640','iiurlwidth=1280')+'&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch='+encodeURIComponent(Q.q+' filetype:bitmap'));const js=await r.json(),pg=js&&js.query&&js.query.pages;
+    const list=pg?Object.values(pg).filter(p=>p.imageinfo&&/image\/(jpeg|png|webp)/.test(p.imageinfo[0].mime)).sort((a,b)=>(a.index||0)-(b.index||0)).map(p=>{const ii=p.imageinfo[0],m=ii.extmetadata||{};return {src:ii.thumburl||ii.url,page:ii.descriptionurl,title:p.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,''),by:stripTags(m.Artist&&m.Artist.value)||'bilinmiyor',lic:stripTags(m.LicenseShortName&&m.LicenseShortName.value)||'özgür lisans'};}):[];
+    if(k==='hk33'||k==='g3')list.push({src:'https://commons.wikimedia.org/wiki/Special:FilePath/G3A3_disassembled.jpg?width=1280',page:'https://commons.wikimedia.org/wiki/File:G3A3_disassembled.jpg',title:'Sökülmüş G3A3 (HK33 ile aynı ana gruplar)',by:'Iago4096',lic:'Kamu malı'});
+    WG[k]=list;return list;}catch(e){return null;}
+}
+async function photoView(k){
+  const R=RIFLES[k];let ov=$('galov');if(!ov){ov=document.createElement('div');ov.id='galov';ov.className='galov';document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="galtop"><b>${esc(R.name)} · gerçek fotoğraflar</b><button class="iconbtn" id="galX">Kapat</button></div><div class="gal" id="gal"><p class="muted small">Fotoğraflar Wikimedia Commons'tan yükleniyor…</p></div>`;ov.hidden=false;
+  $('galX').onclick=()=>{ov.hidden=true;};
+  if(!navigator.onLine){$('gal').innerHTML='<p class="muted small">İnternet bağlantısı yok. Bağlanınca fotoğraflar yüklenir.</p>';return;}
+  const list=await wGallery(k);const g=$('gal');if(!g)return;
+  if(list===null){g.innerHTML='<p class="muted small">Wikimedia Commons\'a şu an ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene.</p>';return;}
+  g.innerHTML=list.length?list.map(o=>`<figure><img src="${esc(o.src)}" alt="${esc(o.title)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('figure').remove()"><figcaption>${esc(o.title)}<br><a href="${esc(o.page)}" target="_blank" rel="noopener">${esc(o.by)} · ${esc(o.lic)} · Wikimedia Commons</a></figcaption></figure>`).join(''):'<p class="muted small">Bu silah için özgür lisanslı fotoğraf bulunamadı.</p>';
 }
 function wCredit(k){const o=WF[k];return o&&o.src?`<a class="wcred" href="${esc(o.page)}" target="_blank" rel="noopener">Foto: ${esc(o.by)} · ${esc(o.lic)} · Wikimedia Commons</a>`:'';}
 function wImg(k,cls){const o=WF[k];return o&&o.src?`<img class="${cls||'rphoto'}" alt="${RIFLES[k].name} fotoğrafı" src="${esc(o.src)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'';}
@@ -2051,7 +2077,7 @@ function init3D(){
     const top=[.42,.58,.74],hor=[.89,.91,.87],grd=[.45,.47,.36];
     for(let i=0;i<pos.count;i++){const y=pos.getY(i)/7000;let c;if(y>=0){const k=Math.pow(y,.55);c=hor.map((v,j)=>v+(top[j]-v)*k);}else c=grd;col.push(c[0],c[1],c[2]);}
     skyG.setAttribute('color',new T3.Float32BufferAttribute(col,3));
-    sc.add(new T3.Mesh(skyG,new T3.MeshBasicMaterial({vertexColors:true,side:T3.BackSide,fog:false,depthWrite:false})));
+    const skyM=new T3.Mesh(skyG,new T3.MeshBasicMaterial({vertexColors:true,side:T3.BackSide,fog:false,depthWrite:false}));sc.add(skyM);
     // güneş parıltısı
     const sunTex=new T3.CanvasTexture(cvTex(128,128,(c,w)=>{const g=c.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(255,250,230,1)');g.addColorStop(.15,'rgba(255,245,215,.7)');g.addColorStop(1,'rgba(255,240,200,0)');c.fillStyle=g;c.fillRect(0,0,w,w);}));
     const sunS=new T3.Sprite(new T3.SpriteMaterial({map:sunTex,fog:false,depthWrite:false,transparent:true,blending:T3.AdditiveBlending}));
@@ -2064,7 +2090,8 @@ function init3D(){
     // zemin
     const grass=new T3.CanvasTexture(cvTex(256,256,(c,w)=>{c.fillStyle='#7f8a4f';c.fillRect(0,0,w,w);for(let i=0;i<5200;i++){const v=rnd();c.fillStyle=v<.33?'rgba(160,168,110,.45)':v<.66?'rgba(70,82,40,.45)':'rgba(120,128,80,.5)';c.fillRect(rnd()*w,rnd()*w,1+rnd()*2,1+rnd()*3);}}));
     grass.wrapS=grass.wrapT=T3.RepeatWrapping;grass.repeat.set(700,700);grass.anisotropy=aniso;
-    const ground=new T3.Mesh(new T3.PlaneGeometry(5000,5000),new T3.MeshLambertMaterial({map:grass}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;sc.add(ground);
+    const ground=new T3.Mesh(new T3.PlaneGeometry(5000,5000),new T3.MeshLambertMaterial({map:grass}));
+    if(OPT.gq!=='dusuk'&&OPT.real!==0)setTimeout(()=>realAssets(sc,skyM,ground,r,aniso),400);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;sc.add(ground);
     const flat=(w,l,color,op,x,z,y)=>{const m=new T3.Mesh(new T3.PlaneGeometry(w,l),new T3.MeshLambertMaterial({color,transparent:op<1,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(x,y||.01,z);m.receiveShadow=true;sc.add(m);return m;};
     for(let i=-3;i<=3;i++)if(i%2===0)flat(5,900,0xa9b06e,.28,i*5,-450,.006);
     for(const lx of [-10,-5,5,10])flat(.09,900,0xe8e4d0,.55,lx,-452,.012);
@@ -2171,6 +2198,17 @@ function rebuild3D(){
   for(const tg of S.targets)if(tg.h0>1){const m=new T3.Mesh(new T3.ConeGeometry(tg.d*1.345,tg.h0*1.35,40),new T3.MeshLambertMaterial({color:0x838a55,flatShading:true}));m.position.set(tg.x,tg.h0*1.35/2,-tg.d*1.35);m.receiveShadow=true;G3.sc.add(m);G3.extra.push(m);}
   if(S.bushes&&S.bushes.length){const bm=[new T3.MeshLambertMaterial({color:0x4f5a33,flatShading:true}),new T3.MeshLambertMaterial({color:0x5d6238,flatShading:true}),new T3.MeshLambertMaterial({color:0x3f4a2a,flatShading:true})];
     for(const b of S.bushes){const m=new T3.Mesh(new T3.IcosahedronGeometry(b.r,1),bm[Math.floor(b.c*3)]);m.scale.set(1.3,b.h/b.r,1);m.position.set(b.x,b.h*.5,-b.d);m.castShadow=true;G3.sc.add(m);G3.extra.push(m);}}
+}
+// ---- gerçek fotoğraf dokuları (Poly Haven, CC0) — telefon internetteyken yüklenir, yoksa çizim kalır
+const PH='https://dl.polyhaven.org/file/ph-assets/';
+function realAssets(sc,skyM,ground,r,aniso){
+  const T=THREE,ld=new T.TextureLoader();ld.setCrossOrigin('anonymous');
+  ld.load(PH+'HDRIs/extra/Tonemapped%20JPG/kloofendal_48d_partly_cloudy_puresky.jpg',tx=>{try{tx.mapping=T.EquirectangularReflectionMapping;tx.encoding=T.sRGBEncoding;
+      const sp=new T.Mesh(new T.SphereGeometry(6800,48,24),new T.MeshBasicMaterial({map:tx,side:T.BackSide,fog:false,depthWrite:false}));sp.rotation.y=Math.PI*.8;sc.add(sp);skyM.visible=false;
+      if(G3){G3.realSky=sp;}}catch(e){}},undefined,()=>{});
+  const tex=(slug,rep,cb)=>ld.load(PH+'Textures/jpg/1k/'+slug+'/'+slug+'_diff_1k.jpg',t=>{t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rep,rep);t.anisotropy=aniso;cb(t);},undefined,()=>{});
+  tex('aerial_grass_rock',900,t=>{ground.material.map=t;ground.material.color.setHex(0xb8b8a0);ground.material.needsUpdate=true;});
+  tex('brown_mud_leaves_01',6,t=>{t.repeat.set(40,2);if(G3&&G3.berm){const ms=[];G3.berm.traverse?G3.berm.traverse(o=>{if(o.isMesh)ms.push(o);}):ms.push(G3.berm);ms.forEach(m=>{if(m.material){m.material.map=t;m.material.needsUpdate=true;}});}});
 }
 const HAVA={acik:{n:'Açık',fog:[0xc4d0cf,420,3400],hemi:[0xe6eef5,.78],sun:[0xfff1d8,.82],sunS:1},
   sis:{n:'Sisli',fog:[0xc2c8c6,25,520],hemi:[0xdfe4e6,.72],sun:[0xffffff,.22],sunS:0,tint:'rgba(205,212,212,.38)'},
@@ -2754,7 +2792,7 @@ function labOpen(key,def){
   l3Dispose();$('modal').hidden=true;if(!$('menu').hidden)closeMenu();
   LB={key,def,i:0,ph:'wait',PS:{},prevRifle:S.rifle,rf:def.rf,seen:new Set(),focus:null,cur:null};
   if(def.rf)S.rifle=def.rf;
-  $('labT').textContent=def.title;$('labStage').innerHTML=def.svg;
+  $('labT').textContent=def.title;$('labStage').innerHTML=def.svg;$('labPh').hidden=!def.rf;$('labPh').onclick=()=>{if(def.rf)photoView(def.rf);};
   const svg=$('labStage').querySelector('svg');
   svg.querySelectorAll('[data-o]').forEach(e=>{const [x,y]=e.dataset.o.split(' ');e.style.transformBox='view-box';e.style.transformOrigin=`${x}px ${y}px`;});
   LB.vb0=svg.getAttribute('viewBox').split(' ').map(Number);LB.vb=LB.vb0.slice();LB.zoom=!!def.rf;
@@ -3058,7 +3096,7 @@ function labKomut(){
 const SIL_G='M-22 0 L-22 -16 L-20 -20 L-10 -23 L-6 -26 L6 -26 L10 -23 L20 -20 L22 -16 L22 0 Z';
 const dirTR=(dx,dy)=>{const h=Math.abs(dx)>4?(dx>0?'sağa':'sola'):'',v=Math.abs(dy)>4?(dy>0?'aşağı':'yukarı'):'';return [v,h].filter(Boolean).join(' ve ')||'ortaya';};
 function customLab(key,title,setup){
-  l3Dispose();$('modal').hidden=true;if(!$('menu').hidden)closeMenu();
+  l3Dispose();$('labPh').hidden=true;$('modal').hidden=true;if(!$('menu').hidden)closeMenu();
   LB={key,def:{title,steps:[],custom:1},i:0,ph:'custom',PS:{},prevRifle:S.rifle,seen:new Set()};
   $('labT').textContent=title;$('labP').innerHTML='';$('labSay').hidden=true;$('labSay').textContent='Tekrar dinle';
   $('lab').hidden=false;audio();LB.custom=setup($('labStage'));
@@ -3406,7 +3444,7 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
 
 <script>
 (()=>{
-const VER=19,btn=document.getElementById('upd');
+const VER=20,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

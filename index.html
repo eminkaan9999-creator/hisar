@@ -2357,7 +2357,7 @@ const HELI=[];window.HELI=HELI;
 const U=P.g.userData;
 // ---- ac/kapa
 function setAA(v){if(v&&(game!=='play'||mode!=='tank'))return;if(!!v===!!AA.on)return;AA.on=v?1:0;document.body.classList.toggle('aa',!!AA.on);
- if(AA.on){iv=0;AA.yaw=P.th;AA.el=.12;AA.py=pitch;say('M85 UÇAKSAVAR · basılı tut: ateş · Z: çık',1.8);sndBip()}
+ if(AA.on){iv=0;AA.yaw=P.th;AA.el=.12;AA.py=pitch;say(TC?'M85 UÇAKSAVAR · ATEŞ basılı tut · sürükle: nişan':'M85 UÇAKSAVAR · basılı tut: ateş · Z: çık',1.8);sndBip();aaEnter()}
  else{yaw=P.th;pitch=AA.py!=null?AA.py:pitch;AA.hold=0;say('ANA TOP',1);sndBip()}}
 window.setAA=setAA;
 addEventListener('keydown',e=>{if(e.repeat)return;if((e.key==='z'||e.key==='Z')&&game==='play'){setAA(!AA.on);e.stopImmediatePropagation();return}
@@ -2365,10 +2365,13 @@ addEventListener('keydown',e=>{if(e.repeat)return;if((e.key==='z'||e.key==='Z')&
 addEventListener('keyup',e=>{if(e.code==='Space')AA.hold=0});
 addEventListener('pointerdown',e=>{if(window.WHEEL&&WHEEL.open)return;if(AA.on&&e.pointerType==='mouse'&&document.pointerLockElement===cv)AA.hold=1},true);
 addEventListener('pointerup',e=>{if(e.pointerType==='mouse')AA.hold=0},true);
+// dokunmatik ATEŞ tusu: basili tutuldukca M85 surekli atar (kare hizi dusse bile kesilmez); parmak tustan kaysa da birakilana kadar surer
+{const fb=document.getElementById('uFire');let fpid=null;if(fb)fb.addEventListener('pointerdown',e=>{if(AA.on){AA.hold=1;fpid=e.pointerId}},true);
+ for(const t of['pointerup','pointercancel'])addEventListener(t,e=>{if(fpid!==null&&e.pointerId===fpid){AA.hold=0;fpid=null}},true)}
 // nisan: fare / dokunmatik surukleme M85'i dondurur (kule sabit kalir)
 addEventListener('pointermove',e=>{if(window.WHEEL&&WHEEL.open)return;if(!AA.on||game!=='play'||mode!=='tank'||window.mapOpen)return;
  if(document.pointerLockElement===cv){AA.yaw-=e.movementX*.0028;AA.el=clamp(AA.el-e.movementY*.0028,-.26,1.05);e.stopImmediatePropagation();e.stopPropagation()}
- else if(e.pointerId===lid){AA.yaw-=(e.clientX-lp.x)*.0055;AA.el=clamp(AA.el-(e.clientY-lp.y)*.0045,-.26,1.05);lp={x:e.clientX,y:e.clientY};e.stopImmediatePropagation();e.stopPropagation()}},true);
+ else if(e.pointerId===lid){AA.yaw-=(e.clientX-lp.x)*.0042;AA.el=clamp(AA.el-(e.clientY-lp.y)*.0036,-.26,1.05);lp={x:e.clientX,y:e.clientY};e.stopImmediatePropagation();e.stopPropagation()}},true);
 const _fire=window.fire;window.fire=function(){if(AA.on&&mode==='tank'){AA.trig=now();return}return _fire.apply(this,arguments)};
 const _sw=window.sw;window.sw=function(){if(AA.on)setAA(0);return _sw.apply(this,arguments)};
 const _cyc=window.cycleView;window.cycleView=function(){if(AA.on){setAA(0);return}return _cyc.apply(this,arguments)};
@@ -2415,21 +2418,21 @@ function mkHeli(){const g=new THREE.Group(),B=new THREE.MeshLambertMaterial({col
  const disc=new THREE.Mesh(new THREE.CircleGeometry(7.2,24),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.14,side:THREE.DoubleSide,depthWrite:false}));disc.rotation.x=-PI/2;disc.position.y=1.9;disc.position.z=-.2;g.add(disc);
  const tr=new THREE.Group();tr.position.set(.22,1.3,-6.7);g.add(tr);for(let k=0;k<2;k++){const b=new THREE.Mesh(BX,K);b.scale.set(.05,2.0,.18);b.rotation.x=k*PI/2;tr.add(b)}
  g.userData={rot,tr};g.rotation.order='YXZ';g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
-let heliT=rnd(70,100);
-function spawnHeli(){const a=rnd(0,PI*2),x=clamp(P.x+Math.sin(a)*175,-195,195),z=clamp(P.z+Math.cos(a)*175,-195,195),g=mkHeli();S.add(g);
- const h={g,x,y:hAt(P.x,P.z)+52,z,h:0,hp:220,mx:220,st:'in',ang:a,R:rnd(72,98),cd:rnd(3,5),rk:rnd(7,11),vx:0,vz:0,vy:0,hit:0,bank:0};g.position.set(h.x,h.y,h.z);HELI.push(h);
- radio('Dikkat! Düşman saldırı helikopteri yaklaşıyor. Uçaksavara geç (Z) ve M85 ile vur!');say('⚠ DÜŞMAN HELİKOPTERİ · Z: UÇAKSAVAR',2.6);sndBip()}
+let heliT=rnd(40,60),heliF=0;
+function spawnHeli(tr){const a=rnd(0,PI*2),x=clamp(P.x+Math.sin(a)*175,-195,195),z=clamp(P.z+Math.cos(a)*175,-195,195),g=mkHeli();S.add(g);
+ const h={g,x,y:hAt(P.x,P.z)+52,z,h:0,hp:220,mx:220,st:'in',ang:a,R:rnd(72,98),cd:rnd(3,5),rk:rnd(7,11),vx:0,vz:0,vy:0,hit:0,bank:0,train:tr?1:0};g.position.set(h.x,h.y,h.z);HELI.push(h);
+ radio(tr?'Eğitim helikopteri geliyor (ateş etmez). M85 ile vur!':'Dikkat! Düşman saldırı helikopteri yaklaşıyor. '+(TC?'Sağdaki ✈ M85 UÇAKSAVAR tuşuna bas':'Uçaksavara geç (Z)')+' ve M85 ile vur!');say('⚠ '+(tr?'EĞİTİM HELİKOPTERİ':'DÜŞMAN HELİKOPTERİ')+(TC?' · ✈ M85 ile vur':' · Z: UÇAKSAVAR'),2.6);sndBip()}
 window.spawnHeli=spawnHeli;
 function downHeli(h){if(h.st==='down'||h.st==='dead')return;h.st='down';h.vy=-2;score+=250;if(window.award)award(150,'HELİKOPTER');$('hit').textContent='✈ HELİKOPTER DÜŞÜYOR +250';$('hit').style.opacity=1;hitT=1.2;boom(h.x,h.y,h.z,4);sndBoom(h.x,h.z);radio('Helikopter vuruldu, düşüyor! Harika iş.')}
-function heliShot(h,rocket){const ty=hAt(P.x,P.z)+1.5,a=rocket?2.2:3.2,dx=P.x-h.x+rnd(-a,a),dy=ty-h.y+rnd(-a,a)*.5,dz=P.z-h.z+rnd(-a,a),l=Math.hypot(dx,dy,dz)||1,sp=rocket?58:110;
+function heliShot(h,rocket){const ty=hAt(P.x,P.z)+1.5,a=rocket?3.0:3.6,dx=P.x-h.x+rnd(-a,a),dy=ty-h.y+rnd(-a,a)*.5,dz=P.z-h.z+rnd(-a,a),l=Math.hypot(dx,dy,dz)||1,sp=rocket?58:110;
  const m=new THREE.Mesh(rocket?new THREE.CylinderGeometry(.09,.09,1.1,8):new THREE.SphereGeometry(.22,6,5),new THREE.MeshBasicMaterial({color:rocket?0xffe0a0:0xff9a30}));if(rocket){m.rotation.order='YXZ';m.lookAt(dx,dy,dz);m.rotateX(PI/2)}
- m.position.set(h.x+dx/l*2,h.y-.6+dy/l*2,h.z+dz/l*2);S.add(m);ebul.push({m,vx:dx/l*sp,vy:dy/l*sp,vz:dz/l*sp,tgt:'tank',life:4,dk:rocket?1.3:.3});sndFire(h.x,h.z,rocket?.9:.4);if(rocket)dust(h.x,h.z,0xd8d8d8,.6,0,h.y-.6,1.2)}
-function stepHeli(dt){if(L.cd&&mode!=='menu'){heliT-=dt;const mx=(L.cnt>=5&&(typeof wave!=='undefined'&&wave>=4))?2:1;if(heliT<=0&&HELI.filter(h=>h.st!=='dead').length<mx&&tP>50){spawnHeli();heliT=rnd(L.cnt>=5?60:80,L.cnt>=5?95:130)}}
+ m.position.set(h.x+dx/l*2,h.y-.6+dy/l*2,h.z+dz/l*2);S.add(m);ebul.push({m,vx:dx/l*sp,vy:dy/l*sp,vz:dz/l*sp,tgt:'tank',life:4,dk:rocket?1.0:.2});sndFire(h.x,h.z,rocket?.9:.4);if(rocket)dust(h.x,h.z,0xd8d8d8,.6,0,h.y-.6,1.2)}
+function stepHeli(dt){if(L.cd&&mode!=='menu'){heliT-=dt;const mx=(L.cnt>=5&&(typeof wave!=='undefined'&&wave>=4))?2:1;if(heliT<=0&&HELI.filter(h=>h.st!=='dead').length<mx&&(tP>30||heliF)){heliF=0;window.spawnHeli();heliT=rnd(L.cnt>=5?55:70,L.cnt>=5?90:115)}}
  const gy=hAt(P.x,P.z);
  for(const h of HELI){const u=h.g.userData;u.rot.rotation.y+=dt*(h.st==='down'?14:30);u.tr.rotation.x+=dt*45;
   if(h.st==='down'){h.vy-=9.8*dt;h.y+=h.vy*dt;h.x+=h.vx*dt;h.z+=h.vz*dt;h.h+=dt*3.2;if(Math.random()<dt*14)dust(h.x,h.z,0x222222,.75,3,h.y,1.4);
    if(h.y<hAt(h.x,h.z)+1){h.st='dead';bigBoom(h.x,h.z,9);if(typeof crater==='function')crater(h.x,h.z,5);S.remove(h.g);continue}}
-  else{if(h.st==='in'){const dx=P.x-h.x,dz=P.z-h.z;if(Math.hypot(dx,dz)<h.R+12)h.st='orbit';h.ang=Math.atan2(h.x-P.x,h.z-P.z)}
+  else{if(h.st==='in'){const dx=P.x-h.x,dz=P.z-h.z;if(Math.hypot(dx,dz)<h.R+12){h.st='orbit';h.cd=Math.max(h.cd,4.5);h.rk=Math.max(h.rk,8)}h.ang=Math.atan2(h.x-P.x,h.z-P.z)}
    if(h.st==='orbit')h.ang+=dt*16/h.R;
    const tx=P.x+Math.sin(h.ang)*h.R,tz=P.z+Math.cos(h.ang)*h.R,ty=Math.max(hAt(tx,tz),gy)+(h.st==='in'?46:30+Math.sin(now()/2600)*6);
    const ax=(tx-h.x)*.9-h.vx*1.2,az=(tz-h.z)*.9-h.vz*1.2;h.vx+=ax*dt;h.vz+=az*dt;const sp=Math.hypot(h.vx,h.vz),mxs=h.st==='in'?30:22;if(sp>mxs){h.vx*=mxs/sp;h.vz*=mxs/sp}
@@ -2437,7 +2440,7 @@ function stepHeli(dt){if(L.cd&&mode!=='menu'){heliT-=dt;const mx=(L.cnt>=5&&(typ
    const fac=Math.atan2(P.x-h.x,P.z-h.z);h.h+=angd(fac,h.h)*Math.min(1,2.2*dt);
    const fwd=h.vx*Math.sin(h.h)+h.vz*Math.cos(h.h),side=h.vx*Math.cos(h.h)-h.vz*Math.sin(h.h);h.pt=clamp(fwd*.012,-.25,.25);h.bank+=(clamp(-side*.02,-.4,.4)-h.bank)*Math.min(1,3*dt);
    const d=Math.hypot(P.x-h.x,P.z-h.z);h.cd-=dt;h.rk-=dt;
-   if(h.st==='orbit'&&d<150&&game==='play'){if(h.cd<=0){h.cd=rnd(4,6.5);for(let i=0;i<5;i++)setTimeout(()=>{if(h.st==='orbit'&&game==='play')heliShot(h,0)},i*110)}
+   if(h.st==='orbit'&&d<150&&game==='play'&&!h.train&&L.cd){if(h.cd<=0){h.cd=rnd(4,6.5);for(let i=0;i<5;i++)setTimeout(()=>{if(h.st==='orbit'&&game==='play')heliShot(h,0)},i*110)}
     if(h.rk<=0){h.rk=rnd(9,14);heliShot(h,1);setTimeout(()=>{if(h.st==='orbit'&&game==='play')heliShot(h,1)},260)}}}
   h.hit=Math.max(0,h.hit-dt);h.g.position.set(h.x,h.y+(h.st==='down'?0:Math.sin(now()/400)*.15),h.z);h.g.rotation.set(h.st==='down'?.3:(h.pt||0),h.h,h.st==='down'?.5:h.bank)}
  // ana top mermisi helikoptere
@@ -2455,7 +2458,7 @@ function prj(x,y,z){_pp.set(x,y,z).project(CAM);if(_pp.z>1)return null;return{x:
 function draw(){ox.setTransform(OD,0,0,OD,0,0);ox.clearRect(0,0,W,H);dirty=0;if(game!=='play'||window.mapOpen)return;
  const sight=iv===1&&mode==='tank';
  // helikopter isaretleri (her modda)
- for(const h of HELI){if(h.st==='dead')continue;const s=prj(h.x,h.y,h.z);if(!s||s.x<-40||s.x>W+40||s.y<-40||s.y>H+40)continue;const d=Math.hypot(h.x-CAM.position.x,h.y-CAM.position.y,h.z-CAM.position.z),r=clamp(1600/d,14,90),col=h.st==='down'?'#ffb040':'#ff4030';
+ for(const h of HELI){if(h.st==='dead')continue;const s=prj(h.x,h.y,h.z);if(!s||s.x<-40||s.x>W+40||s.y<-40||s.y>H+40){if(h.st!=='down'&&mode==='tank')edge(h);continue}const d=Math.hypot(h.x-CAM.position.x,h.y-CAM.position.y,h.z-CAM.position.z),r=clamp(1600/d,14,90),col=h.st==='down'?'#ffb040':'#ff4030';
   ox.strokeStyle=col;ox.lineWidth=2;ox.beginPath();for(const[sx,sy]of[[-1,-1],[1,-1],[1,1],[-1,1]]){const X=s.x+sx*r,Y=s.y+sy*r*.6;ox.moveTo(X-sx*r*.35,Y);ox.lineTo(X,Y);ox.lineTo(X,Y-sy*r*.25)}ox.stroke();
   const f=clamp(h.hp/h.mx,0,1),bw=clamp(r*1.6,40,110),by=s.y-r*.6-12;ox.fillStyle='rgba(0,0,0,.7)';ox.fillRect(s.x-bw/2-2,by-3,bw+4,8);ox.fillStyle=f>.5?'#5ad65a':f>.25?'#f2b134':'#ff4a3a';ox.fillRect(s.x-bw/2,by-1,bw*f,4);
   ox.font='700 11.5px system-ui,sans-serif';ox.textAlign='center';ox.lineWidth=3;ox.strokeStyle='rgba(0,0,0,.75)';const lab=(h.st==='down'?'DÜŞÜYOR':'SALDIRI HELİKOPTERİ')+' · '+Math.round(Math.hypot(h.x-P.x,h.z-P.z))+' m';ox.strokeText(lab,s.x,by-7);ox.fillStyle='#ffd9d4';ox.fillText(lab,s.x,by-7)}
@@ -2468,12 +2471,42 @@ function draw(){ox.setTransform(OD,0,0,OD,0,0);ox.clearRect(0,0,W,H);dirty=0;if(
  const lead=(x,y,z,vx,vy,vz,col)=>{const d=Math.hypot(x-CAM.position.x,y-CAM.position.y,z-CAM.position.z),t=d/430;const s=prj(x+vx*t,y+vy*t+2*t*t,z+vz*t);if(!s)return;ox.strokeStyle=col;ox.lineWidth=2;ox.beginPath();ox.moveTo(s.x,s.y-8);ox.lineTo(s.x+8,s.y);ox.lineTo(s.x,s.y+8);ox.lineTo(s.x-8,s.y);ox.closePath();ox.stroke();const s0=prj(x,y,z);if(s0){ox.setLineDash([3,4]);ox.beginPath();ox.moveTo(s0.x,s0.y);ox.lineTo(s.x,s.y);ox.stroke();ox.setLineDash([])}};
  for(const h of HELI)if(h.st==='orbit'||h.st==='in')lead(h.x,h.y,h.z,h.vx,0,h.vz,'#ffd040');
  for(const d of ED)if(!d.dead){const vx=d._vx||0,vz=d._vz||0,vy=d._vy||0;lead(d.x,d.y,d.z,vx,vy,vz,'#ff9a30')}}
+// ---- helikopteri bulma (kenar oku, harita isareti, HELİKOPTERE DÖN), nisan yardimi, hava gozetleme
+const TC=matchMedia('(pointer:coarse)').matches,SL={on:0,t:0,h:null},_a=new THREE.Vector3(),_c=new THREE.Vector3();
+const liveH=h=>h.st==='in'||h.st==='orbit';
+function nearH(){let b=null,bd=1e9;for(const h of HELI){if(!liveH(h))continue;const d=Math.hypot(h.x-P.x,h.z-P.z);if(d<bd){bd=d;b=h}}return b}
+function leadTo(x,y,z,vx,vy,vz){U.ae.getWorldPosition(_a);const t=Math.hypot(x-_a.x,y-_a.y,z-_a.z)/430,X=x+vx*t,Y=y+vy*t+2*t*t,Z=z+vz*t;return{yaw:Math.atan2(X-_a.x,Z-_a.z),el:Math.atan2(Y-_a.y,Math.hypot(X-_a.x,Z-_a.z))}}
+const hLead=h=>leadTo(h.x,h.y,h.z,h.vx,0,h.vz),offA=Ld=>Math.hypot(angd(Ld.yaw,AA.yaw)*Math.cos(AA.el),Ld.el-AA.el);
+function slewTo(h){if(h){SL.on=1;SL.h=h;SL.t=0}}
+function aaEnter(){const h=nearH();if(h){slewTo(h);return}
+ if(L.cd){if(heliT>12){heliT=rnd(8,12);heliF=1;radio('Hava gözetleme: düşman helikopteri yaklaşıyor! M85 hazır olsun.')}}
+ else if(!HELI.some(q=>q.st!=='dead')){radio('Serbest mod: eğitim helikopteri geliyor, ateş etmez.');setTimeout(()=>{if(AA.on&&game==='play'&&!HELI.some(q=>q.st!=='dead'))window.spawnHeli(1)},2500)}}
+// komutan kuleyi hedefe cevirir (yumusak); hedefe yakinken nisan onleme noktasina cekilir (dokunmatikte daha guclu)
+function aimHelp(dr){
+ if(SL.on){const h=SL.h;if(!h||!liveH(h)){SL.on=0;return}const Ld=hLead(h),k=Math.min(1,dr*7);AA.yaw+=angd(Ld.yaw,AA.yaw)*k;AA.el=clamp(AA.el+(Ld.el-AA.el)*k,-.26,1.05);SL.t+=dr;if(SL.t>1.2||offA(Ld)<.012)SL.on=0;return}
+ let best=null,ba=1e9;const chk=Ld=>{const a=offA(Ld);if(a<ba){ba=a;best=Ld}};
+ for(const h of HELI)if(liveH(h))chk(hLead(h));
+ for(const d of ED)if(!d.dead)chk(leadTo(d.x,d.y,d.z,d._vx||0,d._vy||0,d._vz||0));
+ const cone=TC?.16:.07;if(!best||ba>cone)return;const k=Math.min(1,dr*(TC?5.5:2.5))*(1-.5*ba/cone);AA.yaw+=angd(best.yaw,AA.yaw)*k;AA.el=clamp(AA.el+(best.el-AA.el)*k,-.26,1.05)}
+function thr(){const h=nearH();if(h)return' · ✈ '+Math.round(Math.hypot(h.x-P.x,h.z-P.z))+' m';return HELI.some(q=>q.st!=='dead')?'':(heliF?' · ✈ yaklaşıyor':' · hava boş')}
+// ekran disindaki helikopter: kenarda yanip sonen kirmizi ok + mesafe
+function edge(h){_c.set(h.x,h.y,h.z).applyMatrix4(CAM.matrixWorldInverse);let vx=_c.x,vy=-_c.y;
+ if(_c.z>0){if(Math.abs(vx)>_c.z*.2){vx=Math.sign(vx);vy=.3}else{vx=0;vy=1}}                     // arkada: yan kenar ya da alt orta
+ const a=Math.atan2(vy,vx),c=Math.cos(a),s=Math.sin(a),rx=clamp(Math.min(W*.25,H*.6),100,220),ry=clamp(H*.27,95,190),X=W/2+c*rx,Y=H/2+s*ry;   // nisan merkezinin cevresinde elips: tuslarin altinda kalmaz
+ ox.save();ox.globalAlpha=.78+.22*Math.sin(now()/110);ox.translate(X,Y);ox.rotate(a);ox.scale(1.25,1.25);ox.fillStyle='#ff4030';ox.strokeStyle='rgba(0,0,0,.75)';ox.lineWidth=2.5;ox.beginPath();ox.moveTo(19,0);ox.lineTo(-9,-13);ox.lineTo(-3,0);ox.lineTo(-9,13);ox.closePath();ox.stroke();ox.fill();ox.restore();
+ const rel=angd(Math.atan2(h.x-P.x,h.z-P.z),P.h);let ck=Math.round(12-rel/(2*PI)*12)%12;if(ck<=0)ck+=12;
+ const lab='✈ '+Math.round(Math.hypot(h.x-P.x,h.z-P.z))+' m · saat '+ck,lx=X-c*44,ly=Y-s*30+4;ox.font='800 12px system-ui,sans-serif';ox.textAlign='center';ox.lineWidth=3;ox.strokeStyle='rgba(0,0,0,.8)';ox.strokeText(lab,lx,ly);ox.fillStyle='#ffd9d4';ox.fillText(lab,lx,ly)}
+// uçaksavarda hedef gorus disindaysa: "HELİKOPTERE DÖN" tusu
+let ctT=0;(window.CTX_XP=window.CTX_XP||[]).push(()=>{if(!AA.on||mode!=='tank'||SL.on){ctT=0;return[]}const h=nearH();if(!h){ctT=0;return[]}ctT=offA(hLead(h))>(ctT?.1:.22)?1:0;return ctT?[{k:'aaT',t:'◎ HELİKOPTERE DÖN',c:'p',f:()=>slewTo(nearH())}]:[]});
+// mini haritada helikopter
+{const _mm=window.mmDraw;if(typeof _mm==='function')window.mmDraw=function(){_mm.apply(this,arguments);if(!HELI.length)return;const W2=132,X=x=>(x/400+.5)*W2,Z=z=>(z/400+.5)*W2,bl=(now()/280|0)%2;
+ for(const h of HELI){if(h.st==='dead')continue;mmx.save();mmx.translate(X(h.x),Z(h.z));mmx.strokeStyle=bl?'#ff4030':'#ffc0b0';mmx.lineWidth=1.8;mmx.beginPath();mmx.arc(0,0,6.5,0,7);mmx.stroke();mmx.fillStyle='#ff4030';mmx.font='900 10px system-ui,sans-serif';mmx.textAlign='center';mmx.textBaseline='middle';mmx.fillText('✈',0,.5);mmx.restore()}}}
 // ---- ana dongu
 const ab=document.getElementById('uAb');if(ab){const b=document.createElement('button');b.id='abA';b.className='ab g1';b.title='M85 uçaksavar (Z)';b.innerHTML='<svg viewBox="0 0 24 24"><path d="M3 15l8-5 10-5M11 10l1 4M6.5 13l1.2 4.5h7"/><circle cx="9" cy="19" r="1.6"/></svg><b>Z</b><small>M85</small>';ab.appendChild(b);
  b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();setAA(!AA.on)})}
 FRAME_HOOKS.push(dr=>{const t=now();
  if(AA.on&&(game!=='play'||mode!=='tank'))setAA(0);
- if(game==='play'&&!window.mapOpen){stepHeli(dr);stepBul(dr);rotorSnd(dr);for(const d of ED){if(d._px!=null&&dr>0){d._vx=(d.x-d._px)/dr;d._vy=(d.y-d._py)/dr;d._vz=(d.z-d._pz)/dr}d._px=d.x;d._py=d.y;d._pz=d.z}}
+ if(game==='play'&&!window.mapOpen){if(AA.on&&mode==='tank')aimHelp(dr);stepHeli(dr);stepBul(dr);rotorSnd(dr);for(const d of ED){if(d._px!=null&&dr>0){d._vx=(d.x-d._px)/dr;d._vy=(d.y-d._py)/dr;d._vz=(d.z-d._pz)/dr}d._px=d.x;d._py=d.y;d._pz=d.z}}
  // M85 yonu
  if(U.ag){if(AA.on){U.ag.rotation.y=angd(AA.yaw,P.th);U.ae.rotation.x=-AA.el}else{U.ag.rotation.y*=Math.max(0,1-dr*3);U.ae.rotation.x*=Math.max(0,1-dr*3)}}
  // atis
@@ -2482,11 +2515,11 @@ FRAME_HOOKS.push(dr=>{const t=now();
  if(firing&&AA.cd<=0&&AA.jam<=0&&AA.ammo>0){AA.cd=1/9;shoot();if(AA.heat>=100){AA.jam=2.6;say('M85 AŞIRI ISINDI · bekle',1.2)}}
  if(firing&&AA.ammo<=0&&AA.cd<=0){AA.cd=.6;say('12,7 mm cephane bitti · ikmal noktasına git',1.4)}
  if(typeof SUP!=='undefined'&&Math.hypot(P.x-SUP.x,P.z-SUP.z)<13&&AA.ammo<900)AA.ammo=Math.min(900,AA.ammo+Math.ceil(dr*300));
- if(AA.on){const hb=Math.round(AA.heat);st.className=AA.jam>0?'j':'';st.innerHTML='M85 · 12,7 mm · '+AA.ammo+'/900 · ISI<i><s style="width:'+Math.min(100,hb)+'%;background:'+(hb>75||AA.jam>0?'#ff6a50':'#7de07a')+'"></s></i>'+(AA.jam>0?' · TUTUKLUK':'')}
+ if(AA.on){const hb=Math.round(AA.heat);st.className=AA.jam>0?'j':'';st.innerHTML='M85 · 12,7 mm · '+AA.ammo+'/900 · ISI<i><s style="width:'+Math.min(100,hb)+'%;background:'+(hb>75||AA.jam>0?'#ff6a50':'#7de07a')+'"></s></i>'+(AA.jam>0?' · TUTUKLUK':'')+thr()}
  const b=document.getElementById('abA');if(b)b.classList.toggle('on',!!AA.on);
  if(AA.on||HELI.length||dirty)draw()});
 // gorev basi / bitis temizligi
-const _ie=window.initExtra;window.initExtra=function(){_ie.apply(this,arguments);for(const h of HELI)S.remove(h.g);HELI.length=0;for(const b of BUL)S.remove(b.m);BUL.length=0;AA.ammo=900;AA.heat=0;AA.jam=0;heliT=rnd(70,100);if(AA.on)setAA(0);dirty=1};
+const _ie=window.initExtra;window.initExtra=function(){_ie.apply(this,arguments);for(const h of HELI)S.remove(h.g);HELI.length=0;for(const b of BUL)S.remove(b.m);BUL.length=0;AA.ammo=900;AA.heat=0;AA.jam=0;heliT=rnd(40,60);heliF=0;SL.on=0;if(AA.on)setAA(0);dirty=1};
 })();
 
 
@@ -4414,7 +4447,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'48',LOGO=window.HISAR_LOGO;
+const VER=+'49',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+

@@ -228,6 +228,17 @@ button.chip{cursor:pointer;font-family:var(--mono)}
 .flash.par{background:rgba(242,179,61,.9);color:#2a1d03}
 .flash.end{background:rgba(78,157,255,.85);color:#04162b}
 .share-prev{width:100%;border-radius:10px;border:1px solid var(--line);display:block}
+/* açılış ekranı */
+.splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--bg);transition:opacity .45s ease;cursor:pointer}
+.splash.out{opacity:0;pointer-events:none}
+.splash .sp{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:24px}
+.splash svg{width:88px;height:88px;color:var(--accent);margin-bottom:6px}
+.splash .sp-name{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.16em;padding-left:.16em}
+.splash .sp-sub{font-size:13px;color:var(--muted);letter-spacing:.04em}
+.splash .sp-dev{margin-top:34px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.splash .sp-dev span{font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:.24em;color:var(--muted)}
+.splash .sp-dev b{font-family:var(--display);font-size:18px;font-weight:600;letter-spacing:.12em;color:var(--fg)}
+@media (prefers-reduced-motion:reduce){.splash{transition:none}}
 /* alt sayfa (sheet) */
 .sheet{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center}
 .sheet-back{position:absolute;inset:0;background:rgba(0,0,0,.55)}
@@ -382,6 +393,14 @@ svg text{font-family:var(--mono)}
   </nav>
 </div>
 
+<div class="splash" id="splash" lang="tr" role="img" aria-label="HİSAR TETİK. Geliştirici: Emin Kaan Boyacı">
+  <div class="sp">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/></svg>
+    <div class="sp-name">HİSAR TETİK</div>
+    <div class="sp-sub">Atış ve tetik analizi</div>
+    <div class="sp-dev"><span>GELİŞTİRİCİ</span><b>EMİN KAAN BOYACI</b></div>
+  </div>
+</div>
 <div class="sheet" id="sheet" lang="tr" hidden>
   <div class="sheet-back" data-close></div>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
@@ -400,7 +419,7 @@ svg text{font-family:var(--mono)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=3;
+const VER=4;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -2079,7 +2098,7 @@ function pgUygulama(){
       <p class="note" id="apUpdN">${updAvail?"Yeni sürüm var. "+esc(updNote):(HOSTED||APK)?"Güncel. Yeni sürüm çıkınca burada ve üst çubukta görünür.":"Güncelleme denetimi uygulamanın kendi adresinde çalışır."}</p></div>
     <div class="card"><h2>Telefona yükle</h2>${inst}</div>
     <div class="card"><h2>Sensör yazılımı</h2><p>M5StickC Plus2'ye HİSAR sensör yazılımını yükler: bilgisayarda Chrome ya da Edge ve USB-C kablo gerekir.</p><a class="btn" href="${YUKLE_URL}" target="_blank" rel="noopener">Sensör yazılımını yükle</a></div>
-    <div class="card"><h2>Hakkında</h2><p>HİSAR TETİK · sürüm ${VER}. Sensör: M5StickC Plus2 (HISAR-SENSOR yazılımı) ya da WitMotion WT901BLE.</p>
+    <div class="card"><h2>Hakkında</h2><p>HİSAR TETİK · sürüm ${VER}. Geliştirici: <b style="color:var(--fg)">Emin Kaan Boyacı</b>.</p><p>Sensör: M5StickC Plus2 (HISAR-SENSOR yazılımı) ya da WitMotion WT901BLE.</p>
       <p class="note">Sensör hedefi görmez: tetik anında namlunun ne kadar ve hangi yöne kaydığını ölçer, atışın o yöne gideceğini hesaplar. Teşhisler NRA ve 4-H atış eğitimi hata şemalarına dayanır; tüfek teşhisleri tabanca şemasından uyarlanmıştır.</p></div>`;
 }
 function bindUygulama(){ const b=$("apUpd"); if(b) b.onclick=doUpdate; }
@@ -2220,6 +2239,9 @@ selectSource("demo",false);
 if(prevSrc==="sensor") setStatus(`Son kullandığın kaynak sensördü. Bağlanmak için <b>Sensör</b>'e dokun; o zamana kadar deneme modu çalışır.`);
 else if(prevSrc==="phone") setStatus(`Son kullandığın kaynak telefondu. Başlatmak için <b>Telefon</b>'a dokun; o zamana kadar deneme modu çalışır.`);
 initPlatform();
+(function(){ const sp=$("splash"); if(!sp) return; let gone=false;
+  const hide=()=>{ if(gone) return; gone=true; sp.classList.add("out"); setTimeout(()=>sp.remove(),500); };
+  sp.addEventListener("click",hide); setTimeout(hide,1700); })();
 setTimeout(openFromHash,400);
 requestAnimationFrame(loop);
 if(prevSrc==="sensor"&&S.autoConnect) setTimeout(()=>{ autoConnect(); },400);

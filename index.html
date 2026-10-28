@@ -1511,13 +1511,25 @@ const MZ=window.MZ={tz:.1,ty:1.70,z:1.0,d:4.8,gy:.44};MZ.y=MZ.ty+MZ.gy;       //
 const RUB=0x141516,STL=0x24272a,ALU=0x6f757b,HUB=0x3b3f43,BLT=0x1b1d20,GUN=0x2b2f34,GUN2=0x3a3f45,GLS=0x17303b,LMP=0xfff0b0,TAIL=0xd02020,DRK=0x1b1d1f,TRP=0x6b6247,ROP=0x4d4331,KHK=0x4f5640,CBL=0x2c2e2c;
 const UB=new THREE.BoxGeometry(1,1,1);
 const T4=new THREE.Matrix4(),TQ=new THREE.Quaternion(),TE=new THREE.Euler(0,0,0,'YXZ'),TV=new THREE.Vector3(),TS=new THREE.Vector3(),TN=new THREE.Matrix3(),TC=new THREE.Color(),TW=new THREE.Vector3(),UYv=new THREE.Vector3(0,1,0);
+// yuvarlatilmis kutu: kenar/koseler r yaricapla, yumusak normaller (ic mekan icin; onbellekli)
+const RBC=new Map();
+function rboxGeo(w,h,d,r,k){const key=[w,h,d,r,k].map(v=>Math.round(v*2000)).join(',');if(RBC.has(key))return RBC.get(key);
+ const n=2*k+1,g=new THREE.BoxGeometry(1,1,1,n,n,n),P=g.attributes.position,N=g.attributes.normal,hx=w/2,hy=h/2,hz=d/2,ix=hx-r,iy=hy-r,iz=hz-r;
+ const rm=(v,hh)=>{const i=Math.round((v+.5)*n);return i<=k?-hh+r*(i/k):hh-r*((n-i)/k)};
+ for(let i=0;i<P.count;i++){const x=rm(P.getX(i),hx),y=rm(P.getY(i),hy),z=rm(P.getZ(i),hz),qx=Math.max(-ix,Math.min(ix,x)),qy=Math.max(-iy,Math.min(iy,y)),qz=Math.max(-iz,Math.min(iz,z));
+  let dx=x-qx,dy=y-qy,dz=z-qz;const L=Math.hypot(dx,dy,dz);if(L>1e-7){dx/=L;dy/=L;dz/=L;P.setXYZ(i,qx+dx*r,qy+dy*r,qz+dz*r);N.setXYZ(i,dx,dy,dz)}else P.setXYZ(i,x,y,z)}
+ g.userData.sh=1;RBC.set(key,g);return g}
+// donel (lathe) parca: pts=[[yaricap,y],...] y ekseni etrafinda
+const LTC=new Map();
+function latheGeo(pts,seg){const key=JSON.stringify(pts)+seg;if(LTC.has(key))return LTC.get(key);const g=new THREE.LatheGeometry(pts.map(a=>new THREE.Vector2(a[0],a[1])),seg||16);g.computeVertexNormals();g.userData.sh=1;LTC.set(key,g);return g}
 class Soup{
  constructor(){this.p=[];this.n=[];this.c=[]}
  gm(g,col){const q=g.index?g.toNonIndexed():g;TN.getNormalMatrix(T4);TC.set(col==null?0x808080:col);const P=q.attributes.position.array,N=q.attributes.normal.array,n=P.length/3;
   for(let i=0;i<n;i++){TW.set(P[i*3],P[i*3+1],P[i*3+2]).applyMatrix4(T4);this.p.push(TW.x,TW.y,TW.z);TW.set(N[i*3],N[i*3+1],N[i*3+2]).applyMatrix3(TN).normalize();this.n.push(TW.x,TW.y,TW.z);this.c.push(TC.r,TC.g,TC.b)}
   if(q!==g)q.dispose();return this}
  geo(g,x,y,z,col,rx,ry,rz,sx,sy,sz){TE.set(rx||0,ry||0,rz||0);TQ.setFromEuler(TE);TV.set(x,y,z);TS.set(sx==null?1:sx,sy==null?1:sy,sz==null?1:sz);T4.compose(TV,TQ,TS);return this.gm(g,col)}
- box(w,h,d,x,y,z,col,rx,ry,rz){return this.geo(UB,x,y,z,col,rx,ry,rz,w,h,d)}
+ box(w,h,d,x,y,z,col,rx,ry,rz){if(this.round&&Math.min(w,h,d)>=.03&&Math.max(w,h,d)>=.055){const mn=Math.min(w,h,d),r=this.round>1?Math.min(.045,mn*.42):Math.min(.018,Math.max(.004,mn*.2));return this.geo(rboxGeo(w,h,d,r,Math.max(w,h,d)>.22||this.round>1?2:1),x,y,z,col,rx,ry,rz)}return this.geo(UB,x,y,z,col,rx,ry,rz,w,h,d)}
+ lathe(pts,seg,x,y,z,col,rx,ry,rz){return this.geo(latheGeo(pts,seg),x,y,z,col,rx,ry,rz)}
  cyl(rt,rb,h,x,y,z,col,ax,seg,rx,ry,rz){const g=new THREE.CylinderGeometry(rt,rb,h,seg||12,1);if(ax==='z')g.rotateX(Y90);else if(ax==='x')g.rotateZ(-Y90);return this.geo(g,x,y,z,col,rx,ry,rz)}
  sph(sx,sy,sz,x,y,z,col,seg,rx,ry,rz){const n=seg||10;return this.geo(new THREE.SphereGeometry(1,n,Math.max(4,n>>1)),x,y,z,col,rx,ry,rz,sx,sy,sz)}
  rod(a,b,r,col,seg){TV.set(b[0]-a[0],b[1]-a[1],b[2]-a[2]);const L=TV.length();TV.normalize();TQ.setFromUnitVectors(UYv,TV);TS.set(1,1,1);const m=new THREE.Vector3((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);T4.compose(m,TQ,TS);return this.gm(new THREE.CylinderGeometry(r,r,L,seg||6,1),col)}
@@ -1708,7 +1720,7 @@ let FGg=null,FGb=null;
 function flagGeo(){if(FGg)return FGg;const g=new THREE.PlaneGeometry(.39,.26,7,2);g.rotateY(Y90);g.translate(0,.13,-.195);g.userData.sh=true;FGb=g.attributes.position.array.slice();FGg=g;return g}
 FRAME_HOOKS.push(()=>{if(!FGg)return;const t=performance.now()/1000,p=FGg.attributes.position,a=p.array,b=FGb;
  for(let i=0;i<p.count;i++){const d=-b[i*3+2],k=d/.39;a[i*3]=.055*k*Math.sin(d*17-t*10+b[i*3+1]*5)+.012*k*Math.sin(t*6+d*31);a[i*3+2]=b[i*3+2]*(1-.1*k*Math.abs(Math.sin(d*17-t*10)))}p.needsUpdate=true});
-const W=THREE;let GEO=null;window.M60X={Soup,domeInto,DOME,domeW,domeR,CUP,hull2};
+const W=THREE;let GEO=null;window.M60X={Soup,domeInto,DOME,domeW,domeR,CUP,hull2,rboxGeo,latheGeo};
 function build(){const mk=()=>({C:new Soup(),V:new Soup(),E:new Soup(),D:new Soup()});
  const H=mk(),T=mk(),Gn=mk(),Mt=mk();buildHull(H.C,H.V,H.E);buildTurret(T.C,T.V,T.E,T.D);buildGun(Gn.C,Gn.V,Gn.E);buildMantlet(Mt.C,Mt.V,Mt.E);
  const fin=o=>({D:o.D.p.length?o.D.mesh(null,true):null,C:o.C.p.length?o.C.mesh(null,true):null,V:o.V.p.length?o.V.mesh(null,false):null,E:o.E.p.length?o.E.mesh(null,false):null});
@@ -1897,7 +1909,7 @@ const _ie=window.initExtra;window.initExtra=function(){_ie.apply(this,arguments)
 const X=window.M60X,Soup=X.Soup,domeInto=X.domeInto,DOME=X.DOME,CUP=X.CUP,domeW=X.domeW,PI=Math.PI;
 const TU=P.g.userData.tu,GN=P.g.userData.gn;
 // ---- ic mekan renkleri (M60 ici: kirli beyaz duvar, zeytin yesili cihazlar)
-const WALL=0xaeb2a5,CEIL=0xb8baae,FLR=0x3b3e39,OLV=0x4f573d,OLV2=0x5d6449,GRY=0x6c727a,STL=0x868c92,DK=0x26292c,BLK=0x17191b,RUB=0x1a1b1c,BRS=0xb39443,RED=0xa3261d,WHT=0xd8d8cf,SEAT=0x2b3126,GUNM=0x33383c,TAN=0x7d7454,PNL=0x2b302b;
+const WALL=0xd6d8d0,CEIL=0xdcded6,FLR=0x3b3e39,OLV=0xc2c5be,OLV2=0xb5b9b2,GRY=0x9ca1a5,STL=0xa9aeb2,DK=0x33373a,BLK=0x17191b,RUB=0x1a1b1c,BRS=0xb39443,RED=0xb3231b,WHT=0xe8e8e0,SEAT=0x262928,GUNM=0xadb1b3,TAN=0x8a8160,PNL=0xc9ccc5,RAD=0x4f573d,RAD2=0x5d6449;
 // ---- dokular: duvar paneli (dikis + percin + kir) ve cihaz kiri
 function cvs(n,f){const c=document.createElement('canvas');c.width=c.height=n;const g=c.getContext('2d');f(g,n);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t}
 function noise(g,n,a){const k=document.createElement('canvas');k.width=k.height=n;const c=k.getContext('2d'),id=c.createImageData(n,n),d=id.data;for(let i=0;i<d.length;i+=4){const v=(Math.random()-.5)*a;d[i]=d[i+1]=d[i+2]=v>0?255:0;d[i+3]=Math.min(255,Math.abs(v)*2.2)}c.putImageData(id,0,0);g.drawImage(k,0,0)}
@@ -1922,11 +1934,13 @@ function uvs(geo,k){const P=geo.attributes.position.array,u=new Float32Array(P.l
   for(let q=0;q<3;q++){const x=P[i+q*3],y=P[i+q*3+1],z=P[i+q*3+2],j=(i/3+q)*2;if(ny>=nx&&ny>=nz){u[j]=x*k;u[j+1]=z*k}else if(nx>=nz){u[j]=z*k;u[j+1]=y*k}else{u[j]=x*k;u[j+1]=y*k}}}
  geo.setAttribute('uv',new THREE.BufferAttribute(u,2));return geo}
 // ---- yardimcilar: SW duvar, SF zemin, SI cihaz (sabit), SG top ile hareketli, SE isikli
-const SW=new Soup(),SF=new Soup(),SI=new Soup(),SG=new Soup(),SE=new Soup();
-const segBox=(S,w,h,d,x,y,z,c,rx,ry,rz)=>{const m=Math.max(w,h,d);if(m<.26)return S.box(w,h,d,x,y,z,c,rx,ry,rz);const f=v=>Math.max(1,Math.min(5,Math.ceil(v/.2)));return S.geo(new THREE.BoxGeometry(1,1,1,f(w),f(h),f(d)),x,y,z,c,rx,ry,rz,w,h,d)};
+const SW=new Soup(),SF=new Soup(),SI=new Soup(),SG=new Soup(),SE=new Soup();SW.round=SF.round=SI.round=SG.round=1;
+const PI2=Math.PI/2,LT=(S,pts,seg,x,y,z,c,rx,ry,rz)=>S.lathe(pts,seg,x,y,z,c,rx,ry,rz);
+const segBox=(S,w,h,d,x,y,z,c,rx,ry,rz)=>{const m=Math.max(w,h,d);if(m<.26||S.round)return S.box(w,h,d,x,y,z,c,rx,ry,rz);const f=v=>Math.max(1,Math.min(5,Math.ceil(v/.2)));return S.geo(new THREE.BoxGeometry(1,1,1,f(w),f(h),f(d)),x,y,z,c,rx,ry,rz,w,h,d)};
 const B=(w,h,d,x,y,z,c,rx,ry,rz)=>segBox(SI,w,h,d,x,y,z,c,rx,ry,rz),Cy=(rt,rb,h,x,y,z,c,ax,sg)=>SI.cyl(rt,rb,h,x,y,z,c,ax,sg||12),Rd=(a,b,r,c,sg)=>SI.rod(a,b,r||.012,c==null?STL:c,sg||6),Sp=(r,x,y,z,c)=>SI.sph(r,r,r,x,y,z,c,8);
 const GB=(w,h,d,x,y,z,c,rx,ry,rz)=>segBox(SG,w,h,d,x,y,z,c,rx,ry,rz),GC=(rt,rb,h,x,y,z,c,ax,sg)=>SG.cyl(rt,rb,h,x,y,z,c,ax,sg||12),GR=(a,b,r,c)=>SG.rod(a,b,r||.012,c==null?STL:c,6);
 const EB=(w,h,d,x,y,z,c,ry)=>SE.box(w,h,d,x,y,z,c,0,ry||0);
+const SB=(w,h,d,x,y,z,c,rx,ry,rz)=>{SI.round=2;const r=SI.box(w,h,d,x,y,z,c,rx,ry,rz);SI.round=1;return r};
 const wx=(z,y)=>domeW(z,y)*.955;                                   // ic duvar yari genisligi
 const onR=(z,y,t)=>-(wx(z,y)-t),onL=(z,y,t)=>wx(z,y)-t;           // sag / sol duvara yaslanan merkez x
 const HS=[];const hot=(t,d,x,y,z,g)=>HS.push({t,d,p:new THREE.Vector3(x,y,z),g:!!g});   // Turkce parca adlari (g: topa bagli)
@@ -1964,14 +1978,14 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
   const A=f(a0),Bq=f(a1),R=1.07,I0=[Math.cos(a0)*R,.02,Math.sin(a0)*R],I1=[Math.cos(a1)*R,.02,Math.sin(a1)*R];SF.quad(A,I0,I1,Bq,0x45493f,[0,1,0])}}
 // ================= 2) NISANCI BOLUMU (topun sagi, on) =================
 { // koltuk
- B(.42,.08,.4,-.62,-.40,.1,SEAT);B(.4,.46,.08,-.62,-.12,-.13,SEAT,-.12);B(.34,.12,.08,-.62,.18,-.17,SEAT,-.12);Cy(.04,.04,.55,-.62,-.7,.1,GRY,'y',8);B(.5,.03,.5,-.62,-.95,.1,GRY);
+ SB(.42,.08,.4,-.62,-.40,.1,SEAT);SB(.4,.46,.08,-.62,-.12,-.13,SEAT,-.12);SB(.34,.12,.08,-.62,.18,-.17,SEAT,-.12);Cy(.04,.04,.55,-.62,-.7,.1,GRY,'y',8);B(.5,.03,.5,-.62,-.95,.1,GRY);
  for(const s of[-1,1])Rd([-.62+s*.2,-.4,.18],[-.62+s*.21,-.16,-.13],.014,GRY);
  hot('NİŞANCI SANDALYESİ','Nişancı bölmesinde, topun sağında',-.62,-.32,.1);
  // AN/VSG-2 termal gorus periskobu (M118E1 yatagi)
  B(.28,.56,.32,-.5,.7,.68,OLV);B(.32,.12,.36,-.5,.99,.66,GUNM);B(.27,.16,.24,-.5,.42,.56,0x3a3f40);
  B(.2,.22,.012,-.5,.68,.515,PNL);knobs(SI,-.56,.74,.512,1,0,'z');knobs(SI,-.44,.74,.512,1,0,'z');for(const x of[-.57,-.5,-.43])Rd([x,.62,.512],[x,.62,.49],.006,STL);
  EB(.05,.012,.002,-.5,.79,.508,0xd8d8c8);EB(.05,.012,.002,-.5,.57,.508,0xd8d8c8);
- Cy(.045,.045,.1,-.5,.43,.41,BLK,'z',14);Cy(.05,.062,.045,-.5,.43,.345,RUB,'z',16);Cy(.034,.034,.006,-.5,.43,.322,0x050607,'z',14);B(.18,.045,.06,-.5,.52,.4,RUB);
+ Cy(.044,.048,.1,-.5,.43,.41,BLK,'z',22);Cy(.052,.052,.012,-.5,.43,.455,0x2b2f33,'z',22);LT(SI,[[.036,0],[.05,.002],[.058,.014],[.064,.032],[.063,.048],[.056,.054],[.047,.05],[.042,.036],[.038,.012]],22,-.5,.43,.37,RUB,-PI2);SE.cyl(.031,.031,.003,-.5,.43,.352,0x18321d,'z',20);SE.cyl(.012,.012,.002,-.508,.438,.3505,0x3c6a44,'z',12);SB(.2,.05,.07,-.5,.505,.392,RUB,.15);
  for(const s of[-1,1]){Cy(.042,.042,.05,-.5+s*.165,.68,.62,STL,'x',14);B(.012,.05,.02,-.5+s*.193,.68,.62,BLK)}
  Rd([-.36,.52,.6],[-.31,.6,.52],.011,STL);Sp(.02,-.31,.6,.52,RED);
  cable([[-.36,.86,.7],[-.62,.9,.62],[-1.0,.78,.5],[-1.18,.62,.35]],.012);cable([[-.62,.82,.78],[-.9,.7,.85],[-1.1,.45,.75]],.014,0x2a2c2d);
@@ -1980,8 +1994,8 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
  // M10A3 balistik tahrik (periskobun solu, tavanda)
  B(.2,.14,.26,-.2,.86,.6,OLV2);Rd([-.3,.86,.6],[-.4,.86,.62],.022,STL);Cy(.03,.03,.04,-.2,.78,.6,STL,'y',10);hot('M10A3 BALİSTİK TAHRİK','Termal periskobun sol yanında, kule tavanında',-.2,.84,.6);
  // takat tutamaklari (cadillac)
- B(.38,.12,.18,-.56,-.14,.5,GUNM);Cy(.045,.055,.16,-.56,-.01,.5,GUNM,'y',10);B(.3,.05,.07,-.56,.08,.48,DK);
- for(const s of[-1,1]){const x=-.56+s*.17;Cy(.028,.028,.11,x,.095,.47,RUB,'x',10);B(.05,.026,.07,x,.065,.52,STL);B(.014,.034,.02,x,.07,.43,BLK);Sp(.012,x,.115,.47,s>0?RED:STL)}
+ B(.36,.12,.18,-.56,-.14,.5,GUNM);LT(SI,[[.06,0],[.066,.012],[.056,.024],[.066,.036],[.056,.048],[.064,.06],[.054,.072],[.06,.084],[.05,.096],[.045,.1]],18,-.56,-.08,.5,RUB);Cy(.034,.04,.08,-.56,.04,.5,GUNM,'y',16);SB(.1,.07,.085,-.56,.08,.48,GUNM);Cy(.02,.02,.24,-.56,.08,.48,DK,'x',14);
+ for(const s of[-1,1]){const x0=-.56+s*.145;Cy(.019,.019,.075,-.56+s*.085,.085,.48,BLK,'x',12);LT(SI,[[0,0],[.024,0],[.031,.01],[.027,.024],[.033,.04],[.028,.056],[.034,.072],[.029,.088],[.032,.104],[.026,.118],[.012,.126],[0,.127]],16,x0,.11,.48,RUB,Math.PI,0,-s*.28);Sp(.014,x0,.112,.48,RED);Rd([x0-s*.006,.075,.452],[x0-s*.008,.048,.446],.006,BLK);Sp(.008,x0-s*.008,.048,.446,BLK)}
  hot('NİŞANCI TAKAT TUTAMAKLARI','Önünde · tetikler, lazer (sağ) ve öne tutuş düğmeleri',-.56,.08,.48);
  Rd([-.74,-.1,.78],[-.8,.12,.82],.014,STL);Sp(.022,-.8,.12,.82,RED);hot('PERİSKOP ZIRH KAPAĞI KOLU','Takat tutamağı ilerisinde',-.8,.1,.82);
  // cephane secme kutusu (sag on)
@@ -2013,15 +2027,15 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
  cable([[-.28,-.05,.25],[-.3,-.3,.15],[-.25,-.55,.0],[-.1,-.7,-.2]],.024,0x2a2c2a);B(.12,.08,.1,-.28,.0,.25,OLV2);hot('GAZ TEMİZLEME HORTUMU','Nişancının sol yanı, topun altı · hava ısıtıcı komutası',-.28,0,.25);
 }
 // ================= 3) KOMUTAN BOLUMU (sag arka, kupola altinda) =================
-{B(.46,.08,.4,-.62,.12,-.55,SEAT);B(.42,.46,.08,-.62,.38,-.79,SEAT,-.1);Cy(.045,.045,1.05,-.62,-.42,-.55,GRY,'y',8);B(.52,.03,.5,-.62,-.95,-.55,GRY);
- B(.3,.06,.24,-.62,-.25,-.95,SEAT);Cy(.03,.03,.5,-.62,-.55,-.95,GRY,'y',8);hot('KOMUTAN SANDALYESİ','Kulenin altında · oturur ya da üzerinde ayakta durur',-.62,.12,-.55);hot('GÖZETLEME SANDALYESİ','Kapak açıkken gözetleme için, komutanın gerisinde',-.62,-.24,-.95);
+{SB(.46,.08,.4,-.62,.12,-.55,SEAT);SB(.42,.46,.08,-.62,.38,-.79,SEAT,-.1);Cy(.045,.045,1.05,-.62,-.42,-.55,GRY,'y',8);B(.52,.03,.5,-.62,-.95,-.55,GRY);
+ SB(.3,.06,.24,-.62,-.25,-.95,SEAT);Cy(.03,.03,.5,-.62,-.55,-.95,GRY,'y',8);hot('KOMUTAN SANDALYESİ','Kulenin altında · oturur ya da üzerinde ayakta durur',-.62,.12,-.55);hot('GÖZETLEME SANDALYESİ','Kapak açıkken gözetleme için, komutanın gerisinde',-.62,-.24,-.95);
  // AN/VVG-2 lazer mesafe olcucu (komutanin onunde, tavanda)
  B(.36,.2,.32,-.72,.82,.02,OLV);B(.3,.05,.26,-.72,.7,.02,GUNM);B(.12,.08,.02,-.72,.8,-.15,PNL);EB(.04,.03,.004,-.75,.8,-.162,0xff3020);EB(.03,.02,.004,-.68,.8,-.162,0x3fe070);
  Cy(.04,.05,.08,-.72,.74,-.18,RUB,'z',12);hot('AN/VVG-2 LAZER MESAFE ÖLÇÜCÜ','Komutanın önünde, kule tavanında · RANGE düğmesi (L)',-.72,.8,-.02);
  // komutan termal ekrani (sag on)
  {const mr=2.25,nx=Math.sin(mr),nz=Math.cos(mr);B(.3,.24,.14,-1.0,.5,-.2,GUNM,0,mr);B(.25,.19,.01,-1.0+nx*.068,.5,-.2+nz*.068,0x0b100d,0,mr);B(.32,.03,.06,-1.0-nx*.02,.635,-.2-nz*.02,GUNM,0,mr);window.__tm={x:-1.0+nx*.075,y:.5,z:-.2+nz*.075,ry:mr}}hot('KOMUTAN TERMAL EKRANI','Komutanın sağ önünde · nişancı görüntüsünün aynısı',-1.0,.5,-.2);
  // komutan takat tutamagi (sag)
- B(.12,.1,.14,-1.0,.0,-.68,GUNM);Rd([-1.0,.04,-.68],[-1.0,.2,-.64],.02,BLK);Sp(.032,-1.0,.21,-.64,BLK);Sp(.013,-.98,.23,-.64,RED);hot('KOMUTAN TAKAT TUTAMAĞI','Komutanın sağında · kule/top yönlendirme, öne tutuş, tetik',-1.0,.1,-.66);
+ B(.12,.1,.14,-1.0,.0,-.68,GUNM);LT(SI,[[.045,0],[.05,.01],[.04,.02],[.05,.03],[.04,.04],[.047,.05],[.03,.058]],16,-1.0,.05,-.68,RUB);LT(SI,[[0,0],[.024,0],[.03,.012],[.026,.028],[.032,.044],[.027,.06],[.031,.076],[.026,.092],[.03,.108],[.024,.122],[.012,.13],[0,.13]],16,-1.0,.105,-.675,BLK,.22);Sp(.013,-.99,.24,-.645,RED);Rd([-1.0,.15,-.705],[-1.0,.125,-.715],.006,STL);hot('KOMUTAN TAKAT TUTAMAĞI','Komutanın sağında · kule/top yönlendirme, öne tutuş, tetik',-1.0,.1,-.66);
  // XM21 hesaplayici + komutan cephane secme kutusu + kule akim kutusu + stabilizasyon elektronik unitesi
  {const z=-.82,x=onR(z,.05,.15);B(.28,.3,.42,x,.0,z,OLV);B(.015,.2,.3,x+.145,.02,z,0x0c110e);for(const dz of[-.12,.12])Cy(.026,.026,.03,x+.155,-.09,z+dz,STL,'x',10);
   hot('XM21 HESAPLAYICI','Komutanın sağında kalça hizasında · balistik çözüm, ilave yükseliş',x,.02,z);window.__xm2={x:x+.155,y:.04,z};
@@ -2036,7 +2050,7 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
  B(.18,.1,.12,-.25,.86,-.62,PNL);EB(.022,.02,.004,-.25,.81,-.62,0xff4030);hot('SİS HAVANI AKIM ANAHTARI','Komutanın solunda, kule tavanında',-.25,.86,-.62);
 }
 // ================= 4) DOLDURUCU BOLUMU (topun solu) + cephane =================
-{B(.4,.06,.38,.68,-.22,-.42,SEAT);B(.38,.36,.06,.68,-.02,-.64,SEAT,-.12);{const xw=onL(-.42,-.2,.04);Rd([.88,-.24,-.42],[xw,-.05,-.42],.02,GRY);Rd([.88,-.24,-.3],[xw,-.05,-.3],.02,GRY)}
+{SB(.4,.06,.38,.68,-.22,-.42,SEAT);SB(.38,.36,.06,.68,-.02,-.64,SEAT,-.12);{const xw=onL(-.42,-.2,.04);Rd([.88,-.24,-.42],[xw,-.05,-.42],.02,GRY);Rd([.88,-.24,-.3],[xw,-.05,-.3],.02,GRY)}
  hot('DOLDURUCU SANDALYESİ','Doldurucu bölmesinde · açılıp kapanır, çıkarılabilir',.68,-.2,-.42);
  {const z=-.98,x=onL(z,.05,.05);B(.08,.18,.14,x,.0,z,GUNM);Rd([x-.04,.0,z],[x-.12,.1,z],.016,STL);Sp(.022,x-.12,.1,z,RED);hot('KULE TESPİT KİLİDİ','Doldurucunun gerisinde kule yan duvarında',x,0,z);
   const z2=-.35,x2=onL(z2,.5,.05);B(.07,.12,.14,x2,.5,z2,PNL);EB(.008,.02,.02,x2-.037,.53,z2,0x3fe070);B(.016,.04,.04,x2-.04,.47,z2,RED);hot('DOLDURUCU STABİLİZASYON EMNİYET ANAHTARI','Doldurucunun solunda kule yan duvarında',x2,.5,z2);
@@ -2059,8 +2073,8 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
  cable([[.3,-.3,.2],[.45,-.5,0],[.7,-.6,-.2]],.024,0x2a2c2a);
 }
 // ================= 5) TELSIZ + BOS KOVAN YASTIGI (arka) =================
-{B(.66,.4,.42,-.08,.04,-1.8,OLV);B(.6,.32,.02,-.08,.04,-1.585,0x1d221c);for(let k=0;k<4;k++)Cy(.024,.024,.03,-.3+k*.14,.1,-1.575,STL,'z',10);for(let k=0;k<3;k++)Cy(.016,.016,.03,-.25+k*.2,-.05,-1.575,0x9a9c98,'z',8);
- EB(.18,.05,.004,-.04,.15,-1.572,0x3a8a50);B(.6,.3,.4,.6,.0,-1.8,OLV2);B(.54,.24,.02,.6,.0,-1.595,0x1d221c);knobs(SI,.45,.04,-1.584,3,.0,'z');
+{B(.66,.4,.42,-.08,.04,-1.8,RAD);B(.6,.32,.02,-.08,.04,-1.585,0x1d221c);for(let k=0;k<4;k++)Cy(.024,.024,.03,-.3+k*.14,.1,-1.575,STL,'z',10);for(let k=0;k<3;k++)Cy(.016,.016,.03,-.25+k*.2,-.05,-1.575,0x9a9c98,'z',8);
+ EB(.18,.05,.004,-.04,.15,-1.572,0x3a8a50);B(.6,.3,.4,.6,.0,-1.8,RAD2);B(.54,.24,.02,.6,.0,-1.595,0x1d221c);knobs(SI,.45,.04,-1.584,3,.0,'z');
  cable([[-.08,.25,-1.8],[-.05,.7,-1.7],[.0,.85,-1.5]],.014);hot('TELSİZ','Tank komutanı gerisinde · boş kovan yastığının arkasında',-.08,.1,-1.8);
  for(const[x,z]of[[-.25,-1.02],[.25,-1.02],[-.25,-1.4],[.25,-1.4]])Rd([x,-.72,z],[x,-.06,z],.016,GRY);
  B(.52,.025,.4,0,-.72,-1.21,GRY);B(.52,.5,.07,0,-.4,-1.42,0x2a2f2c);for(const z of[-1.02,-1.4])B(.52,.025,.025,0,-.06,z,GRY);for(const x of[-.25,.25])B(.025,.025,.4,x,-.06,-1.21,GRY);
@@ -2077,7 +2091,7 @@ cable([[.22,.94,.85],[.24,1.0,.0],[.26,.97,-1.0]],.016,0x2c2e2c);cable([[-.1,.99
  for(const s of[-1,1]){GB(.05,.36,.5,s*.2,0,-.22,OLV);GC(.08,.08,.12,s*.27,0,0,STL,'x',12)}
  // kama mekanizmasi (kama halkasi + dikey kayar kama)
  GB(.38,.44,.32,0,0,-1.05,GUNM);GB(.3,.36,.06,0,0,-1.23,0x3d4247);GB(.2,.06,.05,0,.15,-1.26,0x555a60);GB(.06,.2,.05,.14,-.02,-1.26,0x555a60);
- GC(.06,.06,.01,0,-.02,-1.264,0x0a0a0a,'z',14);GR([-.19,.08,-.95],[-.27,.22,-1.12],.02,STL);SG.sph(.03,.03,.03,-.27,.22,-1.12,BLK,8);
+ GC(.06,.06,.01,0,-.02,-1.264,0x0a0a0a,'z',22);SG.geo(new THREE.TorusGeometry(.068,.009,8,28),0,-.02,-1.262,0x30353a);for(let k=0;k<8;k++){const a=k/8*Math.PI*2+.2;GC(.011,.011,.014,Math.cos(a)*.16,Math.sin(a)*.19,-1.258,STL,'z',8)}GB(.31,.012,.012,0,.07,-1.262,0x1d2023);GB(.31,.012,.012,0,-.11,-1.262,0x1d2023);GR([-.19,.08,-.95],[-.27,.22,-1.12],.02,STL);SG.sph(.03,.03,.03,-.27,.22,-1.12,BLK,8);
  // geri tepme silindirleri
  GC(.05,.05,.7,0,.25,-.55,GUNM,'z',12);GC(.05,.05,.7,0,-.25,-.55,GUNM,'z',12);
  // geri tepme muhafazasi: boru cerceve + nisanci tarafinda alt levha
@@ -2821,7 +2835,7 @@ window.fxBurn=burn;FX._s={SM,FI,DB};
 (function(){
 const X=window.M60X,Soup=X.Soup,PI=Math.PI;
 const DRV={m60:{z:2.05,H:1.6},leo1:{z:2.3,H:1.5},t72:{z:2.1,H:1.42},leo2:{z:2.55,H:1.55},m1:{z:2.25,H:1.45},altay:{z:2.45,H:1.58}};
-const WALL=0xaeb2a5,FLR=0x3b3e39,OLV=0x4f573d,GRY=0x6c727a,STL=0x868c92,DK=0x26292c,BLK=0x17191b,RUB=0x1a1b1c,RED=0xa3261d,SEAT=0x2b3126,PNL=0x2b302b,BRS=0xb39443,YEL=0xd8b23a;
+const WALL=0xd6d8d0,FLR=0x3b3e39,OLV=0xc2c5be,GRY=0x9ca1a5,STL=0xa9aeb2,DK=0x33373a,BLK=0x17191b,RUB=0x1a1b1c,RED=0xb3231b,SEAT=0x262928,PNL=0xc9ccc5,BRS=0xb39443,YEL=0xd8b23a;
 const LAMP=[{p:[0,0,0],i:.55,R:1.2}];
 function bake(S,amb,lp){S.raw=S.c.slice();const p=S.p,n=S.n,c=S.c;for(let i=0;i<c.length;i+=3){const x=p[i],y=p[i+1],z=p[i+2],nx=n[i],ny=n[i+1],nz=n[i+2];let r=amb*(.75+.4*(.5+.5*ny));
   const dx=lp[0]-x,dy=lp[1]-y,dz=lp[2]-z,d2=dx*dx+dy*dy+dz*dz,d=Math.sqrt(d2)||1,nd=Math.max(0,(nx*dx+ny*dy+nz*dz)/d);r+=.6*(.2+.8*nd)/(1+d2/1.3);
@@ -2829,13 +2843,13 @@ function bake(S,amb,lp){S.raw=S.c.slice();const p=S.p,n=S.n,c=S.c;for(let i=0;i<
 const MAT=new THREE.MeshBasicMaterial({vertexColors:true});
 // ---- gosterge paneli dokusu (canli)
 const gc=document.createElement('canvas');gc.width=512;gc.height=200;const gx=gc.getContext('2d'),GT=new THREE.CanvasTexture(gc);
-function dial(cx,cy,r,v,mx,lab,unit,red){gx.save();gx.translate(cx,cy);gx.fillStyle='#0c0f0b';gx.beginPath();gx.arc(0,0,r,0,7);gx.fill();gx.strokeStyle='#7d8a72';gx.lineWidth=3;gx.stroke();
+function dial(cx,cy,r,v,mx,lab,unit,red){gx.save();gx.translate(cx,cy);gx.fillStyle='#0c0f0b';gx.beginPath();gx.arc(0,0,r,0,7);gx.fill();gx.strokeStyle='#2c3328';gx.lineWidth=5;gx.stroke();
  gx.strokeStyle='#e6ecd8';gx.lineWidth=2;for(let i=0;i<=10;i++){const a=-PI*1.25+i/10*PI*1.5,r0=i%5?r*.8:r*.7;gx.beginPath();gx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);gx.lineTo(Math.cos(a)*r*.92,Math.sin(a)*r*.92);gx.stroke()}
  if(red){gx.strokeStyle='#d0402a';gx.lineWidth=5;gx.beginPath();gx.arc(0,0,r*.86,-PI*1.25+PI*1.5*red,PI*.25);gx.stroke()}
  const a=-PI*1.25+clamp(v/mx,0,1)*PI*1.5;gx.strokeStyle='#ffb040';gx.lineWidth=3.5;gx.beginPath();gx.moveTo(0,0);gx.lineTo(Math.cos(a)*r*.82,Math.sin(a)*r*.82);gx.stroke();gx.fillStyle='#333';gx.beginPath();gx.arc(0,0,5,0,7);gx.fill();
  gx.fillStyle='#cfdcb8';gx.font='bold '+Math.round(r*.26)+'px monospace';gx.textAlign='center';gx.fillText(lab,0,r*.45);gx.font=Math.round(r*.2)+'px monospace';gx.fillText(unit,0,r*.68);gx.restore()}
 let G={spd:0,rpm:650,gear:'N',oil:0,tmp:60,fuel:100,bat:26};
-function drawPanel(){gx.fillStyle='#262b24';gx.fillRect(0,0,512,200);gx.fillStyle='#1b1f19';gx.fillRect(6,6,500,188);
+function drawPanel(){gx.fillStyle='#c4c7c0';gx.fillRect(0,0,512,200);gx.fillStyle='#e2e4de';gx.fillRect(6,6,500,188);
  dial(80,92,62,G.spd,72,'HIZ','km/sa');dial(220,92,62,G.rpm,3000,'DEVİR','d/dk',.8);
  dial(338,60,34,G.oil,100,'YAĞ','',0);dial(338,140,34,G.tmp,120,'ISI','°C',.82);dial(428,60,34,G.fuel,100,'YAKIT','%',0);dial(428,140,34,G.bat,30,'AKÜ','V',0);
  gx.fillStyle='#0a1209';gx.fillRect(150,160,140,30);gx.fillStyle='#ffb040';gx.font='bold 22px monospace';gx.textAlign='center';gx.fillText('VİTES '+G.gear,220,183);
@@ -2843,7 +2857,7 @@ function drawPanel(){gx.fillStyle='#262b24';gx.fillRect(0,0,512,200);gx.fillStyl
  GT.needsUpdate=true}
 drawPanel();
 // ---- surucu bolmesi geometrisi (govde yerel)
-function build(d){const S=new Soup(),E=new Soup(),zd=d.z,H=d.H,top=H-.06,y0=.45,zf=zd+.62,zb=zd-.85,xw=.72;
+function build(d){const S=new Soup(),E=new Soup();S.round=1;const zd=d.z,H=d.H,top=H-.06,y0=.45,zf=zd+.62,zb=zd-.85,xw=.72;
  const Q=(a,b,c,e,col,h)=>S.quad(a,b,c,e,col,h);
  // zemin, tavan, yan duvarlar, arka
  Q([xw,y0,zb],[-xw,y0,zb],[-xw,y0,zf+.25],[xw,y0,zf+.25],FLR,[0,1,0]);
@@ -2869,17 +2883,18 @@ function build(d){const S=new Soup(),E=new Soup(),zd=d.z,H=d.H,top=H-.06,y0=.45,
  S.box(.48,.08,.42,0,.72,zd-.42,SEAT);S.box(.46,.5,.08,0,.98,zd-.66,SEAT,.18);S.cyl(.04,.04,.25,0,.58,zd-.42,GRY,'y',8);
  // kapakta lamba
  E.box(.12,.02,.06,0,top-.01,zd-.55,0xfff3c4);
+ for(const bz of[zd-.24,zd+.0]){const bx=.5;S.lathe([[0,0],[.084,0],[.088,.025],[.088,.47],[.082,.52],[.064,.56],[.034,.58],[0,.58]],22,bx,y0+.02,bz,RED);for(const yy of[y0+.16,y0+.42])S.cyl(.092,.092,.03,bx,yy,bz,0xe2e3dc,'y',22);S.cyl(.024,.026,.07,bx,y0+.63,bz,0x8e9398,'y',12);S.box(.09,.022,.026,bx-.03,y0+.68,bz,RED);S.rod([bx,y0+.64,bz],[bx-.14,y0+.75,bz+.05],.009,0x3a3d40,8)}
  bake(S,.55,[0,top-.1,zd-.5]);
  const g=new THREE.Group();g.add(new THREE.Mesh(S.mesh(null,false),MAT),new THREE.Mesh(E.mesh(null,false),new THREE.MeshBasicMaterial({vertexColors:true})));
  // gosterge yuzu
  const pm=new THREE.Mesh(new THREE.PlaneGeometry(.88,.34),new THREE.MeshBasicMaterial({map:GT}));pm.position.set(0,top-.48,zf-.125);pm.rotation.set(-.35,PI,0);g.add(pm);
  // T-direksiyon (orta kolonda, panelin altinda)
- const yoke=new THREE.Group();yoke.position.set(0,.86,zd+.42);g.add(yoke);const Y=new Soup();
- Y.rod([0,0,0],[0,-.45,.12],.03,DK,8);Y.box(.62,.045,.06,0,.02,0,DK);for(const s of[-1,1]){Y.cyl(.022,.022,.12,s*.3,.06,0,RUB,'y',8);Y.sph(.026,.026,.026,s*.3,.13,0,RUB,8)}Y.box(.08,.06,.08,0,0,0,STL);
+ const yoke=new THREE.Group();yoke.position.set(0,.86,zd+.42);g.add(yoke);const Y=new Soup();Y.round=1;
+ Y.rod([0,0,0],[0,-.45,.12],.028,DK,16);Y.lathe([[.06,0],[.066,.015],[.054,.03],[.066,.045],[.054,.06],[.064,.075],[.05,.09],[.034,.1]],18,0,-.47,.125,RUB,-.26);{const pts=[];for(let i=0;i<40;i++){const t=i/40*Math.PI*2,c=Math.cos(t),s_=Math.sin(t),e=2/3.2;pts.push(new THREE.Vector3(.245*Math.sign(c)*Math.pow(Math.abs(c),e),.012+.135*Math.sign(s_)*Math.pow(Math.abs(s_),e),-.035))}Y.geo(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true,'centripetal'),80,.017,10,true),0,0,0,BLK);Y.rod([0,.05,-.035],[-.2,-.085,-.035],.013,BLK,10);Y.rod([0,.05,-.035],[.2,-.085,-.035],.013,BLK,10);Y.rod([0,.05,-.035],[0,.145,-.035],.013,BLK,10);Y.cyl(.055,.058,.026,0,.05,-.04,RED,'z',22);Y.cyl(.03,.03,.01,0,.05,-.056,0x8e1c16,'z',18);for(let k=0;k<3;k++){const a=k/3*Math.PI*2+.5;Y.cyl(.008,.008,.008,Math.cos(a)*.036,.05+Math.sin(a)*.036,-.057,0x6d1510,'z',8)}Y.box(.06,.06,.06,0,0,0,0x3a3e42)}
  bake(Y,.6,[0,.5,-.6]);yoke.add(new THREE.Mesh(Y.mesh(null,false),MAT));
  // hiz kolu (sag, -x)
- const gl=new THREE.Group();gl.position.set(-.34,.78,zd+.05);g.add(gl);const GLv=new Soup();GLv.rod([0,0,0],[0,.32,0],.014,STL,6);GLv.sph(.04,.04,.04,0,.34,0,BLK,10);bake(GLv,.6,[0,.5,-.4]);gl.add(new THREE.Mesh(GLv.mesh(null,false),MAT));
- const gb=new Soup();gb.box(.12,.06,.28,-.34,.76,zd+.05,PNL);gb.box(.02,.005,.22,-.34,.792,zd+.05,0x111111);bake(gb,.6,[0,1,zd]);g.add(new THREE.Mesh(gb.mesh(null,false),MAT));
+ const gl=new THREE.Group();gl.position.set(-.34,.78,zd+.05);g.add(gl);const GLv=new Soup();GLv.rod([0,0,0],[0,.32,0],.013,STL,12);GLv.lathe([[.04,0],[.044,.012],[.036,.024],[.044,.036],[.034,.048],[.02,.06],[.014,.064]],16,0,.0,0,RUB);GLv.lathe([[0,0],[.012,0],[.018,.006],[.036,.022],[.042,.044],[.036,.066],[.022,.078],[0,.082]],18,0,.3,0,0xe9e9e2);bake(GLv,.6,[0,.5,-.4]);gl.add(new THREE.Mesh(GLv.mesh(null,false),MAT));
+ const gb=new Soup();gb.round=1;gb.box(.12,.07,.2,-.34,.75,zd+.05,PNL);{const tg=new THREE.TorusGeometry(.2,.016,8,22,1.25);tg.rotateZ(PI/2-.62);tg.rotateY(PI/2);gb.geo(tg,-.375,.78,zd+.05,0xb9bdb6);const tg2=new THREE.TorusGeometry(.2,.016,8,22,1.25);tg2.rotateZ(PI/2-.62);tg2.rotateY(PI/2);gb.geo(tg2,-.305,.78,zd+.05,0xb9bdb6)}bake(gb,.6,[0,1,zd]);g.add(new THREE.Mesh(gb.mesh(null,false),MAT));
  // pedallar
  const pd=[];for(const[x,c]of[[.13,GRY],[-.13,STL]]){const p=new THREE.Group();p.position.set(x,.5,zf+.05);const ps=new Soup();ps.box(.12,.2,.03,0,.1,0,c);ps.rod([0,.0,0],[0,.12,-.08],.012,DK,6);bake(ps,.6,[0,.5,-.5]);p.add(new THREE.Mesh(ps.mesh(null,false),MAT));g.add(p);pd.push(p)}
  g.userData={yoke,gl,pd,head:new THREE.Vector3(0,top-.2,zd-.08),zd,top};g.visible=false;return g}
@@ -4267,7 +4282,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'46',LOGO=window.HISAR_LOGO;
+const VER=+'47',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4718,7 +4733,7 @@ FRAME_HOOKS.push(()=>{if(iv!==3)return;const d=(P.g.children||[]).find(o=>o.user
  for(const s of[-1,1]){const h=new THREE.Group();const palm=new THREE.Mesh(new THREE.SphereGeometry(.05,10,8),GM);palm.scale.set(1,1.15,1.35);h.add(palm);
   const th=new THREE.Mesh(new THREE.CylinderGeometry(.016,.018,.07,8),GM2);th.position.set(-s*.04,.03,.03);th.rotation.z=s*.9;h.add(th);
   const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.045,.05,.12,10),GM2);cuff.position.set(0,-.04,-.09);cuff.rotation.x=1.2;h.add(cuff);
-  h.position.set(s*.3,.09,-.015);d.userData.yoke.add(h)}
+  h.position.set(s*.238,.02,-.04);d.userData.yoke.add(h)}
  const gh=new THREE.Mesh(new THREE.SphereGeometry(.045,10,8),GM);gh.scale.set(1.1,1,1.3);gh.position.set(0,.36,-.02);d.userData.gl.add(gh);d.userData.hands=1});
 
 })();
@@ -4768,7 +4783,7 @@ if(window.CABIN){const GM=new THREE.MeshBasicMaterial({color:0x2e2c24}),GM2=new 
  function glove(s){const h=new THREE.Group();const p=new THREE.Mesh(new THREE.SphereGeometry(.045,10,8),GM);p.scale.set(1,1.2,1.3);h.add(p);
   const th=new THREE.Mesh(new THREE.CylinderGeometry(.014,.016,.06,8),GM2);th.position.set(-s*.035,.035,.02);th.rotation.z=s*.9;h.add(th);
   const fa=new THREE.Mesh(new THREE.CylinderGeometry(.04,.05,.32,10),SL);fa.position.set(s*.02,.06,-.17);fa.rotation.x=1.15;h.add(fa);return h}
- const GH=new THREE.Group();GH.position.set(-.56,.1,.44);for(const s of[-1,1]){const h=glove(s);h.position.x=s*.13;GH.add(h)}
+ const GH=new THREE.Group();GH.position.set(-.56,.1,.44);for(const s of[-1,1]){const h=glove(s);h.position.set(s*.147,-.035,.035);GH.add(h)}
  const CH=new THREE.Group();CH.position.set(-1.0,.13,-.66);const hc=glove(1);hc.rotation.y=-.9;CH.add(hc);
  for(const g of[GH,CH]){g.traverse(o=>{if(o.isMesh)o.frustumCulled=false});CABIN.IG.add(g)}
  let th0=P.th,el0=0;
@@ -4856,7 +4871,7 @@ function buildDrv(d){const u=d.userData,zd=u.zd;const L={legs:[]};
   const th=limb(.075,.065,TR),sh=limb(.06,.05,TR2);place(th,hip,knee);d.add(th,sh);
   const kn=new THREE.Mesh(new THREE.SphereGeometry(.068,10,8),TR);kn.position.copy(knee);kn.frustumCulled=false;d.add(kn);
   const bo=boot();bo.position.set(0,.06,-.02);bo.rotation.x=-.55;pd.add(bo);                       // postal pedalin uzerinde: pedalla birlikte doner
-  const pl=new THREE.Mesh(new THREE.BoxGeometry(.14,.22,.012),new THREE.MeshBasicMaterial({color:k?0x9aa0a6:0x7d8288}));pl.position.set(0,.1,-.022);pl.frustumCulled=false;pd.add(pl);
+  const pl=new THREE.Mesh(new THREE.BoxGeometry(.14,.22,.012),new THREE.MeshBasicMaterial({color:k?0xe0e2dc:0xcfd2cb}));pl.position.set(0,.1,-.022);pl.frustumCulled=false;pd.add(pl);if(k){const hm=new THREE.MeshBasicMaterial({color:0x2a2c2e});for(let a=0;a<3;a++)for(let c=0;c<3;c++){const h=new THREE.Mesh(new THREE.CylinderGeometry(.011,.011,.004,10),hm);h.rotation.x=Math.PI/2;h.position.set(-.04+c*.04,.04+a*.055,-.03);h.frustumCulled=false;pd.add(h)}}
   for(let i=0;i<4;i++){const r=new THREE.Mesh(new THREE.BoxGeometry(.13,.012,.006),new THREE.MeshBasicMaterial({color:0x4a4e52}));r.position.set(0,.03+i*.05,-.03);r.frustumCulled=false;pd.add(r)}
   L.legs.push({sh,knee,bo})}
  // kalcanin ustu: kemer ve gogus (asagi bakinca gorunur)
@@ -5192,8 +5207,8 @@ if(C){const ig=C.IG.children;const wall=ig[0],flr=ig[1],dev=ig[2];
 // ---------- SURUCU MAHALLI ----------
 let DGd=null;
 function litDrv(d){const u=d.userData;d.traverse(c=>{if(!c.isMesh||!c.geometry.userData.raw)return;unbake(c.geometry,.45,u.top||1.5,.5);planarUV(c.geometry,1.3);if(c.material&&c.material.isMeshBasicMaterial&&c.material.vertexColors&&!c.material.userData.lit)toStd(c.material,'w')});
- const g=new THREE.Group();const a=new THREE.PointLight(0xffefd2,1.3,2.6,1.7);a.position.set(0,(u.top||1.5)-.12,(u.zd||2)-.5);const b=new THREE.PointLight(0xffe3b0,.45,1.4,2);b.position.set(0,(u.top||1.5)-.5,(u.zd||2)+.5);
- g.add(a,b,new THREE.HemisphereLight(0xc9d4dc,0x34342e,.38));d.add(g);lay(d);DGd=d}
+ const g=new THREE.Group();const a=new THREE.PointLight(0xffefd2,2.1,3.2,1.6);a.position.set(0,(u.top||1.5)-.12,(u.zd||2)-.5);const b=new THREE.PointLight(0xffe3b0,1.0,1.8,1.8);b.position.set(0,(u.top||1.5)-.5,(u.zd||2)+.5);
+ g.add(a,b,new THREE.HemisphereLight(0xc9d4dc,0x3a3a34,.55));d.add(g);lay(d);DGd=d}
 // ---------- IKI GECIS: once dis dunya (katman 4 haric), sonra derinlik temizlenip yalniz ic mekan kendi isiklariyla ----------
 const r0=R.render.bind(R);
 R.render=function(sc,cam){const ins=sc===S&&game==='play'&&mode==='tank'&&(iv===2||iv===3);if(!ins)return r0(sc,cam);

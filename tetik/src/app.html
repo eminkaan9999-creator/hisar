@@ -394,7 +394,7 @@ const APK=!!window.HisarNative;                       // Android uygulaması (ye
 const UA=navigator.userAgent||"";
 const IS_IOS=/iPad|iPhone|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 const IS_ANDROID=/Android/i.test(UA);
-const APK_URL="https://github.com/eminkaan9999-creator/hisar/releases/latest/download/HisarTetik.apk";
+const APK_URL="https://github.com/eminkaan9999-creator/hisar/releases/download/tetik-android/HisarTetik.apk";
 let apkReady=false;   // version.json "apk" alanı: Android uygulaması yayında mı
 const YUKLE_URL=HOSTED_URL+"yukle.html";
 const FW_LATEST=2;
@@ -2175,6 +2175,20 @@ window.__hisarBack=()=>{ if(!$("sheet").hidden){closeSheet();return true;} if(cu
 window.__hisarSaved=(ok,name)=>toast(ok?(name||"Dosya")+" kaydedildi.":"Dosya kaydedilmedi.");
 document.addEventListener("visibilitychange",()=>{const r=cur.run;if(!document.hidden&&r&&r.active){try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>{r.wake=w;}).catch(()=>{});}catch(e){}}});
 
+/* --- adres işareti (#...) ile doğrudan sayfa açma: kısayollar ve Android testleri */
+function openFromHash(){
+  const h=(location.hash||"").replace(/^#/,""); if(!h) return;
+  const p=h.split("/");
+  try{
+    if(p[0]==="ayarlar") openSettings(SET_T[p[1]]?p[1]:null);
+    else if(p[0]==="kaynak"&&["demo","phone","sensor"].includes(p[1])) { showView("alistirma"); selectSource(p[1],true); }
+    else if(p[0]==="alistirma"&&DRM[p[1]]){ openDrill(p[1]); if(p[2]==="basla") setTimeout(()=>{ if(!(cur.run&&cur.run.active)) startRun(); },1500); }
+    else if(["alistirma","oturum","gecmis","dersler"].includes(p[0])) showView(p[0]);
+  }catch(e){}
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+}
+window.addEventListener("hashchange",openFromHash);
+
 /* --- test kancası */
 window.__hisar={get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,startRun,stopRun,showView,setSub,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
@@ -2190,6 +2204,7 @@ selectSource("demo",false);
 if(prevSrc==="sensor") setStatus(`Son kullandığın kaynak sensördü. Bağlanmak için <b>Sensör</b>'e dokun; o zamana kadar deneme modu çalışır.`);
 else if(prevSrc==="phone") setStatus(`Son kullandığın kaynak telefondu. Başlatmak için <b>Telefon</b>'a dokun; o zamana kadar deneme modu çalışır.`);
 initPlatform();
+setTimeout(openFromHash,400);
 requestAnimationFrame(loop);
 if(prevSrc==="sensor"&&S.autoConnect) setTimeout(()=>{ autoConnect(); },400);
 window.addEventListener("resize",()=>{if(curView==="oturum")renderSub();});

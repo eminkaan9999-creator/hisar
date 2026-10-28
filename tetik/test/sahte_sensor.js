@@ -13,7 +13,7 @@
   };
   const encJerk = g => g <= 0 ? 0 : g <= 8 ? Math.min(200, Math.round(g / 0.04)) : Math.min(255, 200 + Math.round((g - 8) / 0.9));
   function sample(seq) { const m = F.motion ? F.motion(seq) : null; return { acc: (m && m.acc) || [0, 0, 1], om: (m && m.om) || [0.4, -0.3, 0.2], j: (m && m.jerk) || 0.02 }; }
-  const dev = new EventTarget(); dev.id = 'sahte-1';
+  const dev = new EventTarget(); dev.id = 'sahte-1'; F.dev = dev;
   Object.defineProperty(dev, 'name', { get: () => F.name });
   const ntf = new EventTarget(); Object.assign(ntf, { uuid: NTF, properties: { notify: true, read: true, write: false, writeWithoutResponse: false }, value: null });
   const wr = new EventTarget(); Object.assign(wr, { uuid: WR, properties: { notify: false, read: false, write: true, writeWithoutResponse: true } });

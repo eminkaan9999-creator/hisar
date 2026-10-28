@@ -58,7 +58,13 @@ if want_apk:
 '''
     www = here / 'android' / 'app' / 'src' / 'main' / 'assets' / 'www'
     www.mkdir(parents=True, exist_ok=True)
-    apk_out = apk_head + src + '\n</body>\n</html>\n'
+    apk_src = src
+    if (www / 'fonts' / 'fonts.css').exists():
+        # yazı tipleri APK içinde: internetsiz de aynı görünüm
+        import re
+        apk_src = re.sub(r'<link rel="preconnect" href="https://fonts\.googleapis\.com">\s*', '', apk_src)
+        apk_src = re.sub(r'<link rel="stylesheet" href="https://fonts\.googleapis\.com/css2[^"]*">', '<link rel="stylesheet" href="fonts/fonts.css">', apk_src)
+    apk_out = apk_head + apk_src + '\n</body>\n</html>\n'
     (www / 'index.html').write_text(apk_out, encoding='utf-8')
     shutil.copyfile(here / 'favicon-32.png', www / 'favicon-32.png')
     print('yazildi:', www / 'index.html', len(apk_out), 'bayt')

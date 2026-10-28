@@ -1,3 +1,5 @@
+# HİSAR TETİK Android uygulaması: derle, emülatörde dene, GitHub Releases'e yükle.
+# İndirme adresi: https://github.com/eminkaan9999-creator/hisar/releases/download/tetik-android/HisarTetik.apk
 name: Tetik APK
 on:
   workflow_dispatch:
@@ -14,14 +16,61 @@ concurrency:
   group: tetik-apk
   cancel-in-progress: true
 jobs:
-  probe:
-    runs-on: ubuntu-latest
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
-      - name: SDK bilgisi
+      - uses: actions/checkout@v4
+
+      - name: APK derle
         run: |
-          echo "::notice title=sdk::ANDROID_HOME=$ANDROID_HOME ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          echo "::notice title=build-tools::$(ls $ANDROID_HOME/build-tools | tr '\n' ' ')"
-          echo "::notice title=platforms::$(ls $ANDROID_HOME/platforms | tr '\n' ' ')"
-          echo "::notice title=java::$(java -version 2>&1 | head -1) JAVA_HOME_17=$JAVA_HOME_17_X64"
-          echo "::notice title=tools::$(ls $ANDROID_HOME | tr '\n' ' ') $(ls $ANDROID_HOME/system-images 2>/dev/null | tr '\n' ' ')"
-          echo "::notice title=kvm::$(ls -l /dev/kvm 2>&1)"
+          set -o pipefail
+          bash tetik/android/build.sh 2>&1 | tee build.log
+
+      - name: Derleme hatasını göster
+        if: failure()
+        run: tail -60 build.log | sed 's/^/::error::/'
+
+      - name: Emülatör için KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Emülatörde dene
+        id: emu
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash tetik/android/emu_test.sh
+
+      - name: Yayınla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          V=$(grep -o 'const VER=[0-9]*' tetik/src/app.html | head -1 | grep -o '[0-9]*$')
+          NOTES="HİSAR TETİK Android uygulaması, sürüm $V. Telefonda indirip açın; 'Bu kaynaktan yüklemeye izin ver' sorulursa izin verin. Kaynak: ${GITHUB_SHA::7}"
+          if gh release view tetik-android >/dev/null 2>&1; then
+            gh release edit tetik-android --title "HİSAR TETİK Android (sürüm $V)" --notes "$NOTES" --latest=false
+          else
+            gh release create tetik-android --title "HİSAR TETİK Android (sürüm $V)" --notes "$NOTES" --latest=false
+          fi
+          gh release upload tetik-android tetik/android/build/HisarTetik.apk --clobber
+          echo "::notice title=apk::$(ls -la tetik/android/build/HisarTetik.apk | awk '{print $5}') bayt yüklendi (sürüm $V)"
+
+      - name: Test çıktılarını kaydet (tetik-ci dalı)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/ci && cp -r emu_out/* /tmp/ci/ 2>/dev/null || true
+          cp build.log /tmp/ci/ 2>/dev/null || true
+          cd /tmp/ci && git init -q && git checkout -q -b tetik-ci
+          git config user.name "hisar-ci"; git config user.email "hisar-ci@users.noreply.github.com"
+          git add -A && git commit -qm "Android test çıktıları ${GITHUB_SHA::7}" || exit 0
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" tetik-ci

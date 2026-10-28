@@ -2825,10 +2825,10 @@ const labSvg=(k,extra)=>(isAR(k)?svgAR:svgHK)(k,extra);
 function ayakToggle(){const o=LB.PS.ayakb&&LB.PS.ayakb.y;lmv('ayakb',{y:o?0:82});click(1200,.04,.25);setTimeout(()=>click(900,.04,.2),420);}
 // örtü üzerinde parçalar için yer planı (gerçek boyutlarına göre üst üste binmeden)
 function matPlan(ids){
-  const out={},placed=[],M={x0:40,x1:960,y0:368,y1:506};
+  const out={},placed=[],M={x0:40,x1:960,y0:364,y1:507};
   const items=ids.map(id=>{const e=labPart(id);if(!e)return null;let b;try{b=e.getBBox();}catch(x){return null;}const rot=id==='sarjor'?-90:0;return {id,e,b,rot,w:rot?b.height:b.width,h:rot?b.width:b.height};}).filter(Boolean).sort((a,b)=>b.h-a.h||b.w-a.w);
   for(const it of items){let best=null;
-    for(let y=M.y0;y+it.h<=M.y1+.5&&!best;y+=4)for(let x=M.x0;x+it.w<=M.x1;x+=6){if(!placed.some(q=>x<q.x+q.w+12&&x+it.w+12>q.x&&y<q.y+q.h+8&&y+it.h+8>q.y)){best={x,y};break;}}
+    for(let y=M.y0;y+it.h<=M.y1+.5&&!best;y+=2)for(let x=M.x0;x+it.w<=M.x1;x+=6){if(!placed.some(q=>x<q.x+q.w+10&&x+it.w+10>q.x&&y<q.y+q.h+5&&y+it.h+5>q.y)){best={x,y};break;}}
     if(!best)best={x:M.x0,y:M.y0};placed.push({x:best.x,y:best.y,w:it.w,h:it.h});
     const o=(it.e.dataset.o||'').split(' ').map(Number),c=[it.b.x+it.b.width/2,it.b.y+it.b.height/2];let cc=c;
     if(it.rot&&o.length>=2){const a=it.rot*Math.PI/180,dx=c[0]-o[0],dy=c[1]-o[1];cc=[o[0]+dx*Math.cos(a)-dy*Math.sin(a),o[1]+dx*Math.sin(a)+dy*Math.cos(a)];}
@@ -3771,7 +3771,7 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
 
 <script>
 (()=>{
-const VER=21,btn=document.getElementById('upd');
+const VER=22,btn=document.getElementById('upd');
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
 btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});

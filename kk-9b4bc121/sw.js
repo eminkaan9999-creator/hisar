@@ -1,4 +1,4 @@
-const C="kk-v11";const F=["./", "index.html", "manifest.json", "ikon-192.png", "ikon-512.png", "apple-touch-icon.png","../three.min.js"];
+const C="kk-v12";const F=["./", "index.html", "manifest.json", "ikon-192.png", "ikon-512.png", "apple-touch-icon.png","../three.min.js"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)));self.skipWaiting();});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x.startsWith("kk-")).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
 self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;const u=new URL(e.request.url);if(u.origin!==location.origin){return;}

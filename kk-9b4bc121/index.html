@@ -483,9 +483,7 @@ async function avatarlariYukle(kok,ilerleme){
     sahne.traverse(o=>{ if(!o.isMesh) return; const ms=Array.isArray(o.material)?o.material:[o.material];
       ms.forEach(m=>{ const n=m.name||"";
         if(/haircut|Eyelashes/i.test(n)){ m.alphaTest=.4; m.transparent=false; m.depthWrite=true; m.side=THREE.DoubleSide; }
-        if(/Cornea/i.test(n)){ m.transparent=true; m.color.set(0x000000); m.opacity=.3; m.depthWrite=false; m.roughness=.04; m.metalness=0; }
-        // göz küresi: iris rengi dokudan gelsin; metalik yansıma ve sert normal haritası irisi gri gösteriyordu
-        if(/Eyeball/i.test(n)){ m.metalness=0; m.metalnessMap=null; m.roughness=.62; m.roughnessMap=null; if(m.normalScale) m.normalScale.set(.18,.18); }
+        if(/Cornea/i.test(n)){ m.transparent=true; m.opacity=.18; m.depthWrite=false; m.roughness=.05; }
         if(/Headwear/.test(n)) o.visible=false;
         if(m.isMeshStandardMaterial){ m.envMapIntensity=.65; if(/Avatar(Head|Body)|Skin/.test(n)) m.roughness=Math.max(m.roughness,.58); } }); });
     // Mixamo (Michelle) dosyasında iskelet kökü 90° döndürülmüş; animasyonlar zaten dik duruş verdiği için kökü sıfırla
@@ -540,7 +538,7 @@ function sapkaYap(){
   const arma=new THREE.Mesh(new THREE.CircleGeometry(.02,16),altin); arma.position.set(0,.075,.117); g.add(arma);
   const kor=new THREE.Mesh(new THREE.TorusGeometry(.105,.004,6,28,Math.PI*.8),altin); kor.rotation.set(Math.PI/2,0,Math.PI*.1); kor.position.set(0,.04,.012); g.add(kor);
   g.traverse(o=>{ if(o.isMesh) o.castShadow=true; });
-  const sar=new THREE.Group(); g.scale.set(1.13,1.05,1.24); g.position.set(0,.074,.014); sar.add(g); return sar;
+  const sar=new THREE.Group(); g.scale.set(1.26,1.14,1.38); g.position.set(0,.088,.022); sar.add(g); return sar;
 }
 function kilicYap(){
   const g=new THREE.Group();
@@ -696,8 +694,7 @@ function karakterleriGuncelle(dt){
       u._kirp-=dt; let kir=0; if(u._kirp<0){ u._kirpT+=dt; kir=Math.sin(Math.min(1,u._kirpT/.16)*Math.PI); if(u._kirpT>.16){ u._kirpT=0; u._kirp=rnd(2.2,5.5); } }
       u._gul=lerp(u._gul,u.gulumse,1-Math.pow(.05,dt));
       const kn=u.konus>0? clamp(.12+.22*Math.sin(zaman*17+u.faz)*Math.sin(zaman*5.3)+.12*Math.sin(zaman*9.1),0,.45):0; u._cene=lerp(u._cene,kn,.5);
-      const kapak=.12+kir*.88; // göz kapakları hafif aşağıda: bakış daha doğal, daha az "dik dik"
-      yuzAyarla(u,"eyeBlinkLeft",kapak); yuzAyarla(u,"eyeBlinkRight",kapak);
+      yuzAyarla(u,"eyeBlinkLeft",kir); yuzAyarla(u,"eyeBlinkRight",kir);
       yuzAyarla(u,"mouthSmileLeft",u._gul*.7); yuzAyarla(u,"mouthSmileRight",u._gul*.7); yuzAyarla(u,"cheekSquintLeft",u._gul*.35); yuzAyarla(u,"cheekSquintRight",u._gul*.35);
       yuzAyarla(u,"jawOpen",u._cene); yuzAyarla(u,"mouthFunnel",u._cene*.3); yuzAyarla(u,"browInnerUp",u.baslik||0);
     }

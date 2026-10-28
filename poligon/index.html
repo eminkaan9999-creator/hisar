@@ -333,6 +333,9 @@ details.more[open]>summary::before{content:"− ";}
 .labstage svg.l2d [data-side="R"]{display:none;}
 .labstage svg.l2d #lmir text{transform-box:fill-box;transform-origin:center;transform:scaleX(-1);}
 .lmk2{font-family:"Saira Condensed",Arial,sans-serif;font-weight:800;}
+.mver{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);}
+.mver .iconbtn{font-size:14px;padding:7px 14px;}
+.mver .ok{color:var(--ok);}
 .labstage svg .no2{display:none;}
 
 .bcam .hud,.bcam .fig,.bcam #kpanel,.bcam .figw,.bcam #fig,.bcam #timer,.bcam .hint{opacity:0!important;transition:opacity .2s;}
@@ -511,7 +514,7 @@ select.inp{font-size:13px;}
 <div class="menu" id="menu">
   <div class="menu-in wrap">
     <div class="mhead">
-      <div><div class="brand"><span class="bh">HİSAR</span> P<svg class="ox" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13.5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M20 0v11M20 29v11M0 20h11M29 20h11" stroke="currentColor" stroke-width="3.4"/><circle cx="20" cy="20" r="2.8" fill="currentColor"/></svg>LİGON</div><div class="sub">Piyade tüfeği nişancılık ve atış simülatörü</div></div>
+      <div><div class="brand"><span class="bh">HİSAR</span> P<svg class="ox" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13.5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M20 0v11M20 29v11M0 20h11M29 20h11" stroke="currentColor" stroke-width="3.4"/><circle cx="20" cy="20" r="2.8" fill="currentColor"/></svg>LİGON</div><div class="sub">Piyade tüfeği nişancılık ve atış simülatörü</div><div class="mver"><span id="verTxt">Sürüm 23</span><button class="iconbtn" id="upd2" title="Güncellemeyi denetle">Güncelle</button></div></div>
       <button class="primary" id="menuClose">Atışa başla</button>
     </div>
     <section class="sec rankrow" id="rankCard"></section>
@@ -3771,10 +3774,14 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
 
 <script>
 (()=>{
-const VER=22,btn=document.getElementById('upd');
+const VER=23,btns=['upd','upd2'].map(i=>document.getElementById(i)).filter(Boolean),vt=document.getElementById('verTxt');
+const say=t=>{if(vt)vt.innerHTML=t;};say('Sürüm '+VER);
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
-async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(+j.v>VER){btn.classList.add('new');btn.textContent='Yeni sürüm';btn.title=j.not||'';}}catch(e){}}
-btn.addEventListener('click',async()=>{btn.textContent='Yükleniyor…';try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();});
+async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
+  if(+j.v>VER){btns.forEach(b=>{b.classList.add('new');b.textContent='Yeni sürüm · güncelle';b.title=j.not||'';});say('Sürüm '+VER+' · yeni sürüm '+(+j.v)+' hazır');}
+  else say('Sürüm '+VER+' · <span class="ok">güncel</span>');}catch(e){}}
+const go=async b=>{btns.forEach(x=>x.textContent='Yükleniyor…');try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('poligon-')&&!k.endsWith('-foto')).map(k=>caches.delete(k)));}catch(e){}try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}location.reload();};
+btns.forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();go(b);}));
 check();setInterval(check,10*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check();});
 })();
 </script>

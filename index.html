@@ -4305,7 +4305,7 @@ box.innerHTML='<button id="updB"><svg viewBox="0 0 24 24" fill="none" stroke="cu
 if(mt)mt.parentNode.insertBefore(box,mt.nextSibling);
 const btn=box.querySelector('#updB'),inf=box.querySelector('#updI');
 async function update(){btn.classList.add('spin');btn.querySelector('span').textContent='GÜNCELLENİYOR…';
- try{if('serviceWorker' in navigator){const rs=(await navigator.serviceWorker.getRegistrations()).filter(r=>!/\/poligon\//.test(r.scope));for(const r of rs){try{await r.update()}catch(e){}try{await r.unregister()}catch(e){}}}}catch(e){}
+ try{if('serviceWorker' in navigator){const rs=(await navigator.serviceWorker.getRegistrations()).filter(r=>!/\/(poligon|tetik)\/|\/kk-/.test(r.scope));for(const r of rs){try{await r.update()}catch(e){}try{await r.unregister()}catch(e){}}}}catch(e){}
  try{if(window.caches){const ks=(await caches.keys()).filter(k=>k.startsWith('hisar-v'));await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}
  const u=new URL(location.href);if(/^https?:/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.hostname)){u.searchParams.set('v',Date.now().toString(36));location.replace(u.toString())}else location.reload()}
 const FILE=location.protocol==='file:'||location.protocol==='content:';

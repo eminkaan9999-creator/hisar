@@ -35,7 +35,7 @@ code{font-family:var(--mono);font-size:13px;background:#162023;padding:1px 5px;b
 <body>
 <div class="wrap">
   <header><h1>HİSAR TETİK · SENSÖR YAZILIMI</h1><a href="./">← Uygulama</a></header>
-  <p class="note">M5StickC Plus2'ye HİSAR sensör yazılımını yükler. Bir kez yapman yeterli. Yazılım hareket sensörünü saniyede 1000 kez okur ve uygulamaya Bluetooth ile saniyede 200 ölçüm gönderir.</p>
+  <p class="note">M5StickC Plus2'ye HİSAR sensör yazılımını yükler. Bunu <b>bir kez</b> bilgisayardan yapman yeterli; sonraki güncellemeler telefondan (Ayarlar › Sensör bağlantısı › Sensör yazılımı) Bluetooth ile yüklenir. Yazılım hareket sensörünü saniyede 1000 kez okur ve uygulamaya saniyede 200 ölçüm gönderir; bağlantı kısa süre koparsa ölçümleri saklar, kayıp olmaz.</p>
 
   <div class="card">
     <h2>Gerekenler</h2>
@@ -68,10 +68,11 @@ code{font-family:var(--mono);font-size:13px;background:#162023;padding:1px 5px;b
     <ul>
       <li><b>Listede sensör yok:</b> Başka bir kablo dene. Windows'ta görünmüyorsa M5Stack'in USB sürücüsünü (CH9102) kur: <a href="https://docs.m5stack.com/" target="_blank" rel="noopener">docs.m5stack.com</a> › Download › USB Driver.</li>
       <li><b>Bağlanamadı:</b> Sensörün yan güç düğmesine 2 saniye basarak aç, tekrar dene.</li>
-      <li><b>Sensörü kapatmak:</b> Yan B düğmesine 2 saniye bas. Ön A düğmesi ekranı aydınlatır.</li>
+      <li><b>Sensörü kapatmak:</b> Yan B düğmesine 2 saniye bas. Ön A düğmesi ekranı aydınlatır. Bağlı değilken 10 dakika sonra kendiliğinden kapanır (uygulamadan değiştirilebilir).</li>
+      <li><b>"Silmek istiyor musun?" sorusu:</b> İlk yüklemede <b>Evet / Erase</b> seç. Sensördeki eski yazılım silinir, HİSAR yazılımı yüklenir.</li>
       <li><b>Uygulamaya bağlanmak:</b> iPhone'da <b>Bluefy</b> tarayıcısıyla, Android'de Chrome ile uygulamayı aç ve <b>Sensör</b>'e bas.</li>
     </ul>
-    <p class="note">Yazılım kaynağı ve derlenmiş dosya: <a href="https://github.com/eminkaan9999-creator/hisar/tree/main/tetik/sensor" target="_blank" rel="noopener">GitHub › tetik/sensor</a>. Sürüm 1 · M5Unified 0.2.2 · NimBLE-Arduino 1.4.2 · ESP32 Arduino 2.0.17.</p>
+    <p class="note">Yazılım kaynağı ve derlenmiş dosya: <a href="https://github.com/eminkaan9999-creator/hisar/tree/main/tetik/sensor" target="_blank" rel="noopener">GitHub › tetik/sensor</a>. Sürüm 2 · M5Unified 0.2.2 · NimBLE-Arduino 1.4.2 · ESP32 Arduino 2.0.17.</p>
   </div>
 </div>
 <script>

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hisar Tetik Aparat</title>
+<meta name="theme-color" content="#0a0e0f">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#0a0e0f;--panel:#11181a;--panel2:#162023;--line:#22302f;--fg:#e4eeec;--muted:#8a9e9b;--accent:#22d3c5;--warn:#f2b33d;--bad:#ef4d55;
+--display:"Chakra Petch","Arial Narrow",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);letter-spacing:.12em;font-size:22px;margin:0}
+a{color:var(--accent)}
+.back{font-size:14px}
+.lead{color:var(--muted);margin:8px 0 0}
+.viewer{position:relative;margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:radial-gradient(circle at 50% 35%,#18292b,#0b1112 70%);touch-action:none}
+.viewer canvas{display:block;width:100%;height:min(62vh,520px)}
+.hint{position:absolute;left:12px;bottom:10px;right:12px;font-size:12px;color:var(--muted);pointer-events:none}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.seg button{font:inherit;font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{color:var(--fg);border-color:var(--accent)}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+section{margin-top:24px}
+h2{font-family:var(--display);font-size:16px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{margin:0;font-size:15px}
+.card p{margin:0;color:var(--muted);font-size:13.5px}
+.card .spec{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:#04211f;background:var(--accent);border:0;border-radius:10px;padding:11px 14px;cursor:pointer;margin-top:auto}
+ol,ul{margin:0;padding-left:20px}
+li{margin:5px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase}
+td.m{font-family:var(--mono);white-space:nowrap}
+.warn{border-left:3px solid var(--warn);padding:8px 12px;background:var(--panel);border-radius:6px;color:var(--fg);font-size:13.5px;margin:12px 0 0}
+.tw{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>HİSAR TETİK · APARAT</h1>
+    <a class="back" href="./">← Uygulamaya dön</a>
+  </header>
+  <p class="lead">M5StickC Plus2 sensörü için vidasız aparat sistemi. Sensör kızağına bir kez yapıştırılır; kızak, şarjör altındaki plakaya ya da raydaki adaptöre "tık" diye geçer. Modeli parmağınla döndür, iki parmakla yakınlaştır.</p>
+
+  <div class="viewer" id="viewer"><canvas id="cv" aria-label="Aparat 3D görünümü"></canvas><div class="hint" id="hint">Sürükle: döndür · Tekerlek ya da iki parmak: yakınlaştır · Çift dokun: sıfırla</div></div>
+  <div class="seg" role="group" aria-label="Görünüm">
+    <button data-v="sarjor" aria-pressed="true">Şarjör altı (tabanca, G3, HK33)</button>
+    <button data-v="ray" aria-pressed="false">Ray (MPT-76, MPT-55)</button>
+    <button data-v="parca" aria-pressed="false">Basılacak parçalar</button>
+  </div>
+  <div class="legend"><span><i style="background:#2bb3a8"></i>Sensör kızağı</span><span><i style="background:#e0a33a"></i>Şarjör plakası / ray adaptörü</span><span><i style="background:#ff7a1a"></i>Sensör (M5StickC Plus2)</span><span><i style="background:#5b6668"></i>Şarjör / ray (örnek)</span></div>
+
+  <section>
+    <h2>Dosyalar</h2>
+    <div class="cards">
+      <div class="card"><h3>1 · Sensör kızağı</h3><p>Sensör içine bir kez VHB bantla yapıştırılır. Altındaki yaylı dil plakaya ve adaptöre geçer.</p>
+        <div class="spec">51,4 × 29 × 9,5 mm · ≈ 9 g</div>
+        <a class="btn" href="aparat/kizak.stl" download>Kızak (STL)</a></div>
+      <div class="card"><h3>2 · Şarjör plakası</h3><p>Bütün tabanca şarjörlerine, G3 ve HK33 şarjörüne uyar. Her şarjör için bir tane bas.</p>
+        <div class="spec">32 × 28 × 5,2 mm · ≈ 4 g</div>
+        <a class="btn" href="aparat/sarjor-plakasi.stl" download>Plaka (STL)</a></div>
+      <div class="card"><h3>3 · Ray adaptörü</h3><p>MPT-76 ve MPT-55'in pikatini rayına önden sürülür; yaylı tırnağı raydaki yuvaya oturur.</p>
+        <div class="spec">32 × 28 × 16,3 mm · ≈ 10 g</div>
+        <a class="btn" href="aparat/ray-adaptoru.stl" download>Adaptör (STL)</a></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gereken malzeme</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Malzeme</th><th>Not</th></tr></thead>
+      <tbody>
+        <tr><td>3D baskı, PETG</td><td>1 kızak + şarjör sayın kadar plaka + MPT için 1 ray adaptörü.</td></tr>
+        <tr><td>3M VHB çift taraflı bant (1,1 mm kalın)</td><td>Sensörü kızağa, plakaları şarjör tabanına yapıştırmak için. Vida, somun, alet gerekmez.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Baskı</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Parça</th><th>Tablaya nasıl konur</th></tr></thead>
+      <tbody>
+        <tr><td>Kızak</td><td>Ön duvarı (kapalı ucu) tablaya gelecek şekilde <b>dik</b>. Kenar (brim) aç. Destek gerekmez.</td></tr>
+        <tr><td>Şarjör plakası</td><td><b>Düz</b>, yapıştırılan alt yüzü tablada. Destek gerekmez.</td></tr>
+        <tr><td>Ray adaptörü</td><td>Arka ucu (yaprak yayların açık olduğu uç) tablaya gelecek şekilde <b>dik</b>. Kenar (brim) aç. Destek gerekmez.</td></tr>
+      </tbody>
+    </table></div>
+    <ul style="margin-top:10px">
+      <li><b>Malzeme:</b> PETG. Yaylar esnek ve sağlam kalır, güneşte yumuşamaz. PLA önerilmez.</li>
+      <li><b>Ayarlar:</b> 0,2 mm katman · 4 duvar · %40 doluluk · destek kapalı.</li>
+      <li>Baskı hizmetine bu tabloyu ve STL dosyalarını gönder, yeterli.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Takma</h2>
+    <ol>
+      <li><b>Sensörü kızağa yapıştır (bir kez):</b> Sensörün arkasına VHB bandı yapıştır, ekran dışa bakacak şekilde cebe bastır. USB-C girişi kızağın açık arka ucuna gelsin, böylece takılıyken şarj edebilirsin.</li>
+      <li><b>Plakayı şarjöre yapıştır:</b> Şarjör tabanını alkolle sil. Plakayı, üzerindeki ok namluyu gösterecek şekilde VHB ile yapıştır. Bant tam gücüne 24 saatte ulaşır.</li>
+      <li><b>Ray adaptörü:</b> Adaptörü raya önden, kapalı ucu namluya bakacak şekilde sür. Tırnak bir yuvaya "tık" diye oturur. Sökerken arka uçtaki orta yayı tırnağınla kaldır ve öne çek.</li>
+      <li><b>Kızağı tak:</b> Kızağın dilini plakanın ya da adaptörün açık arka ucundan sok, öne doğru it. "Tık" sesi gelince kilitlenmiştir. Çıkarmak için geriye doğru sıkıca çek.</li>
+      <li><b>Uygulamada:</b> Silahı düz tutup <b>Sıfırla</b>'ya bas. İlk kullanımda Ayarlar'dan <b>Yön testi</b>ni yap.</li>
+    </ol>
+    <p class="warn">Kuru tetikten önce silahı boşalt ve fişek yatağını kontrol et. Sensör takılı şarjörü yere düşürme.</p>
+  </section>
+
+  <section>
+    <h2>Ölçüler</h2>
+    <div class="tw"><table><tbody>
+      <tr><td>Sensör cebi</td><td class="m">48,6 × 24,6 mm (sensör 48,0 × 24,0 × 13,5 + 0,3 mm boşluk)</td></tr>
+      <tr><td>Şarjör tabanından sensör altına</td><td class="m">≈ 24 mm</td></tr>
+      <tr><td>Raydan sensör üstüne</td><td class="m">≈ 29 mm</td></tr>
+      <tr><td>Hızlı geçme</td><td class="m">kırlangıç kuyruğu dil 20/16,4 mm, 0,2 mm boşluk, yaylı kilit dişi</td></tr>
+      <tr><td>Ray standardı</td><td class="m">MIL-STD-1913: 21,2 mm, 45°, yuva 5,23 mm, aralık 10,01 mm</td></tr>
+    </tbody></table></div>
+  </section>
+</div>
+
+<script src="../three.min.js"></script>
+<script>
+(function(){
+"use strict";
+const cv=document.getElementById('cv');
+if(!window.THREE){document.getElementById('hint').textContent='3D görüntüleyici yüklenemedi; STL dosyalarını yukarıdan indirebilirsin.';return;}
+const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(32,1,1,3000);
+scene.add(new THREE.HemisphereLight(0xdff7f4,0x1a2224,0.85));
+const key=new THREE.DirectionalLight(0xffffff,0.9); key.position.set(60,-80,120); scene.add(key);
+const rim=new THREE.DirectionalLight(0x9fe9e2,0.45); rim.position.set(-90,70,40); scene.add(rim);
+const group=new THREE.Group(); scene.add(group);
+function parseStl(buf){
+  const dv=new DataView(buf); const n=dv.getUint32(80,true);
+  const pos=new Float32Array(n*9), nor=new Float32Array(n*9);
+  for(let i=0;i<n;i++){ const o=84+i*50; const nx=dv.getFloat32(o,true),ny=dv.getFloat32(o+4,true),nz=dv.getFloat32(o+8,true);
+    for(let k=0;k<9;k++) pos[i*9+k]=dv.getFloat32(o+12+k*4,true);
+    for(let k=0;k<3;k++){nor[i*9+k*3]=nx;nor[i*9+k*3+1]=ny;nor[i*9+k*3+2]=nz;} }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('normal',new THREE.BufferAttribute(nor,3)); return g;
+}
+const cache={};
+async function load(name){ if(!cache[name]){ const r=await fetch('aparat/'+name); if(!r.ok) throw new Error(name); cache[name]=parseStl(await r.arrayBuffer()); } return cache[name]; }
+const mat=(c,o)=>new THREE.MeshStandardMaterial({color:c,roughness:.55,metalness:.08,transparent:o<1,opacity:o,side:THREE.DoubleSide});
+const views={
+  sarjor:[['onizleme-sarjor.stl',0x5b6668,1],['onizleme-sarjor-plaka.stl',0xe0a33a,1],['onizleme-sarjor-kizak.stl',0x2bb3a8,1],['onizleme-sarjor-sensor.stl',0xff7a1a,.92]],
+  ray:[['onizleme-ray.stl',0x5b6668,1],['ray-adaptoru.stl',0xe0a33a,1],['onizleme-ray-kizak.stl',0x2bb3a8,1],['onizleme-ray-sensor.stl',0xff7a1a,.92]],
+  parca:[['kizak.stl',0x2bb3a8,1,[0,0,0]],['sarjor-plakasi.stl',0xe0a33a,1,[8,40,0]],['ray-adaptoru.stl',0xe0a33a,1,[8,-42,5.1]]]
+};
+const DEF={sarjor:[-0.35,0.75,190],ray:[-0.55,0.75,175],parca:[-0.95,0.4,210]};
+let cur='sarjor', rotX=DEF.sarjor[0], rotZ=DEF.sarjor[1], dist=DEF.sarjor[2], center=new THREE.Vector3();
+async function show(v){
+  cur=v;
+  const meshes=[];
+  for(const [f,c,o,off] of views[v]){ const g=await load(f); const m=new THREE.Mesh(g,mat(c,o)); if(off) m.position.set(off[0],off[1],off[2]); meshes.push(m); }
+  while(group.children.length) group.remove(group.children[0]);
+  meshes.forEach(m=>group.add(m));
+  const box=new THREE.Box3().setFromObject(group); box.getCenter(center);
+  [rotX,rotZ,dist]=DEF[v];
+  render();
+}
+function render(){
+  const r=cv.getBoundingClientRect(); const w=Math.max(1,r.width),h=Math.max(1,r.height);
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+  const sp=new THREE.Vector3(Math.sin(rotZ)*Math.cos(rotX),-Math.cos(rotZ)*Math.cos(rotX),-Math.sin(rotX)).normalize();
+  camera.position.copy(center).addScaledVector(sp,dist);
+  camera.up.set(0,0,1); camera.lookAt(center);
+  renderer.render(scene,camera);
+}
+const pts=new Map(); let lastTap=0, pinch0=0, dist0=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2){const [a,b]=[...pts.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);dist0=dist;}
+  const t=performance.now(); if(t-lastTap<300){[rotX,rotZ,dist]=DEF[cur];render();} lastTap=t;});
+cv.addEventListener('pointermove',e=>{const p=pts.get(e.pointerId); if(!p) return;
+  if(pts.size===1){rotZ-=(e.clientX-p.x)*0.008; rotX=Math.max(-1.55,Math.min(1.55,rotX+(e.clientY-p.y)*0.008)); render();}
+  p.x=e.clientX;p.y=e.clientY;
+  if(pts.size===2){const [a,b]=[...pts.values()];const d=Math.hypot(a.x-b.x,a.y-b.y); if(pinch0>0){dist=Math.max(70,Math.min(500,dist0*pinch0/d));render();}}});
+const up=e=>{pts.delete(e.pointerId); if(pts.size<2) pinch0=0;};
+cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(70,Math.min(500,dist*(1+e.deltaY*0.001)));render();},{passive:false});
+window.addEventListener('resize',render);
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  show(b.dataset.v).catch(()=>{});
+}));
+window.__aparat={show,setView:(a,b,c)=>{rotX=a;rotZ=b;dist=c;render();}};
+show('sarjor').catch(e=>{document.getElementById('hint').textContent='Model yüklenemedi: '+e.message;});
+})();
+</script>
+</body>
+</html>

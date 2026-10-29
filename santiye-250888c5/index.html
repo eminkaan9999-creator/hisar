@@ -152,7 +152,7 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
   <div class="pad" id="padR"><span id="padRlbl">KOL</span><i id="knobR"></i></div>
   <div class="ctxL"><button class="big alt" id="bHorn" type="button">KORNA</button></div>
   <div class="ctx"><button class="big alt" id="bFuel" type="button" hidden>YAKIT SERVİSİ</button><button class="big alt" id="bAI" type="button" hidden>ŞOFÖR</button><button class="big alt" id="bCtx2" type="button" hidden>KAZI</button><button class="big" id="bCtx" type="button" hidden>KESİCİ</button></div>
-  <div class="keys">G: görev dağılımı · B: karakter · ENTER: otur / kalk · WASD: yürü · SHIFT: koş · C: kamera · sürükle: kamerayı çevir · işi askerler yapar, sen komuta edersin</div>
+  <div class="keys">G: görev dağılımı · B: karakter · ENTER: otur / kalk · WASD: yürü · SHIFT: koş · E: araca bin / in · R: motor · Tab: alet çarkı · BOŞLUK: alet vur / kesici · I/K: kol ↕ · J/L: kova ↔ · Z/X: kule · U/O: arm · T: kazı modu · H: korna · C: kamera · sürükle: kamerayı çevir</div>
 </div>
 <div id="toast"></div>
 <div id="sig" role="status" aria-live="polite"></div>
@@ -178,7 +178,7 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
   <div class="wrap">
     <div class="brand">
       <h1>HİSAR <b>ŞANTİYE</b><small>SİMÜLATÖR</small></h1>
-      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı drone sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve drone parkurunu kuruyor. Sabah 07.30'da Azizhan Üsteğmen masada görevleri dağıtır; işi askerler yapar, sen komuta edersin. Levent Paşa baskına gelmeden herkes işinin başında olsun.</p>
+      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı drone sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve drone parkurunu kuruyor. Sabah 07.30'da Azizhan Üsteğmen masada görevleri dağıtır; işi askerler kendiliğinden yürütür, istersen herhangi bir makineye binip kendin de sürersin. Levent Paşa baskına gelmeden herkes işinin başında olsun.</p>
     </div>
     <div class="projs">
       <div class="phead"><h3 class="sub">Tabur durumu</h3><span class="bank" id="bank" hidden></span></div>
@@ -994,12 +994,14 @@ const SCN = {};
   const S = () => new (window.M60X.Soup)(), ME = window.M60X.ME;
   const s = S(), L = S();
   const at = (x, z) => heightAt(x, z);
-  for (let i = 0; i < 3; i++) { const x = 7 + (i % 2) * 7.5, z = 43 + Math.floor(i / 2) * 9; PROPS.push([x - 1.3, x + 1.3, z - 3.1, z + 3.1]); }
+  // the office containers: two side by side, the third behind the second (it used to stand right behind the site gate and nobody could walk in)
+  const OFFC = [[7, 43], [14.5, 43], [14.5, 50.5]];
+  for (const [x, z] of OFFC) PROPS.push([x - 1.3, x + 1.3, z - 3.1, z + 3.1]);
   PROPS.push([13.7, 18.3, 61.8, 64.2], [11.6, 14.4, 68.3, 69.7], [20.3, 21.7, 47.3, 48.7], [45.4, 48.6, 24.8, 31.2]);
   for (const [x, z] of [[58, 34], [104, 98], [30, 100]]) PROPS.push([x - 1.4, x + 1.4, z - .8, z + 1.0]);
   // command / office containers (olive drab)
   for (let i = 0; i < 3; i++) {
-    const x = 7 + (i % 2) * 7.5, z = 43 + Math.floor(i / 2) * 9, y = at(x, z), col = [0x5b6142, 0x4f5639, 0x666b4c][i];
+    const [x, z] = OFFC[i], y = at(x, z), col = [0x5b6142, 0x4f5639, 0x666b4c][i];
     s.box(6.1, 2.6, 2.45, x, y + 1.3, z, col, 0, Math.PI / 2);
     for (const k of [-1.6, 0, 1.6]) s.box(.05, .9, .9, x + 1.24, y + 1.5, z + k, 0x2b3c48);
     s.box(.05, 2.0, .9, x - 1.24, y + 1.0, z + 2.1, 0x3d4130);
@@ -1093,11 +1095,12 @@ function instGLB(key, list, tint, dec) { const g = ASSET.glb[key]; if (!g || !li
   SCAN.barrier = instGLB("barrier", bar, 0, MOBILE ? .05 : 0);
   const r = rndF(77), bl = [], rk = [];
   for (let i = 0; i < 40; i++) { const z = 4 + r() * (WZ - 8), x = edgeX(z) + 4 + r() * 50; const gi = Math.floor(z / CS) * GX + Math.floor(x / CS); if (grid[gi] !== 1) continue; bl.push([x, z, r() * 6.28, 1.2 + r() * 1.6, colH[gi] - .4]); }
-  for (let i = 0; i < (MOBILE ? 12 : 30); i++) { let x, z; const s = r(); if (s < .4) { x = GAR.x0 - 8 - r() * 90; z = GAR.z0 + r() * (GAR.z1 - GAR.z0); } else if (s < .7) { x = GAR.x0 + r() * 380; z = GAR.z0 - 8 - r() * 60; } else { x = GAR.x0 + r() * 380; z = GAR.z1 + 8 + r() * 60; } if (garDist(x, z) < 6) continue; bl.push([x, z, r() * 6.28, 1 + r() * 2.2, outerH(x, z) - .3]); }
+  // (the same random numbers on every device, so the site's rocks lie in the same places; phones simply leave two of three of these far boulders out)
+  for (let i = 0; i < 30; i++) { let x, z; const s = r(); if (s < .4) { x = GAR.x0 - 8 - r() * 90; z = GAR.z0 + r() * (GAR.z1 - GAR.z0); } else if (s < .7) { x = GAR.x0 + r() * 380; z = GAR.z0 - 8 - r() * 60; } else { x = GAR.x0 + r() * 380; z = GAR.z1 + 8 + r() * 60; } if (garDist(x, z) < 6) continue; const ang = r() * 6.28, sc = 1 + r() * 2.2; if (MOBILE && i % 3) continue; bl.push([x, z, ang, sc, outerH(x, z) - .3]); }
   for (let i = 0; i < 18; i++) { const z = 6 + r() * (WZ - 12), x = edgeX(z) - 3 - r() * 6; if (cellAt(x, z) !== 0 || Math.abs(z - 63.3) < 6 || [24, 36, 48].some(g => Math.abs(z - g) < 5)) continue; bl.push([x, z, r() * 6.28, .7 + r() * .7]); }
   SCAN.boulders = instGLB("boulders", bl, 0xd2d4d6, MOBILE ? .07 : 0);
   for (let i = 0; i < 70; i++) { const z = 3 + r() * (WZ - 6), x = edgeX(z) + 2 + r() * 55; const gi = Math.floor(z / CS) * GX + Math.floor(x / CS); if (grid[gi] !== 1) continue; rk.push([x, z, r() * 6.28, .8 + r() * 1.4, colH[gi] - .15]); }
-  for (let i = 0; i < 30; i++) { const x = 6 + r() * 118, z = 6 + r() * 100; if (cellAt(x, z) !== 0 || [DUMP, PARK, ROAD, OFFICE, PIT].some(o => rectDist(o, x, z) < 4) || PROPS.some(p => x > p[0] - 2 && x < p[1] + 2 && z > p[2] - 2 && z < p[3] + 2)) continue; rk.push([x, z, r() * 6.28, .35 + r() * .5]); PROPS.push([x - .4, x + .4, z - .4, z + .4]); }
+  for (let i = 0; i < 30; i++) { const x = 6 + r() * 118, z = 6 + r() * 100; if (cellAt(x, z) !== 0 || [DUMP, PARK, ROAD, OFFICE, PIT].some(o => rectDist(o, x, z) < 4) || PROPS.some(p => x > p[0] - 2 && x < p[1] + 2 && z > p[2] - 2 && z < p[3] + 2)) continue; rk.push([x, z, r() * 6.28, .35 + r() * .5]); PROPS.push([x - .4, x + .4, z - .4, z + .4, 1]); }   // 1: the machines roll over these small stones (people step round them)
   SCAN.rock = instGLB("rock", rk, 0xc9d2dc, MOBILE ? .08 : 0);
 }
 // oak scrub: photographic billboards baked from scanned shrubs: three crossed cards and a canopy card each, growing in clumps, swaying in the wind
@@ -1884,7 +1887,7 @@ function blocked(v, x, z, a) {
   const Lf = v.front != null ? v.front : v.L / 2, B = v.back != null ? v.back : -v.L / 2, s = v.Wd / 2 - .1;
   const pts = [[Lf, s], [Lf, -s], [B, s], [B, -s], [(Lf + B) / 2, s], [(Lf + B) / 2, -s], [Lf, 0]];
   const c = Math.cos(a), si = Math.sin(a);
-  for (const [dx, dy] of pts) { const px = x + c * dx - si * dy, pz = z + si * dx + c * dy; if (px < 1 || pz < 1 || px > WX - 1 || pz > WZ - 1) return true; if (cellAt(px, pz) === 1) return true; const pa = propsAt(px, pz); if (pa) for (const r of pa) if (px > r[0] && px < r[1] && pz > r[2] && pz < r[3]) return true; }
+  for (const [dx, dy] of pts) { const px = x + c * dx - si * dy, pz = z + si * dx + c * dy; if (px < 1 || pz < 1 || px > WX - 1 || pz > WZ - 1) return true; if (cellAt(px, pz) === 1) return true; const pa = propsAt(px, pz); if (pa) for (const r of pa) if (r[4] !== 1 && px > r[0] && px < r[1] && pz > r[2] && pz < r[3]) return true; }
   return beltHit(v, x, z, a);
 }
 function beltHit(v, x, z, a) {
@@ -2645,7 +2648,8 @@ function aiTruck(t, dt) {
       const ux = Math.cos(S.a), uz = Math.sin(S.a), proj = (t.x - S.x) * ux + (t.z - S.z) * uz, cp = Math.max(proj, 0) + 9;
       const [a, b] = steerTo(t, S.x + ux * cp, S.z + uz * cp, .3, null); th = clamp(a, -1, .6); st = b;
       const he = Math.abs(wrapA(t.a - S.a)), lat = Math.abs(-(t.x - S.x) * uz + (t.z - S.z) * ux);
-      if (proj > 16 && he < .1 && lat < .8) { th = clamp(-t.v, -1, 0); t.aiBrake = true; if (Math.abs(t.v) < .3) t.aiState = "reverse"; } break; }
+      // straight enough: back in (the reversing corrects what is left); further out the line it takes less, so the truck never runs on across the site
+      if ((proj > 16 && he < .1 && lat < .8) || (proj > 24 && he < .28 && lat < 1.6) || proj > 34) { th = clamp(-t.v, -1, 0); t.aiBrake = true; if (Math.abs(t.v) < .3) t.aiState = "reverse"; } break; }
     case "reverse": { // back straight down the line into the spot
       const ux = Math.cos(S.a), uz = Math.sin(S.a), proj = (t.x - S.x) * ux + (t.z - S.z) * uz, cp = Math.max(proj - 5, -1), cx = S.x + ux * cp, cz = S.z + uz * cp;
       const al = wrapA(Math.atan2(cz - t.z, cx - t.x) - (t.a + Math.PI)); st = clamp(-al * 2.4, -1, 1);
@@ -2660,6 +2664,11 @@ function aiTruck(t, dt) {
   if (t.honkT > 0) t.honkT -= dt; t.crewWait = crewStop;
   // unstick: if a moving state makes no progress, back off and retry
   if (!crewStop && th !== 0 && Math.abs(t.v) < .15) { t.aiStuck += dt; if (t.aiStuck > 2.5) { t.aiEsc = 1.6; t.aiStuck = 0; } } else if (!crewStop) t.aiStuck = 0;
+  // watchdog: on the way, if the truck has not got 1.2 m further in 4 s (creeping along a stone, a pile or a post, or a soldier who will not step aside), back off and try again
+  t.crewT = crewStop ? (t.crewT || 0) + dt : 0;
+  if ((t.aiState === "todump" || t.aiState === "return" || t.aiState === "align") && !(t.aiEsc > 0)) { t.wdT = (t.wdT || 0) + dt;
+    if (t.wdT > 4) { if (t.wdX != null && Math.hypot(t.x - t.wdX, t.z - t.wdZ) < 1.2 && (!crewStop || t.crewT > 12)) { t.aiEsc = 2; t.aiStuck = 0; t.crewT = 0; } t.wdT = 0; t.wdX = t.x; t.wdZ = t.z; } }
+  else if (!(t.aiEsc > 0)) { t.wdT = 0; t.wdX = null; }
   drive(t, dt, th, st); work(t, dt, {rx: 0, ry, L: {x: 0, y: 0}}); t.aiTh = th;
 }
 const AIST = {wait: "yükleme bekliyor", todump: "döküm sahasına gidiyor", tip: "damperi kaldırıyor", lower: "damperi indiriyor", return: "yükleme noktasına dönüyor", align: "hizalanıyor", reverse: "geri geri yanaşıyor"};
@@ -3516,9 +3525,12 @@ function occCells(v, fn) { const o = occOf(v), e = v.g.matrixWorld.elements;
 // ground that can be walked (rock, props and the map edge, not the machines)
 function walkable(x, z) {
   const inSite = x >= 0 && z >= 0 && x <= WX && z <= WZ;
-  if (inSite) { if (x > WX - 2 || z > WZ - 2.7) return false; for (const [dx, dz] of [[.3, 0], [-.3, 0], [0, .3], [0, -.3]]) if (cellAt(x + dx, z + dz) === 1) return false; }
+  // (only real rock cells count here: a point just outside the site is not rock, or nobody could walk in through the gate)
+  if (inSite) { if (x > WX - 2 || z > WZ - 2.7) return false; for (const [dx, dz] of [[.3, 0], [-.3, 0], [0, .3], [0, -.3]]) { const gx = Math.floor((x + dx) / CS), gz = Math.floor((z + dz) / CS); if (gx >= 0 && gz >= 0 && gx < GX && gz < GZ && grid[gz * GX + gx] === 1) return false; } }
   else {   // the garrison: inside the fence, off the hill's steep sides (the ramp and the steps excepted)
-    const inW = x > GAR.x0 + 2.5 && x < 0 && z > GAR.z0 + 2.5 && z < GAR.z1 - 2.5, inN = x >= 0 && x < GAR.x1 - 2.5 && z > GAR.z0 + 2.5 && z < 0; if (!inW && !inN) return false;
+    const inW = x > GAR.x0 + 2.5 && x < 0 && z > GAR.z0 + 2.5 && z < GAR.z1 - 2.5, inN = x >= 0 && x < GAR.x1 - 2.5 && z > GAR.z0 + 2.5 && z < 0;
+    const gateRoad = x > MAINGATE.x - 140 && x <= GAR.x0 + 3 && Math.abs(z - MAINGATE.z) < 5.2;   // out through the main gate, along the road
+    if (!inW && !inN && !gateRoad) return false;
     const d = rectD2(x, z, TER.x0, TER.x1, TER.z0, TER.z1);
     if (d > .25 && d < 5.4) { const ramp = x > RAMP.x0 - 1 && x < TER.x0 + 1 && z > RAMP.z0 + .5 && z < RAMP.z1 - .5, st = x > STAIR.x0 + .35 && x < STAIR.x1 - .35 && z > TER.z1 - 1 && z < STAIR.z1 + 1; if (!ramp && !st) return false; }
     if (x > RAMP.x0 && x < TER.x0 && z > RAMP.z0 - 3.2 && z < RAMP.z1 + 3.2 && (z < RAMP.z0 + .5 || z > RAMP.z1 - .5)) return false;   // the ramp's banks
@@ -3618,8 +3630,8 @@ function toolPose(S, g, k, two, tool, carry) {
   if (two) { TGP2.copy(TGP).addScaledVector(TBY, sep + (dgrip ? .1 : 0)); gripAt(S, oh, TGP2, TBY, oh === "Left" ? [.7, -.5, -.3] : [-.7, -.5, -.3]); }
   else curl(S, oh, 0);
 }
-// the commander does no digging himself: the soldiers do the work, he plans, checks and gives the orders (no hand tools)
-const NOTOOLS = true;
+// the soldiers do the work on their own; you can still pick up a tool or climb into any machine and drive it yourself
+const NOTOOLS = false;
 function setTool(k) { if (NOTOOLS) k = null;
   if (FOOT.carry > 0 && k !== "kurek") { dropDirt(fw(FOOT, .8), FOOT.carry); FOOT.carry = 0; }
   FOOT.tool = k; FOOT.sw = -1; TOOLM.kazma.visible = k === "kazma"; TOOLM.kurek.visible = k === "kurek"; TOOLM.lump.visible = false;
@@ -3783,7 +3795,7 @@ function finishSeq() {
     updAIbtn(); toast(v.name + (v.eng ? " · MOTOR ÇALIŞIYOR" : " · R: MOTORU ÇALIŞTIR"), 2.2);
   } else {
     doorTo(v, DOORA, 0); FOOT.on = true; const a = Math.PI / 2 - new THREE.Euler().setFromQuaternion(PLAYER.root.quaternion, "YXZ").y; FOOT.a = a; FOOT.vx = FOOT.vz = 0;
-    CAM.yaw = a + Math.PI * .45; CAM.pitch = .22; CAM.dist = 4.4; camSnap = true; toast("İNDİN · makineyi asker devralıyor", 2);
+    CAM.yaw = a + Math.PI * .45; CAM.pitch = .22; CAM.dist = 4.4; camSnap = true; toast("İNDİN · makineyi asker devralıyor · E: tekrar bin", 2);
     if (v.job) setTimeout(() => { if (!v.P.seated && !(FOOT.seq && FOOT.seq.v === v)) opsGive(v); }, 1400);
     if (FOOT.tool) setTool(FOOT.tool);
   }
@@ -3938,8 +3950,9 @@ function footHud() {
   if (FOOT.seq) st = FOOT.seq.dir === "in" ? "Araca biniyor…" : "Araçtan iniyor…";
   else if (FOOT.tool === "kazma") st = (FOOT.wall ? "Kayaya vuruyorsun" : "Kazma elinde") + " · BOŞLUK / tık: vur";
   else if (FOOT.tool === "kurek") st = FOOT.carry > 0 ? "Kürek dolu · sağ tarafa atar: yığın, döküm sahası ya da kamyon kasası" : "Kürek elinde · BOŞLUK / tık: kürekle";
-  else st = n ? n.name + " · " + (n.broken ? "arızalı, G ile tamire asker gönder" : n.ai || n.P.seated ? "asker çalıştırıyor" : "operatör bekliyor · G ile asker ata") : "G: görev dağılımı · şantiyeleri gez, askerleri denetle";
-  if (SEAT.on) st = "Çay ocağındasın · G: görev dağılımı · ENTER: kalk · B: karakter"; else { const ch = nearChair(); if (ch) st = "ENTER: sandalyeye otur" + (n ? " · " + n.name : ""); }
+  else st = n ? n.name + " · " + (n.broken ? "arızalı" : n.ai || n.P.seated ? "asker çalıştırıyor" : "operatör yok") + " · E: bin, sen sür" : "G: görev dağılımı · Tab: alet çarkı · makineye yaklaşıp E: bin";
+  if (n && FOOT.tool) st += " · E: " + n.name;
+  if (SEAT.on) st = "Çay ocağındasın · G: görev dağılımı · ENTER: kalk · B: karakter"; else { const ch = nearChair(); if (ch) st = "ENTER: sandalyeye otur" + (n ? " · E: " + n.name : ""); }
   chairBtns();
   vState.textContent = st; vBar.style.width = (FOOT.carry > 0 ? 100 : 0) + "%";
   dSpd.textContent = Math.round(FOOT.spd * 3.6); dGear.textContent = "–"; dRpm.style.width = "0%";
@@ -4266,10 +4279,10 @@ const MGATE = {arms: [], a: 0};
   s.box(7, 3, 5, x + 8, y + 1.5, z + 10.5, 0xd9d3c3); s.box(7.4, .25, 5.4, x + 8, y + 3.1, z + 10.5, 0x5b6142); for (const k of [-2, 0, 2]) s.box(1.2, .9, .06, x + 8 + k, y + 1.8, z + 7.97, 0x2b3c48);
   s.box(1, 2.1, .06, x + 10.6, y + 1.05, z + 7.97, 0x4d4b45);
   s.box(2.2, 2.6, 2.2, x + 4, y + 1.3, z + 6.2, 0xd9d3c3); s.box(2.5, .2, 2.5, x + 4, y + 2.7, z + 6.2, 0x5b6142); s.box(1.6, .8, .06, x + 4, y + 1.7, z + 5.07, 0x2b3c48);
-  for (const zz of [z - 6.6, z + 6.6]) s.box(1.2, 3.4, 1.2, x, GH(x, zz) + 1.7, zz, 0xb9b4a8);
+  for (const zz of [z - 6.6, z + 6.6]) { s.box(1.2, 3.4, 1.2, x, GH(x, zz) + 1.7, zz, 0xb9b4a8); PROPS.push([x - .6, x + .6, zz - .6, zz + .6]); }
   s.box(.3, 6, .3, x + 1.4, y + 3, z - 4.6, 0x4d5238); s.box(.3, 6, .3, x + 1.4, y + 3, z + 4.6, 0x4d5238); s.box(.3, .4, 9.6, x + 1.4, y + 6, z, 0x4d5238);
-  for (const zz of [z - 4.2, z + 4.2]) for (let k = 0; k < 3; k++) s.box(1.8, .9, .7, x - 10 - k * 9, GH(x - 10 - k * 9, zz) + .45, zz + (k % 2 ? .6 : -.6) * Math.sign(zz - z), 0xb7b1a4);
-  for (const zz of [z - 1.8, z + 1.8]) s.box(.5, 1.1, .5, x + 4.6, GH(x + 4.6, zz) + .55, zz, 0xe8c51c);
+  for (const zz of [z - 4.2, z + 4.2]) for (let k = 0; k < 3; k++) { const bx = x - 10 - k * 9, bz = zz + (k % 2 ? .6 : -.6) * Math.sign(zz - z); s.box(1.8, .9, .7, bx, GH(bx, zz) + .45, bz, 0xb7b1a4); PROPS.push([bx - .9, bx + .9, bz - .35, bz + .35]); }
+  for (const zz of [z - 1.8, z + 1.8]) { s.box(.5, 1.1, .5, x + 4.6, GH(x + 4.6, zz) + .55, zz, 0xe8c51c); PROPS.push([x + 4.35, x + 4.85, zz - .25, zz + .25]); }
   s.box(.6, .12, 7, x - 3, GH(x - 3, z) + .06, z, 0xe8c51c);
   putP(scene, s, true, .03);
   PROPS.push([x + 4.4, x + 11.6, z + 7.9, z + 13.1], [x + 2.8, x + 5.2, z + 5, z + 7.4]);
@@ -5541,7 +5554,7 @@ const blockAt = t => { let b = SCHED[0]; for (const s of SCHED) if (t >= s.from)
 const hhmm = t => String(Math.floor(t / 60) % 24).padStart(2, "0") + ":" + String(Math.floor(t % 60)).padStart(2, "0");
 const isWork = () => !DAY.on || (DAY.block && DAY.block.k === "is");
 const restBlock = () => DAY.on && DAY.block && ["sabah", "cay", "sohbet"].includes(DAY.block.k);
-const GOAL = {tunnel: 25, trips: 10};
+const GOAL = {tunnel: 25, trips: 4};   // what the soldiers manage on their own on an ordinary day (a breakdown or two); you can push it higher
 function planDay() {
   const r = (a, b) => a + Math.random() * (b - a);
   const raidAt = r(9 * 60, 16 * 60 + 20);
@@ -5650,11 +5663,11 @@ function newEvent() {
   const machines = JOBS.filter(j => j.on && !j.done && j.v.ai && !j.v.broken && !busy.has(j.v));
   const crew = typeof CREW !== "undefined" ? CREW.filter(w => w.S && w.root.visible !== false && !busy.has(w)) : [];
   if (crew.length && Math.random() < .25) { // a safety rule broken: someone walks too close to a working machine
-    const w = pick(crew); const e = {kind: "isg", w, t0: DAY.t, fix: 0, need: 4, mark: mkMarker(ISGTEX), txt: pick(["Asker çalışan makinenin dönüş alanına girdi!", "Asker baretsiz dolaşıyor!", "Asker kamyonun arkasından geçiyor!"])};
+    const w = pick(crew); const e = {kind: "isg", w, t0: DAY.t, fix: 0, need: 4, crewAt: DAY.t + 12 + Math.random() * 10, mark: mkMarker(ISGTEX), txt: pick(["Asker çalışan makinenin dönüş alanına girdi!", "Asker baretsiz dolaşıyor!", "Asker kamyonun arkasından geçiyor!"])};
     DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz · İSG", "İŞ GÜVENLİĞİ", e.txt + " Gidip ikaz et."); return; }
   if (!machines.length) return;
   const j = pick(machines), v = j.v, txt = pick(EVTXT[v.type] || ["Komutanım, makine arıza yaptı!"]);
-  v.broken = true; const e = {kind: v.type === "tr" && /saplandı/.test(txt) ? "saplandi" : "ariza", v, j, t0: DAY.t, fix: 0, need: v.type === "tr" ? 12 : 16, mark: mkMarker(MARKTEX), txt};
+  v.broken = true; const e = {kind: v.type === "tr" && /saplandı/.test(txt) ? "saplandi" : "ariza", v, j, t0: DAY.t, fix: 0, need: v.type === "tr" ? 12 : 16, crewAt: DAY.t + 20 + Math.random() * 15, mark: mkMarker(MARKTEX), txt};
   DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz", v.name + " operatörü", txt);
   const sup = OFFM[j.sup]; if (sup && !isPlayer(sup)) { e.helpAt = DAY.t + 25 + Math.random() * 25; }   // if you do nothing, the officer in charge goes himself a while later
 }
@@ -5666,7 +5679,11 @@ function evFrame(dt) {
     // who is there: you on foot, or an officer standing by it
     const near = (x, z, r) => (FOOT.on && Math.hypot(FOOT.x - x, FOOT.z - z) < r) || OFFS.some(o => !isPlayer(o) && o.S && o.S.root.visible && ["work", "stand", "walk"].includes(o.st) && Math.hypot(o.x - x, o.z - z) < r);
     const here = near(p.x, p.z, e.kind === "isg" ? 5 : 11);
-    if (here) { e.fix += dt; if (!e.told) { e.told = true; if (e.kind !== "isg") toast(e.kind === "saplandi" ? "Kamyonu çıkarıyorlar…" : "Tamir ekibi çalışıyor…", 2); } } else if (e.fix > 0) e.fix = Math.max(0, e.fix - dt * .3);
+    // the repair team (for a soldier breaking a rule: the duty sergeant) gets there on its own a while later; with you or an officer there it goes faster
+    const crew = e.crewAt != null && DAY.t > e.crewAt;
+    if (crew && !e.crewTold) { e.crewTold = true; if (FOOT.on && Math.hypot(FOOT.x - p.x, FOOT.z - p.z) < 60) toast(e.v ? e.v.name + " · tamir ekibi geldi" : "Nöbetçi çavuş askeri ikaz ediyor", 2); }
+    const rate = (here ? 1 : 0) + (crew ? .6 : 0);
+    if (rate > 0) { e.fix += dt * rate; if (here && !e.told) { e.told = true; if (e.kind !== "isg") toast(e.kind === "saplandi" ? "Kamyonu çıkarıyorlar…" : "Tamir ekibi çalışıyor…", 2); } } else if (e.fix > 0) e.fix = Math.max(0, e.fix - dt * .3);
     if (e.helpAt && DAY.t > e.helpAt && !e.sent) { e.sent = true; const sup = OFFM[e.j.sup]; if (sup && !isPlayer(sup) && ["seat", "stand", "work"].includes(sup.st)) { say(sup, "Ben arızaya bakıyorum.", 2); sendToSite(sup.d.key, e.j.k, true, 40); } }
     if (!e.late && DAY.t - e.t0 > 90) { e.late = true; satAdd(-5, (e.v ? e.v.name : "İSG") + " uzun süre çözülmedi"); }
     if (e.fix >= e.need) { // sorted
@@ -5804,7 +5821,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261029-1257";
+const BUILD = "20261029-1354";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";

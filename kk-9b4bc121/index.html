@@ -251,8 +251,9 @@ h1,h2{font-family:var(--f-serif);font-weight:500;margin:0;line-height:1;text-wra
 .tas.atildi{transform:translateY(-60px) rotate(-12deg);opacity:0}
 .tas.yanlis{animation:sars .35s}
 @keyframes sars{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.geri-sayim{position:absolute;left:50%;top:26%;transform:translate(-50%,-50%);font:800 72px var(--f-ui);color:#fff;text-shadow:0 0 30px #9fd0ff,0 4px 20px #000a;pointer-events:none}
-.geri-sayim.yeni{color:#ffd98a;text-shadow:0 0 40px #ffb04a,0 4px 20px #000a;animation:nabiz 1s infinite}
+.geri-sayim{position:absolute;left:calc((100% - 14px - min(38vw,190px))/2);top:26%;transform:translate(-50%,-50%);font:800 72px var(--f-ui);color:#fff;text-shadow:0 0 30px #9fd0ff,0 4px 20px #000a;pointer-events:none}
+.geri-sayim.yeni{color:#ffd98a;text-shadow:0 0 40px #ffb04a,0 4px 20px #000a;animation:gsNabiz 1s infinite}
+@keyframes gsNabiz{50%{transform:translate(-50%,-50%) scale(1.08)}}
 
 /* manuel vites: devir saati */
 .vites-ui .devir{display:flex;justify-content:center}
@@ -649,8 +650,15 @@ function ayYap(boy=26){ const c=document.createElement("canvas"); c.width=c.heig
   const g=x.createRadialGradient(128,128,20,128,128,128); g.addColorStop(0,"rgba(255,250,235,1)"); g.addColorStop(.32,"rgba(255,246,225,1)"); g.addColorStop(.36,"rgba(220,225,255,.35)"); g.addColorStop(1,"rgba(160,170,255,0)");
   x.fillStyle=g; x.fillRect(0,0,256,256); x.globalAlpha=.12; x.fillStyle="#9a8f80"; [[110,105,14],[150,140,10],[120,150,8],[142,100,6]].forEach(([a,b,r])=>{ x.beginPath(); x.arc(a,b,r,0,7); x.fill(); });
   const t=new THREE.CanvasTexture(c); const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,fog:false})); s.scale.set(boy,boy,1); return s; }
-function sutun(boy=5,yikik=false){ const g=new THREE.Group(), m=mat("#e8dcc4",{roughness:.9,bumpMap:gurultuDoku(2),bumpScale:.08});
-  const h=yikik?boy*rnd(.35,.7):boy; const s=new THREE.Mesh(new THREE.CylinderGeometry(.34,.38,h,14),m); s.position.y=h/2+.3; s.castShadow=true; s.receiveShadow=true; g.add(s);
+// yivli mermer sütun dokusu: 20 yiv, yaşlanma lekeleri (bump için de kullanılır)
+function sutunDoku(){ if(sutunDoku.t) return sutunDoku.t; const c=document.createElement("canvas"); c.width=512; c.height=256; const x=c.getContext("2d");
+  x.fillStyle="#e6dcc6"; x.fillRect(0,0,512,256); for(let i=0;i<20;i++){ const g=x.createLinearGradient(i*25.6,0,i*25.6+25.6,0); g.addColorStop(0,"rgba(255,255,255,.35)"); g.addColorStop(.18,"rgba(120,105,85,.32)"); g.addColorStop(.5,"rgba(150,135,110,.18)"); g.addColorStop(.82,"rgba(120,105,85,.32)"); g.addColorStop(1,"rgba(255,255,255,.35)"); x.fillStyle=g; x.fillRect(i*25.6,0,25.6,256); }
+  for(let i=0;i<40;i++){ const px=Math.random()*512, py=Math.random()*256, r=rnd(8,40); const g=x.createRadialGradient(px,py,0,px,py,r); g.addColorStop(0,`rgba(${rnd(110,150)|0},${rnd(95,125)|0},${rnd(70,95)|0},.22)`); g.addColorStop(1,"rgba(0,0,0,0)"); x.fillStyle=g; x.fillRect(px-r,py-r,2*r,2*r); }
+  const d=x.getImageData(0,0,512,256); for(let i=0;i<d.data.length;i+=4){ const n=(Math.random()-.5)*16; d.data[i]+=n; d.data[i+1]+=n; d.data[i+2]+=n; } x.putImageData(d,0,0);
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.encoding=THREE.sRGBEncoding; t.__kalici=true; sutunDoku.t=t; return t; }
+function sutun(boy=5,yikik=false){ const g=new THREE.Group(), m=mat("#e8dcc4",{roughness:.9,bumpMap:gurultuDoku(2),bumpScale:.08}); const sd=sutunDoku();
+  const ms=new THREE.MeshStandardMaterial({map:sd,bumpMap:sd,bumpScale:.06,roughness:.85});
+  const h=yikik?boy*rnd(.35,.7):boy; const s=new THREE.Mesh(new THREE.CylinderGeometry(.34,.38,h,28),ms); s.position.y=h/2+.3; s.castShadow=true; s.receiveShadow=true; g.add(s);
   const k=new THREE.Mesh(new THREE.BoxGeometry(1,.3,1),m); k.position.y=.15; k.castShadow=true; g.add(k);
   if(!yikik){ const b=new THREE.Mesh(new THREE.BoxGeometry(.95,.32,.95),m); b.position.y=h+.46; b.castShadow=true; g.add(b); }
   g.userData.engel={kutu:[.5,.5]}; return g; }
@@ -900,7 +908,26 @@ function sacUzat(sm,kesit,marj){
   geo.setAttribute("skinIndex",new THREE.Uint16BufferAttribute(SI,4)); geo.setAttribute("skinWeight",new THREE.Float32BufferAttribute(SW,4)); geo.setAttribute("color",new THREE.Float32BufferAttribute(C,3));
   geo.computeVertexNormals(); geo.computeBoundingSphere(); return geo;
 }
+// Kardelen'in yüz hatlarına çok hafif dokunuş (bağlama uzayında, bir kez): gözler biraz daha açık, kaş kemeri hafif yukarı,
+// dudaklar biraz dolgun, burun kanatları ve çene hattı biraz daha ince (V çizgisi). Kirpikler aynı biçimde göz kapağını izler.
+function kardelenYuzSekli(sahne){
+  const GL=[.0281,1.6262,.0806], GR=[-.0294,1.6265,.0805], AG=[.0008,1.5575,.104], BU=[.0006,1.5894,.1276];
+  const ss=(a,b,x)=>{ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
+  const sekil=(x,y,z)=>{ let nx=x, ny=y, nz=z; const on=ss(-.01,.03,z);
+    for(const E of [GL,GR]){ // göz açıklığı: göz merkezine göre dikeyde %9, yatayda %3 açılır
+      const d=Math.hypot(x-E[0],(y-E[1])/.72), w=(1-ss(.006,.021,d))*ss(E[2]-.03,E[2]-.006,z); ny+=(y-E[1])*.09*w; nx+=(x-E[0])*.03*w;
+      // kaş kemeri: dış uca doğru 1.3 mm yukarı
+      const u=(x-E[0])*Math.sign(E[0]), dy=y-(E[1]+.019); const kw=(1-ss(.006,.014,Math.abs(dy)))*ss(-.012,.012,u)*(1-ss(.026,.036,u))*on; ny+=.0013*kw*ss(-.012,.02,u); }
+    { const d=Math.hypot(x-AG[0],(y-AG[1])/.5), w=(1-ss(.008,.02,d))*on; ny+=(y-AG[1])*.06*w; nz+=.0006*w; } // dudak dolgunluğu
+    { const d=Math.hypot(x-BU[0],(y-BU[1])/.9), w=(1-ss(.008,.02,d))*ss(.09,.11,z); nx-=(x-BU[0])*.06*w; } // burun kanatları
+    { const w=ss(1.478,1.505,y)*(1-ss(AG[1]-.004,AG[1]+.018,y))*ss(.022,.055,Math.abs(x))*ss(-.02,.02,z); nx-=x*.045*w; } // çene hattı
+    return [nx,ny,nz]; };
+  sahne.traverse(o=>{ if(!o.isMesh||!o.material) return; const n=o.material.name; if(n!=="AvatarHead"&&n!=="AvatarEyelashes") return;
+    const P=o.geometry.attributes.position; if(o.geometry.userData.yuzSekli) return; o.geometry.userData.yuzSekli=1;
+    for(let i=0;i<P.count;i++){ const q=sekil(P.getX(i),P.getY(i),P.getZ(i)); P.setXYZ(i,q[0],q[1],q[2]); } P.needsUpdate=true; o.geometry.computeBoundingSphere(); });
+}
 async function kardelenGuzellestir(sahne){
+  kardelenYuzSekli(sahne);
   const [yuz,goz]=await Promise.all([_dokuYukle("kardelen_yuz.jpg"),_dokuYukle("kardelen_goz.jpg")]);
   let sac=null;
   sahne.traverse(o=>{ if(!o.isMesh||!o.material) return; const n=o.material.name;
@@ -1541,7 +1568,7 @@ function karakterleriGuncelle(dt){
       if(!aktif&&u.saril>0){ aktif=true; if(u.kim==="kaan"){ px=-.95; pz=-isaret*.15; } else { px=-1.55; pz=-isaret*.25; } }
       if(!aktif&&u._dans>.05){ aktif=true; if(u.kim==="kaan"){ px=-.75; pz=-isaret*.25; } else { px=-1.45; pz=-isaret*.3; } }
       if(!aktif&&u.kilic>0&&anah==="S"){ aktif=true; if(u.kilicYon){ const ky=u.kilicYon.clone().normalize().add(new THREE.Vector3(0,(u.titre||0)*.4,0)).normalize(); ozel=ky.clone().applyQuaternion(kq.clone().invert()); onKol=ky; } else { px=-1.0-u.kilic*.72; pz=-.12; onKol=yon(-.2,.55+u.kilic*.25,.9); } }
-      if(!aktif&&u.telefon>0&&anah==="S"){ aktif=true; if(u.telefon>1.5){ px=-.35; pz=-.55; onKol=yon(.3,1,.25); } else { px=-.55; pz=.12; onKol=yon(.25,.55,1); } }
+      if(!aktif&&u.telefon>0&&anah==="S"){ aktif=true; if(u.telefon>2.5){ px=-1.0; pz=.08; onKol=yon(.16,.95,.5); } else if(u.telefon>1.5){ px=-.35; pz=-.55; onKol=yon(.3,1,.25); } else { px=-.55; pz=.12; onKol=yon(.25,.55,1); } } // 3: görüntülü arama (telefon yüz hizasında)
       if(!aktif&&u.alkis>0){ aktif=true; px=-.55; pz=-isaret*.12; onKol=yon(-isaret*(.55+Math.sin(zaman*14)*.2),.35,.8); }
       if(!aktif&&u.elele>.05&&anah===elKol&&!es){ aktif=true; px=-.1+Math.sin(u.faz)*.06*Math.min(1,hiz); pz=isaret*.32; }
       if(!aktif&&u.salla>0&&anah==="D"){ aktif=true; px=0; pz=2.5+Math.sin(zaman*8)*.25; onKol=yon(isaret*.25,1,.15); }
@@ -1586,7 +1613,7 @@ function karakterleriGuncelle(dt){
       const gl=Math.max(u._gul,u.kim==="kardelen"?.2:.06); // hafif, doğal tebessüm
       yuzAyarla(u,"mouthSmileLeft",gl*.7); yuzAyarla(u,"mouthSmileRight",gl*.7); yuzAyarla(u,"cheekSquintLeft",gl*.35); yuzAyarla(u,"cheekSquintRight",gl*.35);
       yuzAyarla(u,"jawOpen",u._cene); yuzAyarla(u,"mouthFunnel",u._cene*.3); yuzAyarla(u,"browInnerUp",u.baslik||0);
-      if(u.kim==="kardelen"){ const ac=.15*(1-kir); yuzAyarla(u,"eyeWideLeft",ac); yuzAyarla(u,"eyeWideRight",ac); yuzAyarla(u,"browOuterUpLeft",.07); yuzAyarla(u,"browOuterUpRight",.07); } // biraz daha açık, ışıltılı bakış
+      if(u.kim==="kardelen"){ /* göz ve kaş biçimi kardelenYuzSekli'nde geometriye işlendi (dosyada eyeWide/browOuterUp hedefi yok) */ } // biraz daha açık, ışıltılı bakış
     }
     // elde tutulan nesne
     if(u.titre>0) u.titre=Math.max(0,u.titre-dt*2.2);
@@ -1608,6 +1635,11 @@ function kalabalikGuncelle(c,dt){
   if(u._sayac<aralik) return; const t=u._sayac; u._sayac=0;
   if(u.eylem.walk&&u.temel!==u.eylem.walk){ const yw=clamp((u.hiz||0)/1.1,0,1); u.eylem.walk.setEffectiveWeight(yw); u.temel.setEffectiveWeight(1-yw); u.eylem.walk.timeScale=clamp((u.hiz||0)/1.25,.7,1.9); }
   u.mixer.update(t);
+  // ayakta bekleyen sivil kalabalık: bekleme klibindeki açık kolları doğal biçimde yanlara indir
+  if(!u.hazirol&&!u.kilicPoz&&!u.alkis&&u.eylem.idle&&u.temel===u.eylem.idle&&(u.hiz||0)<.15){ c.updateMatrixWorld(true); c.getWorldQuaternion(_kq); const B=u.kemik;
+    for(const [kmk,is] of [["Left",1],["Right",-1]]){ if(!B[kmk+"Arm"]||!B[kmk+"ForeArm"]||!B[kmk+"Hand"]) continue;
+      kemikYonelt(B[kmk+"Arm"],B[kmk+"ForeArm"],new THREE.Vector3(is*.16,-1,.05).normalize().applyQuaternion(_kq),.72);
+      kemikYonelt(B[kmk+"ForeArm"],B[kmk+"Hand"],new THREE.Vector3(is*.06,-1,.2).normalize().applyQuaternion(_kq),.6); } }
   // tören: hazır ol duruşu (kollar yanlarda); kılıç kolu ayrıca yönetilir
   if(u.hazirol){ c.updateMatrixWorld(true); c.getWorldQuaternion(_kq); const B=u.kemik;
     for(const [kmk,is] of [["Left",1],["Right",-1]]){ if(kmk==="Right"&&u.kilicPoz&&u.kilicN) continue;
@@ -2000,7 +2032,7 @@ function kabukGiysi(model,ayar){
   if(!body) return null;
   const sk=body.skeleton, ad=sk.bones.map(b=>b.name.replace(/^mixamorig/,""));
   const grup=n=>/Hand/.test(n)?"el":/^(Head|Neck1|Neck2|HeadTop|LeftEye|RightEye)/.test(n)?"bas":/^Neck$/.test(n)?"boyun":/(Arm|Shoulder)/.test(n)?"kol":/(UpLeg|Leg|Foot|Toe)/.test(n)?"bacak":"govde";
-  const gr=ad.map(grup);
+  const gr=ad.map(grup), omuzK=ad.map(n=>/Shoulder/.test(n)); // köprücük (Shoulder) kemiği: boyun ile kol arası
   const kemikP=n=>{ const i=ad.indexOf(n); if(i<0) return null; return new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(sk.boneInverses[i]).invert()); };
   const elX=Math.abs((kemikP("LeftHand")||new THREE.Vector3(.7,0,0)).x), boyunY=(kemikP("Neck")||new THREE.Vector3(0,1.45,0)).y, omuzX=Math.abs((kemikP("LeftArm")||new THREE.Vector3(.17,0,0)).x);
   const kalcaY=(kemikP("Hips")||new THREE.Vector3(0,.95,0)).y;
@@ -2009,8 +2041,8 @@ function kabukGiysi(model,ayar){
   for(const o of kaynaklar){ const g=o.geometry, P=g.attributes.position; const esle=o.skeleton.bones.map(b=>ad.indexOf(b.name.replace(/^mixamorig/,"")));
     const kim=o.material.name; const M=SINIF_MASKE[ayar.kim]; const UV=g.attributes.uv;
     for(let i=0;i<P.count;i++){ if(kim==="outfit"&&M&&UV){ const c=M[Math.min(255,(UV.getY(i)*256)|0)*256+Math.min(255,(UV.getX(i)*256)|0)]; if(c!==1&&c!==2) continue; if(c===2&&P.getY(i)<etek-.04) continue; }
-      const w=_agirliklar(g,i).map(([j,x])=>[Math.max(0,esle[j]),x]); let kol=0, el=0, bas=0; for(const [j,x] of w){ if(gr[j]==="kol") kol+=x; if(gr[j]==="el") el+=x; if(gr[j]==="bas") bas+=x; }
-      N.push({x:P.getX(i),y:P.getY(i),z:P.getZ(i),w,kol,el,bas}); } }
+      const w=_agirliklar(g,i).map(([j,x])=>[Math.max(0,esle[j]),x]); let kol=0, kolSaf=0, el=0, bas=0; for(const [j,x] of w){ if(gr[j]==="kol"){ kol+=x; if(!omuzK[j]) kolSaf+=x; } if(gr[j]==="el") el+=x; if(gr[j]==="bas") bas+=x; }
+      N.push({x:P.getX(i),y:P.getY(i),z:P.getZ(i),w,kol,kolSaf,el,bas}); } }
   const A=32, ADIM=.011; const ss=(a,b,x)=>{ const t=Math.min(1,Math.max(0,(x-a)/(b-a))); return t*t*(3-2*t); };
   // dilimler: gövde (y ekseni) ve kollar (T pozunda x ekseni); her dilimde açıya göre en dış yarıçap
   const dilimle=(secici,eksenD,bas_,son_,adim)=>{ const D=[]; for(let t=bas_;t<=son_+1e-6;t+=adim){ const pts=N.filter(q=>Math.abs(eksenD.ek(q)-t)<adim*1.6&&secici(q,t)); D.push({t,pts}); } return D; };
@@ -2029,10 +2061,13 @@ function kabukGiysi(model,ayar){
     const gen=R.map(p=>p.r.slice()); for(let i=0;i<R.length;i++) for(let k=0;k<A;k++){ let m=0; for(let d=-2;d<=2;d++){ const j=i+d; if(j<0||j>=R.length) continue; for(let e=-1;e<=1;e++) m=Math.max(m,gen[j][(k+e+A)%A]); } R[i].r[k]=m; }
     // 3) yumuşat: eksen boyunca ±2, açıda ±1 ortalama (testere dişi kalmaz)
     for(let tur=0;tur<2;tur++){ const c=R.map(p=>p.r.slice()); for(let i=0;i<R.length;i++) for(let k=0;k<A;k++){ let t=0,n=0; for(let d=-2;d<=2;d++){ const j=i+d; if(j<0||j>=R.length) continue; for(let e=-1;e<=1;e++){ t+=c[j][(k+e+A)%A]; n++; } } R[i].r[k]=t/n; } }
+    // 4) parlak kumaşta şerit yansıması kalmasın: eksen boyunca ek yumuşatma, ama en çok 2 mm içeri (boşluk açılmaz)
+    for(let tur=0;tur<2;tur++){ const c=R.map(p=>p.r.slice()); for(let i=0;i<R.length;i++) for(let k=0;k<A;k++){ let t=0,n=0; for(let d=-6;d<=6;d++){ const j=i+d; if(j<0||j>=R.length) continue; const w=7-Math.abs(d); t+=c[j][k]*w; n+=w; } R[i].r[k]=Math.max(t/n,c[i][k]-.008); } } // alttaki tişört kırışıkları ceket yüzeyine şerit olarak yansımaz (üst giysi zaten gizli)
     // merkezleri de eksen boyunca yumuşat
     { const cx=R.map(p=>p.cx), cy=R.map(p=>p.cy); for(let i=0;i<R.length;i++){ let a=0,b=0,n=0; for(let d=-3;d<=3;d++){ const j=i+d; if(j<0||j>=R.length) continue; a+=cx[j]; b+=cy[j]; n++; } R[i].cx=a/n; R[i].cy=b/n; } }
     return R; };
-  const govdeD=dilimle(q=>q.kol<.35&&q.el<.05&&q.bas<.3&&Math.abs(q.x)<omuzX*1.05,{ek:q=>q.y},etek,yakaY,ADIM);
+  // gövde: kol ağırlığı düşük noktalar + boynun iki yanındaki trapez (köprücüğe bağlı ama koldan değil): yaka ile omuz arasında açık kalmaz
+  const govdeD=dilimle(q=>(q.kol<.35||(q.kolSaf<.25&&q.y>yakaY-.09&&Math.abs(q.x)<omuzX*.8))&&q.el<.05&&q.bas<.3&&Math.abs(q.x)<omuzX*1.05,{ek:q=>q.y},etek,yakaY,ADIM);
   const govdeR=profil(govdeD,q=>[q.x,q.z]);
   const pos=[], bind=[], kolA=[], si=[], sw=[], idx=[];
   const agirlik=(q)=>q?q.w:[[ad.indexOf("Spine2"),1],[0,0],[0,0],[0,0]];
@@ -2064,15 +2099,42 @@ function kabukGiysi(model,ayar){
   let rx=0, rz=0, zc=0, nz=0; const bn=N.filter(q=>Math.abs(q.y-yakaY-.02)<.015&&Math.abs(q.x)<omuzX*.55&&q.kol<.3); for(const q of bn){ rx=Math.max(rx,Math.abs(q.x)); zc+=q.z; nz++; } zc=nz?zc/nz:boyun.z;
   for(const q of bn) rz=Math.max(rz,Math.abs(q.z-zc));
   rx=Math.max(rx,.05); rz=Math.max(rz,.05);
-  if(ayar.yaka){ const h=ayar.yaka, kat=ayar.kalin+(ayar.sisme||0)*.6+.006; const cg=new THREE.CylinderGeometry(1,1.015,h,28,3,true); cg.translate(0,h/2-.01,0);
-    const p3=cg.attributes.position; for(let i=0;i<p3.count;i++){ const x=p3.getX(i), y=p3.getY(i), z=p3.getZ(i); p3.setXYZ(i,x*(rx+kat),yakaY+y,zc+z*(rz+kat)); }
+  if(ayar.yaka){ const h=ayar.yaka, kat=ayar.kalin+(ayar.sisme||0)*.6+.006, RS=28, HS=4; const cg=new THREE.CylinderGeometry(1,1.015,h,RS,HS,true); cg.translate(0,h/2-.01,0);
+    // dik yaka: her satırda vücut/boyun kesiti açıya göre ölçülür; yaka üstte boyna yaklaşır ama hiçbir satırda yüzeyin içine girmez
+    const kesit=(y,cz)=>{ const r=new Float32Array(RS).fill(-1); for(const q of N){ if(Math.abs(q.y-y)>.011||q.kol>.2||q.el>.05||Math.abs(q.x)>.2) continue; const a=Math.atan2(q.x,q.z-cz); const k=((Math.round(a/(Math.PI*2)*RS)%RS)+RS)%RS; r[k]=Math.max(r[k],Math.hypot(q.x,q.z-cz)); }
+      for(let it=0;it<RS;it++) for(let k=0;k<RS;k++) if(r[k]<0){ const a=r[(k+1)%RS], b=r[(k+RS-1)%RS]; if(a>=0||b>=0) r[k]=Math.max(a,b); } for(let k=0;k<RS;k++) if(r[k]<0) r[k]=.05; return r; };
+    const yT=yakaY+h-.01, bt=N.filter(q=>Math.abs(q.y-yT)<.012&&q.kol<.2&&q.el<.05&&Math.abs(q.x)<.11); let zT=0; for(const q of bt) zT+=q.z; zT=bt.length?zT/bt.length:zc;
+    const satir=[]; for(let r_=0;r_<=HS;r_++){ const t=r_/HS, y=yakaY-.01+h*t, cz=lerp(zc,zT,ss(0,1,t)); satir.push({t,cz,r:kesit(y,cz)}); }
+    const p3=cg.attributes.position; for(let i=0;i<p3.count;i++){ const ux=p3.getX(i), y=p3.getY(i), uz=p3.getZ(i); const L=Math.hypot(ux,uz)||1, nx=ux/L, nz=uz/L;
+      const r_=Math.min(HS,Math.max(0,Math.round((y+.01)/h*HS))), S=satir[r_], t=ss(0,1,S.t); const a=Math.atan2(nx,nz); const k=((Math.round(a/(Math.PI*2)*RS)%RS)+RS)%RS;
+      const rTaban=1/Math.sqrt((nx*nx)/((rx+kat)*(rx+kat))+(nz*nz)/((rz+kat)*(rz+kat))); // tabandaki elips (gövdenin dışı)
+      const rUst=satir[HS].r[k]+.016, rr=Math.max(lerp(rTaban,Math.min(rTaban,rUst),t),S.r[k]+.012);
+      p3.setXYZ(i,nx*rr,yakaY+y,S.cz+nz*rr); }
     cg.computeVertexNormals(); const b=new Float32Array(p3.count*3); for(let i=0;i<p3.count;i++){ b[i*3]=p3.getX(i); b[i*3+1]=p3.getY(i); b[i*3+2]=p3.getZ(i); } cg.setAttribute("aBind",new THREE.BufferAttribute(b,3)); cg.setAttribute("aKol",new THREE.BufferAttribute(new Float32Array(p3.count),1));
     parca(cg,mat,[["Neck",.55],["Spine2",.45]]); }
   if(ayar.kapusonRulo){ const tg=new THREE.TorusGeometry(rx+.055,.052,12,24,Math.PI*1.1); tg.rotateX(Math.PI/2); tg.rotateY(-Math.PI*.05+Math.PI); tg.scale(1,.9,(rz+.065)/(rx+.055)); tg.translate(0,yakaY+.005,zc-.02);
     const p3=tg.attributes.position; const b=new Float32Array(p3.count*3); for(let i=0;i<p3.count;i++){ b[i*3]=p3.getX(i); b[i*3+1]=yakaY-1; b[i*3+2]=p3.getZ(i); } tg.setAttribute("aBind",new THREE.BufferAttribute(b,3)); tg.setAttribute("aKol",new THREE.BufferAttribute(new Float32Array(p3.count),1));
     parca(tg,mat,[["Spine2",.6],["Neck",.4]]); }
-  if(ayar.atki){ const am=atkiMalzeme(ayar.atki); const R1=rx+.034; const tg=new THREE.TorusGeometry(R1,.031,12,30); tg.rotateX(Math.PI/2); tg.scale(1,1.2,(rz+.04)/R1); tg.translate(0,yakaY+.04,zc+.004);
-    tg.computeVertexNormals(); parca(tg,am,[["Neck",.7],["Spine2",.3]]);
+  if(ayar.atki){ const am=atkiMalzeme(ayar.atki); const kat=ayar.kalin+(ayar.sisme||0)*.6;
+    // boyna iki tur sarılmış atkı: alttaki geniş ve yassı, üstteki daha ince (yastık gibi tek simit değil)
+    const tur=(R,tup,yy,dz,sy)=>{ const tg=new THREE.TorusGeometry(R,tup,10,36); tg.rotateX(Math.PI/2); tg.scale(1,sy,(rz+kat+dz)/R); tg.translate(0,yy,zc+.006); tg.computeVertexNormals(); return tg; };
+    parca(tur(rx+kat+.006,.011,yakaY+.016,.008,2.5),am,[["Spine2",.55],["Neck",.45]]);
+    parca(tur(rx+.016,.0095,yakaY+.056,-.004,2.1),am,[["Neck",.75],["Spine2",.25]]);
+    // önden sarkan iki uç: kalınlığı olan örgü şerit; göğüsten aşağı düz sarkar (göğüs altına girmez), uçta kısa püskül
+    const onZ=(x0,y)=>{ let z=-1; for(const q of N){ if(Math.abs(q.y-y)<.014&&Math.abs(q.x-x0)<.03&&q.kol<.25&&q.el<.05&&q.z>z) z=q.z; } return z<0?.1:z; };
+    const m2=am.clone(); m2.onBeforeCompile=am.onBeforeCompile; m2.customProgramCacheKey=()=>"atki2";
+    for(const [x0,uz,egim] of [[.03,.29,.008],[-.034,.23,-.006]]){ const SY=12, W=.072, T=.009, pos2=[], idx2=[]; let zOnce=-1;
+      const zH=[]; for(let r=0;r<=SY;r++){ const t=r/SY; zH.push(onZ(x0+egim*t,yakaY-.004-uz*t)); }
+      for(let r=0;r<=SY;r++){ const t=r/SY, y=yakaY-.004-uz*t, xc=x0+egim*t; let zb_=-1; for(let d=-2;d<=2;d++){ const j=Math.min(SY,Math.max(0,r+d)); zb_=Math.max(zb_,zH[j]); }
+        let z=zb_+ayar.kalin+(ayar.sisme||0)+.018; if(zOnce>0) z=Math.max(z,zOnce-.004); zOnce=z;
+        const w=W*(1-.06*t)/2, dal=.0035*Math.sin(t*5.5+x0*90)*t, eg=.004*Math.sin(t*7.3+x0*60); // kumaş hafif dalgalı, kenarlar düz plaka gibi durmaz
+        pos2.push(xc-w+dal,y,z+T+eg, xc+w+dal,y,z+T-eg, xc+w+dal,y,z-eg, xc-w+dal,y,z+eg); }
+      for(let r=0;r<SY;r++) for(let k=0;k<4;k++){ const a=r*4+k, b=r*4+(k+1)%4, c=a+4, d=b+4; idx2.push(a,c,b, b,c,d); }
+      { const sR=SY*4; idx2.push(sR,sR+2,sR+1, sR,sR+3,sR+2); } // alt kapak (aşağı bakar)
+      const tb=pos2.length/3, yb=yakaY-.004-uz, xb=x0+egim, zb=pos2[SY*12+2]-T*.0+T*.5;
+      for(let k=0;k<8;k++){ const fx=xb-W/2+.005+k*(W-.01)/7, L=.022+.006*Math.sin(k*1.9); pos2.push(fx-.0018,yb+.001,zb, fx+.0018,yb+.001,zb, fx+.0004,yb-L,zb+.001); idx2.push(tb+k*3,tb+k*3+2,tb+k*3+1); }
+      const g2=new THREE.BufferGeometry(); g2.setAttribute("position",new THREE.Float32BufferAttribute(pos2,3)); g2.setIndex(idx2); g2.computeVertexNormals();
+      parca(g2,m2,[["Spine2",.75],["Spine1",.25]]); }
   }
   return {m,ekler};
 }
@@ -2085,7 +2147,7 @@ function kabukMalzeme(ayar,o){
       s.fragmentShader.replace("#include <color_fragment>",`#include <color_fragment>
       { vec3 b=vBind; float ax=abs(b.x); float g=1.0;
         if(${sisme}>0){ float u=mix(b.y,ax,step(.5,vKol))/${kanal}; float p=.5-.5*cos(6.2831*u); g*=mix(.58,1.04,pow(p,.42)); }
-        if(${deri}>0){ float w=_n(b*vec3(55.,9.,55.))*.6+_n(b*140.)*.4; g*=.86+.22*w; float kr=smoothstep(.62,.7,_n(b*vec3(18.,80.,18.))); g*=1.0-kr*.18; }
+        if(${deri}>0){ float w=_n(b*vec3(42.,30.,42.))*.6+_n(b*140.)*.4; g*=.86+.22*w; float kr=smoothstep(.62,.7,_n(b*vec3(18.,80.,18.))); g*=1.0-kr*.18; }
         g*=.92+.08*_n(b*260.);
         if(${kot}>0){ float tw=sin((b.x+b.y)*1500.0)*.5+.5; g*=.9+.12*tw; g*=.9+.2*_n(b*vec3(30.,5.,30.)); g*=.96+.08*_n(b*vec3(4.,90.,4.));
           float yk=${(o.yakaY-.135).toFixed(3)}; if(abs(b.y-yk)<.0025&&vKol<.5) diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.52,.26),.55);
@@ -2110,7 +2172,7 @@ function atkiMalzeme(renkH){
 // İlk buluşma (29 Ocak 2022): Kardelen haki şişme mont + krem atkı, Kaan kahverengi deri ceket
 const KABUK_PLAN={
   kardelen_kis:{tur:"sisme",renk:"#5d5f3e",kalin:.022,sisme:.016,kanal:.085,yaka:.085,kapusonRulo:true,atki:"#e6dccb",puruz:.55,parlak:.7},
-  kaan_kis:{tur:"deri",renk:"#2f2119",kalin:.014,yaka:.07,puruz:.42,parlak:.9,etekPay:.02},
+  kaan_kis:{tur:"deri",renk:"#2f2119",kalin:.014,yaka:.07,puruz:.5,parlak:.62,etekPay:.02},
   // balo: elbisenin üstüne kısa kot ceket (önü açık), "üşürsün" diye ısrar ettiğim
   kardelen_kot:{tur:"kot",renk:"#7d9cc4",kalin:.013,yaka:.055,puruz:.88,parlak:.35,etekPay:.1,acik:.072}
 };
@@ -4410,10 +4472,10 @@ const B5={
     await sahne(async()=>{
       this.kuleler.forEach(k=>k.userData.yandi=true);
       { const T=this.kuleler[0].position; K.rotation.y=Math.atan2(K.position.x-T.x,K.position.z-T.z); }
-      K.userData.telefon=1; this.tel.visible=true; eldeTut(K,this.tel,"S"); K.userData.hiz=0;
+      K.userData.telefon=2; this.tel.visible=true; eldeTut(K,this.tel,"S"); K.userData.hiz=0;
       const ek=el(`<div class="telefon-ekran"><span>KARDELEN</span></div>`); katman.appendChild(ek); ICSAHNE={...O,el:ek};
-      D.userData.telefon=1; O.tel.visible=true; eldeTut(D,O.tel,"S"); D.userData.gulumse=1;
-      await kameraNoktasi(ondenNokta(K,2.2,.8,.2),bas(K),1.4);
+      D.userData.telefon=2; O.tel.visible=true; eldeTut(D,O.tel,"S"); D.userData.gulumse=1;
+      await kameraNoktasi(ondenNokta(K,2.3,-.8,.12),bas(K).add(new THREE.Vector3(0,-.08,0)),1.4);
       const kk={kamera:false};
       const sayac=el(`<div class="geri-sayim">23:59</div>`); katman.appendChild(sayac); await bekle(900);
       for(const t of ["10","9","8","7","6","5","4","3","2","1"]){ sayac.textContent=t; Ses.efekt("vuru",.3); await bekle(520); }
@@ -4433,7 +4495,8 @@ const B5={
       await new Promise(r=>{ q.querySelector("button").onclick=r; }); q.remove(); Ses.efekt("kalp"); this.kalpAt();
       await konus("kardelen",["Pıt diye bir ses geldi kdkdkd","İyi geceler iyi uykular 💋"],{...kk,gul:1});
       await konus("kaan","Uyuduk 😘",{...kk,gul:.8});
-      await kameraNoktasi(K.position.clone().add(new THREE.Vector3(-5,2.2,6)),this.kuleler[0].position.clone().add(new THREE.Vector3(0,5,0)),2.4);
+      { const ab=this.setYol?this.setYol.A1.clone().sub(this.setYol.A0).normalize():new THREE.Vector3(1,0,0); // kar setlerinin arasından, kuleye doğru
+        await kameraNoktasi(K.position.clone().addScaledVector(ab,-4.6).add(new THREE.Vector3(0,2.3,0)),this.kuleler[0].position.clone().add(new THREE.Vector3(0,4.6,0)),2.4); }
       const q2=el(`<div class="qte"><button class="btn qte-btn">📷 Karlı yılbaşı</button></div>`); katman.appendChild(q2);
       await new Promise(r=>{ q2.querySelector("button").onclick=r; }); q2.remove();
       await hatiraFoto("Cudi · Yılbaşı 2026"); await bekle(1800);
@@ -4573,7 +4636,7 @@ const B6={
       for(let i=0;i<P.count;i++){ const x=P.getX(i)+75, z=P.getZ(i); const y=Math.max(0,(x-9)*.04)*(1+.6*Math.sin(z*.05+x*.02))+Math.sin(x*.3)*Math.cos(z*.25)*.15*THREE.MathUtils.smoothstep(x,7,12); P.setY(i,y-.06);
         c.copy(a0).lerp(a1,.5+.5*Math.sin(x*.11+z*.07)).lerp(a2,x<7?.8:0).multiplyScalar(rnd(.9,1.08)); cr.push(c.r,c.g,c.b); }
       g.setAttribute("color",new THREE.Float32BufferAttribute(cr,3)); g.computeVertexNormals();
-      const ze=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,bumpMap:gurultuDoku(80),bumpScale:.06})); ze.position.set(75,0,-230); ze.receiveShadow=true; scene.add(ze); }
+      const zb=gurultuDoku(80); this.zeminDoku=zb; const ze=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,bumpMap:zb,bumpScale:.06})); ze.position.set(75,0,-230); ze.receiveShadow=true; scene.add(ze); }
     this.agaclar=[]; for(let i=0;i<34;i++){ const a=agac(i%3?"zeytin":"cam",rnd(1,1.4)); a.position.set(rnd(7,22),0,-i*14-rnd(0,8)); scene.add(a); this.agaclar.push(a); }
     const ic=new THREE.Group(); scene.add(ic);
     const torp=new THREE.Mesh(new THREE.BoxGeometry(1.8,.26,.6),mat("#2a2b2e",{roughness:.7})); torp.position.set(0,.88,-.78); ic.add(torp);
@@ -4701,8 +4764,10 @@ const B6={
       await konus("kaan",secenek[c]+" (fısıltıyla)",{kamera:false,sure:1.8,gul:.6});
       // ses halkaları basamaklardan yukarı yayılır
       const halkalar=[]; for(let i=0;i<4;i++){ const h=new THREE.Mesh(new THREE.RingGeometry(.9,1.0,48),new THREE.MeshBasicMaterial({color:renk("#fff1c9"),transparent:true,opacity:.6,side:THREE.DoubleSide,depthWrite:false})); h.rotation.x=-Math.PI/2; h.position.y=.4; scene.add(h); halkalar.push({h,t:-i*.35}); }
+      // fısıltı ona ulaşırken önden, hafif yandan: yüzü ve arkasındaki gökyüzü görünür
+      const sahneY=new THREE.Vector3(-ust.x,0,4-ust.z).normalize(), yanY=new THREE.Vector3(-sahneY.z,0,sahneY.x); const onKam=ust.clone().addScaledVector(sahneY,1.9).addScaledVector(yanY,1.0).add(new THREE.Vector3(0,.75,0));
       let s=0; await new Promise(r=>{ Kamera.sinema=dt=>{ s+=dt; for(const q of halkalar){ q.t+=dt; const k=Math.max(0,q.t); const R=1+k*9; q.h.scale.setScalar(R); q.h.position.y=.4+k*4.5; q.h.material.opacity=Math.max(0,.6-k*.22); }
-        camera.position.lerp(ust.clone().add(new THREE.Vector3(1.4,1.6,-2.2)),1-Math.pow(.25,dt)); camera.lookAt(ust.x,ust.y+.8,ust.z); if(s>3.2) r(); }; });
+        camera.position.lerp(onKam,1-Math.pow(.25,dt)); camera.lookAt(ust.x,ust.y+.85,ust.z); if(s>3.2) r(); }; });
       halkalar.forEach(q=>scene.remove(q.h));
       D.userData.gulumse=1;
       const cevap=[["Duydum 😳","Ben de seni seviyorum 💋"],["Duyuyorum","Ohaa gerçekten duyuluyor"],["Fotoğrafçım 😄","Gel o zaman çek beni"]][c];
@@ -4820,7 +4885,7 @@ const B6={
     this.t+=dt; const t=this.t; const K=this.kaan, D=this.kar; if(!K) return;
     if(this.faz==="yol"){ const gaz=this.gazBasik?this.gazBasik():false; const v=this.vites||1; const hedef=gaz?6400:900; this.devir=lerp(this.devir,hedef,Math.min(1,dt*(gaz?.9/v+.12:.6)));
       const oran=[0,.55,.95,1.35,1.7,2.0][v]; this.hiz=lerp(this.hiz,this.devir/1000*oran*4.5,Math.min(1,dt*.8));
-      if(this.yolDoku) this.yolDoku.offset.y+=dt*this.hiz*.06; for(const a of this.agaclar||[]){ a.position.z+=dt*this.hiz; if(a.position.z>8) a.position.z-=470; } for(const d of this.daglar||[]){ d.position.z+=dt*this.hiz*.25; if(d.position.z>40) d.position.z-=500; }
+      if(this.yolDoku) this.yolDoku.offset.y+=dt*this.hiz*.06; if(this.zeminDoku) this.zeminDoku.offset.y+=dt*this.hiz*.16; for(const a of this.agaclar||[]){ a.position.z+=dt*this.hiz; if(a.position.z>8) a.position.z-=470; } for(const d of this.daglar||[]){ d.position.z+=dt*this.hiz*.25; if(d.position.z>40) d.position.z-=500; }
       const ib=katman&&katman.querySelector(".devir .ibre"); if(ib) ib.style.transform=`rotate(${-120+Math.min(7000,this.devir)/7000*240}deg)`;
       if(this.sarsinti>0) this.sarsinti=Math.max(0,this.sarsinti-dt);
       if(this.direksiyon) this.direksiyon.rotation.z=Math.sin(t*.5)*.04+Math.sin(t*40)*.01*this.sarsinti; return; }
@@ -5720,7 +5785,7 @@ function kurulumIpucu(){
 
 
 /* ================= GÜNCELLEME (telefondan) ================= */
-const SURUM="2026.10.29-023624";
+const SURUM="2026.10.29-031400";
 async function sunucuSurumu(){ try{ const r=await fetch("surum.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const j=await r.json(); return j.surum||null; }catch(e){ return null; } }
 function tost(t){ const d=el(`<div class="tost">${t}</div>`); document.body.appendChild(d); requestAnimationFrame(()=>d.classList.add("gor")); setTimeout(()=>{ d.classList.remove("gor"); setTimeout(()=>d.remove(),500); },2600); }
 async function guncelle(){

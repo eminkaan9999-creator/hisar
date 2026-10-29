@@ -7,7 +7,7 @@ const { serve, check, section, finish, openApp, chromium, fs, path, sleep } = re
 const PORT = 8783;
 const FAKE = fs.readFileSync(path.join(__dirname, 'sahte_sensor.js'), 'utf8');
 
-const st = (page) => page.evaluate(() => { const b = window.__hisar.ble; return { st: b.st, recv: b.recv, drops: b.drops, dup: b.dup, reconnects: b.reconnects, lastSeq: b.lastSeq, v2: b.v2, fw: b.fw, bat: b.bat, rssi: b.rssi, busy: b.busy, retry: b.retry, cfg: b.cfg }; });
+const st = (page) => page.evaluate(() => { const b = window.__hisar.ble; return { st: b.st, recv: b.recv, drops: b.drops, dup: b.dup, reconnects: b.reconnects, lastSeq: b.lastSeq, v2: b.v2, fw: b.fw, bat: b.bat, rssi: b.rssi, busy: b.busy, retry: b.retry, cfg: b.cfg, mic: b.mic, snd: b.snd }; });
 const fake = (page, fn, arg) => page.evaluate(fn, arg);
 async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(fn, arg)) return true; await sleep(100); } return false; }
 async function connect(page) {
@@ -27,22 +27,27 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     check(ok, 'Sensör seçilip bağlanıyor, veri akıyor');
     const ev = await fake(page, () => window.__fake.events.filter(e => e[0] === 'yaz' || e[0] === 'abone').map(e => [e[0], e[2] || null]));
     const iw = ev.findIndex(e => e[0] === 'yaz' && e[1][0] === 7), is = ev.findIndex(e => e[0] === 'abone');
-    check(iw >= 0 && is > iw && JSON.stringify(ev[iw][1]) === JSON.stringify([7, 0, 0, 0, 0, 0]), 'Akış başlangıç komutu (canlı) bildirimler açılmadan önce yazılıyor', ev.slice(0, 4));
+    check(iw >= 0 && is > iw && JSON.stringify(ev[iw][1]) === JSON.stringify([7, 0, 0, 0, 0, 0, 1]), 'Akış başlangıç komutu (canlı, ses verisi iste) bildirimler açılmadan önce yazılıyor', ev.slice(0, 4));
     const f = await fake(page, () => window.__fake.lastFilters);
     check(JSON.stringify(f.filters.map(x => x.namePrefix || 'svc')) === JSON.stringify(['svc', 'HISAR', 'WT']), 'Sensör listesi HİSAR ve WitMotion sensörlerini gösterecek şekilde süzülüyor');
     await sleep(2200);
     const s = await st(page);
     const chip = await page.evaluate(() => document.getElementById('srcChip').textContent);
     const rate = await page.evaluate(() => +document.getElementById('rateNote').textContent.replace(/\D/g, ''));
-    check(s.v2 && s.fw === 2 && s.bat === 80 && s.rssi === -58, 'Durum okundu: yazılım 2, pil %80, sinyal −58 dBm', s);
+    check(s.v2 && s.fw === 3 && s.bat === 80 && s.rssi === -58, 'Durum okundu: yazılım 3, pil %80, sinyal −58 dBm', s);
+    const mic = await page.evaluate(() => ({ mic: window.__hisar.ble.mic, snd: window.__hisar.ble.snd, db: window.__hisar.proc.sDb, on: window.__hisar.proc.micOn }));
+    check(mic.mic && mic.snd && mic.db > 24 && mic.db < 32 && mic.on, 'Mikrofon biti okundu, sesli paketler geliyor, oda gürültüsü ~28 dB', mic);
     check(/SENSÖR %80/.test(chip), 'Üst çubukta "SENSÖR %80"', chip);
     check(rate >= 180 && rate <= 220, 'Saniyede ~200 ölçüm', rate);
     check(s.drops === 0 && s.dup === 0, 'Kayıp ve yineleme yok', s);
     const link = await page.evaluate(() => document.getElementById('srcLinkTxt').textContent);
     check(/−?-?58 dBm/.test(link) && /pil %80/.test(link), 'Ana ekranda sinyal ve pil satırı', link);
-    // aynı anda tekrar Sensör'e basmak bağlantıyı bozmamalı
-    await page.click('#srcSensor'); await sleep(300);
-    check((await st(page)).st === 'bagli' && (await fake(page, () => window.__fake.requests)) === 1, 'Bağlıyken Sensör\'e tekrar basmak listeyi açmıyor, bağlantı sürüyor');
+    // sensör eşlendi: ana ekranda üçlü seçim yerine sensör kartı; bağlıyken Bağlan düğmesi yok
+    const card = await page.evaluate(() => ({ seg: document.getElementById('srcSeg').hidden, act: document.getElementById('srcAct').hidden, title: document.getElementById('srcTitle').textContent, last: window.__hisar.S.lastSensor }));
+    check(card.seg && card.act && card.title === 'Sensör' && card.last === 'HISAR-SENSOR', 'Eşlendikten sonra ana ekranda üçlü seçim gizli, başlık "Sensör", bağlıyken düğme yok', card);
+    // bağlıyken tekrar bağlanma isteği listeyi açmamalı, bağlantıyı bozmamalı
+    await page.evaluate(() => window.__hisar.returnToSensor()); await sleep(300);
+    check((await st(page)).st === 'bagli' && (await fake(page, () => window.__fake.requests)) === 1, 'Bağlıyken tekrar bağlan istemek listeyi açmıyor, bağlantı sürüyor');
     check(errs.length === 0, 'Sayfa hatası yok', errs);
     await ctx.close();
   }
@@ -73,7 +78,7 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     const resumeCmd = await fake(page, () => window.__fake.writes.filter(w => w[0] === 7).pop());
     const resumeSeq = resumeCmd ? (resumeCmd[2] | (resumeCmd[3] << 8) | (resumeCmd[4] << 16) | (resumeCmd[5] << 24)) >>> 0 : -1;
     check(back, 'Sensör menzile dönünce kendiliğinden yeniden bağlandı');
-    check(resumeCmd && resumeCmd[1] === 1 && resumeSeq === lastAtDrop + 1, 'Devam isteği gönderildi: kip 1, kopmadan önce alınan son ölçümün bir sonrası', { resumeSeq, lastAtDrop });
+    check(resumeCmd && resumeCmd[1] === 1 && resumeSeq === lastAtDrop + 1 && resumeCmd[6] === 1, 'Devam isteği gönderildi: kip 1, kopmadan önce alınan son ölçümün bir sonrası (ses verisiyle)', { resumeSeq, lastAtDrop });
     check(after.drops === 0 && after.reconnects === 1, 'Kopma boyunca hiçbir ölçüm kaybolmadı', after);
     const shots = await page.evaluate(() => window.__hisar.cur.sess.shots.length);
     check(shots >= 2, 'Kopukken yapılan atış da bağlantı gelince algılandı', shots);
@@ -188,7 +193,7 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     const { ctx, page, errs } = await newPage(browser, { init: [FAKE, 'window.__fake.inRange=false;'] });
     await page.click('#srcSensor'); await sleep(2500);
     const txt = await statusText(page);
-    check(/bağlanılamadı/.test(txt) && /deneme/.test(txt), 'Sensör kapalıyken: "bağlanılamadı, yeniden deneniyor"', txt);
+    check(/Sensör bekleniyor/.test(txt) && /açılınca bağlanır/.test(txt) && /deneme/.test(txt), 'Sensör kapalıyken: "Sensör bekleniyor; açılınca bağlanır … deneme"', txt);
     await fake(page, () => { window.__fake.inRange = true; });
     check(await waitFor(page, () => window.__hisar.ble.st === 'bagli', 8000), 'Sensör açılınca kendiliğinden bağlandı');
     check(/Bağlı/.test(await statusText(page)), 'Durum "Bağlı"');
@@ -216,6 +221,80 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     for (const [sq, t] of taps) maxErr = Math.max(maxErr, Math.abs(t - sq * 5 - base));
     check(s.drops === 0 && taps.length > 800, '0,7 sn\'lik gecikme patlamalarında kayıp yok', { drops: s.drops, n: taps.length });
     check(maxErr < 30, 'Geç gelen ölçümler de doğru zamana yerleşiyor (sapma < 30 ms)', Math.round(maxErr));
+    check(errs.length === 0, 'Sayfa hatası yok', errs);
+    await ctx.close();
+  }
+
+  section('Eşlenmiş sensör: açılışta Deneme\'ye düşmeden bekleme, Deneme Ayarlar\'da, deneme oturumları kaydedilmez');
+  {
+    // sensör kapalı, tarayıcı izinli cihazı veriyor: açılışta kaynak sensör, açılınca kendiliğinden bağlanır
+    const meta = JSON.stringify({ v: 2, settings: { lastSource: 'demo', lastSensor: 'HISAR-SENSOR', autoConnect: true }, ids: [] });
+    const { ctx, page, errs } = await newPage(browser, { init: [FAKE, 'window.__fake.allowGetDevices=true; window.__fake.inRange=false;'], storage: { 'hisarTetik.v2.meta': meta } });
+    await sleep(1500);
+    const a = await page.evaluate(() => ({ src: window.__hisar.source, sim: !!window.__hisar.sim, chip: document.getElementById('srcChip').textContent, seg: document.getElementById('srcSeg').hidden,
+      title: document.getElementById('srcTitle').textContent, status: document.getElementById('srcStatus').textContent }));
+    check(a.src === 'sensor' && !a.sim && !/DENEME/.test(a.chip), 'Son kaynak Deneme olsa bile eşlenmiş sensör varken açılış sensörle (sanal atıcı çalışmıyor)', a);
+    check(a.seg && a.title === 'Sensör' && /HISAR-SENSOR/.test(a.status), 'Ana ekran: üçlü seçim yok, "Sensör" başlığı, durum sensör adını söylüyor', a);
+    await page.evaluate(() => { window.__hisar.openDrill('serbest'); window.__hisar.startRun(); }); await sleep(200);
+    const run = await page.evaluate(() => !!(window.__hisar.cur.run && window.__hisar.cur.run.active));
+    check(!run, 'Sensör bağlı değilken alıştırma başlamıyor (sanal atış üretilmiyor)');
+    await page.evaluate(() => window.__hisar.showView('alistirma'));
+    await fake(page, () => { window.__fake.inRange = true; });
+    check(await waitFor(page, () => window.__hisar.ble.st === 'bagli', 9000), 'Sensör açılınca listeyi açmadan kendiliğinden bağlandı');
+    check((await fake(page, () => window.__fake.requests)) === 0, 'Sensör listesi hiç açılmadı');
+    check(errs.length === 0, 'Sayfa hatası yok', errs);
+    await ctx.close();
+  }
+  {
+    // tarayıcı izinli cihaz vermiyor: "Bağlan" düğmesi, dokununca liste ve bağlantı
+    const meta = JSON.stringify({ v: 2, settings: { lastSource: 'sensor', lastSensor: 'HISAR-SENSOR', autoConnect: true }, ids: [] });
+    const { ctx, page, errs } = await newPage(browser, { storage: { 'hisarTetik.v2.meta': meta } });
+    await sleep(1200);
+    const a = await page.evaluate(() => ({ src: window.__hisar.source, act: document.getElementById('srcAct').hidden, btn: document.getElementById('srcGo').textContent, status: document.getElementById('srcStatus').textContent }));
+    check(a.src === 'sensor' && !a.act && a.btn === 'Bağlan' && /Sensör bekleniyor/.test(a.status) && /Bağlan/.test(a.status), 'Otomatik bağlanma yoksa: "Sensör bekleniyor … Bağlan\'a dokun" ve Bağlan düğmesi', a);
+    await page.click('#srcGo');
+    check(await waitFor(page, () => window.__hisar.ble.st === 'bagli', 6000), 'Bağlan\'a dokununca sensör seçilip bağlandı');
+    check(await page.evaluate(() => document.getElementById('srcAct').hidden), 'Bağlanınca düğme gizlendi');
+    // Deneme modu Ayarlar'dan; deneme oturumu kaydedilmez; Sensöre dön listeyi açmadan bağlanır
+    await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(300);
+    await page.click('#altDemo'); await sleep(400);
+    const d = await page.evaluate(() => ({ src: window.__hisar.source, title: document.getElementById('srcTitle').textContent, btn: document.getElementById('srcGo').textContent, act: document.getElementById('srcAct').hidden, view: !document.getElementById('v-alistirma').hidden }));
+    check(d.src === 'demo' && d.title === 'Deneme modu' && !d.act && d.btn === 'Sensöre dön' && d.view, 'Ayarlar › Deneme modu: ana ekranda "Deneme modu" ve "Sensöre dön"', d);
+    const n0 = await page.evaluate(() => window.__hisar.sessions.filter(x => !x.sample).length);
+    await page.evaluate(() => { window.__hisar.openDrill('serbest'); window.__hisar.startRun(); });
+    await sleep(500);
+    const tag = await page.evaluate(() => document.getElementById('sessSub').textContent);
+    await page.evaluate(() => { for (let i = 0; i < 3; i++) setTimeout(() => window.__hisar.sim.fire(performance.now()), 200 + i * 700); });
+    await sleep(3200);
+    await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1200);
+    const r = await page.evaluate(() => ({ shots: window.__hisar.cur.sess.shots.length, saved: window.__hisar.sessions.includes(window.__hisar.cur.sess), n: window.__hisar.sessions.filter(x => !x.sample).length,
+      ls: Object.keys(localStorage).filter(k => k.startsWith('hisarTetik.v2.s.')).length, sheet: document.getElementById('sheetBody').textContent }));
+    check(/kaydedilmez/i.test(tag), 'Deneme oturumunda "Deneme · kaydedilmez" etiketi', tag);
+    check(r.shots >= 2 && !r.saved && r.n === n0 && r.ls === 0, 'Deneme oturumu atış sayıyor ama geçmişe ve depoya girmiyor', r);
+    check(/kaydedilmedi/.test(r.sheet), 'Sonuç ekranında "geçmişe kaydedilmedi" notu', r.sheet.slice(0, 120));
+    await page.evaluate(() => { const c = document.querySelector('#sheet [data-close]'); if (c) c.click(); window.__hisar.showView('alistirma'); });
+    const req0 = await fake(page, () => window.__fake.requests);
+    await page.click('#srcGo');
+    check(await waitFor(page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.source === 'sensor', 6000), '"Sensöre dön" ile tekrar sensöre bağlandı');
+    check((await fake(page, () => window.__fake.requests)) === req0, '"Sensöre dön" listeyi açmadı (bilinen sensör)');
+    // Sensörü unut: ilk kullanım görünümüne döner
+    await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(300);
+    await page.click('#sbForget'); await page.click('#sbFgYes'); await sleep(300);
+    const f = await page.evaluate(() => ({ last: window.__hisar.S.lastSensor, src: window.__hisar.source, seg: document.getElementById('srcSeg').hidden }));
+    check(f.last === '' && f.src === 'demo' && f.seg === false, '"Sensörü unut": kayıtlı sensör silindi, üçlü seçim geri geldi', f);
+    check(errs.length === 0, 'Sayfa hatası yok', errs);
+    await ctx.close();
+  }
+  {
+    // önceki sürümde kaydedilmiş deneme oturumları açılışta temizlenir, gerçek oturumlar kalır
+    const shot = { n: 1, at: 100, sc: 80, tr: 0.1, ho: 0.1, hx: 0.05, hy: 0.05, dx: 0.1, dy: 0, h: 3, ca: 0, po: 0, ri: 0, pg: 0, rc: null, c: [], x: {} };
+    const mk = (id, src) => ({ id, v: 2, drill: 'serbest', date: Date.now() - 1000, dur: 10, src, mode: 'kuru', weapon: 'pistol', weaponName: '', hand: 'R', handMode: 'normal', diff: 'normal', notes: '', extra: {}, shots: [shot] });
+    const meta = JSON.stringify({ v: 2, settings: {}, ids: ['sDemo1', 'sReal1'] });
+    const { ctx, page, errs } = await newPage(browser, { storage: { 'hisarTetik.v2.meta': meta, 'hisarTetik.v2.s.sDemo1': JSON.stringify(mk('sDemo1', 'demo')), 'hisarTetik.v2.s.sReal1': JSON.stringify(mk('sReal1', 'sensor')) } });
+    await sleep(2600);
+    const r = await page.evaluate(() => ({ ids: window.__hisar.sessions.map(x => x.id), ls: Object.keys(localStorage).filter(k => k.startsWith('hisarTetik.v2.s.')), meta: JSON.parse(localStorage.getItem('hisarTetik.v2.meta')).ids, toast: document.getElementById('toast').textContent }));
+    check(JSON.stringify(r.ids) === '["sReal1"]' && JSON.stringify(r.ls) === '["hisarTetik.v2.s.sReal1"]' && JSON.stringify(r.meta) === '["sReal1"]', 'Eski deneme oturumu geçmişten ve depodan silindi, sensör oturumu duruyor', r);
+    check(/deneme oturumu geçmişten kaldırıldı/.test(r.toast), 'Kullanıcıya bildirildi', r.toast);
     check(errs.length === 0, 'Sayfa hatası yok', errs);
     await ctx.close();
   }

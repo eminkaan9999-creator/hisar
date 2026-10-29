@@ -1,5 +1,5 @@
 // =====================================================================
-//  HISAR TETIK - M5StickC Plus2 sensor yazilimi (surum 2)
+//  HISAR TETIK - M5StickC Plus2 sensor yazilimi (surum 3)
 // ---------------------------------------------------------------------
 //  Ne yapar:
 //   * MPU6886 hareket sensorunu (ivme + jiroskop) saniyede 1000 kez okur.
@@ -7,6 +7,14 @@
 //   * Her olcumde, o 5 ms icindeki en buyuk ani sarsintiyi (tetik "tik"i,
 //     geri tepme) ayrica kaydeder; boylece kisa darbeler kacmaz.
 //   * Olcumleri Bluetooth (BLE) ile HISAR TETIK uygulamasina gonderir.
+//
+//  Mikrofon (surum 3):
+//   * Dahili SPM1423 PDM mikrofonu saniyede 32000 kez okunur (I2S0). Dusuk
+//     frekanslar (el, ruzgar ugultusu) suzulur; her 5 ms'lik olcume o arada
+//     duyulan en yuksek ses eklenir. Uygulama kuru tetikte tetigin "tik" sesini
+//     darbeyle birlikte degerlendirir. Hoparlor (bip) I2S1'e alindi, ikisi
+//     birbirini kesmez. Mikrofon okunamazsa durum paketinde bildirilir ve
+//     atislar yalniz darbeyle algilanir.
 //
 //  Kopukluk olmamasi icin (surum 2):
 //   * Her olcum 10 saniyelik halka tampona yazilir ve 32 bitlik sira numarasi
@@ -35,9 +43,10 @@
 #include <NimBLEDevice.h>
 #include <Preferences.h>
 #include <esp_ota_ops.h>
+#include <driver/i2s.h>
 #include "HisarProtocol.h"
 
-#define FW_VERSION 2
+#define FW_VERSION 3
 #define SVC_UUID    "0000ffe5-0000-1000-8000-00805f9a34fb"
 #define NOTIFY_UUID "0000ffe4-0000-1000-8000-00805f9a34fb"
 #define WRITE_UUID  "0000ffe9-0000-1000-8000-00805f9a34fb"
@@ -55,6 +64,14 @@ static Preferences       prefs;
 static volatile bool     imuOk = false;
 static volatile uint32_t imuErrors = 0;
 static volatile int16_t  imuTempRaw = 0;
+
+// Mikrofon: micTask her 2 ms'de en yuksek sesi micPeak'e yazar, imuTask her olcumde okuyup sifirlar
+static constexpr int      MIC_RATE  = 32000;     // PDM saati 2,048 MHz (SPM1423: 1-3,25 MHz)
+static constexpr int      MIC_BLOCK = 64;        // 2 ms
+static volatile bool      micOk = false;
+static bool               micReady = false;
+static portMUX_TYPE       micMux = portMUX_INITIALIZER_UNLOCKED;
+static uint32_t           micPeak = 0;
 
 static NimBLEServer*         server = nullptr;
 static NimBLECharacteristic* notifyChr = nullptr;
@@ -215,9 +232,76 @@ static void imuTask(void*) {
       for (int i = 0; i < 6; i++) { s.v[i] = (int16_t)(sum[i] / SUB); sum[i] = 0; }
       s.jerk = hisar::encodeJerk((float)maxJerkRaw / 2048.0f);   // ham birim 1/2048 g
       maxJerkRaw = 0;
+      uint32_t pk;
+      portENTER_CRITICAL(&micMux);
+      pk = micPeak; micPeak = 0;
+      portEXIT_CRITICAL(&micMux);
+      s.snd = micOk ? hisar::encodeSnd(pk) : 0;
       sub = 0;
       ring.push(s);
     }
+  }
+}
+
+// ---------------------------------------------------------------- mikrofon
+static bool micSetup() {
+  i2s_config_t c;
+  memset(&c, 0, sizeof(c));
+  c.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
+  c.sample_rate = MIC_RATE;
+  c.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
+  c.channel_format = I2S_CHANNEL_FMT_ALL_RIGHT;
+  c.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+  c.intr_alloc_flags = ESP_INTR_FLAG_LEVEL1;
+  c.dma_buf_count = 4;
+  c.dma_buf_len = MIC_BLOCK;
+  if (i2s_driver_install(I2S_NUM_0, &c, 0, nullptr) != ESP_OK) return false;
+  i2s_pin_config_t pin;
+  memset(&pin, 0, sizeof(pin));
+  pin.mck_io_num = I2S_PIN_NO_CHANGE;   // GPIO0 saat cikisi olarak kullanilmamali (PDM saati orada)
+  pin.bck_io_num = I2S_PIN_NO_CHANGE;
+  pin.ws_io_num = 0;                     // PDM saat (CLK)
+  pin.data_out_num = I2S_PIN_NO_CHANGE;
+  pin.data_in_num = 34;                  // PDM veri
+  if (i2s_set_pin(I2S_NUM_0, &pin) != ESP_OK ||
+      i2s_set_clk(I2S_NUM_0, MIC_RATE, I2S_BITS_PER_SAMPLE_16BIT, I2S_CHANNEL_MONO) != ESP_OK) {
+    i2s_driver_uninstall(I2S_NUM_0);
+    return false;
+  }
+  return true;
+}
+
+static void micTask(void*) {
+  static int16_t buf[MIC_BLOCK];
+  const float a = 0.9428f;               // ~300 Hz yuksek geciren (tik sesi yuksek frekanslidir)
+  float hp = 0, prev = 0;
+  bool first = true;
+  int16_t mn = 32767, mx = -32768;       // takili kalma denetimi (hep ayni deger = mikrofon yok)
+  uint32_t lastOk = millis(), winStart = lastOk;
+  for (;;) {
+    size_t got = 0;
+    if (i2s_read(I2S_NUM_0, buf, sizeof(buf), &got, pdMS_TO_TICKS(20)) != ESP_OK || got < 2) {
+      if (millis() - lastOk > 500) micOk = false;
+      continue;
+    }
+    int n = (int)(got / 2);
+    uint32_t pk = 0;
+    for (int i = 0; i < n; i++) {
+      int16_t x = buf[i];
+      if (x < mn) mn = x;
+      if (x > mx) mx = x;
+      if (first) { prev = x; first = false; }
+      hp = a * (hp + (float)x - prev);
+      prev = (float)x;
+      uint32_t m = (uint32_t)(hp < 0 ? -hp : hp);
+      if (m > pk) pk = m;
+    }
+    lastOk = millis();
+    portENTER_CRITICAL(&micMux);
+    if (pk > micPeak) micPeak = pk;
+    portEXIT_CRITICAL(&micMux);
+    if (lastOk - winStart >= 2000) { micOk = mx > mn; mn = 32767; mx = -32768; winStart = lastOk; }
+    else if (!micOk && mx > mn && lastOk - winStart >= 200) micOk = true;
   }
 }
 
@@ -318,6 +402,7 @@ static void sendStatus() {
   s.imuOk = imuOk;
   s.lowBattery = lastBattery <= 10 && !lastCharging;
   s.streaming = stream.streaming;
+  s.micOk = micOk;
   s.fw = FW_VERSION;
   s.rssi = lastRssi;
   s.tempC = hisar::tempFromRaw(imuTempRaw);
@@ -395,7 +480,7 @@ static void drawScreen(uint32_t now) {
   canvas.setFont(&fonts::Font0);
   canvas.setTextColor(0x8C71);
   canvas.setTextDatum(top_right);
-  canvas.drawString(String("No ") + String((int)cfg.no) + "  v" + String(FW_VERSION), canvas.width() - 8, 11);
+  canvas.drawString(String("No ") + String((int)cfg.no) + "  v" + String(FW_VERSION) + (micOk ? "  MIK" : ""), canvas.width() - 8, 11);
   canvas.setTextDatum(top_left);
 
   canvas.setFont(&fonts::FreeSansBold12pt7b);
@@ -496,7 +581,7 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
       wantStatus = true;
       break;
     case hisar::Command::START:
-      stream.request(c.mode, c.seq, now);
+      stream.request(c.mode, c.seq, now, c.flags);
       break;
     default:
       break;
@@ -508,7 +593,9 @@ void setup() {
   auto mc = M5.config();
   mc.internal_imu = true;
   mc.internal_spk = true;
+  mc.internal_mic = false;          // mikrofon dogrudan I2S0 ile okunur
   M5.begin(mc);
+  { auto sc = M5.Speaker.config(); sc.i2s_port = I2S_NUM_1; M5.Speaker.config(sc); }   // bip I2S1'de: I2S0 mikrofonun
   loadSettings();
   M5.Display.setRotation(1);
   M5.Display.setBrightness(briValue(cfg.bri));
@@ -522,6 +609,8 @@ void setup() {
   esp_ota_mark_app_valid_cancel_rollback();
 
   imuOk = imuSetup();
+  micReady = micSetup();
+  if (micReady) xTaskCreatePinnedToCore(micTask, "mic", 3072, nullptr, 3, nullptr, 1);
   xTaskCreatePinnedToCore(imuTask, "imu", 4096, nullptr, 5, nullptr, 1);
   xTaskCreatePinnedToCore(otaTask, "ota", 6144, nullptr, 2, nullptr, 1);
 

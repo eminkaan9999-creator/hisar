@@ -351,7 +351,7 @@ public class MainActivity extends Activity {
             });
         }
 
-        /** Oturum raporu (PNG/PDF): paylaşım menüsü (WhatsApp, e-posta, galeri...). */
+        /** Oturum raporu (PNG/PDF) ve ham veri (CSV): paylaşım menüsü (WhatsApp, e-posta, galeri...). */
         @JavascriptInterface
         public void shareFile(String name, String mime, String b64) {
             ui.post(() -> {
@@ -369,7 +369,7 @@ public class MainActivity extends Activity {
                     s.putExtra(Intent.EXTRA_STREAM, u);
                     s.setClipData(ClipData.newRawUri(safe, u));
                     s.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    startActivity(Intent.createChooser(s, "Raporu paylaş"));
+                    startActivity(Intent.createChooser(s, "Paylaş"));
                 } catch (Exception e) {
                     Log.w(TAG, "paylaşım", e);
                     Toast.makeText(MainActivity.this, "Paylaşılamadı", Toast.LENGTH_SHORT).show();

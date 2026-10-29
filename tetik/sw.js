@@ -1,7 +1,7 @@
 // HISAR TETIK servis calisani (kapsam: /tetik/)
 // Sayfalar, surum bilgisi, STL ve yazilim dosyalari agdan (yoksa onbellekten); ikonlar ve yazi tipleri onbellekten.
 // Her sayfa kendi adresiyle onbelleklenir; baska bir sayfa index.html'in yerine yazilmaz.
-const C='tetik-v4';
+const C='tetik-v5';
 const STATIC=['./','./index.html','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon-32.png','./manifest.webmanifest'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(STATIC)).catch(()=>{}))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('tetik-')&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

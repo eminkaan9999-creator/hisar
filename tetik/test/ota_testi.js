@@ -9,7 +9,7 @@ const realInfo = JSON.parse(fs.readFileSync(path.join(BIN, 'ota.json'), 'utf8'))
 
 async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(fn, arg)) return true; await sleep(100); } return false; }
 async function setup(browser, { info = Object.assign({}, realInfo, { fw: 3 }), corrupt = false } = {}) {
-  const r = await openApp(browser, { port: PORT, init: [FAKE] });
+  const r = await openApp(browser, { port: PORT, init: [FAKE, 'window.__fake.fw=2;'] });      // eski yazılımlı sensör
   await r.page.route('**/firmware/ota.json*', rt => rt.fulfill({ contentType: 'application/json', body: JSON.stringify(info) }));
   if (corrupt) await r.page.route('**/firmware/' + realInfo.file + '*', async rt => { const b = fs.readFileSync(path.join(BIN, realInfo.file)); b[1000] ^= 0xFF; rt.fulfill({ contentType: 'application/octet-stream', body: b }); });
   await r.page.click('#srcSensor');

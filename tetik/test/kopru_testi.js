@@ -14,7 +14,7 @@ const realInfo = JSON.parse(fs.readFileSync(path.join(BIN, 'ota.json'), 'utf8'))
 async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(fn, arg)) return true; await sleep(100); } return false; }
 const nlog = (page, kind) => page.evaluate(k => window.__nativeLog.filter(e => e[0] === k), kind);
 async function open(browser, opts = {}) {
-  const r = await openApp(browser, Object.assign({ port: PORT, url: PAGE_URL, init: [FAKE, NATIVE] }, opts));
+  const r = await openApp(browser, Object.assign({ port: PORT, url: PAGE_URL, init: [FAKE, 'window.__fake.fw=2;', NATIVE] }, opts));
   // APK sayfası OTA bilgisini barındırılan adresten alır: testte yerel dosyaya yönlendir
   await r.page.route('https://eminkaan9999-creator.github.io/hisar/tetik/**', async rt => {
     const u = new URL(rt.request().url()); const rel = u.pathname.replace('/hisar/', '/');
@@ -71,6 +71,8 @@ async function open(browser, opts = {}) {
     check(done && o.c === o.crc && o.off === realInfo.size, 'Güncelleme köprüden eksiksiz aktarıldı (CRC tuttu)', o);
     const fw3 = await waitFor(page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.ble.fw === 3, 12000);
     check(fw3, 'Sensör yeni sürümle yeniden başladı, uygulama yeniden bağlandı');
+    const snd = await waitFor(page, () => window.__hisar.ble.mic && window.__hisar.ble.snd && window.__hisar.proc.sDb > 20, 4000);
+    check(snd, 'Güncellemeden sonra mikrofon verisi (sesli paketler) köprüden akıyor');
 
     section('Ekranı açık tutma, dosya kaydetme, rapor paylaşma, geri tuşu');
     await page.evaluate(() => { const h = window.__hisar; h.openDrill('serbest'); h.startRun(); });
@@ -90,6 +92,17 @@ async function open(browser, opts = {}) {
     await page.evaluate(() => window.__hisar.shareSession(window.__hisar.cur.sess.id, 'pdf')); await sleep(800);
     const sh2 = await nlog(page, 'shareFile');
     check(sh2.length === 2 && sh2[1][2] === 'application/pdf', 'PDF rapor da paylaşıldı', sh2.length);
+    // ham kayıt (yazılım 3 sonrası sesli): CSV yerel paylaşım menüsüne gider
+    await page.evaluate(() => { const h = window.__hisar; h.S.rawRec = true; h.openDrill('serbest'); h.startRun(); });
+    await page.evaluate(() => window.__fake.addShot(window.__hisar.ble.lastSeq + 200, { spike: 3 }));
+    await sleep(2400);
+    await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1300);
+    await page.click('#sumRaw'); await sleep(200); await page.click('#rawShare'); await sleep(800);
+    const sh3 = await nlog(page, 'shareFile');
+    const csv = sh3.length === 3 ? Buffer.from(await page.evaluate(() => window.__nativeLastShare || ''), 'base64').toString('utf8') : '';
+    check(sh3.length === 3 && sh3[2][1].endsWith('.csv') && sh3[2][2] === 'text/csv' && /^# HISAR TETIK ham kayit/.test(csv) && /"fw":3/.test(csv) && /ses_01db/.test(csv),
+      'Ham veri CSV yerel paylaşım menüsüne gitti (yazılım 3, ses sütunu)', sh3.map(x => [x[1], x[2], x[3]]));
+    await page.evaluate(() => { const c = document.querySelector('#sheet [data-close]'); if (c) c.click(); window.__hisar.S.rawRec = false; });
     await page.evaluate(() => window.__hisar.openSettings('veri')); await sleep(300);
     await page.click('#dExp'); await sleep(400);
     const sv = await nlog(page, 'saveFile');

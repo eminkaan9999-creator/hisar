@@ -42,6 +42,8 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 .status{font-size:13px;color:var(--muted);min-height:1.4em}
 .status b{color:var(--fg);font-weight:500}
 .status.err{color:var(--bad)}
+.src-act{display:flex}
+.src-act .btn{flex:1}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .card h2,.sheet h2{margin:0;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.1em;text-transform:uppercase;text-wrap:balance}
 .card p{margin:0;color:var(--muted);font-size:13.5px}
@@ -139,6 +141,9 @@ textarea{min-height:120px;resize:vertical;line-height:1.45}
 .sess .sr{grid-row:1/3;grid-column:2;text-align:right;font-family:var(--mono)}
 .sess .sr b{display:block;font-size:17px;font-weight:500}
 .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid #5a4719;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+.tag.demo{white-space:nowrap;display:inline-block}
+.tag.rec{color:var(--bad);border-color:#5a2226;white-space:nowrap;display:inline-block}
+.demo-note{color:var(--warn)}
 .bars{display:flex;flex-direction:column;gap:8px}
 .bar-row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13.5px;background:none;border:0;padding:0;text-align:left;cursor:pointer}
 .bar-row .track{grid-column:1/-1;height:6px;background:var(--panel2);border-radius:3px;overflow:hidden}
@@ -253,13 +258,14 @@ svg text{font-family:var(--mono)}
     <!-- ALIŞTIRMA -->
     <section class="view" id="v-alistirma">
       <div class="card">
-        <div class="row"><h2>Veri kaynağı</h2><span class="note" id="rateNote"></span></div>
-        <div class="seg" role="group" aria-label="Veri kaynağı">
+        <div class="row"><h2 id="srcTitle">Veri kaynağı</h2><span class="note" id="rateNote"></span></div>
+        <div class="seg" id="srcSeg" role="group" aria-label="Veri kaynağı">
           <button id="srcDemo" aria-pressed="true">Deneme</button>
           <button id="srcPhone" aria-pressed="false">Telefon</button>
           <button id="srcSensor" aria-pressed="false">Sensör</button>
         </div>
         <div class="status" id="srcStatus"></div>
+        <div class="src-act" id="srcAct" hidden><button class="btn primary" id="srcGo">Bağlan</button></div>
         <div class="link-row" id="srcLink" hidden><span id="srcLinkTxt"></span><button class="lnk" id="srcSet">Sensör ayarları ›</button></div>
         <div class="meter"><span>Sarsıntı</span><div class="bar"><div class="fill" id="mFill"></div><div class="thr" id="mThr"></div></div><span class="val" id="mVal">0,00 g</span></div>
       </div>
@@ -403,7 +409,7 @@ svg text{font-family:var(--mono)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=4;
+const VER=5;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -416,7 +422,7 @@ const IS_ANDROID=/Android/i.test(UA);
 const APK_URL="https://github.com/eminkaan9999-creator/hisar/releases/download/tetik-android/HisarTetik.apk";
 let apkReady=false;   // version.json "apk" alanı: Android uygulaması yayında mı
 const YUKLE_URL=HOSTED_URL+"yukle.html";
-const FW_LATEST=2;
+const FW_LATEST=3;
 const now=()=>performance.now();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rand=(a,b)=>a+Math.random()*(b-a);
@@ -432,21 +438,23 @@ const dateTxt=t=>{const d=new Date(t);return d.toLocaleDateString("tr-TR",{day:"
 /* ---------------------------------------------------------------- ayarlar ve kayıt */
 const KEY="hisarTetik.v2";
 const DEF={hand:"R",weapon:"pistol",weaponName:"",mode:"kuru",diff:"normal",unit:"deg",dist:25,sound:"bip",sensorBeep:true,
-  par:2.0,ritim:1.5,ritimShots:20,dayanik:30,autoShot:true,lastSource:"demo",autoConnect:true,lastSensor:"",visualCue:true,
+  par:2.0,ritim:1.5,ritimShots:20,dayanik:30,autoShot:true,lastSource:"demo",autoConnect:true,lastSensor:"",visualCue:true,rawRec:false,mic:"yardimci",
   lockout:{kuru:450,co2:150,gercek:150},
   thr:{sensor:{kuru:0.5,co2:2.0,gercek:4.0},phone:{kuru:0.3,co2:1.0,gercek:2.0},demo:{kuru:0.6,co2:0.6,gercek:0.6}},
   mount:{sensor:{axis:"+y",B:null,invX:false,invY:false},phone:{axis:"+y",B:null,invX:false,invY:false}},
   bias:{}};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let S=clone(DEF);
-let sessions=[];
+let sessions=[], removedDemo=0;
 function merge(base,add){for(const k in add){const v=add[k];if(v&&typeof v==="object"&&!Array.isArray(v)&&base[k]&&typeof base[k]==="object"&&!Array.isArray(base[k]))merge(base[k],v);else base[k]=v;}return base;}
 const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch(e){return false;}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 function saveMeta(){lsSet(KEY+".meta",JSON.stringify({v:2,settings:S,ids:sessions.filter(s=>!s.sample).map(s=>s.id)}));}
+// Deneme (sanal atıcı) oturumları gerçek ilerlemeyi bozmasın: geçmişe, istatistiğe, depoya girmez.
+const isDemoSess=s=>!!s&&s.src==="demo"&&!s.sample;
 function saveSession(s){
-  if(s.sample) return;
+  if(s.sample||isDemoSess(s)) return;
   const txt=JSON.stringify(s);
   if(!lsSet(KEY+".s."+s.id,txt)){ if(pruneTraces(s)) lsSet(KEY+".s."+s.id,JSON.stringify(s)); }
   saveMeta();
@@ -461,6 +469,9 @@ function loadAll(){
   let meta=null; try{meta=JSON.parse(lsGet(KEY+".meta")||"null");}catch(e){}
   if(meta){ merge(S,meta.settings||{}); for(const id of (meta.ids||[])){ try{const s=JSON.parse(lsGet(KEY+".s."+id)); if(s&&Array.isArray(s.shots)) sessions.push(s);}catch(e){} } }
   else migrateV1();
+  // önceki sürümlerde kaydedilmiş deneme oturumları: gerçek veriye karışmasın diye kaldırılır
+  const demo=sessions.filter(isDemoSess);
+  if(demo.length){ for(const s of demo) lsDel(KEY+".s."+s.id); sessions=sessions.filter(s=>!isDemoSess(s)); saveMeta(); removedDemo=demo.length; }
   sessions.sort((a,b)=>b.date-a.date);
 }
 
@@ -555,8 +566,11 @@ function diagnose(q,s){
 function verdict(sc){return sc>=85?["HARİKA ATIŞ","good"]:sc>=70?["İYİ ATIŞ","mid"]:sc>=50?["GELİŞTİRİLMELİ","bad"]:["ZAYIF ATIŞ","bad"];}
 
 /* ---------------------------------------------------------------- işlemci: ham veri → açı, atış algılama, ölçüm */
-function Proc(){this.cfg={B:[0,1,0],invX:false,invY:false,thr:0.6,lockout:450};this.bias0=null;this.reset();}
+function Proc(){this.cfg={B:[0,1,0],invX:false,invY:false,thr:0.6,lockout:450,mic:"kapali",weak:0.45,clickDb:15,clickMin:50,clickRise:8};this.micOn=false;this.bias0=null;this.reset();}
+// atış algılama ayarları: weak = mikrofon tık sesi duyunca yeterli darbe (eşiğin katı), clickDb = gürültü tabanının üstü, clickMin = en düşük tık seviyesi
+const MIC_WIN=25;
 Proc.prototype.reset=function(){
+  this.cand=null;this.lastClick=null;this.sT=null;this.sBg=null;this.sDb=null;this.rejectRun=0;this.strictOff=false;this.clickN=0;this.rejected=0;
   this.buf=[];this.lastT=null;this.yaw=0;this.pitch=0;this.aFast=null;this.aSlow=null;
   this.zeroUp=null;this.zeroR=null;this.bias=this.bias0?this.bias0.slice():[0,0,0];
   this.em=[0,0,0];this.ev=[1,1,1];this.stillSince=null;this.lastCal=-1e9;
@@ -566,8 +580,9 @@ Proc.prototype.reset=function(){
 };
 Proc.prototype.frame=function(up){const Bv=this.cfg.B||[0,1,0];const bu=dot(Bv,up);let B=[Bv[0]-bu*up[0],Bv[1]-bu*up[1],Bv[2]-bu*up[2]];if(vlen(B)<0.2)B=[up[1],up[2],up[0]];B=norm(B);return{B,R:cross(B,up)};};
 Proc.prototype.zero=function(){if(this.aSlow){this.zeroUp=norm(this.aSlow);this.zeroR=this.frame(this.zeroUp).R;}this.base=[this.yaw,this.pitch];};
-Proc.prototype.feed=function(t,acc,om,devJerk){
+Proc.prototype.feed=function(t,acc,om,devJerk,snd){
   if(this.lastT!=null&&t<=this.lastT) t=this.lastT+0.5;
+  if(this.onRaw) this.onRaw(t,acc,om,devJerk,snd);
   const dt=this.lastT==null?0:Math.min((t-this.lastT)/1000,0.05); this.lastT=t; this.samples++; this.lastData=now();
   if(!this.aFast){this.aFast=acc.slice();this.aSlow=acc.slice();}
   const kF=dt>0?1-Math.exp(-dt/0.05):1;
@@ -600,11 +615,42 @@ Proc.prototype.feed=function(t,acc,om,devJerk){
   this.buf.push([t,this.yaw,this.pitch,this.cant,wm,this.jerk,sat]);
   while(this.buf.length&&this.buf[0][0]<t-3000)this.buf.shift();
   if(this.onSample)this.onSample(t,wm,this.jerk,w,dt);
-  if(this.armed&&this.jerk>this.cfg.thr&&t-this.lastShot>this.cfg.lockout){this.pending.push(t);this.lastShot=t;}
+  this.detect(t,snd);
   while(this.pending.length&&t>=this.pending[0]+600)this.finalize(this.pending.shift());
 };
+// ses: gürültü tabanını izler (aşağı hızlı, yukarı ~1 sn'de). Tık = tabanın belirgin üstünde VE ani yükselen ses;
+// sürekli gürültü (konuşma, müzik, rüzgâr) tık sayılmaz, taban ona uyar.
+Proc.prototype.sound=function(t,snd){
+  if(snd==null) return false;
+  this.sT=t; this.sDb=snd;
+  if(this.sBg==null){ this.sBg=snd; this.sP1=snd; this.sP2=snd; }
+  const prev=Math.max(this.sP1,this.sP2);
+  const click=snd>=this.sBg+this.cfg.clickDb&&snd>=this.cfg.clickMin&&snd-prev>=this.cfg.clickRise;
+  this.sP2=this.sP1; this.sP1=snd;
+  const d=snd-this.sBg; this.sBg+=d<0?d*0.2:d*0.006;
+  if(click){ this.lastClick=t; this.clickN++; }
+  return click;
+};
+// atış: darbe eşiği aşılırsa. Mikrofon açıksa (kuru tetik / CO2): tık sesiyle gelen zayıf darbe de atıştır (Yardımcı);
+// Sıkı kipte sesi olmayan darbe atış sayılmaz (üst üste 3 kez olursa mikrofon duymuyor sayılır, Sıkı kip kapanır).
+Proc.prototype.detect=function(t,snd){
+  this.sound(t,snd);
+  if(!this.armed&&!this.testArm){ this.cand=null; return; }
+  const thr=this.cfg.thr, j=this.jerk, free=t-this.lastShot>this.cfg.lockout;
+  const mic=this.micOn&&this.sT!=null&&t-this.sT<100;
+  if(!mic){ this.cand=null; if(j>thr&&free) this.fire(t,j,"darbe"); return; }
+  const strict=this.cfg.mic==="siki"&&!this.strictOff;
+  if(!this.cand){ if(free&&j>thr*this.cfg.weak) this.cand={t,peak:j,strong:j>thr}; }
+  else if(j>this.cand.peak){ this.cand.peak=j; if(j>thr) this.cand.strong=true; }
+  const c=this.cand; if(!c) return;
+  if(this.lastClick!=null&&Math.abs(this.lastClick-c.t)<=MIC_WIN){ this.cand=null; this.rejectRun=0; this.fire(c.t,c.peak,c.strong?"darbe+ses":"ses"); return; }
+  if(c.strong&&!strict){ this.cand=null; this.fire(c.t,c.peak,"darbe"); return; }
+  if(t-c.t>MIC_WIN){ this.cand=null;
+    if(c.strong){ this.rejected++; this.rejectRun++; if(this.rejectRun>=3&&!this.strictOff){ this.strictOff=true; if(this.onMicWarn) this.onMicWarn(); } } }
+};
+Proc.prototype.fire=function(t,peak,how){ this.lastShot=t; if(this.armed) this.pending.push(t); if(this.onFire) this.onFire(t,peak,how); };
 Proc.prototype.markShot=function(t){t=t==null?(this.lastT||0):t;if(t-this.lastShot>150){this.pending.push(t);this.lastShot=t;}};
-Proc.prototype.gap=function(t0,t1){this.gaps.push([t0,t1]);while(this.gaps.length>30)this.gaps.shift();};
+Proc.prototype.gap=function(t0,t1){this.gaps.push([t0,t1]);while(this.gaps.length>30)this.gaps.shift();if(this.onGap)this.onGap(t0,t1);};
 Proc.prototype.flush=function(){while(this.pending.length)this.finalize(this.pending.shift());};
 Proc.prototype.idxBefore=function(t){const b=this.buf;if(!b.length)return -1;if(b[0][0]>t)return 0;let lo=0,hi=b.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(b[m][0]<=t)lo=m;else hi=m-1;}return lo;};
 Proc.prototype.finalize=function(st){
@@ -687,7 +733,7 @@ const proc=new Proc();
 let source="demo", sim=null, simTimer=null, phoneH=null, phoneTO=null, rateCnt=0, rateShown=0;
 // BLE sensör durumu. st: off | secim | baglaniyor | bagli | yeniden
 const ble={dev:null,chr:null,wchr:null,kind:null,st:"off",
-  bat:null,chg:false,fw:null,imu:true,low:false,rssi:null,temp:null,mv:null,cfg:null,itv:null,mtu:null,ovf:0,bootId:null,head:null,imuErr:0,v2:false,
+  bat:null,chg:false,fw:null,imu:true,low:false,rssi:null,temp:null,mv:null,cfg:null,itv:null,mtu:null,ovf:0,bootId:null,head:null,imuErr:0,v2:false,mic:false,snd:false,sndT:0,
   lastSeq:null,base:null,winMin:Infinity,winT:0,lat:null,pendResume:null,
   recv:0,drops:0,dup:0,lastData:0,lastPkt:0,hist:[],stall:false,
   manual:false,busy:false,retry:0,timer:null,reconnects:0,downAt:0,lastOutage:null,everConnected:false,connAt:0,wq:Promise.resolve(),statT:0};
@@ -698,6 +744,7 @@ function mountFor(src){
 function applyCfg(){
   const m=mountFor(source); proc.cfg.B=m.B; proc.cfg.invX=m.invX; proc.cfg.invY=m.invY;
   proc.cfg.thr=(S.thr[source]||S.thr.demo)[S.mode]; proc.cfg.lockout=(S.lockout&&S.lockout[S.mode])||(S.mode==="kuru"?450:150);
+  proc.cfg.mic=S.mic; proc.micOn=source==="sensor"&&S.mic!=="kapali"&&S.mode!=="gercek";
   if(sim){sim.recoil=S.mode==="gercek"?3.0:S.mode==="co2"?1.0:0.15; sim.spike=S.mode==="gercek"?12:S.mode==="co2"?5:2.6;}
 }
 function biasKey(){return source==="sensor"?"sensor:"+((ble.dev&&ble.dev.name)||"x"):source;}
@@ -713,7 +760,8 @@ function startDemo(){
   stopSources(); sim=new Sim(); proc.bias0=null; proc.reset(); applyCfg();
   let last=now();
   simTimer=setInterval(()=>{const n=now();for(let t=last+5;t<=n;t+=5){const d=sim.step(t);proc.feed(t,d.acc,d.om,d.jerk);last=t;rateCnt++;}},20);
-  setStatus("Deneme modu: sanal bir atıcı çalışır, sensör gerekmez. Gerçek ölçüm için Telefon ya da Sensör'ü seç.");
+  setStatus(sensorPaired()?"Deneme modu: sanal bir atıcı çalışır; bu oturumlar kaydedilmez. Sensörle çalışmak için <b>Sensöre dön</b>'e dokun."
+    :"Deneme modu: sanal bir atıcı çalışır, sensör gerekmez; bu oturumlar kaydedilmez. Gerçek ölçüm için Telefon ya da Sensör'ü seç.");
 }
 function phoneLiveWarn(){return S.mode==="kuru"?"":" <b>Dikkat:</b> telefonu gerçek atışta ya da CO2 ile silaha takma; tepme telefona zarar verir. Gerçek atışta M5Stick sensörünü kullan.";}
 async function startPhone(){
@@ -756,7 +804,7 @@ function useDevice(dev){
   if(ble.dev&&ble.dev!==dev){ try{ble.dev.removeEventListener("gattserverdisconnected",onBleDisconnect);}catch(e){} try{if(ble.dev.gatt.connected){ble.manual=true;ble.dev.gatt.disconnect();}}catch(e){} }
   clearTimeout(ble.timer); ble.timer=null;
   Object.assign(ble,{dev,chr:null,wchr:null,manual:false,busy:false,retry:0,reconnects:0,lastOutage:null,everConnected:false,downAt:0,
-    drops:0,recv:0,dup:0,hist:[],v2:false,fw:null,cfg:null,bat:null,chg:false,rssi:null,temp:null,mv:null,itv:null,mtu:null,ovf:0,bootId:null,head:null,imu:true,low:false,imuErr:0,lat:null,stall:false});
+    drops:0,recv:0,dup:0,hist:[],v2:false,fw:null,cfg:null,bat:null,chg:false,rssi:null,temp:null,mv:null,itv:null,mtu:null,ovf:0,bootId:null,head:null,imu:true,low:false,imuErr:0,lat:null,stall:false,mic:false,snd:false,sndT:0});
   resetStream();
   try{dev.removeEventListener("gattserverdisconnected",onBleDisconnect);}catch(e){}
   dev.addEventListener("gattserverdisconnected",onBleDisconnect);
@@ -782,7 +830,7 @@ function scheduleReconnect(err){
   const w=waits[Math.min(ble.retry,waits.length-1)]; ble.retry++;
   if(ble.st!=="baglaniyor") ble.st="yeniden";
   const secs=ble.downAt?Math.round((now()-ble.downAt)/1000):0;
-  const head=ble.everConnected?"Sensör bağlantısı koptu, yeniden bağlanılıyor":"Sensöre bağlanılamadı, yeniden deneniyor";
+  const head=ble.everConnected?"Sensör bağlantısı koptu, yeniden bağlanılıyor":`Sensör bekleniyor${ble.dev&&ble.dev.name?": <b>"+esc(ble.dev.name)+"</b>":""}; açılınca bağlanır`;
   const keep=ble.everConnected&&ble.v2&&secs<10?" Arada ölçüm kaybolmaz.":"";
   const hint=secs>=8?"<br>Sensör açık ve yakında mı? Ekranında <b>BEKLİYOR</b> yazmalı.":"";
   setStatus(`${head}… <b>${ble.retry}. deneme</b>${secs>=2?" · "+secs+" sn":""}.${keep}${hint}${err&&err.message&&ble.retry>2?` <span class="note">(${esc(err.message)})</span>`:""}`,true);
@@ -816,7 +864,7 @@ async function bleConnect(){
   const resume=ble.kind==="hisar"&&ble.v2&&ble.lastSeq!=null&&gap<9500;
   if(!resume) resetStream(); else ble.pendResume=ble.lastSeq+1;
   if(ble.kind==="hisar"&&wc){
-    const cmd=new Uint8Array(resume?[0x07,1,...u32le(ble.lastSeq+1)]:[0x07,0,0,0,0,0]);
+    const cmd=new Uint8Array(resume?[0x07,1,...u32le(ble.lastSeq+1),1]:[0x07,0,0,0,0,0,1]);   // son bayt: ses verisi iste (yazılım 3)
     try{ await withTimeout(wc.writeValueWithResponse?wc.writeValueWithResponse(cmd):wc.writeValue(cmd),4000,"komut gönderilemedi"); }catch(e){}
   }
   try{nc.removeEventListener("characteristicvaluechanged",onBleValue);}catch(e){}
@@ -846,7 +894,9 @@ function parseBle(dv,tArg){
     if(dv.getUint8(i)!==0x55){i++;continue;}
     const f=dv.getUint8(i+1);
     if(f===0x66&&i+7<=n){const k=dv.getUint8(i+2);if(i+7+k*13>n)break;const o=i+7;ble.v2=true;
-      streamPacket(dv.getUint32(i+3,true),k,tn,(j,t,sq)=>feedSample(t,dv,o+j*13,sq,true));i+=7+k*13;}
+      streamPacket(dv.getUint32(i+3,true),k,tn,(j,t,sq)=>feedSample(t,dv,o+j*13,sq,true,false));i+=7+k*13;}
+    else if(f===0x68&&i+7<=n){const k=dv.getUint8(i+2);if(i+7+k*14>n)break;const o=i+7;ble.v2=true;ble.snd=true;ble.sndT=tn;
+      streamPacket(dv.getUint32(i+3,true),k,tn,(j,t,sq)=>feedSample(t,dv,o+j*14,sq,true,true));i+=7+k*14;}
     else if(f===0x62&&i+5<=n){const k=dv.getUint8(i+2);if(i+5+k*13>n)break;const o=i+5;
       streamPacket(unwrap16(dv.getUint16(i+3,true)),k,tn,(j,t,sq)=>feedSample(t,dv,o+j*13,sq,false));i+=5+k*13;}
     else if(f===0x64&&i+17<=n){const o=i+4;streamPacket(unwrap16(dv.getUint16(i+2,true)),1,tn,(j,t,sq)=>feedSample(t,dv,o,sq,false));i+=17;}
@@ -862,9 +912,12 @@ function parseBle(dv,tArg){
 function unwrap16(s16){ if(ble.lastSeq==null) return s16; let d=(s16-(ble.lastSeq&0xFFFF)+65536)%65536; if(d>32768)d-=65536; return ble.lastSeq+d; }
 // darbe baytı: sürüm 2 paketlerinde 0-8 g 0,04 g adımlı, üstü 0,9 g adımlı (en çok ~57 g)
 const decJerk=v=>v<=200?v*0.04:8+(v-200)*0.9;
-function feedSample(t,dv,o,sq,v2){const i16=k=>dv.getInt16(o+k,true);
+// ses baytı (yazılım 3): 5 ms içindeki en yüksek ses, dB×2,8 (0 = ses yok / mikrofon çalışmıyor)
+const decSnd=v=>v/2.8;
+function feedSample(t,dv,o,sq,v2,hasSnd){const i16=k=>dv.getInt16(o+k,true);
   const acc=[i16(0)/2048,i16(2)/2048,i16(4)/2048], om=[i16(6)/16.384,i16(8)/16.384,i16(10)/16.384], jv=dv.getUint8(o+12);
-  proc.feed(t,acc,om,v2?decJerk(jv):jv*0.04); rateCnt++; if(window.__hisarTap) window.__hisarTap(sq,t,acc,om,jv);}
+  const sv=hasSnd?dv.getUint8(o+13):null, snd=sv&&ble.mic?decSnd(sv):null;
+  proc.feed(t,acc,om,v2?decJerk(jv):jv*0.04,snd); rateCnt++; if(window.__hisarTap) window.__hisarTap(sq,t,acc,om,jv,sv);}
 function streamPacket(seq,k,tn,fn){
   if(k<=0) return;
   const last=seq+k-1;
@@ -887,6 +940,7 @@ function streamPacket(seq,k,tn,fn){
 function parseStatus2(dv,o,len){
   const g=k=>k<len?dv.getUint8(o+k):0;
   ble.v2=true; ble.bat=g(0); const fl=g(1); ble.chg=!!(fl&1); ble.imu=!!(fl&2); const low=!!(fl&4); ble.fw=g(2);
+  const mic=!!(fl&16); if(mic!==ble.mic){ ble.mic=mic; applyCfg(); }
   if(len>3){const r=dv.getInt8(o+3);ble.rssi=r===-128?null:r;}
   if(len>4) ble.temp=dv.getInt8(o+4);
   if(len>5) ble.mv=g(5)*20||null;
@@ -924,14 +978,16 @@ function bleWatch(){
 function lossPct(){ const h=ble.hist; if(h.length<2) return null; const a=h[0],b=h[h.length-1]; const r=b[0]-a[0], d=b[1]-a[1]; return r+d>0?d/(r+d)*100:null; }
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&source==="sensor"&&ble.dev&&!ble.manual&&ble.st!=="bagli"&&!ble.busy){ clearTimeout(ble.timer); ble.timer=null; connectNow(false); } });
 /* --- açılışta son sensöre kendiliğinden bağlan (izin verilmiş cihazlar) */
-async function autoConnect(){
-  if(!S.autoConnect||!navigator.bluetooth||typeof navigator.bluetooth.getDevices!=="function") return false;
+function canAutoConnect(){ return !!(navigator.bluetooth&&typeof navigator.bluetooth.getDevices==="function"); }
+async function autoConnect(fromUser){
+  if((!S.autoConnect&&!fromUser)||!canAutoConnect()) return false;
   let list=[]; try{ list=await navigator.bluetooth.getDevices(); }catch(e){ return false; }
   const dev=list.find(d=>S.lastSensor&&d.name===S.lastSensor)||list.find(d=>/^HISAR/i.test(d.name||""));
-  if(!dev||source!=="demo"||(cur.run&&cur.run.active)) return false;
-  stopSources(); source="sensor"; S.lastSource="sensor"; proc.bias0=null; proc.reset(); applyCfg();
+  if(!dev||(source!=="demo"&&source!=="sensor")||(cur.run&&cur.run.active)) return false;
+  if(source==="sensor"&&ble.dev===dev&&!ble.manual&&(ble.st==="bagli"||ble.busy||ble.timer)) return true;
+  if(source!=="sensor"){ stopSources(); source="sensor"; S.lastSource="sensor"; proc.bias0=null; proc.reset(); applyCfg(); }
   for(const [id,v] of [["srcDemo","demo"],["srcPhone","phone"],["srcSensor","sensor"]]) $(id).setAttribute("aria-pressed",String(v==="sensor"));
-  useDevice(dev); setStatus(`Son kullanılan sensöre bağlanılıyor: <b>${esc(dev.name||"Sensör")}</b>…`);
+  useDevice(dev); ble.st="baglaniyor"; setStatus(`Son kullanılan sensöre bağlanılıyor: <b>${esc(dev.name||"Sensör")}</b>…`);
   if(typeof dev.watchAdvertisements==="function"&&!APK){
     // Chrome: sensör yayın yapınca bağlan
     try{ const ac=new AbortController(); const stop=()=>{try{ac.abort();}catch(e){}};
@@ -949,7 +1005,7 @@ function selectSource(s,fromUser){
   if(source==="sensor"&&s!=="sensor"&&ble.dev){ble.manual=true;clearTimeout(ble.timer);ble.timer=null;try{ble.dev.gatt.disconnect();}catch(e){} ble.st="off"; ble.chr=null;}
   source=s; S.lastSource=s; saveMeta();
   for(const [id,v] of [["srcDemo","demo"],["srcPhone","phone"],["srcSensor","sensor"]]) $(id).setAttribute("aria-pressed",String(v===s));
-  if(s==="demo") startDemo(); else if(s==="phone") startPhone(); else if(fromUser) startSensor(); else {stopSources();proc.reset();applyCfg();setStatus("Sensöre bağlanmak için Sensör'e dokun.");}
+  if(s==="demo") startDemo(); else if(s==="phone") startPhone(); else if(fromUser) startSensor(); else {stopSources();proc.reset();applyCfg();setStatus(sensorIdleText());}
   if(s==="phone"&&fromUser&&S.mode!=="kuru") toast("Telefonu gerçek atışta silaha takma; tepme telefona zarar verir.");
   refreshChip(); updateLinkUi(); renderHome();
 }
@@ -961,6 +1017,34 @@ function refreshChip(){
     if(st==="bagli"){c.innerHTML=`<span class="dot ok"></span>SENSÖR${ble.bat!=null?" %"+ble.bat:""}${ble.chg?" ⚡":""}`;c.className="chip on";}
     else if(st==="yeniden"||st==="baglaniyor"||st==="secim"){c.innerHTML=`<span class="dot wait"></span>${st==="secim"?"SENSÖR SEÇ":"BAĞLANIYOR"}`;c.className="chip wait";}
     else {c.textContent="SENSÖR YOK";c.className="chip off";} }
+  updateSrcCard();
+}
+// Sensör bir kez eşlendiyse ana sayfada üçlü seçim yerine sensör durumu gösterilir; Deneme ve Telefon Ayarlar'dadır.
+function sensorPaired(){ return !!S.lastSensor; }
+function sensorIdleText(){
+  if(!sensorPaired()) return "Sensöre bağlanmak için Sensör'e dokun.";
+  return `Sensör bekleniyor: <b>${esc(S.lastSensor)}</b>. Sensörü aç ve <b>Bağlan</b>'a dokun.`;
+}
+function updateSrcCard(){
+  const seg=$("srcSeg"), act=$("srcAct"), go=$("srcGo"), title=$("srcTitle"); if(!seg) return;
+  const paired=sensorPaired();
+  let t="Veri kaynağı", btn="";
+  if(paired){
+    if(source==="sensor"){ t="Sensör"; if((ble.st==="off"||!ble.dev)&&!ble.busy&&!ble.timer&&!ble.autoPending) btn=ble.dev&&!ble.manual?"Yeniden bağlan":"Bağlan"; }
+    else { t=source==="demo"?"Deneme modu":"Telefon sensörü"; btn="Sensöre dön"; }
+  }
+  if(seg.hidden!==paired) seg.hidden=paired;
+  if(title.textContent!==t) title.textContent=t;
+  if(act.hidden!==!btn) act.hidden=!btn;
+  if(btn&&go.textContent!==btn) go.textContent=btn;
+}
+async function returnToSensor(){
+  if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; }
+  if(source!=="sensor") selectSource("sensor",false);
+  if(!navigator.bluetooth){ startSensor(); return; }
+  if(ble.dev){ ble.manual=false; clearTimeout(ble.timer); ble.timer=null; ble.retry=0; connectNow(true); return; }
+  if(await autoConnect(true)) return;
+  startSensor();
 }
 $("srcChip").onclick=()=>{ if(source==="sensor") openSettings("baglanti"); else if(source==="phone") openSettings("montaj"); else showView("alistirma"); };
 setInterval(()=>{rateShown=rateCnt;rateCnt=0;
@@ -969,6 +1053,7 @@ setInterval(()=>{rateShown=rateCnt;rateCnt=0;
 $("srcDemo").onclick=()=>selectSource("demo",true);
 $("srcPhone").onclick=()=>selectSource("phone",true);
 $("srcSensor").onclick=()=>selectSource("sensor",true);
+$("srcGo").onclick=()=>returnToSensor();
 $("srcSet").onclick=()=>openSettings(source==="phone"?"montaj":"baglanti");
 function sourceReady(){ return now()-proc.lastData<1200; }
 /* --- bağlantı göstergeleri: ana sayfa satırı, oturum uyarısı, ayarlar */
@@ -1033,6 +1118,7 @@ function openReview(s){
 function later(r,ms,fn){const id=setTimeout(()=>{r.timers.delete(id);if(cur.run===r&&r.active)fn();},ms);r.timers.add(id);return id;}
 function cue(r,type){
   const t=now(); r.cueT=t; r.cueType=type; cueSound(type);
+  if(raw.on&&raw.sess===r.sess) raw.cues.push([Math.round(t-raw.t0),type]);
   if(type==="ates"||type==="dur") flash(type==="ates"?"ATEŞ":"DUR",type==="ates"?"go":"no");
   else if(S.visualCue&&type==="go") flash(r.drill.id==="kilif"?"ÇEK":"ATEŞ","go",r.drill.id==="ritim"?260:520);
   else if(S.visualCue&&type==="par") flash("PAR","par",600);
@@ -1103,15 +1189,70 @@ const ENG={
 function panelHtml(big,msg,sub){return `<div><div class="dp-msg">${esc(msg)}</div><div class="dp-sub">${esc(sub)}</div></div><div class="dp-big">${esc(big)}</div>`;}
 const validShots=s=>s.shots.filter(q=>!q.x||(!q.x.erken&&q.x.karar!=="erken"));
 
+/* --- ham kayıt: algılamayı silaha göre ayarlamak için oturumun ham sensör verisi (yalnız bellekte, dosyaya aktarılır) */
+const RAW_MAX=360000, RAW_CH=8192;              // en çok 30 dk (200 ölçüm/sn)
+const raw={on:false,full:false,t0:0,n:0,chunks:[],sess:null,cues:[],gaps:[],info:null};
+function rawStart(r){
+  Object.assign(raw,{on:true,full:false,t0:r.t0,n:0,chunks:[],sess:r.sess,cues:[],gaps:[],
+    info:{src:source,sensor:source==="sensor"&&ble.dev?ble.dev.name||"":"",fw:source==="sensor"?ble.fw:null,mic:micState(),thr:proc.cfg.thr,lockout:proc.cfg.lockout,
+      mount:{B:proc.cfg.B,invX:proc.cfg.invX,invY:proc.cfg.invY},bias:proc.bias?proc.bias.map(v=>+v.toFixed(3)):null,mtu:ble.mtu||null}});
+}
+function rawStop(){ raw.on=false; }
+function rawHas(s){ return !!(s&&raw.sess===s&&raw.n>0); }
+proc.onRaw=(t,acc,om,dj,snd)=>{
+  if(!raw.on) return;
+  if(raw.n>=RAW_MAX){ if(!raw.full){ raw.full=true; toast("Ham kayıt 30 dakikada durdu; oturum sürüyor."); } return; }
+  const ci=(raw.n/RAW_CH)|0, k=raw.n%RAW_CH; let c=raw.chunks[ci];
+  if(!c){ c={t:new Float64Array(RAW_CH),v:new Int16Array(RAW_CH*8)}; raw.chunks[ci]=c; }
+  const q=(x,m)=>{x=Math.round(x*m);return x>32767?32767:x<-32767?-32767:x;};
+  c.t[k]=t-raw.t0; const v=c.v,o=k*8;
+  v[o]=q(acc[0],1000); v[o+1]=q(acc[1],1000); v[o+2]=q(acc[2],1000);
+  v[o+3]=q(om[0],10); v[o+4]=q(om[1],10); v[o+5]=q(om[2],10);
+  v[o+6]=q(dj||0,100); v[o+7]=snd==null?-1:q(snd,10);
+  raw.n++;
+};
+proc.onGap=(t0,t1)=>{ if(raw.on) raw.gaps.push([Math.round(t0-raw.t0),Math.round(t1-raw.t0)]); };
+function rawCsv(s,actual){
+  const last=raw.n?raw.chunks[((raw.n-1)/RAW_CH)|0].t[(raw.n-1)%RAW_CH]:0;
+  const meta=Object.assign({app:"hisar-tetik",ver:VER,bicim:1,tarih:new Date(s.date).toISOString(),alistirma:s.drill,atisTipi:s.mode,silah:s.weapon,silahAdi:s.weaponName||"",el:s.hand,elKipi:s.handMode,
+    zorluk:s.diff,olcum:raw.n,sureMs:Math.round(last),doldu:raw.full,algilanan:s.shots.length,gercek:actual==null?null:actual,not:s.notes||""},raw.info,
+    {atislar:s.shots.map(q=>({n:q.n,at:q.at,sc:q.sc,h:q.h,tr:q.tr,ho:q.ho,x:q.x})),sinyaller:raw.cues,bosluklar:raw.gaps});
+  const out=["# HISAR TETIK ham kayit (bicim 1). Birimler: t ms, ivme mg, jiroskop 0,1 derece/sn, darbe 0,01 g, ses 0,1 dB (-1 = yok)",
+    "# "+JSON.stringify(meta),"t_ms,ax_mg,ay_mg,az_mg,gx_01dps,gy_01dps,gz_01dps,darbe_001g,ses_01db"];
+  let rows=[];
+  for(let i=0;i<raw.n;i++){ const c=raw.chunks[(i/RAW_CH)|0], k=i%RAW_CH, v=c.v, o=k*8;
+    rows.push((Math.round(c.t[k]*10)/10)+","+v[o]+","+v[o+1]+","+v[o+2]+","+v[o+3]+","+v[o+4]+","+v[o+5]+","+v[o+6]+","+v[o+7]);
+    if(rows.length>=20000){ out.push(rows.join("\n")); rows=[]; } }
+  if(rows.length) out.push(rows.join("\n"));
+  return out.join("\n")+"\n";
+}
+function rawName(s){ const d=new Date(s.date); const p=n=>String(n).padStart(2,"0");
+  return `hisar-ham-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}-${s.drill}.csv`; }
+function openRawExport(s){
+  if(!rawHas(s)){ toast("Bu oturumun ham kaydı yok."); return; }
+  const n=s.shots.length, dur=raw.n*5;
+  openSheet("Ham veri",`<p>Bu oturumun ham sensör verisi: <b>${raw.n.toLocaleString("tr-TR")}</b> ölçüm (${mmss(dur)})${raw.full?", 30 dakikada durdu":""}. Algılanan atış: <b>${n}</b>.</p>
+    <div class="field"><label for="rawReal">Gerçekte kaç atış yaptın?</label><input type="number" id="rawReal" min="0" max="999" inputmode="numeric" value="${n}"></div>
+    <p class="note">Kaçan ya da fazla sayılan atış varsa doğru sayıyı yaz; atış algılamayı silahına göre ayarlamak için dosyayı paylaş.</p>
+    <div class="btn-row"><button class="btn primary" id="rawShare">Paylaş</button><button class="btn" id="rawSave">Dosyaya kaydet</button></div>`,
+    body=>{
+      const val=()=>{ const v=parseInt(body.querySelector("#rawReal").value,10); return isNaN(v)?null:clamp(v,0,999); };
+      body.querySelector("#rawShare").onclick=async()=>{ const txt=rawCsv(s,val()); const r=await shareBlob(new Blob([txt],{type:"text/csv"}),rawName(s),"text/csv");
+        if(r==="indirildi") toast("Ham veri indirildi."); else if(r==="hata") toast("Paylaşılamadı."); };
+      body.querySelector("#rawSave").onclick=()=>{ download(rawName(s),rawCsv(s,val()),"text/csv"); };
+    });
+}
+
 function startRun(){
   if(cur.review){ const d=cur.sess.drill; cur.sess=newSession(d); cur.review=false; cur.sel=-1; }
-  if(!sourceReady()){ toast(source==="sensor"?"Sensör bağlı değil. Alıştırma sekmesinden Sensör'e dokun.":"Veri gelmiyor. Önce bir veri kaynağı seç."); return; }
+  if(!sourceReady()){ toast(source==="sensor"?(ble.st==="baglaniyor"||ble.st==="yeniden"?"Sensöre bağlanılıyor; bağlanınca Başla'ya bas.":sensorPaired()?"Sensör bağlı değil. Sensörü aç; Alıştırma sekmesinde Bağlan'a dokun.":"Sensör bağlı değil. Alıştırma sekmesinden Sensör'e dokun."):"Veri gelmiyor. Önce bir veri kaynağı seç."); return; }
   audioUnlock();
   const s=cur.sess; s.date=Date.now(); s.src=source; s.mode=S.mode; s.weapon=S.weapon; s.weaponName=S.weaponName; s.hand=S.hand; s.diff=S.diff;
   const d=DRM[s.drill]; const eng=ENG[s.drill]||{};
   const r={drill:d,eng,sess:s,t0:now(),timers:new Set(),active:true,cueT:null,cueType:null,st:{},msg:"",shotT:[]};
   cur.run=r;
   applyCfg(); proc.zero(); proc.armed=true; proc.pending=[]; proc.lastShot=-1e9;
+  if(S.rawRec) rawStart(r);
   if(eng.start) eng.start(r);
   if(d.demo==="periodic"&&source==="demo"&&S.autoShot) demoPeriodic(r);
   r.eng.demoCue=eng.demoCue; r.drill.demoCue=eng.demoCue?((rr,type,t)=>eng.demoCue.call(eng,rr,type,t)):null;
@@ -1131,8 +1272,9 @@ function stopRun(auto){
 }
 function finishRun(r,auto){
   const s=r.sess; s.dur=Math.round((now()-r.t0)/1000);
+  if(raw.on&&raw.sess===s) rawStop();
   s.extra=summarizeExtra(r);
-  if(s.shots.length){ if(!sessions.includes(s)) sessions.unshift(s); saveSession(s); }
+  if(s.shots.length&&!isDemoSess(s)){ if(!sessions.includes(s)) sessions.unshift(s); saveSession(s); }
   cur.run=null; cur.review=s.shots.length>0; $("btnStart").disabled=false;
   renderSession(); renderHome();
   if(s.shots.length) showSummary(s); else toast("Atış algılanmadı, oturum kaydedilmedi.");
@@ -1167,7 +1309,7 @@ proc.onShot=m=>{
   s.shots.push(q); cur.sel=s.shots.length-1;
   const [vt,vc]=verdict(q.sc); setFeedback(q.c.length&&q.sc<85?CAUSES[q.c[0]].ad:vt,vc);
   shotSound(q); lastFlash=now();
-  if(s.shots.length===1&&!sessions.includes(s)) sessions.unshift(s);
+  if(s.shots.length===1&&!sessions.includes(s)&&!isDemoSess(s)) sessions.unshift(s);
   saveSession(s);
   renderSession();
   const lim=r.drill.limit?r.drill.limit():null;
@@ -1267,7 +1409,7 @@ $("sessInfo").onclick=()=>{const s=cur.sess;const d=DRM[s.drill];const saved=cur
 function renderSession(){
   const s=cur.sess; if(!s) return; const d=DRM[s.drill]||DRM.serbest; const r=cur.run;
   $("sessName").textContent=d.ad;
-  $("sessSub").innerHTML=cur.review&&!(r&&r.active)?esc(dateTxt(s.date))+(s.sample?'<span class="tag">Örnek</span>':""):esc(profileText().slice(0,3).join(" · "));
+  $("sessSub").innerHTML=(cur.review&&!(r&&r.active)?esc(dateTxt(s.date))+(s.sample?'<span class="tag">Örnek</span>':""):esc(profileText().slice(0,3).join(" · ")))+(isDemoSess(s)||(!cur.review&&source==="demo")?' <span class="tag demo">Deneme · kaydedilmez</span>':"")+(raw.on&&raw.sess===s?' <span class="tag rec">● Ham kayıt</span>':"");
   const v=validShots(s);
   $("sessShots").textContent=v.length+" atış";
   $("sessTime").textContent=mmss(r&&r.active?now()-r.t0:s.dur*1000);
@@ -1454,8 +1596,9 @@ function showSummary(s){
   openSheet(DRM[s.drill].ad+" · Sonuç",`<div class="row"><div><div class="lbl">Ortalama skor</div><div class="big sc-${scCls(avg)}">${fx(avg,1)}</div></div><div style="text-align:right"><div class="lbl">Süre</div><div class="num">${mmss(s.dur*1000)}</div></div></div>
     <div class="kv">${lines.map(([k,v2])=>`<div><div class="lbl">${esc(k)}</div><div class="num">${esc(v2)}</div></div>`).join("")}</div>
     ${cc.length?`<div class="lbl">En sık hatalar</div>`+causeButtons(cc.map(x=>x[0])):`<p>Belirgin bir hata yok. ${avg>=85?"Harika bir oturum!":"Tutarlı bir oturum."}</p>`}
-    <div class="btn-row"><button class="btn" id="sumNote">Not ekle</button><button class="btn" id="sumIz">İzleri incele</button><button class="btn" id="sumShare">Paylaş</button><button class="btn primary" id="sumAgain">Tekrar</button></div>`,
-    body=>{bindCauses(body);body.querySelector("#sumNote").onclick=()=>openNotes(s);body.querySelector("#sumShare").onclick=()=>openShare(s);body.querySelector("#sumIz").onclick=()=>{closeSheet();setSub("iz");};body.querySelector("#sumAgain").onclick=()=>{closeSheet();openDrill(s.drill);startRun();};});
+    ${isDemoSess(s)?`<p class="note demo-note">Deneme oturumu: sanal atıcıyla yapıldı, geçmişe ve istatistiklere kaydedilmedi.</p>`:""}
+    <div class="btn-row"><button class="btn" id="sumNote">Not ekle</button><button class="btn" id="sumIz">İzleri incele</button><button class="btn" id="sumShare">Paylaş</button>${rawHas(s)?`<button class="btn" id="sumRaw">Ham veri</button>`:""}<button class="btn primary" id="sumAgain">Tekrar</button></div>`,
+    body=>{bindCauses(body);const rb=body.querySelector("#sumRaw");if(rb)rb.onclick=()=>openRawExport(s);body.querySelector("#sumNote").onclick=()=>openNotes(s);body.querySelector("#sumShare").onclick=()=>openShare(s);body.querySelector("#sumIz").onclick=()=>{closeSheet();setSub("iz");};body.querySelector("#sumAgain").onclick=()=>{closeSheet();openDrill(s.drill);startRun();};});
 }
 
 /* ---------------------------------------------------------------- oturum raporu (görsel / PDF) */
@@ -1577,8 +1720,9 @@ function openShare(s){
   let png=null,pdf=null,url=null;
   openSheet("Oturum raporu",`<img class="share-prev" id="shPrev" alt="Rapor önizlemesi" hidden><p class="note" id="shMsg">Rapor hazırlanıyor…</p>
     <div class="btn-row"><button class="btn primary" id="shPng" disabled>Görsel olarak paylaş</button><button class="btn" id="shPdf" disabled>PDF olarak paylaş</button></div>
-    <p class="note">WhatsApp, e-posta ya da galeriye kaydetmek için paylaş menüsünü kullan.</p>`,
+    <p class="note">WhatsApp, e-posta ya da galeriye kaydetmek için paylaş menüsünü kullan.</p>${rawHas(s)?`<div class="btn-row"><button class="btn" id="shRaw">Ham veri (CSV)</button></div>`:""}`,
     async body=>{
+      const rw=body.querySelector("#shRaw"); if(rw) rw.onclick=()=>openRawExport(s);
       try{ const c=await buildReport(s); png=await new Promise(r=>c.toBlob(r,"image/png")); pdf=canvasToPdf(c); url=URL.createObjectURL(png);
         const im=body.querySelector("#shPrev"); if(im){im.src=url;im.hidden=false;} const m=body.querySelector("#shMsg"); if(m) m.textContent=`${validShots(s).length} atış · ${fx(avgOf(validShots(s)),1)} ortalama`;
         const b1=body.querySelector("#shPng"), b2=body.querySelector("#shPdf"); if(!b1) return; b1.disabled=false; b2.disabled=false;
@@ -1686,6 +1830,20 @@ function renderLessons(){
 
 /* ---------------------------------------------------------------- ayarlar: menü ve sayfalar */
 let setPage=null, detTest=null, mjSrc=null, sbDevKey="";
+Object.defineProperty(proc,"testArm",{get(){return !!detTest;}});      // Ayarlar › Atış algılama açıkken algılama testi
+proc.onFire=(t,peak,how)=>{ if(detTest&&!(cur.run&&cur.run.active)){ detTest.n++; detTest.last=t; detTest.peak=peak; detTest.how=how; updDet(); } };
+proc.onMicWarn=()=>{ toast("Mikrofon tetik sesini duymuyor: Sıkı kip bu oturumda kapatıldı, atışlar sarsıntıyla sayılıyor."); };
+function micState(){ return {kip:S.mic,etkin:proc.micOn&&ble.mic&&ble.snd,sensorMik:!!ble.mic,sesAkisi:!!ble.snd,taban:proc.sBg!=null?+proc.sBg.toFixed(1):null,clickDb:proc.cfg.clickDb,clickMin:proc.cfg.clickMin,clickRise:proc.cfg.clickRise,weak:proc.cfg.weak}; }
+function micStatusText(){
+  if(source!=="sensor") return "Mikrofon yalnız HİSAR sensörüyle çalışır.";
+  if(ble.st!=="bagli") return "Sensör bağlı değil.";
+  if(ble.kind!=="hisar") return "Bu sensörde mikrofon yok.";
+  if((ble.fw||0)<3) return `Sensör yazılımı ${ble.fw||"eski"}; mikrofon için 3. sürüm gerekir. Ayarlar › Sensör bağlantısı'ndan telefondan güncelleyebilirsin.`;
+  if(!ble.mic) return "Sensör mikrofonu okunamıyor; atışlar yalnız sarsıntıyla algılanır.";
+  if(S.mic==="kapali") return "Kapalı: atışlar yalnız sarsıntıyla algılanır.";
+  if(S.mode==="gercek") return "Gerçek atışta mikrofon kullanılmaz; tepme zaten çok belirgin.";
+  return proc.strictOff?"Sıkı kip bu oturumda kapandı: mikrofon tık sesini duymadı.":"Mikrofon çalışıyor. Tetik çektiğinde ses çubuğu çizgiyi geçmeli.";
+}
 const ICO={
   baglanti:SV('<path d="M7 7l10 10-5 5V2l5 5L7 17"/>'),
   montaj:SV('<rect x="2.5" y="8.5" width="19" height="7" rx="3.5"/><circle cx="12" cy="12" r="1.8"/><path d="M8.5 8.5v7M15.5 8.5v7"/>'),
@@ -1707,7 +1865,7 @@ function menuDesc(p){
   switch(p){
     case "baglanti": return source==="sensor"&&ble.st==="bagli"?`${ble.dev&&ble.dev.name||"Sensör"} · bağlı${ble.bat!=null?" · pil %"+ble.bat:""}`:source==="sensor"&&(ble.st==="yeniden"||ble.st==="baglaniyor")?"Bağlanıyor…":"Bağlı değil";
     case "montaj": { const ms=montajSrc(); const m=S.mount[ms]; return `${srcName(ms)} · ${m.B?"yön testi yapıldı":"yön testi yapılmadı"}`; }
-    case "algilama": return `${MODE_T[S.mode]} · eşik ${fx(curThr(),2)} g`;
+    case "algilama": return `${MODE_T[S.mode]} · eşik ${fx(curThr(),2)} g · mikrofon ${{kapali:"kapalı",yardimci:"yardımcı",siki:"sıkı"}[S.mic]||S.mic}`;
     case "atici": return profileText().join(" · ");
     case "alistirma": return `Par ${fx(S.par,1)} sn · ritim ${fx(S.ritim,1)} sn · dayanıklılık ${S.dayanik}`;
     case "gorunum": return `${{deg:"Derece",moa:"MOA",mil:"Milyem"}[S.unit]} · ${S.dist} m · ${{kapali:"ses kapalı",bip:"bip",skor:"skoru okur",tam:"skor ve neden"}[S.sound]}`;
@@ -1752,16 +1910,29 @@ function pgBaglanti(){
   <div class="card"><h2>Bağlantı tercihleri</h2>
     <label class="toggle">Açılışta son sensöre kendiliğinden bağlan<input type="checkbox" id="sAutoCon" ${S.autoConnect?"checked":""}></label>
     <label class="toggle">Alıştırma seslerini sensörde de çal<input type="checkbox" id="sSBeep" ${S.sensorBeep?"checked":""}></label>
-    <p class="note">${APK?"Android uygulamasında sensör açıksa uygulama açılınca kendiliğinden bağlanır.":navigator.bluetooth&&typeof navigator.bluetooth.getDevices==="function"?"Tarayıcı izin verirse açılışta sensör listesi açılmadan bağlanır.":"Bu tarayıcıda her açılışta Sensör'e dokunup listeden seçmek gerekir."} Bağlantı koparsa uygulama kendiliğinden yeniden bağlanır; sensör yazılımı 2 ile 10 saniyeye kadar kopmalarda ölçüm kaybolmaz.</p>
+    <p class="note">${APK?"Android uygulamasında sensör açıksa uygulama açılınca kendiliğinden bağlanır.":navigator.bluetooth&&typeof navigator.bluetooth.getDevices==="function"?"Tarayıcı izin verirse açılışta sensör listesi açılmadan bağlanır.":"Bu tarayıcıda her açılışta Sensör'e dokunup listeden seçmek gerekir."} Bağlantı koparsa uygulama kendiliğinden yeniden bağlanır; sensör yazılımı 2 ve sonrasıyla 10 saniyeye kadar kopmalarda ölçüm kaybolmaz.</p>
+  </div>
+  <div class="card"><h2>Diğer veri kaynakları</h2>
+    <p>Sensör yanında değilken uygulamayı denemek için. <b>Deneme modu</b> sanal bir atıcıyla çalışır, oturumları kaydedilmez. <b>Telefonun sensörü</b> telefonun kendi hareket ölçerini kullanır; yalnız kuru tetik içindir.</p>
+    <div class="btn-row"><button class="btn" id="altDemo">Deneme modu</button><button class="btn" id="altPhone">Telefonun sensörü</button></div>
+    ${S.lastSensor?`<p class="note">Kayıtlı sensör: <b>${esc(S.lastSensor)}</b>. Uygulama açılınca bu sensörü bekler.</p><div class="btn-row" id="sbForgetBox"><button class="btn danger" id="sbForget">Sensörü unut</button></div>`:""}
   </div>
   <details class="card" id="sbDetBox"><summary>Ayrıntılar</summary><div class="kv" id="sbDet"></div></details>
   <div class="card" id="sbFw"></div>`;
 }
 function bindBaglanti(){
-  $("sbConnect").onclick=()=>{ if(source!=="sensor"||!ble.dev){ selectSource("sensor",true); return; } ble.manual=false; clearTimeout(ble.timer); ble.timer=null; ble.retry=0; connectNow(true); };
+  $("sbConnect").onclick=()=>returnToSensor();
   $("sbOther").onclick=()=>{ if(source!=="sensor"){ selectSource("sensor",true); return; } startSensor(); };
   $("sbFind").onclick=()=>{ if(bleCmd([0x03])) toast("Sensör 3 saniye boyunca ötecek ve yanıp sönecek."); };
   $("sbDisc").onclick=()=>{ sensorDisconnect(); updateSensorPage(); };
+  $("altDemo").onclick=()=>{ if(cur.run&&cur.run.active){toast("Önce süren oturumu durdur.");return;} selectSource("demo",true); showView("alistirma"); };
+  $("altPhone").onclick=()=>{ if(cur.run&&cur.run.active){toast("Önce süren oturumu durdur.");return;} selectSource("phone",true); showView("alistirma"); };
+  const fg=$("sbForget"); if(fg) fg.onclick=()=>{ const box=$("sbForgetBox");
+    box.innerHTML=`<span style="align-self:center">Sensör unutulsun mu?</span><button class="btn danger" id="sbFgYes">Evet</button><button class="btn" id="sbFgNo">Vazgeç</button>`;
+    $("sbFgNo").onclick=()=>renderSettings();
+    $("sbFgYes").onclick=()=>{ if(cur.run&&cur.run.active){toast("Önce süren oturumu durdur.");return;}
+      if(source==="sensor"&&ble.dev) sensorDisconnect(); ble.dev=null; S.lastSensor=""; saveMeta();
+      selectSource("demo",false); toast("Sensör unutuldu. Yeni sensör için Alıştırma sekmesinde Sensör'e dokun."); renderSettings(); }; };
   $("sAutoCon").onchange=e=>{S.autoConnect=e.target.checked;saveMeta();};
   $("sSBeep").onchange=e=>{S.sensorBeep=e.target.checked;saveMeta();};
   $("sbDetBox").addEventListener("toggle",updateSensorPage);
@@ -1786,13 +1957,13 @@ function updateSensorPage(){
   const box=$("sbDetBox"), d=$("sbDet");
   if(box&&box.open&&d) d.innerHTML=[["Alınan ölçüm",ble.recv],["Kayıp ölçüm",ble.drops],["Tekrar gelen",ble.dup],["Sensör tamponu taşması",ble.ovf||0],
     ["Bağlantı aralığı",ble.itv?fx(ble.itv,2)+" ms":"–"],["Paket boyu (MTU)",ble.mtu||"–"],["Sensör sıcaklığı",ble.temp!=null?ble.temp+" °C":"–"],["Pil gerilimi",ble.mv?fx(ble.mv/1000,2)+" V":"–"],
-    ["Hareket ölçer hatası",ble.imuErr||0],["Açılış no",ble.bootId!=null?ble.bootId.toString(16).toUpperCase():"–"],["Sensör sayacı",ble.head!=null?ble.head:"–"],["Yazılım",ble.fw!=null?ble.fw:"–"]]
+    ["Hareket ölçer hatası",ble.imuErr||0],["Mikrofon",ble.fw>=3?(ble.mic?(ble.snd?"çalışıyor":"var"):"okunamıyor"):"yazılım 3 gerekir"],["Açılış no",ble.bootId!=null?ble.bootId.toString(16).toUpperCase():"–"],["Sensör sayacı",ble.head!=null?ble.head:"–"],["Yazılım",ble.fw!=null?ble.fw:"–"]]
     .map(([k,v])=>`<div><div class="lbl">${esc(k)}</div><div class="num" style="font-size:15px">${esc(String(v))}</div></div>`).join("");
 }
 function sensorDevHtml(){
   const on=source==="sensor"&&ble.st==="bagli"&&ble.kind==="hisar";
   if(!on) return `<h2>Sensör cihazı</h2><p>Sensör bağlıyken ekran parlaklığını, ses seviyesini, kendiliğinden kapanmasını ve numarasını buradan ayarlayabilirsin.</p>`;
-  if(!ble.v2||!ble.cfg) return `<h2>Sensör cihazı</h2><p>Bu ayarlar sensör yazılımının ${FW_LATEST}. sürümüyle çalışır. Sensöründe ${ble.fw?ble.fw+". sürüm":"eski sürüm"} var; güncellersen bağlantı kopmalarında ölçüm de kaybolmaz.</p><a class="btn primary" href="${YUKLE_URL}" target="_blank" rel="noopener">Sensör yazılımını güncelle</a>`;
+  if(!ble.v2||!ble.cfg) return `<h2>Sensör cihazı</h2><p>Bu ayarlar sensör yazılımı 2 ve sonrasıyla çalışır. Sensöründe ${ble.fw?ble.fw+". sürüm":"eski sürüm"} var; güncellersen bağlantı kopmalarında ölçüm de kaybolmaz.</p><a class="btn primary" href="${YUKLE_URL}" target="_blank" rel="noopener">Sensör yazılımını güncelle</a>`;
   const c=ble.cfg;
   return `<h2>Sensör cihazı</h2>
     <div class="field"><label for="dvBri">Ekran parlaklığı: <b id="dvBriV">%${c.bri}</b></label><input type="range" id="dvBri" min="10" max="100" step="10" value="${c.bri}"></div>
@@ -2002,8 +2173,16 @@ function pgAlgilama(){
   </div>
   <div class="card"><h2>Algılama testi</h2><p>Oturum başlatmadan dene: tetik çek, burada sayılsın.</p>
     <div class="kv3"><div><span class="lbl">Algılanan</span><span class="num" id="dtN">0</span></div><div><span class="lbl">Son tepe</span><span class="num" id="dtPk">–</span></div><div><span class="lbl">Eşik payı</span><span class="num" id="dtMg">–</span></div></div>
+    <p class="note" id="dtHow"></p>
     <button class="btn sm" id="dtReset">Sayacı sıfırla</button>
     <p class="note">Eşik payı, son tetiğin eşiği kaç kat aştığıdır. 1,5 katın altındaysa bazı atışlar kaçabilir: eşiği düşür ya da Eşiği öğren'i kullan. Silahı taşırken sayaç artıyorsa eşik fazla düşüktür.</p></div>
+  <div class="card"><h2>Mikrofon desteği</h2>
+    <p>Sensörün mikrofonu kuru tetikte ve CO2'de tetiğin "tık" sesini de dinler.</p>
+    ${segHtml("sMic",[["kapali","Kapalı"],["yardimci","Yardımcı"],["siki","Sıkı"]],S.mic)}
+    <p class="note"><b>Yardımcı</b> (önerilen): sarsıntı eşiği aşmasa da tık sesiyle aynı anda gelen darbe atış sayılır; hafif tetikli ve ağır silahlarda kaçan atış azalır. <b>Sıkı</b>: sesi olmayan sarsıntılar (silaha çarpma, tutuş değiştirme) atış sayılmaz. Gerçek atışta mikrofon kullanılmaz.</p>
+    <div class="meter"><span>Ses</span><div class="bar"><div class="fill" id="sFill"></div><div class="thr" id="sThr" hidden></div></div><span class="val" id="sVal">– dB</span></div>
+    <div class="kv3"><div><span class="lbl">Ses tabanı</span><span class="num" id="sBgV">–</span></div><div><span class="lbl">Tık eşiği</span><span class="num" id="sLimV">–</span></div><div><span class="lbl">Duyulan tık</span><span class="num" id="dtClick">0</span></div></div>
+    <p class="note" id="micNote"></p></div>
   <div class="card"><h2>Çift algılamayı önleme</h2><p>Bir atıştan sonra bu süre içinde gelen sarsıntılar yeni atış sayılmaz. Kuru tetikte 0,45 sn, gerçek atış ve CO2'de 0,15 sn önerilir. Çok hızlı seri atışta kısa, kuru tetikte sürgü çekerken yanlış algılama oluyorsa uzun seç.</p>
     ${segHtml("sLock",[["150","0,15 sn"],["300","0,30 sn"],["450","0,45 sn"],["600","0,60 sn"]],String(lockFor()))}</div>`;
 }
@@ -2012,11 +2191,20 @@ function bindAlgilama(root){
   $("thr").oninput=e=>{(S.thr[source]||S.thr.demo)[S.mode]=+e.target.value;$("thrVal").textContent=fx(+e.target.value,2)+" g";applyCfg();saveMeta();};
   $("wThr").onclick=wizardThr;
   bindSeg(root,"sLock",v=>{S.lockout=Object.assign({},DEF.lockout,S.lockout||{});S.lockout[S.mode]=+v;applyCfg();saveMeta();});
-  detTest={n:0,last:-1e9,peak:0,feed(t,j){const thr=proc.cfg.thr; if(j>thr&&t-this.last>proc.cfg.lockout){this.n++;this.last=t;this.peak=j;} else if(t-this.last<120&&j>this.peak){this.peak=j;}}};
-  $("dtReset").onclick=()=>{detTest.n=0;detTest.peak=0;updDet();};
+  detTest={n:0,last:-1e9,peak:0,how:"",feed(t,j){ if(t-this.last<120&&j>this.peak){this.peak=j;} }};
+  $("dtReset").onclick=()=>{detTest.n=0;detTest.peak=0;detTest.how="";updDet();};
+  bindSeg(root,"sMic",v=>{S.mic=v;applyCfg();saveMeta();proc.strictOff=false;proc.rejectRun=0;updMic();});
 }
-function updDet(){ if(!detTest||!$("dtN")) return; $("dtN").textContent=String(detTest.n); $("dtPk").textContent=detTest.peak?fx(detTest.peak,2)+" g":"–"; $("dtMg").textContent=detTest.peak?fx(detTest.peak/proc.cfg.thr,1)+"×":"–"; }
-function settingsMeter(){ if(!$("mFill2")) return; const thr=proc.cfg.thr;const max=Math.max(2.5,thr*1.6);$("mFill2").style.width=Math.min(100,proc.jerk/max*100)+"%";$("mThr2").style.left=Math.min(100,thr/max*100)+"%";$("mVal2").textContent=fx(proc.jerk,2)+" g"; }
+function updDet(){ if(!detTest||!$("dtN")) return; $("dtN").textContent=String(detTest.n); $("dtPk").textContent=detTest.peak?fx(detTest.peak,2)+" g":"–"; $("dtMg").textContent=detTest.peak?fx(detTest.peak/proc.cfg.thr,1)+"×":"–";
+  const h=$("dtHow"); if(h) h.textContent=detTest.how==="ses"?"Son atış: zayıf darbe, tık sesiyle sayıldı.":detTest.how==="darbe+ses"?"Son atış: darbe ve tık sesi.":detTest.how==="darbe"?"Son atış: darbeyle sayıldı.":""; }
+let micTxt="";
+function updMic(){ const el=$("micNote"); if(!el) return; const t=micStatusText(); if(t!==micTxt){ micTxt=t; el.textContent=t; }
+  const on=source==="sensor"&&ble.st==="bagli"&&ble.mic&&ble.snd&&now()-ble.sndT<1500, db=on&&proc.sDb!=null?proc.sDb:null;
+  const max=91, bg=proc.sBg!=null?proc.sBg:0, lim=Math.max(proc.cfg.clickMin,bg+proc.cfg.clickDb);
+  $("sFill").style.width=(db==null?0:Math.min(100,db/max*100))+"%"; $("sThr").style.left=Math.min(100,lim/max*100)+"%"; $("sThr").hidden=!on;
+  $("sVal").textContent=db==null?"– dB":fx(db,0)+" dB"; const c=$("dtClick"); if(c) c.textContent=String(proc.clickN||0);
+  $("sBgV").textContent=on&&proc.sBg!=null?fx(bg,0)+" dB":"–"; $("sLimV").textContent=on?fx(lim,0)+" dB":"–"; }
+function settingsMeter(){ updMic(); if(!$("mFill2")) return; const thr=proc.cfg.thr;const max=Math.max(2.5,thr*1.6);$("mFill2").style.width=Math.min(100,proc.jerk/max*100)+"%";$("mThr2").style.left=Math.min(100,thr/max*100)+"%";$("mVal2").textContent=fx(proc.jerk,2)+" g"; }
 
 /* --- Atıcı ve silah */
 function pgAtici(){ return `<div class="card">
@@ -2063,9 +2251,14 @@ function bindGorunum(root){
 function pgVeri(){ return `<div class="card"><p>Atışların sadece bu cihazda saklanır. Telefon değiştirirken dışa aktarıp yeni telefonda içe aktar.</p>
     <div class="btn-row"><button class="btn" id="dExp">Dışa aktar (JSON)</button><button class="btn" id="dCsv">Atışları indir (CSV)</button><label class="btn" for="dImp" style="cursor:pointer">İçe aktar</label><input type="file" id="dImp" accept=".json,application/json" hidden></div>
     <div class="btn-row" id="delBox"><button class="btn danger" id="dDel">Tüm geçmişi sil</button></div>
+  </div>
+  <div class="card"><h2>Ham kayıt</h2>
+    <label class="toggle">Oturumların ham sensör verisini kaydet<input type="checkbox" id="sRaw" ${S.rawRec?"checked":""}></label>
+    <p class="note">Atış algılamayı silahına göre ayarlamak için. Açıkken her oturumda ivme, jiroskop, darbe ve ses ölçümleri bellekte tutulur; oturum bitince sonuç ekranındaki <b>Ham veri</b> düğmesiyle CSV dosyası olarak paylaşılır. Sadece son oturumun kaydı tutulur; en çok 30 dakika.</p>
   </div>`; }
 function bindVeri(){
   $("dExp").onclick=exportJson; $("dCsv").onclick=exportCsv; $("dImp").onchange=importJson;
+  $("sRaw").onchange=e=>{ S.rawRec=e.target.checked; saveMeta(); toast(S.rawRec?"Ham kayıt açık: sonraki oturumdan itibaren kaydedilir.":"Ham kayıt kapalı."); };
   $("dDel").onclick=()=>{const box=$("delBox");box.innerHTML=`<span style="align-self:center">Tüm oturumlar silinsin mi?</span><button class="btn danger" id="dYes">Evet, sil</button><button class="btn" id="dNo">Vazgeç</button>`;
     $("dYes").onclick=()=>{for(const x of sessions)lsDel(KEY+".s."+x.id);sessions=[];cur.sess=null;cur.review=false;saveMeta();renderSettings();toast("Geçmiş silindi.");};$("dNo").onclick=renderSettings;};
 }
@@ -2145,7 +2338,7 @@ function exportJson(){download("hisar-tetik-"+new Date().toISOString().slice(0,1
 function exportCsv(){const rows=[["tarih","alistirma","silah","atis_tipi","atis_no","zaman_sn","skor","tetik_derece","gezinme_derece","yon_saat","kanting_derece","tepki_sn","ara_sn","neden1","neden2"]];
   for(const s of sessions.filter(x=>!x.sample).slice().reverse())for(const q of s.shots)rows.push([new Date(s.date).toISOString(),DRM[s.drill]?DRM[s.drill].ad:s.drill,s.weaponName||s.weapon,s.mode,q.n,(q.at/1000).toFixed(2),q.sc,q.tr,q.ho,q.h,q.ca,q.x.react!=null?(q.x.react/1000).toFixed(3):"",q.x.split!=null?(q.x.split/1000).toFixed(3):"",(q.c&&q.c[0]&&CAUSES[q.c[0]])?CAUSES[q.c[0]].ad:"",(q.c&&q.c[1]&&CAUSES[q.c[1]])?CAUSES[q.c[1]].ad:""]);
   download("hisar-tetik-atislar.csv","﻿"+rows.map(r=>r.map(v=>{const t=String(v);return /[",;\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}).join(";")).join("\n"),"text/csv");}
-function importJson(e){const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(j.app!=="hisar-tetik"||!Array.isArray(j.sessions))throw 0;let n=0;for(const s of j.sessions){if(!s||!s.id||!Array.isArray(s.shots)||sessions.some(x=>x.id===s.id))continue;sessions.push(s);saveSession(s);n++;}sessions.sort((a,b)=>b.date-a.date);saveMeta();toast(n+" oturum içe aktarıldı.");}catch(err){toast("Dosya okunamadı. HİSAR TETİK dışa aktarım dosyası seç.");}};rd.readAsText(f);e.target.value="";}
+function importJson(e){const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(j.app!=="hisar-tetik"||!Array.isArray(j.sessions))throw 0;let n=0;for(const s of j.sessions){if(!s||!s.id||!Array.isArray(s.shots)||isDemoSess(s)||sessions.some(x=>x.id===s.id))continue;sessions.push(s);saveSession(s);n++;}sessions.sort((a,b)=>b.date-a.date);saveMeta();toast(n+" oturum içe aktarıldı.");}catch(err){toast("Dosya okunamadı. HİSAR TETİK dışa aktarım dosyası seç.");}};rd.readAsText(f);e.target.value="";}
 
 /* --- v1 verisinden aktarım */
 function migrateV1(){
@@ -2209,7 +2402,7 @@ function openFromHash(){
 window.addEventListener("hashchange",openFromHash);
 
 /* --- test kancası */
-window.__hisar={get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,startRun,stopRun,showView,setSub,
+window.__hisar={get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess)};
@@ -2219,16 +2412,21 @@ loadAll();
 if(!sessions.length) sessions.push(makeSample());
 renderHome();
 const prevSrc=S.lastSource;
-selectSource("demo",false);
-if(prevSrc==="sensor") setStatus(`Son kullandığın kaynak sensördü. Bağlanmak için <b>Sensör</b>'e dokun; o zamana kadar deneme modu çalışır.`);
-else if(prevSrc==="phone") setStatus(`Son kullandığın kaynak telefondu. Başlatmak için <b>Telefon</b>'a dokun; o zamana kadar deneme modu çalışır.`);
+if(sensorPaired()){ selectSource("sensor",false); }       // eşlenmiş sensör: Deneme'ye düşmeden sensörü bekle
+else { selectSource("demo",false);
+  if(prevSrc==="sensor") setStatus(`Son kullandığın kaynak sensördü. Bağlanmak için <b>Sensör</b>'e dokun; o zamana kadar deneme modu çalışır.`);
+  else if(prevSrc==="phone") setStatus(`Son kullandığın kaynak telefondu. Başlatmak için <b>Telefon</b>'a dokun; o zamana kadar deneme modu çalışır.`); }
 initPlatform();
+if(removedDemo) setTimeout(()=>toast(`${removedDemo} deneme oturumu geçmişten kaldırıldı; deneme oturumları artık kaydedilmiyor.`),2000);
 (function(){ const sp=$("splash"); if(!sp) return; let gone=false;
   const hide=()=>{ if(gone) return; gone=true; sp.classList.add("out"); setTimeout(()=>sp.remove(),500); };
   sp.addEventListener("click",hide); setTimeout(hide,1700); })();
 setTimeout(openFromHash,400);
 requestAnimationFrame(loop);
-if(prevSrc==="sensor"&&S.autoConnect) setTimeout(()=>{ autoConnect(); },400);
+if(sensorPaired()&&S.autoConnect&&canAutoConnect()){
+  ble.autoPending=true; setStatus(`Sensör aranıyor: <b>${esc(S.lastSensor)}</b>…`); updateSrcCard();
+  setTimeout(()=>{ autoConnect(false).then(ok=>{ ble.autoPending=false; if(!ok&&source==="sensor"&&!ble.dev) setStatus(sensorIdleText()); refreshChip(); }); },400);
+}
 window.addEventListener("resize",()=>{if(curView==="oturum")renderSub();});
 })();
 </script>

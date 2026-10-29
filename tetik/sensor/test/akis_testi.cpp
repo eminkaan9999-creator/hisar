@@ -28,6 +28,7 @@ static Sample sampleFor(uint32_t seq) {
   Sample s;
   for (int i = 0; i < 6; i++) s.v[i] = (int16_t)((int32_t)((seq * 37u + (uint32_t)i * 5003u) % 60000u) - 30000);
   s.jerk = (uint8_t)((seq * 13u) % 251u);
+  s.snd = (uint8_t)((seq * 7u) % 254u);
   return s;
 }
 
@@ -35,18 +36,22 @@ struct Notif { uint32_t t; std::vector<uint8_t> b; };
 
 struct AppSide {          // uygulamanin gordugu
   int64_t last = -1;
-  uint64_t got = 0, lost = 0, dup = 0, badValue = 0, reboots = 0;
+  uint64_t got = 0, lost = 0, dup = 0, badValue = 0, reboots = 0, sndPk = 0, plainPk = 0;
   void onPacket(const uint8_t* p, size_t n) {
-    if (n < 7 || p[0] != 0x55 || p[1] != 0x66) return;
+    if (n < 7 || p[0] != 0x55 || (p[1] != 0x66 && p[1] != 0x68)) return;
+    const bool snd = p[1] == 0x68;
+    const int sb = snd ? SAMPLE_BYTES_S : SAMPLE_BYTES;
+    if (snd) sndPk++; else plainPk++;
     int k = p[2];
     uint32_t seq = (uint32_t)p[3] | ((uint32_t)p[4] << 8) | ((uint32_t)p[5] << 16) | ((uint32_t)p[6] << 24);
-    if (n != (size_t)(HDR_BYTES + k * SAMPLE_BYTES)) { badValue++; return; }
+    if (n != (size_t)(HDR_BYTES + k * sb)) { badValue++; return; }
     for (int j = 0; j < k; j++) {
       int64_t s = (int64_t)seq + j;
-      const uint8_t* q = p + HDR_BYTES + j * SAMPLE_BYTES;
+      const uint8_t* q = p + HDR_BYTES + j * sb;
       Sample e = sampleFor((uint32_t)s);
       for (int i = 0; i < 6; i++) { int16_t v = (int16_t)(q[i * 2] | (q[i * 2 + 1] << 8)); if (v != e.v[i]) badValue++; }
       if (q[12] != e.jerk) badValue++;
+      if (snd && q[13] != e.snd) badValue++;
       if (last >= 0 && s + (int64_t)RING < last) { last = -1; reboots++; }   // tampondan buyuk geri sicrama: yeniden baslama
       if (last >= 0 && s <= last) { dup++; continue; }
       if (last >= 0 && s > last + 1) lost += (uint64_t)(s - last - 1);
@@ -65,6 +70,8 @@ struct Scenario {
   int  lateRequestMs = -1;           // >=0 ise istek abonelikten bu kadar sonra gelir
   bool rebootAt = false;             // kopma sirasinda sensor yeniden baslar
   uint32_t rebootMs = 0;
+  bool sound = false;                // uygulama sesli paket ister (surum 3)
+  bool oldApp = false;               // eski uygulama: 6 baytlik istek (bayrak yok)
 };
 
 struct Result { uint64_t produced = 0; AppSide app; uint64_t overflow = 0; size_t packets = 0; double avgK = 0; int maxK = 0; };
@@ -95,19 +102,21 @@ static Result run(const Scenario& sc, const char* outDir) {
       {   // sensor, akistan once durum paketini gonderir (acilis numarasi ile)
         StatusInfo si; si.bat = 80; si.imuOk = true; si.fw = 2; si.rssi = -60; si.tempC = 30; si.mv = 4000;
         si.head = ring.head; si.bootId = (uint16_t)(0x1000 + bootCounter); si.mtu = (uint16_t)sc.mtu; si.itv = 24;
+        si.fw = sc.sound ? 3 : 2; si.micOk = sc.sound;
         uint8_t b[3 + STATUS_LEN]; size_t n = buildStatus(b, si);
         log.push_back({t, std::vector<uint8_t>(b, b + n)});
       }
+      const uint8_t fl = sc.sound && !sc.oldApp ? 1 : 0;
       if (sc.lateRequestMs < 0) {
-        if (sc.resumeOnReconnect && r.app.last >= 0) st.request(1, (uint32_t)(r.app.last + 1), t);
-        else st.request(0, 0, t);
+        if (sc.resumeOnReconnect && r.app.last >= 0) st.request(1, (uint32_t)(r.app.last + 1), t, fl);
+        else st.request(0, 0, t, fl);
       } else requestPending = true;
     }
     if (!up && wasUp) { st.onDisconnect(); lastAtDown = r.app.last; }
     wasUp = up;
     if (up && requestPending && t - upSince >= (uint32_t)sc.lateRequestMs) {
       requestPending = false;
-      if (lastAtDown >= 0) st.request(1, (uint32_t)(lastAtDown + 1), t);   // kopma anindaki son olcumden devam
+      if (lastAtDown >= 0) st.request(1, (uint32_t)(lastAtDown + 1), t, sc.sound ? 1 : 0);   // kopma anindaki son olcumden devam
     }
     if (t % 2 == 0) {                          // ana dongu ~2 ms
       st.service(ring, up, sc.mtu, t, [&](const uint8_t* p, size_t n) {
@@ -126,9 +135,10 @@ static Result run(const Scenario& sc, const char* outDir) {
     std::string jp = std::string(outDir) + "/" + sc.name + ".json";
     FILE* jf = std::fopen(jp.c_str(), "w");
     if (jf) {
-      std::fprintf(jf, "{\"produced\":%llu,\"got\":%llu,\"lost\":%llu,\"dup\":%llu,\"reboots\":%llu,\"mtu\":%d}\n",
+      std::fprintf(jf, "{\"produced\":%llu,\"got\":%llu,\"lost\":%llu,\"dup\":%llu,\"reboots\":%llu,\"mtu\":%d,\"sndPk\":%llu,\"plainPk\":%llu}\n",
                    (unsigned long long)r.produced, (unsigned long long)r.app.got, (unsigned long long)r.app.lost,
-                   (unsigned long long)r.app.dup, (unsigned long long)r.app.reboots, sc.mtu);
+                   (unsigned long long)r.app.dup, (unsigned long long)r.app.reboots, sc.mtu,
+                   (unsigned long long)r.app.sndPk, (unsigned long long)r.app.plainPk);
       std::fclose(jf);
     }
     std::string path = std::string(outDir) + "/" + sc.name + ".bin";
@@ -147,9 +157,10 @@ static Result run(const Scenario& sc, const char* outDir) {
 }
 
 static void report(const char* name, const Result& r) {
-  std::printf("%-12s uretilen %6llu  alinan %6llu  kayip %5llu  yineleme %4llu  hatali %llu  tasma %llu  paket %5zu  ort.olcum/paket %.2f (en cok %d)\n",
+  std::printf("%-12s uretilen %6llu  alinan %6llu  kayip %5llu  yineleme %4llu  hatali %llu  tasma %llu  paket %5zu  ort.olcum/paket %.2f (en cok %d)  sesli %llu\n",
               name, (unsigned long long)r.produced, (unsigned long long)r.app.got, (unsigned long long)r.app.lost,
-              (unsigned long long)r.app.dup, (unsigned long long)r.app.badValue, (unsigned long long)r.overflow, r.packets, r.avgK, r.maxK);
+              (unsigned long long)r.app.dup, (unsigned long long)r.app.badValue, (unsigned long long)r.overflow, r.packets, r.avgK, r.maxK,
+              (unsigned long long)r.app.sndPk);
 }
 
 static void testCommands() {
@@ -162,7 +173,9 @@ static void testCommands() {
   { uint8_t d[] = {0x05}; CHECK(parseCommand(d, 1).type == Command::POWEROFF, "kapat"); }
   { uint8_t d[] = {0x06}; CHECK(parseCommand(d, 1).type == Command::STATUS, "durum"); }
   { uint8_t d[] = {0x07, 1, 0x78, 0x56, 0x34, 0x12}; Command c = parseCommand(d, 6); CHECK(c.type == Command::START && c.mode == 1 && c.seq == 0x12345678u, "devam"); }
-  { uint8_t d[] = {0x07, 0}; Command c = parseCommand(d, 2); CHECK(c.type == Command::START && c.mode == 0, "canli"); }
+  { uint8_t d[] = {0x07, 0}; Command c = parseCommand(d, 2); CHECK(c.type == Command::START && c.mode == 0 && c.flags == 0, "canli"); }
+  { uint8_t d[] = {0x07, 1, 0x78, 0x56, 0x34, 0x12, 1}; Command c = parseCommand(d, 7); CHECK(c.type == Command::START && c.mode == 1 && c.seq == 0x12345678u && c.flags == 1, "devam + ses istegi"); }
+  { uint8_t d[] = {0x07, 0, 0, 0, 0, 0}; Command c = parseCommand(d, 6); CHECK(c.flags == 0, "eski uygulama: ses istegi yok"); }
   { uint8_t d[] = {0x99}; CHECK(parseCommand(d, 1).type == Command::NONE, "bilinmeyen komut"); }
   CHECK(parseCommand(nullptr, 0).type == Command::NONE, "bos komut");
   Settings s;
@@ -178,12 +191,16 @@ static void testCommands() {
   CHECK(encodeJerk(0) == 0 && encodeJerk(0.04f) == 1 && encodeJerk(8.0f) == 200 && encodeJerk(8.9f) == 201 && encodeJerk(100.0f) == 255, "darbe kodlama");
   for (int v = 0; v <= 255; v++) { if (encodeJerk(decodeJerk((uint8_t)v)) != v) { CHECK(false, "darbe kodlama gidis-donus %d", v); break; } }
   CHECK(tempFromRaw(0) == 25 && tempFromRaw(3268) == 35 && tempFromRaw(-3268) == 15, "sicaklik");
+  CHECK(encodeSnd(0) == 0 && encodeSnd(1) == 0 && encodeSnd(10) == 56 && encodeSnd(1000) == 168 && encodeSnd(32767) == 253 && encodeSnd(100000) == 255, "ses kodlama (%d %d %d)", encodeSnd(10), encodeSnd(1000), encodeSnd(32767));
+  { int prev = -1; bool mono = true; for (uint32_t p = 1; p < 70000; p += 37) { int v = encodeSnd(p); if (v < prev) mono = false; prev = v; } CHECK(mono, "ses kodlama tekduze artan"); }
+  CHECK(maxSamplesFor(185, true) == 12 && maxSamplesFor(185, false) == 13 && maxSamplesFor(247, true) == 13 && soundFits(24) && !soundFits(23), "sesli paket boyutlari");
   StatusInfo si; si.bat = 77; si.charging = true; si.imuOk = true; si.fw = 2; si.rssi = -61; si.tempC = 31; si.mv = 4012;
   si.bri = 40; si.scr = 20; si.vol = 60; si.off = 10; si.no = 2; si.head = 0xA1B2C3D4u; si.bootId = 0xBEEF; si.overflow = 7; si.itv = 24; si.mtu = 185;
   uint8_t b[3 + STATUS_LEN]; size_t n = buildStatus(b, si);
   CHECK(n == 27 && b[0] == 0x55 && b[1] == 0x65 && b[2] == 24, "durum basligi");
   CHECK(b[3] == 77 && b[4] == 3 && b[5] == 2 && (int8_t)b[6] == -61 && b[7] == 31 && b[8] == 200, "durum alanlari");
   CHECK(b[13] == 2 && b[15] == 0xD4 && b[18] == 0xA1 && b[19] == 0xEF && b[20] == 0xBE && b[21] == 7 && b[23] == 24 && b[25] == 185, "durum alanlari 2");
+  si.micOk = true; buildStatus(b, si); CHECK(b[4] == (3 | 16), "durum: mikrofon biti");
 }
 
 // ---------------------------------------------------------------- yazilim guncelleme (OTA) testi
@@ -264,6 +281,11 @@ int main(int argc, char** argv) {
   { Scenario s; s.name = "istekyok"; s.resumeOnReconnect = false; s.linkUp = [](uint32_t t) { return !(t >= 4000 && t < 6000); }; list.push_back(s); }
   { Scenario s; s.name = "gecistek"; s.lateRequestMs = 300; s.linkUp = [](uint32_t t) { return !(t >= 4000 && t < 6000); }; list.push_back(s); }
   { Scenario s; s.name = "yenidenbas"; s.rebootAt = true; s.rebootMs = 5000; s.linkUp = [](uint32_t t) { return !(t >= 4000 && t < 6000); }; list.push_back(s); }
+  { Scenario s; s.name = "ses185"; s.sound = true; list.push_back(s); }
+  { Scenario s; s.name = "ses23"; s.sound = true; s.mtu = 23; list.push_back(s); }
+  { Scenario s; s.name = "seskopma"; s.sound = true; s.linkUp = [](uint32_t t) { return !(t >= 3000 && t < 5500); };
+    s.canSend = [](uint32_t t, std::mt19937& g) { if (t >= 7000 && t < 7600) return false; return (g() % 100) >= 15; }; list.push_back(s); }
+  { Scenario s; s.name = "seseskiapp"; s.sound = true; s.oldApp = true; list.push_back(s); }
 
   for (auto& sc : list) {
     Result r = run(sc, out);
@@ -277,6 +299,10 @@ int main(int argc, char** argv) {
     if (sc.name == "istekyok") { CHECK(r.app.lost >= 390 && r.app.lost <= 410, "istekyok: kopma suresi kadar bosluk (%llu)", (unsigned long long)r.app.lost); }
     if (sc.name == "gecistek") { CHECK(r.app.dup >= 400 && r.app.dup <= 520 && r.app.reboots == 0, "gecistek: geri sarilan olcumler yineleme sayilip atilmali (%llu)", (unsigned long long)r.app.dup); CHECK(r.app.lost <= 410, "gecistek: kayip kopma suresini asmamali"); }
     if (sc.name == "yenidenbas") { CHECK(r.app.reboots == 1 && r.app.got >= 1990 && r.app.dup == 0, "yenidenbas: yeniden baslama algilanip akis surmeli (alinan %llu)", (unsigned long long)r.app.got); }
+    if (sc.name == "ses185") { CHECK(r.app.lost == 0 && r.app.dup == 0 && r.app.plainPk == 0 && r.app.sndPk > 0, "ses185: hepsi sesli paket, kayipsiz"); CHECK(r.avgK > 3.9 && r.avgK < 4.6, "ses185: paket basina ~4 olcum (%.2f)", r.avgK); }
+    if (sc.name == "ses23") { CHECK(r.app.lost == 0 && r.app.sndPk == 0 && r.maxK == 1, "ses23: MTU 23'te eski bicime dusuluyor, kayipsiz"); }
+    if (sc.name == "seskopma") { CHECK(r.app.lost == 0 && r.app.dup == 0 && r.app.plainPk == 0, "seskopma: kopma ve geri basincta sesli akis kayipsiz surer"); CHECK(r.maxK == 12, "seskopma: birikme 12'lik sesli paketlerle bosaltilir (%d)", r.maxK); }
+    if (sc.name == "seseskiapp") { CHECK(r.app.lost == 0 && r.app.sndPk == 0 && r.app.plainPk > 0, "seseskiapp: ses istemeyen eski uygulama eski bicimi alir"); }
   }
   std::printf("\n%s (%d hata)\n", failures ? "BASARISIZ" : "TUM TESTLER GECTI", failures);
   return failures ? 1 : 0;

@@ -35,7 +35,7 @@ code{font-family:var(--mono);font-size:13px;background:#162023;padding:1px 5px;b
 <body>
 <div class="wrap">
   <header><h1>HİSAR TETİK · SENSÖR YAZILIMI</h1><a href="./">← Uygulama</a></header>
-  <p class="note">M5StickC Plus2'ye HİSAR sensör yazılımını yükler. Bunu <b>bir kez</b> bilgisayardan yapman yeterli; sonraki güncellemeler telefondan (Ayarlar › Sensör bağlantısı › Sensör yazılımı) Bluetooth ile yüklenir. Yazılım hareket sensörünü saniyede 1000 kez okur ve uygulamaya saniyede 200 ölçüm gönderir; bağlantı kısa süre koparsa ölçümleri saklar, kayıp olmaz.</p>
+  <p class="note">M5StickC Plus2'ye HİSAR sensör yazılımını yükler. Bunu <b>bir kez</b> bilgisayardan yapman yeterli; sonraki güncellemeler telefondan (Ayarlar › Sensör bağlantısı › Sensör yazılımı) Bluetooth ile yüklenir. Yazılım hareket sensörünü saniyede 1000 kez okur ve uygulamaya saniyede 200 ölçüm gönderir; bağlantı kısa süre koparsa ölçümleri saklar, kayıp olmaz. Sensörün mikrofonu da dinlenir: kuru tetikte tetiğin tık sesi atış algılamaya yardım eder.</p>
 
   <div class="card">
     <h2>Gerekenler</h2>
@@ -51,7 +51,7 @@ code{font-family:var(--mono);font-size:13px;background:#162023;padding:1px 5px;b
       <li>Sensörü USB-C kabloyla bilgisayara tak.</li>
       <li>Aşağıdaki <b>Yükle</b> düğmesine bas. Açılan pencerede listeden sensörü seç (adı genelde <code>USB Single Serial</code>, <code>CH9102</code> ya da <code>USB JTAG</code> diye görünür) ve <b>Bağlan</b>'a bas.</li>
       <li><b>Install / Yükle</b>'yi onayla. Yaklaşık 1 dakika sürer, bitene kadar kabloyu çıkarma.</li>
-      <li>Bitince sensörün ekranında <b>HISAR TETIK</b> ve <b>BEKLIYOR</b> yazar. Hazır.</li>
+      <li>Bitince sensörün ekranında <b>HISAR TETIK</b> ve <b>BEKLIYOR</b> yazar; sağ üstte <b>v3 MIK</b> görünür (mikrofon çalışıyor). Hazır.</li>
     </ol>
     <div class="install" style="margin-top:14px">
       <esp-web-install-button manifest="firmware/manifest.json">
@@ -72,7 +72,7 @@ code{font-family:var(--mono);font-size:13px;background:#162023;padding:1px 5px;b
       <li><b>"Silmek istiyor musun?" sorusu:</b> İlk yüklemede <b>Evet / Erase</b> seç. Sensördeki eski yazılım silinir, HİSAR yazılımı yüklenir.</li>
       <li><b>Uygulamaya bağlanmak:</b> iPhone'da <b>Bluefy</b> tarayıcısıyla, Android'de Chrome ile uygulamayı aç ve <b>Sensör</b>'e bas.</li>
     </ul>
-    <p class="note">Yazılım kaynağı ve derlenmiş dosya: <a href="https://github.com/eminkaan9999-creator/hisar/tree/main/tetik/sensor" target="_blank" rel="noopener">GitHub › tetik/sensor</a>. Sürüm 2 · M5Unified 0.2.2 · NimBLE-Arduino 1.4.2 · ESP32 Arduino 2.0.17.</p>
+    <p class="note">Yazılım kaynağı ve derlenmiş dosya: <a href="https://github.com/eminkaan9999-creator/hisar/tree/main/tetik/sensor" target="_blank" rel="noopener">GitHub › tetik/sensor</a>. Sürüm 3 · M5Unified 0.2.2 · NimBLE-Arduino 1.4.2 · ESP32 Arduino 2.0.17.</p>
   </div>
 </div>
 <script>

@@ -18,7 +18,7 @@
     exitApp: () => log.push(['exitApp']),
     keepScreenOn: on => log.push(['keepScreenOn', !!on]),
     saveFile: (n, m, t) => { log.push(['saveFile', n, m, t.length]); later(() => window.__hisarSaved && window.__hisarSaved(true, n)); },
-    shareFile: (n, m, b) => log.push(['shareFile', n, m, b.length]),
+    shareFile: (n, m, b) => { window.__nativeLastShare = b; log.push(['shareFile', n, m, b.length]); },
     bleRequest: (id, opts) => { log.push(['bleRequest', opts]);
       FB.requestDevice(JSON.parse(opts)).then(d => { devs.set(d.id, d); try { localStorage.setItem('hn.known', JSON.stringify({ id: d.id, name: d.name })); } catch (e) {} later(() => H().ok(id, JSON.stringify({ id: d.id, name: d.name }))); },
         e => later(() => H().err(id, e.name, e.message))); },

@@ -26,25 +26,29 @@ function readLog(file) {
     const { ctx, page, errs } = await openApp(browser, { port: PORT });
     const res = await page.evaluate(({ log }) => {
       const H = window.__hisar; H.stopSources();
-      const taps = []; window.__hisarTap = (sq, t, acc, om, jv) => taps.push([sq, t, Math.round(acc[0] * 2048), Math.round(acc[1] * 2048), Math.round(acc[2] * 2048), Math.round(om[0] * 16.384), Math.round(om[1] * 16.384), Math.round(om[2] * 16.384), jv]);
+      const taps = []; window.__hisarTap = (sq, t, acc, om, jv, sv) => taps.push([sq, t, Math.round(acc[0] * 2048), Math.round(acc[1] * 2048), Math.round(acc[2] * 2048), Math.round(om[0] * 16.384), Math.round(om[1] * 16.384), Math.round(om[2] * 16.384), jv, sv]);
       let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
       for (const n of log) { const u = new Uint8Array(n.bytes); H.parseBle(new DataView(u.buffer), 50000 + n.t + 8 + rnd() * 25); }
-      return { taps, drops: H.ble.drops, dup: H.ble.dup, recv: H.ble.recv, fw: H.ble.fw, bat: H.ble.bat, rssi: H.ble.rssi, boot: H.ble.bootId, mtu: H.ble.mtu };
+      return { taps, drops: H.ble.drops, dup: H.ble.dup, recv: H.ble.recv, fw: H.ble.fw, bat: H.ble.bat, rssi: H.ble.rssi, boot: H.ble.bootId, mtu: H.ble.mtu, mic: H.ble.mic, snd: H.ble.snd, sDb: H.proc.sDb };
     }, { log });
     // değerler
-    let badVal = 0, badStep = 0, maxBack = 0, steps = 0;
-    for (const tp of res.taps) { const e = sampleFor(tp[0]); for (let i = 0; i < 6; i++) if (tp[2 + i] !== e.v[i]) { badVal++; break; } if (tp[8] !== e.jerk) badVal++; }
+    let badVal = 0, badStep = 0, maxBack = 0, steps = 0, badSnd = 0;
+    const withSnd = exp.sndPk > 0;
+    for (const tp of res.taps) { const e = sampleFor(tp[0]); for (let i = 0; i < 6; i++) if (tp[2 + i] !== e.v[i]) { badVal++; break; } if (tp[8] !== e.jerk) badVal++;
+      if (withSnd ? tp[9] !== e.snd : tp[9] !== null) badSnd++; }
     for (let i = 1; i < res.taps.length; i++) {
       const a = res.taps[i - 1], b = res.taps[i]; if (b[0] < a[0]) continue;       // yeniden başlama
       const d = (b[1] - a[1]) - (b[0] - a[0]) * 5; steps++;
       if (d < 0) maxBack = Math.max(maxBack, -d);
       if (i > 200 && Math.abs(d) > 2.01 && b[0] - a[0] < 2000) badStep++;            // ilk saniyeden sonra 5 ms adım (kayma payı 2 ms)
     }
-    const ok = res.taps.length === exp.got && res.drops === exp.lost && res.dup === exp.dup && badVal === 0;
+    const ok = res.taps.length === exp.got && res.drops === exp.lost && res.dup === exp.dup && badVal === 0 && badSnd === 0 && res.snd === withSnd;
     check(ok && badStep === 0 && maxBack <= 25 && errs.length === 0,
-      `${name.padEnd(11)} alınan ${res.taps.length}/${exp.got} · kayıp ${res.drops}/${exp.lost} · yineleme ${res.dup}/${exp.dup} · bozuk ${badVal} · zaman adımı hatası ${badStep} · geri adım ≤${Math.round(maxBack)} ms`,
-      { errs: errs.slice(0, 3) });
-    if (name === 'canli185') check(res.fw === 2 && res.bat === 80 && res.rssi === -60 && res.mtu === 185, 'Durum paketi alanları (sürüm, pil, sinyal, MTU) doğru okunuyor', res);
+      `${name.padEnd(11)} alınan ${res.taps.length}/${exp.got} · kayıp ${res.drops}/${exp.lost} · yineleme ${res.dup}/${exp.dup} · bozuk ${badVal} · ${withSnd ? 'sesli, ses hatası ' + badSnd : 'sessiz'} · zaman adımı hatası ${badStep} · geri adım ≤${Math.round(maxBack)} ms`,
+      { errs: errs.slice(0, 3), badSnd, snd: res.snd });
+    if (name === 'canli185') check(res.fw === 2 && res.bat === 80 && res.rssi === -60 && res.mtu === 185 && !res.mic, 'Durum paketi alanları (sürüm, pil, sinyal, MTU) doğru okunuyor', res);
+    if (name === 'ses185') { const lastSv = res.taps[res.taps.length - 1][9];
+      check(res.fw === 3 && res.mic && Math.abs(res.sDb - (lastSv ? lastSv / 2.8 : res.sDb)) < 1e-6, 'Sürüm 3: mikrofon biti okundu, ses baytı dB olarak işlemciye veriliyor', { fw: res.fw, mic: res.mic, sDb: res.sDb, lastSv }); }
     await ctx.close();
   }
 
@@ -71,12 +75,13 @@ function readLog(file) {
       const v2st = { bat: H.ble.bat, chg: H.ble.chg, imu: H.ble.imu, fw: H.ble.fw, rssi: H.ble.rssi, temp: H.ble.temp, mv: H.ble.mv, cfg: H.ble.cfg, head: H.ble.head, boot: H.ble.bootId, ovf: H.ble.ovf, itv: H.ble.itv, mtu: H.ble.mtu };
       // bozuk ve yarım paketler: hata vermemeli, sahte ölçüm üretmemeli
       const n0 = taps.length; let ex = 0;
-      const junk = [[0x55], [0x55, 0x66], [0x55, 0x66, 5, 1, 2, 3, 4, 9, 9], [0x55, 0x62, 4, 0, 0, 1, 2], [0x55, 0x65, 24, 1, 2], [0, 0, 0x55, 0x99, 1, 2, 3], [0x55, 0x64, 1, 2, 3]];
-      for (let k = 0; k < 400; k++) { const L = 1 + Math.floor(Math.random() * 60); const a = new Uint8Array(L); for (let i = 0; i < L; i++) a[i] = Math.random() < 0.2 ? 0x55 : Math.floor(Math.random() * 256); for (let i = 0; i + 1 < L; i++) if (a[i] === 0x55 && [0x66, 0x62, 0x64, 0x61].includes(a[i + 1])) a[i + 1] = 0x00; junk.push(Array.from(a)); }
+      const junk = [[0x55], [0x55, 0x66], [0x55, 0x66, 5, 1, 2, 3, 4, 9, 9], [0x55, 0x68], [0x55, 0x68, 3, 1, 2, 3, 4, 9, 9, 9], [0x55, 0x62, 4, 0, 0, 1, 2], [0x55, 0x65, 24, 1, 2], [0, 0, 0x55, 0x99, 1, 2, 3], [0x55, 0x64, 1, 2, 3]];
+      for (let k = 0; k < 400; k++) { const L = 1 + Math.floor(Math.random() * 60); const a = new Uint8Array(L); for (let i = 0; i < L; i++) a[i] = Math.random() < 0.2 ? 0x55 : Math.floor(Math.random() * 256); for (let i = 0; i + 1 < L; i++) if (a[i] === 0x55 && [0x66, 0x68, 0x62, 0x64, 0x61].includes(a[i + 1])) a[i + 1] = 0x00; junk.push(Array.from(a)); }
       for (const j of junk) { try { const a = new Uint8Array(j); H.parseBle(new DataView(a.buffer), t + 30); } catch (e) { ex++; } }
       const junkTaps = taps.length - n0;
       const jerk = [0, 1, 100, 200, 201, 230, 255].map(v => +H.decJerk(v).toFixed(3));
-      return { v1, v1st, wit, v2st, ex, junkTaps, jerk, dj: dj.map(v => +v.toFixed(3)) };
+      const sndOk = [0, 1, 56, 168, 253].every(v => Math.abs(H.decSnd(v) - v / 2.8) < 1e-9);
+      return { v1, v1st, wit, v2st, ex, junkTaps, jerk, dj: dj.map(v => +v.toFixed(3)), sndOk };
     }, { dj: [0, 1, 100, 200, 201, 230, 255].map(decJerk) });
     const seqs = r.v1.taps.map(x => x[0]);
     const contiguous = seqs.every((s, i) => i === 0 || s === seqs[i - 1] + 1);
@@ -88,7 +93,8 @@ function readLog(file) {
     check(c.bat === 55 && c.chg && c.imu && c.fw === 2 && c.rssi === -63 && c.temp === 33 && c.mv === 4100 && c.cfg.bri === 70 && c.cfg.scr === 60 && c.cfg.vol === 50 && c.cfg.off === 30 && c.cfg.no === 3 && c.head === 0x40302010 && c.boot === 0xBEEF && c.ovf === 9 && c.itv === 30 && c.mtu === 185,
       'Sürüm 2 durum paketi: pil, şarj, sinyal, sıcaklık, gerilim, ayarlar, sayaç, açılış no, aralık, MTU', c);
     check(JSON.stringify(r.jerk) === JSON.stringify(r.dj), 'Darbe kodlaması uygulama ve sensörde aynı (0–8 g ince, 8–57 g geniş)', r.jerk);
-    check(r.ex === 0 && r.junkTaps === 0, `Bozuk/yarım ${400 + 7} paket: hata yok, sahte ölçüm yok`, { ex: r.ex, junkTaps: r.junkTaps });
+    check(r.sndOk, 'Ses baytı çözümü sensörle aynı (dB × 2,8)');
+    check(r.ex === 0 && r.junkTaps === 0, `Bozuk/yarım ${400 + 9} paket: hata yok, sahte ölçüm yok`, { ex: r.ex, junkTaps: r.junkTaps });
     check(errs.length === 0, 'Sayfa hatası yok', errs);
     await ctx.close();
   }

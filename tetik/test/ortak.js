@@ -49,7 +49,7 @@ async function openApp(browser, { port, url = '/tetik/', viewport = { width: 390
 function sampleFor(seq) {
   const v = [];
   for (let i = 0; i < 6; i++) v.push(((seq * 37 + i * 5003) % 60000) - 30000);
-  return { v, jerk: (seq * 13) % 251 };
+  return { v, jerk: (seq * 13) % 251, snd: (seq * 7) % 254 };
 }
 function encJerk(g) { if (g <= 0) return 0; if (g <= 8) return Math.min(200, Math.round(g / 0.04)); return Math.min(255, 200 + Math.round((g - 8) / 0.9)); }
 function decJerk(v) { return v <= 200 ? v * 0.04 : 8 + (v - 200) * 0.9; }

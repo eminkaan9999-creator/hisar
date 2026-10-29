@@ -1,11 +1,16 @@
 // =====================================================================
-//  HISAR TETIK - sensor ile uygulama arasindaki veri protokolu (surum 2)
+//  HISAR TETIK - sensor ile uygulama arasindaki veri protokolu (surum 3)
 // ---------------------------------------------------------------------
 //  Donanimdan bagimsizdir: hem sensor yazilimi hem de bilgisayardaki
 //  testler (test/akis_testi.cpp) bu dosyayi kullanir.
 //
 //  Veri paketi:   0x55 0x66 n seq32(LE) + n x 13 bayt olcum
 //      olcum:     ax ay az gx gy gz (int16 LE) + darbe(u8, encodeJerk)
+//  Sesli veri paketi (surum 3, uygulama isterse): 0x55 0x68 n seq32(LE) + n x 14 bayt
+//      olcum:     yukaridaki 13 bayt + ses(u8, encodeSnd: 5 ms icindeki en yuksek ses, dB x 2,8)
+//      Uygulama akis istegine (0x07) 7. bayt olarak 1 yazarsa sesli paket gonderilir; eski
+//      uygulamalar 6 bayt yazar ve eski bicimi alir. MTU 24'ten kucukse sesli paket sigmaz,
+//      eski bicim gonderilir (paket turu bicimi belirtir).
 //  Durum paketi:  0x55 0x65 24 + 24 bayt (buildStatus'a bakin)
 //  Komutlar:      parseCommand'a bakin
 // =====================================================================
@@ -13,12 +18,14 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <math.h>
 
 namespace hisar {
 
 static constexpr int      SAMPLE_BYTES = 13;
-static constexpr int      HDR_BYTES    = 7;       // 0x55 0x66 n seq32
-static constexpr int      MAX_K        = 13;      // MTU 185 -> 13 olcum/paket
+static constexpr int      SAMPLE_BYTES_S = 14;    // ses bayti ile
+static constexpr int      HDR_BYTES    = 7;       // 0x55 0x66|0x68 n seq32
+static constexpr int      MAX_K        = 13;      // MTU 185 -> 13 olcum/paket (sesli: 12)
 static constexpr uint32_t RING         = 2048;    // 200 Hz'de 10,24 sn
 static constexpr uint32_t RING_SAFE    = RING - 64;
 static constexpr int      STATUS_LEN   = 24;
@@ -27,6 +34,7 @@ static constexpr uint32_t START_VALID_MS = 5000;  // "devam et" isteginin gecerl
 struct Sample {
   int16_t v[6];   // ax ay az gx gy gz
   uint8_t jerk;   // encodeJerk ile kodlanmis darbe
+  uint8_t snd;    // encodeSnd ile kodlanmis ses (0 = yok / mikrofon calismiyor)
 };
 
 // Tek ureticili (olcum gorevi), tek tuketicili (gonderim) halka tampon.
@@ -52,12 +60,23 @@ inline uint8_t encodeJerk(float g) {
 }
 inline float decodeJerk(uint8_t v) { return v <= 200 ? v * 0.04f : 8.0f + (v - 200) * 0.9f; }
 
-inline void putSample(uint8_t* p, const Sample& s) {
+// Ses bayti: 16 bitlik ornegin tepe genligi (yuksek geciren suzgecten sonra) logaritmik:
+// v = 20*log10(tepe) * 2,8   (1 -> 0, 32767 -> 253). 0,36 dB cozunurluk.
+inline uint8_t encodeSnd(uint32_t peak) {
+  if (peak <= 1) return 0;
+  float db = 20.0f * log10f((float)peak);
+  int v = (int)(db * 2.8f + 0.5f);
+  return (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v);
+}
+inline float decodeSnd(uint8_t v) { return v / 2.8f; }
+
+inline void putSample(uint8_t* p, const Sample& s, bool withSnd = false) {
   for (int i = 0; i < 6; i++) {
     p[i * 2] = (uint8_t)(s.v[i] & 0xFF);
     p[i * 2 + 1] = (uint8_t)((s.v[i] >> 8) & 0xFF);
   }
   p[12] = s.jerk;
+  if (withSnd) p[13] = s.snd;
 }
 
 inline void putU32(uint8_t* p, uint32_t v) {
@@ -66,19 +85,22 @@ inline void putU32(uint8_t* p, uint32_t v) {
 }
 inline void putU16(uint8_t* p, uint16_t v) { p[0] = (uint8_t)(v & 0xFF); p[1] = (uint8_t)(v >> 8); }
 
-inline size_t buildData(uint8_t* pkt, const Ring& r, uint32_t seq, int k) {
-  pkt[0] = 0x55; pkt[1] = 0x66; pkt[2] = (uint8_t)k;
+inline size_t buildData(uint8_t* pkt, const Ring& r, uint32_t seq, int k, bool withSnd = false) {
+  const int sb = withSnd ? SAMPLE_BYTES_S : SAMPLE_BYTES;
+  pkt[0] = 0x55; pkt[1] = withSnd ? 0x68 : 0x66; pkt[2] = (uint8_t)k;
   putU32(pkt + 3, seq);
-  for (int j = 0; j < k; j++) putSample(pkt + HDR_BYTES + j * SAMPLE_BYTES, r.at(seq + j));
-  return (size_t)(HDR_BYTES + k * SAMPLE_BYTES);
+  for (int j = 0; j < k; j++) putSample(pkt + HDR_BYTES + j * sb, r.at(seq + j), withSnd);
+  return (size_t)(HDR_BYTES + k * sb);
 }
 
-inline int maxSamplesFor(int mtu) {
-  int k = (mtu - 3 - HDR_BYTES) / SAMPLE_BYTES;
+inline int maxSamplesFor(int mtu, bool withSnd = false) {
+  int k = (mtu - 3 - HDR_BYTES) / (withSnd ? SAMPLE_BYTES_S : SAMPLE_BYTES);
   if (k < 1) k = 1;
   if (k > MAX_K) k = MAX_K;
   return k;
 }
+// Sesli paket bu MTU'ya sigar mi (en az bir olcum)
+inline bool soundFits(int mtu) { return mtu - 3 - HDR_BYTES >= SAMPLE_BYTES_S; }
 
 // Gonderim durumu: kayipsiz akis, geri basinc, kopmadan sonra devam.
 struct Stream {
@@ -86,18 +108,20 @@ struct Stream {
   uint32_t sendSeq = 0;
   uint32_t overflow = 0;     // tampon tastigi icin gonderilemeyen olcum sayisi
   uint32_t sent = 0;
+  bool     sound = false;      // uygulama sesli paket istedi (surum 3)
   volatile bool     startReq = false;
   volatile uint8_t  startMode = 0;
+  volatile uint8_t  startFlags = 0;
   volatile uint32_t startSeq = 0;
   volatile uint32_t startReqAt = 0;
 
-  // Uygulama "0x07 kip seq32" yazinca (bildirimleri acmadan once)
-  void request(uint8_t mode, uint32_t seq, uint32_t nowMs) {
-    startMode = mode; startSeq = seq; startReqAt = nowMs;
+  // Uygulama "0x07 kip seq32 [bayrak]" yazinca (bildirimleri acmadan once). bayrak bit0: ses verisi iste
+  void request(uint8_t mode, uint32_t seq, uint32_t nowMs, uint8_t flags = 0) {
+    startMode = mode; startSeq = seq; startReqAt = nowMs; startFlags = flags;
     __sync_synchronize();
     startReq = true;
   }
-  void onDisconnect() { streaming = false; startReq = false; }
+  void onDisconnect() { streaming = false; startReq = false; sound = false; }
 
   // send(pkt, len) -> true: yigin kabul etti; false: tampon dolu, sonra tekrar dene
   template <typename SendFn>
@@ -106,25 +130,28 @@ struct Stream {
     uint32_t head = r.head;
     if (!streaming) {
       sendSeq = head;                                     // varsayilan: canli
+      sound = startReq && (startFlags & 1);               // istek yoksa eski bicim (eski uygulama)
       if (startReq && nowMs - startReqAt < START_VALID_MS) applyStart(head);
       startReq = false;
       streaming = true;
     } else if (startReq) {                                // akis sirasinda gelen istek
       startReq = false;
+      sound = (startFlags & 1) != 0;
       applyStart(head);
     }
     if (head - sendSeq > RING_SAFE) {                     // uzun kopma: en eskiler kaybolur
       overflow += (head - sendSeq) - RING_SAFE;
       sendSeq = head - RING_SAFE;
     }
-    const int maxK = maxSamplesFor(mtu);
+    const bool snd = sound && soundFits(mtu);
+    const int maxK = maxSamplesFor(mtu, snd);
     const int liveMin = maxK < 4 ? maxK : 4;               // canli akista ~20 ms'de bir paket
-    uint8_t pkt[HDR_BYTES + MAX_K * SAMPLE_BYTES];
+    uint8_t pkt[HDR_BYTES + MAX_K * SAMPLE_BYTES_S];
     for (int packets = 0; packets < 16; packets++) {
       uint32_t avail = head - sendSeq;
       if (avail == 0 || avail < (uint32_t)liveMin) break;
       int k = avail > (uint32_t)maxK ? maxK : (int)avail;
-      size_t len = buildData(pkt, r, sendSeq, k);
+      size_t len = buildData(pkt, r, sendSeq, k, snd);
       if (!send(pkt, len)) break;                          // geri basinc: veri tamponda bekler
       sendSeq += (uint32_t)k;
       sent += (uint32_t)k;
@@ -140,7 +167,7 @@ struct Stream {
 
 struct StatusInfo {
   uint8_t  bat = 0;        // %
-  bool     charging = false, imuOk = false, lowBattery = false, streaming = false;
+  bool     charging = false, imuOk = false, lowBattery = false, streaming = false, micOk = false;
   uint8_t  fw = 2;
   int8_t   rssi = -128;    // dBm, -128 = bilinmiyor
   int8_t   tempC = 0;
@@ -156,7 +183,7 @@ inline size_t buildStatus(uint8_t* st, const StatusInfo& s) {
   st[0] = 0x55; st[1] = 0x65; st[2] = STATUS_LEN;
   uint8_t* p = st + 3;
   p[0] = s.bat > 100 ? 100 : s.bat;
-  p[1] = (uint8_t)((s.charging ? 1 : 0) | (s.imuOk ? 2 : 0) | (s.lowBattery ? 4 : 0) | (s.streaming ? 8 : 0));
+  p[1] = (uint8_t)((s.charging ? 1 : 0) | (s.imuOk ? 2 : 0) | (s.lowBattery ? 4 : 0) | (s.streaming ? 8 : 0) | (s.micOk ? 16 : 0));
   p[2] = s.fw;
   p[3] = (uint8_t)s.rssi;
   p[4] = (uint8_t)s.tempC;
@@ -182,7 +209,7 @@ struct Command {
   enum Type : uint8_t { NONE, TONE, SET, IDENTIFY, RESTART, POWEROFF, STATUS, START } type = NONE;
   uint16_t freq = 0, ms = 0;
   uint8_t  key = 0, val = 0;
-  uint8_t  mode = 0;
+  uint8_t  mode = 0, flags = 0;
   uint32_t seq = 0;
 };
 
@@ -190,7 +217,7 @@ struct Command {
 //  0x02 anahtar deger     ayar: 1 parlaklik %, 2 ekran sn (0 = hep acik), 3 ses %,
 //                         4 otomatik kapanma dk (0 = kapali), 5 sensor no 1-9
 //  0x03 sensoru bul   0x04 yeniden baslat   0x05 kapat   0x06 durumu hemen gonder
-//  0x07 kip seq32         akis baslangici (kip 0 canli, kip 1 seq32'den devam)
+//  0x07 kip seq32 [bayrak] akis baslangici (kip 0 canli, kip 1 seq32'den devam; bayrak bit0 ses verisi)
 inline Command parseCommand(const uint8_t* d, size_t n) {
   Command c;
   if (n < 1) return c;
@@ -205,6 +232,7 @@ inline Command parseCommand(const uint8_t* d, size_t n) {
       c.type = Command::START;
       c.mode = n >= 2 ? d[1] : 0;
       c.seq = n >= 6 ? ((uint32_t)d[2] | ((uint32_t)d[3] << 8) | ((uint32_t)d[4] << 16) | ((uint32_t)d[5] << 24)) : 0;
+      c.flags = n >= 7 ? d[6] : 0;
       break;
   }
   return c;

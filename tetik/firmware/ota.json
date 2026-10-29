@@ -1,1 +1,1 @@
-{"fw": 2, "file": "hisar-sensor-v2-app.bin", "size": 807280, "crc32": 1900013636, "not": "Kayıpsız veri akışı, sensör ayarları, telefondan güncelleme, gerçek atış için geniş tepme ölçümü."}
+{"fw": 3, "file": "hisar-sensor-v3-app.bin", "size": 809328, "crc32": 1491551564, "not": "Mikrofonla tetik doğrulama: kuru tetikte tetiğin tık sesi de dinlenir, hafif tetiklerde kaçan atış azalır."}

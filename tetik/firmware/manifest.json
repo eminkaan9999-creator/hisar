@@ -1,13 +1,13 @@
 {
   "name": "HISAR TETIK Sensor",
-  "version": "2",
+  "version": "3",
   "new_install_prompt_erase": true,
   "builds": [
     {
       "chipFamily": "ESP32",
       "parts": [
         {
-          "path": "hisar-sensor-v2.bin",
+          "path": "hisar-sensor-v3.bin",
           "offset": 0
         }
       ]

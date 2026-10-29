@@ -1,0 +1,315 @@
+# HİSAR ŞANTİYE · SOHBETLER
+# Bu dosyayı GitHub'da düzenleyip kaydet (kalem simgesi → Commit changes). Oyun her açılışta buradaki metinleri kullanır.
+# Kurallar:
+#  - [SOHBETLER]: çay ocağındaki konuşmalar. Her sohbet BOŞ SATIRLA ayrılır, her satır "İsim: söz".
+#  - [TEK SÖZLER]: masada tek başına söylenen sözler ("İsim: söz").
+#  - [LEVENT AZARLARI]: Levent Paşa'nın baskında ortaya karışık söylediği azarlar (her satır bir azar).
+#  - İsimler: Azizhan, Ahmet, Ali, Orhan, Kaan, Boran, Furkan, Ufuk, Levent
+#  - # ile başlayan satırlar not satırıdır, oyun okumaz.
+
+[SOHBETLER]
+Azizhan: Arkadaşlar, yarının planını konuşalım.
+Ahmet: Sabah ilk iş tünel, öğleden sonra döküm sahası.
+Kaan: Planı tablete işledim komutanım, herkese gönderiyorum.
+Azizhan: La bana çok güvenme, cuma günü gidebilirim, eline kalırsın bak.
+Boran: Yarın sabah tam teçhizat. Çelik plakalar dahil.
+Furkan: Planlama ve koordinasyon için beklemekteyiz, arz ederim.
+Azizhan: Tamam. Herkes görevini biliyor.
+
+Ahmet: Arkadaşlar, lahmacun saat 18.30'da tabldotta.
+Ali: Bu sefer erken gidelim, geçen sefer bitmişti.
+Boran: Furkan kaçma, gel Furkan, sıraya beraber gireriz.
+Furkan: Emredersiniz komutanım.
+Ahmet: Sen kralsın kardeşim.
+Ali: Ben de akşam kendi ellerimle çorba yapacağım devrelerime.
+Boran: Afiyet olsun şimdiden komutanım.
+
+Ali: Tek rakibim kendim. Her gün daha iyi olmak için çabalıyorum.
+Kaan: Ben de bu işi nasıl daha iyi yaparım, onu düşünüyorum.
+Ahmet: Teknik iyi ama geliştirmen lazım.
+Ali: Daha iyisi beni aşar, o senin işin kardeşim.
+Boran: Ekip sağlam.
+
+Boran: Ali Üsteğmenim, bölüğüme karışmayın lütfen. Cuma günü takım komutanıma bir takım emirler vereceğim.
+Ali: Hizmete özel olmayan hiçbir emri veremezsin.
+Boran: Emir çeşitleri ve emir verme yöntemleri ile ilgili yeterince bilgiye haiz olmamdan mütevellit, amirlerim beni bu göreve layık görmüşlerdir. Sağ olun.
+Furkan: Aslan komutanım.
+Ahmet: Kesin ulan develer, buranın ağası Azizhan Üsteğmen!
+Azizhan: La, bana bakmayın.
+
+Boran: Furkan kaçma gel Furkan, mümkünü yok, Ali Üsteğmen kurtaramaz seni!
+Ali: Kapım sana her daim açık Furkan. Bir telefon uzağındayım sadece.
+Furkan: Sağ olun komutanım, varlığınız yeter. Kıdemli teğmenler kaldırdı geliyor, hedef benim galiba.
+Ali: Sen yine de beni bırak, üst devrelerinle arayı iyi tutmaya çalış.
+Furkan: Benim kılıç daha yeni, daha parlak, siz merak etmeyin komutanım.
+Ali: Furkan, iyi misin kardeşim?
+Furkan: Yeni uyandım sadece komutanım.
+
+Kaan: Eskiden yapay zekâ mı vardı? Projeleri hayal ederdik sadece.
+Ali: Bu çocuk son günlerde iyi değil, kendi kendine konuşmaya başlamış.
+Ali: Sen yakında kendi kendinle kavga edersin, seni hiç iyi görmüyorum.
+Kaan: Orada da devreye siz gireceksiniz komutanım.
+Ali: Ben araya girmem kardeşim. Bir tek Furkan'a destek olurum, o bir şey isteyince yok diyemiyorum.
+Furkan: Cansınız komutanım.
+
+Furkan: Kaan, ben bu fotoğrafın yapay zekâ ürünü olduğunu düşünüyorum.
+Boran: Teğmen Asmaca diye bir oyun çıkaralım, yapay zekâ projesi!
+Kaan: Yazarım, iki günde çıkar.
+Ahmet: Sen kralsın kardeşim.
+Azizhan: Önce bu şantiyenin yazılımı bitsin.
+
+Furkan: Bu makam bu adama ayrı yakışıyor.
+Ahmet: Hayırlı olsun Kaan, yeni makamın.
+Kaan: Resmen enkaz devraldım.
+Furkan: Yazıya dikkat komutanım.
+Ahmet: Ben seni tümen komutanına arz yaparken göreceğim.
+Kaan: Yansın Hisar!
+
+Kaan: Yeni zil sesim: Yansın Hisar!
+Boran: Şarkının adında değişiklik yapabilir miyiz? Yansın Hisar!
+Boran: Nefesinize sağlık komutanım.
+Ahmet: Sen kimsin?
+Boran: Yarın sabah gelince tanırsınız kim olduğumu komutanım.
+Ahmet: Onun sonunu bağla!
+Boran: Bağladım komutanım.
+
+Boran: Ali Üsteğmenim, spor geçmişi olan bir subaysınız. Bomba ve barfikse sizin yazılmanız daha uygun olmaz mıydı? Arz ederim.
+Ali: Ne alakası var la! Kötü kötü konuşturma beni şimdi.
+Boran: Bu faaliyetlerde sizi de görmek isteriz komutanım.
+Ali: Adı üstünde, geçmiş kardeşim. Şu an genç dimağlara güvenim sonsuz.
+Furkan: Ah o koşular…
+Ahmet: Altı kilometre!
+Ali: Bir de utanmadan övünüyor musun?
+
+Ahmet: Bizim devrede de böyle şeyler olurdu.
+Boran: Bizim devrede de olmuştu komutanım. Kovdu bizi sonra binadan zaten.
+Kaan: Komutanım, sizin devrede de vukuat ha, tehlikelisiniz.
+Ahmet: Var biraz.
+Ali: En tehlikelimizdir kardeşim.
+
+Ahmet: Vay be, ne güzel günlerdi.
+Ali: Senden ayrı kalmanın acı tebessümü vardı yüzümüzde kardeşim.
+Ahmet: O gece ışıklar sabaha kadar açık kaldı…
+Azizhan: Senin ışıklar hiç kapanmıyor zaten.
+Ahmet: Sen benim geceleri uyuduğumu mu sanıyorsun?
+Azizhan: Uyumuyorsan ne işler karıştırıyorsun?
+Ali: Kim dost kim düşman, geç oldu ama öğrenmiş oldun.
+
+Boran: Hisar taburunda şenlik havası hakim!
+Azizhan: Tugayda bir iş yapılıyorsa Hisar yapıyordur, gayet normal.
+Boran: Komutanım siz cansınız vallaha.
+Kaan: Yansın Hisar!
+Ali: En kötü günümüz böyle olsun, abim ve kardeşlerim.
+
+Ahmet: Boran, akşam ne yapıyoruz?
+Boran: Mesaj bekleniyor. Bu işlem biraz zaman alabilir.
+Ali: Mesaj bekleniyor. Bu işlem biraz zaman alabilir.
+Ali: Ben böyle bir kaçış görmedim.
+Azizhan: Yolunu buldu bu işin.
+Ahmet: Ahmet sinirli, bulaşmayın.
+
+Azizhan: Ali, çalışma hayatı zordur.
+Ali: Sağ olsun devrelerim de bir bardak su vermiyor.
+Azizhan: Devrelerin içebiliyor mu diye sordun mu?
+Ali: Malzeme, araç olarak hiç yardımcı olmuyorsunuz.
+Ahmet: Altmış kişi her gün iki defa bu yolda intikal yapıyor, nedense bir tek sen kalıyorsun.
+Ali: Bunlar özel konular. Herkesin içinde konuşulmaz devrem. Özel olarak konuşalım bunu.
+
+Azizhan: Ali ile Kaan bölük komutanlığına başladığında hallerini görecektiniz.
+Ali: Ben eksik bir şey göremedim komutanım, gayet disiplinli biri.
+Ali: Çakı gibi asker!
+Kaan: Sağ olun komutanım.
+Ahmet: Haaahaaa haaa!
+Ali: Gülüşün bile tehlikeli devrem.
+
+Furkan: Ali Üsteğmenim, tabur komutanı sizi çağırıyor. Okçuluk kursu verecekmişsiniz.
+Ali: Furkan, hedef diye de seni koyarım okun karşısına, haberin olsun.
+Ali: Sen sen ol, benimle ters düşme.
+Furkan: Komutanın raconunu kıdemli teğmenlere kesiyordunuz, hedef ne ara ben oldum?
+Boran: Furkan kaçma, gel Furkan!
+
+Ali: Kıskançlık sezdim sanki.
+Ali: Kral öldü, yaşasın yeni kral!
+Furkan: Ne kıskanması komutanım, canım komutanım kuvvete layık.
+Ahmet: Fotoğrafını duvardan indirdim ama masama koydum Furkan.
+Furkan: Cansınız komutanım.
+
+Orhan: Dronu kaldırdım, saha temiz görünüyor.
+Kaan: Görüntüleri yapay zekâya verelim, hafriyat hacmini hesaplasın.
+Orhan: Yukarıdan bakınca her şey belli zaten.
+Ali: Pili de unutma, geçen sefer yarıda indi.
+Orhan: Pil yarıda, iniyorum dedim ya, ondan.
+Azizhan: Tamam, akşam raporu getir.
+
+Azizhan: Çaylar tazelensin.
+Ahmet: Ocakçı, demli olsun!
+Kaan: Bu çay yapay zekâdan daha iyi çalışıyor.
+Orhan: Yukarıdan bile kokusu geliyor.
+Boran: Afiyet olsun komutanım, arkadaşlar.
+Ali: Çay bizden, muhabbet sizden.
+
+Azizhan: Sığınak ne durumda?
+Furkan: Kempar aynada komutanım, ben de askerle aşağıdayım, küreği bırakmadık.
+Boran: Kamyonlar döküm sahasına gidip geliyor, ben koordine ediyorum.
+Ali: Yakıt tankeri öğleden sonra geliyor, sorun yok.
+Azizhan: Güzel. Akşama kadar galeri yirmi metre olsun.
+Furkan: Emredersiniz komutanım.
+
+Boran: Komutanım, Allah aşkına sizin işiniz gücünüz yok mu? İzindesiniz, ailenizle vakit geçirin.
+Ahmet: Bir dakika baktım telefona, hepsini kapattım.
+Boran: Yirmi gün uzaklaşın, keyfinize bakın.
+Ahmet: Ben burayı çok seviyorum, ayrılmak istemiyorum.
+
+Ahmet: Yarın buraya verzalit masa ve sandalye geliyor.
+Ali: Yağmur yağarsa ne olacak?
+Azizhan: Tente var, merak etme.
+Kaan: Çay ocağına bir de internet lazım komutanım.
+Boran: Hisar taburunda şenlik havası hakim!
+
+Furkan: Komutanım, yeni projeler var, birazdan gelir.
+Furkan: Sizi rahatlatmak için uğraşıyoruz teğmenler olarak.
+Ali: Eyvallah kardeşim.
+Boran: Vallahi sizinle çok şaka yaptık herhalde komutanım.
+Ali: Benim için hiç önemli değil kardeşim, inan.
+
+Ali: Okey mokey yok kardeşim, bitti o devirler.
+Boran: Bize yok zaten.
+Ali: Devrelerimi üç gündür göremiyorum bile.
+Ali: Onlar için zaman yaratır, ayarlarım bir şeyler.
+Ahmet: Seferberlik ilan ediyoruz, herkes akşam buraya!
+
+Ufuk: Naber mankiler? Kazı nasıl gidiyor?
+Ahmet: Bütün şantiyeleri gezdim komutanım, Kempar aynada, kamyonlar dönüyor.
+Ufuk: Güzel. Asker yorulmasın, nöbetleşe çalışsın.
+Azizhan: Emredersiniz komutanım.
+Ufuk: İyi gidiyorsunuz, aynen devam.
+
+Ufuk: Sabah koşusuna herkes geliyor, değil mi?
+Ali: Tek rakibim kendim komutanım, ben hep oradayım.
+Ufuk: Teğmenler de gelsin.
+Boran: Furkan kaçma, gel Furkan!
+Furkan: Emredersiniz komutanım.
+
+Ufuk: Paşam bugün yine Barkan 4'ü sordu mu?
+Orhan: Sordu komutanım. Barkan-2'yi gösterdim, 'bu Barkan 4 değil mi' dedi.
+Ufuk: Barkan 4'ü bulursan bana da haber ver Orhan.
+Orhan: Emredersiniz komutanım, keşfe çıkarız, belki buluruz.
+Ali: Haaahaha!
+Ufuk: Naber mankiler, gülmeyin!
+Kaan: Ben bunun yazılımını yaparım komutanım, Barkan 4 olur.
+
+Ufuk: Atış alanı kaç metreye geldi Ali?
+Ali: Hedef çerçeveleri dikiliyor komutanım, dört yüz metreye kadar gideceğiz.
+Ufuk: Orhan, drone parkuru?
+Orhan: Kapılar yükseliyor komutanım, ağ tüneli de kuruldu.
+Ufuk: Aferin mankiler, iyi gidiyorsunuz.
+
+Ufuk: Bugün kaç sefer döküm yaptık?
+Boran: Saymaya devam ediyoruz komutanım, kamyonlar boş durmuyor.
+Ufuk: Çay da güzel olmuş, ellerinize sağlık.
+Kaan: Hepsi tablette kayıtlı komutanım.
+
+Azizhan: Projeler ne durumda arkadaşlar?
+Furkan: Kempar sığınağı kazıyor komutanım, ben de askerle beraber küreğe girdim.
+Boran: Ben de koordine ediyorum komutanım, arz ederim.
+Kaan: Garajdaki bunker yaşam alanının çukuru açılıyor.
+Ali: Atış alanında hedef çerçeveleri dikiliyor, dört yüz metreye kadar gideceğiz.
+Orhan: Drone parkurunun kapıları yükseliyor.
+Azizhan: Güzel. Genel koordinasyon bende, akşam herkes rapor versin.
+
+Ahmet: Arkadaşlar, ben sabah bütün şantiyeleri gezdim.
+Kaan: Paşama yakalanmadınız inşallah komutanım?
+Ahmet: Üç yerde yakalandım! Nereye gitsem paşam orada.
+Boran: Komutanım, paşam sizi takip ediyor olabilir mi? Arz ederim.
+Ahmet: Sus Boran, sus.
+Ali: Sen kralsın kardeşim.
+
+Boran: Furkan, sen yine mi kazdın?
+Furkan: Askerle beraber çalışınca iş daha hızlı gidiyor komutanım.
+Boran: Ben de iş yaptırıyorum, o da bir sanat.
+Ahmet: Sanatını görüyoruz Boran.
+Azizhan: La Boran, bir kürek de sen al bari.
+
+Orhan: Paşam yine 'Barkan 4'ler hazır mı' dedi.
+Kaan: Barkan 4 mü? Bizdeki Barkan-2 değil miydi?
+Orhan: Öyle bir araç yok ki! Ben de 'hazır komutanım' dedim.
+Boran: Arz ederim, Barkan 4 hâlâ fabrikada komutanım.
+Azizhan: La güldürmeyin, paşam duyarsa…
+Ahmet: Haaahaaa haaa!
+
+Kaan: Barkan 4'ün yazılımını ben yapayım bari, paşam sorunca gösteririz.
+Orhan: Keşifte tank yok, ZPT var, bir de Barkan-2. Dördü nereden çıktı bilmiyorum.
+Ali: Paşam bizden bir adım önde, iki model sonrasını biliyor.
+Furkan: Cansınız komutanım.
+Boran: Hisar taburunda şenlik havası hakim!
+
+[TEK SÖZLER]
+Kaan: Bunker yaşam alanının projesi hazır, tablete yükledim.
+Kaan: Yansın Hisar!
+Kaan: Resmen enkaz devraldım.
+Kaan: Bunun yazılımını yaparız komutanım.
+Kaan: Planı tablete işledim, herkese gönderiyorum.
+Kaan: Yapay zekâya sordum, kazı yarın biter diyor.
+Furkan: Askerle beraber sığınağı kazıyoruz komutanım.
+Furkan: Emredersiniz komutanım.
+Furkan: Cansınız komutanım.
+Furkan: Planlama ve koordinasyon için beklemekteyiz, arz ederim.
+Furkan: Kürek bende komutanım, sorun yok.
+Furkan: Kepçe varken neden kürek komutanım?
+Boran: Ben koordine ediyorum, siz kazın arkadaşlar.
+Boran: Furkan kaçma, gel Furkan.
+Boran: Yarın sabah tam teçhizat, çelik plakalar dahil.
+Boran: Arz ederim komutanım.
+Boran: Hisar taburunda şenlik havası hakim.
+Boran: Ekip sağlam.
+Boran: Bir şey diyeceğim ama…
+Ahmet: Ben bir şantiyeleri dolaşıp geleyim.
+Ahmet: Nereye gitsem paşam orada, inanmıyorum!
+Ahmet: Teknik iyi ama geliştirmen lazım.
+Ahmet: Sen kralsın kardeşim.
+Ahmet: Lahmacun 18.30'da tabldotta.
+Ahmet: Seferberlik ilan ediyoruz.
+Ahmet: Kamyonlar dökümhaneye, ekskavatör kazıya.
+Ali: Atış alanında hedef çerçeveleri dikiliyor.
+Ali: Dört yüz metre hattına kadar set çekeceğiz.
+Ali: Tek rakibim kendim.
+Ali: Kapım sana her daim açık.
+Ali: Çakı gibi asker.
+Ali: Özel olarak konuşalım bunu.
+Ali: Yakıt tankeri öğleden sonra geliyor.
+Orhan: Drone parkurunun kapıları dikiliyor.
+Orhan: Keşifte ZPT'ler hazır, Barkan-2 de hazır.
+Orhan: Dronu kaldırdım, saha temiz.
+Orhan: Yukarıdan bakınca her şey belli.
+Orhan: Keşif tamam, ilerleyebiliriz.
+Orhan: Pil yarıda, iniyorum.
+Azizhan: Genel koordinasyon bende, herkes işinin başına.
+Azizhan: La bana çok güvenme.
+Azizhan: Yarınki planı konuşalım.
+Azizhan: Sabah ilk iş galeri iki, sonra döküm.
+Azizhan: Herkes görevini biliyor mu?
+Azizhan: Toplantı bitmedi, oturun.
+Azizhan: Çaylar tazelensin.
+Ufuk: Naber mankiler!
+Ufuk: Kolay gelsin arkadaşlar.
+Ufuk: Bugün kaç sefer döküm yaptık?
+Ufuk: İyi gidiyorsunuz, aynen devam.
+Ufuk: Asker yorulmasın, nöbetleşe çalışsın.
+Ufuk: Bir göz atın, kamyonlar boş beklemesin.
+Levent: Bu ne rehavet! Saha sahipsiz kalmış!
+Levent: Çay ocağı mı burası, karargâh mı?!
+Levent: Makineler kendi kendine mi çalışıyor sanıyorsunuz?!
+Levent: Asker sahada ter dökerken siz burada keyif mi çatıyorsunuz?!
+Levent: Disiplin diye bir şey kalmamış!
+Levent: Hepinize ayrı ayrı hesap soracağım!
+Levent: Akşama kadar raporlar masamda olacak!
+
+[LEVENT AZARLARI]
+Bugün ilacımı içmedim, beni sinirlendirmeyin!
+Tansiyonumu çıkarmayın, bak!
+Sabrımı sınamayın!
+Kimse bana mazeret söylemesin!
+Bu tempoyla tünel seneye biter!
+Sizinle mi uğraşacağım, şantiyeyle mi?!
+Bu ne lakaytlık?!
+Komutan geldi, hâlâ bana bakıyorlar!

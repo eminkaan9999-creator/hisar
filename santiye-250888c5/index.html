@@ -152,7 +152,7 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
   <div class="pad" id="padR"><span id="padRlbl">KOL</span><i id="knobR"></i></div>
   <div class="ctxL"><button class="big alt" id="bHorn" type="button">KORNA</button></div>
   <div class="ctx"><button class="big alt" id="bFuel" type="button" hidden>YAKIT SERVİSİ</button><button class="big alt" id="bAI" type="button" hidden>ŞOFÖR</button><button class="big alt" id="bCtx2" type="button" hidden>KAZI</button><button class="big" id="bCtx" type="button" hidden>KESİCİ</button></div>
-  <div class="keys">G: görev dağılımı · B: karakter · ENTER: otur / kalk · WASD: yürü · SHIFT: koş · E: araca bin / in · R: motor · Tab: alet çarkı · BOŞLUK: alet vur / kesici · I/K: kol ↕ · J/L: kova ↔ · Z/X: kule · U/O: arm · T: kazı modu · H: korna · C: kamera · sürükle: kamerayı çevir</div>
+  <div class="keys">G: görev dağılımı · B: karakter · ENTER: otur / kalk · WASD: yürü · SHIFT: koş · C: kamera · sürükle: kamerayı çevir · işi askerler yapar, sen komuta edersin</div>
 </div>
 <div id="toast"></div>
 <div id="sig" role="status" aria-live="polite"></div>
@@ -178,7 +178,7 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
   <div class="wrap">
     <div class="brand">
       <h1>HİSAR <b>ŞANTİYE</b><small>SİMÜLATÖR</small></h1>
-      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı drone sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve drone parkurunu kuruyor. Görevleri dağıt, içtimaya çık, Levent Paşa baskına gelmeden herkes işinin başında olsun.</p>
+      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı drone sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve drone parkurunu kuruyor. Sabah 07.30'da Azizhan Üsteğmen masada görevleri dağıtır; işi askerler yapar, sen komuta edersin. Levent Paşa baskına gelmeden herkes işinin başında olsun.</p>
     </div>
     <div class="projs">
       <div class="phead"><h3 class="sub">Tabur durumu</h3><span class="bank" id="bank" hidden></span></div>
@@ -548,6 +548,26 @@ const LINC = (() => {
 
 // ======================= WORLD: dry foothills — limestone massif, dry stony ground, the garrison around the construction site, oak scrub =======================
 const WX = 200, WZ = 135, CS = 1.25, GX = 160, GZ = 108, ROOF = 5.6;
+// phones and tablets: lighter settings everywhere (iPadOS reports itself as a Mac with a touch screen)
+const MOBILE = /Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+// what the graphics level allows (filled in by gfxLevel): pool of real soldiers near you, their radius, crowd detail distances, tank detail, small-part detail, fog
+const QUAL = {g: "", pool: 8, nearR: 19, lod0: 45, lod1: 110, far: 260, crowdShadow: true, tankNear: 60, detail: 420, offLod: 28, fog: 1};
+// vertex clustering: every vertex snaps into a cell of the given size (or frac of the largest side), triangles that collapse are dropped.
+// Positions and colours are averaged, uv and skin weights come from the first vertex of the cell; uvSplit keeps far-apart uv (the seams) apart.
+function decimateGeo(src, frac, cellAbs, uvSplit) {
+  const g = src, P = g.attributes.position, U = g.attributes.uv, Cc = g.attributes.color, SI = g.attributes.skinIndex, SW = g.attributes.skinWeight, I = g.index ? g.index.array : null; g.computeBoundingBox(); const bb = g.boundingBox, sz = Math.max(bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z), cell = cellAbs || sz * frac;
+  const key = new Map(), map = new Int32Array(P.count), pos = [], uv = [], col = [], si = [], sw = [], cnt = [], us = uvSplit && U;
+  for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i), z = P.getZ(i); let k = ((Math.floor(x / cell) + 1024) * 2048 + (Math.floor(y / cell) + 1024)) * 2048 + (Math.floor(z / cell) + 1024);
+    if (us) k = k * 64 + Math.min(7, Math.max(0, Math.floor(U.getX(i) * 8))) * 8 + Math.min(7, Math.max(0, Math.floor(U.getY(i) * 8)));
+    let c = key.get(k);
+    if (c === undefined) { c = cnt.length; key.set(k, c); cnt.push(0); pos.push(0, 0, 0); if (U) uv.push(U.getX(i), U.getY(i)); if (Cc) col.push(0, 0, 0); if (SI) { si.push(SI.getX(i), SI.getY(i), SI.getZ(i), SI.getW(i)); sw.push(SW.getX(i), SW.getY(i), SW.getZ(i), SW.getW(i)); } }
+    map[i] = c; cnt[c]++; pos[c * 3] += x; pos[c * 3 + 1] += y; pos[c * 3 + 2] += z; if (Cc) { col[c * 3] += Cc.getX(i); col[c * 3 + 1] += Cc.getY(i); col[c * 3 + 2] += Cc.getZ(i); } }
+  for (let c = 0; c < cnt.length; c++) for (let a = 0; a < 3; a++) { pos[c * 3 + a] /= cnt[c]; if (Cc) col[c * 3 + a] /= cnt[c]; }
+  const idx = [], n = I ? I.length : P.count; for (let t = 0; t + 2 < n; t += 3) { const a = map[I ? I[t] : t], b = map[I ? I[t + 1] : t + 1], c = map[I ? I[t + 2] : t + 2]; if (a !== b && b !== c && a !== c) idx.push(a, b, c); }
+  const o = new THREE.BufferGeometry(); o.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); if (U) o.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); if (Cc) o.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  if (SI) { o.setAttribute("skinIndex", new THREE.BufferAttribute(new SI.array.constructor(si), 4, SI.normalized)); o.setAttribute("skinWeight", new THREE.BufferAttribute(new SW.array.constructor(sw), 4, SW.normalized)); }
+  o.setIndex(idx); o.computeVertexNormals(); return o;
+}
 const grid = new Uint8Array(GX * GZ);           // 0 ground, 1 rock, 2 dug
 const colH = new Float32Array(GX * GZ);
 const instOf = new Int32Array(GX * GZ).fill(-1);
@@ -590,15 +610,16 @@ const DUG_GOAL = 160, DUMP_GOAL = 25, TANK_GOAL = 2;
 const cellAt = (x, z) => { const gx = Math.floor(x / CS), gz = Math.floor(z / CS); if (gx < 0 || gz < 0 || gx >= GX || gz >= GZ) return 1; return grid[gz * GX + gx]; };
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-function rectDist(r, x, z) { const dx = Math.max(r.x - x, 0, x - (r.x + r.w)), dz = Math.max(r.y - z, 0, z - (r.y + r.h)); return Math.hypot(dx, dz); }
+function rectDist(r, x, z) { const dx = Math.max(r.x - x, 0, x - (r.x + r.w)), dz = Math.max(r.y - z, 0, z - (r.y + r.h)); return Math.sqrt(dx * dx + dz * dz); }
 // excavated ground (vertex field, 1 m grid)
 const DV = new Float32Array((WX + 1) * (WZ + 1));
 function dvAt(x, z) { if (x < 0 || z < 0 || x >= WX || z >= WZ) return 0; const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, i = iz * (WX + 1) + ix;
   return (DV[i] * (1 - fx) + DV[i + 1] * fx) * (1 - fz) + (DV[i + WX + 1] * (1 - fx) + DV[i + WX + 2] * fx) * fz; }
 function heightAt(x, z) { return baseH(x, z) - dvAt(x, z); }
+const FLATR = [DUMP, PARK, ROAD, OFFICE];   // the flat pads (one array, not a new one on every call: heightAt runs hundreds of times a frame)
 function baseH(x, z) {
   let m = 1;
-  for (const r of [DUMP, PARK, ROAD, OFFICE]) m = Math.min(m, sstep(1, 6, rectDist(r, x, z)));
+  for (let k = 0; k < 4; k++) m = Math.min(m, sstep(1, 6, rectDist(FLATR[k], x, z)));
   m *= 1 - sstep(112, 126, x);
   const h = .42 * Math.sin(x * .13) * Math.cos(z * .11) + .22 * Math.sin(x * .31 + 1.7) * Math.sin(z * .27) + .5 * Math.sin(x * .05 + z * .04 + .6);
   const out = Math.max(0, -x, x - WX, -z, z - WZ);
@@ -793,13 +814,26 @@ function terrainGeo(w, d, sx, sz, ox, oz) {
 }
 const groundGeo = terrainGeo(WX, WZ, 200, 135, WX / 2, WZ / 2);
 let groundDirty = false;
+// the site ground is a regular 1 m grid: its normals straight from the neighbouring heights, only where it changed;
+// only the changed rows go up to the GPU (the whole ground every few tenths of a second was a stutter on phones)
+const GDR = {x0: 1e9, x1: -1, z0: 1e9, z1: -1, r0: 1e9, r1: -1};
+function groundNormals(x0, x1, z0, z1) { const p = groundGeo.attributes.position, n = groundGeo.attributes.normal, W = WX + 1, A = p.array, N = n.array;
+  x0 = Math.max(0, x0); z0 = Math.max(0, z0); x1 = Math.min(WX, x1); z1 = Math.min(WZ, z1); if (x1 < x0 || z1 < z0) return;
+  for (let iz = z0; iz <= z1; iz++) for (let ix = x0; ix <= x1; ix++) { const i = iz * W + ix, l = ix > 0 ? i - 1 : i, r = ix < WX ? i + 1 : i, d = iz > 0 ? i - W : i, u = iz < WZ ? i + W : i;
+    const nx = (A[l * 3 + 1] - A[r * 3 + 1]) / (r - l), nz = (A[d * 3 + 1] - A[u * 3 + 1]) / ((u - d) / W), k = 1 / Math.sqrt(nx * nx + 1 + nz * nz); N[i * 3] = nx * k; N[i * 3 + 1] = k; N[i * 3 + 2] = nz * k; }
+  groundRows(n, z0, z1); }
+function groundRows(a, z0, z1) { const W = (WX + 1) * 3, R0 = a.updateRange; if (R0.count === -1 || a.__r1 == null) { a.__r0 = z0; a.__r1 = z1; } else { a.__r0 = Math.min(a.__r0, z0); a.__r1 = Math.max(a.__r1, z1); }
+  R0.offset = a.__r0 * W; R0.count = (a.__r1 - a.__r0 + 1) * W; a.needsUpdate = true; }
+function groundFlush() { if (GDR.x1 < 0) return; groundNormals(GDR.x0 - 1, GDR.x1 + 1, GDR.z0 - 1, GDR.z1 + 1); GDR.x0 = GDR.z0 = 1e9; GDR.x1 = GDR.z1 = -1; }
+groundNormals(0, WX, 0, WZ); groundGeo.attributes.normal.updateRange.count = -1;
 function canDigGround(x, z) { if (cellAt(x, z) !== 0) return false; for (const r of [DUMP, PARK, ROAD, OFFICE]) if (rectDist(r, x, z) < 1.5) return false; return x > 3 && z > 3 && x < WX - 3 && z < WZ - 3; }
 function digGround(x, z, amt) {
-  const rr = 1.7, p = groundGeo.attributes.position;
-  for (let iz = Math.max(0, Math.floor(z - rr)); iz <= Math.min(WZ, Math.ceil(z + rr)); iz++) for (let ix = Math.max(0, Math.floor(x - rr)); ix <= Math.min(WX, Math.ceil(x + rr)); ix++) {
+  const rr = 1.7, p = groundGeo.attributes.position, z0 = Math.max(0, Math.floor(z - rr)), z1 = Math.min(WZ, Math.ceil(z + rr)), x0 = Math.max(0, Math.floor(x - rr)), x1 = Math.min(WX, Math.ceil(x + rr));
+  GDR.x0 = Math.min(GDR.x0, x0); GDR.x1 = Math.max(GDR.x1, x1); GDR.z0 = Math.min(GDR.z0, z0); GDR.z1 = Math.max(GDR.z1, z1);
+  for (let iz = z0; iz <= z1; iz++) for (let ix = x0; ix <= x1; ix++) {
     const d = Math.hypot(ix - x, iz - z); if (d > rr) continue; const i = iz * (WX + 1) + ix; DV[i] = Math.min(3.2, DV[i] + amt * (1 - d / rr)); p.setY(i, heightAt(ix, iz));
     const col = groundGeo.attributes.color, k = Math.max(.55, 1 - DV[i] * .16); col.setXYZ(i, k * 1.0, k * .9, k * .8); }
-  p.needsUpdate = true; groundGeo.attributes.color.needsUpdate = true; groundDirty = true;
+  groundRows(p, z0, z1); groundRows(groundGeo.attributes.color, z0, z1); groundDirty = true;
 }
 { const c = new Float32Array(groundGeo.attributes.position.count * 3).fill(1); groundGeo.setAttribute("color", new THREE.BufferAttribute(c, 3)); }
 const ground = new THREE.Mesh(groundGeo, pbrSurf(SM({map: groundTex, vertexColors: true}), {mode: "top", d: AT("ground"), n: AT("groundN"), a: ASSET.tex.groundA, s: 1 / 3.6, nk: 1.15, sat: .72, key: "g"}));
@@ -811,7 +845,17 @@ const trackTex = new THREE.CanvasTexture(trackCanvas); trackTex.encoding = THREE
 const trackLayer = new THREE.Mesh(groundGeo, new THREE.MeshLambertMaterial({map: trackTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2}));
 trackLayer.receiveShadow = true; scene.add(trackLayer);
 let trackDirty = false;
-function stamp(x0, z0, x1, z1, w, a) { tctx.strokeStyle = `rgba(48,34,20,${a || .2})`; tctx.lineWidth = w * TPX; tctx.lineCap = "round"; tctx.beginPath(); tctx.moveTo(x0 * TPX, z0 * TPX); tctx.lineTo(x1 * TPX, z1 * TPX); tctx.stroke(); trackDirty = true; }
+const TRD = {x0: 1e9, z0: 1e9, x1: -1e9, z1: -1e9}, TSUB = document.createElement("canvas"), TSUBT = new THREE.Texture(), TPOS = new THREE.Vector2();
+function stamp(x0, z0, x1, z1, w, a) { tctx.strokeStyle = `rgba(48,34,20,${a || .2})`; tctx.lineWidth = w * TPX; tctx.lineCap = "round"; tctx.beginPath(); tctx.moveTo(x0 * TPX, z0 * TPX); tctx.lineTo(x1 * TPX, z1 * TPX); tctx.stroke(); trackDirty = true;
+  const m = w / 2 + .4; TRD.x0 = Math.min(TRD.x0, x0 - m, x1 - m); TRD.x1 = Math.max(TRD.x1, x0 + m, x1 + m); TRD.z0 = Math.min(TRD.z0, z0 - m, z1 - m); TRD.z1 = Math.max(TRD.z1, z0 + m, z1 + m); }
+// only the changed part of the track canvas goes up to the GPU (the whole 1000 x 675 canvas every 0.3 s was a stutter on phones)
+function trackFlush() { const W = trackCanvas.width, H = trackCanvas.height;
+  const rx = Math.max(0, Math.floor(TRD.x0 * TPX)), ry = Math.max(0, Math.floor(TRD.z0 * TPX)), rx1 = Math.min(W, Math.ceil(TRD.x1 * TPX)), ry1 = Math.min(H, Math.ceil(TRD.z1 * TPX)), rw = rx1 - rx, rh = ry1 - ry;
+  TRD.x0 = TRD.z0 = 1e9; TRD.x1 = TRD.z1 = -1e9; if (rw <= 0 || rh <= 0) return;
+  const full = !R.capabilities.isWebGL2 || rw * rh > W * H * .4;
+  if (full) { trackTex.needsUpdate = true; return; }
+  try { if (TSUB.width !== rw || TSUB.height !== rh) { TSUB.width = rw; TSUB.height = rh; } const sc = TSUB.getContext("2d"); sc.clearRect(0, 0, rw, rh); sc.drawImage(trackCanvas, rx, ry, rw, rh, 0, 0, rw, rh);
+    TSUBT.image = TSUB; R.copyTextureToTexture(TPOS.set(rx, H - ry - rh), TSUBT, trackTex); } catch (e) { trackTex.needsUpdate = true; } }
 // the land beyond the fence and the massif
 {
   const geo = new THREE.PlaneGeometry(1500, 1500, 150, 150); geo.rotateX(-Math.PI / 2); geo.translate(WX / 2, 0, WZ / 2);
@@ -830,7 +874,7 @@ for (const [x0, x1, z0, z1, st] of [[GAR.x0, -90, GAR.z0, GAR.z1, 2], [-90, 0, G
 
 // ---------------- road cells (grader task) ----------------
 for (let cx = 0; cx < ROAD.w / ROAD.cs; cx++) for (let cz = 0; cz < ROAD.h / ROAD.cs; cz++) roadCells.push({x: ROAD.x + cx * ROAD.cs, z: ROAD.y + cz * ROAD.cs, rough: true});
-const roadMesh = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.5, 1), pbrSurf(SM({color: 0xffffff}), {mode: "top", d: AT("rubble"), n: AT("rubbleN"), s: 1 / 1.6, nk: 1, sat: .6, key: "rl"}), roadCells.length * 3);
+const roadMesh = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.5, 0), pbrSurf(SM({color: 0xffffff}), {mode: "top", d: AT("rubble"), n: AT("rubbleN"), s: 1 / 1.6, nk: 1, sat: .6, key: "rl"}), roadCells.length * 3);
 const roadFlat = new THREE.InstancedMesh(BOX, pbrSurf(SM({color: 0xffffff}), {mode: "top", d: AT("road"), n: AT("roadN"), s: 1 / 4, nk: 1.2, sat: .7, key: "rd"}), roadCells.length);
 function setRoad(c, i) {
   for (let k = 0; k < 3; k++) {
@@ -876,6 +920,21 @@ const lampMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(.5, .16, .5), new
     if (gx > 0 && grid[i - 1] === 1) b += 1; if (gx < GX - 1 && grid[i + 1] === 1) b += 2; if (gz > 0 && grid[i - GX] === 1) b += 4; if (gz < GZ - 1 && grid[i + GX] === 1) b += 8; aNb[k] = b; } }
 rockGeo.setAttribute("aNb", new THREE.InstancedBufferAttribute(aNb, 1));
 rockGeo.setAttribute("aTop", new THREE.InstancedBufferAttribute(aTop, 4)); rockGeo.setAttribute("aBot", new THREE.InstancedBufferAttribute(aBot, 1)); rockGeo.setAttribute("aCut", new THREE.InstancedBufferAttribute(aCut, 1));
+// a column inside the massif shows nothing (its top is the massif's surface, its sides touch other columns): only the columns that can show
+// (at the cliff, round a tunnel) are drawn. They are kept at the front of the instance list; digging brings more to the front.
+const slotCell = new Int32Array(rockN); for (let i = 0; i < grid.length; i++) if (instOf[i] >= 0) slotCell[instOf[i]] = i;
+let rockNV = 0;
+const rockNeed = k => aNb[k] !== 15 || aCut[k] > 0 || aBot[k] > 0;
+function rockSwap(a, b) { if (a === b) return; const M = rockMesh.instanceMatrix.array, C = rockMesh.instanceColor ? rockMesh.instanceColor.array : null; let t;
+  for (let j = 0; j < 16; j++) { t = M[a * 16 + j]; M[a * 16 + j] = M[b * 16 + j]; M[b * 16 + j] = t; }
+  if (C) for (let j = 0; j < 3; j++) { t = C[a * 3 + j]; C[a * 3 + j] = C[b * 3 + j]; C[b * 3 + j] = t; }
+  for (let j = 0; j < 4; j++) { t = aTop[a * 4 + j]; aTop[a * 4 + j] = aTop[b * 4 + j]; aTop[b * 4 + j] = t; }
+  t = aBot[a]; aBot[a] = aBot[b]; aBot[b] = t; t = aCut[a]; aCut[a] = aCut[b]; aCut[b] = t; t = aNb[a]; aNb[a] = aNb[b]; aNb[b] = t;
+  const ca = slotCell[a], cb = slotCell[b]; slotCell[a] = cb; slotCell[b] = ca; instOf[ca] = b; instOf[cb] = a; }
+function rockDirty() { rockMesh.instanceMatrix.needsUpdate = true; if (rockMesh.instanceColor) rockMesh.instanceColor.needsUpdate = true; const A = rockGeo.attributes; A.aTop.needsUpdate = A.aBot.needsUpdate = A.aCut.needsUpdate = A.aNb.needsUpdate = true; }
+function rockShow(i) { const k = instOf[i]; if (k < 0 || k < rockNV || !rockNeed(k)) return; rockSwap(k, rockNV); rockNV++; rockMesh.count = rockNV; rockDirty(); }
+for (let k = 0; k < rockN; k++) if (rockNeed(k)) { rockSwap(k, rockNV); rockNV++; }
+rockMesh.count = rockNV; rockDirty();
 [rockMesh, floorMesh, lampMesh, roadMesh, roadFlat].forEach(m => m.frustumCulled = false);
 rockMesh.castShadow = rockMesh.receiveShadow = floorMesh.receiveShadow = true;
 scene.add(rockMesh, floorMesh, lampMesh);
@@ -890,13 +949,13 @@ scene.add(rockMesh, floorMesh, lampMesh);
   const m = new THREE.Mesh(g, pbrSurf(SM({color: 0xdedbd4}), {mode: "tri", d: AT("grass"), n: AT("grassN"), d2: AT("rock"), n2: AT("rockN"), s: 1 / 7, s2: 1 / 5.5, nk: 1.1, patch: .75, sat: .42, macro: true, key: "skin"}));
   m.castShadow = m.receiveShadow = true; scene.add(m);
 }
-function markCut(i) { const k = instOf[i]; if (k >= 0 && aCut[k] < 1) { aCut[k] = 1; rockGeo.attributes.aCut.needsUpdate = true; } }
+function markCut(i) { const k = instOf[i]; if (k >= 0 && aCut[k] < 1) { aCut[k] = 1; rockGeo.attributes.aCut.needsUpdate = true; rockShow(i); } }
 function digCell(i) {
   grid[i] = 2; const k = instOf[i], gx = i % GX, gz = i / GX | 0, x = gx * CS + CS / 2, z = gz * CS + CS / 2;
   stats.tunnel = Math.max(stats.tunnel, x - edgeX(z));
-  aBot[k] = ROOF; rockGeo.attributes.aBot.needsUpdate = true; TQ.identity();
+  aBot[k] = ROOF; rockGeo.attributes.aBot.needsUpdate = true; rockShow(i); TQ.identity();
   markCut(i); if (gx > 0) markCut(i - 1); if (gx < GX - 1) markCut(i + 1); if (gz > 0) markCut(i - GX); if (gz < GZ - 1) markCut(i + GX);
-  const open = (j, bit) => { const kk = instOf[j]; if (kk >= 0 && grid[j] === 1 && Math.floor(aNb[kk] / bit) % 2) { aNb[kk] -= bit; rockGeo.attributes.aNb.needsUpdate = true; } };
+  const open = (j, bit) => { const kk = instOf[j]; if (kk >= 0 && grid[j] === 1 && Math.floor(aNb[kk] / bit) % 2) { aNb[kk] -= bit; rockGeo.attributes.aNb.needsUpdate = true; rockShow(j); } };
   if (gx > 0) open(i - 1, 2); if (gx < GX - 1) open(i + 1, 1); if (gz > 0) open(i - GX, 8); if (gz < GZ - 1) open(i + GX, 4);
   const f = floorMesh.count++; TV.set(x, .03, z); TS.set(CS, .06, CS); TM.compose(TV, TQ, TS); floorMesh.setMatrixAt(f, TM); floorMesh.setColorAt(f, LC(TCol, ((gx + gz) % 2) ? 0xd6cfc4 : 0xccc4b8)); floorMesh.instanceMatrix.needsUpdate = true; if (floorMesh.instanceColor) floorMesh.instanceColor.needsUpdate = true;
   if ((gx * 7 + gz * 3) % 5 === 0 && lampMesh.count < lampMesh.instanceMatrix.count) { const l = lampMesh.count++; LAMPS.push([x, ROOF - .3, z]); TV.set(x, ROOF - .1, z); TS.set(1, 1, 1); TM.compose(TV, TQ, TS); lampMesh.setMatrixAt(l, TM); lampMesh.instanceMatrix.needsUpdate = true; }
@@ -1020,22 +1079,26 @@ const flagU = {uT: {value: 0}};
   const pm = new THREE.Mesh(s.mesh(null, false), WMAT); pm.castShadow = true; scene.add(pm); }
 // scanned props: Jersey barriers along the road and at the gate, limestone boulders, oak scrub
 const SCAN = {};
-function instGLB(key, list, tint) { const g = ASSET.glb[key]; if (!g || !list.length) return null; let src = null; g.scene.traverse(o => { if (o.isMesh && !src) src = o; }); if (!src) return null;
+function instGLB(key, list, tint, dec) { const g = ASSET.glb[key]; if (!g || !list.length) return null; let src = null; g.scene.traverse(o => { if (o.isMesh && !src) src = o; }); if (!src) return null;
   const m = src.material.clone(); if (tint) m.color.copy(L2(tint)); m.envMapIntensity = .6;
-  const im = new THREE.InstancedMesh(src.geometry, m, list.length); list.forEach(([x, z, a, s, y], i) => { TV.set(x, y != null ? y : heightAt(x, z) - .05 * s, z); TQ.setFromAxisAngle(UPV, a); TS.set(s, s, s); TM.compose(TV, TQ, TS); im.setMatrixAt(i, TM); });
+  const geo = dec ? decimateGeo(src.geometry, dec) : src.geometry.clone(), im = new THREE.InstancedMesh(geo, m, list.length);
+  geo.computeBoundingSphere(); const r0 = geo.boundingSphere.radius + geo.boundingSphere.center.length(), BB = new THREE.Box3(); let sm = 1;
+  list.forEach(([x, z, a, s, y], i) => { TV.set(x, y != null ? y : heightAt(x, z) - .05 * s, z); TQ.setFromAxisAngle(UPV, a); TS.set(s, s, s); TM.compose(TV, TQ, TS); im.setMatrixAt(i, TM); BB.expandByPoint(TV); sm = Math.max(sm, s); });
+  // one sphere round all the copies: the set drops out of the view and the shadow pass when none of it is there
+  const BS = new THREE.Sphere(); BB.getBoundingSphere(BS); BS.radius += r0 * sm + 1; geo.boundingSphere = BS; im.frustumCulled = true;
   im.castShadow = im.receiveShadow = true; scene.add(im); return im; }
 {
   const bar = []; for (let x = ROAD.x - 2; x < ROAD.x + ROAD.w + 2; x += 3.2) bar.push([x, ROAD.y - 1.7, 0, 1], [x + 1.6, ROAD.y + ROAD.h + 1.7, Math.PI, 1]);
   for (const [x, z, a] of [[6, 47.2, Math.PI / 2], [6, 58.8, Math.PI / 2], [9.5, 50, 0], [9.5, 56, 0]]) bar.push([x, z, a, 1]);
-  SCAN.barrier = instGLB("barrier", bar);
+  SCAN.barrier = instGLB("barrier", bar, 0, MOBILE ? .05 : 0);
   const r = rndF(77), bl = [], rk = [];
   for (let i = 0; i < 40; i++) { const z = 4 + r() * (WZ - 8), x = edgeX(z) + 4 + r() * 50; const gi = Math.floor(z / CS) * GX + Math.floor(x / CS); if (grid[gi] !== 1) continue; bl.push([x, z, r() * 6.28, 1.2 + r() * 1.6, colH[gi] - .4]); }
-  for (let i = 0; i < 30; i++) { let x, z; const s = r(); if (s < .4) { x = GAR.x0 - 8 - r() * 90; z = GAR.z0 + r() * (GAR.z1 - GAR.z0); } else if (s < .7) { x = GAR.x0 + r() * 380; z = GAR.z0 - 8 - r() * 60; } else { x = GAR.x0 + r() * 380; z = GAR.z1 + 8 + r() * 60; } if (garDist(x, z) < 6) continue; bl.push([x, z, r() * 6.28, 1 + r() * 2.2, outerH(x, z) - .3]); }
+  for (let i = 0; i < (MOBILE ? 12 : 30); i++) { let x, z; const s = r(); if (s < .4) { x = GAR.x0 - 8 - r() * 90; z = GAR.z0 + r() * (GAR.z1 - GAR.z0); } else if (s < .7) { x = GAR.x0 + r() * 380; z = GAR.z0 - 8 - r() * 60; } else { x = GAR.x0 + r() * 380; z = GAR.z1 + 8 + r() * 60; } if (garDist(x, z) < 6) continue; bl.push([x, z, r() * 6.28, 1 + r() * 2.2, outerH(x, z) - .3]); }
   for (let i = 0; i < 18; i++) { const z = 6 + r() * (WZ - 12), x = edgeX(z) - 3 - r() * 6; if (cellAt(x, z) !== 0 || Math.abs(z - 63.3) < 6 || [24, 36, 48].some(g => Math.abs(z - g) < 5)) continue; bl.push([x, z, r() * 6.28, .7 + r() * .7]); }
-  SCAN.boulders = instGLB("boulders", bl, 0xd2d4d6);
+  SCAN.boulders = instGLB("boulders", bl, 0xd2d4d6, MOBILE ? .07 : 0);
   for (let i = 0; i < 70; i++) { const z = 3 + r() * (WZ - 6), x = edgeX(z) + 2 + r() * 55; const gi = Math.floor(z / CS) * GX + Math.floor(x / CS); if (grid[gi] !== 1) continue; rk.push([x, z, r() * 6.28, .8 + r() * 1.4, colH[gi] - .15]); }
   for (let i = 0; i < 30; i++) { const x = 6 + r() * 118, z = 6 + r() * 100; if (cellAt(x, z) !== 0 || [DUMP, PARK, ROAD, OFFICE, PIT].some(o => rectDist(o, x, z) < 4) || PROPS.some(p => x > p[0] - 2 && x < p[1] + 2 && z > p[2] - 2 && z < p[3] + 2)) continue; rk.push([x, z, r() * 6.28, .35 + r() * .5]); PROPS.push([x - .4, x + .4, z - .4, z + .4]); }
-  SCAN.rock = instGLB("rock", rk, 0xc9d2dc);
+  SCAN.rock = instGLB("rock", rk, 0xc9d2dc, MOBILE ? .08 : 0);
 }
 // oak scrub: photographic billboards baked from scanned shrubs: three crossed cards and a canopy card each, growing in clumps, swaying in the wind
 const bushU = {uT: {value: 0}};
@@ -2076,7 +2139,9 @@ function update(dt, t) {
   actPressed = false;
   vehicles.forEach(o => { pose(o, t); tracksDust(o, dt); updHyd(o.P); exhaust(o, dt); });
   cockpit(v, th, st, inp);
-  vehicles.forEach(o => { if (o !== v && o.P.seated) updArms(o.P, o.P.hand.wL || o.P.hand.jL || o.P.hand.k3, o.P.hand.wR || o.P.hand.jR); });
+  // the drivers' arms follow the controls; on far machines a few times a second is enough
+  for (const o of vehicles) { if (o === v || !o.P.seated) continue; o.armAcc = (o.armAcc || 0) + dt; const d = Math.hypot(o.x - cam.position.x, o.z - cam.position.z), iv = d < 30 ? 0 : d < 70 ? .1 : .25;
+    if (o.armAcc >= iv) { o.armAcc = 0; updArms(o.P, o.P.hand.wL || o.P.hand.jL || o.P.hand.k3, o.P.hand.wR || o.P.hand.jR); } }
   // separation
   for (let i = 0; i < vehicles.length; i++) for (let j = i + 1; j < vehicles.length; j++) {
     const a = vehicles[i], b = vehicles[j], dx = b.x - a.x, dzz = b.z - a.z, d = Math.hypot(dx, dzz), m = a.r + b.r;
@@ -2089,8 +2154,8 @@ function update(dt, t) {
   stats.parked = vehicles.filter(o => o.type === "tk" && inGarage(o)).length;
   sound(v, dt, mag);
   updDust(dt); updFalls(dt);
-  trackT -= dt; if (trackT <= 0 && trackDirty) { trackTex.needsUpdate = true; trackDirty = false; trackT = .3; }
-  groundT -= dt; if (groundT <= 0 && groundDirty) { groundGeo.computeVertexNormals(); groundDirty = false; groundT = .4; piles.forEach(syncPile); }
+  trackT -= dt; if (trackT <= 0 && trackDirty) { trackFlush(); trackDirty = false; trackT = MOBILE ? .5 : .3; }
+  groundT -= dt; if (groundT <= 0 && groundDirty) { groundFlush(); groundDirty = false; groundT = .4; piles.forEach(syncPile); }
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.classList.remove("on"); }
   // sun + shadow follow the player
   const F = FOOT.on ? FOOT : v; cam.getWorldDirection(SUNDIR); const sl = Math.hypot(SUNDIR.x, SUNDIR.z) || 1, sk = sun.shadow.camera.right * .45, sx = F.x + SUNDIR.x / sl * sk, sz = F.z + SUNDIR.z / sl * sk;   // the shadow box sits a little ahead, where you look
@@ -2105,7 +2170,13 @@ const TOOLCAM = {ex: ["up", [-3.0, 4.6, -2.3]], ld: ["g", [-1.2, 3.8, -2.4]], bh
 const TGT = new THREE.Vector3(), DES = new THREE.Vector3(), TMPV = new THREE.Vector3(), LK = new THREE.Vector3();
 function solidAt(x, y, z) { const gx = Math.floor(x / CS), gz = Math.floor(z / CS); if (gx < 0 || gz < 0 || gx >= GX || gz >= GZ) return y < 1; const i = gz * GX + gx, c = grid[i];
   if (c === 1 && y < colH[i] + .4) return true; if (c === 2 && y > ROOF - .35 && y < colH[i] + .4) return true; return y < heightAt(x, z) + .45; }
-function camRay(from, to) { const d = from.distanceTo(to); TMPV.subVectors(to, from).normalize(); for (let s = .6; s <= d; s += .25) { if (solidAt(from.x + TMPV.x * s, from.y + TMPV.y * s, from.z + TMPV.z * s)) return Math.max(.8, s - .45); } return d; }
+// solid boxes the camera must not go through (the tea kiosk behind the chairs and the like): [x0, x1, y0, y1, z0, z1]
+const CAMBOX = [];
+function boxHit(o, d, b, max) { let t0 = 0, t1 = max; for (let a = 0; a < 3; a++) { const p = a === 0 ? o.x : a === 1 ? o.y : o.z, v = a === 0 ? d.x : a === 1 ? d.y : d.z, lo = b[a * 2], hi = b[a * 2 + 1];
+    if (Math.abs(v) < 1e-9) { if (p < lo || p > hi) return -1; continue; } let ta = (lo - p) / v, tb = (hi - p) / v; if (ta > tb) { const t = ta; ta = tb; tb = t; } if (ta > t0) t0 = ta; if (tb < t1) t1 = tb; if (t0 > t1) return -1; } return t0; }
+function camRay(from, to) { let d = from.distanceTo(to); TMPV.subVectors(to, from).normalize(); let box = false;
+  for (const b of CAMBOX) { const t = boxHit(from, TMPV, b, d); if (t >= 0 && t < d) { d = t; box = true; } }
+  for (let s = .6; s <= d; s += .25) { if (solidAt(from.x + TMPV.x * s, from.y + TMPV.y * s, from.z + TMPV.z * s)) return Math.max(.8, s - .45); } return box ? Math.max(.6, d - .25) : d; }
 function updateCam(dt) {
   updBeltMark();
   if (FOOT.on || FOOT.seq) { footCam(dt); return; }
@@ -2238,7 +2309,7 @@ function loop(now) {
   if (running) { update(dt, TT); updateCam(dt); hud(dt); renderMain(dt);
     // adaptive quality: drop resolution / shadow detail on slow phones
     perf.t += dt; perf.n++; if (perf.t > 3 && !perf.lock) { const ms = perf.t / perf.n * 1000; perf.t = perf.n = 0;
-      if (ms > 34 && perf.lvl < 3) { perf.lvl++; gfxDown(perf.lvl); } } }
+      if (ms > 34 && GFX0 + perf.lvl < GFXLADDER.length - 1) { perf.lvl++; gfxDown(perf.lvl); } } }
   for (const h of window.FRAME_HOOKS) { try { h(dt); } catch (e) {} }
   if (!stopped) requestAnimationFrame(loop);
 }
@@ -2468,12 +2539,13 @@ const head = [new THREE.SpotLight(0xfff3d6, 0, 55, .5, .45, 1.2), new THREE.Spot
 const workL = new THREE.SpotLight(0xfff6e4, 0, 30, .75, .5, 1.1), beaconL = new THREE.PointLight(0xff9a1a, 0, 14, 2);
 head.forEach(h => { scene.add(h, h.target); }); scene.add(workL, workL.target, beaconL);
 // tunnel lamps light the gallery around you
-const lampL = []; for (let i = 0; i < 4; i++) { const p = new THREE.PointLight(0xffd99a, 0, 10, 2); p.visible = false; scene.add(p); lampL.push(p); }
+// (always "visible", only the brightness changes: a light switched on or off would rebuild every shader, a long freeze on phones)
+const lampL = []; for (let i = 0; i < 4; i++) { const p = new THREE.PointLight(0xffd99a, 0, 10, 2); scene.add(p); lampL.push(p); }
 function setTOD(m) {
   tod = m; const T = TODS[m]; try { localStorage.setItem("hs-tod", m); } catch (e) {}
   sun.color.setHex(T.sun); sun.intensity = T.si; SUNOFF[0] = T.off[0]; SUNOFF[1] = T.off[1]; SUNOFF[2] = T.off[2];
   hemi.color.setHex(T.hs); hemi.groundColor.setHex(T.hg); hemi.intensity = T.hi;
-  scene.fog.color.setHex(T.fog); scene.fog.near = T.f0; scene.fog.far = T.f1;
+  const fq = QUAL.fog; scene.fog.color.setHex(T.fog); scene.fog.near = T.f0 * fq; scene.fog.far = T.f1 * fq;
   const U = SKYM.u; LC(U.uZen.value, T.zen); LC(U.uHor.value, T.fog); LC(U.uGlow.value, T.glow); LC(U.uCloudCol.value, T.cc); U.uCloud.value = T.cl; U.uNight.value = T.night; U.uSun.value.set(T.off[0], T.off[1], T.off[2]).normalize();
   scene.environment = ENVS[T.env] || ENVS[0]; R.toneMappingExposure = T.ex;
   const b = document.getElementById("bTod"); if (b) b.textContent = T.n;
@@ -2491,7 +2563,7 @@ function lightsFrame(dt, v) {
   // pick the 4 tunnel lamps closest to the action
   lampT -= dt; if (lampT <= 0) { lampT = .35; const ref = cam.position;
     const near = LAMPS.map(p => [p, (p[0] - ref.x) ** 2 + (p[2] - ref.z) ** 2 + (p[0] - v.x) ** 2 + (p[2] - v.z) ** 2]).sort((a, b) => a[1] - b[1]).slice(0, 4);
-    lampL.forEach((L, i) => { const n = near[i]; L.visible = !!n; if (n) { L.position.set(n[0][0], n[0][1], n[0][2]); L.intensity = .45 + T.lights * .45; } }); }
+    lampL.forEach((L, i) => { const n = near[i]; if (n) { L.position.set(n[0][0], n[0][1], n[0][2]); L.intensity = .45 + T.lights * .45; } else L.intensity = 0; }); }
 }
 // ---------- brake / reverse lamps + beacon on every machine ----------
 const RL = {ex: ["up", -3.27, .45, 1.0], dz: ["g", -2.32, 1.95, .7], bh: ["g", -2.34, 1.45, 1.0], ld: ["g", -3.54, 1.12, .65], tr: ["g", -4.36, .9, .9], gr: ["g", -4.64, 1.15, .8], gt: ["g", -3.32, 1.55, 1.0], tk: ["g", -3.62, 1.25, 1.35]};
@@ -2652,19 +2724,22 @@ function renderMain(dt) {
 // every texture filtered at the best angle the card allows
 function maxAniso() { const A = R.capabilities.getMaxAnisotropy();
   scene.traverse(o => { const ms = o.material ? [].concat(o.material) : []; for (const m of ms) for (const k of ["map", "normalMap", "roughnessMap", "aoMap", "bumpMap"]) { const t = m[k]; if (t && t.anisotropy < A) { t.anisotropy = A; t.needsUpdate = true; } } }); }
-// quality levels: ultra (everything), high, mid, low; "auto" starts at ultra and steps down while the frame time is too long
+// quality levels: ultra (everything), high, mid, low. They also set how far the soldiers, the tanks and the machines' small parts are drawn in detail.
+// "auto" starts at ultra on a computer and at mid on a phone, and steps down while the frame time is too long
+const QPRE = {
+  ultra: {dpr: 2, sh: 4096, post: true, pool: 8, nearR: 19, lod0: 45, lod1: 110, far: 260, crowdShadow: true, tankNear: 60, detail: 420, offLod: 28, fog: 1},
+  high: {dpr: 2, sh: 2048, post: false, pool: 6, nearR: 17, lod0: 34, lod1: 90, far: 220, crowdShadow: true, tankNear: 45, detail: 320, offLod: 22, fog: 1},
+  mid: {dpr: 1.3, sh: 1024, post: false, pool: 3, nearR: 13, lod0: 22, lod1: 60, far: 160, crowdShadow: false, tankNear: 32, detail: 210, offLod: 14, fog: .8},
+  low: {dpr: 1, sh: 1024, post: false, pool: 2, nearR: 10, lod0: 14, lod1: 42, far: 120, crowdShadow: false, tankNear: 22, detail: 150, offLod: 10, fog: .65}};
 function gfxLevel(g) {
-  if (g === "ultra") { R.setPixelRatio(Math.min(2, DPR)); setShadows(true, 4096); POST.on = postInit(); maxAniso(); DUSTQ.k = 1; }
-  else { POST.on = false; R.setPixelRatio(g === "high" ? Math.min(2, DPR) : g === "mid" ? Math.min(1.25, DPR) : 1); setShadows(g !== "low", g === "high" ? 2048 : 1024); DUSTQ.k = g === "low" ? .45 : 1; }
+  const P = QPRE[g] || QPRE.mid; Object.assign(QUAL, P, {g});
+  R.setPixelRatio(Math.min(P.dpr, DPR)); setShadows(g !== "low" || SET.gfx === "auto", P.sh); POST.on = P.post ? postInit() : false; if (g === "ultra") maxAniso(); DUSTQ.k = g === "low" ? .45 : g === "mid" ? .7 : 1;
+  setTOD(tod);   // the fog follows the level
   resize();
 }
-function gfxDown(lvl) { // auto: 1 = no post-processing, 2 = lower resolution, 3 = smaller shadows
-  if (lvl === 1) { POST.on = false; setShadows(true, 2048); R.setPixelRatio(Math.min(1.75, DPR)); }
-  else if (lvl === 2) R.setPixelRatio(1.2);
-  else { R.setPixelRatio(1); setShadows(true, 1024); }
-  resize();
-}
-window.__hs.post = POST; window.__hs.gfxLevel = gfxLevel;
+const GFXLADDER = ["ultra", "high", "mid", "low"], GFX0 = MOBILE ? 2 : 0;
+function gfxDown(lvl) { gfxLevel(GFXLADDER[Math.min(GFXLADDER.length - 1, GFX0 + lvl)]); }   // auto: one step down the ladder
+window.__hs.post = POST; window.__hs.gfxLevel = gfxLevel; window.__hs.qual = QUAL;
 
 // ======================= SETTINGS PANEL + GAMEPAD =======================
 const SET = {sens: 1, joy: 150, gfx: "auto", vol: .9, auto: true, isg: true};
@@ -2678,7 +2753,7 @@ function setShadows(on, size) {
 }
 function applyGfx() {
   const g = SET.gfx;
-  if (g === "auto") { if (perf.lock || !perf.init) { perf.lock = false; perf.init = true; perf.lvl = 0; perf.t = perf.n = 0; gfxLevel("ultra"); } DUSTQ.k = 1; return; }
+  if (g === "auto") { if (perf.lock || !perf.init) { perf.lock = false; perf.init = true; perf.lvl = 0; perf.t = perf.n = 0; gfxLevel(GFXLADDER[GFX0]); } return; }
   perf.lock = true; perf.init = true; gfxLevel(g);
 }
 function applySet() {
@@ -3055,10 +3130,11 @@ function twist(S, tw) {
 }
 // fingers: closed round a handle (k = 1) or back to their rest pose
 const FING = ["Index", "Middle", "Ring", "Pinky"], FCURL = [1.05, 1.2, .85], SQF = new THREE.Quaternion(), SXA = new THREE.Vector3(1, 0, 0);
+// the finger bone names, built once (not a dozen new strings on every call)
+const FNAMES = {}; for (const sd of ["Left", "Right"]) { FNAMES[sd] = []; for (const f of FING) for (let j = 1; j <= 3; j++) FNAMES[sd].push([sd + "Hand" + f + j, FCURL[j - 1] * (f === "Pinky" ? 1.08 : 1)]); for (let j = 1; j <= 3; j++) FNAMES[sd].push([sd + "HandThumb" + j, j === 1 ? 0 : j === 2 ? .45 : .55]); }
 function curl(S, side, k) {
   const B = S.bones, R = S.restF; if (!R) return;
-  for (const f of FING) for (let j = 1; j <= 3; j++) { const n = side + "Hand" + f + j, b = B[n]; if (!b || !R[n]) continue; b.quaternion.copy(R[n]); if (k) b.quaternion.multiply(SQF.setFromAxisAngle(SXA, FCURL[j - 1] * k * (f === "Pinky" ? 1.08 : 1))); }
-  for (let j = 1; j <= 3; j++) { const n = side + "HandThumb" + j, b = B[n]; if (!b || !R[n]) continue; b.quaternion.copy(R[n]); if (k && j > 1) b.quaternion.multiply(SQF.setFromAxisAngle(SXA, (j === 2 ? .45 : .55) * k)); }
+  const L = FNAMES[side]; for (let i = 0; i < L.length; i++) { const n = L[i][0], a = L[i][1], b = B[n], r = R[n]; if (!b || !r) continue; b.quaternion.copy(r); if (k && a) b.quaternion.multiply(SQF.setFromAxisAngle(SXA, a * k)); }
 }
 // grip a bar through C (world) running along a (world, unit): the bar lies across the palm, the thumb towards +a
 const SG1 = new THREE.Vector3(), SG2 = new THREE.Vector3(), SG3 = new THREE.Vector3(), SG4 = new THREE.Vector3(), SGW = new THREE.Vector3(), SGM = new THREE.Matrix4(), SGQ = new THREE.Quaternion();
@@ -3542,10 +3618,12 @@ function toolPose(S, g, k, two, tool, carry) {
   if (two) { TGP2.copy(TGP).addScaledVector(TBY, sep + (dgrip ? .1 : 0)); gripAt(S, oh, TGP2, TBY, oh === "Left" ? [.7, -.5, -.3] : [-.7, -.5, -.3]); }
   else curl(S, oh, 0);
 }
-function setTool(k) {
+// the commander does no digging himself: the soldiers do the work, he plans, checks and gives the orders (no hand tools)
+const NOTOOLS = true;
+function setTool(k) { if (NOTOOLS) k = null;
   if (FOOT.carry > 0 && k !== "kurek") { dropDirt(fw(FOOT, .8), FOOT.carry); FOOT.carry = 0; }
   FOOT.tool = k; FOOT.sw = -1; TOOLM.kazma.visible = k === "kazma"; TOOLM.kurek.visible = k === "kurek"; TOOLM.lump.visible = false;
-  toast(k === "kazma" ? "KAZMA ELİNDE · BOŞLUK / tık: vur" : k === "kurek" ? "KÜREK ELİNDE · BOŞLUK / tık: kürekle" : "ELLER BOŞ", 1.6); updCtx();
+  if (!NOTOOLS) toast(k === "kazma" ? "KAZMA ELİNDE · BOŞLUK / tık: vur" : k === "kurek" ? "KÜREK ELİNDE · BOŞLUK / tık: kürekle" : "ELLER BOŞ", 1.6); updCtx();
 }
 
 // ---------------- sounds of the hand tools and the starter motor ----------------
@@ -3705,7 +3783,7 @@ function finishSeq() {
     updAIbtn(); toast(v.name + (v.eng ? " · MOTOR ÇALIŞIYOR" : " · R: MOTORU ÇALIŞTIR"), 2.2);
   } else {
     doorTo(v, DOORA, 0); FOOT.on = true; const a = Math.PI / 2 - new THREE.Euler().setFromQuaternion(PLAYER.root.quaternion, "YXZ").y; FOOT.a = a; FOOT.vx = FOOT.vz = 0;
-    CAM.yaw = a + Math.PI * .45; CAM.pitch = .22; CAM.dist = 4.4; camSnap = true; toast("İNDİN · makineyi asker devralıyor · E: tekrar bin", 2);
+    CAM.yaw = a + Math.PI * .45; CAM.pitch = .22; CAM.dist = 4.4; camSnap = true; toast("İNDİN · makineyi asker devralıyor", 2);
     if (v.job) setTimeout(() => { if (!v.P.seated && !(FOOT.seq && FOOT.seq.v === v)) opsGive(v); }, 1400);
     if (FOOT.tool) setTool(FOOT.tool);
   }
@@ -3730,12 +3808,12 @@ function footInstant(x, z, a) {
 // keys: E in/out, R engine
 function keyE() {
   if (!running || !PLAYER || FOOT.seq || (typeof AUTO !== "undefined" && AUTO.on)) return;
-  if (FOOT.on) { const v = FOOT.near || nearestVehicle(); if (v) boardSeq(v); else toast("Yakında araç yok · bir makinenin kapısına yaklaş", 1.8); return; }
+  if (FOOT.on) { const v = FOOT.near || nearestVehicle(); if (NOTOOLS) { toast((v ? v.name + " · " : "") + "Makineleri askerler kullanıyor · sen komuta et: G ile görev dağılımı", 2.4); return; } if (v) boardSeq(v); else toast("Yakında araç yok · bir makinenin kapısına yaklaş", 1.8); return; }
   const v = vehicles[cur]; if (v.P.seated !== PLAYER) { footInstant(); return; }
   if (Math.abs(v.v) > .8) { toast("Önce dur, sonra in", 1.4); return; } exitSeq(v);
 }
 function keyR() {
-  if (!running) return; if (FOOT.on || FOOT.seq) { toast("Motoru çalıştırmak için önce araca bin (E)", 1.8); return; }
+  if (!running) return; if (FOOT.on || FOOT.seq) { if (!NOTOOLS) toast("Motoru çalıştırmak için önce araca bin (E)", 1.8); return; }
   const v = vehicles[cur]; if (v.ai) return;
   if (v.eng) { v.eng = false; v.crank = 0; toast(v.name + " · MOTOR DURDU", 1.4); }
   else if (!(v.crank > 0)) { if (v.type !== "gt" && v.fuel <= 0) { toast("Yakıt yok", 1.4); return; } v.crank = 1.15; sfx("crank"); toast("MARŞ…", 1); }
@@ -3743,7 +3821,7 @@ function keyR() {
 }
 addEventListener("keydown", e => {
   if (!running) return;
-  if (e.code === "Tab") { e.preventDefault(); if (!e.repeat) openWheel("key"); return; }
+  if (e.code === "Tab") { e.preventDefault(); if (!e.repeat && !(NOTOOLS && FOOT.on)) openWheel("key"); return; }
   if (e.repeat) return;
   if (e.code === "KeyE") keyE(); else if (e.code === "KeyR") keyR(); else if (e.code === "KeyF" && FOOT.on) FOOT.useReq = true;
 });
@@ -3860,9 +3938,8 @@ function footHud() {
   if (FOOT.seq) st = FOOT.seq.dir === "in" ? "Araca biniyor…" : "Araçtan iniyor…";
   else if (FOOT.tool === "kazma") st = (FOOT.wall ? "Kayaya vuruyorsun" : "Kazma elinde") + " · BOŞLUK / tık: vur";
   else if (FOOT.tool === "kurek") st = FOOT.carry > 0 ? "Kürek dolu · sağ tarafa atar: yığın, döküm sahası ya da kamyon kasası" : "Kürek elinde · BOŞLUK / tık: kürekle";
-  else st = n ? "E: " + n.name + " aracına bin" : "Tab: alet çarkı · makineye yaklaşıp E: bin";
-  if (n && FOOT.tool) st += " · E: " + n.name;
-  if (SEAT.on) st = "Çay ocağındasın · G: görev dağılımı · ENTER: kalk · B: karakter"; else { const ch = nearChair(); if (ch) st = "ENTER: sandalyeye otur" + (n ? " · E: " + n.name : ""); }
+  else st = n ? n.name + " · " + (n.broken ? "arızalı, G ile tamire asker gönder" : n.ai || n.P.seated ? "asker çalıştırıyor" : "operatör bekliyor · G ile asker ata") : "G: görev dağılımı · şantiyeleri gez, askerleri denetle";
+  if (SEAT.on) st = "Çay ocağındasın · G: görev dağılımı · ENTER: kalk · B: karakter"; else { const ch = nearChair(); if (ch) st = "ENTER: sandalyeye otur" + (n ? " · " + n.name : ""); }
   chairBtns();
   vState.textContent = st; vBar.style.width = (FOOT.carry > 0 ? 100 : 0) + "%";
   dSpd.textContent = Math.round(FOOT.spd * 3.6); dGear.textContent = "–"; dRpm.style.width = "0%";
@@ -3877,11 +3954,11 @@ function footHud() {
 const bWheel = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.id = "bWheel"; b.textContent = "ÇARK"; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => { if (WHL.open) closeWheel(false); else openWheel("touch"); }); return b; })();
 function footCtx() {
   const foot = FOOT.on || !!FOOT.seq, v = vehicles[cur];
-  bWheel.hidden = !PLAYER;
+  bWheel.hidden = !PLAYER || NOTOOLS;
   if (!foot) { if (!v.eng && !v.ai) { bCtx2.hidden = false; bCtx2.textContent = "MOTOR"; } return; }
   padLlbl.textContent = "YÜRÜ"; padRlbl.textContent = "BAK"; document.getElementById("padR").hidden = false;
   bCtx.hidden = !FOOT.tool; bCtx.textContent = FOOT.tool === "kurek" ? "KÜREKLE" : "KAZ";
-  bCtx2.hidden = !FOOT.near; bCtx2.textContent = "BİN";
+  bCtx2.hidden = !FOOT.near || NOTOOLS; bCtx2.textContent = "BİN";
   bHorn.hidden = true; bFuel.hidden = true; bAI.hidden = true;
 }
 bCtx.addEventListener("pointerdown", () => { if (FOOT.on) FOOT.touchUse = true; });
@@ -3895,7 +3972,7 @@ function wheelItems() {
   const v = vehicles[cur]; return [{k: "in", t: "ARAÇTAN İN"}, {k: "motor", t: v.eng ? "MOTORU DURDUR" : "MOTORU ÇALIŞTIR"}, {k: "kamera", t: "KAMERA"}];
 }
 function openWheel(src) {
-  if (!running || !PLAYER || FOOT.seq) return; WHL.items = wheelItems(); WHL.open = true; WHL.src = src; WHL.sel = -1; WHL.mx = innerWidth / 2; WHL.my = innerHeight / 2;
+  if (!running || !PLAYER || FOOT.seq || (NOTOOLS && FOOT.on)) return; WHL.items = wheelItems(); WHL.open = true; WHL.src = src; WHL.sel = -1; WHL.mx = innerWidth / 2; WHL.my = innerHeight / 2;
   wheelEl.querySelectorAll(".wi").forEach(e => e.remove()); const n = WHL.items.length;
   WHL.items.forEach((it, i) => { const a = -Math.PI / 2 + i / n * Math.PI * 2, b = document.createElement("button"); b.type = "button"; b.className = "wi" + (it.off ? " off" : ""); b.textContent = it.t;
     b.style.left = (150 + Math.cos(a) * 106) + "px"; b.style.top = (150 + Math.sin(a) * 106) + "px"; b.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); WHL.sel = i; closeWheel(true); }); wheelEl.appendChild(b); it.el = b; });
@@ -4382,16 +4459,41 @@ const TERFLAG = [-9.6, 18];
     const f = new THREE.Mesh(new THREE.PlaneGeometry(3, 2, 24, 8), m); f.position.set(x + 1.55, y + h - 1.1, z); f.castShadow = true; f.userData.noAO = true; scene.add(f); }
   putP(scene, s, true, 0); }
 
-// ---------------- tanks: every part of the M60 model instanced once per tank ----------------
-{ const src = buildModel("tk").g; src.updateMatrixWorld(true); const W = new THREE.Matrix4(), R0 = new THREE.Matrix4();
+// ---------------- tanks: the ones near you with every part of the M60 model, the rest as one simplified mesh with the colours baked in ----------------
+const TANKS = (() => { const src = buildModel("tk").g; src.updateMatrixWorld(true); const N = TANKSPOTS.length;
   const shown = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };   // lamps' glows, the muzzle flash and the like stay off
-  // one bounding sphere round all the tanks: the whole set drops out of the shadow pass and the view when it is not in them
-  let cx = 0, cz = 0; for (const [x, z] of TANKSPOTS) { cx += x; cz += z; } cx /= TANKSPOTS.length; cz /= TANKSPOTS.length; let rad = 0; for (const [x, z] of TANKSPOTS) rad = Math.max(rad, Math.hypot(x - cx, z - cz)); const BS = new THREE.Sphere(new THREE.Vector3(cx, 2, cz), rad + 9);
-  src.traverse(o => { if (!o.isMesh || !o.geometry || !shown(o) || o.material.transparent || (o.material.isMeshBasicMaterial)) return; const geo = o.geometry.clone(); geo.boundingSphere = BS;
-    const im = new THREE.InstancedMesh(geo, o.material, TANKSPOTS.length);
-    TANKSPOTS.forEach(([x, z, a], i) => { TV.set(x, GH(x, z) + .02, z); TQ.setFromAxisAngle(UPV, -a); TS.set(1, 1, 1); R0.compose(TV, TQ, TS); W.multiplyMatrices(R0, o.matrixWorld); im.setMatrixAt(i, W); });
-    im.castShadow = true; im.receiveShadow = true; scene.add(im); });
-  for (const [x, z, a] of TANKSPOTS) { const c = Math.abs(Math.cos(a)), sn = Math.abs(Math.sin(a)), hx = 3.6 * c + 1.8 * sn, hz = 3.6 * sn + 1.8 * c; PROPS.push([x - hx, x + hx, z - hz, z + hz]); } }
+  const TMW = TANKSPOTS.map(([x, z, a]) => { TV.set(x, GH(x, z) + .02, z); TQ.setFromAxisAngle(UPV, -a); TS.set(1, 1, 1); return new THREE.Matrix4().compose(TV, TQ, TS); });
+  const BSN = new THREE.Sphere(new THREE.Vector3(), 1), BSF = new THREE.Sphere(new THREE.Vector3(), 1), parts = [];
+  const texAvg = new Map(), avgOf = t => { if (texAvg.has(t)) return texAvg.get(t); let r = [.3, .33, .22];
+    try { const c = document.createElement("canvas"); c.width = c.height = 8; const x = c.getContext("2d"); x.drawImage(t.image, 0, 0, 8, 8); const d = x.getImageData(0, 0, 8, 8).data; let a = 0, b = 0, e = 0; for (let k = 0; k < 256; k += 4) { a += d[k]; b += d[k + 1]; e += d[k + 2]; }
+      r = [a / 16320, b / 16320, e / 16320]; if (t.encoding === THREE.sRGBEncoding) r = r.map(v => Math.pow(v, 2.2)); } catch (e) {} texAvg.set(t, r); return r; };
+  const FP = [], FN = [], FC = [], V = new THREE.Vector3(), NM = new THREE.Matrix3();
+  src.traverse(o => { if (!o.isMesh || !o.geometry || !shown(o) || o.material.transparent || o.material.isMeshBasicMaterial) return; const m = o.material;
+    const geo = o.geometry.clone(); geo.boundingSphere = BSN; const im = new THREE.InstancedMesh(geo, m, N); im.count = 0; im.visible = false; im.frustumCulled = true; im.castShadow = im.receiveShadow = true; scene.add(im);
+    parts.push({im, mats: TMW.map(M => new THREE.Matrix4().multiplyMatrices(M, o.matrixWorld))});
+    // the far mesh: this part in tank space, its colour (vertex colours, or the texture's average) baked in, heavy parts simplified
+    const s = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry, P = s.attributes.position, C = m.vertexColors && s.attributes.color, base = m.map ? avgOf(m.map) : [1, 1, 1], mc = m.color;
+    const t = new THREE.BufferGeometry(), pa = new Float32Array(P.count * 3), ca = new Float32Array(P.count * 3);
+    for (let k = 0; k < P.count; k++) { V.fromBufferAttribute(P, k).applyMatrix4(o.matrixWorld); pa[k * 3] = V.x; pa[k * 3 + 1] = V.y; pa[k * 3 + 2] = V.z;
+      ca[k * 3] = (C ? C.getX(k) : 1) * base[0] * mc.r; ca[k * 3 + 1] = (C ? C.getY(k) : 1) * base[1] * mc.g; ca[k * 3 + 2] = (C ? C.getZ(k) : 1) * base[2] * mc.b; }
+    t.setAttribute("position", new THREE.BufferAttribute(pa, 3)); t.setAttribute("color", new THREE.BufferAttribute(ca, 3));
+    let r = P.count > 1500 ? decimateGeo(t, 0, P.count > 9000 ? .24 : .15) : null; if (r) r = r.toNonIndexed(); else { t.computeVertexNormals(); r = t; }
+    const rp = r.attributes.position, rn = r.attributes.normal, rc = r.attributes.color; for (let k = 0; k < rp.count; k++) { FP.push(rp.getX(k), rp.getY(k), rp.getZ(k)); FN.push(rn.getX(k), rn.getY(k), rn.getZ(k)); FC.push(rc.getX(k), rc.getY(k), rc.getZ(k)); } });
+  const fg = new THREE.BufferGeometry(); fg.setAttribute("position", new THREE.Float32BufferAttribute(FP, 3)); fg.setAttribute("normal", new THREE.Float32BufferAttribute(FN, 3)); fg.setAttribute("color", new THREE.Float32BufferAttribute(FC, 3)); fg.boundingSphere = BSF;
+  const FAR = new THREE.InstancedMesh(fg, new THREE.MeshStandardMaterial({vertexColors: true, roughness: .78, metalness: .05}), N); FAR.frustumCulled = true; FAR.castShadow = FAR.receiveShadow = true; scene.add(FAR);
+  for (const [x, z, a] of TANKSPOTS) { const c = Math.abs(Math.cos(a)), sn = Math.abs(Math.sin(a)), hx = 3.6 * c + 1.8 * sn, hz = 3.6 * sn + 1.8 * c; PROPS.push([x - hx, x + hx, z - hz, z + hz]); }
+  const sphereOf = (list, S) => { if (!list.length) return; let cx = 0, cz = 0; for (const i of list) { cx += TANKSPOTS[i][0]; cz += TANKSPOTS[i][1]; } cx /= list.length; cz /= list.length; let rad = 0; for (const i of list) rad = Math.max(rad, Math.hypot(TANKSPOTS[i][0] - cx, TANKSPOTS[i][1] - cz)); S.center.set(cx, 2, cz); S.radius = rad + 7; };
+  const near = [], far = []; let key = "", tq = 0;
+  // every quarter second: which tanks are near the camera; the detailed parts are drawn for those, the simple mesh for the rest
+  function frame(dt, force) { tq -= dt; if (tq > 0 && !force) return; tq = .25;
+    const cx = cam.position.x, cz = cam.position.z, R2 = QUAL.tankNear * QUAL.tankNear; near.length = far.length = 0;
+    for (let i = 0; i < N; i++) { const dx = TANKSPOTS[i][0] - cx, dz = TANKSPOTS[i][1] - cz; (dx * dx + dz * dz < R2 ? near : far).push(i); }
+    const k = near.join(","); if (k === key && !force) return; key = k;
+    for (const P of parts) { P.im.count = near.length; P.im.visible = near.length > 0; for (let n = 0; n < near.length; n++) P.im.setMatrixAt(n, P.mats[near[n]]); P.im.instanceMatrix.needsUpdate = true; }
+    FAR.count = far.length; FAR.visible = far.length > 0; for (let n = 0; n < far.length; n++) FAR.setMatrixAt(n, TMW[far[n]]); FAR.instanceMatrix.needsUpdate = true;
+    sphereOf(near, BSN); sphereOf(far, BSF); }
+  frame(0, true);
+  return {frame, parts, FAR, near, far}; })();
 
 // every parked vehicle in one mesh
 putP(scene, PARKED, true, 0);
@@ -4450,17 +4552,20 @@ function projFrame(dt) {
 
 // ---------------- per frame ----------------
 let garNight = -1;
+const GCARS = [];
 function garFrame(dt) {
   const night = typeof tod !== "undefined" ? (tod === 2 ? 1 : tod === 1 ? .5 : 0) : 0;
   if (night !== garNight) { garNight = night; WINLIT.visible = night > 0; WINLIT.material.color.setRGB(.85 * night + .1, .72 * night + .08, .45 * night + .05); GLOWS.material.opacity = night * .95; POOLS.material.opacity = night * .55; }
   CAMLED.material.color.setRGB(night && (Math.floor(TT * 1.5) % 2) ? 1 : .25, 0, 0);
   // the barriers rise for the cars coming in or going out; the sentries salute the commanders
-  const cars = typeof CARS !== "undefined" ? Object.values(CARS).filter(c => c.g.visible) : [];
-  const near = cars.some(c => Math.abs(c.z - MAINGATE.z) < 9 && c.x > MAINGATE.x - 30 && c.x < MAINGATE.x + 22);
+  if (!GCARS.length && typeof CARS !== "undefined") for (const k in CARS) GCARS.push(CARS[k]); const cars = GCARS;
+  let near = false; for (const c of cars) if (c.g.visible && Math.abs(c.z - MAINGATE.z) < 9 && c.x > MAINGATE.x - 30 && c.x < MAINGATE.x + 22) near = true;
   MGATE.a += ((near ? 1 : 0) - MGATE.a) * Math.min(1, dt * 2.4); for (const A of MGATE.arms) A.p.rotation.x = A.dir * MGATE.a * Math.PI * .47;
-  const boss = cars.find(c => (c === CARS.levent || c === CARS.ufuk) && Math.abs(c.x - MAINGATE.x) < 18 && Math.abs(c.z - MAINGATE.z) < 9);
-  for (const g of GSENT) { locoSoldier(g.S, 0, dt); if (boss) g.sal = 2.4; if (g.sal > 0) { g.sal -= dt; salutePose(g.S); } }
-  trafficFrame(dt); vehLightsFrame(TT, dt); projFrame(dt);
+  let boss = null; for (const c of cars) if (c.g.visible && (c === CARS.levent || c === CARS.ufuk) && Math.abs(c.x - MAINGATE.x) < 18 && Math.abs(c.z - MAINGATE.z) < 9) boss = c;
+  for (const g of GSENT) { if (boss) g.sal = 2.4; g.acc = (g.acc || 0) + dt; const d = Math.hypot(g.S.root.position.x - cam.position.x, g.S.root.position.z - cam.position.z);
+    if (g.acc < (d < 40 ? 0 : d < 90 ? .1 : .3)) { if (g.sal > 0) g.sal -= dt; continue; }
+    locoSoldier(g.S, 0, g.acc); g.acc = 0; if (g.sal > 0) { g.sal -= dt; salutePose(g.S); } }
+  trafficFrame(dt); vehLightsFrame(TT, dt); projFrame(dt); TANKS.frame(dt);
 }
 UPD.push(garFrame);
 window.__hs.gar = {GN, GE, gRoute, TANKSPOTS, SPORT, OBST, RNG, DRC, TRAFFIC, rangeFront, courseFront, projVisuals, HOMES};
@@ -4517,7 +4622,7 @@ const CHAIRS = [[-1.95, 0, 0], [-.9, -.86, Math.PI / 2], [0, -.86, Math.PI / 2],
   for (const [dx, dz] of [[-2.6, -1.9], [2.6, -1.9], [-2.6, 1.9], [2.6, 1.9]]) { s.cyl(.05, .06, 2.6, TH.x + dx, y + 1.3, TH.z + dz, 0x4a4d42, null, 8); PROPS.push([TH.x + dx - .15, TH.x + dx + .15, TH.z + dz - .15, TH.z + dz + .15]); }
   s.box(5.6, .05, 4.2, TH.x, y + 2.62, TH.z, 0x55593d);
   // the kiosk: a small container on the south side (the view east over the site stays open) with a counter, a samovar and the sign
-  const kx = TH.x, kz = TH.z + 3.75; s.box(2.4, 2.3, 1.6, kx, y + 1.15, kz, CL); s.box(1.6, .9, .08, kx, y + 1.6, kz - .82, 0x2b3c48); s.box(1.8, .05, .5, kx, y + 1.05, kz - 1.05, 0x8a7458);
+  const kx = TH.x, kz = TH.z + 3.75; s.box(2.4, 2.3, 1.6, kx, y + 1.15, kz, CL); CAMBOX.push([kx - 1.3, kx + 1.3, y - .5, y + 2.45, kz - .9, kz + .9]); s.box(1.6, .9, .08, kx, y + 1.6, kz - .82, 0x2b3c48); s.box(1.8, .05, .5, kx, y + 1.05, kz - 1.05, 0x8a7458);
   s.cyl(.14, .16, .45, kx - .45, y + 1.3, kz - 1.05, 0xd2d4d6, null, 12); s.cyl(.05, .05, .1, kx - .45, y + 1.57, kz - 1.05, 0x2a2a2a, null, 8);       // samovar
   for (let k = 0; k < 6; k++) s.cyl(.02, .018, .08, kx + .1 + k * .1, y + 1.12, kz - 1.05, 0xb5501c, null, 8);
   PROPS.push([TH.x - 1.75, TH.x + 1.75, TH.z - .62, TH.z + .62], [kx - 1.3, kx + 1.3, kz - .9, kz + .9]);
@@ -4537,6 +4642,24 @@ for (const o of OFFS) {
   if (o.d.key === "furkan" && PLAYER) { o.S = PLAYER; continue; }
   o.S = mkOfficer(o.d.key, hScale(o.d)); if (!o.S) continue; scene.add(o.S.root);
 }
+// officers by distance: the heavy meshes (heads, body) in three detail levels, picked by the distance from the camera
+const OLOD = [], OLODC = new Map(), OLV = new THREE.Vector3();
+const lodOf = (g, n, fr, max) => { let lo = null; for (const f of fr) { lo = decimateGeo(g, f); if (lo.index.count / 3 < n * max) break; } lo.boundingSphere = g.boundingSphere; return lo; };
+function offLodBuild(S) { if (!S || S.lod) return; const L = [];
+  S.root.traverse(q => { if (!q.isMesh || !q.geometry || q.isInstancedMesh || q.material.transparent) return; const g = q.geometry, n = (g.index ? g.index.count : g.attributes.position.count) / 3;
+    if (q.isSkinnedMesh && !q.frustumCulled) { g.computeBoundingSphere(); g.boundingSphere.radius += .8; q.frustumCulled = true; }   // scanned heads: culled like the rest, the sphere a little larger for the moves
+    if (n < 3000) return; if (!g.boundingSphere) g.computeBoundingSphere(); let e = OLODC.get(g.uuid);
+    if (!e) { g.computeBoundingBox(); const b = g.boundingBox, sz = Math.max(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z);
+      // hair cards (alpha-tested) only in the far level; tiny parts (lashes, teeth) almost gone in both
+      e = q.material.alphaTest > 0 ? [g, g, lodOf(g, n, [.05, .08, .12], .3)] : sz < .12 ? [g, lodOf(g, n, [.05], 1), lodOf(g, n, [.12], 1)] : [g, lodOf(g, n, [.016, .022, .03], .5), lodOf(g, n, [.035, .055, .085, .12], .2)];
+      OLODC.set(g.uuid, e); }
+    L.push({q, g: e}); });
+  S.lod = {L, lvl: 0}; OLOD.push(S); }
+for (const o of OFFS) offLodBuild(o.S);
+function offLodFrame() { const T = QUAL.offLod, T0 = T * .45;
+  for (const S of OLOD) { if (!S.root.visible) continue; S.root.getWorldPosition(OLV); const d = OLV.distanceTo(cam.position), c = S.lod.lvl, h = 1;
+    const lvl = d < T0 - (c > 0 ? h : -h) ? 0 : d < T - (c > 1 ? h : -h) ? 1 : 2; if (lvl === c) continue;
+    S.lod.lvl = lvl; for (const e of S.lod.L) e.q.geometry = e.g[lvl]; } }
 let CUR = OFFM.furkan;                        // the officer you play
 const isPlayer = o => o === CUR;
 const chairOf = o => o.chair >= 0 ? CHAIRS[o.chair] : null;
@@ -4551,13 +4674,12 @@ function tablePose(S, talk, T) {
   else { armDirs(S, "Right", [-.25, -.55, .78], [-.08, -.08, 1]); armDirs(S, "Left", [.25, -.55, .78], [.08, -.08, 1]); }
   curl(S, "Left", .35); curl(S, "Right", .35);
 }
-const LKV = new THREE.Vector3(), LKH = new THREE.Vector3();
+const LKV = new THREE.Vector3(), LKH = new THREE.Vector3(), LKD = new THREE.Vector3(), LKF = new THREE.Vector3(), LKU = new THREE.Vector3(), LKT = new THREE.Vector3();
 function lookAtHead(S, target, k) { // turn neck and head towards a world point
   if (!target) return; const B = S.bones; if (!B.Head || !B.Neck) return; S.root.updateMatrixWorld(true);
-  B.Head.getWorldPosition(LKH); LKV.copy(target).sub(LKH); LKV.y *= .5; if (LKV.lengthSq() < 1e-4) return; LKV.normalize();
-  const f = dC(S, 0, 0, 1, new THREE.Vector3()); if (f.dot(LKV) < -.2) return;          // not over the shoulder
-  LKV.lerp(f, 1 - k).normalize(); aimBone(B.Neck, B.Head, dC(S, 0, 1, 0, new THREE.Vector3()).multiplyScalar(.9).add(LKV.clone().multiplyScalar(.25)).normalize());
-  const hb = B.Head; hb.getWorldPosition(LKH); const tip = new THREE.Vector3(); (B.HeadTop_End || hb).getWorldPosition(tip);
+  LKT.copy(target); B.Head.getWorldPosition(LKH); LKD.copy(LKT).sub(LKH); LKD.y *= .5; if (LKD.lengthSq() < 1e-4) return; LKD.normalize();
+  const f = dC(S, 0, 0, 1, LKF); if (f.dot(LKD) < -.2) return;          // not over the shoulder
+  LKD.lerp(f, 1 - k).normalize(); aimBone(B.Neck, B.Head, dC(S, 0, 1, 0, LKU).multiplyScalar(.9).addScaledVector(LKD, .25).normalize());
 }
 // walking somewhere: the hill's steps and ramp and the site gate are the ways between the areas; long walks across the garrison follow the roads
 const PORT = {stTop: [-13.5, 24.2], stBot: [-13.5, 43], rpTop: [-36, 6], rpBot: [-87, 6], gOut: [-3.6, 53], gIn: [5.8, 53]};
@@ -4789,7 +4911,7 @@ const nearT = (o, r) => !!o && Math.hypot(o.x - TH.x, o.z - TH.z) < (r || 7);
 // lines play one after another; a line whose speaker is no longer there is skipped
 function playSeq(seq, done) {
   const step = () => { while (seq.length) { const [o, text, dur, cond] = seq.shift(); if (!o || (!o.all && !o.S) || (cond && !cond())) continue;
-      if (o.all) { const who = OFFS.filter(q => q.S && q.st === "line" && !isPlayer(q)); if (!who.length) continue; who.forEach((q, i) => say(q, text, dur)); } else say(o, text, dur);
+      if (o.all) { const who = OFFS.filter(q => q.S && !isPlayer(q) && (q.st === "line" || (BRIEF.on && q.st === "seat" && !q.d.visitor && q !== BRIEF.lead))); if (!who.length) continue; who.forEach((q, i) => say(q, text, dur)); } else say(o, text, dur);
       gTimeout(step, (dur + .25) * 1000); return; } if (done) done(); };
   step();
 }
@@ -4909,7 +5031,7 @@ function autoFrame(dt) { // true while the game walks you
   if (AUTO.arrived) { FOOT.spd = 0; FOOT.a += wrapA(AUTO.face - FOOT.a) * Math.min(1, dt * 6); }
   FOOT.y += (footGround(FOOT.x, FOOT.z) - FOOT.y) * Math.min(1, dt * 12); FOOT.vx = FOOT.vz = 0;
   S.root.position.set(FOOT.x, FOOT.y, FOOT.z); headingQ(FOOT.a, S.root.quaternion); locoSoldier(S, FOOT.spd, dt);
-  if (AUTO.arrived && RECV.salute) salutePose(S); else if (AUTO.arrived && MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV.clone(), .7); }
+  if (AUTO.arrived && RECV.salute) salutePose(S); else if (AUTO.arrived && MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); }
   return true;
 }
 function carCamFrame(dt) { // the raid on camera: first the black car pulling up, then the commander in front of the line
@@ -4950,6 +5072,11 @@ const DRONE = (() => { const g = new THREE.Group(), s = SP(); s.box(.36, .09, .3
 
 // ---------------- each officer that is not you ----------------
 const MCH = new THREE.Vector3();
+const LPV = {x: 0, y: 0, z: 0}, GESTS = ["sagGos", "ileri", "ok", "clip"];
+function talkerAt(o) { for (const q of OFFS) if (q !== o && q.talk > 0 && q.S && q.S.root.visible && Math.hypot(q.x - TH.x, q.z - TH.z) < 6) return q; return null; }
+// far from the camera an officer's bones are updated less often (the walking, the jobs and the talk go on every frame)
+function animTick(o, dt) { o.acc = (o.acc || 0) + dt; const d = Math.hypot(o.x - cam.position.x, o.z - cam.position.z), th = QUAL.offLod;
+  const iv = d < th * 1.6 ? 0 : d < th * 3.5 ? .09 : .2; if (o.acc < iv) return false; o.adt = Math.min(.25, o.acc); o.acc = 0; return true; }
 function offFrame(dt, T) {
   let droneOn = false;
   for (const o of OFFS) {
@@ -4959,9 +5086,8 @@ function offFrame(dt, T) {
       const c = chairOf(o); if (c && !c.occ) seatAt(o, c); else { o.x = TH.x + 3; o.z = TH.z + 3; o.st = "stand"; } o.supT = 40 + Math.random() * 120;
     }
     if (o.st === "away" || o.st === "car") continue;
-    if (o.st === "walk") { if (stepWalk(o, dt)) { const f = o.next; o.next = null; o.st = "stand"; if (f) f(); } locoSoldier(S, o.spd, dt); continue; }
-    if (o.st === "seat") { S.mixer.update(dt); tablePose(S, o.talk, T);
-      const sp = OFFS.find(q => q !== o && q.talk > 0 && q.S && q.S.root.visible && Math.hypot(q.x - TH.x, q.z - TH.z) < 6); if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV.clone(), .7); }
+    if (o.st === "walk") { if (stepWalk(o, dt)) { const f = o.next; o.next = null; o.st = "stand"; if (f) f(); } if (animTick(o, dt)) locoSoldier(S, o.spd, o.adt); continue; }
+    if (o.st === "seat") { if (animTick(o, dt)) { S.mixer.update(o.adt); tablePose(S, o.talk, T); const sp = talkerAt(o); if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); } }
       if (o === MEET.visit) { o.t -= dt; if (o.t <= 0) endVisit(); continue; }
       // now and then a commander gets up to look in on his job (never everybody at once, never in the middle of his own conversation)
       if (!o.d.visitor && !MEET.visit && !MEET.boss && (typeof isWork !== "function" || isWork())) { o.supT = (o.supT == null ? 60 : o.supT) - dt;
@@ -4971,15 +5097,15 @@ function offFrame(dt, T) {
       continue; }
     if (o.st === "standby") { // on their feet next to the chair (a commander came)
       const c = chairOf(o) || CHAIRS[0]; o.x = c.x - Math.cos(c.a) * .45; o.z = c.z - Math.sin(c.a) * .45; o.a = c.a; S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion);
-      locoSoldier(S, 0, dt); const boss = MEET.boss || MEET.visit; if (boss && boss.S && boss.S.root.visible) { boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV.clone(), .8); } continue; }
+      if (animTick(o, dt)) { locoSoldier(S, 0, o.adt); const boss = MEET.boss || MEET.visit; if (boss && boss.S && boss.S.root.visible) { boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .8); } } continue; }
     if (o.st === "work") { // at his job: Furkan digs with the soldiers, Boran now and then; the others watch, point and call out
-      locoSoldier(S, 0, dt); o.t -= dt; const v = o.jobV, lp = v ? {x: v.x, y: (v.y || 0) + 1.8, z: v.z} : o.jobP;
+      const tick = animTick(o, dt); if (tick) locoSoldier(S, 0, o.adt); o.t -= dt; const v = o.jobV; let lp = o.jobP; if (v) { lp = LPV; LPV.x = v.x; LPV.y = (v.y || 0) + 1.8; LPV.z = v.z; }
       if (lp) { o.a += wrapA(Math.atan2(lp.z - o.z, lp.x - o.x) - o.a) * Math.min(1, dt * 2); headingQ(o.a, S.root.quaternion); }
       const dig = o.d.key === "furkan" || (o.d.key === "boran" && (T + o.d.h * 7) % 40 < 9);
       if (dig) { if (!o.tool) { o.tool = TOOLM.kurek.clone(true); scene.add(o.tool); } o.tool.visible = true; S.root.position.set(o.x, footGround(o.x, o.z), o.z);
-        toolPose(S, o.tool, kfAt(KF.kurek, ((T * .85 + o.d.h * 3) % SWDUR.kurek) / SWDUR.kurek), true, "kurek"); }
-      else { if (o.tool) o.tool.visible = false; const gs = ["sagGos", "ileri", "ok", "clip"][Math.floor((T + o.d.h * 5) / 14) % 4];
-        if ((T + o.d.h * 5) % 14 < 2.4) gesture(S, gs, T * 3); else if (lp) { MCH.set(lp.x, lp.y != null ? lp.y : footGround(lp.x, lp.z) + 1.2, lp.z); lookAtHead(S, MCH, .6); } }
+        if (tick) toolPose(S, o.tool, kfAt(KF.kurek, ((T * .85 + o.d.h * 3) % SWDUR.kurek) / SWDUR.kurek), true, "kurek"); }
+      else { if (o.tool) o.tool.visible = false; const gs = GESTS[Math.floor((T + o.d.h * 5) / 14) % 4];
+        if (!tick) {} else if ((T + o.d.h * 5) % 14 < 2.4) gesture(S, gs, T * 3); else if (lp) { MCH.set(lp.x, lp.y != null ? lp.y : footGround(lp.x, lp.z) + 1.2, lp.z); lookAtHead(S, MCH, .6); } }
       o.sayT = (o.sayT || 5) - dt;
       if (o.sayT <= 0) { o.sayT = 13 + Math.random() * 13; const L0 = v && v.type === "tr" ? SUPL.nakliye : SUPL[o.site] || SUPL.cukur; if (FOOT.on && Math.hypot(FOOT.x - o.x, FOOT.z - o.z) < 30) say(o, pick(L0), 2.4); }
       if (o.d.key === "orhan") { droneOn = true;
@@ -4988,11 +5114,11 @@ function offFrame(dt, T) {
       if (o.t <= 0 && !MEET.boss && !(typeof CATCH !== "undefined" && CATCH.on && o.d.key === "ahmet")) goBack(o); continue; }
     if (o.st === "line") { // in the line for the brigade commander
       const form = !RECV.on && o.lineFace != null && typeof FORM !== "undefined" && FORM.on;
-      locoSoldier(S, 0, dt); o.a += wrapA((form ? o.lineFace : RECV.face) - o.a) * Math.min(1, dt * 6); S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion);
-      if (form) { if (FORM.salute) salutePose(S); continue; }
-      if (RECV.salute) salutePose(S); else if (MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV.clone(), .7); }
+      const tick = animTick(o, dt); if (tick) locoSoldier(S, 0, o.adt); o.a += wrapA((form ? o.lineFace : RECV.face) - o.a) * Math.min(1, dt * 6); S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion);
+      if (form) { if (FORM.salute && tick) salutePose(S); continue; }
+      if (!tick) {} else if (RECV.salute) salutePose(S); else if (MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); }
       if (!RECV.on) { o.st = "stand"; o.t = 1; } continue; }
-    if (o.st === "stand") { locoSoldier(S, 0, dt); o.t -= dt; if (o.saluteT > 0) { o.saluteT -= dt; salutePose(S); }
+    if (o.st === "stand") { if (animTick(o, dt)) locoSoldier(S, 0, o.adt); o.t -= dt; if (o.saluteT > 0) { o.saluteT -= dt; salutePose(S); }
       if (!o.d.visitor && o.t <= 0) goBack(o); continue; }
   }
   DRONE.visible = droneOn;
@@ -5027,7 +5153,7 @@ function seatedFrame(dt, T) {
   if (autoFrame(dt)) return true;
   if (!SEAT.on) return false; const S = PLAYER; S.mixer.update(dt); tablePose(S, CUR.talk, T);
   if (keys.KeyW || keys.KeyS || keys.KeyA || keys.KeyD || (L.on && Math.hypot(L.x, L.y) > .5)) { standUp(); return false; }
-  const sp = OFFS.find(q => q.talk > 0 && q.S && q.S.root.visible && !isPlayer(q) && Math.hypot(q.x - TH.x, q.z - TH.z) < 6); if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV.clone(), .6); }
+  const sp = OFFS.find(q => q.talk > 0 && q.S && q.S.root.visible && !isPlayer(q) && Math.hypot(q.x - TH.x, q.z - TH.z) < 6); if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .6); }
   return true;
 }
 function playerArrival() {}
@@ -5124,7 +5250,7 @@ function cineFrame(dt) { // returns true while the close-up runs (it owns the ca
 function charsFrame(dt, T) {
   if (CUR && FOOT.on) { CUR.x = FOOT.x; CUR.z = FOOT.z; CUR.a = FOOT.a; }
   if (CUR && CUR.talk > 0 && !SEAT.on) CUR.talk = Math.min(CUR.talk, .01);
-  timersFrame(dt); offFrame(dt, T); meetFrame(dt, T); talkFrame(dt);
+  timersFrame(dt); offFrame(dt, T); meetFrame(dt, T); talkFrame(dt); offLodFrame();
 }
 window.__hs.offs = OFFS; window.__hs.th = TH; window.__hs.switchTo2 = k => switchOfficer(OFFM[k]); window.__hs.meet = MEET; window.__hs.visit = () => startVisit(OFFM.ufuk); window.__hs.boss = () => startBoss(OFFM.levent);
 window.__hs.startOfficer = k => startOfficer(OFFM[k]); window.__hs.cars = CARS; window.__hs.sendToSite = sendToSite; window.__hs.dialogs = DIALOGS; window.__hs.seat = SEAT; window.__hs.cur = () => CUR;
@@ -5403,7 +5529,7 @@ function saveDay() { try { localStorage.setItem("hs-tabur", JSON.stringify({day:
 // one real second is one minute of the day; the work day is about nine real minutes, the night is skipped with the day report
 const SCHED = [
   {k: "sabah", from: 420, name: "SABAH ÇAYI"},
-  {k: "ictima", from: 450, name: "İÇTİMA"},
+  {k: "ictima", from: 450, name: "GÖREV DAĞILIMI"},
   {k: "is", from: 465, name: "İŞ BAŞI"},
   {k: "ogle", from: 720, name: "ÖĞLE YEMEĞİ"},
   {k: "is", from: 780, name: "İŞ BAŞI"},
@@ -5458,25 +5584,43 @@ function onBlock(b, prev) {
   else if (k === "cay") { toast("17:30 · MESAİ BİTTİ · herkes çay ocağına", 2.6); allToTea(true); }
   else if (k === "aksam") { toast("18:30 · AKŞAM YEMEĞİ · tabldotta lahmacun", 2.8); say(OFFM.ahmet.S && !isPlayer(OFFM.ahmet) ? OFFM.ahmet : regulars()[0], "Arkadaşlar, lahmacun 18.30'da tabldotta!", 2.6); let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => toMess(oo), 1500 + (i++) * 300); } }
   else if (k === "sohbet") { toast("19:30 · ÇAY OCAĞI MUHABBETİ", 2.2); let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => fromMess(oo, false), (i++) * 400); } }
-  else if (k === "gece") { let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => toMess(oo), (i++) * 300); } say(OFFM.azizhan && !isPlayer(OFFM.azizhan) ? OFFM.azizhan : regulars()[0], "Hadi arkadaşlar, yarın erken içtima var. İyi geceler.", 3); gTimeout(dayReport, 4500); }
+  else if (k === "gece") { let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => toMess(oo), (i++) * 300); } say(OFFM.azizhan && !isPlayer(OFFM.azizhan) ? OFFM.azizhan : regulars()[0], "Hadi arkadaşlar, yarın 07.30'da masada görev dağılımı var. İyi geceler.", 3); gTimeout(dayReport, 4500); }
 }
-// ---- the morning roll call in front of the flag: by rank, the senior reads the day's targets, then everyone to his job ----
+// ---- 07:30 the day's tasks at the table: Azizhan Üsteğmen, the coordinator, gives every commander his job; they answer; then everyone to his site.
+// The clock waits while he talks. (FORM is the old line-up in front of the flag; the raid code still asks for it.)
 const FORM = {on: false, salute: false, face: Math.PI / 2};
+const BRIEF = {on: false};
+function toTable() { // you are walked to your chair and sit down
+  let c = chairOf(CUR); if (!c || (c.occ && c.occ !== CUR) || (c.i === 0 && CUR.d.rank < 3)) c = CHAIRS.find(q => !q.occ && q.i !== 0); if (!c) return;
+  autoWalk(c.x - Math.cos(c.a) * .7, c.z - Math.sin(c.a) * .7, c.a);
+  const wait = () => { if (!AUTO.on) return; if (AUTO.arrived) { AUTO.on = false; updCtx(); if (!c.occ) sitDown(c, true); return; } gTimeout(wait, 250); }; gTimeout(wait, 250); }
 function rollCall() {
-  DAY.rolled = true;
-  const all = OFFS.filter(o => !o.d.visitor && o.S).sort((u, w) => w.d.rank - u.d.rank || (u.d.cls || 0) - (w.d.cls || 0));
-  const lead = all.find(o => !isPlayer(o)), row = all.filter(o => o !== lead); FORM.on = true; FORM.lead = lead;
-  const fx = TERFLAG[0], fz = TERFLAG[1];             // the flag on the hill: the row faces it, the senior stands in front of it
-  if (SEAT.on) standUp();
-  row.forEach((o, i) => { const x = fx - 6, z = fz - 4.3 + i * 1.08; if (isPlayer(o)) { if (FOOT.on && !FOOT.seq) autoWalk(x, z, 0); return; }
-    o.site = null; leaveChair(o); o.S.root.visible = true; if (o.st === "meal") { o.x = MESS.x; o.z = MESS.z; } o.lineFace = 0; walkTo(o, x, z, () => { o.st = "line"; o.lineFace = 0; }, true); });
-  toast("07:30 · İÇTİMA · tepedeki bayrağın önünde rütbe sırasıyla", 2.6);
-  if (lead) { lead.site = null; leaveChair(lead); lead.lineFace = Math.PI; walkTo(lead, fx - 2.2, fz, () => { lead.st = "line"; lead.lineFace = Math.PI; }, true); }
-  const g = GOAL, tip = pick(["Arıza olursa hemen telsizden bildirin.", "İş güvenliği önce gelir, baretler takılı olsun.", "Komutanın bugün sahaya gelme ihtimali var, gevşemek yok!", "Kamyonlar boş beklemesin, sefer sayısı önemli."]);
-  playSeqAt(5, [[lead, "Bölük, dikkat!", 1.8], [lead, "Günaydın arkadaşlar!", 1.8], ["all", "Sağ ol!", 1.4], [lead, `Bugün hedef: sığınakta ${g.tunnel} metre, ${g.trips} kamyon seferi.`, 3.2], [lead, tip, 2.8], [lead, "Herkes görev başına! Kolay gelsin!", 2.4]], () => {
-    FORM.on = false; for (const o of OFFS) o.lineFace = null; if (AUTO.on && !RECV.on) { AUTO.on = false; updCtx(); CAM.yaw = FOOT.a + Math.PI; camSnap = true; }
-    let i = 0; for (const o of OFFS) if (!o.d.visitor && o.S && !isPlayer(o)) { const oo = o; gTimeout(() => { if (!sendToSite(oo.d.key, null, false, 30 + Math.random() * 50)) goBack(oo); }, (i++) * 250); }
-    if (typeof OPS !== "undefined") OPS.pause = false; });
+  DAY.rolled = true; BRIEF.on = true;
+  const lead = OFFM.azizhan && OFFM.azizhan.S ? OFFM.azizhan : regulars()[0], O = OFFM, g = GOAL; BRIEF.lead = lead;
+  BRIEF.hush0 = MEET.hush; MEET.hush = true; MEET.dlg = null; for (const o of OFFS) if (o.talk > 0 && !isPlayer(o)) o.talk = .01;   // the table's chatter stops while he talks
+  for (const o of regulars()) { if (o.st === "seat") continue; if (o.st === "meal") { o.x = MESS.x; o.z = MESS.z; o.S.root.visible = true; o.st = "stand"; } o.site = null; o.next = null; goBack(o); }
+  if (!SEAT.on && FOOT.on && !FOOT.seq) toTable();
+  toast("07:30 · GÖREV DAĞILIMI · Azizhan Üsteğmen masada görevleri veriyor", 2.8);
+  const tip = pick(["Arıza olursa hemen telsizden bildirin.", "İş güvenliği önce gelir, baretler takılı olsun.", "Paşa'nın bugün sahaya gelme ihtimali var, gevşemek yok!", "Kamyonlar boş beklemesin, sefer sayısı önemli."]);
+  playSeqAt(3, [
+    [lead, "Arkadaşlar günaydın. Tabur olarak bugünün görev dağılımını yapıyorum.", 3],
+    ["all", "Günaydın komutanım!", 1.5],
+    [lead, `Furkan, Boran: Kempar'la kapalı drone sığınağı. Hedef ${g.tunnel} metre.`, 3],
+    [O.furkan, "Emredersiniz komutanım, kürek bende!", 2],
+    [O.boran, "Emredersiniz komutanım, askerleri ben yönetirim.", 2.2],
+    [lead, "Kaan: garajdaki bunker yaşam alanı. Ekskavatör çukuru açıyor.", 2.8],
+    [O.kaan, "Emredersiniz komutanım!", 1.6],
+    [lead, "Ali: 400 metrelik atış alanı. Orhan: drone parkuru.", 2.6],
+    [O.ali, "Emredersiniz komutanım!", 1.5],
+    [O.orhan, "Emredersiniz, parkur hızlı ilerliyor.", 1.8],
+    [lead, "Ahmet: stok sahası ile yollar senden, bütün şantiyeleri de gez.", 2.8],
+    [O.ahmet, "Emredersiniz… yeter ki Paşa'ya yakalanmayayım!", 2.4],
+    [lead, `Kamyonlar bugün en az ${g.trips} sefer. Koordinasyon bende. ${tip}`, 3.4],
+    [lead, "Hadi, herkes görev başına! Kolay gelsin.", 2.2],
+    ["all", "Sağ olun komutanım!", 1.4]], () => {
+    BRIEF.on = false; MEET.hush = BRIEF.hush0 || false; if (AUTO.on && !RECV.on) { AUTO.on = false; updCtx(); CAM.yaw = FOOT.a + Math.PI; camSnap = true; }
+    let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => { if (!sendToSite(oo.d.key, null, false, 30 + Math.random() * 50)) goBack(oo); }, (i++) * 250); }
+    if (typeof OPS !== "undefined") OPS.pause = DAY.block && DAY.block.k !== "is"; });
 }
 function playSeqAt(sec, seq, done) { gTimeout(() => playSeq(seq.map(([o, t, d, c]) => o === "all" ? [{S: true, all: true}, t, d, c] : [o, t, d, c]), done), sec * 1000); }
 
@@ -5575,12 +5719,12 @@ function ahmetCaught() {
 }
 
 // ---------------- the clock button, the panel, the day report, the battalion's state on the menu ----------------
-const bClk = document.getElementById("bTod");
-function updClockBtn() { if (bClk && DAY.on) bClk.textContent = hhmm(DAY.t) + " ▸"; }
-if (bClk) { const nb = bClk.cloneNode(true); bClk.parentNode.replaceChild(nb, bClk); }
+{ const b0 = document.getElementById("bTod"); if (b0) b0.parentNode.replaceChild(b0.cloneNode(true), b0); }   // a fresh button: the day's clock instead of the time-of-day switch
 const bClock = document.getElementById("bTod");
+let clkTxt = "";
+function updClockBtn(force) { if (!bClock || !DAY.on) return; const t = hhmm(DAY.t) + " ▸"; if (t === clkTxt && !force) return; clkTxt = t; bClock.textContent = t; }   // the page is touched only when the minute changes
 bClock.addEventListener("click", () => { if (!DAY.on || DAY.rep) return; const i = SCHED.indexOf(DAY.block), nx = SCHED[i + 1];   // skip to the next part of the day
-  if (!nx) return; if (MEET.boss || RECV.on || FORM.on) { toast("Şu an zaman atlatılamaz", 1.4); return; } DAY.t = nx.from; toast("⏩ " + hhmm(DAY.t) + " · " + nx.name, 1.8); });
+  if (!nx) return; if (MEET.boss || RECV.on || FORM.on || BRIEF.on) { toast("Şu an zaman atlatılamaz", 1.4); return; } DAY.t = nx.from; toast("⏩ " + hhmm(DAY.t) + " · " + nx.name, 1.8); });
 const bar = (v, c) => `<div class="pb"><i style="width:${clamp(v, 0, 100).toFixed(0)}%;${c ? "background:" + c : ""}"></i></div>`;
 function dayPanel() {
   if (!DAY.on) return `<div class="mt">Tabur · GÜN ${DAY.day}</div>`;
@@ -5609,7 +5753,7 @@ function dayReport() {
 }
 function newDay() {
   repEl.hidden = true; DAY.rep = false; DAY.day++; DAY.t = 7 * 60; DAY.block = null; for (const e of DAY.ev) { scene.remove(e.mark); if (e.v) e.v.broken = false; } DAY.ev = [];
-  AUTO.on = false; FORM.on = false; seatAllNow(); if (FOOT.on && !SEAT.on) { const c = chairOf(CUR); if (c && !c.occ) sitDown(c, true); }
+  AUTO.on = false; FORM.on = false; if (BRIEF.on) { BRIEF.on = false; MEET.hush = BRIEF.hush0 || false; } seatAllNow(); if (FOOT.on && !SEAT.on) { const c = chairOf(CUR); if (c && !c.occ) sitDown(c, true); }
   planDay(); saveDay(); toast(`${DAY.day}. GÜN · sabah çayı`, 2.4);
 }
 function taburHtml() { // the battalion on the menu instead of the old company account
@@ -5645,8 +5789,8 @@ loadTexts();
 UPD.push(dt => {
   siteGateFrame(dt); if (!DAY.on) return; carFrame(TANKER, dt);
   if (DAY.rep) return;
-  DAY.t += dt; updClockBtn();
-  const m = todFor(DAY.t); if (m !== DAY.tod) { DAY.tod = m; setTOD(m); lightsByTod(m); updClockBtn(); }
+  if (!BRIEF.on) DAY.t += dt; updClockBtn();
+  const m = todFor(DAY.t); if (m !== DAY.tod) { DAY.tod = m; setTOD(m); lightsByTod(m); updClockBtn(true); }
   const b = blockAt(DAY.t); if (b !== DAY.block) { const prev = DAY.block; onBlock(b, prev); }
   const P = DAY.plan; if (!P) return;
   if (isWork()) {
@@ -5660,7 +5804,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261029-1017";
+const BUILD = "20261029-1257";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -5889,18 +6033,21 @@ const CROWD = (() => {
 
   // ---------------- drawing: pick the pose for every agent, the nearest ones as real soldiers, the rest instanced by distance ----------------
   const FR = new THREE.Frustum(), PM = new THREE.Matrix4(), SPH = new THREE.Sphere(new THREE.Vector3(), 1.6), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), ONE = new THREE.Vector3(1, 1, 1), P3 = new THREE.Vector3(), MM = new THREE.Matrix4();
+  const PIW = [], PIR = []; for (let k = 0; k < WALKN; k++) PIW.push(PI["walk" + k]); for (let k = 0; k < RUNN; k++) PIR.push(PI["run" + k]);   // no string building per agent and frame
   function poseOf(g) { switch (g.mode) {
-    case "walk": return PI["walk" + (Math.floor(g.ph * WALKN) % WALKN)]; case "run": return PI["run" + (Math.floor(g.ph * RUNN) % RUNN)];
+    case "walk": return PIW[Math.floor(g.ph * WALKN) % WALKN]; case "run": return PIR[Math.floor(g.ph * RUNN) % RUNN];
     case "salute": return PI.salute; case "sit": return PI.sit; case "bend0": return PI.bend0; case "bend1": return PI.bend1; case "point": return PI.point; default: return PI.idle; } }
+  const NEAR = [], byDist = (a, b) => a.dist - b.dist;
   function drawFrame(dt) {
     cam.updateMatrixWorld(); PM.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); FR.setFromProjectionMatrix(PM);
     const cx = cam.position.x, cz = cam.position.z;
     for (const row of IM) for (const im of row) im.count = 0;
     // the nearest few to the real soldiers
-    const near = []; for (const g of L) { g.near = null; if (g.hidden) continue; const d = Math.hypot(g.x - cx, g.z - cz); g.dist = d; if (d < NEARR) near.push(g); }
-    near.sort((a, b) => a.dist - b.dist); near.length = Math.min(near.length, NEARN);
-    for (const p of POOL) if (p.ag && !near.includes(p.ag)) p.ag = null;
-    for (const g of near) { let p = POOL.find(q => q.ag === g); if (!p) { p = POOL.find(q => !q.ag); if (!p) continue; p.ag = g; } g.near = p; }
+    const NR = Math.min(NEARR, QUAL.nearR), NN = Math.min(NEARN, QUAL.pool);   // the graphics level sets how many real soldiers walk near you
+    const near = NEAR; near.length = 0; for (const g of L) { g.near = null; g.isNear = false; if (g.hidden) continue; const dx = g.x - cx, dz = g.z - cz, d = Math.sqrt(dx * dx + dz * dz); g.dist = d; if (d < NR) near.push(g); }
+    near.sort(byDist); near.length = Math.min(near.length, NN); for (const g of near) g.isNear = true;
+    for (const p of POOL) if (p.ag && !p.ag.isNear) p.ag = null;
+    for (const g of near) { let p = null; for (const q of POOL) if (q.ag === g) { p = q; break; } if (!p) { for (const q of POOL) if (!q.ag) { p = q; break; } if (!p) continue; p.ag = g; } g.near = p; }
     for (const p of POOL) { const g = p.ag, R = p.S.root; if (!g) { R.visible = false; continue; } R.visible = true;
       const y = g.y != null ? g.y : heightAt(g.x, g.z); R.position.set(g.x, y + (g.mode === "sit" ? .5 - p.S.hipY : 0), g.z); headingQ(g.a, R.quaternion);
       if (g.mode === "sit") { p.S.mixer.update(dt); seatPose(p.S, null, null, false); }
@@ -5908,9 +6055,10 @@ const CROWD = (() => {
         if (g.mode === "bend0" || g.mode === "bend1") { crouch(p.S, g.mode === "bend0" ? .3 : .22); aimBone(p.S.bones.Spine, p.S.bones.Neck, dC(p.S, 0, .6, .8)); armDirs(p.S, "Left", [.15, -.6, .78], [.05, -.9, .4]); armDirs(p.S, "Right", [-.15, -.6, .78], [-.05, -.9, .4]); }
         else if (g.mode === "salute") salutePose(p.S); else if (g.mode === "point") gesture(p.S, "sagGos", 0); } }
     // the rest, instanced
-    for (const g of L) { if (g.hidden || g.near) continue; const d = g.dist; if (d > 260) continue;
+    const FAR = QUAL.far, L0 = QUAL.lod0, L1 = QUAL.lod1; for (const im of IM[0]) im.castShadow = QUAL.crowdShadow;
+    for (const g of L) { if (g.hidden || g.near) continue; const d = g.dist; if (d > FAR) continue;
       const y = g.y != null ? g.y : heightAt(g.x, g.z); SPH.center.set(g.x, y + 1, g.z); if (!FR.intersectsSphere(SPH)) continue;
-      const l = d < 45 ? 0 : d < 110 ? 1 : 2, im = IM[l][poseOf(g)]; if (im.count >= MAXN) continue;
+      const l = d < L0 ? 0 : d < L1 ? 1 : 2, im = IM[l][poseOf(g)]; if (im.count >= MAXN) continue;
       P3.set(g.x, y, g.z); Q.setFromAxisAngle(Y, Math.PI / 2 - g.a); MM.compose(P3, Q, ONE); im.setMatrixAt(im.count++, MM); }
     for (const row of IM) for (const im of row) { im.visible = im.count > 0; if (im.visible) im.instanceMatrix.needsUpdate = true; }
   }
@@ -6032,7 +6180,7 @@ function loadWorld() {
     if (S.dv.length) { const p = groundGeo.attributes.position, col = groundGeo.attributes.color;
       for (let k = 0; k < S.dv.length; k += 2) DV[S.dv[k]] = S.dv[k + 1] / 100;
       for (let k = 0; k < S.dv.length; k += 2) { const i = S.dv[k], ix = i % (WX + 1), iz = i / (WX + 1) | 0; p.setY(i, heightAt(ix, iz)); const c = Math.max(.72, 1 - DV[i] * .12); col.setXYZ(i, c * 1.04, c * .93, c * .86); }
-      p.needsUpdate = col.needsUpdate = true; groundGeo.computeVertexNormals(); }
+      p.updateRange.count = col.updateRange.count = -1; p.needsUpdate = col.needsUpdate = true; groundNormals(0, WX, 0, WZ); groundGeo.attributes.normal.updateRange.count = -1; }
     for (let k = 0; k < S.road.length; k += 2) for (let i = S.road[k]; i < S.road[k] + S.road[k + 1]; i++) { const c = roadCells[i]; if (c && c.rough) { c.rough = false; setRoad(c, i); } }
     for (const q of piles.slice()) removePile(q); for (const [x, z, a] of S.piles) if (a > .02) addPile(x, z, a);
     S.veh.forEach((s, i) => { const o = vehicles[i]; if (!o || !s) return;
@@ -6058,6 +6206,27 @@ addEventListener("pagehide", () => saveWorld(true));
 const hadSave = loadWorld(); worldReady = true;
 updProjBtn();
 window.__hs.save = saveWorld; window.__hs.load = loadWorld;
+
+// ======================= PERFORMANCE: far machines without their small parts, every shader and mesh prepared before the first frame =======================
+// small parts of the machines (lamps, handles, mirrors, bolts) are left out when they would be a few pixels on the screen;
+// they are moved to another layer, so the game's own visible flags (beacons, flashes, loads) stay untouched
+const DETL = (() => { const list = [], S = new THREE.Vector3();
+  for (const v of vehicles) { v.g.updateMatrixWorld(true); const parts = [];
+    v.g.traverse(o => { if (!o.isMesh || o.isSkinnedMesh || !o.geometry) return; const g = o.geometry; if (!g.boundingSphere) g.computeBoundingSphere(); o.getWorldScale(S); const r = g.boundingSphere.radius * Math.max(S.x, S.y, S.z); if (r < .65) parts.push({o, r, off: false}); });
+    if (parts.length) list.push({v, parts}); }
+  let t = 0;
+  function frame(dt) { t -= dt; if (t > 0) return; t = .2; const K = QUAL.detail, C = cam.position;
+    for (const L of list) { const d = L.v.g.position.distanceTo(C); for (const p of L.parts) { const off = d > p.r * K; if (off !== p.off) { p.off = off; p.o.layers.mask = off ? 4 : 1; } } } }
+  return {list, frame}; })();
+UPD.push(dt => DETL.frame(dt));
+// warm-up: one hidden render with everything switched on, so that no shader is compiled and no mesh uploaded in the middle of the game (a stutter on phones)
+(function warmUp() { try {
+  const saved = []; scene.traverse(o => { const drawn = o.isMesh || o.isPoints || o.isLine || o.isSprite; if (!drawn && o.visible) return;
+    saved.push([o, o.visible, o.frustumCulled, o.isInstancedMesh ? o.count : -1]); o.visible = true; if (drawn) { o.frustumCulled = false; if (o.isInstancedMesh && o.count === 0) o.count = 1; } });
+  sun.shadow.needsUpdate = true; renderMain(1 / 60);   // the real path (to the screen, or through the post chain): the same shader variants the game will ask for
+  for (const [o, v, fc, n] of saved) { o.visible = v; o.frustumCulled = fc; if (n >= 0) o.count = n; }
+} catch (e) { console.warn("warm-up", e); } })();
+window.__hs.detl = DETL;
 
 })().catch(e => { console.error(e); const l = document.getElementById("load"); if (l) { l.hidden = false; l.textContent = "Yükleme hatası: " + (e && e.message || e) + " · Sayfayı yenile."; } });
 </script>

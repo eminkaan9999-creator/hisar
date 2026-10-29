@@ -1717,6 +1717,7 @@ function addV(type, x, z, a) {
 // ---------------- input ----------------
 const keys = {}; const L = {x: 0, y: 0, on: false}, Rj = {x: 0, y: 0, on: false};
 const PK = {}, kd = c => keys[c] || PK[c]; // keyboard + gamepad d-pad
+const SUNDIR = new THREE.Vector3();
 const VOL = {v: .9}, SENS = {k: 1, auto: true}, UPD = [], HUDF = []; // settings + per-frame hooks of the add-on modules
 let actPressed = false, exMode = "drive";
 addEventListener("keydown", e => {
@@ -2092,7 +2093,8 @@ function update(dt, t) {
   groundT -= dt; if (groundT <= 0 && groundDirty) { groundGeo.computeVertexNormals(); groundDirty = false; groundT = .4; piles.forEach(syncPile); }
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) toastEl.classList.remove("on"); }
   // sun + shadow follow the player
-  const F = FOOT.on ? FOOT : v; sun.position.set(F.x + SUNOFF[0], SUNOFF[1], F.z + SUNOFF[2]); sun.target.position.set(F.x, 0, F.z);
+  const F = FOOT.on ? FOOT : v; cam.getWorldDirection(SUNDIR); const sl = Math.hypot(SUNDIR.x, SUNDIR.z) || 1, sk = sun.shadow.camera.right * .45, sx = F.x + SUNDIR.x / sl * sk, sz = F.z + SUNDIR.z / sl * sk;   // the shadow box sits a little ahead, where you look
+  sun.position.set(sx + SUNOFF[0], SUNOFF[1], sz + SUNOFF[2]); sun.target.position.set(sx, 0, sz);
 }
 const sign = (() => { const tx = texCanvas(512, 128, (c) => { c.fillStyle = "#1b1712"; c.fillRect(0, 0, 512, 128); c.strokeStyle = "#f2b705"; c.lineWidth = 10; c.strokeRect(5, 5, 502, 118); c.font = "700 92px Teko, Impact, sans-serif"; c.fillStyle = "#f2b705"; c.textAlign = "center"; c.fillText("TANK GARAJI", 256, 100); }); const m = new THREE.Mesh(new THREE.PlaneGeometry(8, 2), new THREE.MeshBasicMaterial({map: tx, side: THREE.DoubleSide})); m.visible = false; scene.add(m); return m; })();
 function placeSign() { let best = null, bd = 1e9; for (let i = 0; i < grid.length; i++) if (grid[i] === 2) { const gx = i % GX, gz = i / GX | 0, x = gx * CS + CS / 2, z = gz * CS + CS / 2, d = x - edgeX(z); if (d < bd) { bd = d; best = {x, z}; } } if (best) { sign.position.set(edgeX(best.z) - 1.6, ROOF + 1.6, best.z); sign.rotation.y = -Math.PI / 2; sign.visible = true; } }
@@ -2672,6 +2674,7 @@ const DPR = devicePixelRatio || 1;
 function setShadows(on, size) {
   if (R.shadowMap.enabled !== on) { R.shadowMap.enabled = on; scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); }); }
   if (sun.shadow.mapSize.x !== size) { sun.shadow.mapSize.set(size, size); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+  const ext = size >= 4096 ? 72 : size >= 2048 ? 50 : 42; Object.assign(sun.shadow.camera, {left: -ext, right: ext, top: ext, bottom: -ext}); sun.shadow.camera.updateProjectionMatrix();   // the bigger the map, the further the shadows reach (the view from the hill)
 }
 function applyGfx() {
   const g = SET.gfx;
@@ -5657,7 +5660,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261029-1015";
+const BUILD = "20261029-1017";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";

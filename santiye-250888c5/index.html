@@ -546,6 +546,8 @@ const LINC = (() => {
   return lin;
 })();
 
+;(window.__INIT || (window.__INIT = [])).push(["assets", performance.now()]);
+
 // ======================= WORLD: dry foothills — limestone massif, dry stony ground, the garrison around the construction site, oak scrub =======================
 const WX = 200, WZ = 135, CS = 1.25, GX = 160, GZ = 108, ROOF = 5.6;
 // phones and tablets: lighter settings everywhere (iPadOS reports itself as a Mac with a touch screen)
@@ -1151,6 +1153,8 @@ for (let i = 0; i < 60; i++) { const m = new THREE.Mesh(chunkGeo, chunkMat); m.v
 let fallI = 0;
 function drop(x, y, z, floor, vx, vz) { const f = falls[fallI++ % falls.length]; f.m.position.set(x + (Math.random() - .5) * .5, y, z + (Math.random() - .5) * .5); f.v.set(vx || 0, -.5, vz || 0); f.floor = floor; f.on = true; f.m.visible = true; f.m.scale.setScalar(.7 + Math.random() * .8); }
 function updFalls(dt) { for (const f of falls) { if (!f.on) continue; f.v.y -= 9.8 * dt; f.m.position.addScaledVector(f.v, dt); f.m.rotation.x += dt * 5; if (f.m.position.y < f.floor) { f.on = false; f.m.visible = false; } } }
+
+;(window.__INIT || (window.__INIT = [])).push(["world", performance.now()]);
 
 // ======================= MODELS: detailed machines, cabs, controls, operator =======================
 const X = window.M60X, MV = X.MV, ME = X.ME;
@@ -1770,6 +1774,8 @@ function buildModel(type) {
   return {g, P};
 }
 
+;(window.__INIT || (window.__INIT = [])).push(["models", performance.now()]);
+
 // ======================= GAME: physics, machine controls, camera, sound, HUD =======================
 const vehicles = [];
 function addV(type, x, z, a) {
@@ -2305,11 +2311,12 @@ window.__hs = {stats, vehicles, start, switchTo, keys, look: CAM, asset: ASSET, 
   place: (i, x, z, a) => { const v = vehicles[i]; v.x = x; v.z = z; v.a = a; v.prev = null; },
   view: (p, t, fov) => { cam.position.set(p[0], p[1], p[2]); cam.lookAt(t[0], t[1], t[2]); if (fov) { cam.fov = fov; cam.updateProjectionMatrix(); } sun.position.set(t[0] + SUNOFF[0], SUNOFF[1], t[2] + SUNOFF[2]); sun.target.position.set(t[0], 0, t[2]); renderMain(1 / 30); }};
 let stopped = false;
+const UICOVER = []; let coverN = 0;   // full-screen panels register here: while one is open the 3D view behind it is drawn less often
 document.getElementById("load").hidden = true;
 let last = performance.now(), TT = 0; const perf = {t: 0, n: 0, lvl: 0};
 function loop(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now; TT += dt;
-  if (running) { update(dt, TT); updateCam(dt); hud(dt); renderMain(dt);
+  if (running) { update(dt, TT); updateCam(dt); hud(dt); let cover = false; for (const f of UICOVER) if (f()) { cover = true; break; } if (!cover || (coverN = (coverN + 1) % 3) === 0) renderMain(dt);
     // adaptive quality: drop resolution / shadow detail on slow phones
     perf.t += dt; perf.n++; if (perf.t > 3 && !perf.lock) { const ms = perf.t / perf.n * 1000; perf.t = perf.n = 0;
       if (ms > 34 && GFX0 + perf.lvl < GFXLADDER.length - 1) { perf.lvl++; gfxDown(perf.lvl); } } }
@@ -2317,6 +2324,8 @@ function loop(now) {
   if (!stopped) requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+;(window.__INIT || (window.__INIT = [])).push(["game", performance.now()]);
 
 // ======================= PROJECTS & MISSIONS =======================
 const portalZ = 63.3, portalX = edgeX(portalZ);
@@ -2525,8 +2534,10 @@ bNew.addEventListener("click", () => {
 });
 document.getElementById("cards").addEventListener("click", () => { if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
 const _openMenu = openMenu;
-openMenu = function () { _openMenu(); hornStop(); if (typeof saveWorld === "function") saveWorld(true); updProjBtn(); if (typeof updTaburMenu === "function") updTaburMenu(); };
+openMenu = function () { _openMenu(); hornStop(); updProjBtn(); if (typeof updTaburMenu === "function") updTaburMenu(); if (typeof saveWorld === "function") setTimeout(() => saveWorld(false), 60); };   // (the tyre-track picture is saved when the page is left: encoding it made the menu wait)
 window.__hs.proj = PROJ; window.__hs.brief = briefMission; window.__hs.modalGo = () => mGo.click(); window.__hs.openProject = openProject; window.__hs.gal = {galDepth, galAcc, pilesIn, faceX, edgeX, GAL, PORTZ};
+
+;(window.__INIT || (window.__INIT = [])).push(["missions", performance.now()]);
 
 // ======================= EXTRAS: time of day, lights, fuel, AI truck driver =======================
 // ---------- time of day ----------
@@ -2674,6 +2685,8 @@ function aiTruck(t, dt) {
 const AIST = {wait: "yükleme bekliyor", todump: "döküm sahasına gidiyor", tip: "damperi kaldırıyor", lower: "damperi indiriyor", return: "yükleme noktasına dönüyor", align: "hizalanıyor", reverse: "geri geri yanaşıyor"};
 window.__hs.setAI = setAI; window.__hs.tod = setTOD;
 
+;(window.__INIT || (window.__INIT = [])).push(["extras", performance.now()]);
+
 // ======================= GRAPHICS: the ULTRA level — ambient occlusion (SSAO), a soft bloom, a light colour grade with a vignette,
 // a multisampled image, 4K sun shadows and full texture filtering. The automatic level starts here and steps down on slow devices. =======================
 const POST = {on: false, comp: null, ssao: null, bloom: null, grade: null, w: 0, h: 0, pr: 0, fail: false};
@@ -2749,6 +2762,8 @@ function gfxLevel(g) {
 const GFXLADDER = ["ultra", "high", "mid", "low"], GFX0 = MOBILE ? 2 : 0;
 function gfxDown(lvl) { gfxLevel(GFXLADDER[Math.min(GFXLADDER.length - 1, GFX0 + lvl)]); }   // auto: one step down the ladder
 window.__hs.post = POST; window.__hs.gfxLevel = gfxLevel; window.__hs.qual = QUAL;
+
+;(window.__INIT || (window.__INIT = [])).push(["gfx", performance.now()]);
 
 // ======================= SETTINGS PANEL + GAMEPAD =======================
 const SET = {sens: 1, joy: 150, gfx: "auto", vol: .9, auto: true, isg: true};
@@ -2856,6 +2871,8 @@ window.FRAME_HOOKS.push(() => {
   PAD.prev = gp.buttons.map(b => b.pressed); PAD.gp = gp;
 });
 window.__hs.set = SET; window.__hs.R = R; window.__hs.pad = PAD;
+
+;(window.__INIT || (window.__INIT = [])).push(["settings", performance.now()]);
 
 // ======================= SOLDIERS: skinned soldiers with real walk/run cycles; bones aimed for hand signals, tools and the driver's seat =======================
 // The model faces +z, its left side is +x (glTF convention). Directions below are given in that frame and turned into world space per soldier.
@@ -3269,6 +3286,8 @@ function addGlasses(S, eyes, kind) {
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
 }
 
+;(window.__INIT || (window.__INIT = [])).push(["soldier", performance.now()]);
+
 // ======================= CREW: site workers, banksman, site chief, OHS (İSG) rules, horn =======================
 const CREW = [];
 // every person on site is a skinned soldier (soldier.js); the banksman and the site chief wear hi-vis vests over the plate carrier
@@ -3467,6 +3486,8 @@ bHorn.addEventListener("pointerdown", e => { e.preventDefault(); hornStart(); })
 ["pointerup", "pointerleave", "pointercancel"].forEach(n => bHorn.addEventListener(n, hornStop));
 window.__hs.crew = CREW; window.__hs.bank = bank; window.__hs.chief = chief;
 
+;(window.__INIT || (window.__INIT = [])).push(["crew", performance.now()]);
+
 // ======================= NAV: what someone on foot cannot walk through — every machine's real shape at body height —
 // and a path finder that walks around the machines (used to reach a door, and by the officers going to and from the tea house) =======================
 const OCS = .2;                         // occupancy cell (m), in each machine's own frame
@@ -3575,6 +3596,8 @@ function navPath(x0, z0, x1, z1, r, skip) {
   while (i < pts.length) { let j = pts.length - 1; while (j > i && !clear(ax, az, pts[j][0], pts[j][1])) j--; out.push(pts[j]); ax = pts[j][0]; az = pts[j][1]; i = j + 1; }
   return out;
 }
+
+;(window.__INIT || (window.__INIT = [])).push(["nav", performance.now()]);
 
 // ======================= PLAYER: Furkan Teğmen on foot — walks and runs, boards the machines through their doors (E), starts them (R),
 // works with pickaxe and shovel (tool wheel: hold Tab) =======================
@@ -3707,7 +3730,7 @@ function entryOf(v) {
 const QA = new THREE.Quaternion(), QB = new THREE.Quaternion(), QUP = new THREE.Vector3(0, 1, 0);
 const headingQ = (a, q) => (q || QA).setFromAxisAngle(QUP, Math.PI / 2 - a);
 const DOORA = -1.5;                       // the cab door swings fully open
-const BOARDK = .45;                       // climbing in and out takes under half the old time
+const BOARDK = .36;                       // climbing in and out takes under half the old time
 function doorTo(v, ang, u) { if (v.P.door) v.P.door.rotation.y = ang * u; }
 function nearestVehicle() {
   let best = null, bd = 3.4;
@@ -3729,7 +3752,7 @@ function boardSeq(v) {
   if (v.ai) setAI(v, false, true); if (v.P.seated && v.P.seated !== PLAYER) unseat(v);
   if (FOOT.carry > 0) { dropDirt(fw(FOOT, .6), FOOT.carry); FOOT.carry = 0; } TOOLM.kazma.visible = TOOLM.kurek.visible = false; FOOT.sw = -1;
   const steps = [], p0 = EV().set(FOOT.x, FOOT.y, FOOT.z), qFace = headingQ(E.face, new THREE.Quaternion());
-  const w = walkSteps(steps, p0, FOOT.a, E.stand, 2.6);
+  const w = walkSteps(steps, p0, FOOT.a, E.stand, 3.6);
   steps.push({d: .35, a: w.end, b: E.stand, qa: headingQ(w.heading, new THREE.Quaternion()), qb: qFace, spd: 0});
   if (E.tank) { const P = E.pts; for (let i = 1; i < P.length; i++) steps.push({d: .75, a: P[i - 1], b: P[i], qa: qFace, qb: qFace, spd: .9, arc: .25, climbT: true}); steps.push({d: .6, a: P[P.length - 1], b: E.seatP, qa: qFace, qb: E.seatQ, spd: 0, sit: true}); }
   else {
@@ -4014,6 +4037,8 @@ function startHook(v) { boardInstant(v); v.eng = true; v.crank = 0; if (FOOT.res
 UPD.push(() => headVisible());
 window.__hs.ev = s => eval(s); window.__hs.foot = FOOT; window.__hs.player = PLAYER; window.__hs.keyE = keyE; window.__hs.keyR = keyR; window.__hs.setTool = setTool;
 
+;(window.__INIT || (window.__INIT = [])).push(["player", performance.now()]);
+
 // ======================= VEHICLES OF THE GARRISON: the battalion commander's pickup with its beacon, the brigade commander's black SUV,
 // Land Rovers, the Unimog, MAN trucks, the garbage truck, the water tanker, the armoured personnel carriers and the unmanned BARKAN-2 =======================
 // Every model is built in its own frame: x forward, z to the right, y up, the origin on the ground under the middle of the car.
@@ -4144,6 +4169,8 @@ const PARKED = SP(), PARKLIST = [];
 function parkVeh(kind, x, z, a, col) { const y = heightAt(x, z), info = VB[kind](vX(PARKED, x, y, z, a), col); vLabels(scene, info, x, y, z, a); PARKLIST.push({kind, x, z, a, info});
   const c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)), hx = (info.L * c + info.W * s) / 2, hz = (info.L * s + info.W * c) / 2; PROPS.push([x - hx, x + hx, z - hz, z + hz]); return info; }
 window.__hs.vb = VB;
+
+;(window.__INIT || (window.__INIT = [])).push(["vehicles", performance.now()]);
 
 // ======================= GARRISON: everything around the construction site — a fictional base laid out for the game.
 // The fence with cameras and four corner towers, the main gate, roads, the tea-house hill, the officers' mess, the battalion HQ and parade ground,
@@ -4583,6 +4610,8 @@ function garFrame(dt) {
 UPD.push(garFrame);
 window.__hs.gar = {GN, GE, gRoute, TANKSPOTS, SPORT, OBST, RNG, DRC, TRAFFIC, rangeFront, courseFront, projVisuals, HOMES};
 
+;(window.__INIT || (window.__INIT = [])).push(["garrison", performance.now()]);
+
 // ======================= THE OFFICERS: every named character on site, the Tabur Çay Ocağı meeting table (always in session),
 // visits of the battalion and brigade commanders, and switching who you play (B: character wheel) =======================
 const OFF_DEF = [
@@ -4655,6 +4684,7 @@ for (const o of OFFS) {
   if (o.d.key === "furkan" && PLAYER) { o.S = PLAYER; continue; }
   o.S = mkOfficer(o.d.key, hScale(o.d)); if (!o.S) continue; scene.add(o.S.root);
 }
+(window.__INIT || (window.__INIT = [])).push(["chars:officers", performance.now()]);
 // officers by distance: the heavy meshes (heads, body) in three detail levels, picked by the distance from the camera
 const OLOD = [], OLODC = new Map(), OLV = new THREE.Vector3();
 const lodOf = (g, n, fr, max) => { let lo = null; for (const f of fr) { lo = decimateGeo(g, f); if (lo.index.count / 3 < n * max) break; } lo.boundingSphere = g.boundingSphere; return lo; };
@@ -4668,7 +4698,7 @@ function offLodBuild(S) { if (!S || S.lod) return; const L = [];
       OLODC.set(g.uuid, e); }
     L.push({q, g: e}); });
   S.lod = {L, lvl: 0}; OLOD.push(S); }
-for (const o of OFFS) offLodBuild(o.S);
+for (const o of OFFS) offLodBuild(o.S); (window.__INIT || (window.__INIT = [])).push(["chars:lod", performance.now()]);
 function offLodFrame() { const T = QUAL.offLod, T0 = T * .45;
   for (const S of OLOD) { if (!S.root.visible) continue; S.root.getWorldPosition(OLV); const d = OLV.distanceTo(cam.position), c = S.lod.lvl, h = 1;
     const lvl = d < T0 - (c > 0 ? h : -h) ? 0 : d < T - (c > 1 ? h : -h) ? 1 : 2; if (lvl === c) continue;
@@ -4890,7 +4920,7 @@ function outOfCar(o, car) { const p = carDoor(car); o.x = p.x; o.z = p.z; o.a = 
 function startVisit(u) {
   if (!u || !u.S || isPlayer(u)) { MEET.vt = 200; return; }
   MEET.visit = u; u.st = "car"; u.vw = 2.3; const car = CARS.ufuk; toast("Ufuk Binbaşı'nın aracı karargâhtan çıktı · çay ocağına geliyor", 2.6);
-  carGo(car, ROUTE_U_IN, 12, () => { outOfCar(u, car); walkTo(u, CHAIRS[0].x - .9, CHAIRS[0].z, () => {
+  carGo(car, ROUTE_U_IN, 16, () => { outOfCar(u, car); walkTo(u, CHAIRS[0].x - .9, CHAIRS[0].z, () => {
     if (MEET.visit !== u) return;
     if (!seated().length) { say(u, SEAT.on ? "Naber mankiler? Herkes iş başında, aferin. Sen de bir göz at, kolay gelsin." : "Naber mankiler? Masa boş, herkes iş başında. Aferin, kolay gelsin!", 3); gTimeout(() => leaveVisit(u), 3400); return; }
     MEET.hush = true; say(u, "Naber mankiler!", 2.2);   // his famous greeting
@@ -4911,7 +4941,7 @@ function endVisit() {
   gTimeout(() => { leaveChair(u); OFFM.azizhan.chair = 0; gTimeout(() => { sitAll(); MEET.hush = false; }, 1200);
     leaveVisit(u); }, 6800);
 }
-function leaveVisit(u) { inCar(u, CARS.ufuk, () => { carGo(CARS.ufuk, ROUTE_U_OUT, 12, () => parkCar(CARS.ufuk, HQ.x, HQ.z, -Math.PI / 2)); MEET.visit = null; MEET.hush = false; MEET.vt = 170 + Math.random() * 90; }); }
+function leaveVisit(u) { inCar(u, CARS.ufuk, () => { carGo(CARS.ufuk, ROUTE_U_OUT, 16, () => parkCar(CARS.ufuk, HQ.x, HQ.z, -Math.PI / 2)); MEET.visit = null; MEET.hush = false; MEET.vt = 170 + Math.random() * 90; }); }
 // Levent Paşa: a raid. The black car comes in fast; if he finds them drinking tea he gives them hell and sends them running
 // how the brigade commander addresses people: he gets Boran's name wrong, Kaan is "the kid who makes projects", the battalion commander is just "Ufuk"
 const LNAME = {boran: "Baran", kaan: "Proje yapan çocuk", ufuk: "Ufuk"};
@@ -4925,7 +4955,7 @@ const nearT = (o, r) => !!o && Math.hypot(o.x - TH.x, o.z - TH.z) < (r || 7);
 function playSeq(seq, done) {
   const step = () => { while (seq.length) { const [o, text, dur, cond] = seq.shift(); if (!o || (!o.all && !o.S) || (cond && !cond())) continue;
       if (o.all) { const who = OFFS.filter(q => q.S && !isPlayer(q) && (q.st === "line" || (BRIEF.on && q.st === "seat" && !q.d.visitor && q !== BRIEF.lead))); if (!who.length) continue; who.forEach((q, i) => say(q, text, dur)); } else say(o, text, dur);
-      gTimeout(step, (dur + .25) * 1000); return; } if (done) done(); };
+      gTimeout(step, (dur + .15) * 1000); return; } if (done) done(); };
   step();
 }
 // ---------------- the brigade commander's raid: the gate calls, the battalion commander sends a voice message, everyone lines up by rank beside his car and salutes ----------------
@@ -4993,7 +5023,7 @@ const CARCAM = {on: false, done: false, t: 0}, CCL = new THREE.Vector3(), CCT = 
 function startBoss(L) {
   if (!L || !L.S || isPlayer(L)) { MEET.bt = 300; return; }
   MEET.boss = L; MEET.hush = true; MEET.dlg = null; L.st = "car"; L.vw = 2.6; const car = CARS.levent, U = OFFM.ufuk;
-  car.gateNote = false; carGo(car, ROUTE_L_IN, 16, () => gTimeout(() => arrive(L), 700)); lineUp(car); RECV.on = true; RECV.salute = false; CARCAM.done = false; CARCAM.on = false; CARCAM.t = 0;
+  car.gateNote = false; carGo(car, ROUTE_L_IN, 22, () => gTimeout(() => arrive(L), 400)); lineUp(car); RECV.on = true; RECV.salute = false; CARCAM.done = false; CARCAM.on = false; CARCAM.t = 0;
   MEET.bossU = U && U.S && !isPlayer(U) && (U.st === "away" || U === MEET.visit) ? U : null;
 }
 // the black car is through the main gate: the sentry calls, the battalion commander sends a voice message and drives over, everyone runs to the line
@@ -5002,7 +5032,7 @@ function bossGate() {
   if (typeof DAY !== "undefined" && DAY.on) { const r = raidEval(); DAY.raidRes = r.res; RECV.res = r.res; satAdd(r.res === "iyi" ? 6 : r.res === "orta" ? -3 : -8, "Levent Paşa baskını"); } else RECV.res = "kotu";
   phoneNote("Nizamiye", "NİZAMİYE NÖBETÇİSİ", "Komutan nizamiyeden girdi!");
   gTimeout(() => { if (!RECV.on) return; phoneNote("Mesaj · Tabur", "Ufuk Binbaşı · sesli mesaj", "Arkadaşlar, komutanımız girdi!", true); speakTR("Arkadaşlar, komutanımız girdi!");
-    if (U && U.st === "away") { U.st = "car"; carGo(CARS.ufuk, ROUTE_U_IN, 13, () => { outOfCar(U, CARS.ufuk); if (RECV.on) toLine(U); else { U.st = "stand"; U.t = 1e9; } }); } }, 2200);
+    if (U && U.st === "away") { U.st = "car"; carGo(CARS.ufuk, ROUTE_U_IN, 18, () => { outOfCar(U, CARS.ufuk); if (RECV.on) toLine(U); else { U.st = "stand"; U.t = 1e9; } }); } }, 2200);
   gTimeout(() => { if (!RECV.on) return; let k = 0; if (SEAT.on) standUp();
     for (const o of OFFS) { if (o === L || !RECV.slots.has(o)) continue; if (o.d.visitor && o !== U) continue; if (o === U && (o.st === "car" || o.st === "away")) continue; const oo = o;
       gTimeout(() => { if (!RECV.on) return; toLine(oo); if (!isPlayer(oo) && Math.random() < .4) say(oo, pick(["Komutan geliyor, hadi hadi!", "Sıraya! Çabuk!", "Komutanım geldi, toparlanın!"]), 1.6); }, (k++) * 160); } }, 3300);
@@ -5014,13 +5044,13 @@ function arrive(L) { // the car has stopped: the senior calls the salute, the co
     gTimeout(() => { RECV.salute = false; say(L, "Rahat.", 1.5); CARCAM.phase = 2; if (!CARCAM.on && FOOT.on && AUTO.on) { CARCAM.on = true; CARCAM.t = 1; }
       const U2 = MEET.bossU, seq = U2 ? [[U2, "Hoş geldiniz komutanım.", 1.8, () => U2.st === "line"]] : [];
       gTimeout(() => { if (U2 && U2.st === "line") walkTo(U2, RECV.cmd.x - Math.cos(RECV.cmd.a + 1.2) * 1.3, RECV.cmd.z - Math.sin(RECV.cmd.a + 1.2) * 1.3, () => { U2.st = "stand"; U2.t = 1e9; U2.a = RECV.cmd.a; headingQ(U2.a, U2.S.root.quaternion); });
-        playSeq(seq.concat(bossLines(L, U2, RECV.res)), () => scatter(L)); }, 1700); }, 2400);
+        playSeq(seq.concat(bossLines(L, U2, RECV.res)), () => scatter(L)); }, 1000); }, 1600);
   });
 }
 function leaveBoss(L) {
   const U = MEET.bossU; MEET.bossU = null; RECV.on = false; RECV.salute = false; CARCAM.on = false;
-  inCar(L, CARS.levent, () => { CARS.levent.gateNote = true; carGo(CARS.levent, ROUTE_L_OUT, 16, () => { CARS.levent.g.visible = false; }); MEET.boss = null; MEET.hush = false; MEET.bt = 280 + Math.random() * 140; MEET.vt = Math.max(MEET.vt, 70); MEET.barkan = true;
-    if (U && U.st !== "away" && U.st !== "car") { U.saluteT = 2.6; gTimeout(() => { if (U.st === "away" || U.st === "car") return; if (MEET.visit === U) { leaveVisit(U); return; } U.st = "car"; inCar(U, CARS.ufuk, () => carGo(CARS.ufuk, ROUTE_U_OUT, 12, () => parkCar(CARS.ufuk, HQ.x, HQ.z, -Math.PI / 2))); }, 2600); } });
+  inCar(L, CARS.levent, () => { CARS.levent.gateNote = true; carGo(CARS.levent, ROUTE_L_OUT, 22, () => { CARS.levent.g.visible = false; }); MEET.boss = null; MEET.hush = false; MEET.bt = 280 + Math.random() * 140; MEET.vt = Math.max(MEET.vt, 70); MEET.barkan = true;
+    if (U && U.st !== "away" && U.st !== "car") { U.saluteT = 2.6; gTimeout(() => { if (U.st === "away" || U.st === "car") return; if (MEET.visit === U) { leaveVisit(U); return; } U.st = "car"; inCar(U, CARS.ufuk, () => carGo(CARS.ufuk, ROUTE_U_OUT, 16, () => parkCar(CARS.ufuk, HQ.x, HQ.z, -Math.PI / 2))); }, 2600); } });
 }
 function scatter(L) {
   for (const o of OFFS) { if (o === L || o === MEET.bossU || isPlayer(o) || o.d.visitor) continue; if (!["line", "standby", "seat", "stand", "walk"].includes(o.st)) continue;
@@ -5173,7 +5203,9 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const portraits = {};
+const PORTKEY = "hs-portraits-20261030-0141";
+const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
+function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
   if (portraits[o.d.key] !== undefined) return portraits[o.d.key]; let u = "";
   try { const S = o.S, sc = new THREE.Scene(); sc.background = new THREE.Color(0x2c3236); sc.environment = ENVS[0]; sc.add(new THREE.HemisphereLight(0xdfeaff, 0x7a5a3c, .5)); const dl = new THREE.DirectionalLight(0xfff0d2, 2.2); dl.position.set(2, 3, 4); sc.add(dl);
@@ -5181,12 +5213,12 @@ function portraitOf(o) {
     const h = S.bones.Head.getWorldPosition(new THREE.Vector3()); const c = new THREE.PerspectiveCamera(26, 1.5, .05, 20); c.position.set(.2, h.y + .07, 1.02); c.lookAt(0, h.y + .03, 0);
     const pr = R.getPixelRatio(), sz = R.getSize(new THREE.Vector2()); R.setPixelRatio(1); R.setSize(330, 220, false); R.render(sc, c); u = R.domElement.toDataURL("image/jpeg", .86); R.setPixelRatio(pr); R.setSize(sz.x, sz.y, false);
     if (par) par.add(S.root); S.root.position.copy(p0); S.root.quaternion.copy(q0); S.root.visible = vis; } catch (e) { u = ""; }
-  return portraits[o.d.key] = u;
+  portraits[o.d.key] = u; if (u) savePortraits(); return u;
 }
 const PLAYABLE = () => OFFS.filter(o => !o.d.visitor && o.S);
 function openPicker() {
   if (!running || PICK.cine || AUTO.on || MEET.boss) return; if (PICK.open) { closePicker(null); return; }
-  const el = document.createElement("div"); el.style.cssText = "position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(10,12,14,.55);backdrop-filter:blur(3px)";
+  const el = document.createElement("div"); el.style.cssText = "position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(10,12,14,.74)";
   const ring = document.createElement("div"); const R0 = Math.min(innerWidth, innerHeight) * .34; ring.style.cssText = `position:relative;width:${R0 * 2 + 120}px;height:${R0 * 2 + 120}px`; el.appendChild(ring);
   const mid = document.createElement("div"); mid.style.cssText = "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;font:600 14px/1.35 system-ui,sans-serif;width:200px;text-shadow:0 1px 3px #000"; mid.innerHTML = "KARAKTER SEÇ<br><span style='font-weight:400;font-size:12px;opacity:.8'>tıkla · B: kapat</span>"; ring.appendChild(mid);
   const list = PLAYABLE();
@@ -5197,8 +5229,9 @@ function openPicker() {
     b.onclick = () => closePicker(o); ring.appendChild(b); });
   el.onclick = e => { if (e.target === el) closePicker(null); }; document.body.appendChild(el); PICK.el = el; PICK.open = true;
 }
+UICOVER.push(() => PICK.open);
 function closePicker(o) { if (PICK.el) PICK.el.remove(); PICK.el = null; PICK.open = false; if (o && o !== CUR) switchOfficer(o); }
-const titleEl = document.createElement("div"); titleEl.style.cssText = "position:fixed;left:6vw;bottom:22vh;z-index:7;color:#fff;font:800 clamp(28px,6vw,54px)/1 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 3px 18px rgba(0,0,0,.7);pointer-events:none;opacity:0;transition:opacity .4s";
+const titleEl = document.createElement("div"); titleEl.style.cssText = "position:fixed;left:6vw;bottom:22vh;z-index:7;color:#fff;font:800 clamp(28px,6vw,54px)/1 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 3px 18px rgba(0,0,0,.7);pointer-events:none;opacity:0;transition:opacity .25s";
 document.body.appendChild(titleEl);
 function switchOfficer(n, quiet) {
   if (!n || !n.S || n.d.visitor) return; const old = CUR;
@@ -5217,7 +5250,7 @@ function switchOfficer(n, quiet) {
   PLAYER.root.position.set(FOOT.x, FOOT.y, FOOT.z); headingQ(FOOT.a, PLAYER.root.quaternion);
   if (c && !c.occ) sitDown(c, true);
   if (!quiet) { // the close-up: the camera sweeps onto the face, the name comes up, then back behind the shoulder
-    PICK.cine = {t: 0, from: cam.position.clone(), fromL: new THREE.Vector3(), dur: 2.6};
+    PICK.cine = {t: 0, from: cam.position.clone(), fromL: new THREE.Vector3(), dur: 1.5};
     cam.getWorldDirection(PICK.cine.fromL); PICK.cine.fromL.multiplyScalar(5).add(cam.position);
     titleEl.innerHTML = `${n.d.name}<div style="font:500 clamp(13px,2.2vw,18px)/1.3 system-ui,sans-serif;margin-top:8px;opacity:.9">${n.d.role}</div>`; titleEl.style.opacity = 1; }
   CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .25; CAM.dist = 4.4; camSnap = true;
@@ -5247,7 +5280,7 @@ function officerCards() {
     b.innerHTML = `<div class="ph" style="background-image:url('${portraitOf(o)}')"><span class="tag">${o.d.rank >= 2 ? "ÜSTEĞMEN" : "TEĞMEN"}</span></div><div class="tx"><span class="t">${o.d.name}</span><span class="c">${o.d.role}</span></div>`;
     b.addEventListener("click", () => { if (OPS.started && o === CUR) resumeGame(); else if (OPS.started) { resumeGame(); switchOfficer(o); } else startOfficer(o); }); el.appendChild(b); }
 }
-officerCards();
+officerCards(); (window.__INIT || (window.__INIT = [])).push(["chars:cards", performance.now()]);
 const CNP = new THREE.Vector3(), CNL = new THREE.Vector3(), CNH = new THREE.Vector3();
 function cineFrame(dt) { // returns true while the close-up runs (it owns the camera)
   if (carCamFrame(dt)) return true;
@@ -5273,6 +5306,8 @@ UPD.push(dt => charsFrame(dt, TT));
 const bSit = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.textContent = "OTUR"; b.hidden = true; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => { if (SEAT.on) standUp(); else { const ch = nearChair(); if (ch) sitDown(ch); } }); return b; })();
 const bChar = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.textContent = "KİŞİ"; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => openPicker()); return b; })();
 function chairBtns() { const ch = SEAT.on || !!nearChair(); bSit.hidden = !ch; bSit.textContent = SEAT.on ? "KALK" : "OTUR"; }
+
+;(window.__INIT || (window.__INIT = [])).push(["chars", performance.now()]);
 
 // ======================= OPS: soldiers drive every machine on their own; the commanders hand out the jobs and watch over the work =======================
 // jobs: each machine has one job and a commander responsible for it; G (or the GÖREVLER button) opens the job board
@@ -5494,7 +5529,7 @@ function aiDrive(o, dt) {
 // ---- the job board (G) ----
 const jobEl = (() => {
   const d = document.createElement("div"); d.id = "jobs"; d.hidden = true;
-  d.style.cssText = "position:fixed;inset:0;z-index:21;display:grid;place-items:center;background:rgba(10,12,14,.55);backdrop-filter:blur(3px)";
+  d.style.cssText = "position:fixed;inset:0;z-index:21;display:grid;place-items:center;background:rgba(10,12,14,.74)";
   d.innerHTML = '<div style="width:min(94vw,640px);max-height:86vh;overflow:auto;background:#1d2023;color:#eef0f2;border-radius:16px;padding:16px 16px 12px;box-shadow:0 12px 40px rgba(0,0,0,.5);font:14px/1.35 system-ui,sans-serif">' +
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><b style="font-size:18px;letter-spacing:.04em">GÖREV DAĞILIMI</b><span style="opacity:.7;font-size:12px">makineleri askerler kullanır · sen işi verirsin</span><span style="flex:1"></span><button type="button" class="big alt" id="jClose">KAPAT</button></div>' +
     '<div id="jList"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="big" id="jAll">HERKES İŞ BAŞINA</button><button type="button" class="big alt" id="jTea">ÇAY MOLASI</button></div></div>';
@@ -5514,7 +5549,7 @@ function jobsHtml() {
       <div><button type="button" class="big alt" data-gsend="${i}" style="padding:8px 10px;font-size:12px">BAŞINA GÖNDER</button></div></div>`; }).join("");
   return h;
 }
-function openJobs() { if (!running) return; jobEl.querySelector("#jList").innerHTML = jobsHtml(); jobEl.hidden = false; OPS.open = true; }
+function openJobs() { if (!running) return; jobsRefresh(); jobEl.hidden = false; OPS.open = true; }
 function closeJobs() { jobEl.hidden = true; OPS.open = false; }
 jobEl.addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
@@ -5525,14 +5560,18 @@ jobEl.addEventListener("click", e => {
   if (b.dataset.gsend != null) { const j = GJOBS[+b.dataset.gsend]; if (typeof sendToSite === "function" && !sendToSite(j.sup, j.k, true)) toast(OFFK[j.sup].name + " şu an gidemiyor", 1.6); }
   if (b.id === "jAll") { if (typeof allToSites === "function") allToSites(false); closeJobs(); }
   if (b.id === "jTea") { if (typeof allToTea === "function") allToTea(); closeJobs(); }
-  jobEl.querySelector("#jList").innerHTML = jobsHtml();
+  jobsRefresh();
 });
 addEventListener("keydown", e => { if (!running || e.repeat) return; if (e.code === "KeyG") { e.preventDefault(); OPS.open ? closeJobs() : openJobs(); } if (e.code === "Escape" && OPS.open) closeJobs(); });
 const bJobs = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "tb"; b.textContent = "GÖREVLER"; const t = document.querySelector(".tools"); if (t) t.prepend(b); b.addEventListener("click", () => OPS.open ? closeJobs() : openJobs()); return b; })();
-UPD.push(dt => { OPS.t += dt; if (OPS.open) { OPS.ref = (OPS.ref || 0) - dt; if (OPS.ref <= 0) { OPS.ref = 1; jobEl.querySelector("#jList").innerHTML = jobsHtml(); } } });
+UICOVER.push(() => OPS.open);
+function jobsRefresh() { const el = jobEl.querySelector("#jList"), h = jobsHtml(); if (el.__h !== h) { el.innerHTML = h; el.__h = h; } }
+UPD.push(dt => { OPS.t += dt; if (OPS.open) { OPS.ref = (OPS.ref || 0) - dt; if (OPS.ref <= 0) { OPS.ref = 1; jobsRefresh(); } } });
 // the machines are the soldiers' now: no jumping from cab to cab
 for (const id of ["bPrev", "bNext"]) { const b = document.getElementById(id); if (b) b.style.visibility = "hidden"; }
 window.__hs.ops = OPS; window.__hs.jobs = JOBS; window.__hs.gjobs = GJOBS; window.__hs.opsStart = opsStart;
+
+;(window.__INIT || (window.__INIT = [])).push(["ops", performance.now()]);
 
 // ======================= LIFE: the battalion's day — the clock and the routine (morning tea, roll call, work, meals, evening tea, the night),
 // the commander's satisfaction, things going wrong on site, the fuel tanker, Ahmet running into the paşa, the day report =======================
@@ -5615,21 +5654,21 @@ function rollCall() {
   if (!SEAT.on && FOOT.on && !FOOT.seq) toTable();
   toast("07:30 · GÖREV DAĞILIMI · Azizhan Üsteğmen masada görevleri veriyor", 2.8);
   const tip = pick(["Arıza olursa hemen telsizden bildirin.", "İş güvenliği önce gelir, baretler takılı olsun.", "Paşa'nın bugün sahaya gelme ihtimali var, gevşemek yok!", "Kamyonlar boş beklemesin, sefer sayısı önemli."]);
-  playSeqAt(3, [
-    [lead, "Arkadaşlar günaydın. Tabur olarak bugünün görev dağılımını yapıyorum.", 3],
-    ["all", "Günaydın komutanım!", 1.5],
-    [lead, `Furkan, Boran: Kempar'la kapalı drone sığınağı. Hedef ${g.tunnel} metre.`, 3],
-    [O.furkan, "Emredersiniz komutanım, kürek bende!", 2],
-    [O.boran, "Emredersiniz komutanım, askerleri ben yönetirim.", 2.2],
-    [lead, "Kaan: garajdaki bunker yaşam alanı. Ekskavatör çukuru açıyor.", 2.8],
-    [O.kaan, "Emredersiniz komutanım!", 1.6],
-    [lead, "Ali: 400 metrelik atış alanı. Orhan: drone parkuru.", 2.6],
-    [O.ali, "Emredersiniz komutanım!", 1.5],
-    [O.orhan, "Emredersiniz, parkur hızlı ilerliyor.", 1.8],
-    [lead, "Ahmet: stok sahası ile yollar senden, bütün şantiyeleri de gez.", 2.8],
-    [O.ahmet, "Emredersiniz… yeter ki Paşa'ya yakalanmayayım!", 2.4],
-    [lead, `Kamyonlar bugün en az ${g.trips} sefer. Koordinasyon bende. ${tip}`, 3.4],
-    [lead, "Hadi, herkes görev başına! Kolay gelsin.", 2.2],
+  playSeqAt(1.5, [
+    [lead, "Arkadaşlar günaydın. Tabur olarak bugünün görev dağılımını yapıyorum.", 2.6],
+    ["all", "Günaydın komutanım!", 1.3],
+    [lead, `Furkan, Boran: Kempar'la kapalı drone sığınağı. Hedef ${g.tunnel} metre.`, 2.6],
+    [O.furkan, "Emredersiniz komutanım, kürek bende!", 1.7],
+    [O.boran, "Emredersiniz komutanım, askerleri ben yönetirim.", 1.9],
+    [lead, "Kaan: garajdaki bunker yaşam alanı. Ekskavatör çukuru açıyor.", 2.4],
+    [O.kaan, "Emredersiniz komutanım!", 1.4],
+    [lead, "Ali: 400 metrelik atış alanı. Orhan: drone parkuru.", 2.3],
+    [O.ali, "Emredersiniz komutanım!", 1.3],
+    [O.orhan, "Emredersiniz, parkur hızlı ilerliyor.", 1.6],
+    [lead, "Ahmet: stok sahası ile yollar senden, bütün şantiyeleri de gez.", 2.4],
+    [O.ahmet, "Emredersiniz… yeter ki Paşa'ya yakalanmayayım!", 2.1],
+    [lead, `Kamyonlar bugün en az ${g.trips} sefer. Koordinasyon bende. ${tip}`, 3],
+    [lead, "Hadi, herkes görev başına! Kolay gelsin.", 1.9],
     ["all", "Sağ olun komutanım!", 1.4]], () => {
     BRIEF.on = false; MEET.hush = BRIEF.hush0 || false; if (AUTO.on && !RECV.on) { AUTO.on = false; updCtx(); CAM.yaw = FOOT.a + Math.PI; camSnap = true; }
     let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => { if (!sendToSite(oo.d.key, null, false, 30 + Math.random() * 50)) goBack(oo); }, (i++) * 250); }
@@ -5699,10 +5738,10 @@ const ROUTE_S_IN = [[-420, 60], [-360, 60], [-310, 60], [-290, 60], [-270, 60], 
 const ROUTE_S_OUT = [[20, 55], [28, 54], [33, 50], [31, 45.5], [25, 45], [19, 50.5], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-270, 60], [-290, 60], [-310, 60], [-360, 60], [-420, 60]];
 function tankerVisit() {
   phoneNote("Nizamiye", "NİZAMİYE NÖBETÇİSİ", "Yakıt tankeri girdi.");
-  carGo(TANKER, ROUTE_S_IN, 10, () => {
+  carGo(TANKER, ROUTE_S_IN, 13, () => {
     const ali = OFFM.ali; if (ali && ali.S && !isPlayer(ali) && ["seat", "stand", "work"].includes(ali.st)) { say(ali, "Yakıt tankeri geldi, ikmale bakıyorum.", 2.4); leaveChair(ali); const p = carDoor(TANKER); walkTo(ali, p.x, p.z, () => { ali.st = "stand"; ali.t = 25; }); }
     toast("Yakıt tankeri geldi · ikmal yapılıyor", 2.4);
-    gTimeout(() => { for (const v of vehicles) v.fuel = 1; toast("Yakıt ikmali tamam · bütün makinelerin deposu dolu", 2.6); carGo(TANKER, ROUTE_S_OUT, 10, () => { TANKER.g.visible = false; }); }, 28000); });
+    gTimeout(() => { for (const v of vehicles) v.fuel = 1; toast("Yakıt ikmali tamam · bütün makinelerin deposu dolu", 2.6); carGo(TANKER, ROUTE_S_OUT, 13, () => { TANKER.g.visible = false; }); }, 16000); });
 }
 
 // ---------------- the site's own barrier lifts for the cars coming in ----------------
@@ -5721,7 +5760,7 @@ function ahmetCaught() {
   if (me ? (!FOOT.on || SEAT.on || FOOT.seq) : A.st !== "work") return false;
   if (zoneOf(ax, az) !== "S" || Math.hypot(ax - 20, az - 55) > 150) return false;   // on the site, where the black car can get to
   CATCH.on = true; MEET.catchL = true; L.st = "car"; L.vw = 2.7; const car = CARS.levent; car.gateNote = true;
-  carGo(car, ROUTE_C_IN, 15, () => { toast("LEVENT PAŞA ŞANTİYEDE!", 2.2); outOfCar(L, car);
+  carGo(car, ROUTE_C_IN, 20, () => { toast("LEVENT PAŞA ŞANTİYEDE!", 2.2); outOfCar(L, car);
     const tx = () => isPlayer(A) ? FOOT.x : A.x, tz = () => isPlayer(A) ? FOOT.z : A.z;
     const go = () => { const x = tx(), z = tz(), a = Math.atan2(L.z - z, L.x - x); walkTo(L, x + Math.cos(a) * 1.6, z + Math.sin(a) * 1.6, () => { L.st = "stand"; L.t = 1e9; L.a = Math.atan2(tz() - L.z, tx() - L.x); headingQ(L.a, L.S.root.quaternion); talk(); }); };
     const talk = () => { if (!isPlayer(A)) { A.st = "stand"; A.t = 1e9; A.a = Math.atan2(L.z - A.z, L.x - A.x); headingQ(A.a, A.S.root.quaternion); A.saluteT = 1.8; }
@@ -5729,7 +5768,7 @@ function ahmetCaught() {
         [A, pick(["Komutanım, şantiyeleri geziyordum…", "Kontrol ediyordum komutanım…", "Tesadüf komutanım…"]), 2.2],
         [L, pick(["Gezme Ahmet, çalış!", "Ben de geziyorum, ama nereye gitsem seni görüyorum!", "Bir daha karşıma çıkma Ahmet!", "Bölüğün nerede senin?!"]), 2.6], [A, "Emredersiniz komutanım…", 1.6]], () => {
         satAdd(-1, "Ahmet yine paşaya yakalandı");
-        inCar(L, car, () => carGo(car, ROUTE_C_OUT, 15, () => { car.g.visible = false; L.st = "away"; CATCH.on = false; MEET.catchL = false; }));
+        inCar(L, car, () => carGo(car, ROUTE_C_OUT, 20, () => { car.g.visible = false; L.st = "away"; CATCH.on = false; MEET.catchL = false; }));
         gTimeout(() => { if (!isPlayer(A)) { say(A, "Nereye gitsem paşam orada…", 2.6); A.st = "work"; A.t = 20 + Math.random() * 20; } }, 2600); }); };
     go(); });
   return true;
@@ -5752,7 +5791,8 @@ function dayPanel() {
     `<div class="ob ${tun >= GOAL.tunnel ? "ok" : ""}"><span class="r"><span>Sığınak (Kempar) bugün</span><span>${tun.toFixed(0)}/${GOAL.tunnel} m</span></span>${bar(tun / GOAL.tunnel * 100)}</div>` +
     `<div class="ob ${tr >= GOAL.trips ? "ok" : ""}"><span class="r"><span>Kamyon seferi</span><span>${tr}/${GOAL.trips}</span></span>${bar(tr / GOAL.trips * 100)}</div>` + evs;
 }
-const repEl = (() => { const d = document.createElement("div"); d.hidden = true; d.style.cssText = "position:fixed;inset:0;z-index:24;display:grid;place-items:center;background:rgba(8,10,12,.72);backdrop-filter:blur(3px)"; document.body.appendChild(d); return d; })();
+const repEl = (() => { const d = document.createElement("div"); d.hidden = true; d.style.cssText = "position:fixed;inset:0;z-index:24;display:grid;place-items:center;background:rgba(8,10,12,.72)"; document.body.appendChild(d); return d; })();
+UICOVER.push(() => DAY.rep);
 function dayReport() {
   if (DAY.rep) return; DAY.rep = true;
   const tun = Math.max(0, (stats.kemparM || 0) - DAY.s0.tunnel), tr = DAY.trips - DAY.s0.trips, gT = tun >= GOAL.tunnel, gR = tr >= GOAL.trips;
@@ -5821,7 +5861,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261029-1354";
+const BUILD = "20261030-0141";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -5831,6 +5871,8 @@ checkVersion(); setInterval(checkVersion, 4 * 60 * 1000);
 try { if ("serviceWorker" in navigator && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) {}
 function lifeStart() { if (DAY.on) return; DAY.on = true; DAY.t = 7 * 60; planDay(); DAY.tod = -1; updClockBtn(); }
 window.__hs.day = DAY; window.__hs.lifeStart = lifeStart; window.__hs.newEvent = newEvent; window.__hs.raidEval = raidEval; window.__hs.dayReport = dayReport;
+
+;(window.__INIT || (window.__INIT = [])).push(["life", performance.now()]);
 
 // ======================= THE GARRISON'S SOLDIERS: about a hundred and fifty of them — running squads, football, a platoon marching on the parade ground,
 // the obstacle course, the men building the range and the drone course, tank and carrier crews, the motor pool, gunners, sentries on the towers,
@@ -6090,6 +6132,8 @@ const CROWD = (() => {
 UPD.push(dt => CROWD.frame && CROWD.frame(dt));
 window.__hs.crowd = CROWD;
 
+;(window.__INIT || (window.__INIT = [])).push(["crowd", performance.now()]);
+
 // ======================= FX: night glows, light pools, moon, load spill on fast turns =======================
 const glowTex = texCanvas(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.18, "rgba(255,246,226,.85)"); gr.addColorStop(.48, "rgba(255,214,160,.22)"); gr.addColorStop(1, "rgba(255,190,120,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
 const poolTex = texCanvas(128, 128, g => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, "rgba(255,236,200,1)"); gr.addColorStop(.35, "rgba(255,218,166,.6)"); gr.addColorStop(.72, "rgba(255,200,140,.16)"); gr.addColorStop(1, "rgba(255,200,140,0)"); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
@@ -6155,6 +6199,8 @@ function spillFrame(dt, v) {
     if (o === v && spillMsg <= 0) { toast("Virajda yük döküldü · yavaşla, sonra dön", 2.4); spillMsg = 7; }
   }
 }
+
+;(window.__INIT || (window.__INIT = [])).push(["fx", performance.now()]);
 
 // ======================= SAVE: the whole site persists between sessions =======================
 const SAVE_KEY = "hs-save-v2", TRK_KEY = "hs-save-trk";
@@ -6224,6 +6270,8 @@ const hadSave = loadWorld(); worldReady = true;
 updProjBtn();
 window.__hs.save = saveWorld; window.__hs.load = loadWorld;
 
+;(window.__INIT || (window.__INIT = [])).push(["save", performance.now()]);
+
 // ======================= PERFORMANCE: far machines without their small parts, every shader and mesh prepared before the first frame =======================
 // small parts of the machines (lamps, handles, mirrors, bolts) are left out when they would be a few pixels on the screen;
 // they are moved to another layer, so the game's own visible flags (beacons, flashes, loads) stay untouched
@@ -6237,13 +6285,16 @@ const DETL = (() => { const list = [], S = new THREE.Vector3();
   return {list, frame}; })();
 UPD.push(dt => DETL.frame(dt));
 // warm-up: one hidden render with everything switched on, so that no shader is compiled and no mesh uploaded in the middle of the game (a stutter on phones)
+(window.__INIT || (window.__INIT = [])).push(["perf:detl", performance.now()]);
 (function warmUp() { try {
   const saved = []; scene.traverse(o => { const drawn = o.isMesh || o.isPoints || o.isLine || o.isSprite; if (!drawn && o.visible) return;
     saved.push([o, o.visible, o.frustumCulled, o.isInstancedMesh ? o.count : -1]); o.visible = true; if (drawn) { o.frustumCulled = false; if (o.isInstancedMesh && o.count === 0) o.count = 1; } });
-  sun.shadow.needsUpdate = true; renderMain(1 / 60);   // the real path (to the screen, or through the post chain): the same shader variants the game will ask for
+  sun.shadow.needsUpdate = true; R.setScissorTest(true); R.setScissor(0, 0, 1, 1); renderMain(1 / 60); R.setScissorTest(false);   // the real path (to the screen, or through the post chain): the same shader variants the game will ask for
   for (const [o, v, fc, n] of saved) { o.visible = v; o.frustumCulled = fc; if (n >= 0) o.count = n; }
 } catch (e) { console.warn("warm-up", e); } })();
 window.__hs.detl = DETL;
+
+;(window.__INIT || (window.__INIT = [])).push(["perf", performance.now()]);
 
 })().catch(e => { console.error(e); const l = document.getElementById("load"); if (l) { l.hidden = false; l.textContent = "Yükleme hatası: " + (e && e.message || e) + " · Sayfayı yenile."; } });
 </script>

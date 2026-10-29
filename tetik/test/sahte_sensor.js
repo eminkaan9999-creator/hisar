@@ -42,7 +42,7 @@
   wr.writeValue = write; wr.writeValueWithResponse = write; wr.writeValueWithoutResponse = write;
   function cmd(b) {
     switch (b[0]) {
-      case 1: F.lastTone = b; break;
+      case 1: F.lastTone = b; if (F.fw >= 3) { F.beepAt = now(); F.beepUntil = now() + (b[3] || 0) * 10 + 60; } break;   // yazılım 3: bip çalarken ses 0
       case 2: { const k = b[1], v = b[2];
         if (k === 1) F.cfg.bri = Math.max(5, Math.min(100, v)); if (k === 2) F.cfg.scr = v; if (k === 3) F.cfg.vol = Math.min(100, v); if (k === 4) F.cfg.off = v;
         if (k === 5 && v >= 1 && v <= 9 && v !== F.cfg.no) { F.cfg.no = v; setTimeout(() => F.reboot('ad'), 60); }
@@ -114,7 +114,7 @@
       for (let j = 0; j < k; j++) { const m = sample(s0 + j), o = 7 + sb * j;
         const w = (i, v) => { v = Math.max(-32768, Math.min(32767, Math.round(v))); a[o + i] = v & 255; a[o + i + 1] = (v >> 8) & 255; };
         w(0, m.acc[0] * 2048); w(2, m.acc[1] * 2048); w(4, m.acc[2] * 2048); w(6, m.om[0] * 16.384); w(8, m.om[1] * 16.384); w(10, m.om[2] * 16.384); a[o + 12] = encJerk(m.j);
-        if (snd) a[o + 13] = micOk() ? encSnd(m.snd) : 0; }
+        if (snd) { const ts = F.t0 + (s0 + j) * 5; a[o + 13] = micOk() && !(F.beepUntil && ts >= F.beepAt && ts < F.beepUntil) ? encSnd(m.snd) : 0; } }
       F.sendSeq += k; notify(a);
     }
   }

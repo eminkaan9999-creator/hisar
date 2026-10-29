@@ -13,8 +13,11 @@
 //     frekanslar (el, ruzgar ugultusu) suzulur; her 5 ms'lik olcume o arada
 //     duyulan en yuksek ses eklenir. Uygulama kuru tetikte tetigin "tik" sesini
 //     darbeyle birlikte degerlendirir. Hoparlor (bip) I2S1'e alindi, ikisi
-//     birbirini kesmez. Mikrofon okunamazsa durum paketinde bildirilir ve
-//     atislar yalniz darbeyle algilanir.
+//     birbirini kesmez; sensorun kendi bibi calarken ses bayti 0 gider.
+//     Mikrofon okunamazsa durum paketinde bildirilir ve atislar yalniz
+//     darbeyle algilanir.
+//   * Telefondan guncellemede geri donus: yeni yazilim 60 sn calismadan ya da
+//     10 sn veri akitmadan coker/yeniden baslarsa eski yazilim acilir.
 //
 //  Kopukluk olmamasi icin (surum 2):
 //   * Her olcum 10 saniyelik halka tampona yazilir ve 32 bitlik sira numarasi
@@ -46,6 +49,13 @@
 #include <driver/i2s.h>
 #include "HisarProtocol.h"
 
+// Telefondan guncellemede geri donus: yeni yazilim saglikli calistigi anlasilinca gecerli sayilir
+// (60 sn calisma ya da 10 sn kesintisiz veri akisi; bilerek yeniden baslatma/kapatma da). O ana kadar
+// cokup yeniden baslarsa onyukleyici eski yazilima doner; sensor USB'siz kurtulur.
+extern "C" bool verifyRollbackLater() { return true; }
+static bool appValid = false;
+static void markValid() { if (!appValid) { esp_ota_mark_app_valid_cancel_rollback(); appValid = true; } }
+
 #define FW_VERSION 3
 #define SVC_UUID    "0000ffe5-0000-1000-8000-00805f9a34fb"
 #define NOTIFY_UUID "0000ffe4-0000-1000-8000-00805f9a34fb"
@@ -72,6 +82,10 @@ static volatile bool      micOk = false;
 static bool               micReady = false;
 static portMUX_TYPE       micMux = portMUX_INITIALIZER_UNLOCKED;
 static uint32_t           micPeak = 0;
+// Sensorun kendi bibi mikrofonu bastirir: calarken (+60 ms) ses bayti 0 gider, uygulama o an
+// atisi yalniz darbeyle algilar.
+static volatile uint32_t  beepAt = 0, beepLen = 0;
+static void beep(float f, uint32_t ms) { beepLen = 0; beepAt = millis(); beepLen = ms + 60; M5.Speaker.tone(f, ms); }
 
 static NimBLEServer*         server = nullptr;
 static NimBLECharacteristic* notifyChr = nullptr;
@@ -236,7 +250,7 @@ static void imuTask(void*) {
       portENTER_CRITICAL(&micMux);
       pk = micPeak; micPeak = 0;
       portEXIT_CRITICAL(&micMux);
-      s.snd = micOk ? hisar::encodeSnd(pk) : 0;
+      s.snd = (micOk && millis() - beepAt >= beepLen) ? hisar::encodeSnd(pk) : 0;
       sub = 0;
       ring.push(s);
     }
@@ -250,7 +264,7 @@ static bool micSetup() {
   c.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_PDM);
   c.sample_rate = MIC_RATE;
   c.bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT;
-  c.channel_format = I2S_CHANNEL_FMT_ALL_RIGHT;
+  c.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT;
   c.communication_format = I2S_COMM_FORMAT_STAND_I2S;
   c.intr_alloc_flags = ESP_INTR_FLAG_LEVEL1;
   c.dma_buf_count = 4;
@@ -284,10 +298,10 @@ static void micTask(void*) {
       if (millis() - lastOk > 500) micOk = false;
       continue;
     }
-    int n = (int)(got / 2);
+    int n = (int)(got / 2) & ~1;
     uint32_t pk = 0;
     for (int i = 0; i < n; i++) {
-      int16_t x = buf[i];
+      int16_t x = buf[i ^ 1];            // ESP32 16 bit tek kanal: ornek ciftleri ters sirada gelir
       if (x < mn) mn = x;
       if (x > mx) mx = x;
       if (first) { prev = x; first = false; }
@@ -534,8 +548,9 @@ static void showMessage(const char* msg) {
 }
 
 static void powerOffNow() {
+  markValid();
   showMessage("KAPANIYOR");
-  M5.Speaker.tone(900, 200);
+  beep(900, 200);
   delay(600);
   M5.Power.powerOff();
 }
@@ -547,7 +562,7 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
   hisar::Command c = hisar::parseCommand(m.d, m.n);
   switch (c.type) {
     case hisar::Command::TONE:
-      M5.Speaker.tone(c.freq, c.ms);
+      beep(c.freq, c.ms);
       break;
     case hisar::Command::SET: {
       bool rename = hisar::applySetting(cfg, c.key, c.val);
@@ -559,6 +574,7 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
       saveSettings();
       wantStatus = true;
       if (rename) {
+        markValid();
         showMessage("YENIDEN BASLIYOR");
         delay(400);
         ESP.restart();
@@ -570,6 +586,7 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
       wakeScreen(now);
       break;
     case hisar::Command::RESTART:
+      markValid();
       showMessage("YENIDEN BASLIYOR");
       delay(300);
       ESP.restart();
@@ -605,8 +622,7 @@ void setup() {
   bootId = (uint16_t)(esp_random() & 0xFFFF);
   cmdQ = xQueueCreate(16, sizeof(CmdMsg));
   otaQ = xQueueCreate(48, sizeof(OtaMsg));
-  // Yeni yazilimla ilk acilis: calisan bolumu gecerli say (geri donus etkinse)
-  esp_ota_mark_app_valid_cancel_rollback();
+  // Yeni yazilimla ilk acilis: gecerli sayma dongude (markValid), saglikli calisma goruldukten sonra
 
   imuOk = imuSetup();
   micReady = micSetup();
@@ -636,7 +652,7 @@ void setup() {
   uint32_t now = millis();
   wakeScreen(now);
   lastActivity = now;
-  M5.Speaker.tone(2200, 80);
+  beep(2200, 80);
 }
 
 // ---------------------------------------------------------------- Dongu
@@ -644,9 +660,12 @@ static uint32_t lastRateT = 0, lastDrawT = 0, lastStatusT = 0, lastPowerT = 0, l
 static uint32_t btnBDown = 0;
 static uint32_t lastSent = 0;
 static bool     wasConnected = false;
+static uint32_t streamSince = 0;
 
 void loop() {
   uint32_t now = millis();
+  if (stream.streaming) { if (!streamSince) streamSince = now | 1; } else streamSince = 0;
+  if (!appValid && (now > 60000 || (streamSince && now - streamSince > 10000))) markValid();
 
   CmdMsg m;
   while (xQueueReceive(cmdQ, &m, 0) == pdTRUE) handleCommand(m, now);
@@ -671,7 +690,7 @@ void loop() {
     wasConnected = bleConnected;
     lastActivity = now;
     wakeScreen(now);
-    M5.Speaker.tone(bleConnected ? 2600 : 1200, 90);
+    beep(bleConnected ? 2600 : 1200, 90);
     if (!bleConnected) stream.onDisconnect();
     if (!bleConnected && otaActive && ota.state == hisar::OtaRx::READY) { OtaMsg a; a.n = 1; a.d[0] = 0x13; xQueueSend(otaQ, &a, 0); }
   }
@@ -696,7 +715,7 @@ void loop() {
         lastLedT = now;
         bool on = ((now / 250) % 2) == 0;
         M5.Power.setLed(on ? 255 : 0);
-        if (on && ((now / 500) % 2) == 0) M5.Speaker.tone(2800, 90);
+        if (on && ((now / 500) % 2) == 0) beep(2800, 90);
       }
     } else {
       identifyUntil = 0;
@@ -725,6 +744,7 @@ void loop() {
 
   // Guncelleme tamam: yaniti gonderip yeni yazilimla yeniden basla
   if (otaDoneAt && now - otaDoneAt > 900) {
+    markValid();                     // bu (calisan) yazilim saglikliydi; yenisi kendi denetiminden gecer
     showMessage("YENIDEN BASLIYOR");
     delay(200);
     ESP.restart();

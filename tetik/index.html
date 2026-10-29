@@ -582,7 +582,7 @@ function diagnose(q,s){
 function verdict(sc){return sc>=85?["HARİKA ATIŞ","good"]:sc>=70?["İYİ ATIŞ","mid"]:sc>=50?["GELİŞTİRİLMELİ","bad"]:["ZAYIF ATIŞ","bad"];}
 
 /* ---------------------------------------------------------------- işlemci: ham veri → açı, atış algılama, ölçüm */
-function Proc(){this.cfg={B:[0,1,0],invX:false,invY:false,thr:0.6,lockout:450,mic:"kapali",weak:0.45,clickDb:15,clickMin:50,clickRise:8};this.micOn=false;this.bias0=null;this.reset();}
+function Proc(){this.cfg={B:[0,1,0],invX:false,invY:false,thr:0.6,lockout:450,mic:"kapali",weak:0.45,clickDb:15,clickMin:32,clickRise:8};this.micOn=false;this.bias0=null;this.reset();}
 // atış algılama ayarları: weak = mikrofon tık sesi duyunca yeterli darbe (eşiğin katı), clickDb = gürültü tabanının üstü, clickMin = en düşük tık seviyesi
 const MIC_WIN=25;
 Proc.prototype.reset=function(){
@@ -653,8 +653,11 @@ Proc.prototype.detect=function(t,snd){
   this.sound(t,snd);
   if(!this.armed&&!this.testArm){ this.cand=null; return; }
   const thr=this.cfg.thr, j=this.jerk, free=t-this.lastShot>this.cfg.lockout;
-  const mic=this.micOn&&this.sT!=null&&t-this.sT<100;
-  if(!mic){ this.cand=null; if(j>thr&&free) this.fire(t,j,"darbe"); return; }
+  // bu ölçümde ses yoksa (eski yazılım, mikrofon arızası, sensör bip çalıyor) yalnız darbe: bekleyen güçlü aday atıştır
+  const mic=this.micOn&&snd!=null;
+  if(!mic){ const c=this.cand; this.cand=null;
+    if(c&&c.strong){ this.fire(c.t,c.peak,"darbe"); return; }
+    if(j>thr&&free) this.fire(t,j,"darbe"); return; }
   const strict=this.cfg.mic==="siki"&&!this.strictOff;
   if(!this.cand){ if(free&&j>thr*this.cfg.weak) this.cand={t,peak:j,strong:j>thr}; }
   else if(j>this.cand.peak){ this.cand.peak=j; if(j>thr) this.cand.strong=true; }
@@ -2418,7 +2421,7 @@ function openFromHash(){
 window.addEventListener("hashchange",openFromHash);
 
 /* --- test kancası */
-window.__hisar={get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
+window.__hisar={get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess)};

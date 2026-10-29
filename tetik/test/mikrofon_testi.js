@@ -129,6 +129,33 @@ const WEAK = { spike: 0.3 };                             // eşik 0,5 g; 0,45 ×
     await ctx.close();
   }
 
+  section('Sensör bip çalarken: ses yok sayılır, atış darbeyle algılanır (bip tetik sesini bastırmaz)');
+  {
+    const { ctx, page, errs } = await connected(browser);
+    await run(page, { mic: 'siki' });
+    const bg0 = await page.evaluate(() => window.__hisar.proc.sBg);
+    // 400 ms bip; bip sırasında sessiz güçlü darbe (Sıkı kipte normalde sayılmaz) ve tıklı zayıf darbe
+    let h = await head(page);
+    await page.evaluate(h => { window.__hisar.sensorTone(2400, 400); window.__fake.addShot(h + 20, { spike: 3, click: null }); }, h);
+    await sleep(1600);
+    let n = await page.evaluate(() => window.__hisar.cur.sess.shots.length);
+    const z = await page.evaluate(() => { const r = window.__hisar.proc; return { rej: r.rejected, bg: r.sBg }; });
+    check(n === 1 && z.rej === 0, 'Bip sırasında güçlü darbe Sıkı kipte de sayıldı (ses o an yok sayılır)', { n, z });
+    check(Math.abs(z.bg - bg0) < 3, 'Bip gürültü tabanını bozmadı', { bg0, bg: z.bg });
+    h = await head(page);
+    await page.evaluate(h => { window.__hisar.sensorTone(2400, 400); window.__fake.addShot(h + 20, { spike: 0.3 }); }, h);
+    await sleep(1600);
+    n = await page.evaluate(() => window.__hisar.cur.sess.shots.length);
+    check(n === 1, 'Bip sırasında zayıf darbe doğrulanamaz, sayılmaz', n);
+    n = await shots(page, [{ at: 300, o: { spike: 3, click: null } }]);
+    check(n === 1, 'Bip bitince Sıkı kip yine sessiz darbeyi saymıyor', n);
+    n = await shots(page, [{ at: 300, o: { spike: 3 } }]);
+    check(n === 2, 'Bip bitince tıklı darbe sayılıyor', n);
+    await stop(page);
+    check(errs.length === 0, 'Sayfa hatası yok', errs);
+    await ctx.close();
+  }
+
   section('Gürültülü ortam: taban yükselir, ortam sesi tık sayılmaz');
   {
     const { ctx, page, errs } = await connected(browser);

@@ -839,7 +839,7 @@ async function avatarlariYukle(kok,ilerleme){
         if(/haircut|Eyelashes/i.test(n)){ m.alphaTest=.4; m.transparent=false; m.depthWrite=true; m.side=THREE.DoubleSide; }
         if(/Cornea/i.test(n)){ m.transparent=true; m.opacity=.18; m.depthWrite=false; m.roughness=.05; }
         if(/Headwear/.test(n)) o.visible=false;
-        if(m.isMeshStandardMaterial){ m.envMapIntensity=.65; if(/Avatar(Head|Body)|Skin/.test(n)) m.roughness=Math.max(m.roughness,.58); } }); });
+        if(m.isMeshStandardMaterial){ m.envMapIntensity=.65; if(/Avatar(Head|Body)|Skin/.test(n)){ m.roughness=Math.max(m.roughness,.58); m.metalness=0; } } }); }); // deri metal değildir: hazır şablonun metal kanalı burun kanadında ve kulakta "halka/küpe" gibi parlıyordu
     // Mixamo (Michelle) dosyasında iskelet kökü 90° döndürülmüş; animasyonlar zaten dik duruş verdiği için kökü sıfırla
     let q0=null; if(k==="michelle") sahne.traverse(n=>{ if(n.name==="Character"){ q0=n.quaternion.clone(); n.rotation.set(0,0,0); } });
     const klipler=Object.keys(a).map(ad=>{ const c=THREE.AnimationClip.parse(a[ad]); c.name=ad; c.tracks.forEach(t=>{ t.name=t.name.replace(/^\.bones\[([^\]]+)\]/,"$1"); }); return c; });
@@ -862,6 +862,10 @@ async function avatarlariYukle(kok,ilerleme){
     if(k==="kardelen"){ const yukleD=(ad,srgb)=>new Promise(r=>new THREE.TextureLoader().load(kok+ad,t=>{ t.flipY=false; if(srgb) t.encoding=THREE.sRGBEncoding; t.anisotropy=4; t.__kalici=true; r(t); },undefined,()=>r(null)));
       const yb=null, yn=await yukleD("kardelen_bas_n.png",false); // renk dokusu kardelenGuzellestir'de (kardelen_yuz.jpg)
       sahne.traverse(o=>{ if(o.isMesh&&o.material&&o.material.name==="AvatarHead"){ if(yb) o.material.map=yb; if(yn) o.material.normalMap=yn; o.material.needsUpdate=true; } }); }
+    // yüz pürüzlülüğü: şablondaki ıslak (parlak) boşluk bölgeleri burun deliği ve kulak kenarında gümüş halka gibi parlıyordu; mat sürüm
+    if(k==="kaan"||k==="kardelen"){ if(!avatarlariYukle.basMR) avatarlariYukle.basMR=new Promise(r=>new THREE.TextureLoader().load(kok+"bas_mr.png",t=>{ t.flipY=false; t.__kalici=true; r(t); },undefined,()=>r(null)));
+      yuzNormalYumusat(sahne);
+      const mr=await avatarlariYukle.basMR; sahne.traverse(o=>{ if(o.isMesh&&o.material&&o.material.name==="AvatarHead"){ if(mr){ o.material.roughnessMap=mr; } o.material.metalnessMap=null; o.material.metalness=0; o.material.needsUpdate=true; } }); }
     if(k==="kardelen") await kardelenGuzellestir(sahne);
     AVATAR[k]={sahne, olcek, kalca:kalca*olcek, klipler, onek:k==="michelle"?"mixamorig":""};
   };
@@ -907,6 +911,23 @@ function sacUzat(sm,kesit,marj){
     C[i*3]=(.6+.55*u)*(1-.12*kok); C[i*3+1]=(.54+.36*u)*(1-.12*kok); C[i*3+2]=(.5+.16*u)*(1-.1*kok); }
   geo.setAttribute("skinIndex",new THREE.Uint16BufferAttribute(SI,4)); geo.setAttribute("skinWeight",new THREE.Float32BufferAttribute(SW,4)); geo.setAttribute("color",new THREE.Float32BufferAttribute(C,3));
   geo.computeVertexNormals(); geo.computeBoundingSphere(); return geo;
+}
+// burun kanadı ve kulak kıvrımlarında normaller çok keskin: yandan gelen ışıkta ince parlak + koyu çizgi "halka/küpe" gibi görünüyordu.
+// Bu bölgelerde normaller komşularıyla yumuşatılır (deri altı saçılımın yaptığı gibi), biçim değişmez.
+function yuzNormalYumusat(sahne){
+  sahne.traverse(o=>{ if(!o.isMesh||!o.material||o.material.name!=="AvatarHead"||o.geometry.userData.nYum) return; const g=o.geometry; g.userData.nYum=1;
+    const P=g.attributes.position, N=g.attributes.normal; if(!N) return; let tip=-1, tz=-9;
+    for(let i=0;i<P.count;i++){ if(Math.abs(P.getX(i))<.012&&P.getZ(i)>tz){ tz=P.getZ(i); tip=i; } } if(tip<0) return; const ty=P.getY(tip);
+    const bolgeler=[{f:(x,y,z)=>Math.abs(x)<.032&&y>ty-.032&&y<ty+.008&&z>tz-.055, R:.0055},
+                    {f:(x,y,z)=>Math.abs(x)>.058&&y>ty-.075&&y<ty+.07&&z>-.07&&z<tz-.06, R:.007}];
+    const yeni=new Float32Array(N.array.length); yeni.set(N.array);
+    for(const B of bolgeler){ const id=[]; for(let i=0;i<P.count;i++) if(B.f(P.getX(i),P.getY(i),P.getZ(i))) id.push(i);
+      const R2=B.R*B.R*4;
+      for(const i of id){ const xi=P.getX(i), yi=P.getY(i), zi=P.getZ(i); let sx=0,sy=0,sz=0;
+        for(const j of id){ const dx=P.getX(j)-xi, dy=P.getY(j)-yi, dz=P.getZ(j)-zi, d2=dx*dx+dy*dy+dz*dz; if(d2>R2) continue; const w=Math.exp(-d2/(B.R*B.R)); sx+=N.getX(j)*w; sy+=N.getY(j)*w; sz+=N.getZ(j)*w; }
+        const L=Math.hypot(sx,sy,sz)||1; const k=.85; let nx=N.getX(i)*(1-k)+sx/L*k, ny=N.getY(i)*(1-k)+sy/L*k, nz=N.getZ(i)*(1-k)+sz/L*k; const L2=Math.hypot(nx,ny,nz)||1;
+        yeni[i*3]=nx/L2; yeni[i*3+1]=ny/L2; yeni[i*3+2]=nz/L2; } }
+    N.array.set(yeni); N.needsUpdate=true; });
 }
 // Kardelen'in yüz hatlarına çok hafif dokunuş (bağlama uzayında, bir kez): gözler biraz daha açık, kaş kemeri hafif yukarı,
 // dudaklar biraz dolgun, burun kanatları ve çene hattı biraz daha ince (V çizgisi). Kirpikler aynı biçimde göz kapağını izler.
@@ -4574,8 +4595,13 @@ const B6={
     if(THREE.Water){
       const sn=new THREE.TextureLoader().load(SU_NORMAL); sn.wrapS=sn.wrapT=THREE.RepeatWrapping;
       const wg=new THREE.PlaneGeometry(600,300); wg.rotateX(-Math.PI/2); wg.translate(0,0,-148);
-      this.su=new THREE.Water(wg,{textureWidth:512,textureHeight:512,waterNormals:sn,sunDirection:gy.clone(),sunColor:0xffc490,waterColor:0x0b3550,distortionScale:2.2,fog:true,alpha:1});
+      this.su=new THREE.Water(wg,{textureWidth:512,textureHeight:512,waterNormals:sn,sunDirection:gy.clone(),sunColor:0xffc490,waterColor:0x174f6b,distortionScale:2.2,fog:true,alpha:1});
       this.su.position.y=.02; scene.add(this.su);
+      // kıyıya yakın sığ su: kumun üstünde turkuaz, açığa doğru solar (yukarıdan bakınca deniz kapkara görünmez)
+      const sc=document.createElement("canvas"); sc.width=8; sc.height=256; const sx=sc.getContext("2d"); const sg=sx.createLinearGradient(0,0,0,256);
+      sg.addColorStop(0,"rgba(40,120,140,0)"); sg.addColorStop(.55,"rgba(52,150,160,.38)"); sg.addColorStop(.85,"rgba(110,196,190,.62)"); sg.addColorStop(1,"rgba(190,215,190,.55)"); sx.fillStyle=sg; sx.fillRect(0,0,8,256);
+      const st=new THREE.CanvasTexture(sc); st.encoding=THREE.sRGBEncoding;
+      const sig=new THREE.Mesh(new THREE.PlaneGeometry(400,12),new THREE.MeshBasicMaterial({map:st,transparent:true,depthWrite:false,fog:true})); sig.rotation.x=-Math.PI/2; sig.position.set(0,.026,-5.0); scene.add(sig);
     } else { const dm=new THREE.Mesh(new THREE.PlaneGeometry(600,300).rotateX(-Math.PI/2).translate(0,0,-148),mat("#2d6e93",{roughness:.12,metalness:.35})); scene.add(dm); }
     const kg=new THREE.PlaneGeometry(400,120,140,46); kg.rotateX(-Math.PI/2); kg.translate(0,0,58);
     const kp=kg.attributes.position; const kr=[];
@@ -4810,7 +4836,7 @@ const B6={
         await sahne(async()=>{ K.userData.hiz=0; D.userData.hiz=0; for(const [kim,t] of satirlar[h.userData.ad]) await konus(kim,t,{gul:.7}); });
         if(n>=6) res(); },{mesafe:1.6,isaret:false}); }); });
     await etkBekle(this.yuvalar[1],"Tabelayı oku",{mesafe:2.4,isaretY:1.4});
-    this.serbest=false; this.elele=false;
+    this.serbest=false; this.elele=false; gorev(null);
     await sahne(async()=>{
       const y=this.yuvalar[1].position; await kameraNoktasi(y.clone().add(new THREE.Vector3(-1.8,1.4,2.4)),y.clone().add(new THREE.Vector3(0,.4,0)),1.4);
       await anlat("Caretta yuvaları. Gönüllüler tel kafesle korumaya almış. Yavrular geceleri aya bakıp denize yürüyormuş.",3600);
@@ -5785,7 +5811,7 @@ function kurulumIpucu(){
 
 
 /* ================= GÜNCELLEME (telefondan) ================= */
-const SURUM="2026.10.29-031400";
+const SURUM="2026.10.29-035459";
 async function sunucuSurumu(){ try{ const r=await fetch("surum.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const j=await r.json(); return j.surum||null; }catch(e){ return null; } }
 function tost(t){ const d=el(`<div class="tost">${t}</div>`); document.body.appendChild(d); requestAnimationFrame(()=>d.classList.add("gor")); setTimeout(()=>{ d.classList.remove("gor"); setTimeout(()=>d.remove(),500); },2600); }
 async function guncelle(){

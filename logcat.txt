@@ -1,0 +1,9 @@
+10-29 07:11:27.196  3021  3021 W JobService: onNetworkChanged() not implemented in org.chromium.android_webview.services.AwVariationsSeedFetcher. Must override in a subclass.
+10-29 07:11:27.351  3288  3374 W chromium: [WARNING:dns_config_service_android.cc(115)] Failed to read DnsConfig.
+10-29 07:11:27.547   520   549 I ActivityManager: Start proc 3371:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {com.hisar.tetik/org.chromium.content.app.SandboxedProcessService0:0}
+10-29 07:11:27.785   520   549 I ActivityManager: Start proc 3460:com.google.android.webview:webview_apk/u0a134 for service {com.google.android.webview/org.chromium.android_webview.nonembedded.AwComponentUpdateService}
+10-29 07:11:27.869  3371  3371 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+10-29 07:11:28.622  3460  3554 W cr_AWNetworkFetcherTask: 	at org.chromium.android_webview.nonembedded.NetworkFetcherTask.download(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:48)
+10-29 07:11:42.752  3371  3482 I chromium: [INFO:audio_latency.cc(179)] audioHardwareBufferSize = 4360
+10-29 07:12:10.098  5211  5453 W .gms.persistent: Long monitor contention with owner lowpool[6] (5339) at org.chromium.net.ExperimentalCronetEngine com.google.android.gms.common.app.BaseApplicationContext.getRealCronetEngine()(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7) waiters=0 in org.chromium.net.ExperimentalCronetEngine com.google.android.gms.common.app.BaseApplicationContext.getRealCronetEngine() for 194ms
+10-29 07:12:12.189  4704  5559 I cr_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@708e8ac

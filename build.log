@@ -1,0 +1,19 @@
+build-tools: /usr/local/lib/android/sdk/build-tools/37.0.0
+platform: /usr/local/lib/android/sdk/platforms/android-35/android.jar
+sürüm: 6.0 (600)
+yazı tipleri: 16
+yazildi: /home/runner/work/hisar/hisar/tetik/index.html 222761 bayt
+yazildi: /home/runner/work/hisar/hisar/tetik/android/app/src/main/assets/www/index.html 222129 bayt
+Note: /home/runner/work/hisar/hisar/tetik/android/app/src/main/java/com/hisar/tetik/MainActivity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+package: name='com.hisar.tetik' versionCode='600' versionName='6.0' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+targetSdkVersion:'35'
+application-label:'Hisar Tetik'
+  uses-implied-feature: name='android.hardware.bluetooth' reason='requested android.permission.BLUETOOTH permission, requested android.permission.BLUETOOTH_ADMIN permission, and targetSdkVersion > 4'
+-rw-r--r-- 1 runner runner 539610 Oct 29 07:09 /home/runner/work/hisar/hisar/tetik/android/build/HisarTetik.apk

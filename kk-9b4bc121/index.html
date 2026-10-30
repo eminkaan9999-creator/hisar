@@ -1992,7 +1992,9 @@ function karakterleriGuncelle(dt){
       if(!aktif&&u._otur>.5&&!(u.oturY>.2)){ aktif=true; px=.45; pz=isaret*.3; onKol=yon(isaret*.1,-1,-.3); }
       // sandalyede, bankta, yatakta otururken eller dizlerin üstünde (önceden kollar sandalyenin yanından dümdüz sarkıyordu)
       if(!aktif&&u._otur>.5&&u.oturY>.2&&u.oturTip!=="ata"){ aktif=true; px=-.32; pz=isaret*.12; onKol=yon(-isaret*.18,-.32,1); }
-      st.w=lerp(st.w,aktif?1:0,1-Math.pow(.003,dt));
+      // ayakta beklerken kollar gövdeye biraz daha yakın ve dirsek hafif bükük (bekleme klibinde kollar yana açık, eller havada duruyordu); yarı ağırlıkla
+      let agir=1; if(!aktif&&u._otur<.1&&u._dans<.1&&(A.walk+A.run)<.15&&!(u.elele>.05)){ aktif=true; agir=.55; px=-.05; pz=isaret*.12; onKol=yon(isaret*.02,-1,.22); }
+      st.w=lerp(st.w,aktif?agir:0,1-Math.pow(.003,dt));
       if(aktif){ if(ozel) _v3.copy(ozel); else { _e.set(px,0,pz); _v3.set(0,-1,0).applyEuler(_e); } st.d.lerp(_v3,1-Math.pow(.0005,dt)).normalize(); st.on=onKol; }
       if(st.w>.01){
         const d=st.d.clone().applyQuaternion(kq);
@@ -3125,6 +3127,10 @@ function kadrajIyi(L){ camera.updateMatrixWorld(); const H=L.map(c=>bas(c)), _p=
   const ray=new THREE.Raycaster(); for(const h of H){ const d=h.clone().sub(camera.position), uz=d.length(); ray.set(camera.position,d.normalize()); ray.near=.05; ray.far=uz-.12; if(ray.intersectObjects(engel,false).length) return false; }
   // yüzleri kameraya dönük mü (sırtları ya da tam profilleri değil)
   for(const c of L){ const f=c.getWorldDirection(new THREE.Vector3()).setY(0).normalize(), k=camera.position.clone().sub(c.position).setY(0).normalize(); if(f.dot(k)<.25) return false; }
+  // ikiliyse yan yana görünmeliler: biri ötekinin önüne geçmesin (başlar ekranda ayrık, kamera karşıdan ±35°)
+  if(L.length===2){ const p0=H[0].clone().project(camera), p1=H[1].clone().project(camera); if(Math.abs(p0.x-p1.x)<.28) return false;
+    const fo=L[0].getWorldDirection(new THREE.Vector3()).add(L[1].getWorldDirection(new THREE.Vector3())).setY(0); const m=L[0].position.clone().lerp(L[1].position,.5), k=camera.position.clone().sub(m).setY(0);
+    if(fo.lengthSq()>.09&&fo.normalize().dot(k.normalize())<.82) return false; }
   return true; }
 function fotoCercevesi(){
   const L=["kaan","kardelen"].map(k=>KONUSANLAR&&KONUSANLAR[k]).filter(c=>c&&c.visible&&ataMi(scene,c));
@@ -9082,7 +9088,7 @@ function kurulumIpucu(){
 
 
 /* ================= GÜNCELLEME (telefondan) ================= */
-const SURUM="2026.10.30-222558";
+const SURUM="2026.10.30-233005";
 async function sunucuSurumu(){ try{ const r=await fetch("surum.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const j=await r.json(); return j.surum||null; }catch(e){ return null; } }
 function tost(t,sure=2600){ const d=el(`<div class="tost">${t}</div>`); document.body.appendChild(d); requestAnimationFrame(()=>d.classList.add("gor")); setTimeout(()=>{ d.classList.remove("gor"); setTimeout(()=>d.remove(),500); },sure); }
 async function guncelle(){

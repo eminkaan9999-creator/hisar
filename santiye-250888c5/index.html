@@ -139,6 +139,26 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
 #load{position:fixed;inset:0;display:grid;place-items:center;background:var(--asphalt);font-family:var(--display);font-size:28px;color:var(--cat);letter-spacing:1px}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 .onfoot .plate.dash{display:none}
+
+/* missions: the giver on the card, the tea break bar, the paşa warning, the chosen character */
+.mpor{display:flex;align-items:center;gap:12px;margin:0 0 10px}.mpor i{flex:none;width:62px;height:62px;border-radius:50%;background:#333 center/cover;border:3px solid #f2b705;box-shadow:0 3px 10px rgba(0,0,0,.45)}
+.mpor b{display:block;font:800 16px/1.2 system-ui,sans-serif;color:#fff}.mpor small{display:block;font:600 12px/1.3 system-ui,sans-serif;color:#9fd3ff;letter-spacing:.03em}
+#teaBar{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:12px;background:rgba(24,22,19,.86);border:1px solid #ffffff22;border-radius:14px;padding:8px 10px 8px 16px;color:#ffd27a;font:800 15px system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+#teaBar .big{height:44px;font-size:16px;padding:0 14px}
+#raidChip{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:8;background:#b3141b;color:#fff;font:800 15px system-ui,sans-serif;letter-spacing:.03em;padding:9px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);animation:rpulse 1s ease-in-out infinite alternate;pointer-events:none;white-space:nowrap}
+@keyframes rpulse{from{opacity:.85}to{opacity:1;transform:translateX(-50%) scale(1.04)}}
+.card.sel{outline:3px solid #f2b705;outline-offset:-3px;box-shadow:0 0 0 3px rgba(242,183,5,.25)}
+/* in the cab: the map off, the job panel smaller on a phone held upright, so the arm and the bucket stay in sight */
+body.cab #mini{display:none}
+@media (max-width:640px){body.cab .tasks{transform:scale(.8);transform-origin:top right;opacity:.92}}
+/* phones held upright: the characters three to a row so the jobs are not far below; the tea bar under the top panels */
+@media (max-width:640px){#cards{grid-template-columns:repeat(3,1fr);gap:8px}#cards .card .tx .c{display:none}#cards .card .tx .t{font-size:13px;line-height:1.15}#cards .card .tag{font-size:10px;padding:1px 5px}
+  #teaBar{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + var(--joy,150px) + 44px)}}
+/* the jobs of a project, playable in any order */
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 12px}
+.mchip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:#24211d;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:6px 10px;font:700 13px/1.2 system-ui,sans-serif;cursor:pointer;text-align:left;touch-action:manipulation}
+.mchip b{color:var(--cat);margin-right:4px}.mchip small{font:600 10.5px system-ui,sans-serif;opacity:.7;letter-spacing:.02em}
+.mchip.ok{border-color:#6cc24a66}.mchip.ok b::after{content:" ✓";color:#7ac943}.mchip.nx{border-color:var(--cat);box-shadow:0 0 0 2px rgba(242,183,5,.25)}
 </style>
 
 <canvas id="gl"></canvas>
@@ -1375,7 +1395,7 @@ function interior(P, par, ci, kind) {
   // pedals
   for (const k of [-.13, .13]) { s.box(.04, .2, .1, xf - .32, ci.y + .18, sz + k, 0x111, 0, 0, -.5); s.box(.06, .02, .12, xf - .26, ci.y + .27, sz + k, 0x555); }
   // roof liner + lamp + visor
-  s.box(.28, .03, .14, ci.x + .1, ci.yt - .06, ci.z, 0xdedcd4); s.box(.02, .18, ci.W * .5, xf - ci.L * .1, ci.yt - .14, sz, 0x444, 0, 0, .3);
+  s.box(.28, .03, .14, ci.x + .1, ci.yt - .06, ci.z, 0xdedcd4); s.box(.02, .07, ci.W * .34, xf - ci.L * .07, ci.yt - .08, sz, 0x2e2e2e, 0, 0, .3);
   const cons = (sd, len) => { s.box(len, .12, .17, sx + .06, sy + .16, sz + sd * .34, D); s.box(len - .05, .05, .15, sx + .06, sy + .25, sz + sd * .34, 0x3a3d40); s.box(.25, .3, .16, sx - .02, sy - .02, sz + sd * .34, D); };
   if (kind === "ex" || kind === "dz" || kind === "gt") { cons(-1, .55); cons(1, .55); }
   else if (kind === "wheel") cons(1, .45);
@@ -2213,7 +2233,7 @@ function updateCam(dt) {
     EYE.set(P.ci.eye[0], P.ci.eye[1], P.ci.eye[2]); par.localToWorld(EYE); cam.position.copy(EYE);
     if (shake) cam.position.y += (Math.random() - .5) * shake * .5;
     par.getWorldQuaternion(Q1); E1.set(CAM.cpitch, CAM.cyaw - Math.PI / 2, 0); const q2 = new THREE.Quaternion().setFromEuler(E1); cam.quaternion.copy(Q1).multiply(q2);
-    if (cam.near !== .04) { cam.near = .04; cam.fov = 70; cam.updateProjectionMatrix(); } marker.visible = false; camSnap = true; return;
+    const fv = typeof cabFov === "function" ? cabFov() : 70; if (cam.near !== .04 || cam.fov !== fv) { cam.near = .04; cam.fov = fv; cam.updateProjectionMatrix(); } marker.visible = false; camSnap = true; return;
   }
   if (cam.near !== .2) { cam.near = .2; cam.fov = 58; cam.updateProjectionMatrix(); }
   const k = camSnap ? 1 : 1 - Math.exp(-dt * 7);
@@ -2342,6 +2362,8 @@ requestAnimationFrame(loop);
 ;(window.__INIT || (window.__INIT = [])).push(["game", performance.now()]);
 
 // ======================= PROJECTS & MISSIONS =======================
+// GM: the machine missions are the game (gorev.js: the officers give the jobs, the paşa drops in, tea between jobs)
+const GM = {on: true, started: false, pick: null, raid: null, tea: false, giver: null, said: {}};
 const portalZ = 63.3, portalX = edgeX(portalZ);
 const GAL = [24, 36, 48];                                   // cold-storage gallery axes (z)
 const PORTZ = {x: 110, y: 14, w: 24, h: 44};                 // apron in front of the storage galleries
@@ -2393,10 +2415,12 @@ const PROJECTS = [
         spawn: () => GAL.forEach(zc => { const ex = edgeX(zc); for (const [dx, dz, a] of [[-3.4, -1.5, 2.8], [-6.2, 1.3, 1.9], [-2.6, 2.1, 1.5]]) { const x = ex + dx, z = zc + dz; if (!crewBlocked(x, z) && !piles.some(q => dist2(q, {x, z}) < 1.2)) addPile(x, z, a); } })}
     ]}
 ];
-const PROJ = {p: 0, m: 0, prog: {kapadokya: 0, depo: 0}, money: 0, active: false, base: {}, t0: 0, done: false, f0: []};
+const PROJ = {p: 0, m: 0, prog: {kapadokya: 0, depo: 0}, dn: {}, money: 0, active: false, base: {}, t0: 0, done: false, f0: []};
 const projOf = () => PROJECTS[PROJ.p], missionsOf = () => projOf().missions;
-try { const s = JSON.parse(localStorage.getItem("hs-proj") || "null"); if (s) { if (s.prog) Object.assign(PROJ.prog, s.prog); else PROJ.prog.kapadokya = Math.min(s.m | 0, 5); PROJ.money = s.money | 0; } } catch (e) {}
-function saveProj() { PROJ.prog[projOf().id] = PROJ.m; try { localStorage.setItem("hs-proj", JSON.stringify({prog: PROJ.prog, money: PROJ.money})); } catch (e) {} }
+try { const s = JSON.parse(localStorage.getItem("hs-proj") || "null"); if (s) { if (s.prog) Object.assign(PROJ.prog, s.prog); else PROJ.prog.kapadokya = Math.min(s.m | 0, 5); PROJ.money = s.money | 0; if (s.dn) PROJ.dn = s.dn; } } catch (e) {}
+// which jobs are done (any order can be played from the menu); prog stays "how far in order" for the older saves
+const isDone = (P, i) => i < (PROJ.prog[P.id] || 0) || !!(PROJ.dn[P.id] && PROJ.dn[P.id][i]);
+function saveProj() { const id = projOf().id; if (!GM.on) PROJ.prog[id] = PROJ.m; else { let p = PROJ.prog[id] || 0; while (PROJ.dn[id] && PROJ.dn[id][p]) p++; PROJ.prog[id] = p; } try { localStorage.setItem("hs-proj", JSON.stringify({prog: PROJ.prog, money: PROJ.money, dn: PROJ.dn})); } catch (e) {} }
 const fmtTL = n => (n < 0 ? "-₺" : "₺") + Math.abs(Math.round(n)).toLocaleString("tr-TR");
 const idxOf = t => vehicles.findIndex(o => o.type === t);
 
@@ -2443,7 +2467,7 @@ function setZone(z) {
   if (z.portal) { const x = portalX - .3; for (const [y, zz] of [[0, portalZ - 2.6], [5, portalZ - 2.6], [5, portalZ + 2.6], [0, portalZ + 2.6]]) pts.push(new THREE.Vector3(x, y + .05, zz)); }
   if (pts.length) { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color: 0xf2b705})); zoneG.add(l); const l2 = l.clone(); l2.position.y = .06; zoneG.add(l2); }
   if (z.laser != null) zoneG.add(laserGroup(z.laser));
-  if (z.beam) { const [x, zz] = z.beam; const b = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, 40, 16, 1, true), beamMat); b.position.set(x, heightAt(x, zz) + 20, zz); zoneG.add(b); }
+  if (z.beam) { const [x, zz] = z.beam; const b = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, 40, 16, 1, true), beamMat); b.position.set(x, heightAt(x, zz) + 20, zz); b.userData.beam = true; zoneG.add(b); }
 }
 // ---- storage doors once the cold-storage project is handed over ----
 const doorG = new THREE.Group(); scene.add(doorG);
@@ -2462,7 +2486,7 @@ function buildDoors() {
 function objVal(o) { return Math.max(0, o.f(PROJ.base)); }
 function objOk(o, v) { return o.le ? v <= o.goal : v >= o.goal; }
 function missionHud() {
-  if (!PROJ.active) { const h = typeof dayPanel === "function" && typeof DAY !== "undefined" && DAY.on ? dayPanel() : `<div class="mt">Tabur · G: görev dağılımı</div>`; if (tasksEl.__h !== h) { tasksEl.innerHTML = h; tasksEl.__h = h; } return; }
+  if (!PROJ.active || (GM.on && PROJ.done)) { const h = GM.on ? (GM.tea ? `<h4>ÇAY MOLASI</h4><div class="mt">Subaylar masada · GÖREVE DÖN ile sıradaki iş</div>` : `<div class="mt">Görev seçmek için MENÜ</div>`) : typeof dayPanel === "function" && typeof DAY !== "undefined" && DAY.on ? dayPanel() : `<div class="mt">Tabur · G: görev dağılımı</div>`; if (tasksEl.__h !== h) { tasksEl.innerHTML = h; tasksEl.__h = h; } return; }
   const MS = missionsOf(), M = MS[PROJ.m]; if (!M) return;
   let all = true; const rows = M.obj.map((o, i) => { const v = objVal(o), ok = objOk(o, v); if (!ok) all = false;
     const shown = o.u === " %" || o.u === " m" ? Math.floor(v) : Math.round(v * 10) / 10;
@@ -2485,7 +2509,7 @@ function showModal(kick, title, text, objs, vehs, btn, act) {
   document.getElementById("mKick").textContent = kick; document.getElementById("mTitle").textContent = title; document.getElementById("mText").textContent = text;
   document.getElementById("mObj").innerHTML = objs.map(([a, b]) => `<li><span>${a}</span><b>${b}</b></li>`).join("");
   document.getElementById("mVeh").innerHTML = vehs.map(t => `<span class="chip">${TYPES[t].name}</span>`).join("");
-  mGo.textContent = btn; modalAct = act; modal.hidden = false; running = false; if (ac) master.gain.value = 0;
+  mGo.textContent = btn; modalAct = act; modal.hidden = false; running = false; if (ac) master.gain.value = 0; subEl.style.opacity = 0;
   document.getElementById("hud").hidden = true; document.getElementById("ctl").hidden = true; document.getElementById("menu").hidden = true;
 }
 mGo.addEventListener("click", () => { modal.hidden = true; const f = modalAct; modalAct = null; if (f) f(); });
@@ -2495,23 +2519,29 @@ function startMission() {
   const M = missionsOf()[PROJ.m];
   if (M.spawn) M.spawn();
   PROJ.active = true; PROJ.done = false; PROJ.t0 = TT; PROJ.base = Object.assign({}, stats); PROJ.f0 = M.obj.map(o => objVal(o)); setZone(M.zone); crewMission(M);
+  if (GM.on) gmStart(M);
   resumeGame();
 }
 function briefMission() {
   const P = projOf(), MS = P.missions, M = MS[PROJ.m];
-  if (!M) { showModal("PROJE TAMAMLANDI", P.name, P.end, [["Şirket kasası", fmtTL(PROJ.money)]], [], "MENÜYE DÖN", () => openMenu()); return; }
-  showModal(`PROJE ${PROJ.p + 1} · GÖREV ${PROJ.m + 1}/${MS.length}`, M.title, M.brief,
+  if (!M) { showModal("PROJE TAMAMLANDI", P.name, P.end, [["Tabur bütçesi", fmtTL(PROJ.money)]], [], "MENÜYE DÖN", () => openMenu()); if (GM.on) gmCard(null); return; }
+  const B = GM.on ? gmBrief(P, PROJ.m, M) : null;
+  showModal(`PROJE ${PROJ.p + 1} · GÖREV ${PROJ.m + 1}/${MS.length}`, M.title, B ? B.text : M.brief,
     M.obj.map(o => [o.t, (o.le ? "≤ " : o.min ? "en az " : "") + o.goal + o.u]).concat([["İpucu: " + M.tip, ""], ["Hakediş", fmtTL(M.pay)]]), M.veh, "BAŞLA", startMission);
+  if (GM.on) gmCard(B);
 }
 function completeMission() {
   PROJ.done = true; const P = projOf(), M = P.missions[PROJ.m], sec = Math.max(1, TT - PROJ.t0);
   const bonus = sec < 600 ? Math.round(M.pay * .2 / 1000) * 1000 : 0, isg = stats.isg - (PROJ.base.isg || 0), safe = isg === 0 ? Math.round(M.pay * .1 / 1000) * 1000 : 0;
-  PROJ.money += M.pay + bonus + safe; PROJ.m++; saveProj(); setZone(null); chiefOk();
+  const raid = GM.on ? gmRaidResult() : null, mi = PROJ.m;
+  (PROJ.dn[P.id] || (PROJ.dn[P.id] = []))[mi] = true;
+  PROJ.money += M.pay + bonus + safe + (raid ? raid.money : 0); PROJ.m++; saveProj(); setZone(null); chiefOk();
   if (P.id === "depo" && PROJ.m >= P.missions.length) { stats.depotDone = true; buildDoors(); }
+  const D = GM.on ? gmDone(P, mi, M) : null;
   if (typeof saveWorld === "function") saveWorld();
   const mm = Math.floor(sec / 60), ss = Math.floor(sec % 60);
-  setTimeout(() => showModal("GÖREV TAMAMLANDI", M.title, "Şantiye şefi işi kontrol etti ve onayladı.", [["Süre", `${mm} dk ${ss} sn`], ["Hakediş", fmtTL(M.pay)], ["Hız primi", bonus ? fmtTL(bonus) : "—"], ["İSG ihlali", String(isg)], ["İSG primi", safe ? fmtTL(safe) : "—"], ["Şirket kasası", fmtTL(PROJ.money)]], [],
-    PROJ.m < P.missions.length ? "SONRAKİ GÖREV" : "DEVAM", () => briefMission()), 900);
+  setTimeout(() => { showModal("GÖREV TAMAMLANDI", M.title, D ? D.text : "Şantiye şefi işi kontrol etti ve onayladı.", [["Süre", `${mm} dk ${ss} sn`], ["Hakediş", fmtTL(M.pay)], ["Hız primi", bonus ? fmtTL(bonus) : "—"], ["İSG ihlali", String(isg)], ["İSG primi", safe ? fmtTL(safe) : "—"]].concat(raid ? [["Levent Paşa baskını", (raid.money > 0 ? "memnun · " : "kızdı · ") + fmtTL(raid.money)]] : []).concat([["Tabur bütçesi", fmtTL(PROJ.money)]]), [],
+    PROJ.m < P.missions.length ? "SONRAKİ GÖREV" : "DEVAM", () => briefMission()); if (GM.on) gmCard(D, true); }, 900);
 }
 // legacy: older saves only stored the mission number, rebuild what earlier missions produced
 function restoreWorld(m) {
@@ -2528,10 +2558,19 @@ function updProjBtn() {
     const d = document.createElement("div"); d.className = "proj" + (done ? " done" : "");
     d.innerHTML = `<div class="pj-l"><span class="pj-k">PROJE ${k + 1}</span><b>${P.name}</b><span class="pj-s">${done ? "Tamamlandı ✓ · " + P.missions.length + " görev" : m > 0 || live ? `Görev ${m + 1}/${P.missions.length} · ${P.missions[m].title}` : P.sub}</span></div>` +
       (done ? `<span class="pj-ok">TAMAM ✓</span>` : `<div class="pj-b"><button class="big" type="button">${live ? "DEVAM ET" : m > 0 ? `DEVAM · GÖREV ${m + 1}` : "BAŞLA"}</button></div>`);
-    const b = d.querySelector("button"); if (b) b.addEventListener("click", () => openProject(k)); projList.appendChild(d); });
-  bankEl.textContent = `Şirket kasası ${fmtTL(PROJ.money)}`;
+    if (GM.on && !done) { const g = gmGiverName(P, m); if (g) d.querySelector(".pj-s").textContent += " · görevi " + g + " veriyor"; }
+    const b = d.querySelector("button"); if (b) b.addEventListener("click", () => openProject(k)); projList.appendChild(d);
+    if (GM.on) { const row = document.createElement("div"); row.className = "mchips";   // every job of the project, playable in any order
+      P.missions.forEach((M, i) => { const c = document.createElement("button"); c.type = "button"; c.className = "mchip" + (isDone(P, i) ? " ok" : "") + (i === m && !done ? " nx" : "");
+        c.innerHTML = `<b>${i + 1}</b> ${M.title}<small>${M.veh.map(t => TYPES[t].name).join(" · ")}</small>`; c.addEventListener("click", () => openMission(k, i)); row.appendChild(c); });
+      projList.appendChild(row); } });
+  bankEl.textContent = `Tabur bütçesi ${fmtTL(PROJ.money)}`; bankEl.hidden = !GM.on;
   if (typeof saveInfo === "function") saveEl.textContent = saveInfo();
 }
+function openMission(k, i) {   // one job straight from the menu
+  const P = PROJECTS[k]; if (!restored && !hasWorldSave()) { restoreWorld(PROJ.prog.kapadokya || 0); restored = true; }
+  if (PROJ.active && !PROJ.done) { PROJ.active = false; setZone(null); }
+  PROJ.p = k; PROJ.m = i; PROJ.active = false; PROJ.done = false; document.getElementById("menu").hidden = true; briefMission(); }
 function openProject(k) {
   const P = PROJECTS[k];
   if (!restored && !hasWorldSave()) { restoreWorld(PROJ.prog.kapadokya || 0); restored = true; }
@@ -2544,9 +2583,9 @@ function openProject(k) {
 let newArm = 0;
 bNew.addEventListener("click", () => {
   if (Date.now() - newArm > 3500) { newArm = Date.now(); bNew.textContent = "EMİN MİSİN? TEKRAR BAS"; setTimeout(() => { bNew.textContent = "YENİ OYUN"; }, 3500); return; }
-  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
+  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
 });
-document.getElementById("cards").addEventListener("click", () => { if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
+document.getElementById("cards").addEventListener("click", () => { if (GM.on) return; if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
 const _openMenu = openMenu;
 openMenu = function () { _openMenu(); hornStop(); updProjBtn(); if (typeof updTaburMenu === "function") updTaburMenu(); if (typeof saveWorld === "function") setTimeout(() => saveWorld(false), 60); };   // (the tyre-track picture is saved when the page is left: encoding it made the menu wait)
 window.__hs.proj = PROJ; window.__hs.brief = briefMission; window.__hs.modalGo = () => mGo.click(); window.__hs.openProject = openProject; window.__hs.gal = {galDepth, galAcc, pilesIn, faceX, edgeX, GAL, PORTZ};
@@ -2755,8 +2794,8 @@ function postSync() { const pr = R.getPixelRatio(); if (POST.w !== innerWidth ||
 // night: the lamps and lights glow a little more
 function postTune() { if (!POST.bloom) return; const night = typeof tod !== "undefined" && tod === 2; POST.bloom.strength = night ? .55 : .2; POST.bloom.threshold = night ? .62 : .9; POST.grade.uniforms.uWarm.value = night ? -.01 : typeof tod !== "undefined" && tod === 1 ? .025 : .012; }
 function renderMain(dt) {
-  if (POST.on && POST.comp) { try { postSync(); postTune(); POST.comp.render(dt || 1 / 60); return; } catch (e) { console.warn("post off", e); POST.on = false; POST.fail = true; } }
-  R.render(scene, cam);
+  if (POST.on && POST.comp) { try { postSync(); postTune(); POST.comp.render(dt || 1 / 60); vmRender(); return; } catch (e) { console.warn("post off", e); POST.on = false; POST.fail = true; } }
+  R.render(scene, cam); vmRender();
 }
 // every texture filtered at the best angle the card allows
 function maxAniso() { const A = R.capabilities.getMaxAnisotropy();
@@ -4011,7 +4050,7 @@ function footHud() {
   else if (FOOT.tool === "kurek") st = FOOT.carry > 0 ? "Kürek dolu · sağ tarafa atar: yığın, döküm sahası ya da kamyon kasası" : "Kürek elinde · BOŞLUK / tık: kürekle";
   else st = n ? n.name + " · " + (n.broken ? "arızalı" : n.ai || n.P.seated ? "asker çalıştırıyor" : "operatör yok") + (MOBILE ? " · BİN'e bas, sen sür" : " · E: bin, sen sür") : MOBILE ? "Makineye yaklaş, BİN'e bas · HARİTA'dan yerleri gör" : "G: görev dağılımı · Tab: alet çarkı · makineye yaklaşıp E: bin";
   if (n && FOOT.tool) st += " · E: " + n.name;
-  if (SEAT.on) st = "Çay ocağındasın · G: görev dağılımı · ENTER: kalk · B: karakter"; else { const ch = nearChair(); if (ch) st = "ENTER: sandalyeye otur" + (n ? " · E: " + n.name : ""); }
+  if (SEAT.on) st = GM.on ? "Çay molası · GÖREVE DÖN ile sıradaki iş" : "Çay ocağındasın · G: görev dağılımı · ENTER: kalk · B: karakter"; else { const ch = nearChair(); if (ch) st = "ENTER: sandalyeye otur" + (n ? " · E: " + n.name : ""); }
   chairBtns();
   vState.textContent = st; vBar.style.width = (FOOT.carry > 0 ? 100 : 0) + "%";
   dSpd.textContent = Math.round(FOOT.spd * 3.6); dGear.textContent = "–"; dRpm.style.width = "0%";
@@ -4027,7 +4066,7 @@ function boardBtn() { const foot = FOOT.on && !FOOT.seq, n = FOOT.near, v = vehi
 const bWheel = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.id = "bWheel"; b.textContent = "ÇARK"; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => { if (WHL.open) closeWheel(false); else openWheel("touch"); }); return b; })();
 function footCtx() {
   const foot = FOOT.on || !!FOOT.seq, v = vehicles[cur];
-  bWheel.hidden = !PLAYER || NOTOOLS;
+  bWheel.hidden = !PLAYER || NOTOOLS || GM.on;
   if (!foot) { if (!v.eng && !v.ai) { bCtx2.hidden = false; bCtx2.textContent = "MOTOR"; } boardBtn(); return; }
   padLlbl.textContent = "YÜRÜ"; padRlbl.textContent = "BAK"; document.getElementById("padR").hidden = false;
   bCtx.hidden = !FOOT.tool; bCtx.textContent = FOOT.tool === "kurek" ? "KÜREKLE" : "KAZ";
@@ -4981,7 +5020,7 @@ const MEET = {t: 4, visit: null, vt: 85 + Math.random() * 40, boss: null, bt: 23
 const seated = () => OFFS.filter(o => o.st === "seat" && !isPlayer(o));
 const atTable = k => { const o = OFFM[k]; return !!o && !!o.S && ((o.st === "seat" && !isPlayer(o)) || (isPlayer(o) && SEAT.on)); };
 function startDialog() {
-  const A = dlgAll(), ctx = dlgCtx(), pool = [];
+  const A = GM.on ? DIALOGS.concat(DIALOGS_GM) : dlgAll(), ctx = dlgCtx(), pool = [];
   A.forEach((d, i) => { if (MEET.last.includes(d)) return; if (d.when && d.when !== "any" && d.when !== ctx) return; if (d.need) { try { if (!d.need()) return; } catch (e) { return; } } if (d.every(([k]) => atTable(k))) pool.push(d); });
   const bk = MEET.barkan ? pool.filter(d => d.some(([, t]) => typeof t === "string" && /Barkan 4/.test(t))) : [];
   const uf = pool.filter(d => d.some(([k]) => k === "ufuk")), P = bk.length ? bk : MEET.visit && uf.length ? uf : pool.filter(d => !d.some(([k]) => k === "ufuk"));   // just after the raid the paşa's "Barkan 4"; the commander at the table: his topics first
@@ -5013,7 +5052,7 @@ function meetFrame(dt, T) {
   else { MEET.t -= dt; if (MEET.t <= 0) { MEET.t = 3.5 + Math.random() * 3;
     if (!startDialog()) { const s = seated(); if (s.length) { const chief = MEET.visit && MEET.visit.st === "seat" ? MEET.visit : s.find(o => o.d.chief); const o = chief && Math.random() < .38 ? chief : pick(s); say(o, pick(TLINES[o.d.key] || o.d.lines)); MEET.t = 9 + Math.random() * 6; } } } }
   // the battalion commander drops by now and then, the brigade commander raids
-  if (typeof DAY !== "undefined" && DAY.on) return;
+  if ((typeof DAY !== "undefined" && DAY.on) || GM.on) return;   // (in the missions the paşa comes his own way: gorev.js)
   if (!MEET.visit && !MEET.boss) { MEET.vt -= dt; if (MEET.vt <= 0) startVisit(OFFM.ufuk); }
   if (!MEET.boss && !MEET.visit) { MEET.bt -= dt; if (MEET.bt <= 0) startBoss(OFFM.levent); }
 }
@@ -5267,6 +5306,7 @@ const LPV = {x: 0, y: 0, z: 0}, GESTS = ["sagGos", "ileri", "ok", "clip"];
 // the subtitle line: on a narrow (portrait) screen it sits just above the buttons, however many rows they take
 function subShow(html, t) { subEl.innerHTML = html; subEl.style.opacity = 1; subEl._t = t;
   if (innerWidth <= 640) { let top = innerHeight - 150; for (const s of [".ctxL", ".ctx"]) { const e = document.querySelector(s); if (e) for (const c of e.children) { const r = c.getBoundingClientRect(); if (r.height > 0 && r.top < top) top = r.top; } }
+    const tb = document.getElementById("teaBar"); if (tb && !tb.hidden) { const r = tb.getBoundingClientRect(); if (r.height > 0 && r.top < top) top = r.top; }
     subEl.style.setProperty("bottom", Math.round(innerHeight - top + 10) + "px", "important"); }
   else subEl.style.setProperty("bottom", "calc(env(safe-area-inset-bottom,0px) + 150px)"); }
 function talkerAt(o) { for (const q of OFFS) if (q !== o && q.talk > 0 && q.S && q.S.root.visible && Math.hypot(q.x - TH.x, q.z - TH.z) < 6) return q; return null; }
@@ -5315,7 +5355,7 @@ function offFrame(dt, T) {
       o.sayT = (o.sayT || 5) - dt;
       if (o.sayT <= 0) { o.sayT = 13 + Math.random() * 13; const L0 = v && v.type === "tr" ? SUPL.nakliye : SUPL[o.site] || SUPL.cukur; if (FOOT.on && Math.hypot(FOOT.x - o.x, FOOT.z - o.z) < 30) say(o, pick(L0), 2.4); }
       if (o.d.key === "orhan") { droneOn = true;
-        if (o.site === "parkur" && typeof DGATES !== "undefined") { const p = DRONEPATH.getPointAt((T * .035) % 1), q = DRONEPATH.getTangentAt((T * .035) % 1); DRONE.position.copy(p); DRONE.rotation.y = -Math.atan2(q.z, q.x); }   // round the course, through the gates
+        if (o.site === "parkur" && typeof DGATES !== "undefined") { const u = ((T * .035) % 1 + 1) % 1, p = DRONEPATH.getPointAt(u), q = DRONEPATH.getTangentAt(u); DRONE.position.copy(p); DRONE.rotation.y = -Math.atan2(q.z, q.x); }   // round the course, through the gates
         else { DRONE.position.set(o.x + Math.sin(T * .4) * 6 + 3, footGround(o.x, o.z) + 9 + Math.sin(T * 1.3) * .4, o.z + Math.cos(T * .33) * 5); DRONE.rotation.y = T * .5; } }
       if (o.t <= 0 && !MEET.boss && !(typeof CATCH !== "undefined" && CATCH.on && o.d.key === "ahmet")) { const w = typeof isWork !== "function" || isWork();
         if (w && o.d.roam) { if (!sendToSite(o.d.key, null, false, 150 + Math.random() * 70)) o.t = 30; } else if (w && o.d.chief) goBack(o); else if (w) o.t = 1e9; else goBack(o); }
@@ -5373,7 +5413,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261030-1324";
+const PORTKEY = "hs-portraits-20261030-1537";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5387,7 +5427,7 @@ function portraitOf(o) {
 }
 const PLAYABLE = () => OFFS.filter(o => !o.d.visitor && o.S);
 function openPicker() {
-  if (!running || PICK.cine || AUTO.on || MEET.boss) return; if (PICK.open) { closePicker(null); return; }
+  if (!running || PICK.cine || AUTO.on || MEET.boss || GM.on) return; if (PICK.open) { closePicker(null); return; }
   const el = document.createElement("div"); el.style.cssText = "position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(10,12,14,.74)";
   const ring = document.createElement("div"); const R0 = Math.min(innerWidth, innerHeight) * .34; ring.style.cssText = `position:relative;width:${R0 * 2 + 120}px;height:${R0 * 2 + 120}px`; el.appendChild(ring);
   const mid = document.createElement("div"); mid.style.cssText = "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;font:600 14px/1.35 system-ui,sans-serif;width:200px;text-shadow:0 1px 3px #000"; mid.innerHTML = "KARAKTER SEÇ<br><span style='font-weight:400;font-size:12px;opacity:.8'>tıkla · B: kapat</span>"; ring.appendChild(mid);
@@ -5442,13 +5482,14 @@ function startOfficer(o) {
   if (POST.on) maxAniso();
   updCtx(); toast(CUR.d.name + " · çay ocağındasın · G: görev dağılımı · B: karakter", 3.4);
 }
-function resumeGame() { if (!OPS.started) { startOfficer(CUR); return; } document.getElementById("menu").hidden = true; document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; if (ac) { master.gain.value = soundOn ? VOL.v : 0; if (ac.state === "suspended") ac.resume(); } updCtx(); }
+function resumeGame() { if (GM.on) { if (!GM.started) { openMenu(); return; } } else if (!OPS.started) { startOfficer(CUR); return; } document.getElementById("menu").hidden = true; document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; if (ac) { master.gain.value = soundOn ? VOL.v : 0; if (ac.state === "suspended") ac.resume(); } updCtx(); }
 // the menu: pick who you are
 function officerCards() {
   const el = document.getElementById("cards"); if (!el) return; el.innerHTML = "";
   for (const o of PLAYABLE()) { const b = document.createElement("button"); b.type = "button"; b.className = "card";
     b.innerHTML = `<div class="ph" style="background-image:url('${portraitOf(o)}')"><span class="tag">${o.d.rank >= 2 ? "ÜSTEĞMEN" : "TEĞMEN"}</span></div><div class="tx"><span class="t">${o.d.name}</span><span class="c">${o.d.role}</span></div>`;
-    b.addEventListener("click", () => { if (OPS.started && o === CUR) resumeGame(); else if (OPS.started) { resumeGame(); switchOfficer(o); } else startOfficer(o); }); el.appendChild(b); }
+    b.dataset.k = o.d.key; if (GM.on && (GM.pick || CUR) === o) b.classList.add("sel");
+    b.addEventListener("click", () => { if (GM.on) { gmPick(o); return; } if (OPS.started && o === CUR) resumeGame(); else if (OPS.started) { resumeGame(); switchOfficer(o); } else startOfficer(o); }); el.appendChild(b); }
 }
 officerCards(); (window.__INIT || (window.__INIT = [])).push(["chars:cards", performance.now()]);
 const CNP = new THREE.Vector3(), CNL = new THREE.Vector3(), CNH = new THREE.Vector3();
@@ -5475,7 +5516,7 @@ UPD.push(dt => charsFrame(dt, TT));
 // touch: sit / stand and the character wheel
 const bSit = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.textContent = "OTUR"; b.hidden = true; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => { if (SEAT.on) standUp(); else { const ch = nearChair(); if (ch) sitDown(ch); } }); return b; })();
 const bChar = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.textContent = "KİŞİ"; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => openPicker()); return b; })();
-function chairBtns() { const ch = SEAT.on || !!nearChair(); bSit.hidden = !ch; bSit.textContent = SEAT.on ? "KALK" : "OTUR"; }
+function chairBtns() { const ch = SEAT.on || !!nearChair(); bSit.hidden = !ch || GM.on; bSit.textContent = SEAT.on ? "KALK" : "OTUR"; }
 
 ;(window.__INIT || (window.__INIT = [])).push(["chars", performance.now()]);
 
@@ -5734,7 +5775,7 @@ jobEl.addEventListener("click", e => {
   if (b.id === "jTea") { if (typeof allToTea === "function") allToTea(); closeJobs(); }
   jobsRefresh();
 });
-addEventListener("keydown", e => { if (!running || e.repeat) return; if (e.code === "KeyG") { e.preventDefault(); OPS.open ? closeJobs() : openJobs(); } if (e.code === "Escape" && OPS.open) closeJobs(); });
+addEventListener("keydown", e => { if (!running || e.repeat || GM.on) return; if (e.code === "KeyG") { e.preventDefault(); OPS.open ? closeJobs() : openJobs(); } if (e.code === "Escape" && OPS.open) closeJobs(); });
 const bJobs = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "tb"; b.textContent = "GÖREVLER"; const t = document.querySelector(".tools"); if (t) t.prepend(b); b.addEventListener("click", () => OPS.open ? closeJobs() : openJobs()); return b; })();
 UICOVER.push(() => OPS.open);
 function jobsRefresh() { const el = jobEl.querySelector("#jList"), h = jobsHtml(); if (el.__h !== h) { el.innerHTML = h; el.__h = h; } }
@@ -6044,7 +6085,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261030-1324";
+const BUILD = "20261030-1537";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -7018,6 +7059,327 @@ UPD.push(durFrame);
 window.__hs.dur = DUR;
 
 ;(window.__INIT || (window.__INIT = [])).push(["durum", performance.now()]);
+
+// ======================= GÖREV MODU: the machine missions are the game. The officers give the jobs on the radio and stand at their sites;
+// Levent Paşa can turn up in the middle of a job (a machine standing idle is what he hates); between jobs there is tea at the tea house =======================
+
+// ---- who gives which job, in his own words. {H}/{h}: how he addresses you (komutanım / devrem / your name), {n}: your first name ----
+const GIVE = {
+  kapadokya: [
+    {g: "ahmet", brief: "{H}, dağa çıkan stabilize yol bozuk, kamyonlar geçemiyor. Greyderi al, bıçağı indir ve yol boyunca sür. Taşları ser, yolu düzelt. Teknik iyi ama yavaş ve düz gideceksin!",
+      go: "Greyder hazır {h}, bıçağı indir, yavaş sür.", mid: "Yolun yarısı oldu, aynen devam {h}!", ok: "Sen kralsın {h}! Yol pürüzsüz oldu, kamyonlar artık uçar."},
+    {g: "boran", brief: "{H}, sahada eski hafriyat yığınları duruyor. Kepçeyle kamyona yükleyin, kamyonla sarı çizgili döküm sahasına götürüp damperi kaldırın. İsterseniz dozerle de itebilirsiniz. Koordinasyon bende, arz ederim.",
+      go: "Kamyon hazır {h}, kepçe sizde. Arz ederim.", mid: "Yarısı tamam {h}, ekip sağlam!", ok: "Saha tertemiz oldu {h}. Hisar taburunda şenlik havası hâkim, arz ederim!"},
+    {g: "kaan", brief: "{H}, garajdaki bunker yaşam alanının çukurunu açıyoruz. Ekskavatörü sarı çerçeveye götür, KAZI moduna geç, toprağı yanına yanaştıracağın kamyona yükle. Ölçüleri tablete işledim, yansın Hisar!",
+      go: "Kova senin {h}, çukura dal!", mid: "Çukur derinleşiyor, tablette yarısı göründü!", ok: "Yansın Hisar! Bunkerin çukuru hazır, temel demirine geçiyoruz."},
+    {g: "furkan", brief: "{H}, asıl iş bu! Kempar'la dağa galeri açacağız. Önce kamyonu geri geri bandın ucuna yanaştırın, halka yeşile dönsün. Sonra Kempar'ı kayaya sürün; kesilen taş banttan kamyona akar. Dolan kamyonu döküm sahasına boşaltın. Ben askerle aşağıdayım, kürek bende!",
+      go: "Kesici hazır {h}, aynaya sürün!", mid: "Galerinin yarısını geçtik {h}, asker coştu!", ok: "Galeri açıldı {h}! Cansınız."},
+    {g: "ufuk", brief: "Naber mankiler? Galeri tank garajı olacak. İki M60A3'ü tank parkından al, galerinin derinine sür ve park et. Paşam görünce çok sevinecek, aynen devam.",
+      go: "Tanklar hazır, galeriye dikkatli gir.", mid: "Biri içeride, hadi ikincisi!", ok: "Aferin mankiler, garaj hazır! Paşama haber veriyorum."}],
+  depo: [
+    {g: "boran", brief: "{H}, taburun erzakı için kayaya depo galerileri açıyoruz; kireçtaşının içi yaz kış serin kalır. Kırmızı lazer 1. galerinin eksenini gösteriyor. Kempar'ı lazer çizgisine hizalayın, kesiciyi çalıştırın ve 20 metre ilerleyin. Eksenden sapmayın, arz ederim.",
+      go: "Lazer kurulu {h}, kırmızı çizgiyi takip edin.", mid: "On metre oldu {h}, eksen yerinde.", ok: "Birinci galeri eksenine oturdu {h}, arz ederim!"},
+    {g: "furkan", brief: "{H}, ikinci galeri 12 metre kuzeyde. Aradaki kaya ayak depoyu taşıyacak, lazerden ayrılmayın. Kürekler hazır, bant altını biz temizleriz!",
+      go: "Lazer ikinci galeride {h}, buyurun!", mid: "Yarıladık {h}, kaya ayak sağlam.", ok: "İkinci galeri tamam {h}, cansınız!"},
+    {g: "ali", brief: "{H}, son galeri bu. Ayaklar sağlam kalsın, lazer çizgisinden şaşma. Bu iş çakı gibi olacak; tek rakibin kendinsin!",
+      go: "Lazer hazır {h}, çakı gibi kes.", mid: "Yarısı oldu {h}, aynen böyle.", ok: "Çakı gibi oldu {h}! Kapım her daim açık, çaya gel."},
+    {g: "orhan", brief: "{H}, dronla yukarıdan baktım: galeri ağızlarına moloz dökülmüş. Kepçeyle kamyona yükle ya da dozerle döküm sahasına it. Alan temiz olunca kapıları takıp depoyu teslim ediyoruz.",
+      go: "Dron havada {h}, yukarıdan izliyorum.", mid: "Yukarıdan bakınca her şey belli, yarısı temiz!", ok: "Yukarıdan tertemiz görünüyor {h}! Depo teslime hazır."}]};
+// seniority: rank first, then the earlier class
+const isSen = (a, b) => a.rank > b.rank || (a.rank === b.rank && (a.cls || 9999) < (b.cls || 9999));
+const meO = () => GM.pick || CUR;   // who you are (the one picked on the menu counts already)
+function hitap(g) { const p = meO().d, d = g.d; if (isSen(p, d)) return "komutanım"; if (p.rank === d.rank && p.cls && p.cls === d.cls) return "devrem"; return d.key === "ahmet" || d.key === "ali" ? p.short + " kardeşim" : p.short; }
+const cap1 = s => s ? s[0].toLocaleUpperCase("tr-TR") + s.slice(1) : s;
+function fillT(s, g) { const h = hitap(g); return s.replace(/\{H\}/g, cap1(h)).replace(/\{h\}/g, h).replace(/\{n\}/g, meO().d.short); }
+const oName = o => o.d.short + " " + o.d.name.split(" ").slice(1).map(w => w[0] + w.slice(1).toLocaleLowerCase("tr-TR")).join(" ");   // "Furkan Teğmen"
+// the giver of a job; when it would be you, the coordinator gives it
+function giverOf(P, m) { const G = (GIVE[P.id] || [])[m]; if (!G) return null; const o = OFFM[G.g], me = meO();
+  if (o && o.S && o !== me) return {o, G, alt: false};
+  const A = OFFM.azizhan && OFFM.azizhan !== me ? OFFM.azizhan : OFFM.ufuk; return {o: A, G, alt: true}; }
+function gmGiverName(P, m) { const g = giverOf(P, m); return g ? oName(g.o) : ""; }
+const plainBrief = M => M.brief.replace(/^Şantiye şefi:\s*/, "").replace(/[“”]/g, "");
+
+// ---- the card: the giver's face and name over the text ----
+const MPOR = (() => { const d = document.createElement("div"); d.className = "mpor"; d.hidden = true; const b = document.querySelector("#modal .mbox"); if (b) b.prepend(d); return d; })();
+const mTea = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.id = "mTea"; b.textContent = "ÇAY MOLASI ☕"; b.hidden = true;
+  const bx = document.querySelector("#modal .mbtns"); if (bx) bx.insertBefore(b, document.getElementById("mGo")); b.addEventListener("click", () => { document.getElementById("modal").hidden = true; gmTea(); }); return b; })();
+function gmCard(B, done) {
+  mTea.hidden = !done || !B;
+  if (!B) { MPOR.hidden = true; return; }
+  MPOR.hidden = false; MPOR.innerHTML = `<i style="background-image:url('${portraitOf(B.o)}')"></i><span><b>${oName(B.o)}</b><small>${B.app}</small></span>`; }
+function gmBrief(P, m, M) { const g = giverOf(P, m); if (!g) return null;
+  const text = g.alt ? `La ${meO().d.short}, “${M.title}” işi senden. ${plainBrief(M)} Bana çok güvenme, kendin bitir.` : fillT(g.G.brief, g.o);
+  return {o: g.o, app: "📻 Telsiz · görevi veriyor", text}; }
+
+// ---- the radio: the bubble over him if he is in sight, the line at the bottom anyway ----
+function gmRadio(o, text, t) { if (!o || !text) return; t = t || 3.2; if (o.S && o.S.root.visible) say(o, text, t); subShow(`<span style="color:#7fd1ff">📻 ${oName(o)}:</span> ${text}`, t); }
+
+// ---- the start of a job: your character, into the machine, the officers to their places, a bright day ----
+const CABV = {ex: true};   // the machines whose job starts in the cab view
+function gmStart(M) {
+  const P = projOf(), m = PROJ.m, g = giverOf(P, m);
+  if (GM.pick && GM.pick !== CUR) switchOfficer(GM.pick, true); GM.pick = null;
+  if (SEAT.on) standUp(true); FOOT.rise = null; FOOT.seq = null; AUTO.on = false; MEET.dlg = null; MEET.called = false; GM.tea = false; teaBar.hidden = true;
+  // no soldier drivers in a mission: the job is yours (a truck can still be given a driver with ŞOFÖR)
+  for (const o of vehicles) { if (o.ai && typeof opsTake === "function") opsTake(o); o.ai = false; }
+  const i = Math.max(0, idxOf(M.veh[0])), v = vehicles[i]; cur = i; boardInstant(v); v.eng = true; v.crank = 0; v.v = 0;
+  camMode = CABV[v.type] ? 1 : 0; CAM.yaw = 0; CAM.pitch = .32; CAM.dist = CAMDIST[v.type]; CAM.cyaw = CABV[v.type] ? -.06 : 0; CAM.cpitch = CABV[v.type] ? -.2 : -.1; camSnap = true; toastT = 0; toastEl.classList.remove("on");
+  document.getElementById("bCam").textContent = "KAMERA: " + camName(camMode);
+  if (typeof setTOD === "function") { setTOD(0); bClock.textContent = TODS[0].n; }
+  GM.cur = {P, m, M, g}; GM.giver = g ? g.o : null; GM.said = {}; GM.t = 0; GM.started = true;
+  gmPlace(M);
+  // the brigade commander: maybe today, never in the very first job
+  GM.raid = (PROJ.p > 0 || m > 0) && Math.random() < .6 ? {at: TT + 55 + Math.random() * 80, st: 0, act: 0, money: 0} : null;
+  if (g) gTimeout(() => phoneNote("📻 Telsiz", oName(g.o), fillT(g.alt ? "Hadi {n}, bekliyorum." : g.G.go, g.o), true), 900);
+  updCtx();
+}
+// everybody where he belongs: the giver at the job, the coordinator at the table, the others at their own sites
+function gmPlace(M) {
+  const sp = chiefSpot(M);
+  for (const o of OFFS) { if (!o.S || isPlayer(o)) continue; const S = o.S; o.rise = null; o.trans = null; o.next = null; o.path = null;
+    if (o.d.visitor && o !== GM.giver) { leaveChair(o); o.st = "away"; S.root.visible = false; continue; }
+    if (o === GM.giver) { leaveChair(o); o.x = sp.x + 1.6; o.z = sp.z + .9; if (!footFree(o.x, o.z)) { o.x = sp.x; o.z = sp.z; } o.st = "work"; o.t = 1e9; o.site = "gorev"; o.jobV = null; o.jobP = {x: sp.lx, y: null, z: sp.lz}; }
+    else if (o.d.chief) { const c = chairOf(o); if (c && (!c.occ || c.occ === o)) { leaveChair(o); seatAt(o, c); o.supT = 1e9; continue; } }
+    else { const j = siteOf(o.d.key, null); if (!j) continue; leaveChair(o); const p = j.spot(); o.x = p.x + (Math.random() - .5) * 2; o.z = p.z + (Math.random() - .5) * 2; if (!footFree(o.x, o.z)) { o.x = p.x; o.z = p.z; }
+      o.st = "work"; o.t = 1e9; o.site = j.k; o.jobV = j.v; o.jobP = j.look ? j.look() : null; }
+    o.a = o.jobP ? Math.atan2(o.jobP.z - o.z, o.jobP.x - o.x) : o.a; S.root.visible = true; S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion); }
+}
+// the job is done: his line, the world moves on (the soldiers kept building the bunker, the range and the course meanwhile)
+function gmDone(P, mi, M) { const g = giverOf(P, mi); if (!g) return null;
+  const text = g.alt ? `Aferin ${meO().d.short}, “${M.title}” tamam. Bana çok güvenme ama bu sefer güzel olmuş.` : fillT(g.G.ok, g.o);
+  gmWorld(); return {o: g.o, app: "📻 Telsiz · görevi veren", text}; }
+function gmWorld() { let n = 0; for (const P of PROJECTS) n += Math.min(PROJ.prog[P.id] || 0, P.missions.length);
+  if (typeof BNK !== "undefined") { const pit = (PROJ.prog.kapadokya || 0) >= 3; BNK.p = clamp(Math.max(BNK.p, pit ? .3 + (n - 3) * .1 : n * .06), 0, 1); BNK.done = BNK.p >= .999; bnkVisuals(); bnkSave(); }
+  if (typeof RNG !== "undefined") { RNG.p = clamp(Math.max(RNG.p, .34 + n * .075), 0, 1); DRC.p = clamp(Math.max(DRC.p, .3 + n * .08), 0, 1); if (typeof projVisuals === "function") projVisuals(); } }
+
+// ---- the brigade commander turns up in the middle of a job: is your machine working? ----
+const raidChip = (() => { const d = document.createElement("div"); d.id = "raidChip"; d.hidden = true; document.body.appendChild(d); return d; })();
+const RAIDIN = [[-130, 60], [-90, 60], [-60, 60], [-30, 60], [-14, 59], [-5, 55.4], [2.5, 53], [10, 54.2], [20, 55]];
+function gmRaidResult() { const R = GM.raid; GM.raid = null; raidChip.hidden = true; if (!(R && R.st >= 3)) GM.lastRaid = null; return R && R.st >= 3 ? {money: R.money} : null; }
+const RJ = (v) => { let s = 0; for (const k in v.t) { const x = v.t[k]; if (typeof x === "number") s += x; } return s; };
+function gmRaidFrame(dt, M) {
+  const R = GM.raid; if (!R) return; const v = vehicles[cur];
+  if (R.st === 0) { if (TT < R.at || !mine(v)) return;
+    R.st = 1; R.lx = v.x; R.lz = v.z; R.lj = RJ(v); const sp = chiefSpot(M); let dx = 20 - sp.x, dz = 55 - sp.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+    R.stop = {x: sp.x + dx * 6, z: sp.z + dz * 6}; const L = OFFM.levent; if (!L || !L.S) { GM.raid = null; return; } L.st = "car"; L.S.root.visible = false; R.L = L;
+    const pts = RAIDIN.concat([[(20 + R.stop.x) / 2, (55 + R.stop.z) / 2], [R.stop.x, R.stop.z]]);
+    carGo(CARS.levent, pts, 15, () => gmRaidArrive(R));
+    phoneNote("📻 Telsiz · Tabur", "Ufuk Binbaşı", "Paşa geliyor! Herkes işinin başında olsun, makineler çalışsın!", true); toast("⚠ PAŞA GELİYOR", 2.6); }
+  if (R.st === 1 || R.st === 2) { if (mine(v)) { R.act += Math.hypot(v.x - R.lx, v.z - R.lz) + Math.abs(RJ(v) - R.lj) * 3; R.lx = v.x; R.lz = v.z; R.lj = RJ(v); }
+    const t = R.st === 1 ? "⚠ PAŞA GELİYOR · makinen çalışsın" : "LEVENT PAŞA ŞANTİYEDE"; if (raidChip.textContent !== t) raidChip.textContent = t; raidChip.hidden = false; }
+}
+function gmRaidArrive(R) { if (GM.raid !== R) { CARS.levent.g.visible = false; return; } const L = R.L, car = CARS.levent, v = vehicles[cur]; R.st = 2;
+  outOfCar(L, car); L.a = Math.atan2(v.z - L.z, v.x - L.x); headingQ(L.a, L.S.root.quaternion); L.t = 1e9;
+  const G = GM.giver; if (G && G.S && !isPlayer(G) && G.st === "work" && Math.hypot(G.x - L.x, G.z - L.z) < 30) { G.st = "stand"; G.t = 1e9; G.saluteT = 2.2; G.a = Math.atan2(L.z - G.z, L.x - G.x); headingQ(G.a, G.S.root.quaternion); }
+  gTimeout(() => { if (GM.raid !== R) return; const ok = R.act > 4; R.st = 3; R.money = ok ? 5000 : -5000; GM.lastRaid = ok ? "iyi" : "kotu";
+    const line = ok ? pick(["Aferin! Makine boş durmuyor, böyle çalışın.", "İşte bu! Şantiye dediğin böyle olur.", "Güzel, devam edin. Bu tempo iyi."]) : pick(["Bu ne lakaytlık?! Makine boşta duruyor!", "Sabrımı sınamayın! Ben geldim, makine hâlâ yatıyor!", "Bugün ilacımı içmedim, beni sinirlendirmeyin! Çalışın!"]);
+    gmRadio(L, line, 3.4); toast(ok ? "PAŞA MEMNUN · +₺5.000" : "PAŞA KIZDI · -₺5.000", 2.8); raidChip.hidden = true;
+    const barkan = Math.random() < .4, O = OFFM.orhan;
+    if (barkan) { gTimeout(() => gmRadio(L, "Bu arada Barkan 4'ler hazır mı?", 2.8), 3800); gTimeout(() => gmRadio(O, "Hazır komutanım! Fabrikadan çıkmak üzere.", 3), 6800); }
+    gTimeout(() => { if (G && G.st === "stand") { G.st = "work"; G.t = 1e9; }
+      inCar(L, car, () => carGo(car, [[car.x, car.z]].concat(RAIDIN.slice().reverse()), 15, () => { car.g.visible = false; })); }, barkan ? 9800 : 5200); }, 1800); }
+
+// ---- tea between jobs: everybody at the table, a conversation, then back to work ----
+const teaBar = (() => { const d = document.createElement("div"); d.id = "teaBar"; d.hidden = true; d.innerHTML = `<span>☕ ÇAY MOLASI</span><button type="button" class="big">GÖREVE DÖN ▸</button>`; document.body.appendChild(d);
+  d.querySelector("button").addEventListener("click", () => gmTeaEnd()); return d; })();
+function gmTea() {
+  document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; if (ac) { master.gain.value = soundOn ? VOL.v : 0; }
+  for (const v of vehicles) if (v.P.seated === PLAYER) { unseat(v); doorTo(v, 0, 0); scene.add(PLAYER.root); v.eng = false; }
+  toastT = 0; toastEl.classList.remove("on"); FOOT.on = true; FOOT.seq = null; FOOT.rise = null; FOOT.vx = FOOT.vz = 0; GM.tea = true; MEET.called = true; MEET.hush = false; MEET.dlg = null; MEET.t = 1.5; GM.raid = null; raidChip.hidden = true;
+  for (const o of OFFS) { if (!o.S || isPlayer(o)) continue; o.rise = null; o.trans = null; o.next = null;
+    if (o.d.visitor) { leaveChair(o); o.st = "away"; o.S.root.visible = false; continue; } const c = chairOf(o); if (c && (!c.occ || c.occ === o)) { leaveChair(o); seatAt(o, c); o.supT = 1e9; } }
+  let c = chairOf(CUR); if (!c || (c.occ && c.occ !== CUR) || (c.i === 0 && CUR.d.rank < 3)) c = CHAIRS.find(q => !q.occ && q.i !== 0);
+  if (c) { FOOT.x = c.x; FOOT.z = c.z; FOOT.a = c.a; FOOT.y = footGround(c.x, c.z); sitDown(c, true); }
+  camMode = 0; CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .3; CAM.dist = 4.6; CAM.cyaw = 0; CAM.cpitch = -.1; camSnap = true; document.getElementById("bCam").textContent = "KAMERA: " + camName(camMode);
+  teaBar.hidden = false; updCtx(); }
+function gmTeaEnd() { teaBar.hidden = true; GM.tea = false; MEET.called = false; MEET.dlg = null; briefMission(); }
+
+// ---- the menu: who you are, which job ----
+function gmPick(o) { GM.pick = o; document.querySelectorAll("#cards .card").forEach(b => b.classList.toggle("sel", b.dataset.k === o.d.key));
+  toast(oName(o) + " seçildi · makineleri o sürer", 1.6);
+  if (GM.started && PROJ.active && !PROJ.done) { const v = vehicles[cur], inV = !FOOT.on; switchOfficer(o, true); GM.pick = null; if (inV) boardInstant(v); const M = missionsOf()[PROJ.m]; GM.giver = (giverOf(projOf(), PROJ.m) || {}).o || null; gmPlace(M); } }
+(() => {
+  const menu = document.getElementById("menu"); if (!menu) return;
+  const p = menu.querySelector(".brand p"); if (p) p.textContent = "İş makinesi görevleri: greyderle yol, kepçe ve kamyonla stok sahası, ekskavatörle bunker çukuru, Kempar'la galeri, tankla garaj. Görevleri subaylar telsizden verir, sahada da onlar var. Levent Paşa her an çıkagelebilir: makinen boşta yakalanmasın. Görev aralarında çay ocağında mola.";
+  const h = menu.querySelector(".phead .sub"); if (h) h.textContent = "2 · Görevler";
+  const tb = document.getElementById("tabur"); if (tb) tb.hidden = true; const pl = document.getElementById("projList"); if (pl) pl.hidden = false;
+  const cards = document.getElementById("cards"), projs = menu.querySelector(".projs"), ch = cards && cards.previousElementSibling;
+  if (ch && ch.tagName === "H3") { ch.textContent = "1 · Karakterini seç · makineleri o sürer"; if (projs) { projs.parentNode.insertBefore(ch, projs); projs.parentNode.insertBefore(cards, projs); } }
+})();
+if (GM.on) { bChar.hidden = true; bJobs.hidden = true; }
+// the clock button is the time of day again (no daily schedule in the missions)
+bClock.addEventListener("click", () => { if (!GM.on || !running) return; setTOD((tod + 1) % 3); bClock.textContent = TODS[tod].n; toast("SAAT: " + TODS[tod].n, 1.2); });
+if (GM.on) bClock.textContent = TODS[tod].n;
+CAMS[1] = "KABİN";
+{ const k = document.querySelector(".keys"); if (k && GM.on) k.textContent = "WASD / oklar: sür · I/K: bom · J/L: kova · Z/X: kule · U/O: arm · T: kazı modu · E: in / bin · C: kamera · H: korna · M: harita · ESC: menü"; }
+// at the tea table in the missions: what the jobs have done, not the day's numbers
+const DIALOGS_GM = [
+  DLG("any", [["azizhan", "Arkadaşlar, tünel projesinde neredeyiz?"], ["boran", () => { const m = PROJ.prog.kapadokya || 0, P = PROJECTS[0]; return m >= P.missions.length ? "Tünel projesi bitti komutanım, tanklar garajda. Arz ederim." : `${m} iş bitti komutanım, sırada “${P.missions[m].title}” var.`; }], ["azizhan", "La bana çok güvenme, makineler boş durmasın."], ["furkan", "Emredersiniz komutanım."]]),
+  DLG("any", [["ahmet", "Paşam bugün şantiyeye uğradı mı?"], ["ali", () => GM.lastRaid === "iyi" ? "Uğradı, makine çalışıyordu, memnun kaldı." : GM.lastRaid === "kotu" ? "Uğradı, makineyi boşta yakaladı. Tansiyonu çıktı." : "Bu sefer uğramadı kardeşim."], ["ahmet", () => GM.lastRaid === "kotu" ? "Haaahaaa! Nereye gitsek paşam orada." : "Sen kralsın kardeşim."]]),
+  DLG("any", [["orhan", () => `Dronla baktım, galeri ${Math.round(stats.tunnel || 0)} metre olmuş.`], ["kaan", "Görüntüleri bana at, kazı hacmini tablette hesaplarım."], ["orhan", "Yukarıdan bakınca her şey belli."]], () => (stats.tunnel || 0) > 1),
+  DLG("any", [["kaan", () => typeof BNK !== "undefined" && BNK.p >= .3 ? `Bunkerde ${bnkStage()} aşamasına geldik, yüzde ${Math.round(BNK.p * 100)}.` : "Bunkerin çukuru sırada, ekskavatör hazır."], ["azizhan", "Teftişten önce bitsin, Paşam ilk oraya bakar."], ["kaan", "Yansın Hisar, bitecek komutanım!"]])];
+
+// ---- per frame: the radio lines, the paşa ----
+function gmProg(M) { let f = 1; M.obj.forEach((o, i) => { const v = objVal(o), fr = o.le ? (objOk(o, v) ? 1 : clamp((PROJ.f0[i] - v) / Math.max(.01, PROJ.f0[i] - o.goal), 0, 1)) : clamp(v / o.goal, 0, 1); f = Math.min(f, fr); }); return f; }
+function gmFrame(dt) {
+  if (!GM.on || !GM.started || !running) return;
+  const C = GM.cur; if (!C || !PROJ.active || PROJ.done) return; GM.t += dt;
+  const g = C.g; if (g && !g.alt && !GM.said.mid && GM.t > 8 && gmProg(C.M) >= .5) { GM.said.mid = true; gmRadio(g.o, fillT(g.G.mid, g.o)); }
+  gmRaidFrame(dt, C.M);
+}
+UPD.push(gmFrame);
+window.__hs.gm = GM; window.__hs.gmTea = () => gmTea(); window.__hs.gmRaidNow = () => { if (GM.raid) GM.raid.at = TT; else GM.raid = {at: TT, st: 0, act: 0, money: 0}; };
+
+;(window.__INIT || (window.__INIT = [])).push(["gorev", performance.now()]);
+
+// ======================= KABİN: the excavator from the operator's seat — the boom out front, two joysticks at the bottom of the screen
+// with gloved hands on them that move with what you press (drawn over the scene after it, so the cab never cuts into them) =======================
+const VM = {scene: new THREE.Scene(), on: false, t: 0, hid: null};
+VM.hemi = new THREE.HemisphereLight(0xfff4e2, 0x5d4c3c, 1.05); VM.scene.add(VM.hemi);
+VM.sun = new THREE.DirectionalLight(0xfff0d8, 1.7); VM.sun.position.set(-.35, 1, .55); VM.scene.add(VM.sun);
+VM.fill = new THREE.DirectionalLight(0xcfe0ff, .45); VM.fill.position.set(.6, .2, -.8); VM.scene.add(VM.fill);
+// the sleeve's camouflage
+const CAMO = (() => { const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d"); g.fillStyle = "#5d5f40"; g.fillRect(0, 0, 128, 128);
+  const cols = ["#3e4230", "#7a6f4c", "#4c5636", "#8f8460", "#33362a"]; let s = 7; const r = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 70; i++) { g.fillStyle = cols[i % cols.length]; g.beginPath(); const x = r() * 128, y = r() * 128, w = 6 + r() * 16, h = 4 + r() * 10; g.ellipse(x, y, w, h, r() * 3, 0, 7); g.fill();
+    for (const [dx, dy] of [[-128, 0], [128, 0], [0, -128], [0, 128]]) { g.beginPath(); g.ellipse(x + dx, y + dy, w, h, 0, 0, 7); g.fill(); } }
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 1.5); return t; })();
+const VMM = {glove: new THREE.MeshStandardMaterial({color: 0xa88a66, roughness: .8, metalness: 0}), seam: new THREE.MeshStandardMaterial({color: 0x6e5539, roughness: .85}),
+  sleeve: new THREE.MeshStandardMaterial({map: CAMO, roughness: .95}), rub: new THREE.MeshStandardMaterial({color: 0x161616, roughness: .62}), met: new THREE.MeshStandardMaterial({color: 0x8a8d90, roughness: .4, metalness: .6}),
+  red: new THREE.MeshStandardMaterial({color: 0xc0281e, roughness: .45, emissive: 0x2a0000}), yel: new THREE.MeshStandardMaterial({color: 0xf2b705, roughness: .45, emissive: 0x201400})};
+for (const k in VMM) VMM[k].color.convertSRGBToLinear();   // the colours as picked (the picture is sRGB)
+// one joystick with a gloved hand round its grip; side +1 right, -1 left. Units: metres, the stick's frame (y up, -z forward, x right)
+function vmStick(side) {
+  const base = new THREE.Group(), stick = new THREE.Group(); base.add(stick);
+  const add = (g, m, par, x, y, z, rx, ry, rz) => { const o = new THREE.Mesh(g, m); o.position.set(x || 0, y || 0, z || 0); o.rotation.set(rx || 0, ry || 0, rz || 0); (par || stick).add(o); return o; };
+  // the rubber boot and the plate it sits on
+  add(new THREE.CylinderGeometry(.075, .085, .02, 18), VMM.rub, base, 0, -.01, 0);
+  add(new THREE.CylinderGeometry(.03, .06, .06, 16), VMM.rub, stick, 0, .03, 0);
+  add(new THREE.CylinderGeometry(.011, .011, .04, 8), VMM.met, stick, 0, .07, 0);
+  // the grip: tilted a little forward, buttons on top, a trigger at the front
+  const grip = new THREE.Group(); grip.position.set(0, .085, 0); grip.rotation.x = -.18; stick.add(grip);
+  add(new THREE.CylinderGeometry(.021, .025, .12, 16), VMM.rub, grip, 0, .06, 0);
+  add(new THREE.SphereGeometry(.0232, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), VMM.rub, grip, 0, .12, 0);
+  add(new THREE.CylinderGeometry(.0065, .0065, .008, 10), VMM.red, grip, -side * .006, .139, -.006);
+  add(new THREE.CylinderGeometry(.0055, .0055, .008, 10), VMM.yel, grip, side * .008, .135, .008);
+  add(new THREE.BoxGeometry(.012, .028, .012), VMM.red, grip, 0, .095, -.025);
+  // the glove: back of the hand behind the grip, four fingers wrapped round its front, the thumb over the top, the cuff and the sleeve
+  const R0 = .031, fing = [[.106, .0102], [.084, .0107], [.062, .0102], [.041, .0092]];
+  for (const [y, r] of fing) { const pts = []; for (let k = 0; k <= 10; k++) { const a = (-35 + k * 21) * Math.PI / 180, aa = side > 0 ? a : Math.PI - a; pts.push(new THREE.Vector3(Math.cos(aa) * R0, y - k * .0012, -Math.sin(aa) * R0)); }
+    add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, r, 7, false), VMM.glove, grip);
+    const e = pts[pts.length - 1]; add(new THREE.SphereGeometry(r, 8, 6), VMM.glove, grip, e.x, e.y, e.z);
+    const s0 = pts[0]; add(new THREE.SphereGeometry(r * 1.12, 8, 6), VMM.seam, grip, s0.x * 1.04, s0.y, s0.z * 1.04); }
+  const back = add(new THREE.SphereGeometry(1, 18, 12), VMM.glove, grip, side * .024, .074, .03, 0, side * .55, 0); back.scale.set(.034, .05, .026);
+  const thumb = [new THREE.Vector3(side * .002, .1, .034), new THREE.Vector3(-side * .004, .124, .022), new THREE.Vector3(-side * .007, .136, .006)];
+  add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(thumb), 8, .0108, 7, false), VMM.glove, grip); add(new THREE.SphereGeometry(.0108, 8, 6), VMM.glove, grip, thumb[2].x, thumb[2].y, thumb[2].z);
+  // the forearm leaves towards the bottom corner of the screen
+  const fa = new THREE.Group(); fa.position.set(side * .03, .062, .045); fa.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(side * .55, -.55, .9).normalize()); grip.add(fa);
+  add(new THREE.CylinderGeometry(.034, .03, .07, 16, 1, true), VMM.glove, fa, 0, 0, .035, Math.PI / 2, 0, 0);
+  add(new THREE.CylinderGeometry(.0375, .0375, .02, 16, 1, true), VMM.seam, fa, 0, 0, .05, Math.PI / 2, 0, 0);
+  add(new THREE.CylinderGeometry(.047, .043, .5, 16, 1, false), VMM.sleeve, fa, 0, 0, .31, Math.PI / 2, 0, 0);
+  base.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+  VM.scene.add(base); return {base, stick, side};
+}
+VM.L = vmStick(-1); VM.R = vmStick(1);
+const VMQ = new THREE.Quaternion(), VMV = new THREE.Vector3();
+// the cab camera: a wide view on a computer, a tall one on a phone
+function cabFov() { const a = innerWidth / Math.max(1, innerHeight), vf = 2 * Math.atan(Math.tan(47.5 * Math.PI / 180) / a) * 180 / Math.PI; return clamp(vf, 62, 92); }
+const VMSTICK = {ex: ["jL", "jR"]};
+function vmFrame(dt) {
+  const v = vehicles[cur], ks = v && VMSTICK[v.type];
+  const on = !!ks && camMode === 1 && !FOOT.on && !FOOT.seq && !!PLAYER && v.P.seated === PLAYER;
+  if (on !== VM.on) { VM.on = on; document.body.classList.toggle("cab", on); if (on) { VM.hid = PLAYER; PLAYER.root.visible = false; VM.lev = v; } else if (VM.hid) { if (VM.hid.root.parent) VM.hid.root.visible = true; VM.hid = null; }
+    const lv = VM.lev && VM.lev.P.ctl; if (lv) for (const k of ["tL", "tR"]) if (lv[k]) lv[k].parent.visible = !on; }   // the travel levers would poke up between the hands
+  for (const c of zoneG.children) if (c.userData.beam) c.visible = camMode !== 1;   // the zone's light column would stand in the windscreen
+  if (!on) return; VM.t += dt; VM.vib = v.eng ? .0012 : 0;
+  const C = v.P.ctl; [[VM.L, C[ks[0]]], [VM.R, C[ks[1]]]].forEach(([J, c]) => { if (c) J.stick.rotation.set(c.rotation.z * 1.25, 0, -c.rotation.x * 1.25); });
+  VM.hemi.intensity = hemi.intensity * 1.1; VM.sun.intensity = Math.max(.5, sun.intensity * .75); VM.sun.color.copy(sun.color);
+}
+UPD.push(vmFrame);
+// placed on the camera as it is for this picture, drawn last on its own depth: nothing in the cab can cut into the hands
+function vmPlace() { // size and place by the screen: the knobs low in the corners, a little bigger on a phone held upright
+  VM.sun.position.set(-.4, .9, .8).applyQuaternion(cam.quaternion); VM.fill.position.set(.7, .1, .4).applyQuaternion(cam.quaternion);   // lit from over your shoulder, whichever way you look
+  const D = .5, H = D * Math.tan(cam.fov * Math.PI / 360), W = H * cam.aspect, s = Math.min(2.8 * H, 4.3 * W);
+  for (const J of [VM.L, VM.R]) { J.base.scale.setScalar(s);
+    VMV.set(J.side * Math.min(W - .12 * s, .62 * W), -H + .76 * H - .21 * s + Math.sin(VM.t * 31 + J.side) * VM.vib * s, -D); /* the knob tops about 38 % up the screen */ VMV.applyQuaternion(cam.quaternion).add(cam.position); J.base.position.copy(VMV);
+    J.base.quaternion.copy(cam.quaternion); VMQ.setFromAxisAngle(VMV.set(1, 0, 0), VM.tilt); J.base.quaternion.multiply(VMQ); } }   // the plates face up towards the eye a little
+VM.tilt = .32;
+function vmRender() { if (!VM.on) return; vmPlace(); const ac0 = R.autoClear; R.autoClear = false; R.setRenderTarget(null); R.clearDepth(); R.render(VM.scene, cam); R.autoClear = ac0; }
+window.__hs.vm = VM;
+
+;(window.__INIT || (window.__INIT = [])).push(["kabin", performance.now()]);
+
+// ======================= TOPAK: the bucket carries clods you can see; tipping it lets them go one by one — into the truck, where they stay
+// on the load until it is dumped, or onto the ground, where they lie a while and settle. Digging throws a few over the bucket's lip =======================
+const TPK = {N: 260, c: []};
+const TPG = (() => { const g = new THREE.IcosahedronGeometry(1, 0), p = g.attributes.position, key = (x, y, z) => Math.round(x * 97) * 7 + Math.round(y * 89) * 13 + Math.round(z * 83) * 29;
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), h = Math.abs(Math.sin(key(x, y, z) * 12.9898) * 43758.5453) % 1, k = .72 + h * .5; p.setXYZ(i, x * k, y * k * .78, z * k); }
+  g.computeVertexNormals(); return g; })();
+const TPM = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 1, flatShading: true});
+const TPI = new THREE.InstancedMesh(TPG, TPM, TPK.N); TPI.frustumCulled = false; TPI.castShadow = true; TPI.receiveShadow = true; scene.add(TPI);
+const TPCOL = [0x7d6650, 0x6a5641, 0x8c745a, 0x5c4a39, 0x75604b, 0x97805f].map(h => new THREE.Color(h).convertSRGBToLinear()), TPZ = new THREE.Matrix4().makeScale(0, 0, 0);
+for (let i = 0; i < TPK.N; i++) { TPK.c.push({i, st: 0, p: new THREE.Vector3(), pp: new THREE.Vector3(), v: new THREE.Vector3(), q: new THREE.Quaternion(), w: new THREE.Vector3(), lp: new THREE.Vector3(), lq: new THREE.Quaternion(), s: new THREE.Vector3(1, 1, 1), r: .15, par: null, own: null, t: 0, bounce: 0});
+  TPI.setColorAt(i, TPCOL[i % TPCOL.length]); TPI.setMatrixAt(i, TPZ); }
+TPI.instanceColor.needsUpdate = true;
+const TPV = new THREE.Vector3(), TPQ = new THREE.Quaternion(), TPE = new THREE.Euler(), TPMX = new THREE.Matrix4();
+// a free clod, or the oldest one lying on the ground
+function tpTake() { let best = null; for (const c of TPK.c) { if (c.st === 0) return c; if (c.st === 4 && (!best || c.t > best.t)) best = c; } return best; }
+function tpSize(c, r) { c.r = r; c.s.set(r * (.85 + Math.random() * .35), r * (.75 + Math.random() * .3), r * (.85 + Math.random() * .35)); }
+// in a bucket: on top of the heap (the dirt blob's upper half, in the bucket's own frame)
+function tpInBucket(v, c) { const d = v.P.dirt; c.st = 1; c.own = v; c.par = d.parent; tpSize(c, v.type === "ex" ? .13 + Math.random() * .07 : .15 + Math.random() * .08);
+  const sx = d.scale.x * .5, sz = d.scale.z * .5, a = Math.random() * 6.283, rr = Math.sqrt(Math.random()) * .75;
+  c.lp.set(d.position.x + Math.cos(a) * rr * sx, d.position.y + d.scale.y * .5 * .55 + Math.random() * .12, d.position.z + Math.sin(a) * rr * sz);
+  c.lq.setFromEuler(TPE.set(Math.random() * 6, Math.random() * 6, Math.random() * 6)); c.par.localToWorld(c.p.copy(c.lp)); c.pp.copy(c.p); }
+function tpFall(c, vx, vy, vz) { c.st = 2; c.v.set(vx, vy, vz); c.w.set((Math.random() - .5) * 9, (Math.random() - .5) * 9, (Math.random() - .5) * 9); c.bounce = 0; c.par = null; c.t = 0; }
+const tpCount = (v, st) => { let n = 0; for (const c of TPK.c) if (c.st === st && c.own === v) n++; return n; };
+// the load's surface in a truck bed (its frame): the heap is a half-ellipsoid
+function tpBedTop(t, x, z) { const d = t.P.dirt; if (!d.visible) return .14; const u = (x - d.position.x) / d.scale.x, w = z / d.scale.z, k = 1 - u * u - w * w; return .14 + (k > 0 ? Math.sqrt(k) * d.scale.y : 0); }
+const BKT = {ex: 9, ld: 12, bh: 7};
+function tpFrame(dt) {
+  if (!dt) return; dt = Math.min(dt, .05);
+  // the buckets: as many clods as the load, the extra ones fall out while it pours
+  for (const v of vehicles) { const nmax = BKT[v.type]; if (!nmax || !v.P.dirt) continue; const cap = v.type === "ld" ? 2.2 : 1.2, want = v.load > .05 ? Math.max(1, Math.round(v.load / cap * nmax)) : 0;
+    let have = tpCount(v, 1); const far = (v.x - cam.position.x) ** 2 + (v.z - cam.position.z) ** 2 > 90 * 90; if (far && have === 0) continue;
+    while (have < want) { const c = tpTake(); if (!c) break; tpInBucket(v, c); have++; }
+    if (have > want) for (const c of TPK.c) { if (have <= want) break; if (c.st !== 1 || c.own !== v) continue; const vv = TPV.subVectors(c.p, c.pp).divideScalar(dt);
+      tpFall(c, vv.x * .7 + (Math.random() - .5) * .8, Math.min(vv.y * .7, 1), vv.z * .7 + (Math.random() - .5) * .8); have--; }
+    // digging: now and then one goes over the lip
+    const s = v.tps || (v.tps = {t: 0, l: v.load}); if (v.load > s.l + .02 && v.load < cap * .98) { s.t -= dt; if (s.t <= 0) { s.t = .25 + Math.random() * .35; const c = tpTake(); if (c) { const tip = wpos(v.P.tip); c.own = v; tpSize(c, .08 + Math.random() * .06); c.p.copy(tip); c.p.y += .25; c.pp.copy(c.p); c.q.setFromEuler(TPE.set(Math.random() * 6, Math.random() * 6, 0)); tpFall(c, (Math.random() - .5) * 1.4, 1.2 + Math.random() * 1.2, (Math.random() - .5) * 1.4); } } }
+    s.l = v.load; }
+  // the trucks: the heap of their load shows even when nobody drives them; a clod on the load stays there; when the bed is up and the load goes, they slide off
+  for (const t of vehicles) { if (t.type !== "tr") continue; const d = t.P.dirt; if (d) { d.visible = t.load > .05; if (t.load > 0) d.scale.y = .25 + t.load / t.cap * .95; }
+    const n = tpCount(t, 3); if (!n) continue;
+    const dumping = t.t.bed > .42 && t.load < (t.lastLoad == null ? t.load : t.lastLoad) - 1e-4, empty = t.load < .05;
+    if (dumping || empty) { const bx = -Math.cos(t.a), bz = -Math.sin(t.a); let k = 0;
+      for (const c of TPK.c) if (c.st === 3 && c.own === t && (empty || (k++ < 2 && Math.random() < dt * 9))) tpFall(c, bx * (1.5 + Math.random() * 1.5), -.2, bz * (1.5 + Math.random() * 1.5)); }
+    t.lastLoad = t.load; }
+  for (const t of vehicles) if (t.type === "tr" && tpCount(t, 3) === 0) t.lastLoad = t.load;
+  // move, collide, draw
+  let dirty = false;
+  for (const c of TPK.c) {
+    if (c.st === 0) continue; dirty = true;
+    if (c.st === 1) { if (!c.own || c.own.load <= .05 || !c.par) { c.st = 0; TPI.setMatrixAt(c.i, TPZ); continue; } c.pp.copy(c.p); c.par.localToWorld(c.p.copy(c.lp)); c.par.getWorldQuaternion(c.q).multiply(c.lq); }
+    else if (c.st === 3) { c.par.localToWorld(c.p.copy(c.lp)); c.par.getWorldQuaternion(c.q).multiply(c.lq); }
+    else if (c.st === 2) { c.t += dt; c.v.y -= 9.8 * dt; c.p.addScaledVector(c.v, dt); TPQ.setFromEuler(TPE.set(c.w.x * dt, c.w.y * dt, c.w.z * dt)); c.q.multiply(TPQ);
+      // into a truck's load?
+      let landed = false;
+      for (const t of vehicles) { if (t.type !== "tr" || Math.abs(c.p.x - t.x) > 6 || Math.abs(c.p.z - t.z) > 6 || t.t.bed > .3) continue; const b = t.P.bed; b.worldToLocal(TPV.copy(c.p));
+        if (TPV.x > .25 && TPV.x < 5.75 && Math.abs(TPV.z) < 1.1 && TPV.y < tpBedTop(t, TPV.x, TPV.z) + c.r * .55 && TPV.y > -.3 && c.v.y < 0) {
+          if (tpCount(t, 3) >= 30) { c.st = 0; TPI.setMatrixAt(c.i, TPZ); landed = true; break; }
+          const lx = clamp(TPV.x + (Math.random() - .5) * .7, .5, 5.5), lz = clamp(TPV.z + (Math.random() - .5) * .7, -.95, .95); let up = 0;   // they roll a little and pile on each other
+          for (const o of TPK.c) if (o.st === 3 && o.own === t && Math.abs(o.lp.x - lx) < .3 && Math.abs(o.lp.z - lz) < .3) up = Math.max(up, o.lp.y - tpBedTop(t, lx, lz) + o.r * .7);
+          c.st = 3; c.own = t; c.par = b; c.lp.set(lx, tpBedTop(t, lx, lz) + c.r * .45 + up, lz); b.getWorldQuaternion(TPQ); c.lq.copy(TPQ.invert().multiply(c.q)); landed = true; break; } }
+      if (!landed) { let gy = heightAt(c.p.x, c.p.z); const pu = pileUnder(c.p); if (pu && pu.h > gy) gy = pu.h;
+        if (c.p.y - c.r * .6 < gy) { c.p.y = gy + c.r * .6; if (c.v.y < -2.2 && c.bounce < 1) { c.bounce++; c.v.y = -c.v.y * .22; c.v.x *= .5; c.v.z *= .5; c.w.multiplyScalar(.5); } else { c.st = 4; c.t = 0; } } }
+      if (c.t > 6) { c.st = 0; TPI.setMatrixAt(c.i, TPZ); continue; } }
+    else if (c.st === 4) { c.t += dt; if (c.t > 9) c.p.y -= dt * .05; if (c.t > 13) { c.st = 0; TPI.setMatrixAt(c.i, TPZ); continue; } }
+    TPMX.compose(c.p, c.q, c.s); TPI.setMatrixAt(c.i, TPMX); }
+  if (dirty || TPK.was) TPI.instanceMatrix.needsUpdate = true; TPK.was = dirty;
+}
+UPD.push(tpFrame);
+window.__hs.tpk = TPK;
+
+;(window.__INIT || (window.__INIT = [])).push(["topak", performance.now()]);
 
 // ======================= FX: night glows, light pools, moon, load spill on fast turns =======================
 const glowTex = texCanvas(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.18, "rgba(255,246,226,.85)"); gr.addColorStop(.48, "rgba(255,214,160,.22)"); gr.addColorStop(1, "rgba(255,190,120,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });

@@ -3731,7 +3731,7 @@ apply();
 const PI=Math.PI,RN=Math.random,rr=(a,b)=>a+RN()*(b-a);
 const ldx=(k,d)=>{try{const j=JSON.parse(localStorage.getItem('m60v2')||'null');return j&&j[k]!=null?j[k]:d}catch(e){return d}};
 const FX=window.FXP;
-SV.wx=ldx('wx',null)||'gunduz';
+SV.wx=ldx('wx',null)||'gunduz';window.__wx0=SV.wx;
 // ---------------- AKSAM havasi + hava kaydi ----------------
 WX.aksam={n:'Akşam',bg:0xe6a47a,fog:[70,360],hi:.62,hg:0x4a3a2c,sun:.95,sc:0xffa868,cl:0xffcfae,co:.88,rain:0,hl:1.4};
 const wb=document.querySelector('[data-w="yagmur"]');
@@ -3740,10 +3740,10 @@ const _setW=window.setW;
 window.setW=function(w){_setW.apply(this,arguments);
  if(w==='aksam'){skyU.top.value.set(0x2c3f72);sunM.material.color.set(0xffb070);sunM.scale.setScalar(1.6);sunM.visible=true;hemi.color.set(0xffd9b8)}else hemi.color.set(0xffffff);
  if(SV.wx!==w){SV.wx=w;save()}nvApply()};
-addEventListener('keydown',e=>{if((e.key==='n'||e.key==='N')&&!e.repeat&&!(window.PHOTO&&PHOTO.on)){e.stopImmediatePropagation();const ks=['gunduz','aksam','gece','sis','yagmur'];setW(ks[(ks.indexOf(wx)+1)%ks.length]);say(WX[wx].n,1.2)}},true);
+addEventListener('keydown',e=>{if((e.key==='n'||e.key==='N')&&!e.repeat&&!(window.PHOTO&&PHOTO.on)){e.stopImmediatePropagation();const ks=['gunduz','aksam','gece','sis','yagmur','kar'].filter(k=>WX[k]);setW(ks[(ks.indexOf(wx)+1)%ks.length]);say(WX[wx].n,1.2)}},true);
 // ---------------- RUZGAR ----------------
 const WIND={x:0,z:0,s:0,d:0,b:0};window.WIND=WIND;
-function newWind(){const g={gunduz:[1,6],gece:[0,4],sis:[0,2],yagmur:[5,11],aksam:[2,7]}[wx]||[1,5];WIND.b=rr(g[0],g[1]);WIND.d=RN()*2*PI;WIND.t=0}
+function newWind(){const g={gunduz:[1,6],gece:[0,4],sis:[0,2],yagmur:[5,11],aksam:[2,7],kar:[2,8]}[wx]||[1,5];WIND.b=rr(g[0],g[1]);WIND.d=RN()*2*PI;WIND.t=0}
 newWind();
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#wnd{position:fixed;z-index:8;right:calc(12px + var(--mm,132px)/2 + env(safe-area-inset-right,0px));transform:translateX(50%);top:calc(16px + var(--mm,132px) + env(safe-area-inset-top,0px));display:none;align-items:center;gap:5px;padding:4px 9px 4px 5px;border-radius:999px;background:rgba(12,16,10,.72);border:1px solid rgba(214,236,190,.3);font:800 11px system-ui,-apple-system,sans-serif;color:#e8f2dc;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.4)}'+
@@ -4450,7 +4450,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'53',LOGO=window.HISAR_LOGO;
+const VER=+'54',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -5097,7 +5097,7 @@ function lamps(){if(LG&&LG.parent===P.g)return;LG=new THREE.Group();
  for(const s of[1,-1]){const h=new THREE.Sprite(HG);h.position.set(s*1.62,1.6,3.26);h.scale.set(.9,.9,1);LG.add(h);const t=new THREE.Sprite(TG);t.position.set(s*1.0,1.3,-3.52);t.scale.set(.55,.55,1);LG.add(t)}
  SP.position.set(0,1.75,3.3);SPT.position.set(0,-.5,22);LG.add(SP,SPT);SP.target=SPT;P.g.add(LG)}
 lamps();let sp0=0,brk=0;
-FRAME_HOOKS.push(dr=>{lamps();const n=typeof wx!=='undefined'&&(wx==='gece'||wx==='sis'),on=n&&game==='play'&&mode==='tank';
+FRAME_HOOKS.push(dr=>{lamps();const n=typeof wx!=='undefined'&&(wx==='gece'||wx==='sis'||(wx==='aksam'&&window.NATX&&NATX.DK.f>.55)),on=n&&game==='play'&&mode==='tank';
  SP.intensity+=((on?(wx==='gece'?2.4:1.2):0)-SP.intensity)*Math.min(1,4*dr);HG.opacity=Math.min(1,SP.intensity/1.6)*(iv===2||iv===3?0:1);
  const v=window.__spd||0,gy=typeof giy==='number'?giy:0;brk=(gy<-.05||(Math.abs(sp0)-Math.abs(v))/Math.max(dr,1e-3)>3)?1:Math.max(0,brk-dr*3);sp0=v;
  TG.opacity=(n?.35:0)+brk*.75});
@@ -5300,7 +5300,7 @@ window.PHA={sky_gunduz:'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDA
 (function(){
 if(!window.PHA)return;
 const L=new THREE.TextureLoader(),TX={};let ready=0;
-const SKY={gunduz:{k:'sky_gunduz',u:.600,v:.443,el:.62,sun:1.25},aksam:{k:'sky_aksam',u:.590,v:.331,el:.5,sun:1.05},gece:{k:'sky_gece',u:.13,v:.3,el:.9,sun:.22},sis:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.4},yagmur:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.32}};
+const SKY={gunduz:{k:'sky_gunduz',u:.600,v:.443,el:.62,sun:1.25},aksam:{k:'sky_aksam',u:.590,v:.331,el:.5,sun:1.05},gece:{k:'sky_gece',u:.13,v:.3,el:.9,sun:.22},sis:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.4},yagmur:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.32},kar:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.5}};window.PHSKY=SKY;
 function load(k,cb){if(TX[k])return cb&&cb(TX[k]);L.load(PHA[k],t=>{TX[k]=t;cb&&cb(t)})}
 // ---------- gokyuzu ----------
 const BGC=S.background&&S.background.isColor?S.background:new THREE.Color(0x9ec3e0);const pm=new THREE.PMREMGenerator(R);let envRT=null,cur=null,SD=new THREE.Vector3(.42,.84,.25).normalize();
@@ -5311,7 +5311,7 @@ function applySky(w){const o=SKY[w];if(!o)return;load(o.k,t=>{if((typeof wx!=='u
   hemi.color.copy(hz.up).lerp(new THREE.Color(1,1,1),.4);hemi.groundColor.copy(hz.lo).multiplyScalar(.7);
   const a=(o.u-.5)*Math.PI*2,el=Math.max(o.el,(.5-o.v)*Math.PI);SD.set(Math.cos(a)*Math.cos(el),Math.sin(el),Math.sin(a)*Math.cos(el)).normalize();sun.intensity=o.sun;
   try{if(w==='gece'){S.environment=null}else{if(envRT)envRT.dispose();envRT=pm.fromEquirectangular(t);S.environment=envRT.texture}}catch(e){}
-  if(typeof sky!=='undefined')sky.visible=false;if(typeof clouds!=='undefined')for(const c of clouds)c.visible=false;if(typeof sunM!=='undefined')sunM.visible=false})}
+  if(typeof sky!=='undefined')sky.visible=false;if(typeof clouds!=='undefined')for(const c of clouds)c.visible=false;if(typeof sunM!=='undefined')sunM.visible=false;try{window.onSky&&onSky(w)}catch(e){}})}
 {const s0=window.setW;window.setW=function(w){S.background=BGC;if(typeof sky!=='undefined')sky.visible=true;if(typeof clouds!=='undefined')for(const c of clouds)c.visible=true;if(typeof sunM!=='undefined')sunM.visible=true;const r=s0.apply(this,arguments);applySky(w);return r}}
 {const u0=window.skyUp;window.skyUp=function(dt){const r=u0.apply(this,arguments);if(cur&&S.background&&S.background.isTexture){const o=mode==='drone'&&DR.on?DR:P;sun.position.set(o.x+SD.x*120,SD.y*120,o.z+SD.z*120)}return r}}
 applySky(typeof wx!=='undefined'?wx:'gunduz');
@@ -5609,6 +5609,346 @@ FRAME_HOOKS.push(dr=>{const gs=navigator.getGamepads?navigator.getGamepads():nul
  // R2: ates (basili tutuldukca)
  if(game==='play'){if(window.AA&&AA.on){if(!!b[7]!==!!GP.prev7)AA.hold=b[7]?1:0}else if(b[7]&&mode==='tank')fire();else if(b[7]&&!GP.prev7&&mode==='drone')fire()}
  GP.prev7=b[7]});
+})();
+
+
+// ===== m_trees =====
+// ============ GERCEKCI AGACLAR: koni yigini yerine karacam, genc cam ve mese — igne/yaprak kartlari, tek cizim cagrisi (instanced), ruzgarda titreme, karda beyazlama ============
+(function(){
+const TR=window.TREES;if(!TR||!TR.length)return;
+const PI=Math.PI,cl=(v,a,b)=>v<a?a:v>b?b:v;
+let sd=90127;const rn=()=>{sd=sd+0x6D2B79F5|0;let t=Math.imul(sd^sd>>>15,1|sd);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const rr=(a,b)=>a+rn()*(b-a);
+// ---------------- 1) igne / yaprak dokusu: 512x512, 4 hucre (2 cam dali, 2 mese yaprak demeti) ----------------
+const AT=(function(){const N=512,k=document.createElement('canvas');k.width=k.height=N;const g=k.getContext('2d');g.lineCap='round';g.lineJoin='round';
+ const rgb=(r,gg,b,a)=>'rgba('+(r|0)+','+(gg|0)+','+(b|0)+','+(a==null?1:a)+')';
+ function cell(ox,oy,f){g.save();g.beginPath();g.rect(ox+4,oy+4,248,248);g.clip();g.translate(ox,oy);f();g.restore()}
+ function needles(){const tw=[],x0=128+rr(-12,12),y0=252,x1=128+rr(-46,46),y1=rr(16,34),bend=rr(-28,28);
+  for(let i=0;i<=24;i++){const t=i/24;tw.push([x0+(x1-x0)*t+Math.sin(t*PI)*bend,y0+(y1-y0)*t])}
+  const tws=[tw];for(let s=0;s<6;s++){const b=tw[4+s*3+(rn()*2|0)],dir=s%2?1:-1,a=Math.atan2(y1-y0,x1-x0)+dir*rr(.55,1.05),L=rr(50,92),tt=[];for(let i=0;i<=12;i++){const t=i/12;tt.push([b[0]+Math.cos(a)*L*t,b[1]+Math.sin(a)*L*t+t*t*rr(4,14)])}tws.push(tt)}
+  for(const t of tws){g.strokeStyle=rgb(70,56,42);g.lineWidth=t===tw?3.6:2.2;g.beginPath();g.moveTo(t[0][0],t[0][1]);for(const p of t)g.lineTo(p[0],p[1]);g.stroke()}
+  for(let pass=0;pass<3;pass++)for(const t of tws)for(let i=1;i<t.length;i++){const p=t[i],q=t[i-1],da=Math.atan2(p[1]-q[1],p[0]-q[0]),fr=i/t.length;
+   for(let j=0;j<(pass===2?3:7);j++){const s=j%2?1:-1,a=da+s*rr(.3,1.25),L=rr(15,28)*(1-fr*.3)*(t===tw?1.1:.92),l=pass===0?rr(.55,.8):pass===1?rr(.85,1.05):rr(1.15,1.45);
+    g.strokeStyle=rgb((36+rr(0,14))*l,(58+rr(0,20))*l,(30+rr(0,10))*l);g.lineWidth=pass===0?rr(1.9,2.6):rr(1.1,1.7);g.beginPath();g.moveTo(p[0],p[1]);g.lineTo(p[0]+Math.cos(a)*L,p[1]+Math.sin(a)*L);g.stroke()}}}
+ function leaves(){const bx=128,by=252,tw=[];for(let s=0;s<6;s++){const a=-PI/2+rr(-1.15,1.15),L=rr(90,135);tw.push([bx+Math.cos(a)*L,by+Math.sin(a)*L*.95])}
+  g.strokeStyle=rgb(66,54,40);for(const t of tw){g.lineWidth=2.8;g.beginPath();g.moveTo(bx,by);g.quadraticCurveTo((bx+t[0])/2+rr(-14,14),(by+t[1])/2,t[0],t[1]);g.stroke()}
+  for(let pass=0;pass<3;pass++)for(let i=0;i<(pass===0?90:pass===1?80:34);i++){const t=tw[i%tw.length],f=rr(.25,1.08),x=bx+(t[0]-bx)*f+rr(-26,26),y=by+(t[1]-by)*f+rr(-22,22);if(Math.hypot(x-128,(y-130)*1.05)>114)continue;
+   const L=rr(18,29),W=L*rr(.44,.6),a=rr(0,2*PI),l=pass===0?rr(.5,.72):pass===1?rr(.8,1.02):rr(1.1,1.35),yl=rr(-.1,.14);
+   g.save();g.translate(x,y);g.rotate(a);g.beginPath();g.moveTo(-L/2,0);g.quadraticCurveTo(-L*.15,-W*.75,L/2,0);g.quadraticCurveTo(-L*.15,W*.75,-L/2,0);
+   g.fillStyle=rgb((56+yl*130)*l,(78+yl*45)*l,(28+yl*10)*l);g.fill();g.strokeStyle=rgb(20,28,12,.32);g.lineWidth=1;g.stroke();
+   g.strokeStyle=rgb(200,212,150,.2);g.beginPath();g.moveTo(-L/2,0);g.lineTo(L*.42,0);g.stroke();g.restore()}}
+ cell(0,0,needles);cell(256,0,needles);cell(0,256,leaves);cell(256,256,leaves);
+ const d=g.getImageData(0,0,N,N).data;let R0=0,G0=0,B0=0,n=0;for(let i=0;i<d.length;i+=4)if(d[i+3]>200){R0+=d[i];G0+=d[i+1];B0+=d[i+2];n++}n=n||1;R0/=n;G0/=n;B0/=n;
+ const o=new Uint8Array(d.length);for(let i=0;i<d.length;i+=4){if(d[i+3]<10){o[i]=R0;o[i+1]=G0;o[i+2]=B0;o[i+3]=0}else{o[i]=d[i];o[i+1]=d[i+1];o[i+2]=d[i+2];o[i+3]=d[i+3]}}
+ // el yapimi mip seviyeleri: kuculdukce kapsama azalmasin (uzaktaki agaclar seyrelmesin)
+ const mips=[{data:o,width:N,height:N}];let w=N,src=o;while(w>1){const h=w>>1,dst=new Uint8Array(h*h*4);
+  for(let y=0;y<h;y++)for(let x=0;x<h;x++){let r=0,gg=0,b=0,a=0,c=0,am=0;for(const[dx,dy]of[[0,0],[1,0],[0,1],[1,1]]){const j=((y*2+dy)*w+(x*2+dx))*4,aa=src[j+3];a+=aa;am=Math.max(am,aa);if(aa>0){r+=src[j]*aa;gg+=src[j+1]*aa;b+=src[j+2]*aa;c+=aa}}
+   const j=(y*h+x)*4;if(c>0){dst[j]=r/c;dst[j+1]=gg/c;dst[j+2]=b/c}else{dst[j]=R0;dst[j+1]=G0;dst[j+2]=B0}dst[j+3]=Math.min(255,a/4*.45+am*.55)}
+  mips.push({data:dst,width:h,height:h});src=dst;w=h}
+ const t=new THREE.DataTexture(o,N,N,THREE.RGBAFormat);t.mipmaps=mips;t.generateMipmaps=false;t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;
+ try{t.anisotropy=Math.min(4,R.capabilities.getMaxAnisotropy())}catch(e){}t.needsUpdate=true;return t})();
+// ---------------- 2) geometri yardimcilari ----------------
+function GB(){this.p=[];this.n=[];this.c=[];this.u=[];this.w=[]}
+GB.prototype.v=function(p,n,c,u,v,w){this.p.push(p[0],p[1],p[2]);this.n.push(n[0],n[1],n[2]);this.c.push(c[0],c[1],c[2]);this.u.push(u,v);this.w.push(w)};
+GB.prototype.geo=function(){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(this.u,2));g.setAttribute('fw',new THREE.Float32BufferAttribute(this.w,1));g.computeBoundingSphere();g.userData.sh=1;return g};
+const nrm=a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/l,a[1]/l,a[2]/l]},cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],
+ add=(a,b,k)=>[a[0]+b[0]*k,a[1]+b[1]*k,a[2]+b[2]*k],mix=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t],mul=(a,k)=>[a[0]*k,a[1]*k,a[2]*k],
+ hx=c=>[(c>>16&255)/255,(c>>8&255)/255,(c&255)/255];
+// govde/dal: nokta dizisi boyunca halkalar
+function tube(B,pts,rad,sdn,c0,c1,f0,f1){const RG=[];
+ for(let i=0;i<pts.length;i++){const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)],d=nrm([b[0]-a[0],b[1]-a[1],b[2]-a[2]]),up=Math.abs(d[1])<.92?[0,1,0]:[1,0,0],u=nrm(cross(d,up)),v=cross(d,u),t=i/(pts.length-1),col=mix(c0,c1,t),ring=[];
+  for(let k=0;k<=sdn;k++){const an=k/sdn*2*PI,cs=Math.cos(an),sn=Math.sin(an),n=[u[0]*cs+v[0]*sn,u[1]*cs+v[1]*sn,u[2]*cs+v[2]*sn],kk=k%sdn,j=1+.09*Math.sin(kk*2.3+i*1.7);
+   ring.push({p:add(pts[i],n,rad[i]*j),n,c:mul(col,.8+.2*Math.sin(kk*1.9+i*2.1)),w:f0+(f1-f0)*t})}RG.push(ring)}
+ for(let i=0;i<RG.length-1;i++)for(let k=0;k<sdn;k++){const a=RG[i][k],b=RG[i][k+1],c=RG[i+1][k+1],d=RG[i+1][k];for(const q of[a,b,c,a,c,d])B.v(q.p,q.n,q.c,0,0,q.w)}}
+// tac cekirdegi: gurultulu ikosahedron (kartlarin arkasini doldurur)
+const ICO=[new THREE.IcosahedronGeometry(1,0),new THREE.IcosahedronGeometry(1,1)].map(g=>g.attributes.position.array);
+function blob(B,c,r,det,amp,cT,cB,cc,fw){const A=ICO[det],ph=rn()*10;
+ for(let i=0;i<A.length;i+=3){const x=A[i],y=A[i+1],z=A[i+2],k=1+amp*(Math.sin(x*2.7+ph)*Math.sin(y*3.1+ph*.7)*Math.sin(z*2.9+ph*1.3)*1.4+.3*Math.sin((x+y+z)*5.1+ph)),p=[c[0]+x*r[0]*k,c[1]+y*r[1]*k,c[2]+z*r[2]*k];
+  const n=nrm(mix(nrm([x/r[0],y/r[1],z/r[2]]),nrm([p[0]-cc[0],p[1]-cc[1],p[2]-cc[2]]),.6)),t=cl(y*.5+.5,0,1),hh=Math.sin(x*91.7+y*47.3+z*13.1+ph)*43758.5,h=hh-Math.floor(hh);B.v(p,n,mul(mix(cB,cT,t*t),(.8+.2*k)*(.62+.6*h)),0,0,fw*(.4+.6*t))}}
+// yaprak dokulu cekirdek: her yuzeye dokudan rastgele bir parca (alfa testli; yakindan yaprak kumesi gibi gorunur)
+function blobT(B,c,r,det,amp,col,cc,fw,cells){const A=ICO[det],ph=rn()*10,pd=.012;
+ for(let i=0;i<A.length;i+=9){const V=[];for(let j=0;j<3;j++){const x=A[i+j*3],y=A[i+j*3+1],z=A[i+j*3+2],k=1+amp*(Math.sin(x*2.7+ph)*Math.sin(y*3.1+ph*.7)*Math.sin(z*2.9+ph*1.3)*1.4+.3*Math.sin((x+y+z)*5.1+ph));V.push({u:[x,y,z],p:[c[0]+x*r[0]*k,c[1]+y*r[1]*k,c[2]+z*r[2]*k]})}
+  const ce=mul(add(add(V[0].p,V[1].p,1),V[2].p,1),1/3),fn=nrm(cross(add(V[1].p,V[0].p,-1),add(V[2].p,V[0].p,-1))),t=nrm(cross(Math.abs(fn[1])<.9?[0,1,0]:[1,0,0],fn)),bb=cross(fn,t);
+  let S=0;for(const v of V)S=Math.max(S,Math.hypot(v.p[0]-ce[0],v.p[1]-ce[1],v.p[2]-ce[2]));S*=2.3;const cell=cells[rn()*cells.length|0],[u0,v0]=CELL[cell],ou=rr(-.12,.12),ov=rr(-.12,.12);
+  for(const v of V){const q=add(v.p,ce,-1),uu=cl((q[0]*t[0]+q[1]*t[1]+q[2]*t[2])/S+.5+ou,0,1),vv=cl((q[0]*bb[0]+q[1]*bb[1]+q[2]*bb[2])/S+.5+ov,0,1),tt=cl(v.u[1]*.5+.5,0,1),
+   n=nrm(mix(fn,nrm([v.p[0]-cc[0],v.p[1]-cc[1],v.p[2]-cc[2]]),.75));B.v(v.p,n,mul(col,.72+.36*tt),u0+pd+uu*(.5-2*pd),v0+pd+vv*(.5-2*pd),fw*(.4+.6*tt))}}}
+// kart: c merkez, nd yuz yonu, upv duzlem ici yukari (dal ucu), w genislik, h boy (upv boyunca)
+const CELL=[[0,0],[.5,0],[0,.5],[.5,.5]];
+function card(B,c,nd,upv,w,h,cell,col,cc,fB,fT,nk){const n0=nrm(nd);if(Math.abs(n0[0]*upv[0]+n0[1]*upv[1]+n0[2]*upv[2])>.95)upv=Math.abs(n0[0])<.9?[1,0,0]:[0,0,1];
+ const t=nrm(cross(upv,n0)),b=cross(n0,t),[u0,v0]=CELL[cell],pd=.01,fl=rn()<.5;let U0=u0+pd,U1=u0+.5-pd;if(fl){const s=U0;U0=U1;U1=s}const V0=v0+pd,V1=v0+.5-pd;
+ const P=[add(add(c,t,-w/2),b,-h/2),add(add(c,t,w/2),b,-h/2),add(add(c,t,w/2),b,h/2),add(add(c,t,-w/2),b,h/2)],UV=[[U0,V1],[U1,V1],[U1,V0],[U0,V0]],
+  N=P.map(p=>nrm(mix(n0,nrm([p[0]-cc[0],p[1]-cc[1],p[2]-cc[2]]),nk==null?.72:nk))),C=[mul(col,.7),mul(col,.7),mul(col,1.06),mul(col,1.06)],W=[fB,fB,fT,fT];
+ for(const i of[0,1,2,0,2,3])B.v(P[i],N[i],C[i],UV[i][0],UV[i][1],W[i])}
+// ---------------- 3) agac turleri ----------------
+// karacam: uzun, hafif egri govde; tepede duzensiz, yassi igne kumeleri (Anadolu'da en yaygin cam)
+function karacam(){const O=new GB(),C=new GB(),H=rr(10.5,12),lx=rr(-.5,.5),lz=rr(-.5,.5),tp=[],trd=[];
+ for(let i=0;i<=6;i++){const t=i/6;tp.push([lx*t*t+Math.sin(t*4+lx)*.12,t*H,lz*t*t+Math.cos(t*3.3+lz)*.1]);trd.push(.34*(1-t*.84)+.03)}
+ tube(O,tp,trd,7,hx(0x55493f),hx(0x9a6440),0,.12);const at=y=>{const t=cl(y/H,0,1),i=Math.min(5,Math.floor(t*6)),f=t*6-i;return mix(tp[i],tp[i+1],f)},cc=add(at(H*.8),[0,0,0],1);
+ const NP=7;for(let k=0;k<NP;k++){const top=k===NP-1,y=top?H*.98:H*(.56+.38*k/(NP-1))+rr(-.3,.3),a=k*2.4+rr(-.4,.4),L=top?0:rr(1.5,2.9)*(1.15-k/NP*.55),b0=at(y-L*.3),tip=top?at(H*.98):[b0[0]+Math.cos(a)*L,y+L*.2,b0[2]+Math.sin(a)*L];
+  if(!top)tube(O,[b0,[b0[0]+Math.cos(a)*L*.5,y,b0[2]+Math.sin(a)*L*.5],tip],[.13,.085,.05],5,hx(0x5a4636),hx(0x6e4a32),.1,.5);
+  const pr=[rr(1.5,2.1)*(top?.85:1),rr(.55,.8),rr(1.5,2.1)*(top?.85:1)],col=[rr(.92,1.08),rr(.95,1.08),rr(.9,1.02)];
+  blob(O,tip,mul(pr,.62),0,.2,hx(0x223619),hx(0x111b0b),cc,.6);
+  for(let j=0;j<16;j++){const aa=j/16*2*PI*3+rr(-.3,.3),o=[Math.cos(aa),0,Math.sin(aa)];
+   if(j<4)card(C,add(tip,[o[0]*pr[0]*.38,pr[1]*.5,o[2]*pr[2]*.38],1),nrm([o[0]*.45,1,o[2]*.45]),o,rr(1.8,2.4),rr(1.8,2.4),rn()<.5?0:1,col,cc,.5,1);
+   else if(j<13)card(C,add(tip,[o[0]*pr[0]*rr(.55,.8),rr(-.2,.35),o[2]*pr[2]*rr(.55,.8)],1),nrm([o[0],rr(.1,.6),o[2]]),[0,1,0],rr(1.9,2.6),rr(1.5,2.2),rn()<.5?0:1,col,cc,.5,1);
+   else card(C,add(tip,[o[0]*pr[0]*.35,-pr[1]*.45,o[2]*pr[2]*.35],1),nrm([o[0]*.5,-1,o[2]*.5]),o,rr(1.7,2.3),rr(1.7,2.3),rn()<.5?0:1,mul(col,.85),cc,.5,1)}}
+ return[O.geo(),C.geo()]}
+// genc cam / koknar: yere kadar inen sivri tac, katman katman sarkik dallar
+function gencCam(){const O=new GB(),C=new GB(),H=rr(8.8,10.4);tube(O,[[0,0,0],[0,H*.5,0],[0,H,0]],[.25,.15,.04],6,hx(0x4c3e36),hx(0x5a4636),0,.2);
+ const cc=[0,H*.42,0],NL=9,SD=9,Rr=t=>2.75*Math.pow(1-t,.95)+.12,rings=[];
+ for(let i=0;i<=NL;i++){const t=i/NL,y=.9+t*(H-.5),R=Rr(t)*(i%2?.8:1),ring=[];for(let k=0;k<=SD;k++){const a=k/SD*2*PI+i*.35,rk=R*.78*(1+.12*Math.sin((k%SD)*2.1+i));ring.push([Math.cos(a)*rk*.72,y-(i%2?0:.28*R*.3),Math.sin(a)*rk*.72])}rings.push(ring)}
+ const dk=hx(0x111a0b),lt=hx(0x1f2f17),ap=[0,H+.25,0];
+ for(let i=0;i<NL;i++)for(let k=0;k<SD;k++){const a=rings[i][k],b=rings[i][k+1],c=rings[i+1][k+1],d=rings[i+1][k];for(const q of[a,c,b,a,d,c]){const n=nrm([q[0],.45,q[2]]);B0(O,q,n,mix(dk,lt,(q[1]/H)*.9))}}
+ for(let k=0;k<SD;k++){const a=rings[NL][k],b=rings[NL][k+1];for(const q of[a,ap,b])B0(O,q,nrm([q[0],.8,q[2]]),lt)}
+ for(let k=0;k<SD;k++){const a=rings[0][k],b=rings[0][k+1],c=[0,1.2,0];for(const q of[a,b,c])B0(O,q,[0,-1,0],mul(dk,.7))}
+ for(let i=0;i<NL;i++){const t=(i+.45)/NL,y=.95+t*(H-.7),R=Rr(t)+.2,nb=Math.max(5,Math.round(9-t*4)),col=[rr(.9,1.05),rr(.92,1.06),rr(.9,1)];
+  for(let j=0;j<nb;j++){const a=j/nb*2*PI+i*1.1+rr(-.25,.25),o=[Math.cos(a),0,Math.sin(a)],tg=[-o[2],0,o[0]],L=R*rr(1.0,1.2),c=add([0,y-.12,0],o,L*.5),dr=-rr(.22,.42);
+   card(C,c,tg,nrm([o[0],dr,o[2]]),L*.72,L*1.06,rn()<.5?0:1,col,cc,.15,1,.55);
+   card(C,add(c,[0,.14,0],1),nrm([o[0]*.35,1,o[2]*.35]),nrm([o[0],dr*.6,o[2]]),L*.78,L*1.02,rn()<.5?0:1,mul(col,1.05),cc,.15,1,.55);
+   card(C,add(c,[0,-.2,0],1),nrm([o[0]*.6,-1,o[2]*.6]),nrm([o[0],dr,o[2]]),L*.7,L*.95,rn()<.5?0:1,mul(col,.8),cc,.15,1,.55)}}
+ return[O.geo(),C.geo()]}
+function B0(O,p,n,c){O.v(p,n,c,0,0,cl(p[1]/10,0,1)*.4)}
+// mese: kalin kisa govde, 3-4 ana kol, genis yuvarlak tac
+function mese(){const O=new GB(),C=new GB(),H=rr(7.8,9),t1=[rr(-.25,.25),rr(2.4,2.9),rr(-.25,.25)];
+ tube(O,[[0,0,0],[t1[0]*.4,1.3,t1[2]*.4],t1],[.44,.37,.33],8,hx(0x463d36),hx(0x51453a),0,.1);
+ const cc=[t1[0],H*.66,t1[2]];
+ for(let k=0;k<4;k++){const a=k/4*2*PI+rr(-.4,.4),L=rr(2.3,3.3),e=[t1[0]+Math.cos(a)*L*.62,t1[1]+L*.82,t1[2]+Math.sin(a)*L*.62],m=[(t1[0]+e[0])/2+rr(-.25,.25),(t1[1]+e[1])/2+.1,(t1[2]+e[2])/2+rr(-.25,.25)];tube(O,[t1,m,e],[.25,.17,.09],6,hx(0x4a3f35),hx(0x56483b),.05,.35)}
+ const BL=[[cc,[2.6,1.9,2.6],1]];for(let k=0;k<6;k++){const a=k/6*2*PI+rr(-.3,.3),rd=rr(1.45,2.1);BL.push([[cc[0]+Math.cos(a)*rr(1.7,2.4),cc[1]+rr(-1,1.2),cc[2]+Math.sin(a)*rr(1.7,2.4)],[rd,rd*rr(.74,.9),rd],0])}
+ BL.push([[cc[0]+rr(-.4,.4),cc[1]+1.85,cc[2]+rr(-.4,.4)],[1.9,1.4,1.9],1]);
+ for(const[c,r,dt]of BL){blob(O,c,mul(r,.42),0,.25,hx(0x2a3a1a),hx(0x16200e),cc,.5);blobT(C,c,mul(r,.8),1,.22,[.9,.95,.85],cc,.6,[2,3])}
+ for(const[c,r]of BL){const n=Math.round(8+r[0]*3.6),col=[rr(.92,1.1),rr(.94,1.06),rr(.85,1)];for(let j=0;j<n;j++){const d=nrm([rr(-1,1),rr(-.55,1),rr(-1,1)]),f=rr(.62,.98),p=[c[0]+d[0]*r[0]*f,c[1]+d[1]*r[1]*f,c[2]+d[2]*r[2]*f];
+   card(C,p,nrm(add(d,[rr(-.5,.5),rr(-.3,.4),rr(-.5,.5)],1)),[rr(-.3,.3),1,rr(-.3,.3)],rr(1.9,2.7),rr(1.9,2.7),rn()<.5?2:3,mul(col,.78+.3*f),cc,.5,1)}}
+ return[O.geo(),C.geo()]}
+// kutuk (parcalanan agac): kirik, sivri uclu kisa govde
+function kutuk(){const O=new GB();tube(O,[[0,0,0],[0,.55,0],[0,.95,0]],[.4,.35,.32],7,hx(0x463d36),hx(0x4e4238),0,0);const top=.95,lw=hx(0xb59a72);
+ for(let k=0;k<7;k++){const a0=k/7*2*PI,a1=(k+1)/7*2*PI,p0=[Math.cos(a0)*.33,top,Math.sin(a0)*.33],p1=[Math.cos(a1)*.33,top,Math.sin(a1)*.33],c=[rr(-.06,.06),top+rr(.15,.55),rr(-.06,.06)];
+  for(const q of[p1,p0,c])O.v(q,nrm([q[0],1.2,q[2]]),mix(lw,hx(0x6b5236),rn()*.5),0,0,0)}return O.geo()}
+// ---------------- 4) malzemeler: ruzgarda titreme + kar ----------------
+const U={uT:{value:0},uW:{value:.3},uSn:{value:0}};
+function patch(m,cardM){m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
+ sh.vertexShader='attribute float fw;uniform float uT,uW;varying float vUpN;\n'+sh.vertexShader
+  .replace('#include <beginnormal_vertex>','#include <beginnormal_vertex>\nvUpN=objectNormal.y;')
+  .replace('#include <begin_vertex>',`#include <begin_vertex>
+#ifdef USE_INSTANCING
+vec3 ip=instanceMatrix[3].xyz;
+#else
+vec3 ip=vec3(0.);
+#endif
+float ph=ip.x*.37+ip.z*.23,fl=fw*uW;
+transformed.x+=sin(uT*2.3+ph+position.y*.7)*.08*fl;transformed.z+=cos(uT*1.9+ph*1.3+position.x*.5)*.07*fl;transformed.y+=sin(uT*3.1+ph+position.z*.8)*.035*fl;`);
+ sh.fragmentShader='uniform float uSn;varying float vUpN;\n'+sh.fragmentShader
+  .replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,vec3(.84,.87,.91),uSn*smoothstep(.1,.65,vUpN)*.8);');
+ if(cardM)sh.fragmentShader=sh.fragmentShader.replace('#include <normal_fragment_begin>',THREE.ShaderChunk.normal_fragment_begin.replace('normal = normal * faceDirection;',''))};
+ m.customProgramCacheKey=()=>cardM?'trc1':'tro1';return m}
+const MO=patch(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0,envMapIntensity:.45}),0);
+const MC=patch(new THREE.MeshStandardMaterial({map:AT,vertexColors:true,roughness:.85,metalness:0,envMapIntensity:.5,alphaTest:.4,side:THREE.DoubleSide}),1);
+try{const ca=R.getContext().getContextAttributes();if(ca&&ca.antialias)MC.alphaToCoverage=true}catch(e){}
+const MD=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:AT,alphaTest:.4,side:THREE.DoubleSide});
+// ---------------- 5) agaclari tur/varyanta ayir, instanced cizim ----------------
+const KIND=[karacam,karacam,gencCam,gencCam,mese,mese],GEO=KIND.map(f=>f()),STG=kutuk();
+function sp(x,z){const n=Math.sin(x*.017+1.3)*Math.cos(z*.019-.7)+.45*Math.sin(x*.043-z*.037);return n>.35?(n>.8?1:0):n<-.25?2:((x*13.1+z*7.7)%3+3)%3|0} // 0 karacam, 1 genc cam, 2 mese (kumelenmis)
+const IT=[];for(let i=0;i<TR.length;i++){const t=TR[i],s=sp(t.x,t.z),v=window.__treeV?__treeV(i):s*2+(((t.x*3.7+t.z*5.3)|0)&1);IT.push({v,i:0,cv:true})}
+const CNT=[0,0,0,0,0,0];for(const q of IT)q.i=CNT[q.v]++;
+const IMO=[],IMC=[];const _c=new THREE.Color();
+function mk(geo,mat,n){const m=new THREE.InstancedMesh(geo,mat,Math.max(1,n));m.count=n;m.visible=n>0;m.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1,n)*3).fill(1),3);m.frustumCulled=false;m.castShadow=true;m.receiveShadow=true;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.userData.trees=1;S.add(m);return m}
+for(let v=0;v<6;v++){IMO.push(mk(GEO[v][0],MO,CNT[v]));const c=mk(GEO[v][1],MC,CNT[v]);c.customDepthMaterial=MD;IMC.push(c)}
+const IMS=mk(STG,MO,TR.length);
+// her agaca sabit varyasyon: Y donusu + hafif oran farki + renk tonu
+const VM=[],_e=new THREE.Euler(),_q=new THREE.Quaternion(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
+for(let i=0;i<TR.length;i++){const t=TR[i],q=IT[i];_q.setFromEuler(_e.set(0,rr(0,2*PI),0));_s.set(rr(.9,1.1),rr(.92,1.08),rr(.9,1.1));_s.z=_s.x*rr(.95,1.05);VM.push(new THREE.Matrix4().compose(_p.set(0,0,0),_q,_s));
+ const sv=q.v>>1,l=rr(.86,1.1);_c.setRGB(l*(sv===2?rr(1,1.1):rr(.95,1.03)),l*rr(.97,1.04),l*(sv===2?rr(.85,.95):rr(.95,1.05)));IMO[q.v].setColorAt(q.i,_c);IMC[q.v].setColorAt(q.i,_c);_c.setRGB(1,1,1);IMS.setColorAt(i,_c)}
+for(const m of[...IMO,...IMC,IMS])if(m.instanceColor)m.instanceColor.needsUpdate=true;
+// eski govde/koni orgulerini cizimden cikar (devrilme/parcalanma kodu ayni nesneleri kullanmaya devam eder)
+for(let i=0;i<TR.length;i++){const c=TR[i].g.children,q=IT[i];if(!c||c.length<2)continue;q.cv=c[1].visible!==false;
+ Object.defineProperty(c[1],'visible',{configurable:true,get(){return false},set(v){q.cv=!!v}});Object.defineProperty(c[0],'visible',{configurable:true,get(){return false},set(v){}})}
+const _m=new THREE.Matrix4(),_z=new THREE.Matrix4().makeScale(0,0,0);
+function sync(){for(let i=0;i<TR.length;i++){const t=TR[i],q=IT[i],g=t.g;_m.compose(g.position,g.quaternion,g.scale).multiply(VM[i]);
+  if(q.cv){IMO[q.v].setMatrixAt(q.i,_m);IMC[q.v].setMatrixAt(q.i,_m);IMS.setMatrixAt(i,_z)}else{IMO[q.v].setMatrixAt(q.i,_z);IMC[q.v].setMatrixAt(q.i,_z);IMS.setMatrixAt(i,_m)}}
+ for(const m of IMO)m.instanceMatrix.needsUpdate=true;for(const m of IMC)m.instanceMatrix.needsUpdate=true;IMS.instanceMatrix.needsUpdate=true}
+sync();
+FRAME_HOOKS.push(dr=>{U.uT.value+=dr||0;const W=window.WIND,ws=W?Math.min(1,(W.s||0)/9):.25;U.uW.value+=(.18+.9*ws-U.uW.value)*Math.min(1,(dr||0)*2);sync()});
+window.TREEX={U,IMO,IMC,IMS,AT,CNT,sync};
+})();
+
+
+// ===== m_nature =====
+// ============ DOGA VE HAVA: ruzgarda dalgalanan ve tankin ezdigi cimen, KAR havasi (yagan kar + karla kaplanan zemin/agac/kaya), aksamda gunesin yavasca batmasi, nisangah/periskop/Ucangoz merceginde yagmur damlalari ============
+(function(){
+const PI=Math.PI,RN=Math.random,rr=(a,b)=>a+RN()*(b-a),cl=(v,a,b)=>v<a?a:v>b?b:v;
+const SNU={value:0};window.SNOWU=SNU;              // 0..1 kar ortusu (zemin, cimen, kaya, agac ortak)
+let T=0;
+// ---------------- 1) CIMEN: ruzgarda dalga + tankin cevresinde ezilme + karda kisalma ----------------
+const GU={uT:{value:0},uWd:{value:new THREE.Vector2(1,0)},uWs:{value:.3},uTk:{value:new THREE.Vector4(0,0,0,1)},uSn:SNU};
+if(typeof gm!=='undefined'&&gm&&gm.material){const m=gm.material;
+ m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,GU);
+  sh.vertexShader='uniform float uT,uWs,uSn;uniform vec2 uWd;uniform vec4 uTk;\n'+sh.vertexShader.replace('#include <project_vertex>',`vec4 mvPosition=vec4(transformed,1.);
+#ifdef USE_INSTANCING
+mvPosition=instanceMatrix*mvPosition;
+#endif
+{float gh=max(position.y,0.);vec2 ip=mvPosition.xz;float ph=dot(ip,vec2(.21,.17));
+ float sw=sin(uT*1.7+ph)+.45*sin(uT*3.3+ph*1.7),gu=.6+.4*sin(uT*.35+ip.x*.02+ip.y*.015);
+ vec2 off=uWd*(gh*gh)*(sw*.35+.65*gu)*uWs;
+ vec2 d=ip-uTk.xy;float lx=dot(d,vec2(uTk.w,-uTk.z)),lz=dot(d,uTk.zw);float bd=max(abs(lx)-1.9,abs(lz)-3.9);float pu=(1.-smoothstep(0.,1.3,bd))*gh;
+ off+=normalize(d+vec2(1e-4))*pu*.6;mvPosition.y-=pu*.3+gh*uSn*.55;mvPosition.xz+=off;}
+mvPosition=modelViewMatrix*mvPosition;gl_Position=projectionMatrix*mvPosition;`);
+  sh.fragmentShader='uniform float uSn;\n'+sh.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,vec3(.8,.83,.86),uSn*.72);')};
+ m.customProgramCacheKey=()=>'grw1';m.needsUpdate=true}
+// ---------------- 2) KAR havasi ----------------
+WX.kar={n:'Kar',bg:0xc5ccd3,fog:[22,250],hi:.62,hg:0xb8bec4,sun:.5,sc:0xe6eeff,cl:0xdfe4e8,co:.95,rain:0,hl:0};
+{const yb=document.querySelector('[data-w="aksam"]')||document.querySelector('[data-w="yagmur"]');
+ if(yb&&!document.querySelector('[data-w="kar"]')){yb.insertAdjacentHTML('afterend','<button data-w="kar">❄️ Kar</button>');const b=document.querySelector('[data-w="kar"]');b.onclick=()=>setW('kar')}}
+// yagan kar: kamerayi izleyen 3200 tanecik, tek cizim (konum golgelendiricide hesaplanir)
+const SNN=3200,sg=new THREE.BufferGeometry();{const p=new Float32Array(SNN*3),s=new Float32Array(SNN);for(let i=0;i<SNN;i++){p[i*3]=RN();p[i*3+1]=RN();p[i*3+2]=RN();s[i]=RN()}
+ sg.setAttribute('position',new THREE.BufferAttribute(p,3));sg.setAttribute('sd',new THREE.BufferAttribute(s,1))}
+const FU={uT:{value:0},uC:{value:new THREE.Vector3()},uW:{value:new THREE.Vector2()},uSc:{value:400},uFc:{value:new THREE.Color()},uFn:{value:20},uFf:{value:250}};
+const SNP=new THREE.Points(sg,new THREE.ShaderMaterial({uniforms:FU,transparent:true,depthWrite:false,fog:false,
+ vertexShader:`attribute float sd;uniform float uT,uSc;uniform vec3 uC;uniform vec2 uW;varying float vF,vA;uniform float uFn,uFf;
+void main(){vec3 B=vec3(64.,36.,64.);vec3 p=position*B;float sp=1.05+sd*.95;p.y-=uT*sp;p.x+=sin(uT*.8+sd*31.)*.9+uW.x*uT*.4;p.z+=cos(uT*.7+sd*17.)*.9+uW.y*uT*.4;
+ vec3 c=uC-B*vec3(.5,.42,.5);p=mod(p-c,B)+c;vec4 mv=modelViewMatrix*vec4(p,1.);gl_PointSize=clamp((.05+sd*.07)*uSc/-mv.z,1.,22.);gl_Position=projectionMatrix*mv;
+ vF=smoothstep(uFn,uFf,-mv.z);vA=smoothstep(.25,1.6,-mv.z);}`,
+ fragmentShader:`uniform vec3 uFc;varying float vF,vA;void main(){vec2 d=gl_PointCoord-.5;float a=smoothstep(.5,.12,length(d));if(a<.02)discard;gl_FragColor=vec4(mix(vec3(1.),uFc,vF*.6),a*.92*vA*(1.-vF*.75));}`}));
+SNP.frustumCulled=false;SNP.visible=false;SNP.renderOrder=3;S.add(SNP);
+// zemin: karla kaplanir (duz yerler beyaz, yamaclar ve kayalar kismen acik, dere kenari az)
+function snowGround(){const m=typeof gr!=='undefined'&&gr.material;if(!m||m.userData.snow||!m.customProgramCacheKey||m.customProgramCacheKey()!=='phg'||!m.onBeforeCompile)return;
+ const ob=m.onBeforeCompile;m.onBeforeCompile=function(sh){ob.call(this,sh);sh.uniforms.uSn=SNU;
+  sh.vertexShader=sh.vertexShader.replace('varying vec3 vWP;','varying vec3 vWP;varying float vNy;').replace('vWP=(modelMatrix','vNy=normal.y;vWP=(modelMatrix');
+  sh.fragmentShader=sh.fragmentShader.replace('varying vec3 vWP;','varying vec3 vWP;varying float vNy;uniform float uSn;').replace('diffuseColor.rgb*=col;',`diffuseColor.rgb*=col;
+ {float n1=texture2D(tT,vWP.xz/17.).r,n2=texture2D(tG,vWP.xz/5.3).g;float cov=uSn*smoothstep(.62,.93,vNy)*(1.-.55*w.w)*(1.-.6*vWet);
+  float sm=smoothstep(.2,.6,cov*1.25+(n1-.5)*.8+(n2-.5)*.35);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.7,.72,.77)*(.84+.2*n2+.12*n1),sm);}`)};
+ m.customProgramCacheKey=()=>'phgs';m.userData.snow=1;m.needsUpdate=true}
+// kayalar: ust yuzeylerde kar
+if(typeof rocks!=='undefined'&&rocks.material){const m=rocks.material,ob=m.onBeforeCompile;m.onBeforeCompile=function(sh){if(ob&&ob!==THREE.Material.prototype.onBeforeCompile)ob.call(this,sh);sh.uniforms.uSn=SNU;
+  sh.vertexShader='varying float vNy;\n'+sh.vertexShader.replace('#include <beginnormal_vertex>','#include <beginnormal_vertex>\n{vec3 wn=objectNormal;\n#ifdef USE_INSTANCING\nwn=mat3(instanceMatrix)*wn;\n#endif\nvNy=normalize(wn).y;}');
+  sh.fragmentShader='varying float vNy;uniform float uSn;\n'+sh.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,vec3(.86,.88,.92),uSn*smoothstep(.35,.75,vNy)*.9);')};
+ m.customProgramCacheKey=()=>'rks1';m.needsUpdate=true}
+// karda palet tozu yerine kar savrulur, mermi dusunce kar puskurur
+{const FX=window.FXP;if(FX&&FX._s){const SM=FX._s.SM,d0=FX.dust,r0=FX.dirt;
+ FX.dust=function(x,z,k,col){if(SNU.value<.5||col)return d0.apply(this,arguments);const y=hAt(x,z);if(y<-1.2)return d0.apply(this,arguments);
+  SM.emit(x,y+.3,z,rr(-1.2,1.2),rr(.8,2),rr(-1.2,1.2),rr(1.2,2.2),rr(.7,1.1),rr(2.4,3.6),0xf2f5f8,0xe4e9ee,.5*k,0,1.4,.4,null,rr(-.3,.3))};
+ FX.dirt=function(x,z,k){const r=r0.apply(this,arguments);if(SNU.value>.5&&hAt(x,z)>-1.2){k=k||1;const y=hAt(x,z);for(let i=0;i<Math.round(10*k);i++){const a=RN()*2*PI,v=rr(1.5,5)*k;SM.emit(x+rr(-.5,.5),y+.4,z+rr(-.5,.5),Math.cos(a)*v,rr(3,7)*k,Math.sin(a)*v,rr(1.2,2.2),rr(.8,1.4)*k,rr(3,5)*k,0xf4f6f9,0xdfe5ea,.75,0,1.2,3,null,rr(-.3,.3))}}return r}}}
+// ---------------- 3) AKSAM: gunes yavasca batar (altin saatten alacakaranliga ~7 dk) ----------------
+const DK={t:0,b:null,f:-1,ls:-1};
+const DOME=new THREE.Mesh(new THREE.SphereGeometry(400,24,12),new THREE.ShaderMaterial({uniforms:{uK:{value:0}},side:THREE.BackSide,depthWrite:false,depthTest:false,fog:false,blending:THREE.MultiplyBlending,premultipliedAlpha:true,transparent:true,
+ vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+ fragmentShader:'uniform float uK;varying vec3 vP;void main(){float h=clamp(normalize(vP).y,0.,1.);vec3 t=mix(vec3(.9,.66,.62),vec3(.42,.42,.6),pow(h,.6));gl_FragColor=vec4(mix(vec3(1.),t,uK),1.);}'}));
+DOME.renderOrder=-2;DOME.frustumCulled=false;DOME.visible=false;S.add(DOME);
+const EI=new WeakMap();let eiK=1;
+function envScale(k){if(Math.abs(k-eiK)<.01)return;eiK=k;S.traverse(o=>{if(!o.material)return;for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(m.envMapIntensity==null)continue;if(!EI.has(m))EI.set(m,m.envMapIntensity);m.envMapIntensity=EI.get(m)*k}})}
+function dkBase(){DK.b={sun:sun.intensity,sc:sun.color.clone(),hi:hemi.intensity,hc:hemi.color.clone(),fog:S.fog.color.clone(),top:skyU.top.value.clone(),bot:skyU.bot.value.clone()};DK.f=-1;DK.ls=sun.intensity}
+const _c1=new THREE.Color(),SUNR=new THREE.Color(1,.42,.28),HEMB=new THREE.Color(.5,.52,.78),FOGD=new THREE.Color(.36,.31,.4),TOPD=new THREE.Color(.1,.12,.25);
+function dkApply(f){const b=DK.b;if(!b)return;sun.intensity=b.sun*(1-.62*f);DK.ls=sun.intensity;sun.color.copy(b.sc).lerp(SUNR,f*.65);hemi.intensity=b.hi*(1-.45*f);hemi.color.copy(b.hc).lerp(HEMB,f*.6);
+ S.fog.color.copy(b.fog).lerp(FOGD,f*.62);skyU.top.value.copy(b.top).lerp(TOPD,f*.7);skyU.bot.value.copy(b.bot).lerp(FOGD,f*.5);if(S.background&&S.background.isColor)S.background.copy(S.fog.color);
+ DOME.material.uniforms.uK.value=f*.85;DOME.visible=f>.01&&!!(S.background&&S.background.isTexture);envScale(1-.5*f)}
+// ---------------- hava degisimi kancalari ----------------
+function onW(w){
+ if(w==='kar'){skyU.top.value.set(0x9aa6b2);if(typeof sunM!=='undefined')sunM.visible=false;hemi.color.set(0xeef3ff);hemi.groundColor.set(0xb9bfc6);sun.color.set(0xe6eeff)}
+ SNP.visible=w==='kar';
+ if(w==='aksam'){DK.t=0;dkBase()}else{DK.b=null;DOME.visible=false;envScale(1)}}
+{const s0=window.setW;window.setW=function(w){const r=s0.apply(this,arguments);try{onW(w)}catch(e){}return r}}
+window.onSky=function(w){if(w==='kar'){hemi.groundColor.set(0xb9bfc6);hemi.intensity=.62;S.fog.color.lerp(_c1.setRGB(.86,.88,.9),.35)}if(w==='aksam'&&wx==='aksam'){const t=DK.t;dkBase();DK.t=t}};
+{const ie=window.initExtra;if(ie)window.initExtra=function(){const r=ie.apply(this,arguments);if(wx==='aksam'&&DK.b){DK.t=0;dkApply(0);DK.f=0}return r}}
+// ---------------- 4) MERCEKTE YAGMUR DAMLASI / KAR TANESI (nisangah, surucu periskopu, Ucangoz kamerasi) ----------------
+const LC=document.createElement('canvas');LC.id='lensW';LC.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;display:none';
+R.domElement.insertAdjacentElement('afterend',LC);const lg=LC.getContext('2d');
+function spr(fn){const c=document.createElement('canvas');c.width=c.height=64;fn(c.getContext('2d'));return c}
+const DROP=spr(g=>{let gr=g.createRadialGradient(32,38,3,32,32,30);gr.addColorStop(0,'rgba(225,235,245,.22)');gr.addColorStop(.55,'rgba(170,190,210,.26)');gr.addColorStop(.82,'rgba(18,26,34,.62)');gr.addColorStop(.93,'rgba(10,14,18,.3)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);
+ gr=g.createRadialGradient(24,22,0,24,22,11);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);
+ g.strokeStyle='rgba(255,255,255,.45)';g.lineWidth=2.5;g.beginPath();g.arc(32,32,23,PI*.12,PI*.8);g.stroke()});
+const FLK=spr(g=>{const gr=g.createRadialGradient(32,32,0,32,32,30);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(.45,'rgba(240,246,255,.7)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64)});
+const DR_=[];let lw=0,lh=0,spn=0,lensOn=false,lv='';
+function lensActive(){if(game!=='play'||(window.PHOTO&&PHOTO.on))return 0;const w=typeof wx!=='undefined'?wx:'';if(w!=='yagmur'&&w!=='kar')return 0;
+ if(mode==='drone')return w==='yagmur'?1:2;if(mode==='tank'&&(iv===1||iv===3)&&!(window.AA&&AA.on))return w==='yagmur'?1:2;return 0}
+function lensStep(dr){const a=lensActive();if(!a){if(lensOn){lensOn=false;LC.style.display='none';DR_.length=0;lg.clearRect(0,0,lw,lh)}return}
+ if(!lensOn){lensOn=true;LC.style.display='block'}const vk=mode+iv;if(vk!==lv){lv=vk;DR_.length=0}const dvB=mode==='tank'&&iv===3;
+ const W=Math.round(Math.min(innerWidth,1000)),H=Math.round(W*innerHeight/innerWidth);if(W!==lw||H!==lh){lw=LC.width=W;lh=LC.height=H}
+ const sp=Math.abs(window.__spd||0),k=W/844;spn+=dr*(a===1?(mode==='drone'?11:7)+sp*.6:2.2);
+ while(spn>1){spn--;if(DR_.length>70)break;const r=a===1?rr(5,16)*k:rr(4,10)*k,dv=mode==='tank'&&iv===3;DR_.push({x:RN()*W,y:dv?H*rr(.17,.62):RN()*H,r,t:0,L:a===1?rr(3,9):rr(1.6,3.4),vy:0,sl:a===1&&r>10*k&&RN()<.6,f:a===2})}
+ lg.clearRect(0,0,W,H);
+ for(let i=DR_.length-1;i>=0;i--){const d=DR_[i];d.t+=dr;if(d.t>d.L){DR_.splice(i,1);continue}
+  if(d.sl&&d.t>.6){d.vy=Math.min(d.vy+dr*120*k,150*k);d.y+=d.vy*dr;if(dvB&&d.y>H*.64){DR_.splice(i,1);continue}if(RN()<dr*9&&DR_.length<90)DR_.push({x:d.x+rr(-1,1),y:d.y-d.r*.6,r:d.r*rr(.25,.4),t:0,L:rr(.8,1.8),vy:0,sl:false,f:false})}
+  const fa=Math.min(1,d.t*5)*Math.min(1,(d.L-d.t)*1.5),s=d.r*2*(d.f?1:1+Math.min(.25,d.t*.08));lg.globalAlpha=fa*(d.f?.75:1);
+  if(d.sl&&d.vy>0){lg.drawImage(DROP,d.x-s/2,d.y-s*.6,s,s*1.2)}else lg.drawImage(d.f?FLK:DROP,d.x-s/2,d.y-s/2,s,s)}
+ lg.globalAlpha=1}
+// ---------------- her kare ----------------
+const _v=new THREE.Vector3();
+FRAME_HOOKS.push(dr=>{dr=dr||0;T+=dr;if(T>5000)T-=5000;
+ const W=window.WIND,ws=W?Math.min(1,(W.s||0)/9):.25;
+ // cimen
+ GU.uT.value=T;if(W&&(W.x||W.z)){const l=Math.hypot(W.x,W.z)||1;GU.uWd.value.set(W.x/l,W.z/l)}GU.uWs.value+=(.12+.42*ws-GU.uWs.value)*Math.min(1,dr*2);
+ if(typeof P!=='undefined'&&P.g)GU.uTk.value.set(P.x,P.z,Math.sin(P.h||0),Math.cos(P.h||0));
+ // kar
+ const kar=typeof wx!=='undefined'&&wx==='kar',tgt=kar?1:0;SNU.value+=(tgt-SNU.value)*Math.min(1,dr*2.5);if(SNU.value<.001)SNU.value=0;
+ if(window.TREEX)TREEX.U.uSn.value=SNU.value;snowGround();
+ if(SNP.visible){FU.uT.value=T;FU.uC.value.copy(CAM.position);if(W)FU.uW.value.set(W.x||0,W.z||0);FU.uSc.value=R.domElement.height*.5/Math.tan(CAM.fov*PI/360)*.55;FU.uFc.value.copy(S.fog.color);FU.uFn.value=S.fog.near;FU.uFf.value=S.fog.far;
+  if(kar)hemi.groundColor.set(0xb9bfc6)}
+ // aksam gecisi
+ if(wx==='aksam'&&DK.b){if(game==='play'&&!(window.mapOpen))DK.t+=dr;if(Math.abs(sun.intensity-DK.ls)>1e-3){const t=DK.t;dkBase();DK.t=t}const f=cl(DK.t/420,0,1),e=f*f*(3-2*f);if(Math.abs(e-DK.f)>.003){DK.f=e;dkApply(e)}DOME.position.copy(CAM.position)}
+ lensStep(dr)});
+if(window.__wx0==='kar'&&wx!=='kar')setW('kar');else onW(wx);
+window.NATX={GU,SNP,DK,DOME,dkApply,lensActive};
+})();
+
+
+// ===== m_fx2 =====
+// ============ EFEKT 2: izli mermi cizgisi (gece belirgin; bizimkiler kirmizi, dusmaninki yesil), yukselen ates topu ve mantar duman, yanan enkazdan uzun duman sutunu ve yere vuran alev parlamasi ============
+(function(){
+const FX=window.FXP;if(!FX||!FX._s)return;
+const PI=Math.PI,RN=Math.random,rr=(a,b)=>a+RN()*(b-a),{SM,FI}=FX._s;
+const nightK=()=>{const w=typeof wx!=='undefined'?wx:'gunduz';let k=w==='gece'?1:w==='sis'?.7:w==='yagmur'||w==='kar'?.6:w==='aksam'?.45+.5*((window.NATX&&NATX.DK.f>0)?NATX.DK.f:0):.35;return k};
+// ---------------- 1) IZLI MERMI: ekran-uzayinda kalinlik koruyan parlak cizgi ----------------
+const MX=96,tg=new THREE.InstancedBufferGeometry();
+tg.setAttribute('position',new THREE.BufferAttribute(new Float32Array([0,-1,0,1,-1,0,1,1,0,0,1,0]),3));tg.setIndex([0,1,2,0,2,3]);
+const iA=new THREE.InstancedBufferAttribute(new Float32Array(MX*3),3),iB=new THREE.InstancedBufferAttribute(new Float32Array(MX*3),3),iC=new THREE.InstancedBufferAttribute(new Float32Array(MX*4),4),iW=new THREE.InstancedBufferAttribute(new Float32Array(MX),1);
+for(const a of[iA,iB,iC,iW])a.setUsage(THREE.DynamicDrawUsage);tg.setAttribute('iA',iA);tg.setAttribute('iB',iB);tg.setAttribute('iC',iC);tg.setAttribute('iW',iW);tg.instanceCount=0;
+const TU={uPx:{value:.003},uFn:{value:90},uFf:{value:420}};
+const TM=new THREE.ShaderMaterial({uniforms:TU,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+ vertexShader:`attribute vec3 iA,iB;attribute vec4 iC;attribute float iW;uniform float uPx,uFn,uFf;varying vec2 vU;varying vec4 vC;varying float vF;
+void main(){vec4 a=modelViewMatrix*vec4(iA,1.),b=modelViewMatrix*vec4(iB,1.);
+ if(a.z>-.3&&b.z>-.3){gl_Position=vec4(2.,2.,2.,1.);return;}
+ if(a.z>-.3)a=mix(b,a,(b.z+.3)/(b.z-a.z));if(b.z>-.3)b=mix(a,b,(a.z+.3)/(a.z-b.z));
+ vec2 d=b.xy/-b.z-a.xy/-a.z;d=length(d)>1e-6?normalize(d):vec2(1.,0.);vec2 n=vec2(-d.y,d.x);
+ vec4 p=position.x<.5?a:b;float w=max(iW,-p.z*uPx);p.xy+=n*position.y*w+d*(position.x<.5?-1.:1.)*w*1.3;
+ vU=position.xy;vC=iC;vF=smoothstep(uFn,uFf*2.2,-p.z);gl_Position=projectionMatrix*p;}`,
+ fragmentShader:`varying vec2 vU;varying vec4 vC;varying float vF;void main(){float c=1.-abs(vU.y);c=c*c;float al=smoothstep(-.1,.8,vU.x),hd=smoothstep(.72,1.,vU.x);float core=pow(c,3.)*(al*.7+hd);
+ vec3 col=vC.rgb*c*(al+hd*1.2)+vec3(1.,.96,.88)*core;gl_FragColor=vec4(col*vC.a*(1.-vF*.8),1.);}`});
+const TRM=new THREE.Mesh(tg,TM);TRM.frustumCulled=false;TRM.renderOrder=7;TRM.layers.set(2);S.add(TRM);
+const CR=new THREE.Color(1,.34,.16),CG=new THREE.Color(.45,1,.38),CY=new THREE.Color(1,.62,.25);
+function trc(){let n=0;const nk=nightK();TU.uPx.value=2*Math.tan(CAM.fov*PI/360)/Math.max(200,R.domElement.height)*(3+3.5*nk)*(R.getPixelRatio?R.getPixelRatio():1);
+ if(S.fog){TU.uFn.value=S.fog.near;TU.uFf.value=S.fog.far}
+ const put=(p,vx,vy,vz,c,a,w,L)=>{if(n>=MX)return;const l=Math.hypot(vx,vy,vz)||1,len=Math.min(L,Math.max(4,l*.1));const k3=n*3,k4=n*4;
+  iB.array[k3]=p.x;iB.array[k3+1]=p.y;iB.array[k3+2]=p.z;iA.array[k3]=p.x-vx/l*len;iA.array[k3+1]=p.y-vy/l*len;iA.array[k3+2]=p.z-vz/l*len;
+  iC.array[k4]=c.r;iC.array[k4+1]=c.g;iC.array[k4+2]=c.b;iC.array[k4+3]=a;iW.array[n]=w;n++};
+ if(typeof shells!=='undefined')for(const s of shells){if(s.k===2||!s.m)continue;const p=s.m.position;if(p.distanceToSquared(CAM.position)<16)continue;put(p,s.vx,s.vy,s.vz,s.k===0?CR:CY,.8+1.4*nk,.08+.06*nk,22)}
+ if(typeof ebul!=='undefined')for(const b of ebul){if(!b.m||b.life<=0)continue;if(!b._tr){b._tr=1;if(b.tgt!=='drone'&&b.m.material&&b.m.material.color&&b.dk>=.5){b.m.material.color.set(0xd8ffc8);b.m.scale.setScalar(.55)}}put(b.m.position,b.vx,b.vy,b.vz,b.tgt==='drone'?CY:CG,.75+1.3*nk,.1+.07*nk,9)}
+ tg.instanceCount=n;if(n){iA.needsUpdate=iB.needsUpdate=iC.needsUpdate=iW.needsUpdate=true}}
+// ---------------- 2) BUYUK PATLAMA: yukselen ates topu + koyu mantar duman ----------------
+const _ex=FX.explosion;FX.explosion=function(x,y,z,k,opt){const r=_ex.apply(this,arguments);k=k||1;if(k<.85)return r;const q=window.FXQ||1;
+ for(let i=0;i<Math.round(9*q*Math.min(1.6,k));i++){const a=RN()*2*PI,o=rr(.3,1.6)*k;FI.emit(x+Math.cos(a)*o,y+rr(.4,1.6)*k,z+Math.sin(a)*o,Math.cos(a)*rr(.6,2.2),rr(4.5,8.5)*Math.sqrt(k),Math.sin(a)*rr(.6,2.2),rr(1.05,1.7),rr(2.4,3.6)*k,rr(6.5,9.5)*k,RN()<.4?0xffe2a0:0xffa040,0x5a1404,.95,0,1.25,-1.8,null,rr(-1.2,1.2))}
+ for(let i=0;i<Math.round(13*q*Math.min(1.6,k));i++){const a=RN()*2*PI,o=rr(.3,2.4)*k,up=rr(3,7.5)*Math.sqrt(k);SM.emit(x+Math.cos(a)*o,y+rr(1.5,4.5)*k,z+Math.sin(a)*o,Math.cos(a)*rr(.8,3),up,Math.sin(a)*rr(.8,3),rr(4.5,8),rr(2.2,3.6)*k,rr(7,12.5)*k,RN()<.5?0x2e2a26:0x3e3832,0x8c877e,.62,0,.85,-.35,null,rr(-.3,.3))}
+ if(window.HAP&&Math.hypot(x-P.x,z-P.z)<40)HAP(30);return r};
+// ---------------- 3) YANAN ENKAZ: uzun duman sutunu + yerde titreyen alev isigi ----------------
+const COL=[],GMX=10;
+const gc=document.createElement('canvas');gc.width=gc.height=128;{const g=gc.getContext('2d'),gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,'rgba(255,190,110,1)');gr.addColorStop(.3,'rgba(255,130,50,.55)');gr.addColorStop(.65,'rgba(200,70,20,.16)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128)}
+const GG=new THREE.PlaneGeometry(1,1);GG.rotateX(-PI/2);
+const GLM=new THREE.InstancedMesh(GG,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(gc),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,fog:false}),GMX);
+GLM.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(GMX*3),3);GLM.frustumCulled=false;GLM.count=0;GLM.renderOrder=5;GLM.layers.set(2);S.add(GLM);
+const BT={tank:1,apc:1,truck:1,arty:1,aa:1,radar:1,fuel:2};
+const _k=window.killE;window.killE=function(e){const was=e&&E.includes(e);const r=_k.apply(this,arguments);
+ try{if(was&&!E.includes(e)&&BT[e.type]){if(COL.length>=GMX)COL.shift();const big=BT[e.type]===2||e.type==='tank';COL.push({x:e.x,z:e.z,y:hAt(e.x,e.z),t:0,dur:e.type==='fuel'?42:rr(24,32),big,a:0,b:0,ph:RN()*9})}}catch(x){}return r};
+const _m=new THREE.Matrix4(),_c=new THREE.Color();
+function burnStep(dt){let n=0;const nk=nightK(),tt=performance.now()/1000;
+ for(let i=COL.length-1;i>=0;i--){const c=COL[i];c.t+=dt;const life=1-c.t/c.dur;if(life<=0){COL.splice(i,1);continue}
+  const k=c.big?1.25:.9;c.a+=dt*(2.2+3.2*life)*k*(window.FXQ||1);while(c.a>1){c.a--;if(SM.cnt>1400)continue;SM.emit(c.x+rr(-.6,.6),c.y+2.2,c.z+rr(-.6,.6),rr(-.35,.35),rr(3,4.6)*k,rr(-.35,.35),rr(9,13.5),rr(1.6,2.6)*k,rr(11,18)*k,0x1c1a18,0x6e6a64,.55*Math.min(1,life*2.2),0,.06,-.12,null,rr(-.15,.15))}
+  c.b+=dt*14;while(c.b>1){c.b--;if(life>.15)FI.emit(c.x+rr(-.5,.5),c.y+rr(1,1.8),c.z+rr(-.5,.5),0,rr(.2,.8),0,rr(.18,.32),rr(4.5,6.5)*k,rr(5.5,7.5)*k,0xff8a3a,0xff5a20,(.16+.22*nk)*Math.min(1,life*3),0,0,0,null,0)}
+  if(n<GMX&&life>.1){const fl=.75+.25*Math.sin(tt*13+c.ph)*Math.sin(tt*7.3+c.ph*2)+rr(-.06,.06),s=(c.big?13:9)*(.85+.15*fl);_m.makeScale(s,1,s).setPosition(c.x,c.y+.12,c.z);GLM.setMatrixAt(n,_m);
+   const I=(.18+.82*nk)*fl*Math.min(1,life*3)*.85;_c.setRGB(I,I*.62,I*.32);GLM.setColorAt(n,_c);n++}}
+ GLM.count=n;if(n){GLM.instanceMatrix.needsUpdate=true;GLM.instanceColor.needsUpdate=true}}
+// ---------------- her kare ----------------
+FRAME_HOOKS.push(dr=>{if(game==='menu'){COL.length=0;GLM.count=0;tg.instanceCount=0;return}
+ if(window.mapOpen||game==='pause'||game==='over'||game==='photo'){trc();return}
+ let dt=dr||0;if(typeof kc!=='undefined'&&kc&&kc.t>0)dt*=.3;if(window.BCAM&&BCAM.on)dt*=BCAM.ts;trc();burnStep(dt)});
+{const ie=window.initExtra;if(ie)window.initExtra=function(){const r=ie.apply(this,arguments);COL.length=0;GLM.count=0;tg.instanceCount=0;return r}}
+window.FX2={COL,trc,nightK,TRM,tg,TU};
 })();
 
 </script>

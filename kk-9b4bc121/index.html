@@ -33,7 +33,7 @@ canvas#gl{position:fixed;left:0;top:0;width:100%;height:var(--tamH,100%);display
 button{font-family:var(--f-ui);color:inherit;cursor:pointer;border:0;background:none}
 button:focus-visible{outline:2px solid var(--altin);outline-offset:3px}
 .tam{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:calc(env(safe-area-inset-top,0px) + 24px) max(24px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(24px,env(safe-area-inset-left,0px));pointer-events:auto}
-.perde{position:absolute;inset:0;background:#000;opacity:0;transition:opacity 1.2s ease;pointer-events:none}
+.perde{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .55s ease;pointer-events:none}
 .perde.kapali{opacity:1}
 h1,h2{font-family:var(--f-serif);font-weight:500;margin:0;line-height:1;text-wrap:balance}
 .logo{font-size:clamp(52px,14vw,96px);letter-spacing:.01em;text-shadow:0 2px 30px #0009}
@@ -408,7 +408,8 @@ if(!window.THREE){ UI.appendChild(el(`<div class="tam"><p class="yukleniyor">3D 
 /* ================= RENDERER ================= */
 const canvas=document.getElementById("gl");
 let renderer;
-try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"}); }
+// kenar yumuşatma efekt zincirinin çok örneklemeli hedefinde yapılır; tuvalin kendi çok örneklemeli tamponu boşuna bellek ve bant genişliği harcıyordu
+try{ renderer=new THREE.WebGLRenderer({canvas,antialias:!(window.WebGL2RenderingContext&&THREE.WebGLMultisampleRenderTarget&&THREE.EffectComposer),powerPreference:"high-performance"}); }
 catch(e){ UI.appendChild(el(`<div class="tam"><p class="yukleniyor">Bu cihaz 3D grafiği açamadı.</p></div>`)); PERDE.classList.remove("kapali"); return; }
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));
 renderer.outputEncoding=THREE.sRGBEncoding;
@@ -416,6 +417,11 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.debug.checkShaderErrors=false; // her yeni programda eşzamanlı derleme sorgusu sahne açılışlarını uzatıyordu
+// su yüzeyinin yansıma hedefi kurucunun içinde yerel: sahne bırakılırken serbest kalsın diye yakalanır
+if(THREE.Water&&!THREE.Water.__sarili){ const Asil=THREE.Water, RT=THREE.WebGLRenderTarget;
+  const Su=function(g,o){ let rt=null; THREE.WebGLRenderTarget=function(a,b,c){ rt=new RT(a,b,c); return rt; }; let w; try{ w=new Asil(g,o); } finally{ THREE.WebGLRenderTarget=RT; } if(w) w.userData.rt=rt; return w; };
+  Su.__sarili=true; THREE.Water=Su; }
 const camera=new THREE.PerspectiveCamera(50,1,0.1,2000);
 // iPhone'da ana ekrandan açılınca (siyah-saydam durum çubuğu) görünüm alanı durum çubuğu kadar kısa gelebiliyor; altta boş şerit kalmasın diye tam ekran yüksekliği kullanılır
 function ekranYuksekligi(){ let h=innerHeight; try{ if(/iPhone|iPod/.test(navigator.userAgent)&&(navigator.standalone===true||matchMedia("(display-mode: standalone)").matches)){
@@ -659,13 +665,141 @@ function ustDugmeler(){
 }
 async function altYazi(t,sure=3800){ const d=el(`<div class="alt-yazi">${t}</div>`); katman.appendChild(d); await bekle(50); d.classList.add("gor"); await bekle(sure); d.classList.remove("gor"); await bekle(1300); d.remove(); }
 async function baslikKarti(b,a){ const d=el(`<div class="kart-baslik"><span class="ust-yazi">${a[0]}</span><h2>${b}</h2><p>${a[1]}</p></div>`); katman.appendChild(d); await bekle(60); d.classList.add("gor"); await bekle(3200); d.classList.remove("gor"); await bekle(1500); d.remove(); }
-async function gecis(fn){ PERDE.classList.add("kapali"); await bekle(1250); await fn(); await bekle(150); PERDE.classList.remove("kapali"); }
+let YUKLENIYOR=false;
+// küçük eşyalar (fincan, kalem, düğme, yaprak…) gölge haritasına çizilmez: gölgeleri birkaç piksel ama her biri ayrı çizim çağrısı
+// (kafede kare başına 130 gölge çiziminin 90'ı bunlardı). Karakterler kendi kurallarıyla (golgeSadelestir) ayrıca sadeleşir.
+const _kgV=new THREE.Vector3();
+function kucukGolgeleriKapat(s){ if(!s) return; s.updateMatrixWorld(true); const kar=new Set(KARAKTERLER);
+  const gez=o=>{ if(kar.has(o)) return;
+    if(o.isMesh&&o.castShadow&&o.geometry){ const g=o.geometry; if(!g.boundingSphere) g.computeBoundingSphere(); o.getWorldScale(_kgV);
+      if(g.boundingSphere.radius*Math.max(Math.abs(_kgV.x),Math.abs(_kgV.y),Math.abs(_kgV.z))<.25) o.castShadow=false; }
+    for(const c of o.children) gez(c); };
+  gez(s); }
+/* çok malzemeli ağlar (ör. binalar: 6 yüzlü kutu, yüzlerin çoğu aynı renk) her yüz grubu için ayrı çizim çağrısı yapıyordu.
+   Aynı görünen malzemeli yüz grupları dizinde yan yana getirilip birleştirilir: bina başına 6 çizim → 3 (gölge haritasında da). */
+function _malzAnahtar(m){ if(!m) return "yok"; if(!/^Mesh(Standard|Lambert|Basic|Phong)Material$/.test(m.type)||m.onBeforeCompile!==THREE.Material.prototype.onBeforeCompile) return m.uuid;
+  const t=x=>x?x.uuid:"-", c=x=>x?x.getHexString():"-";
+  return [m.type,c(m.color),c(m.emissive),m.emissiveIntensity,m.roughness,m.metalness,t(m.map),t(m.normalMap),t(m.bumpMap),m.bumpScale,t(m.roughnessMap),t(m.metalnessMap),t(m.emissiveMap),t(m.alphaMap),t(m.aoMap),t(m.envMap),m.envMapIntensity,
+    m.transparent,m.opacity,m.side,m.alphaTest,m.depthWrite,m.depthTest,m.vertexColors,m.flatShading,m.fog,m.wireframe,m.blending,m.skinning,m.morphTargets,c(m.specular),m.shininess,m.toneMapped,m.visible,m.colorWrite].join("|"); }
+function cokluMalzemeSadelestir(s){ if(!s) return; const kul=new Map(); s.traverse(o=>{ if(o.isMesh&&o.geometry) kul.set(o.geometry,(kul.get(o.geometry)||0)+1); });
+  s.traverse(o=>{ if(!o.isMesh||!Array.isArray(o.material)||o.isSkinnedMesh||o.isInstancedMesh) return; const g=o.geometry, M=o.material;
+    if(!g||!g.index||!g.groups||g.groups.length<2||kul.get(g)!==1||g.userData.grupBirlesik) return;
+    const anah=M.map(_malzAnahtar), kanon=anah.map(a=>anah.indexOf(a)); const sira=[], tip=new Map();
+    for(const gr of g.groups){ const k=kanon[gr.materialIndex]; if(k===undefined||k<0) return; if(!tip.has(k)){ tip.set(k,[]); sira.push(k); } tip.get(k).push(gr); }
+    if(sira.length===g.groups.length) return;
+    const eski=g.index.array, yeni=new (eski.constructor)(eski.length); let p=0; g.clearGroups();
+    for(const k of sira){ const bas=p; for(const gr of tip.get(k)){ yeni.set(eski.subarray(gr.start,gr.start+gr.count),p); p+=gr.count; } g.addGroup(bas,p-bas,k); }
+    if(p!==eski.length){ const kalan=yeni.subarray(0,p); g.setIndex(new THREE.BufferAttribute(kalan.slice(),1)); } else g.setIndex(new THREE.BufferAttribute(yeni,1));
+    g.userData.grupBirlesik=true;
+    if(g.groups.length===1){ o.material=M[g.groups[0].materialIndex]; g.clearGroups(); } }); }
+/* durağan çevre birleştirme: binalar, banklar, ağaçlar, masa-sandalye gibi hiç kıpırdamayan ağlar aynı görünen malzemeye göre tek ağda toplanır
+   (meydanda kare başına çizim çağrısı ~%30 azalır; iPhone'da asıl yük çizim çağrısı sayısı). Asıl ağlar sahnede kalır ama çizilmez (katman 0 kapalı):
+   konumları, çarpışma bilgileri, raycast dışı her şey aynen durur. Kod sonradan birini oynatır, gizler ya da malzemesini değiştirirse
+   izleyici bunu görür ve o grubu hemen eski hâline döndürür. Bölüm nesnesinin tuttuğu, etkileşimli ya da işaretli nesnelere hiç dokunulmaz. */
+let STATIK=[]; let _statikT=0;
+function statikBirlestir(s){ if(!s||s.userData.statikYapildi) return; s.userData.statikYapildi=true; s.updateMatrixWorld(true);
+  const ref=new Set(), ekle=v=>{ if(v&&v.isObject3D) ref.add(v); };
+  const B=bolum; if(B) for(const k of Object.keys(B)){ const v=B[k]; if(!v||typeof v!=="object") continue; if(v.isObject3D) ekle(v);
+    else if(Array.isArray(v)) v.forEach(x=>{ if(x&&x.isObject3D) ekle(x); else if(x&&typeof x==="object"&&!Array.isArray(x)) Object.values(x).forEach(ekle); else if(Array.isArray(x)) x.forEach(ekle); });
+    else if(v.constructor===Object) Object.values(v).forEach(y=>{ if(y&&y.isObject3D) ekle(y); else if(Array.isArray(y)) y.forEach(ekle); }); }
+  for(const e of (ETK||[])) if(e&&e.nesne) ekle(e.nesne); for(const c of KARAKTERLER) ekle(c);
+  const refAlt=new Set(); ref.forEach(r=>r.traverse(x=>refAlt.add(x)));
+  const uygun=o=>{ if(!o.isMesh||o.isSkinnedMesh||o.isInstancedMesh||!o.visible||refAlt.has(o)||o.layers.mask!==1||o.renderOrder!==0||o.customDepthMaterial||o.customDistanceMaterial||o.onBeforeRender!==THREE.Object3D.prototype.onBeforeRender) return false;
+    for(let p=o;p&&p!==s;p=p.parent){ if(!p.visible) return false; const u=p.userData; if(u) for(const k in u) if(k!=="engel") return false; if(p!==o&&refAlt.has(p)) return false; }
+    const g=o.geometry; if(!g||!g.attributes||!g.attributes.position||!g.attributes.normal||g.morphAttributes&&Object.keys(g.morphAttributes).length||g.drawRange.start!==0||g.drawRange.count!==Infinity) return false;
+    const ms=Array.isArray(o.material)?o.material:[o.material];
+    return ms.every(m=>m&&!m.transparent&&/^Mesh(Standard|Lambert|Basic|Phong)Material$/.test(m.type)&&!m.vertexColors&&!m.aoMap&&!m.lightMap&&!m.morphTargets&&!m.skinning&&m.alphaTest===0&&m.onBeforeCompile===THREE.Material.prototype.onBeforeCompile); };
+  const adaylar=[];
+  s.traverse(o=>{ if(!uygun(o)) return; const g=o.geometry, ms=Array.isArray(o.material)?o.material:[o.material];
+    const pr=(Array.isArray(o.material)&&g.groups.length)? g.groups.map(gr=>({m:ms[gr.materialIndex],start:gr.start,count:gr.count})) : [{m:ms[0],start:0,count:g.index?g.index.count:g.attributes.position.count}];
+    if(pr.some(x=>!x.m||(x.m.map&&!g.attributes.uv))) return;
+    for(const x of pr) x.k=_malzAnahtar(x.m)+"|"+o.castShadow+"|"+o.receiveShadow+"|"+(g.attributes.uv?1:0);
+    adaylar.push({o,pr:pr.filter(x=>x.m.visible&&x.count>0)}); });
+  let aktif=adaylar;
+  for(let tur=0;tur<10;tur++){ const say=new Map(); for(const a of aktif) for(const x of a.pr) say.set(x.k,(say.get(x.k)||0)+1);
+    const yeni=aktif.filter(a=>a.pr.length&&a.pr.every(x=>say.get(x.k)>=2)); if(yeni.length===aktif.length) break; aktif=yeni; }
+  if(!aktif.length) return;
+  const kova=new Map(); for(const a of aktif) for(const x of a.pr){ if(!kova.has(x.k)) kova.set(x.k,{m:x.m,golge:a.o.castShadow,al:a.o.receiveShadow,uv:!!a.o.geometry.attributes.uv,list:[]}); kova.get(x.k).list.push({o:a.o,start:x.start,count:x.count}); }
+  const nm=new THREE.Matrix3(), v=new THREE.Vector3(), parti=new Map();
+  for(const kv of kova.values()){ let n=0; for(const it of kv.list) n+=it.count;
+    const P=new Float32Array(n*3), N=new Float32Array(n*3), U=kv.uv?new Float32Array(n*2):null; let w=0;
+    for(const it of kv.list){ const g=it.o.geometry, pa=g.attributes.position, na=g.attributes.normal, ua=g.attributes.uv, ix=g.index, M=it.o.matrixWorld; nm.getNormalMatrix(M); const ters=M.determinant()<0;
+      for(let i=it.start;i<it.start+it.count;i++){ let q=i; if(ters){ const r=(i-it.start)%3; if(r===1) q=i+1; else if(r===2) q=i-1; } const j=ix?ix.getX(q):q;
+        v.fromBufferAttribute(pa,j).applyMatrix4(M); P[w*3]=v.x; P[w*3+1]=v.y; P[w*3+2]=v.z; v.fromBufferAttribute(na,j).applyMatrix3(nm).normalize(); N[w*3]=v.x; N[w*3+1]=v.y; N[w*3+2]=v.z;
+        if(U){ U[w*2]=ua.getX(j); U[w*2+1]=ua.getY(j); } w++; } }
+    const G=new THREE.BufferGeometry(); G.setAttribute("position",new THREE.BufferAttribute(P,3)); G.setAttribute("normal",new THREE.BufferAttribute(N,3)); if(U) G.setAttribute("uv",new THREE.BufferAttribute(U,2));
+    G.computeBoundingSphere(); const m=new THREE.Mesh(G,kv.m); m.castShadow=kv.golge; m.receiveShadow=kv.al; m.matrixAutoUpdate=false; m.userData.statikParti=true; s.add(m);
+    for(const it of kv.list){ if(!parti.has(it.o)) parti.set(it.o,new Set()); parti.get(it.o).add(m); } }
+  // asıllar çizimden çıkar; izleyici için ilk hâlleri saklanır
+  const grup={s,partiler:new Set(),asil:[]};
+  for(const a of aktif){ const o=a.o; o.layers.mask=0; const ms=Array.isArray(o.material)?o.material:[o.material];
+    grup.asil.push({o,mw:o.matrixWorld.clone(),an:ms.map(_malzAnahtar).join("#"),mat:o.material,parti:parti.get(o)}); parti.get(o).forEach(m=>grup.partiler.add(m)); }
+  STATIK.push(grup); }
+// asıllardan biri değişirse (kıpırdadı, gizlendi, malzemesi değişti) o asılla aynı birleşik ağı paylaşanların hepsi eski hâline döner
+function statikIzle(dt){ _statikT+=dt; if(_statikT<.2||!STATIK.length) return; _statikT=0;
+  for(const g of STATIK){ if(g.s!==scene&&!EK_SAHNELER.includes(g.s)) continue; let bozuk=null;
+    for(const a of g.asil){ if(a.bitti) continue; const o=a.o; let gor=false; for(let p=o;p;p=p.parent){ if(!p.visible) break; if(p===g.s){ gor=true; break; } }
+      if(!gor||o.material!==a.mat||!o.matrixWorld.equals(a.mw)||(Array.isArray(o.material)?o.material:[o.material]).map(_malzAnahtar).join("#")!==a.an){ bozuk=a; break; } }
+    if(!bozuk) continue;
+    const coz=new Set(bozuk.parti); let degisti=true;
+    while(degisti){ degisti=false; for(const a of g.asil){ if(a.bitti) continue; let dokun=false; a.parti.forEach(m=>{ if(coz.has(m)) dokun=true; }); if(dokun) a.parti.forEach(m=>{ if(!coz.has(m)){ coz.add(m); degisti=true; } }); } }
+    for(const a of g.asil){ if(a.bitti) continue; let dokun=false; a.parti.forEach(m=>{ if(coz.has(m)) dokun=true; }); if(dokun){ a.o.layers.mask=1; a.bitti=true; } }
+    coz.forEach(m=>{ if(m.parent) m.parent.remove(m); m.geometry.dispose(); g.partiler.delete(m); }); } }
+const GECIS_OLC=[];
+async function gecis(fn){ PERDE.classList.add("kapali"); await bekle(560); YUKLENIYOR=true; const t0=performance.now();
+  try{ await fn(); } finally{ YUKLENIYOR=false; }
+  // yan sahneler de (tren içi, telefondaki oda…) şimdi derlenir: bölüm onlardan biriyle açılırsa ilk karede donmasın
+  const t1=performance.now(); for(const s of [scene,...EK_SAHNELER]){ if(!s) continue; try{ kucukGolgeleriKapat(s); cokluMalzemeSadelestir(s); statikBirlestir(s); isiklariDengele(s); renderer.compile(s,camera); }catch(e){} } const t2=performance.now();
+  let n=3; const ac=()=>{ if(--n>0) requestAnimationFrame(ac); else { PERDE.classList.remove("kapali"); GECIS_OLC.push({kur:Math.round(t1-t0),derle:Math.round(t2-t1),kare:Math.round(performance.now()-t2)}); if(GECIS_OLC.length>30) GECIS_OLC.shift(); } }; requestAnimationFrame(ac); }
 
 /* ================= SAHNE ORTAK ================= */
 let scene=null, bolum=null, zaman=0;
+// yeni sahne kurulunca kamera hâlâ eski sahnedeki yerinde durur; ilk kamera komutu oradan süzülerek başlamasın diye işaretlenir
+let KAMERA_ESKI=false; const KAMERA_ESKI_POZ=new THREE.Vector3();
+// kamera yeni sahne kurulduktan sonra hiç yerinden oynatılmadıysa hâlâ eski sahnededir
+function kameraEskiMi(){ return KAMERA_ESKI&&camera.position.distanceToSquared(KAMERA_ESKI_POZ)<1e-8; }
+/* ---------- kaynak yönetimi: sahne değişince eski sahnenin geometri, malzeme ve dokuları GPU'dan bırakılır ----------
+   (önceden yalnız "map" bırakılıyordu; tümsek/normal dokuları ve kalabalığın kopya malzemeleri her sahnede birikip iPhone'u yavaşlatıyordu)
+   Avatar şablonlarının ortak kaynakları ve __kalici işaretli dokular korunur; bırakılan bir kaynak yeniden kullanılırsa three.js onu tekrar yükler. */
+const DOKU_ALAN=["map","normalMap","bumpMap","roughnessMap","metalnessMap","emissiveMap","alphaMap","aoMap","lightMap","displacementMap","specularMap","clearcoatMap","clearcoatNormalMap","clearcoatRoughnessMap","transmissionMap","gradientMap"];
+const KALICI={mat:new Set(),doku:new Set(),geo:new Set(),hazir:false};
+let EK_SAHNELER=[]; // sahneyle birlikte bırakılacak yan sahneler (telefondaki oda, tren içi)
+function kaliciKaynaklar(){ if(KALICI.hazir||typeof AVATAR==="undefined") return; let n=0;
+  for(const k in AVATAR){ const A=AVATAR[k]; if(!A||!A.sahne) continue; n++; A.sahne.traverse(o=>{ if(o.geometry) KALICI.geo.add(o.geometry);
+    for(const m of (o.material?(Array.isArray(o.material)?o.material:[o.material]):[])){ KALICI.mat.add(m); for(const a of DOKU_ALAN) if(m[a]) KALICI.doku.add(m[a]); } }); }
+  if(n>=2) KALICI.hazir=true; }
+/* gölgelendirici program önbelleği: three.js dispose edilen malzemenin programını da siler, sonraki sahne aynı programları baştan derlerdi
+   (iPhone'da sahne açılışını en çok yavaşlatan iş). Programlar "iğnelenir": sahne değişince silinmez, aynı ayarlı malzeme gelince hazır bulunur.
+   Sayı PROG_SINIR'ı aşarsa en uzun süredir kullanılmayanlar bırakılır. */
+const PROG_SINIR=130;
+function programlariIgnele(malzemeler){ const P=renderer.info.programs; if(!P) return; const simdi=performance.now();
+  for(const m of malzemeler){ const pr=renderer.properties.get(m); if(pr&&pr.programs) pr.programs.forEach(p=>{ p.__son=simdi; }); }
+  for(const p of P){ if(!p.__ig){ p.__ig=true; p.usedTimes++; if(!p.__son) p.__son=simdi; } } }
+// her yeni program derlendiği karede iğnelenir: sahne içinde kullanılıp atılan malzemeler (konfeti, parıltı…) programlarını sildirmesin,
+// bir sonraki konfetide aynı program yeniden derlenip oyunu takmasın
+let _progSay=0, _progKare=0;
+function yeniProgramlariIgnele(){ const P=renderer.info.programs; if(!P||(P.length===_progSay&&++_progKare%30)) return; const t=performance.now(); for(const p of P) if(!p.__ig){ p.__ig=true; p.usedTimes++; p.__son=t; } _progSay=P.length; }
+function programlariBuda(){ const P=renderer.info.programs; if(!P||P.length<=PROG_SINIR) return; let fazla=P.length-PROG_SINIR;
+  for(const p of P.filter(p=>p.__ig).sort((a,b)=>a.__son-b.__son)){ if(fazla<=0) break; p.__ig=false;
+    if(--p.usedTimes===0){ const i=P.indexOf(p); if(i>=0){ P[i]=P[P.length-1]; P.pop(); } try{ p.destroy(); }catch(e){} fazla--; } } _progSay=P.length; }
+function sahneyiBirak(s){ if(!s) return; kaliciKaynaklar();
+  const ML=new Set(); s.traverse(o=>{ if(o.material) for(const m of (Array.isArray(o.material)?o.material:[o.material])) ML.add(m); });
+  try{ programlariIgnele(ML); }catch(e){}
+  s.traverse(o=>{ if(o.userData&&o.userData.rt){ try{ o.userData.rt.dispose(); }catch(e){} }
+    if(o.isSkinnedMesh&&o.skeleton&&o.skeleton.boneTexture) o.skeleton.dispose(); // kemik dokusu
+    if(o.geometry&&!KALICI.geo.has(o.geometry)&&!(o.geometry.userData&&o.geometry.userData.kalici)) o.geometry.dispose();
+    for(const m of (o.material?(Array.isArray(o.material)?o.material:[o.material]):[])){ if(KALICI.mat.has(m)) continue;
+      for(const a of DOKU_ALAN){ const t=m[a]; if(t&&t.isTexture&&!t.__kalici&&!KALICI.doku.has(t)) t.dispose(); }
+      if(m.uniforms&&m.uniforms.normalSampler&&m.uniforms.normalSampler.value&&m.uniforms.normalSampler.value.isTexture) m.uniforms.normalSampler.value.dispose();
+      m.dispose(); } });
+  try{ programlariBuda(); }catch(e){} }
+// ışık sayısı aynı olan sahneler aynı gölgelendirici programlarını paylaşır: 1-3 noktasal ışıklı sahneler 4'e tamamlanır (karakter gölgelendiricileri yeniden derlenmez)
+function isiklariDengele(s){ if(!s||s.userData.dengeli) return; s.userData.dengeli=true; let P=0; s.traverse(o=>{ if(o.isPointLight) P++; });
+  if(P>0&&P<4) for(let i=P;i<4;i++){ const l=new THREE.PointLight(0x000000,0,1,2); l.position.set(0,-500,0); l.userData.bos=true; s.add(l); } }
 function sahneKur(ayar){
-  if(scene){ scene.traverse(o=>{ if(o.userData&&o.userData.kalici) return; if(o.geometry) o.geometry.dispose(); if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m.userData&&m.userData.kalici) return; if(m.map&&!m.map.__kalici) m.map.dispose(); m.dispose(); }); } }); }
+  if(scene) sahneyiBirak(scene); for(const e of EK_SAHNELER) sahneyiBirak(e); EK_SAHNELER=[]; STATIK=[];
   KARAKTERLER=[]; Ses.zemin=null; Ses.ortamDur();
+  Kamera.sinema=null; KAMERA_ESKI=true; KAMERA_ESKI_POZ.copy(camera.position); Kamera.poz.set(NaN,NaN,NaN); camera.userData.bakis=null;
   scene=new THREE.Scene();
   scene.fog=new THREE.Fog(renk(ayar.sis),ayar.sisYakin||40,ayar.sisUzak||260);
   const gok=gokyuzuYap(ayar); scene.add(gok); scene.userData.gok=gok;
@@ -1710,10 +1844,38 @@ function sarilIK(c,es,w){
 }
 // kişiye göre duruş düzeltme açıları (radyan)
 const DURUS={kaan:{kalca:.1,sirt:.05,gogus:.05,boyun:.05,dar:.06}, kardelen:{kalca:.16,sirt:.04,gogus:.04,boyun:.05,dar:.08}};
+// Karıştırıcı (AnimationMixer) bir kemiğin hesapladığı değer bir önceki kareyle aynıysa o kemiğe hiç yazmaz (ör. bekleme klibinde
+// başın birkaç kare sabit kaldığı anlar). O karelerde bizim üstüne eklediğimiz dönüşler (duruş, bakış, kafa eğme) birikip baş
+// birden eğiliyor, sonra yerine "sıçrıyordu". Çözüm: güncellemeden önce kemikleri karıştırıcının son çıktısına geri al, sonra sakla.
+// Bir karakterin bütün parçaları (gövde, baş, kıyafet, saç…) aynı kemikleri kullanır ama kopyalamada her parçaya ayrı iskelet düşüyordu:
+// kalabalık sahnelerde 200 iskelet = her karede 200 kemik hesabı ve doku yüklemesi. Aynı kemik ve bağlama matrislerini kullanan parçalar tek iskeleti paylaşır.
+function iskeletPaylas(kok){ const G=[];
+  kok.traverse(o=>{ if(!o.isSkinnedMesh||!o.skeleton) return; const s=o.skeleton;
+    const g=G.find(x=>x.bones.length===s.bones.length&&x.bones.every((b,i)=>b===s.bones[i])&&x.boneInverses.every((m,i)=>m.equals(s.boneInverses[i])));
+    if(!g){ G.push(s); return; } if(g!==s){ if(s.boneTexture) s.dispose(); o.skeleton=g; } }); }
+// küçük parçalar (düğme, rozet, kordon, göz, diş, kirpik) gölge haritasına çizilmez: gölgede seçilmezler ama her biri ayrı çizim çağrısıydı
+// (mezuniyet sahnesinde kare başına 500 gölge çizimi). Çok küçük olanlar kalabalıkta uzaktan gizlenir (ayrıntı seviyesi).
+const _gsV=new THREE.Vector3();
+function golgeSadelestir(kok){ kok.updateMatrixWorld(true); const ayrinti=[]; // [ağ, en uzak görünme mesafesi]
+  kok.traverse(o=>{ if(!o.isMesh) return; const ad=o.name||"";
+    if(/Teeth|Tongue/i.test(ad)){ o.castShadow=false; if(o.visible) ayrinti.push([o,5]); return; }
+    if(/Cornea|Eyeball|Eyelash|^Eye(Left|Right)/i.test(ad)){ o.castShadow=false; if(o.visible) ayrinti.push([o,16]); return; }
+    if(o.isSkinnedMesh||(o.userData&&(o.userData.telefon||o.userData.kalici))) return;
+    const g=o.geometry; if(!g) return; if(!g.boundingSphere) g.computeBoundingSphere(); o.getWorldScale(_gsV);
+    const r=g.boundingSphere.radius*Math.max(Math.abs(_gsV.x),Math.abs(_gsV.y),Math.abs(_gsV.z));
+    if(r<.11){ o.castShadow=false; if(r<.06&&o.visible) ayrinti.push([o,14]); } });
+  return ayrinti; }
+function animGuncelle(u,dt){
+  if(u._kq) for(let i=0;i<u._kd.length;i++) u._kd[i].quaternion.copy(u._kq[i]);
+  u.mixer.update(dt);
+  if(!u._kq){ u._kd=Object.values(u.kemik); u._kq=u._kd.map(b=>b.quaternion.clone()); }
+  else for(let i=0;i<u._kd.length;i++) u._kq[i].copy(u._kd[i].quaternion);
+}
 function karakterleriGuncelle(dt){
   for(const c of KARAKTERLER){
     if(!c.parent) continue;
     const u=c.userData;
+    if(!u._iskelet){ iskeletPaylas(c); u._ayrinti=golgeSadelestir(c); u._iskelet=true; }
     if(u.kalabalik){ kalabalikGuncelle(c,dt); continue; }
     const A=u._ag, E=u.eylem;
     const hiz=u.hiz||0;
@@ -1727,7 +1889,7 @@ function karakterleriGuncelle(dt){
     { const wD=E.walk.getClip().duration, rD=E.run.getClip().duration, wHz=clamp(hiz/1.5,.6,1.7)/wD, rHz=clamp(hiz/4,.62,1.3)/rD;
       u._adimFaz=((u._adimFaz||0)+dt*lerp(wHz,rHz,A.run/(A.walk+A.run+1e-6)))%1;
       E.walk.timeScale=E.run.timeScale=0; E.walk.time=u._adimFaz*wD; E.run.time=(((u._adimFaz-.16)%1)+1)%1*rD; }
-    u.mixer.update(dt);
+    animGuncelle(u,dt);
     const m=u.model, B=u.kemik;
     u._otur=lerp(u._otur,u.otur>0?1:0,1-Math.pow(.004,dt));
     u._dans=lerp(u._dans,u.dans>0?1:0,1-Math.pow(.02,dt));
@@ -1836,9 +1998,11 @@ function kalabalikGuncelle(c,dt){
   const u=c.userData; u._sayac+=dt;
   // uzaktakiler daha seyrek güncellenir
   const uz=c.position.distanceTo(camera.position), aralik=uz>30?.12:uz>14?.05:0;
+  // uzaktaki kalabalıkta düğme/rozet gibi minicik parçalar çizilmez (o mesafede birer pikselden küçükler)
+  if(u._ayrinti&&u._ayrinti.length&&Math.abs(uz-(u._ayrUz||-99))>.5){ u._ayrUz=uz; for(const a of u._ayrinti){ const gor=a[0].visible? uz<a[1]+.75 : uz<a[1]; if(a[0].visible!==gor) a[0].visible=gor; } }
   if(u._sayac<aralik) return; const t=u._sayac; u._sayac=0;
   if(u.eylem.walk&&u.temel!==u.eylem.walk){ const yw=clamp((u.hiz||0)/1.1,0,1); u.eylem.walk.setEffectiveWeight(yw); u.temel.setEffectiveWeight(1-yw); u.eylem.walk.timeScale=clamp((u.hiz||0)/1.25,.7,1.9); }
-  u.mixer.update(t);
+  animGuncelle(u,t);
   // ayakta bekleyen sivil kalabalık: bekleme klibindeki açık kolları doğal biçimde yanlara indir
   if(!u.hazirol&&!u.kilicPoz&&!u.alkis&&u.eylem.idle&&u.temel===u.eylem.idle&&(u.hiz||0)<.15){ c.updateMatrixWorld(true); c.getWorldQuaternion(_kq); const B=u.kemik;
     for(const [kmk,is] of [["Left",1],["Right",-1]]){ if(!B[kmk+"Arm"]||!B[kmk+"ForeArm"]||!B[kmk+"Hand"]) continue;
@@ -2445,13 +2609,18 @@ function kameraEngelleri(){ if(_kengSahne!==scene||_kengSay!==scene.children.len
 function kameraGuncelle(dt){
   const K=Kamera;
   if(K.sinema){ K.sinema(dt); return; }
+  if(YUKLENIYOR) return; // sahne kurulurken takip kamerası oynamaz: kurulumda açıkça konan kamera bozulmasın, eski sahneden süzülme olmasın
   const ist=new THREE.Vector3(K.hedef.x+Math.sin(K.aci)*K.mesafe, K.hedef.y+K.yukseklik, K.hedef.z+Math.cos(K.aci)*K.mesafe);
-  const E=kameraEngelleri();
+  if(Number.isNaN(K.poz.x)) K.poz.copy(ist); // yeni sahnede takip kamerası doğrudan yerine oturur (eski sahneden süzülmez)
+  KAMERA_ESKI=false;
+  const E=kameraEngelleri(); let yakin=0;
   if(E.length){ const bak=new THREE.Vector3(K.hedef.x,K.hedef.y+1.25,K.hedef.z), yon=ist.clone().sub(bak), L=yon.length();
     if(L>.01){ yon.divideScalar(L); _kRay.set(bak,yon); _kRay.far=L; const h=_kRay.intersectObjects(E,true);
-      if(h.length){ ist.copy(bak).addScaledVector(yon,Math.max(.45,h[0].distance-.25)); K.poz.lerp(ist,1-Math.pow(.0005,dt)); } } }
+      // kamera eşyaya takılıp karaktere yaklaşınca biraz yükselir ve omuz hizasına bakar (yakından bele/kalçaya bakan kadraj olmasın)
+      if(h.length){ const d=Math.max(.45,h[0].distance-.25); yakin=clamp(1-d/L,0,1); ist.copy(bak).addScaledVector(yon,d); ist.y+=.5*yakin; K.poz.lerp(ist,1-Math.pow(.0005,dt)); } } }
+  K._yakin=lerp(K._yakin||0,yakin,1-Math.pow(.02,dt));
   K.poz.lerp(ist,1-Math.pow(.02,dt)); camera.position.copy(K.poz);
-  camera.lookAt(K.hedef.x,K.hedef.y+1,K.hedef.z);
+  camera.lookAt(K.hedef.x,K.hedef.y+1+.42*K._yakin,K.hedef.z);
 }
 /* çarpışma: ağaç gövdeleri, direkler, banklar, kayalar, binalar ve diğer insanlar — oyuncu ve el ele yürüdüğü kişi içlerinden geçmez.
    engel bilgisi nesnenin userData.engel alanında: sayı = yarıçap, {kutu:[yarıGen,yarıDerin], o:[x,z]} = döndürülmüş kutu */
@@ -2748,12 +2917,16 @@ function konusmaKamerasi(konusan,dinleyen,ops={}){
   };
 }
 function kameraNoktasi(poz,bakis,sure=0){ sure*=.78;
+  // anında geçiş (süre 0) hemen uygulanır: ardından gelen hareketli çekim buradan başlar. Önceden bir sonraki kareyi bekliyordu ve sahneler
+  // açılırken kamera bir önceki sahnede kaldığı yerden (duvarların içinden, boşluktan) süzülerek geliyordu.
+  // yeni sahnenin ilk hareketli çekimi de eski sahnedeki kamera yerinden değil, kendi başlangıç noktasından başlar
+  if(!sure||kameraEskiMi()){ const P=typeof poz==="function"?poz(0):poz, B=typeof bakis==="function"?bakis(0):bakis; camera.position.copy(P); camera.userData.bakis=B.clone(); camera.lookAt(B); KAMERA_ESKI=false; }
   const p0=camera.position.clone(); const b0=camera.userData.bakis? camera.userData.bakis.clone() : camera.position.clone().add(new THREE.Vector3(0,0,-5).applyQuaternion(camera.quaternion)); let s=0;
   return new Promise(res=>{ Kamera.sinema=dt=>{ s+=dt; const k=sure?Math.min(1,s/sure):1, e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
     const P=typeof poz==="function"?poz(s):poz, B=typeof bakis==="function"?bakis(s):bakis;
     camera.position.copy(p0).lerp(P,e); const b=b0.clone().lerp(B,e); camera.userData.bakis=b; camera.lookAt(b); if(k>=1&&res){ res(); res=null; } }; });
 }
-function oyuncuKamerasi(){ Kamera.sinema=null; Kamera.poz.copy(camera.position); camera.userData.bakis=null; }
+function oyuncuKamerasi(){ Kamera.sinema=null; if(kameraEskiMi()) Kamera.poz.set(NaN,NaN,NaN); else Kamera.poz.copy(camera.position); camera.userData.bakis=null; }
 
 let dkKutu=null;
 function diyalogKutusu(){
@@ -2808,7 +2981,36 @@ function etkilesimGuncelle(oyuncu,btn){
 
 /* hatıra fotoğrafı: o anki kareden albüme */
 let fotoIstegi=null;
-function hatiraFoto(baslik){ return new Promise(r=>{ fotoIstegi={baslik,r}; }); }
+/* anı fotoğrafı: önceki çekim ne olursa olsun (masa, manzara…) kamera ikisini önden, yüzleri ve üst bedenleri kadrajda olacak
+   biçimde çerçeveler; araya duvar/eşya giriyorsa yaklaşır ya da öbür taraftan çeker. Oyuncunun kendi kadrajladığı fotoğraflarda {kendi:true}. */
+function ataMi(ata,o){ for(let x=o;x;x=x.parent) if(x===ata) return true; return false; }
+function fotoCercevesi(){
+  const L=["kaan","kardelen"].map(k=>KONUSANLAR&&KONUSANLAR[k]).filter(c=>c&&c.visible&&ataMi(scene,c));
+  if(!L.length) return null;
+  const H=L.map(c=>bas(c)), m=new THREE.Vector3(); H.forEach(h=>m.add(h)); m.multiplyScalar(1/H.length);
+  const ileri=new THREE.Vector3(), f=new THREE.Vector3(); L.forEach(c=>{ c.getWorldDirection(f); f.y=0; if(f.lengthSq()>1e-6) ileri.add(f.normalize()); });
+  const kamTaraf=camera.position.clone().sub(m).setY(0);
+  let yon;
+  if(L.length===2){ const ab=H[1].clone().sub(H[0]).setY(0); yon=ab.lengthSq()>1e-4?new THREE.Vector3(-ab.z,0,ab.x).normalize():ileri.clone().normalize();
+    const ref=ileri.lengthSq()>.09?ileri:kamTaraf; if(yon.dot(ref)<0) yon.negate(); }
+  else yon=(ileri.lengthSq()>1e-6?ileri:kamTaraf).normalize();
+  const vf=THREE.MathUtils.degToRad(camera.fov), hf=2*Math.atan(Math.tan(vf/2)*camera.aspect);
+  const yari=(L.length===2?Math.hypot(H[0].x-H[1].x,H[0].z-H[1].z)/2:0)+.42;
+  const d=clamp(Math.max(yari/Math.tan(hf/2),.6/Math.tan(vf/2)),1.0,5.5);
+  const hedef=m.clone().add(new THREE.Vector3(0,-.16,0));
+  const engel=[]; scene.traverse(o=>{ if(!o.isMesh||!o.visible||o.isSkinnedMesh||o===scene.userData.gok||o.userData.isaret) return; const mt=Array.isArray(o.material)?o.material[0]:o.material;
+    if(mt&&mt.transparent&&mt.opacity<.45) return; if(L.some(c=>ataMi(c,o))) return; engel.push(o); });
+  const ray=new THREE.Raycaster(); ray.camera=camera;
+  const bos=y=>{ ray.set(hedef,y); ray.near=.05; ray.far=d; const h=ray.intersectObjects(engel,false); return h.length?h[0].distance:d; };
+  let mes=bos(yon); if(mes<.9){ const y2=yon.clone().negate(), m2=bos(y2); if(m2>mes){ yon=y2; mes=m2; } }
+  const pos=hedef.clone().addScaledVector(yon,Math.max(.7,Math.min(d,mes-.2))); pos.y=m.y-.02;
+  return {pos,hedef};
+}
+const kareBekle=n=>new Promise(r=>{ const f=()=>{ if(--n<=0) r(); else requestAnimationFrame(f); }; requestAnimationFrame(f); });
+function hatiraFoto(baslik,ops={}){ return new Promise(async r=>{
+  let fk=null, onceki=null;
+  if(!ops.kendi){ try{ const c=fotoCercevesi(); if(c){ onceki=Kamera.sinema; fk=dt=>{ camera.position.copy(c.pos); camera.lookAt(c.hedef); camera.userData.bakis=c.hedef; }; Kamera.sinema=fk; await kareBekle(3); } }catch(e){ console.warn("foto",e); } }
+  fotoIstegi={baslik,r:v=>{ if(fk) setTimeout(()=>{ if(Kamera.sinema===fk) Kamera.sinema=onceki; },1100); r(v); }}; }); }
 function fotoAl(){
   if(!fotoIstegi) return; const {baslik,r}=fotoIstegi; fotoIstegi=null;
   try{
@@ -2869,7 +3071,7 @@ async function fotoModu(foto,model,ops={}){
     const t0=performance.now(); const anim=()=>{ if(bitti) return; x=Math.sin((performance.now()-t0)/1000*h*2.4); ibre.style.left=(50+x*46)+"%"; requestAnimationFrame(anim); }; anim();
     await new Promise(r=>{ v.querySelector(".deklansor").onclick=r; const f=e=>{ if(["Space","Enter","KeyE"].includes(e.code)){ removeEventListener("keydown",f); r(); } }; addEventListener("keydown",f); });
     bitti=true; const iyi=Math.abs(x)<Math.min(.6,.28+deneme*.1);
-    if(iyi){ await hatiraFoto(ops.baslik); }
+    if(iyi){ await hatiraFoto(ops.baslik,{kendi:true}); }
     else { Ses.efekt("deklansor"); const f=el(`<div class="flas"></div>`); katman.appendChild(f); setTimeout(()=>f.remove(),900); }
     v.remove(); camera.fov=fov0; camera.updateProjectionMatrix(); boyut();
     pozVer(model,null);
@@ -2947,7 +3149,7 @@ const B0={
     const ml=new THREE.Mesh(new THREE.ConeGeometry(.12,.16,16,1,true),new THREE.MeshStandardMaterial({color:renk("#ffe2c0"),emissive:renk("#ffb070"),emissiveIntensity:1.3,side:THREE.DoubleSide})); ml.position.set(.85,1.12,-2.62); oda.add(ml);
     const mla=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.32,6),metal); mla.position.set(.85,.95,-2.62); oda.add(mla);
     this.lamba=new THREE.PointLight(renk("#ffbe7a"),1.6,7,1.5); this.lamba.position.set(.85,1.1,-2.4); oda.add(this.lamba);
-    const ayIsik=new THREE.SpotLight(renk("#9fb4ff"),1.2,9,.5,.6,1.2); ayIsik.position.set(1.4,2.4,-3.6); ayIsik.target.position.set(.4,0,.5); oda.add(ayIsik,ayIsik.target);
+    const ayIsik=new THREE.PointLight(renk("#9fb4ff"),1.1,8,1.2); ayIsik.position.set(1.4,2.2,-2.6); oda.add(ayIsik); // ay ışığı (noktasal: diğer sahnelerle aynı ışık düzeni)
     // duvarda bayrak
     const bd=bayrakDoku(); const bf=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.73),new THREE.MeshStandardMaterial({map:bd,roughness:.9})); bf.position.set(-W/2+.02,1.9,-1.4); bf.rotation.y=Math.PI/2; oda.add(bf);
     // telefon yatağın üstünde
@@ -4785,7 +4987,7 @@ const B5={
     const g=new THREE.BufferGeometry(); g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3)); g.setIndex(idx); g.computeVertexNormals();
     const me=new THREE.Mesh(g,km); me.castShadow=true; me.receiveShadow=true; return me; },
   odaKur(kis){
-    const s=new THREE.Scene(); s.background=renk("#1b1626");
+    const s=new THREE.Scene(); s.background=renk("#1b1626"); EK_SAHNELER.push(s);
     s.add(new THREE.HemisphereLight(renk("#ffe9d6"),renk("#4a3a5a"),.55));
     const lamba=new THREE.PointLight(renk("#ffc89a"),2.2,8,1.4); lamba.position.set(1.1,1.4,.6); s.add(lamba);
     const ayI=new THREE.DirectionalLight(renk("#9fb4ff"),.6); ayI.position.set(-1,2,-3); s.add(ayI);
@@ -5541,7 +5743,7 @@ Object.assign(B3,{
         if(kare>=5){ setTimeout(res,1200); } }; });
     cv.removeEventListener("pointerdown",pd); cv.removeEventListener("pointermove",pm); cv.removeEventListener("pointerup",pu); cv.removeEventListener("pointercancel",pu);
     ui.remove(); vz.remove(); camera.fov=fov0; camera.updateProjectionMatrix(); boyut&&boyut();
-    await hatiraFoto("Kapadokya şafağı · "+enIyi+" balon · Mayıs 2025");
+    await hatiraFoto("Kapadokya şafağı · "+enIyi+" balon · Mayıs 2025",{kendi:true});
     return enIyi;
   },
   // ATV TURU: joystick ileri gaz, geri fren, sağ-sol direksiyon. Kardelen arkada sarılı. Toz kalkar, peri bacalarına çarpmamaya dikkat.
@@ -6079,7 +6281,7 @@ const BA={
     const v=el(`<div class="selfie"><div class="ust">${baslik}</div><i class="izg"></i><small class="alt">${ipucu}</small><button class="dek" aria-label="Çek"></button></div>`); katman.appendChild(v);
     const fov0=camera.fov; camera.fov=Math.max(camera.fov,58); camera.updateProjectionMatrix();
     await new Promise(r=>{ v.querySelector(".dek").onclick=r; });
-    v.style.visibility="hidden"; const veri=await hatiraFoto("Ankara Kalesi'nden · Eylül 2024"); v.remove(); camera.fov=fov0; boyut(); return veri;
+    v.style.visibility="hidden"; const veri=await hatiraFoto("Ankara Kalesi'nden · Eylül 2024",{kendi:true}); v.remove(); camera.fov=fov0; boyut(); return veri;
   },
   // ikimizin selfiesi: yan yana dururlar, Kaan sağ kolunu uzatır, kamera elindeki telefondadır
   async selfie(K,D,baslik,ops={}){
@@ -6099,7 +6301,7 @@ const BA={
       await new Promise(r=>{ v.querySelector(".dek").onclick=r; });
       if(ops.tekrar&&d===0){ Ses.efekt("deklansor"); const fl=el(`<div class="flas"></div>`); katman.appendChild(fl); setTimeout(()=>fl.remove(),900);
         v.style.visibility="hidden"; await konus("kardelen",["Gözüm kapalı çıktı","Bir daha çek 😄"],{gul:1,kamera:false}); v.style.visibility=""; continue; }
-      v.style.visibility="hidden"; veri=await hatiraFoto(baslik); }
+      v.style.visibility="hidden"; veri=await hatiraFoto(baslik,{kendi:true}); }
     v.remove(); camera.fov=fov0; boyut(); K.userData.elHedef=null; D.userData.kafa.rotation.z=0;
     await bekle(300); return veri;
   },
@@ -6570,7 +6772,7 @@ function bkLobi(B){
 }
 
 /* sabit kamera: mini oyun sırasında yakın çekim kalsın (sahne() bitince oyuncu kamerasına dönmesin) */
-function sabitKamera(p,b){ const P=p.clone(), Bk=b.clone(); Kamera.sinema=dt=>{ camera.position.lerp(P,1-Math.pow(.02,dt)); camera.lookAt(Bk); camera.userData.bakis=Bk; }; }
+function sabitKamera(p,b){ const P=p.clone(), Bk=b.clone(); if(kameraEskiMi()){ camera.position.copy(P); camera.lookAt(Bk); camera.userData.bakis=Bk; KAMERA_ESKI=false; } Kamera.sinema=dt=>{ camera.position.lerp(P,1-Math.pow(.02,dt)); camera.lookAt(Bk); camera.userData.bakis=Bk; }; }
 function kafaEkle(c,tip){ if(!c||c.userData.kafa) return c; const h=c.userData.kemik&&c.userData.kemik.Head; if(!h) return c; const k=new THREE.Object3D(); h.add(k); const A=AVATAR[tip]; k.position.set(0,.09/((A&&A.olcek)||1),0); c.userData.kafa=k; return c; }
 /* ---------- bilekliği bileğe tak: bind uzayında bilek noktası ve kol yönü; çapı örgüden ölçülür ---------- */
 function bilegeTak(c,yan){
@@ -6808,7 +7010,7 @@ const BK={
     ui.remove(); gorev(null); Ses.efekt("parilti");
     await sahne(async()=>{ D.userData.gulumse=1; const p=new THREE.Vector3(); (b||D.userData.kafa).getWorldPosition(p);
       await kameraNoktasi(p.clone().add(new THREE.Vector3(-.12,.1,.3)),p.clone().add(new THREE.Vector3(.03,.02,0)),1.0);
-      await hatiraFoto("Bileklik · 31 Aralık 2024"); await bekle(1400);
+      await hatiraFoto("Bileklik · 31 Aralık 2024",{kendi:true}); await bekle(1400);
       D.userData.kolS.rotation.set(0,0,0); });
   },
   async yilbasiGecesi(){
@@ -7148,7 +7350,7 @@ function otelOdasi(B,ops={}){
 
 /* ---------- tren vagonu (ayrı sahne): koltuklar, raflar, pencerelerde akan manzara ---------- */
 function trenSahnesi(){
-  const s=new THREE.Scene(); s.background=renk("#1a1c22");
+  const s=new THREE.Scene(); s.background=renk("#1a1c22"); EK_SAHNELER.push(s);
   s.add(new THREE.HemisphereLight(renk("#f2f4f8"),renk("#4a4a52"),.75)); const g=new THREE.DirectionalLight(renk("#fff0dc"),.8); g.position.set(-3,4,1); s.add(g);
   const tavL=new THREE.PointLight(renk("#f6f8ff"),.8,12,1.2); tavL.position.set(0,2.1,0); s.add(tavL);
   const W=2.9, L=12, H=2.3;
@@ -8308,7 +8510,9 @@ const BT={
     const kr=new THREE.Mesh(new THREE.TorusGeometry(.15,.015,6,24),mat("#e7a3bd")); kr.rotation.x=Math.PI/2; kr.position.y=.12; this.pasta.add(kr);
     this.mumlar=[]; for(let i=0;i<5;i++){ const a=i/5*Math.PI*2; const m=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.06,6),mat(["#9fd0ff","#ffd28a","#c9a8ff","#a8e6c0","#ffb0c8"][i])); m.position.set(Math.cos(a)*.08,.15,Math.sin(a)*.08); this.pasta.add(m);
       const al=parilti("#ffcf7a",.07); al.position.set(Math.cos(a)*.08,.195,Math.sin(a)*.08); this.pasta.add(al); this.mumlar.push(al); }
-    this.pastaIsik=new THREE.PointLight(renk("#ffbe6a"),0,3,1.5); this.pasta.add(this.pastaIsik); this.pastaIsik.position.y=.3;
+    // mum ışığı: odanın ikinci lambası pastanın yanına taşınır (ışık sayısı değişmez, gölgelendiriciler yeniden derlenmez)
+    { const L2=this.lamba2, p0=L2.position.clone(), c0=L2.color.clone(), d0=L2.distance; this.mumAcik=false;
+      this.mumIsik=v=>{ if(v>0){ this.mumAcik=true; L2.color.set("#ffbe6a"); L2.distance=3; L2.intensity=v; } else { this.mumAcik=false; L2.position.copy(p0); L2.color.copy(c0); L2.distance=d0; } }; }
     this.pasta.position.set(2.05,.56,-1.3); this.pasta.visible=false; scene.add(this.pasta);
     Kamera.sinema=null; Kamera.aci=.25; Kamera.mesafe=3.4; Kamera.yukseklik=1.8; Kamera.hedef.copy(this.kaan.position); Kamera.poz.set(1.3,2.4,4);
     Ses.ton="gece";
@@ -8323,7 +8527,7 @@ const BT={
       await konus("kardelen",["Ne oluyor","Neden karanlık burası"],{gul:.4});
     });
     gorev("Pastayı getir");
-    this.serbest=true; this.pasta.visible=true; this.pastaIsik.intensity=.9; gizliKalpler(this,[[2.0,1.0,1.0,2]]);
+    this.serbest=true; this.pasta.visible=true; this.mumIsik(.9); gizliKalpler(this,[[2.0,1.0,1.0,2]]);
     await etkBekle(this.pasta,"Pastayı al",{mesafe:1.4,isaretY:.4});
     this.serbest=false; gorev(null);
     await sahne(async()=>{ eldeTut(K,this.pasta,"S"); this.pasta.userData.dik=true; K.userData.kolS.rotation.set(-.95,0,-.15);
@@ -8337,7 +8541,7 @@ const BT={
     const bar=ui.querySelector(".bar i"); let v=0, sonen=0;
     await new Promise(r=>{ ui.querySelector(".ufle").onclick=()=>{ v=Math.min(1,v+.13); bar.style.width=(v*100)+"%"; Ses.efekt("vuru",.08); const s=Math.floor(v*5); while(sonen<s&&sonen<5){ this.mumlar[sonen].visible=false; sonen++; } if(v>=1){ setTimeout(r,500); } };
       const azal=setInterval(()=>{ if(v>=1) return clearInterval(azal); v=Math.max(0,v-.02); bar.style.width=(v*100)+"%"; },200); });
-    ui.remove(); gorev(null); this.pastaIsik.intensity=0; Ses.efekt("buyuk");
+    ui.remove(); gorev(null); this.mumIsik(0); Ses.efekt("buyuk");
     await sahne(async()=>{ this.lamba1.intensity=this.lamba2.intensity=1.4; this.tavan.intensity=.3; K.userData.kolS.rotation.set(0,0,0); K.userData.eldeki=null; this.pasta.position.set(2.0,.57,-.2);
       await konus("kardelen",["Dileğimi tuttum","Söylemem ama kdkdkd"],{gul:1});
       yuzYuze(K,D); K.userData.saril=D.userData.saril=1; await bekle(1500); K.userData.saril=D.userData.saril=0;
@@ -8369,6 +8573,7 @@ const BT={
     if(this.faz==="asti"){ BA.guncelle.call(this,dt); if(this.valizK&&this.kaan){ const K=this.kaan; this.valizK.position.set(K.position.x-Math.sin(K.rotation.y+1.2)*.45,.18,K.position.z-Math.cos(K.rotation.y+1.2)*.45); this.valizK.rotation.y=K.rotation.y; } return; }
     if(this.faz==="otobus"){ if(!Kamera.sinema) Kamera.sinema=this.otobusKam; this._oc=(this._oc||0)+dt; if(this._oc>.05&&this.otobusCiz){ this._oc=0; this.otobusCiz(this.t); } return; }
     if(this.faz==="oda"&&this.manzara){ this._mz=(this._mz||0)+dt; if(this._mz>.06){ this._mz=0; this.manzara.ciz(this.t); } }
+    if(this.faz==="otel"&&this.mumAcik&&this.pasta){ this.pasta.getWorldPosition(this.lamba2.position); this.lamba2.position.y+=.3; }
     if(this.faz==="otel"){ if(this.tvDurum==="film"){ this._tv=(this._tv||0)+dt; if(this._tv>.08){ this._tv=0; BI.tvCiz.call(this,"film",this.t); } } for(const m of this.mumlar||[]) if(m.visible) m.scale.setScalar(.06+Math.sin(this.t*20+m.position.x*40)*.012); }
     const P=this.oyuncu; if(!P) return;
     const sinir=this.faz==="oda"?this.odaSinir:this.faz==="sokak"?this.sokakSinir:this.faz==="otel"?this.odaSinir:null;
@@ -8644,7 +8849,7 @@ function kurulumIpucu(){
 
 
 /* ================= GÜNCELLEME (telefondan) ================= */
-const SURUM="2026.10.29-134031";
+const SURUM="2026.10.30-055731";
 async function sunucuSurumu(){ try{ const r=await fetch("surum.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const j=await r.json(); return j.surum||null; }catch(e){ return null; } }
 function tost(t,sure=2600){ const d=el(`<div class="tost">${t}</div>`); document.body.appendChild(d); requestAnimationFrame(()=>d.classList.add("gor")); setTimeout(()=>{ d.classList.remove("gor"); setTimeout(()=>d.remove(),500); },sure); }
 async function guncelle(){
@@ -8755,10 +8960,12 @@ function dongu(t){
       const gun=scene.userData.gun; if(gun){ gun.target.position.copy(Kamera.hedef); gun.position.copy(Kamera.hedef).addScaledVector(scene.userData.gunesYon,60); } }
     kameraGuncelle(dt);
     karakterleriGuncelle(dt);
+    statikIzle(dt);
     Ses.guncelle();
   }catch(e){ console.error(e); }
   Girdi.aksiyonBas=false;
-  if(scene){ if(composer){ composer.passes[0].scene=scene; composer.passes[0].camera=camera; composer.render(dt); } else renderer.render(scene,camera); }
+  if(scene&&!YUKLENIYOR){ if(!scene.userData.dengeli) isiklariDengele(scene); if(composer){ composer.passes[0].scene=scene; composer.passes[0].camera=camera; composer.render(dt); } else renderer.render(scene,camera); }
+  yeniProgramlariIgnele();
   if(ICSAHNE&&ICSAHNE.el&&ICSAHNE.el.isConnected){ try{ const r=ICSAHNE.el.getBoundingClientRect(), H=ekranYuksekligi(); const tm=renderer.toneMapping;
     renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.setScissorTest(true); renderer.setViewport(r.left+3,H-r.bottom+3,r.width-6,r.height-6); renderer.setScissor(r.left+3,H-r.bottom+3,r.width-6,r.height-6);
     ICSAHNE.camera.aspect=(r.width-6)/(r.height-6); ICSAHNE.camera.updateProjectionMatrix(); renderer.render(ICSAHNE.scene,ICSAHNE.camera);
@@ -8774,7 +8981,7 @@ function dongu(t){
   cub.style.width="100%"; await bekle(250);
   await Menu.ac(); yk.classList.add("bitti"); setTimeout(()=>yk.remove(),900); PERDE.classList.remove("kapali"); requestAnimationFrame(dongu);
   setTimeout(()=>guncellemeKontrol(false),1500); })();
-window.__oyun3d={testBasla:(B,kurAd,basAd,arg)=>{ const T=Object.create(B); T.kareler=[]; T.bolumKur=null; const kurF=B[kurAd], basF=B[basAd]; T.kur=async function(){ await kurF.call(this,arg); }; T.basla=async function(){ katmanTemizle(); ustDugmeler(); joystickEkle(); this.btn=aksiyonEkle(); const f=basF||this[basAd]; await f.call(this); window.__segmentBitti=true; }; window.__B=T; bolumAc(T); return T; },B0,B1,BA,BK,B2,BI,BY,B3,B4,B5,BD,B5K,BT,BN,B6,BOLUMLER,Album,AlbumDB,Yarisma,Sozluk,Menu,Final,bolumAc,Girdi,kayit,Kamera,camera,get bolum(){return bolum;},get kilit(){return kilit;},get GIZLI(){return GIZLI;},gizliKalpler,joystickEkle,get ETK(){return ETK;},get scene(){return scene;},kalabalik,AVATAR,karakter,kilicYap,kinYap,sapkaYap,eldeTut,uniformaHazirla,kemigeBagla,torenHazirla,kisHazirla,takimHazirla,pembeHazirla,yazHazirla,ceketAktar,bindPoz,eslemeMatris,parcaBagla,TU,Ses,get KARAKTERLER(){return KARAKTERLER;},get renderer(){return renderer;},karakterleriGuncelle,engelIt,engelleriTopla,agac,otlar};
+window.__oyun3d={testBasla:(B,kurAd,basAd,arg)=>{ const T=Object.create(B); T.kareler=[]; T.bolumKur=null; const kurF=B[kurAd], basF=B[basAd]; T.kur=async function(){ await kurF.call(this,arg); }; T.basla=async function(){ katmanTemizle(); ustDugmeler(); joystickEkle(); this.btn=aksiyonEkle(); const f=basF||this[basAd]; await f.call(this); window.__segmentBitti=true; }; window.__B=T; bolumAc(T); return T; },B0,B1,BA,BK,B2,BI,BY,B3,B4,B5,BD,B5K,BT,BN,B6,BOLUMLER,Album,AlbumDB,Yarisma,Sozluk,Menu,Final,bolumAc,Girdi,kayit,Kamera,camera,get bolum(){return bolum;},get kilit(){return kilit;},get GIZLI(){return GIZLI;},gizliKalpler,joystickEkle,get ETK(){return ETK;},get scene(){return scene;},kalabalik,AVATAR,karakter,kilicYap,kinYap,sapkaYap,eldeTut,uniformaHazirla,kemigeBagla,torenHazirla,kisHazirla,takimHazirla,pembeHazirla,yazHazirla,ceketAktar,bindPoz,eslemeMatris,parcaBagla,TU,Ses,get KARAKTERLER(){return KARAKTERLER;},get renderer(){return renderer;},karakterleriGuncelle,engelIt,engelleriTopla,agac,otlar,hatiraFoto,GECIS_OLC,get STATIK(){return STATIK;}};
 })();
 </script>
 

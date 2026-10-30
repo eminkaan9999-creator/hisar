@@ -55,7 +55,9 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
 @media (max-width:640px){.ctx{bottom:calc(env(safe-area-inset-bottom,0px) + var(--joy,150px) + 46px);right:max(18px,env(safe-area-inset-right,0px));max-width:calc(100vw - 150px)}.ctxL{bottom:calc(env(safe-area-inset-bottom,0px) + var(--joy,150px) + 46px);left:max(18px,env(safe-area-inset-left,0px))}}
 /* phone held sideways: compact HUD so the task card and map clear the sticks */
 @media (max-height:500px){.tasks{width:172px;font-size:11px;padding:4px 8px}.tasks h4{font-size:15px;margin:0}.tasks .mt{font-size:15px;margin-bottom:1px}.tasks .chips{display:none}.tasks .pb{height:4px}
-  #mini{width:100px;height:67px}.tb{font-size:15px;padding:3px 7px}.who .nm{font-size:19px}.who .st{font-size:11px}.dash b{font-size:24px}.big{height:46px;font-size:20px;min-width:66px}.pad span{font-size:13px;top:-17px}#sig{font-size:21px;top:30%}#toast{font-size:20px}}
+  #mini{width:100px;height:67px}.tb{font-size:15px;padding:3px 7px}.who .nm{font-size:19px}.who .st{font-size:11px}.dash b{font-size:24px}.big{height:46px;font-size:20px;min-width:66px}.pad span{font-size:13px;top:-17px}#sig{font-size:21px;top:30%}#toast{font-size:20px}
+  #tasks .ob.two,#tasks .ob.camp{display:none}.tasks .ob{padding:1px 0}.tasks .mis{margin:1px -3px 4px;padding:4px 7px}.tasks .mis p{font-size:11px;margin-top:1px}
+  #mini{position:fixed;right:calc(max(10px,env(safe-area-inset-right,0px)) + 198px);top:calc(env(safe-area-inset-top,0px) + 76px)}}
 #bHorn.on{background:var(--cat);color:#1b1500;border-color:var(--cat)}
 #wheel{position:fixed;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;background:radial-gradient(circle,rgba(20,18,15,.3) 0 27%,rgba(20,18,15,.8) 28% 100%);border:2px solid rgba(242,183,5,.55);z-index:4;touch-action:none}
 #wheel .wi{position:absolute;width:112px;min-height:50px;margin:-25px 0 0 -56px;display:grid;place-items:center;text-align:center;font-family:var(--display);font-size:19px;line-height:1;letter-spacing:.4px;color:var(--ink);background:var(--plate-2);border:1px solid var(--line);border-radius:10px;padding:4px 6px}
@@ -94,6 +96,20 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
 .mveh{display:flex;gap:6px;flex-wrap:wrap}.chip{font-family:var(--display);font-size:17px;letter-spacing:.5px;background:#1b1916;border:1px solid var(--line);color:var(--ink);border-radius:20px;padding:3px 12px}
 .mbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
 .tasks .mt{font-family:var(--display);font-size:18px;line-height:1.05;color:var(--ink);margin-bottom:4px}.tasks .money{font-family:var(--display);color:var(--cat);font-size:17px;float:right}
+.tasks .mis{display:block;margin:2px -3px 7px;padding:6px 8px;border-radius:8px;background:rgba(57,228,111,.13);border:1px solid rgba(57,228,111,.6);pointer-events:auto;cursor:pointer}
+.tasks .mis b{color:#7dff9e;font-size:13.5px;letter-spacing:.02em}.tasks .mis em{float:right;font-style:normal;font-weight:800;color:#7dff9e}.tasks .mis p{margin:3px 0 0;font-size:12px;line-height:1.25}
+.tasks .mis.urg{background:rgba(242,183,5,.16);border-color:#f2b705}.tasks .mis.urg b,.tasks .mis.urg em{color:#ffd24a}
+.tasks .mis .go{float:right;margin:1px -4px 2px 6px;font:800 12.5px system-ui,sans-serif;padding:4px 9px;border-radius:8px;border:0;background:#39e46f;color:#0f2a17;cursor:pointer;touch-action:manipulation}.tasks .mis.urg .go{background:#f2b705;color:#1b1500}
+.tasks h4 small{float:right;font:600 12px system-ui,sans-serif;color:var(--muted);letter-spacing:0;margin-top:5px}
+.tasks .ob.two{display:flex;gap:10px}.tasks .ob.two>span{flex:1;min-width:0}.tasks .ob.two .ok .pb i{background:var(--ok)}
+#mapv .mapb{pointer-events:auto;height:46px;font-size:18px;padding:0 13px;min-width:0}
+#wpm{position:fixed;left:0;top:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:1px;will-change:transform}
+#wpm b{font:800 12.5px system-ui,sans-serif;color:#0f2a17;background:#5ff08a;border-radius:9px;padding:2px 8px;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.55)}
+#wpm span{font:800 12.5px system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000,0 0 5px #000}
+#wpm i{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid #5ff08a;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+@media (max-width:640px){.subl{bottom:calc(env(safe-area-inset-bottom,0px) + var(--joy,150px) + 116px) !important}
+  .ctxL{right:max(18px,env(safe-area-inset-right,0px));flex-wrap:wrap}.ctxL .big,.ctx .big{height:50px;font-size:19px;min-width:0;padding:0 11px}
+  .ctx{bottom:calc(env(safe-area-inset-bottom,0px) + var(--joy,150px) + 104px)}}
 .tasks .ob{display:block;padding:3px 0}.tasks .ob .r{display:flex;justify-content:space-between;gap:8px}.tasks .pb{height:5px;background:#14120f;border-radius:3px;overflow:hidden;margin-top:2px}.tasks .pb i{display:block;height:100%;background:var(--cat)}
 .tasks .ob.ok .pb i{background:var(--ok)}.tasks .chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.tasks .chip{font-size:14px;padding:1px 8px;pointer-events:auto;cursor:pointer}
 .fuel{width:46px;height:6px;background:#14120f;border-radius:3px;overflow:hidden;border:1px solid var(--line)}.fuel i{display:block;height:100%;width:100%;background:#6cc24a}
@@ -152,7 +168,7 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
   <div class="pad" id="padR"><span id="padRlbl">KOL</span><i id="knobR"></i></div>
   <div class="ctxL"><button class="big alt" id="bHorn" type="button">KORNA</button></div>
   <div class="ctx"><button class="big alt" id="bFuel" type="button" hidden>YAKIT SERVİSİ</button><button class="big alt" id="bAI" type="button" hidden>ŞOFÖR</button><button class="big alt" id="bCtx2" type="button" hidden>KAZI</button><button class="big" id="bCtx" type="button" hidden>KESİCİ</button></div>
-  <div class="keys">G: görev dağılımı · B: karakter · ENTER: otur / kalk · WASD: yürü · SHIFT: koş · E: araca bin / in · R: motor · Tab: alet çarkı · BOŞLUK: alet vur / kesici · I/K: kol ↕ · J/L: kova ↔ · Z/X: kule · U/O: arm · T: kazı modu · H: korna · C: kamera · sürükle: kamerayı çevir</div>
+  <div class="keys">G: görev dağılımı · M: harita · Q: subayları topla · B: karakter · ENTER: otur / kalk · WASD: yürü · SHIFT: koş · E: araca bin / in · R: motor · Tab: alet çarkı · BOŞLUK: alet vur / kesici · I/K: kol ↕ · J/L: kova ↔ · Z/X: kule · U/O: arm · T: kazı modu · H: korna · C: kamera · sürükle: kamerayı çevir</div>
 </div>
 <div id="toast"></div>
 <div id="sig" role="status" aria-live="polite"></div>
@@ -178,7 +194,7 @@ button:focus-visible{outline:3px solid var(--cat);outline-offset:2px}
   <div class="wrap">
     <div class="brand">
       <h1>HİSAR <b>ŞANTİYE</b><small>SİMÜLATÖR</small></h1>
-      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı drone sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve drone parkurunu kuruyor. Sabah 07.30'da Azizhan Üsteğmen masada görevleri dağıtır; işi askerler kendiliğinden yürütür, istersen herhangi bir makineye binip kendin de sürersin. Levent Paşa baskına gelmeden herkes işinin başında olsun.</p>
+      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı drone sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve drone parkurunu kuruyor. Sabah 07.30'da Azizhan Üsteğmen masada görevleri dağıtır, sonra gün senin görevlerinle akar: denetim turu, 10.00 çay molası, makine başına geçmek, öğle yemeği, öğleden sonra kontrolü, akşam çayı. Arada arızalar, yakıt tankeri, Ufuk Binbaşı'nın ziyareti ve Levent Paşa'nın baskını çıkar. Yeşil halka nereye gideceğini gösterir; HARİTA'dan bir yere dokun, YÜRÜ de. 5. gün Paşa'nın büyük teftişi var: hedefleri tuttur, takdirnameyi al.</p>
     </div>
     <div class="projs">
       <div class="phead"><h3 class="sub">Tabur durumu</h3><span class="bank" id="bank" hidden></span></div>
@@ -2260,9 +2276,7 @@ function hud(dt) {
   vState.textContent = st; vBar.style.width = (clamp(f, 0, 1) * 100).toFixed(0) + "%";
   fuelHud(v); dSpd.textContent = Math.round(Math.abs(v.v) * 3.6); dGear.textContent = v.gear; dRpm.style.width = (clamp(v.rpm, 0, 1) * 100).toFixed(0) + "%";
   missionHud();
-  mc.drawImage(mapCanvas, 0, 0, 150, 100); const s = 150 / WX;
-  mc.fillStyle = "#4a2f17"; piles.forEach(q => mc.fillRect(q.x * s - 1, q.z * s - 1, 3, 3));
-  vehicles.forEach((o, i) => { mc.fillStyle = i === cur ? "#fff" : o.type === "tk" ? "#9fb86a" : "#f2b705"; mc.beginPath(); mc.arc(o.x * s, o.z * s, i === cur ? 3.5 : 2.5, 0, 7); mc.fill(); });
+  miniMap(mc);
   for (const h of HUDF) h(v);
 }
 
@@ -2530,7 +2544,7 @@ function openProject(k) {
 let newArm = 0;
 bNew.addEventListener("click", () => {
   if (Date.now() - newArm > 3500) { newArm = Date.now(); bNew.textContent = "EMİN MİSİN? TEKRAR BAS"; setTimeout(() => { bNew.textContent = "YENİ OYUN"; }, 3500); return; }
-  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
+  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
 });
 document.getElementById("cards").addEventListener("click", () => { if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
 const _openMenu = openMenu;
@@ -2680,6 +2694,7 @@ function aiTruck(t, dt) {
   if ((t.aiState === "todump" || t.aiState === "return" || t.aiState === "align") && !(t.aiEsc > 0)) { t.wdT = (t.wdT || 0) + dt;
     if (t.wdT > 4) { if (t.wdX != null && Math.hypot(t.x - t.wdX, t.z - t.wdZ) < 1.2 && (!crewStop || t.crewT > 12)) { t.aiEsc = 2; t.aiStuck = 0; t.crewT = 0; } t.wdT = 0; t.wdX = t.x; t.wdZ = t.z; } }
   else if (!(t.aiEsc > 0)) { t.wdT = 0; t.wdX = null; }
+  if (t.hold > 0) { t.hold -= dt; if (ry < 0) ry = 0; th = clamp(-t.v * 1.5, -1, 1); st = 0; t.aiBrake = true; }   // waiting for the commander who is coming to drive it
   drive(t, dt, th, st); work(t, dt, {rx: 0, ry, L: {x: 0, y: 0}}); t.aiTh = th;
 }
 const AIST = {wait: "yükleme bekliyor", todump: "döküm sahasına gidiyor", tip: "damperi kaldırıyor", lower: "damperi indiriyor", return: "yükleme noktasına dönüyor", align: "hizalanıyor", reverse: "geri geri yanaşıyor"};
@@ -3449,7 +3464,6 @@ function isgFrame(dt, v) {
 function isgHud() { document.getElementById("dLim").hidden = !SET.isg; }
 HUDF.push(v => {
   const over = SET.isg && Math.abs(v.v) > LIMIT + .2; dSpd.style.color = over ? "#ff6a4a" : ""; dLim.classList.toggle("warn", over);
-  const s = 150 / WX; mc.fillStyle = "#7fe3ff"; for (const w of CREW) mc.fillRect(w.x * s - 1, w.z * s - 1, 2.2, 2.2);
   // banksman's signal for the truck you are driving
   const show = v.type === "tr" && !v.ai && bank.sig && bank.sigTr === v && camMode !== 3 ? "İŞARETÇİ · " + bank.sigTxt : "";
   if (show !== sigShown) { sigShown = show; sigEl.textContent = show; sigEl.classList.toggle("on", !!show); sigEl.classList.toggle("stop", bank.sig === "dur"); }
@@ -3980,11 +3994,8 @@ function footHud() {
   vState.textContent = st; vBar.style.width = (FOOT.carry > 0 ? 100 : 0) + "%";
   dSpd.textContent = Math.round(FOOT.spd * 3.6); dGear.textContent = "–"; dRpm.style.width = "0%";
   missionHud();
-  mc.drawImage(mapCanvas, 0, 0, 150, 100); const s = 150 / WX;
-  mc.fillStyle = "#4a2f17"; piles.forEach(q => mc.fillRect(q.x * s - 1, q.z * s - 1, 3, 3));
-  vehicles.forEach(o => { mc.fillStyle = o.type === "tk" ? "#9fb86a" : "#f2b705"; mc.beginPath(); mc.arc(o.x * s, o.z * s, 2.5, 0, 7); mc.fill(); });
   for (const h of HUDF) h(vehicles[cur]);
-  mc.fillStyle = "#fff"; mc.beginPath(); mc.arc(FOOT.x * s, FOOT.z * s, 3.5, 0, 7); mc.fill();
+  miniMap(mc);
 }
 // touch buttons and stick labels on foot
 const bWheel = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.id = "bWheel"; b.textContent = "ÇARK"; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => { if (WHL.open) closeWheel(false); else openWheel("touch"); }); return b; })();
@@ -4586,7 +4597,7 @@ function projFrame(dt) {
   if (typeof DAY === "undefined" || !DAY.on || DAY.rep || !(DAY.block && DAY.block.k === "is")) return;
   const at = (k, p) => { const o = typeof OFFM !== "undefined" ? OFFM[k] : null; return !!o && ((o.st === "work" && Math.hypot(o.x - p.x, o.z - p.z) < 25) || (typeof isPlayer === "function" && isPlayer(o) && FOOT.on && Math.hypot(FOOT.x - p.x, FOOT.z - p.z) < 25)); };
   const m = dt / 60, r0 = RNG.p, d0 = DRC.p;
-  RNG.p = Math.min(1, RNG.p + m * (at("ali", rangeFront()) ? .0045 : .0016)); DRC.p = Math.min(1, DRC.p + m * (at("orhan", courseFront()) ? .005 : .0018));
+  RNG.p = Math.min(1, RNG.p + m * (at("ali", rangeFront()) ? .032 : .01)); DRC.p = Math.min(1, DRC.p + m * (at("orhan", courseFront()) ? .034 : .011));
   if (Math.floor(r0 * RANGEF.length) !== Math.floor(RNG.p * RANGEF.length) || Math.floor(d0 * DGATES.length) !== Math.floor(DRC.p * DGATES.length)) { projVisuals(); saveGarProj(); }
 }
 
@@ -4744,12 +4755,12 @@ function legPath(ax, az, bx, bz) {
 function walkRoute(x0, z0, x1, z1) { const out = []; let ax = x0, az = z0; for (const [bx, bz] of legsFor(x0, z0, x1, z1).concat([[x1, z1]])) { out.push(...legPath(ax, az, bx, bz)); ax = bx; az = bz; } return out.length ? out : [[x1, z1]]; }
 const pathLen = (x, z, P) => { let L = 0; for (const [px, pz] of P) { L += Math.hypot(px - x, pz - z); x = px; z = pz; } return L; };
 function walkTo(o, x, z, then, run) {
-  const S = o.S; leaveChair(o); o.st = "walk"; o.next = then || null; o.run = !!run; o.tx = x; o.tz = z; if (o.tool) o.tool.visible = false;
+  const S = o.S; leaveChair(o); o.st = "walk"; o.next = then || null; o.run = !!run; o.hurry = false; o.tx = x; o.tz = z; if (o.tool) o.tool.visible = false;
   o.path = walkRoute(o.x, o.z, x, z); o.pi = 0; o.far = pathLen(o.x, o.z, o.path) > 60; S.root.visible = true;
 }
 function stepWalk(o, dt) {
   const S = o.S, p = o.path[o.pi]; if (!p) { o.st = "stand"; return true; }
-  const dx = p[0] - o.x, dz = p[1] - o.z, d = Math.hypot(dx, dz), v = o.run ? 4.9 : (o.vw || (o.far ? 3.0 : 2.2));
+  const dx = p[0] - o.x, dz = p[1] - o.z, d = Math.hypot(dx, dz), v = o.run ? 4.9 : (o.vw || (o.hurry ? 3.6 : o.far ? 3.0 : 2.2));
   if (d < .12) { o.pi++; if (o.pi >= o.path.length) { o.spd = 0; return true; } return false; }
   const s = Math.min(d, v * dt); o.x += dx / d * s; o.z += dz / d * s; o.a += wrapA(Math.atan2(dz, dx) - o.a) * Math.min(1, dt * 8); o.spd = v;
   S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion); return false;
@@ -4758,7 +4769,7 @@ function stepWalk(o, dt) {
 // ---------------- speech: a bubble over the speaker, a subtitle line ----------------
 const talkLayer = document.createElement("div"); talkLayer.id = "talk"; talkLayer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:5;overflow:hidden";
 document.body.appendChild(talkLayer);
-const subEl = document.createElement("div"); subEl.style.cssText = "position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);transform:translateX(-50%);max-width:min(92vw,620px);text-align:center;font:600 15px/1.35 system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;z-index:6;opacity:0;transition:opacity .3s";
+const subEl = document.createElement("div"); subEl.className = "subl"; subEl.style.cssText = "position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);transform:translateX(-50%);max-width:min(92vw,620px);text-align:center;font:600 15px/1.35 system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;z-index:6;opacity:0;transition:opacity .3s";
 document.body.appendChild(subEl);
 const BUB = new Map(); const PRJ = new THREE.Vector3();
 function say(o, text, dur) {
@@ -5065,10 +5076,13 @@ function scatter(L) {
 }
 // you, moved by the game (lining up for the commander)
 const AUTO = {on: false};
-function autoWalk(x, z, face) { if (SEAT.on) standUp(); const p = walkRoute(FOOT.x, FOOT.z, x, z); Object.assign(AUTO, {on: true, path: p && p.length ? p : [[x, z]], pi: 0, face, arrived: false, line: true}); FOOT.sw = -1; FOOT.tool = null; TOOLM.kazma.visible = TOOLM.kurek.visible = false; updCtx(); }
+function autoWalk(x, z, face) { if (SEAT.on) standUp(); const p = walkRoute(FOOT.x, FOOT.z, x, z); Object.assign(AUTO, {on: true, path: p && p.length ? p : [[x, z]], pi: 0, face, arrived: false, line: true, go: false, v: 0, stop: 0, seat: false}); FOOT.sw = -1; FOOT.tool = null; TOOLM.kazma.visible = TOOLM.kurek.visible = false; updCtx(); }
 function autoFrame(dt) { // true while the game walks you
   if (!AUTO.on) return false; const S = PLAYER;
-  if (!AUTO.arrived) { const p = AUTO.path[AUTO.pi]; if (!p) AUTO.arrived = true; else { const dx = p[0] - FOOT.x, dz = p[1] - FOOT.z, d = Math.hypot(dx, dz), v = 4.9;
+  if (AUTO.go && (AUTO.arrived || (L.on && Math.hypot(L.x, L.y) > .35) || keys.KeyW || keys.KeyS || keys.KeyA || keys.KeyD || keys.ArrowUp || keys.ArrowDown || keys.ArrowLeft || keys.ArrowRight)) {
+    const sit = AUTO.arrived && AUTO.seat; AUTO.on = false; AUTO.go = false; FOOT.spd = 0; if (sit) { let c = chairOf(CUR); if (!c || c.occ) c = nearChair(); if (c && !c.occ) sitDown(c); } updCtx(); return false; }   // the walk to a mark: the stick takes over, or it is done
+  if (AUTO.go && AUTO.stop && !AUTO.arrived) { const e = AUTO.path[AUTO.path.length - 1]; if (Math.hypot(e[0] - FOOT.x, e[1] - FOOT.z) < AUTO.stop) AUTO.arrived = true; }   // into the ring, not into the machine
+  if (!AUTO.arrived) { const p = AUTO.path[AUTO.pi]; if (!p) AUTO.arrived = true; else { const dx = p[0] - FOOT.x, dz = p[1] - FOOT.z, d = Math.hypot(dx, dz), v = AUTO.v || 4.9;
       if (d < .15) { AUTO.pi++; if (AUTO.pi >= AUTO.path.length) AUTO.arrived = true; }
       else { const st = Math.min(d, v * dt); FOOT.x += dx / d * st; FOOT.z += dz / d * st; FOOT.a += wrapA(Math.atan2(dz, dx) - FOOT.a) * Math.min(1, dt * 10); FOOT.spd = v; } } }
   if (AUTO.arrived) { FOOT.spd = 0; FOOT.a += wrapA(AUTO.face - FOOT.a) * Math.min(1, dt * 6); }
@@ -5103,8 +5117,8 @@ function sendToSite(key, site, run, stay) {
   if (o.st === "seat") leaveChair(o); o.site = j.k; o.jobV = j.v; o.jobP = j.look ? j.look() : null;
   walkTo(o, x, z, () => { o.st = "work"; o.t = stay || 55 + Math.random() * 45; o.sayT = 2 + Math.random() * 5; }, !!run); return true;
 }
-function allToSites(run) { let k = 0; for (const o of OFFS) { if (o.d.visitor || isPlayer(o)) continue; if (["seat", "standby", "stand"].includes(o.st)) { const oo = o; gTimeout(() => { if (["seat", "standby", "stand"].includes(oo.st)) sendToSite(oo.d.key, null, run); }, (k++) * 380); } } }
-function allToTea(quiet) { for (const o of OFFS) if (!o.d.visitor && !isPlayer(o) && (o.st === "work" || (o.st === "walk" && o.site))) goBack(o); if (!quiet) toast("Çay molası · herkes çay ocağına", 1.8); }
+function allToSites(run) { MEET.called = false; let k = 0; for (const o of OFFS) { if (o.d.visitor || isPlayer(o)) continue; if (["seat", "standby", "stand"].includes(o.st)) { const oo = o; gTimeout(() => { if (["seat", "standby", "stand"].includes(oo.st)) sendToSite(oo.d.key, null, run); }, (k++) * 380); } } }
+function allToTea(quiet) { MEET.called = true; for (const o of OFFS) if (!o.d.visitor && !isPlayer(o) && (o.st === "work" || (o.st === "walk" && o.site))) { goBack(o); o.hurry = true; } if (!quiet) toast("Çay molası · herkes çay ocağına", 1.8); }
 function sayOrder(j) { const o = OFFM[j.sup]; if (o && o.S && !isPlayer(o) && (o.st === "seat" || o.st === "work")) say(o, j.on ? "Emredersiniz komutanım, başlıyoruz." : "Anlaşıldı komutanım, durduruyorum.", 2.4); }
 // the drone's line round the course: through every gate at about head height
 const DRONEPATH = typeof DGATES !== "undefined" ? new THREE.CatmullRomCurve3([[-76, -40]].concat(DGATES.map(([x, z]) => [x, z])).map(([x, z], i) => new THREE.Vector3(x, heightAt(x, z) + (i ? 1.45 : 3), z)), true, "centripetal") : null;
@@ -5133,9 +5147,9 @@ function offFrame(dt, T) {
     if (o.st === "seat") { if (animTick(o, dt)) { S.mixer.update(o.adt); tablePose(S, o.talk, T); const sp = talkerAt(o); if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); } }
       if (o === MEET.visit) { o.t -= dt; if (o.t <= 0) endVisit(); continue; }
       // now and then a commander gets up to look in on his job (never everybody at once, never in the middle of his own conversation)
-      if (!o.d.visitor && !MEET.visit && !MEET.boss && (typeof isWork !== "function" || isWork())) { o.supT = (o.supT == null ? 60 : o.supT) - dt;
-        if (o.supT <= 0 && o.talk <= 0 && awayN() < 3 && seated().length > 2 && !(MEET.dlg && DIALOGS[MEET.dlg.i].some(([k]) => k === o.d.key))) {
-          o.supT = 120 + Math.random() * 140; const j = siteOf(o.d.key, null);
+      if (!o.d.visitor && !MEET.visit && !MEET.boss && !MEET.called && (typeof isWork !== "function" || isWork())) { o.supT = Math.min(o.supT == null ? 12 : o.supT, 25) - dt;   // working hours: everyone's place is at his job
+        if (o.supT <= 0 && o.talk <= 0 && !(MEET.dlg && DIALOGS[MEET.dlg.i].some(([k]) => k === o.d.key))) {
+          o.supT = 30 + Math.random() * 30; const j = siteOf(o.d.key, null);
           if (j && j.on) { say(o, pick(["Ben bir sahaya bakıp geleyim.", "Şuna bir göz atayım, geliyorum.", "Arkadaşlar, ben işin başına geçiyorum."]), 2.2); const oo = o, k = j.k; gTimeout(() => { if (oo.st === "seat") sendToSite(oo.d.key, k, false); }, 1500); } } }
       continue; }
     if (o.st === "standby") { // on their feet next to the chair (a commander came)
@@ -5154,7 +5168,9 @@ function offFrame(dt, T) {
       if (o.d.key === "orhan") { droneOn = true;
         if (o.site === "parkur" && typeof DGATES !== "undefined") { const p = DRONEPATH.getPointAt((T * .035) % 1), q = DRONEPATH.getTangentAt((T * .035) % 1); DRONE.position.copy(p); DRONE.rotation.y = -Math.atan2(q.z, q.x); }   // round the course, through the gates
         else { DRONE.position.set(o.x + Math.sin(T * .4) * 6 + 3, footGround(o.x, o.z) + 9 + Math.sin(T * 1.3) * .4, o.z + Math.cos(T * .33) * 5); DRONE.rotation.y = T * .5; } }
-      if (o.t <= 0 && !MEET.boss && !(typeof CATCH !== "undefined" && CATCH.on && o.d.key === "ahmet")) goBack(o); continue; }
+      if (o.t <= 0 && !MEET.boss && !(typeof CATCH !== "undefined" && CATCH.on && o.d.key === "ahmet")) { const w = typeof isWork !== "function" || isWork();
+        if (w && (o.d.chief || o.d.roam)) { if (!sendToSite(o.d.key, null, false, 70 + Math.random() * 50)) o.t = 30; } else if (w) o.t = 1e9; else goBack(o); }
+      continue; }
     if (o.st === "line") { // in the line for the brigade commander
       const form = !RECV.on && o.lineFace != null && typeof FORM !== "undefined" && FORM.on;
       const tick = animTick(o, dt); if (tick) locoSoldier(S, 0, o.adt); o.a += wrapA((form ? o.lineFace : RECV.face) - o.a) * Math.min(1, dt * 6); S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion);
@@ -5203,7 +5219,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261030-0141";
+const PORTKEY = "hs-portraits-20261030-0319";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5335,7 +5351,8 @@ const GJOBS = [
 function opsGive(v) {
   if (!v || !v.job || v.P.seated === PLAYER) return;
   v.ai = true; v.eng = true; v.aiState = null; v.aiStuck = 0; v.aiEsc = 0; v.aiBrake = false; v.aiT = 0; npcDriver(v, true);
-  if (v.type === "tr") { v.aiState = "wait"; if (!v.home) v.home = {x: v.x, z: v.z, a: v.a}; }
+  if (v.type === "tr") { if (!v.home) v.home = {x: v.x, z: v.z, a: v.a};
+    v.aiState = v.load >= v.cap - .05 ? "todump" : v.t.bed > .05 ? "lower" : Math.hypot(v.x - v.home.x, v.z - v.home.z) > 3 ? "return" : "wait"; }
 }
 function opsTake(v) { if (!v) return; v.ai = false; v.aiState = null; npcDriver(v, false); if (v.type === "gt") v.cutter = false; }
 // first start: the excavator moves to the foundation pit with its truck beside it, every driver climbs in
@@ -5600,8 +5617,9 @@ function planDay() {
   let visit = r(8 * 60 + 20, 11 * 60 + 30); if (Math.abs(visit - raidAt) < 50) visit = raidAt > 12 * 60 ? r(8 * 60 + 20, 10 * 60) : r(14 * 60, 16 * 60 + 30);
   let tank = r(13 * 60 + 20, 15 * 60 + 30); if (Math.abs(tank - raidAt) < 40 || Math.abs(tank - visit) < 40) tank = raidAt < 14 * 60 ? 16 * 60 : 13 * 60 + 15;
   let caught = r(9 * 60 + 30, 16 * 60); if (Math.abs(caught - raidAt) < 45) caught = raidAt > 12 * 60 ? r(9 * 60 + 20, 10 * 60 + 30) : r(14 * 60 + 30, 16 * 60 + 20);
-  DAY.plan = {raidAt, visit, eveVisit: Math.random() < .55 ? r(19 * 60 + 50, 21 * 60 + 30) : 0, tank, caught, nextEv: r(8 * 60 + 30, 9 * 60 + 30)};
-  DAY.s0 = {tunnel: stats.kemparM || 0, trips: DAY.trips}; DAY.evN = 0; DAY.evFixed = 0; DAY.raidRes = null; DAY.sat0 = DAY.sat; DAY.visitDone = DAY.eveDone = DAY.raidDone = DAY.tankDone = DAY.catchDone = DAY.rolled = false;
+  const noLunch = t => t > 700 && t < 800 ? 800 + Math.random() * 30 : t;   // nothing planned for the lunch hour
+  DAY.plan = {raidAt: noLunch(raidAt), visit: noLunch(visit), eveVisit: Math.random() < .55 ? r(19 * 60 + 50, 21 * 60 + 30) : 0, tank: noLunch(tank), caught: noLunch(caught), nextEv: r(8 * 60 + 30, 9 * 60 + 30)};
+  DAY.s0 = {tunnel: stats.kemparM || 0, trips: DAY.trips}; DAY.evN = 0; DAY.evFixed = 0; DAY.raidRes = null; DAY.sat0 = DAY.sat; DAY.visitDone = DAY.eveDone = DAY.raidDone = DAY.tankDone = DAY.catchDone = DAY.rolled = DAY.raidWarn = DAY.visitWarn = false;
 }
 // ---- the commander's satisfaction ----
 const satEl = () => document.getElementById("tasks");
@@ -5626,12 +5644,12 @@ function fromMess(o, toWork) { if (o.st !== "meal") return; o.x = MESS.x; o.z = 
 function seatAllNow() { // a new day: everybody already at the table
   for (const o of regulars()) { o.site = null; o.next = null; o.S.root.visible = true; const c = chairOf(o); leaveChair(o); if (c && !c.occ) seatAt(o, c); else { const f = CHAIRS.find(q => !q.occ && q.i !== 0); if (f) { o.chair = f.i; seatAt(o, f); } } o.supT = 60 + Math.random() * 120; } }
 function onBlock(b, prev) {
-  const k = b.k; DAY.block = b; updClockBtn();
+  const k = b.k; DAY.block = b; updClockBtn(); MEET.called = false;
   if (typeof OPS !== "undefined") OPS.pause = k !== "is";
   if (k !== "is" && k !== "sabah" && MEET.visit && MEET.visit.st === "seat") endVisit();   // the battalion commander goes back to the HQ for meals and the night
   if (k === "ictima") rollCall();
   else if (k === "is" && prev && (prev.k === "sabah" || (prev.k === "ictima" && !FORM.on && !DAY.rolled))) { let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => { if (["seat", "stand", "standby"].includes(oo.st) && !sendToSite(oo.d.key, null, false, 40 + Math.random() * 60)) goBack(oo); }, (i++) * 300); } }   // the roll call was skipped: straight to work
-  else if (k === "is") { if (prev && prev.k === "ogle") { let i = 0; for (const o of regulars()) { const oo = o, w = i++ % 2 === 0; gTimeout(() => fromMess(oo, w), i * 350); } toast("13:00 · İŞ BAŞI · makineler çalışıyor", 2.4); } }
+  else if (k === "is") { if (prev && prev.k === "ogle") { let i = 0; for (const o of regulars()) { const oo = o; i++; gTimeout(() => fromMess(oo, true), i * 350); } toast("13:00 · İŞ BAŞI · makineler çalışıyor", 2.4); } }
   else if (k === "ogle") { toast("12:00 · ÖĞLE YEMEĞİ · makineler durdu", 2.6); let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => toMess(oo), (i++) * 300); } }
   else if (k === "cay") { toast("17:30 · MESAİ BİTTİ · herkes çay ocağına", 2.6); allToTea(true); }
   else if (k === "aksam") { toast("18:30 · AKŞAM YEMEĞİ · tabldotta lahmacun", 2.8); say(OFFM.ahmet.S && !isPlayer(OFFM.ahmet) ? OFFM.ahmet : regulars()[0], "Arkadaşlar, lahmacun 18.30'da tabldotta!", 2.6); let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => toMess(oo), 1500 + (i++) * 300); } }
@@ -5703,11 +5721,11 @@ function newEvent() {
   const crew = typeof CREW !== "undefined" ? CREW.filter(w => w.S && w.root.visible !== false && !busy.has(w)) : [];
   if (crew.length && Math.random() < .25) { // a safety rule broken: someone walks too close to a working machine
     const w = pick(crew); const e = {kind: "isg", w, t0: DAY.t, fix: 0, need: 4, crewAt: DAY.t + 12 + Math.random() * 10, mark: mkMarker(ISGTEX), txt: pick(["Asker çalışan makinenin dönüş alanına girdi!", "Asker baretsiz dolaşıyor!", "Asker kamyonun arkasından geçiyor!"])};
-    DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz · İSG", "İŞ GÜVENLİĞİ", e.txt + " Gidip ikaz et."); return; }
+    DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz · İSG", "İŞ GÜVENLİĞİ", e.txt + " Gidip ikaz et."); storyEvent(e); return; }
   if (!machines.length) return;
   const j = pick(machines), v = j.v, txt = pick(EVTXT[v.type] || ["Komutanım, makine arıza yaptı!"]);
   v.broken = true; const e = {kind: v.type === "tr" && /saplandı/.test(txt) ? "saplandi" : "ariza", v, j, t0: DAY.t, fix: 0, need: v.type === "tr" ? 12 : 16, crewAt: DAY.t + 20 + Math.random() * 15, mark: mkMarker(MARKTEX), txt};
-  DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz", v.name + " operatörü", txt);
+  DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz", v.name + " operatörü", txt); storyEvent(e);
   const sup = OFFM[j.sup]; if (sup && !isPlayer(sup)) { e.helpAt = DAY.t + 25 + Math.random() * 25; }   // if you do nothing, the officer in charge goes himself a while later
 }
 function evFrame(dt) {
@@ -5736,13 +5754,19 @@ const TANKER = mkVehicle("fuel");
 CARS.tanker = TANKER;
 const ROUTE_S_IN = [[-420, 60], [-360, 60], [-310, 60], [-290, 60], [-270, 60], [-200, 60], [-130, 60], [-60, 60], [-30, 60], [-14, 59], [-5, 55.4], [2.5, 53], [10, 54.2], [20, 55]];
 const ROUTE_S_OUT = [[20, 55], [28, 54], [33, 50], [31, 45.5], [25, 45], [19, 50.5], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-270, 60], [-290, 60], [-310, 60], [-360, 60], [-420, 60]];
+// the tanker drives up to the main gate and waits (for you to meet it, at most three quarters of an hour), then on to the site's fuel point
+const ROUTE_T_GATE = [[-420, 60], [-370, 60], [-340, 60], [-326, 60]];
+const ROUTE_T_IN = [[-326, 60], [-300, 60], [-290, 60], [-270, 60], [-200, 60], [-130, 60], [-60, 60], [-30, 60], [-14, 59], [-5, 55.4], [2.5, 53], [10, 54.2], [20, 55]];
 function tankerVisit() {
-  phoneNote("Nizamiye", "NİZAMİYE NÖBETÇİSİ", "Yakıt tankeri girdi.");
-  carGo(TANKER, ROUTE_S_IN, 13, () => {
+  TANKER.waiting = false; TANKER.inside = false; TANKER.refuelled = false;
+  carGo(TANKER, ROUTE_T_GATE, 13, () => { TANKER.waiting = true; TANKER.waitT = 0; });
+  storyTanker();
+}
+function tankerGo() { if (!TANKER.waiting) return; TANKER.waiting = false; TANKER.inside = true;
+  carGo(TANKER, ROUTE_T_IN, 13, () => {
     const ali = OFFM.ali; if (ali && ali.S && !isPlayer(ali) && ["seat", "stand", "work"].includes(ali.st)) { say(ali, "Yakıt tankeri geldi, ikmale bakıyorum.", 2.4); leaveChair(ali); const p = carDoor(TANKER); walkTo(ali, p.x, p.z, () => { ali.st = "stand"; ali.t = 25; }); }
     toast("Yakıt tankeri geldi · ikmal yapılıyor", 2.4);
-    gTimeout(() => { for (const v of vehicles) v.fuel = 1; toast("Yakıt ikmali tamam · bütün makinelerin deposu dolu", 2.6); carGo(TANKER, ROUTE_S_OUT, 13, () => { TANKER.g.visible = false; }); }, 16000); });
-}
+    gTimeout(() => { for (const v of vehicles) v.fuel = 1; TANKER.refuelled = true; toast("Yakıt ikmali tamam · bütün makinelerin deposu dolu", 2.6); carGo(TANKER, ROUTE_S_OUT, 13, () => { TANKER.g.visible = false; }); }, 16000); }); }
 
 // ---------------- the site's own barrier lifts for the cars coming in ----------------
 const SGATE = {x: SCN.gate[0], z: SCN.gate[2] + SCN.gate[3] / 2, a: 0};
@@ -5785,11 +5809,10 @@ const bar = (v, c) => `<div class="pb"><i style="width:${clamp(v, 0, 100).toFixe
 function dayPanel() {
   if (!DAY.on) return `<div class="mt">Tabur · GÜN ${DAY.day}</div>`;
   const tun = Math.max(0, (stats.kemparM || 0) - DAY.s0.tunnel), tr = DAY.trips - DAY.s0.trips, sc = DAY.sat >= 70 ? "#7ac943" : DAY.sat >= 40 ? "#f2b705" : "#e0452b";
-  const evs = DAY.ev.map(e => `<div class="ob warn"><span class="r"><span>⚠ ${e.v ? e.v.name : "İSG"}</span><span>${e.v ? (e.kind === "saplandi" ? "saplandı" : "arıza") : "ikaz et"}</span></span></div>`).join("");
-  return `<h4>GÜN ${DAY.day} · ${hhmm(DAY.t)}</h4><div class="mt">${DAY.block ? DAY.block.name : ""}</div>` +
+  return `<h4>GÜN ${DAY.day} · ${hhmm(DAY.t)}<small>${DAY.block ? DAY.block.name : ""}</small></h4>` + misHtml() +
     `<div class="ob"><span class="r"><span>Komutan memnuniyeti</span><span>${Math.round(DAY.sat)}</span></span>${bar(DAY.sat, sc)}</div>` +
-    `<div class="ob ${tun >= GOAL.tunnel ? "ok" : ""}"><span class="r"><span>Sığınak (Kempar) bugün</span><span>${tun.toFixed(0)}/${GOAL.tunnel} m</span></span>${bar(tun / GOAL.tunnel * 100)}</div>` +
-    `<div class="ob ${tr >= GOAL.trips ? "ok" : ""}"><span class="r"><span>Kamyon seferi</span><span>${tr}/${GOAL.trips}</span></span>${bar(tr / GOAL.trips * 100)}</div>` + evs;
+    `<div class="ob two"><span class="${tun >= GOAL.tunnel ? "ok" : ""}"><span class="r"><span>Sığınak</span><span>${tun.toFixed(0)}/${GOAL.tunnel}</span></span>${bar(tun / GOAL.tunnel * 100)}</span>` +
+    `<span class="${tr >= GOAL.trips ? "ok" : ""}"><span class="r"><span>Sefer</span><span>${tr}/${GOAL.trips}</span></span>${bar(tr / GOAL.trips * 100)}</span></div>` + campHtml();
 }
 const repEl = (() => { const d = document.createElement("div"); d.hidden = true; d.style.cssText = "position:fixed;inset:0;z-index:24;display:grid;place-items:center;background:rgba(8,10,12,.72)"; document.body.appendChild(d); return d; })();
 UICOVER.push(() => DAY.rep);
@@ -5803,7 +5826,7 @@ function dayReport() {
   repEl.innerHTML = `<div style="width:min(92vw,440px);background:#1d2023;color:#eef0f2;border-radius:16px;padding:18px 18px 14px;box-shadow:0 12px 40px rgba(0,0,0,.5);font:14px/1.35 system-ui,sans-serif">
     <div style="font:700 13px system-ui;letter-spacing:.12em;opacity:.7">GÜN SONU RAPORU</div><div style="font:800 26px system-ui;margin:2px 0 10px">${DAY.day}. GÜN</div>
     ${row("Sığınakta ilerleme", tun.toFixed(1) + " m / " + GOAL.tunnel, gT)}${row("Kamyon seferi", tr + " / " + GOAL.trips, gR)}${row("Sahada olay", DAY.evN + " · çözülen " + DAY.evFixed)}${row("Baskın", raid, DAY.raidRes ? DAY.raidRes !== "kotu" : undefined)}
-    ${row("Komutan memnuniyeti", Math.round(DAY.sat0) + " → " + Math.round(DAY.sat), DAY.sat >= DAY.sat0)}
+    ${misReport()}${row("Komutan memnuniyeti", Math.round(DAY.sat0) + " → " + Math.round(DAY.sat), DAY.sat >= DAY.sat0)}
     ${star ? `<div style="margin:12px 0 4px;padding:10px;border-radius:10px;background:#3a2f08;color:#ffd46a;font-weight:700;text-align:center">🎖️ TAKDİRNAME! Tabur komutanı imzaladı.</div>` : ""}
     <div style="display:flex;justify-content:flex-end;margin-top:12px"><button type="button" class="big" id="bNewDay">YENİ GÜN ▸</button></div></div>`;
   repEl.hidden = false; repEl.querySelector("#bNewDay").onclick = newDay;
@@ -5811,7 +5834,7 @@ function dayReport() {
 function newDay() {
   repEl.hidden = true; DAY.rep = false; DAY.day++; DAY.t = 7 * 60; DAY.block = null; for (const e of DAY.ev) { scene.remove(e.mark); if (e.v) e.v.broken = false; } DAY.ev = [];
   AUTO.on = false; FORM.on = false; if (BRIEF.on) { BRIEF.on = false; MEET.hush = BRIEF.hush0 || false; } seatAllNow(); if (FOOT.on && !SEAT.on) { const c = chairOf(CUR); if (c && !c.occ) sitDown(c, true); }
-  planDay(); saveDay(); toast(`${DAY.day}. GÜN · sabah çayı`, 2.4);
+  planDay(); saveDay(); storyDay(); toast(`${DAY.day}. GÜN · sabah çayı`, 2.4);
 }
 function taburHtml() { // the battalion on the menu instead of the old company account
   const t = (v, k, cl) => `<div class="tt${cl ? " " + cl : ""}"><b>${v}</b><span>${k}</span></div>`;
@@ -5844,13 +5867,15 @@ loadTexts();
 
 // ---------------- per frame ----------------
 UPD.push(dt => {
-  siteGateFrame(dt); if (!DAY.on) return; carFrame(TANKER, dt);
+  siteGateFrame(dt); if (!DAY.on) return; carFrame(TANKER, dt); if (TANKER.waiting) { TANKER.waitT += dt; if (TANKER.waitT > 90) tankerGo(); }
   if (DAY.rep) return;
   if (!BRIEF.on) DAY.t += dt; updClockBtn();
   const m = todFor(DAY.t); if (m !== DAY.tod) { DAY.tod = m; setTOD(m); lightsByTod(m); updClockBtn(true); }
   const b = blockAt(DAY.t); if (b !== DAY.block) { const prev = DAY.block; onBlock(b, prev); }
   const P = DAY.plan; if (!P) return;
   if (isWork()) {
+    if (!DAY.raidWarn && !DAY.raidDone && DAY.t >= P.raidAt - 15) { DAY.raidWarn = true; storyRaidWarn(); }
+    if (!DAY.visitWarn && !DAY.visitDone && DAY.t >= P.visit - 8 && Math.abs(P.visit - P.raidAt) > 20) { DAY.visitWarn = true; storyVisitWarn(); }
     if (!DAY.raidDone && DAY.t >= P.raidAt && !MEET.visit && !MEET.boss && !CATCH.on) { DAY.raidDone = true; startBoss(OFFM.levent); }
     if (!DAY.visitDone && DAY.t >= P.visit && !MEET.visit && !MEET.boss && !CATCH.on) { DAY.visitDone = true; startVisit(OFFM.ufuk); }
     if (!DAY.catchDone && DAY.t >= P.caught && Math.abs(DAY.t - P.raidAt) > 35) { if (ahmetCaught()) DAY.catchDone = true; else P.caught = DAY.t + 12; }
@@ -5861,7 +5886,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261030-0141";
+const BUILD = "20261030-0319";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -5869,7 +5894,7 @@ function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai
     d.querySelector("button").onclick = () => { const u = new URL(location.href); u.searchParams.set("v", Date.now().toString(36)); location.replace(u.toString()); }; document.body.appendChild(d); }).catch(() => {}); }
 checkVersion(); setInterval(checkVersion, 4 * 60 * 1000);
 try { if ("serviceWorker" in navigator && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) {}
-function lifeStart() { if (DAY.on) return; DAY.on = true; DAY.t = 7 * 60; planDay(); DAY.tod = -1; updClockBtn(); }
+function lifeStart() { if (DAY.on) return; DAY.on = true; DAY.t = 7 * 60; planDay(); DAY.tod = -1; updClockBtn(); storyDay(); }
 window.__hs.day = DAY; window.__hs.lifeStart = lifeStart; window.__hs.newEvent = newEvent; window.__hs.raidEval = raidEval; window.__hs.dayReport = dayReport;
 
 ;(window.__INIT || (window.__INIT = [])).push(["life", performance.now()]);
@@ -6133,6 +6158,378 @@ UPD.push(dt => CROWD.frame && CROWD.frame(dt));
 window.__hs.crowd = CROWD;
 
 ;(window.__INIT || (window.__INIT = [])).push(["crowd", performance.now()]);
+
+// ======================= STORY: what the commander does all day (a chain of tasks with a purpose), the big map with every place named,
+// the green ring and the green arrow that lead you, the call to the tea house and back to work, the battalion's goal: the big inspection =======================
+
+// ---------------- places: the names on the map and the targets of the tasks ----------------
+const jobSpot = k => { const j = JOBS.find(q => q.k === k && q.spot); return j ? j.spot() : null; };
+const PL = [
+  {k: "cay", n: "ÇAY OCAĞI", x: TH.x, z: TH.z, r: 4},
+  {k: "nizamiye", n: "NİZAMİYE", x: MAINGATE.x + 9, z: MAINGATE.z, r: 10},
+  {k: "karargah", n: "TABUR KARARGÂHI", x: -125, z: 22, r: 8},
+  {k: "gazino", n: "SUBAY YEMEKHANESİ", x: MESS.x, z: MESS.z + 1.5, r: 4},
+  {k: "revir", n: "REVİR", x: -66, z: 46, r: 5},
+  {k: "yemekhane", n: "YEMEKHANE", x: -134, z: 74, r: 6},
+  {k: "kantin", n: "KANTİN", x: -105, z: 74, r: 5},
+  {k: "yasam", n: "YAŞAM ALANI", x: -242, z: 79, r: 10},
+  {k: "dus", n: "DUŞ · WC", x: -190, z: 80, r: 6},
+  {k: "spor", n: "SPOR ALANI", x: SPORT.cx, z: SPORT.cz, r: 16},
+  {k: "kesif", n: "KEŞİF BÖLÜĞÜ", x: -262, z: 2, r: 10},
+  {k: "kbol", n: "KARARGÂH BÖLÜĞÜ", x: -185, z: 2, r: 10},
+  {k: "tank1", n: "1. TANK BÖLÜĞÜ", x: 34.5, z: -43, r: 14},
+  {k: "tank2", n: "2. TANK BÖLÜĞÜ", x: 98.5, z: -43, r: 14},
+  {k: "bakim", n: "BAKIM ATÖLYESİ", x: 32, z: -3, r: 8},
+  {k: "topcu", n: "TOPÇU", x: -244, z: -46, r: 12},
+  {k: "havan", n: "HAVAN", x: -190, z: -46, r: 10},
+  {k: "engel", n: "ENGEL PARKURU", x: -136, z: -52, r: 14},
+  {k: "atis", n: "400 m ATIŞ ALANI", x: -82, z: -96, r: 12, at: () => { const f = rangeFront(); return {x: f.x - 3, z: f.z + 4}; }},
+  {k: "parkur", n: "DRONE PARKURU", x: -46, z: -52, r: 12, at: () => { const f = courseFront(); return {x: f.x, z: f.z + 3}; }},
+  {k: "kapi", n: "ŞANTİYE KAPISI", x: -2, z: 53, r: 5},
+  {k: "siginak", n: "KAPALI DRONE SIĞINAĞI", x: edgeX(75) - 8, z: 75, r: 12, at: () => jobSpot("siginak")},
+  {k: "bunker", n: "BUNKER YAŞAM ALANI", x: PIT.x + PIT.w / 2, z: PIT.y + PIT.h / 2, r: 12, at: () => jobSpot("bunker")},
+  {k: "stok", n: "STOK SAHASI", x: OPS.sp.x, z: OPS.sp.z, r: 12, at: () => ({x: OPS.sp.x - 6, z: OPS.sp.z - 5})},
+  {k: "dokum", n: "DÖKÜM SAHASI", x: DUMP.x + DUMP.w / 2, z: DUMP.y + DUMP.h / 2, r: 10},
+  {k: "yakit", n: "YAKIT NOKTASI", x: FUEL.x, z: FUEL.z - 3, r: 6},
+  {k: "park", n: "MAKİNE PARKI", x: PARK.x + PARK.w / 2, z: PARK.y + PARK.h / 2, r: 10}];
+const PLK = {}; for (const p of PL) PLK[p.k] = p;
+function plTarget(p) { const a = p.at ? p.at() : null; return {x: a ? a.x : p.x, z: a ? a.z : p.z, n: p.n, r: p.r}; }
+const mePos = () => FOOT.on || FOOT.seq ? FOOT : vehicles[cur];
+const distTo = t => { const m = mePos(); return Math.hypot(t.x - m.x, t.z - m.z); };
+const tableT = () => { const c = chairOf(CUR) || CHAIRS[1]; return {x: c.x - Math.cos(c.a) * .7, z: c.z - Math.sin(c.a) * .7, n: "ÇAY OCAĞI", r: 2.5, seat: true}; };
+
+// ---------------- the waypoint: a green ring with a beam of light where you are going, a green arrow on the ground in front of you ----------------
+const WP = {on: false, x: 0, z: 0, n: "", r: 6, src: "", m: null};
+const WPV = (() => {
+  const g = new THREE.Group(), C = 0x22d955;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.6, .22, 8, 64), new THREE.MeshBasicMaterial({color: C, transparent: true, opacity: .95, fog: false, toneMapped: false})); ring.rotation.x = -Math.PI / 2; ring.position.y = .3; g.add(ring);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(2.5, 40), new THREE.MeshBasicMaterial({color: C, transparent: true, opacity: .24, depthWrite: false, fog: false, toneMapped: false})); disc.rotation.x = -Math.PI / 2; disc.position.y = .08; g.add(disc);
+  const bt = texCanvas(4, 64, (c, W, H) => { const gr = c.createLinearGradient(0, H, 0, 0); gr.addColorStop(0, "rgba(34,217,85,.95)"); gr.addColorStop(.6, "rgba(34,217,85,.45)"); gr.addColorStop(1, "rgba(34,217,85,0)"); c.fillStyle = gr; c.fillRect(0, 0, W, H); });
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 30, 18, 1, true), new THREE.MeshBasicMaterial({map: bt, transparent: true, opacity: .8, depthWrite: false, side: THREE.DoubleSide, fog: false, toneMapped: false}));
+  beam.position.y = 15; g.add(beam);
+  for (const o of [ring, disc, beam]) { o.userData.noAO = true; o.renderOrder = 6; }
+  g.visible = false; scene.add(g); return {g, ring, disc, beam}; })();
+const WPA = (() => { const sh = new THREE.Shape(); sh.moveTo(0, .95); sh.lineTo(.66, .08); sh.lineTo(.24, .08); sh.lineTo(.24, -.8); sh.lineTo(-.24, -.8); sh.lineTo(-.24, .08); sh.lineTo(-.66, .08); sh.closePath();
+  const geo = new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI / 2);   // flat, the tip towards -z
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color: 0x22d955, transparent: true, opacity: .95, depthWrite: false, side: THREE.DoubleSide, fog: false, toneMapped: false}));
+  m.userData.noAO = true; m.renderOrder = 6; m.visible = false; scene.add(m); return m; })();
+function wpSet(t, src, m) { Object.assign(WP, {on: true, x: t.x, z: t.z, n: t.n || "İŞARET", r: t.r || 6, src: src || "map", m: m || null}); WPV.g.visible = true; }
+function wpClear() { WP.on = false; WP.src = ""; WP.m = null; WPV.g.visible = false; WPA.visible = false; }
+function wpFrame(dt) {
+  if (!WP.on || !running) { WPV.g.visible = false; WPA.visible = false; return; }
+  const me = mePos(), dx = WP.x - me.x, dz = WP.z - me.z, d = Math.hypot(dx, dz), y = footGround(WP.x, WP.z);
+  WPV.g.visible = true; WPV.g.position.set(WP.x, y, WP.z); const k = 1 + Math.sin(TT * 4) * .06; WPV.ring.scale.set(k, k, 1); WPV.beam.material.opacity = .8 * (d < 30 ? Math.max(.2, d / 30) : 1);
+  const foot = FOOT.on || FOOT.seq, off = foot ? 3.4 : 6, sc = foot ? 1.5 : 2.4;
+  if (d > WP.r + 1.5) { const ux = dx / d, uz = dz / d, ax = me.x + ux * off, az = me.z + uz * off; WPA.visible = true; WPA.scale.setScalar(sc * (1 + Math.sin(TT * 6) * .05)); WPA.position.set(ax, footGround(ax, az) + (foot ? .22 : .5), az); WPA.rotation.y = -Math.atan2(uz, ux) - Math.PI / 2; }
+  else WPA.visible = false;
+  if (WP.src === "map" && d < WP.r) { toast("✓ Vardın · " + WP.n, 1.8); wpClear(); }
+  wpmFrame(d);
+}
+// the name and the distance on the screen, over the ring (only while the ring is in sight: off to the side the ground arrow and the minimap show the way)
+const WPM = (() => { const d = document.createElement("div"); d.id = "wpm"; d.hidden = true; d.innerHTML = "<b></b><span></span><i></i>"; const h = document.getElementById("hud"); if (h) h.before(d); else document.body.appendChild(d);
+  return {d, b: d.children[0], s: d.children[1], n: null, m: -1}; })();
+const WPMV = new THREE.Vector3();
+function wpmFrame(d) {
+  let show = WP.on && running && d > WP.r + 1 && !CARCAM.on && !PICK.cine && !DAY.rep && !MAPS.open, x = 0, y = 0;
+  if (show) { WPMV.set(WP.x, footGround(WP.x, WP.z) + 3.4, WP.z).applyMatrix4(cam.matrixWorldInverse);
+    if (WPMV.z > -1.5) show = false; else { WPMV.applyMatrix4(cam.projectionMatrix); const W = innerWidth, H = innerHeight; x = (WPMV.x * .5 + .5) * W; y = (-WPMV.y * .5 + .5) * H;
+      if (x < 30 || x > W - 30) show = false; else y = Math.max(H * .16, Math.min(H * .74, y)); } }
+  if (!show) { if (!WPM.d.hidden) WPM.d.hidden = true; return; }
+  if (WPM.d.hidden) WPM.d.hidden = false;
+  if (WPM.n !== WP.n) { WPM.n = WP.n; WPM.b.textContent = WP.n; }
+  const m = Math.round(d); if (m !== WPM.m) { WPM.m = m; WPM.s.textContent = m + " m"; }
+  WPM.d.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-100%)`; }
+// walk there by yourself: along the paths, a little faster than walking; the stick or WASD takes the control back
+function autoGo(t) { if (!t || !running) return;
+  if (!FOOT.on || FOOT.seq) { toast("Önce araçtan in (E)", 1.6); return; }
+  if (BRIEF.on || MEET.boss || RECV.on || FORM.on || PICK.cine || (AUTO.on && !AUTO.go)) { toast("Şu an olmaz", 1.4); return; }
+  autoWalk(t.x, t.z, Math.atan2(t.z - FOOT.z, t.x - FOOT.x)); AUTO.go = true; AUTO.line = false; AUTO.v = 6.2; AUTO.stop = t.seat ? .3 : Math.max(1.2, (t.r || 3) - 1.5); AUTO.seat = !!t.seat;
+  toast("Gidiyorsun · durmak için joystick'i oynat", 2.2); }
+
+// ---------------- the call: everyone to the tea house, and back to work ----------------
+const bCall = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.textContent = "TOPLA"; const c = document.querySelector(".ctxL"); if (c) c.appendChild(b);
+  b.addEventListener("click", () => callToggle()); return b; })();
+function callToggle() { if (!running || !DAY.on) return;
+  if (MEET.called) { allToSites(true); toast("Herkes görev başına", 1.8); if (WP.src === "call") wpClear(); }
+  else { allToTea(true); toast("Subayları çay ocağına çağırdın · masaya otur", 2.4); if (!SEAT.on && WP.src !== "mis") wpSet(tableT(), "call"); }
+  callBtn(); }
+function callBtn() { const t = MEET.called ? "İŞ BAŞINA" : "TOPLA"; if (bCall.textContent !== t) bCall.textContent = t; bCall.classList.toggle("on", !!MEET.called); bCall.hidden = !DAY.on; }
+addEventListener("keydown", e => { if (!running || e.repeat) return; if (e.code === "KeyQ") callToggle(); if (e.code === "KeyM") { e.preventDefault(); mapOpen(); } });
+
+// ---------------- the world map: drawn once (roads, buildings, the ranges), the site part copied in live ----------------
+const WMB = {x0: -312, x1: 222, z0: -136, z1: 152, s: 3};
+const WM = (() => { const c = document.createElement("canvas"), S = WMB.s; c.width = Math.round((WMB.x1 - WMB.x0) * S); c.height = Math.round((WMB.z1 - WMB.z0) * S); const g = c.getContext("2d");
+  const X = x => (x - WMB.x0) * S, Z = z => (z - WMB.z0) * S;
+  const rect = (x, z, w, d, fill, line) => { g.fillStyle = fill; g.fillRect(X(x - w / 2), Z(z - d / 2), w * S, d * S); if (line) { g.strokeStyle = line; g.lineWidth = 1.5; g.strokeRect(X(x - w / 2), Z(z - d / 2), w * S, d * S); } };
+  g.fillStyle = "#b9a37c"; g.fillRect(0, 0, c.width, c.height);   // the land outside
+  g.fillStyle = "#d8c9a5"; g.fillRect(X(GAR.x0), Z(GAR.z0), (GAR.x1 - GAR.x0) * S, (GAR.z1 - GAR.z0) * S);   // inside the fence
+  // roads: the access road, the garrison's road net
+  g.lineCap = "round"; g.lineJoin = "round";
+  const road = (pts, w, col) => { g.strokeStyle = col; g.lineWidth = w * S; g.beginPath(); pts.forEach(([x, z], i) => i ? g.lineTo(X(x), Z(z)) : g.moveTo(X(x), Z(z))); g.stroke(); };
+  road([[WMB.x0, 60], [GN.G[0], 60]], 7.5, "#8f877b");
+  for (const [a, b] of GE) road([GN[a], GN[b]], 7.5, "#8f877b");
+  road([[WMB.x0, 60], [GN.G[0], 60]], 6, "#a59d90"); for (const [a, b] of GE) road([GN[a], GN[b]], 6, "#a59d90");
+  // the tea-house hill, its ramp and steps
+  g.fillStyle = "#c7b48a"; g.fillRect(X(TER.x0 - 4), Z(TER.z0 - 4), (TER.x1 - TER.x0 + 8) * S, (TER.z1 - TER.z0 + 8) * S);
+  g.fillStyle = "#e3d6b4"; g.fillRect(X(TER.x0), Z(TER.z0), (TER.x1 - TER.x0) * S, (TER.z1 - TER.z0) * S);
+  g.fillStyle = "#b8ab92"; g.fillRect(X(RAMP.x0), Z(RAMP.z0), (TER.x0 - RAMP.x0) * S, (RAMP.z1 - RAMP.z0) * S);
+  g.fillStyle = "#cfc7b6"; g.fillRect(X(STAIR.x0), Z(TER.z1), (STAIR.x1 - STAIR.x0) * S, (STAIR.z1 - TER.z1) * S);
+  // the sports ground
+  g.fillStyle = "#9b4a34"; g.beginPath(); g.ellipse(X(SPORT.cx), Z(SPORT.cz), SPORT.rx * S + 2 * S, SPORT.rz * S + 2 * S, 0, 0, 7); g.fill();
+  g.fillStyle = "#6c8a4b"; g.fillRect(X(SPORT.cx - 30), Z(SPORT.cz - 18), 60 * S, 36 * S);
+  // the 400 m range and the drone course (under construction)
+  g.fillStyle = "#cdb88f"; g.fillRect(X(RNG.x0), Z(RNG.z0), (RNG.x1 - RNG.x0) * S, (RNG.z1 - RNG.z0) * S);
+  g.strokeStyle = "rgba(90,70,40,.45)"; g.lineWidth = 1; for (let i = 1; i < RNG.lanes; i++) { const z = RNG.z0 + (RNG.z1 - RNG.z0) * i / RNG.lanes; g.beginPath(); g.moveTo(X(RNG.x0), Z(z)); g.lineTo(X(RNG.x1), Z(z)); g.stroke(); }
+  g.strokeStyle = "#6b5a3e"; g.lineWidth = 2; for (let k = 0; k <= 4; k++) { const x = RNG.x0 + k * 100; g.beginPath(); g.moveTo(X(x), Z(RNG.z0)); g.lineTo(X(x), Z(RNG.z1)); g.stroke(); }
+  g.fillStyle = "#cbb791"; g.fillRect(X(DRC.x0), Z(DRC.z0), (DRC.x1 - DRC.x0) * S, (DRC.z1 - DRC.z0) * S); g.strokeStyle = "#7a6a4c"; g.lineWidth = 1.5; g.strokeRect(X(DRC.x0), Z(DRC.z0), (DRC.x1 - DRC.x0) * S, (DRC.z1 - DRC.z0) * S);
+  if (typeof DGATES !== "undefined") { g.fillStyle = "#3d6fb0"; for (const [x, z] of DGATES) g.fillRect(X(x) - 3, Z(z) - 3, 6, 6); }
+  g.fillStyle = "#8a7a58"; for (const [x, z] of OBST) g.fillRect(X(x) - 4, Z(z) - 4, 8, 8);
+  // buildings
+  const B = "#6d7354", BL = "#3a3f2c";
+  for (const [x, z, w, d] of [[-33, 35, 18, 10], [-66, 40, 14, 9], [-125, 13.5, 26, 11], [-134, 84, 32, 15], [-105, 80, 13, 9], [-262, -9, 22, 12], [-185, -10, 44, 12], [34.5, -60, 61, 12], [98.5, -60, 61, 12], [32, -12, 16, 12],
+    [MAINGATE.x + 8, MAINGATE.z + 10.5, 7, 5], [MAINGATE.x + 4, MAINGATE.z + 6.2, 2.2, 2.2]]) rect(x, z, w, d, B, BL);
+  for (let r = 0; r < 5; r++) for (let i = 0; i < 10; i++) rect(-276 + i * 7.4, 84 + r * 9.5, 6.1, 2.4, "#cfc8b4", "#8e8676");
+  for (let k = 0; k < 4; k++) rect(-194 + (k % 2) * 7.4, 86 + Math.floor(k / 2) * 9.5, 6.1, 2.4, "#c7d1c4", "#808a7c");
+  g.fillStyle = "#3c4130"; for (const [x, z] of TANKSPOTS) g.fillRect(X(x) - 2.6 * S, Z(z) - 1.6 * S, 5.2 * S, 3.2 * S);
+  g.fillStyle = "#4f553e"; for (const p of GUNS) g.fillRect(X(p[0]) - 4, Z(p[1]) - 4, 8, 8); for (const p of PITS) { g.beginPath(); g.arc(X(p[0]), Z(p[1]), 4, 0, 7); g.fill(); }
+  // the fence, the towers
+  g.strokeStyle = "#5d5a52"; g.lineWidth = 2; for (const [[ax, az], [bx, bz]] of FENCE) { g.beginPath(); g.moveTo(X(ax), Z(az)); g.lineTo(X(bx), Z(bz)); g.stroke(); }
+  g.fillStyle = "#4a4f3b"; for (const [x, z] of GTOWERS) g.fillRect(X(x) - 5, Z(z) - 5, 10, 10);
+  return c; })();
+// world -> map pixels (landscape: x right, z down; portrait: turned a quarter so the long side runs down the screen)
+function mapXf(W, H, pad, top, bot) { const rot = H > W, ww = WMB.x1 - WMB.x0, hh = WMB.z1 - WMB.z0; top = top == null ? pad : top; bot = bot == null ? pad : bot; const AH = H - top - bot;
+  const s = rot ? Math.min((W - 2 * pad) / hh, AH / ww) : Math.min((W - 2 * pad) / ww, AH / hh);
+  const mw = (rot ? hh : ww) * s, mh = (rot ? ww : hh) * s, ox = (W - mw) / 2, oy = top + (AH - mh) / 2;
+  return {rot, s, ox, oy, mw, mh,
+    w2s: (x, z) => rot ? [ox + (WMB.z1 - z) * s, oy + (x - WMB.x0) * s] : [ox + (x - WMB.x0) * s, oy + (z - WMB.z0) * s],
+    s2w: (px, py) => rot ? [WMB.x0 + (py - oy) / s, WMB.z1 - (px - ox) / s] : [WMB.x0 + (px - ox) / s, WMB.z0 + (py - oy) / s]}; }
+function drawWorld(g, T) { // the background image and the live site plan
+  g.save(); if (T.rot) { g.translate(T.ox + T.mw, T.oy); g.rotate(Math.PI / 2); } else g.translate(T.ox, T.oy);
+  const S = T.s; g.drawImage(WM, 0, 0, (WMB.x1 - WMB.x0) * S, (WMB.z1 - WMB.z0) * S);
+  g.drawImage(mapCanvas, (0 - WMB.x0) * S, (0 - WMB.z0) * S, WX * S, WZ * S); g.restore(); }
+const OFFCOL = {kaan: "#ffd27a", furkan: "#7fd1ff", boran: "#9b8cff", ahmet: "#ff9f6b", ali: "#7dff9e", orhan: "#ff7ad9", azizhan: "#ffe14d", ufuk: "#d9d9d9", levent: "#ff4d4d"};
+function pill(g, txt, x, y, size, fg, bg) { g.font = `800 ${size}px system-ui, sans-serif`; const w = g.measureText(txt).width + size * .9, h = size * 1.55;
+  g.fillStyle = bg || "rgba(20,22,18,.86)"; const r = h / 2, x0 = x - w / 2, y0 = y - h / 2; g.beginPath(); g.moveTo(x0 + r, y0); g.arcTo(x0 + w, y0, x0 + w, y0 + h, r); g.arcTo(x0 + w, y0 + h, x0, y0 + h, r); g.arcTo(x0, y0 + h, x0, y0, r); g.arcTo(x0, y0, x0 + w, y0, r); g.fill();
+  g.fillStyle = fg || "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(txt, x, y + size * .04); return [x0, y0, w, h]; }
+function drawMarks(g, T, big) { // places, people, machines, trouble, the ring and you
+  const L = []; const hit = b => L.some(a => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3]);
+  const fs = big ? Math.max(11, Math.min(15, T.s * 4.2)) : 8.5;
+  // the ring and the line to it
+  const me = mePos(), [mx, my] = T.w2s(me.x, me.z);
+  if (WP.on) { const [wx, wy] = T.w2s(WP.x, WP.z); g.strokeStyle = "rgba(57,228,111,.85)"; g.lineWidth = big ? 3 : 1.5; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(mx, my); g.lineTo(wx, wy); g.stroke(); g.setLineDash([]);
+    g.lineWidth = big ? 4 : 2; g.beginPath(); g.arc(wx, wy, big ? 11 : 6, 0, 7); g.stroke(); }
+  // the officers on their way: a thin line to where they are going
+  if (big) for (const o of OFFS) { if (!o.S || !o.S.root.visible || isPlayer(o) || o.st !== "walk" || !o.path || !o.path.length) continue; const e = o.path[o.path.length - 1], [ex, ey] = T.w2s(e[0], e[1]), [ox, oy] = T.w2s(o.x, o.z);
+    g.strokeStyle = OFFCOL[o.d.key] || "#fff"; g.globalAlpha = .7; g.lineWidth = 1.5; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(ox, oy); g.lineTo(ex, ey); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; }
+  // the machines and the cars
+  g.fillStyle = "#f2b705"; for (const v of vehicles) { const [x, y] = T.w2s(v.x, v.z); g.fillRect(x - (big ? 4 : 2), y - (big ? 4 : 2), big ? 8 : 4, big ? 8 : 4); }
+  for (const k in CARS) { const c = CARS[k]; if (!c.g.visible) continue; const [x, y] = T.w2s(c.x, c.z); g.fillStyle = k === "levent" ? "#111" : k === "ufuk" ? "#d8d0b8" : "#c8102e"; g.fillRect(x - (big ? 5 : 2.5), y - (big ? 3 : 1.5), big ? 10 : 5, big ? 6 : 3); }
+  // trouble
+  for (const e of DAY.ev) { const p = e.v || e.w; if (!p) continue; const [x, y] = T.w2s(p.x, p.z); g.fillStyle = "#e0251b"; g.beginPath(); g.arc(x, y, big ? 9 : 5, 0, 7); g.fill(); g.fillStyle = "#fff"; g.font = `900 ${big ? 13 : 8}px system-ui`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("!", x, y + 1); }
+  // the officers
+  for (const o of OFFS) { if (!o.S || isPlayer(o) || !o.S.root.visible || o.st === "away") continue; const [x, y] = T.w2s(o.x, o.z), col = OFFCOL[o.d.key] || "#fff";
+    g.fillStyle = "#111"; g.beginPath(); g.arc(x, y, big ? 6 : 3.4, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(x, y, big ? 4.5 : 2.4, 0, 7); g.fill();
+    if (big) { g.font = "700 11px system-ui"; g.textAlign = "left"; g.textBaseline = "middle"; g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,.75)"; g.strokeText(o.d.short, x + 8, y); g.fillStyle = col; g.fillText(o.d.short, x + 8, y); } }
+  // the places
+  const pts = PL.map(p => { const [x, y] = T.w2s(p.x, p.z); return {p, x, y}; });
+  for (const q of pts) { if (q.x < -40 || q.y < -20 || q.x > g.canvas.width + 40 || q.y > g.canvas.height + 20) continue;
+    g.font = `800 ${fs}px system-ui, sans-serif`; const w = g.measureText(q.p.n).width + fs * .9, h = fs * 1.55, box = [q.x - w / 2, q.y - h - 3, w, h]; if (hit(box)) { if (!big) continue; box[1] = q.y + 4; if (hit(box)) continue; }
+    L.push(box); g.fillStyle = "#fff"; g.beginPath(); g.arc(q.x, q.y, big ? 3 : 1.6, 0, 7); g.fill();
+    pill(g, q.p.n, box[0] + w / 2, box[1] + h / 2, fs, WP.on && WP.n === q.p.n ? "#0f2a17" : "#fff", WP.on && WP.n === q.p.n ? "#5ff08a" : null); q.box = box; }
+  // you
+  const a = FOOT.on || FOOT.seq ? FOOT.a : vehicles[cur].a, aa = T.rot ? a + Math.PI / 2 : a, R0 = big ? 9 : 5;
+  g.save(); g.translate(mx, my); g.rotate(aa); g.fillStyle = "#fff"; g.strokeStyle = "#000"; g.lineWidth = 2; g.beginPath(); g.moveTo(R0 * 1.3, 0); g.lineTo(-R0 * .8, R0 * .75); g.lineTo(-R0 * .4, 0); g.lineTo(-R0 * .8, -R0 * .75); g.closePath(); g.stroke(); g.fill(); g.restore();
+  return pts; }
+// ---- the big map ----
+const MAPV = (() => { const d = document.createElement("div"); d.id = "mapv"; d.hidden = true; d.style.cssText = "position:fixed;inset:0;z-index:23;background:#14160f;touch-action:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)";
+  d.innerHTML = '<canvas id="mapc" style="position:absolute;inset:0;width:100%;height:100%"></canvas>' +
+    '<div style="position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 8px);text-align:center;pointer-events:none;font:800 15px system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px #000">HARİTA · gideceğin yere dokun, YÜRÜ ile kendiliğinden git</div>' +
+    '<div style="position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;padding:0 10px;pointer-events:none">' +
+    '<div id="mapSel" style="flex-basis:100%;text-align:center;font:800 16px system-ui,sans-serif;color:#7dff9e;text-shadow:0 1px 3px #000,0 0 6px #000"></div>' +
+    '<button class="big mapb" type="button" id="mapGo" style="background:#39e46f;color:#0f2a17">YÜRÜ ▸</button><button class="big alt mapb" type="button" id="mapClr">İŞARETİ KALDIR</button><button class="big alt mapb" type="button" id="mapX">KAPAT</button></div>';
+  document.body.appendChild(d); return d; })();
+const MAPS = {open: false, was: false, T: null, pts: null};
+function mapOpen() { if (MAPS.open || (!running && !DAY.on)) return; MAPS.was = running; running = false; MAPS.open = true; MAPV.hidden = false; mapDraw(); }
+function mapClose() { if (!MAPS.open) return; MAPS.open = false; MAPV.hidden = true; running = MAPS.was; }
+function mapDraw() { const c = document.getElementById("mapc"), dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight; c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+  const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = "#14160f"; g.fillRect(0, 0, W, H);
+  const top = (H > W ? 58 : 34) + safeTop(), T = mapXf(W, H, 10, top, 96 + safeBot()); MAPS.T = T; drawWorld(g, T); MAPS.pts = drawMarks(g, T, true); mapBar(); }
+const safeTop = () => parseFloat(getComputedStyle(MAPV).paddingTop) || 0, safeBot = () => parseFloat(getComputedStyle(MAPV).paddingBottom) || 0;
+function mapBar() { const s = document.getElementById("mapSel"), go = document.getElementById("mapGo"), c = document.getElementById("mapClr");
+  s.textContent = WP.on ? "◎ " + WP.n + " · " + Math.round(distTo(WP)) + " m" : ""; go.hidden = !WP.on || !FOOT.on || !!FOOT.seq; c.hidden = !WP.on; }
+document.getElementById("mapc").addEventListener("pointerdown", e => { const T = MAPS.T; if (!T) return; const px = e.clientX, py = e.clientY;
+  let best = null, bd = 30; for (const q of MAPS.pts || []) { const d = Math.hypot(q.x - px, q.y - py); if (d < bd) { bd = d; best = q; } if (q.box && px > q.box[0] && px < q.box[0] + q.box[2] && py > q.box[1] && py < q.box[1] + q.box[3]) { best = q; bd = 0; } }
+  let t; if (best) t = plTarget(best.p); else { const [x, z] = T.s2w(px, py); if (x < WMB.x0 || x > WMB.x1 || z < WMB.z0 || z > WMB.z1) return; t = {x, z, n: "İŞARET", r: 5}; }
+  wpSet(t, "map"); mapDraw(); });
+document.getElementById("mapX").addEventListener("click", mapClose);
+document.getElementById("mapGo").addEventListener("click", () => { if (!WP.on) return; const t = {x: WP.x, z: WP.z, r: WP.r}; mapClose(); autoGo(t); });
+document.getElementById("mapClr").addEventListener("click", () => { wpClear(); mapDraw(); });
+const bMap = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "tb"; b.textContent = "HARİTA"; const t = document.querySelector(".tools"); if (t) t.prepend(b); b.addEventListener("click", mapOpen); return b; })();
+document.getElementById("mini").addEventListener("click", mapOpen);
+let goDown = 0;
+document.getElementById("tasks").addEventListener("pointerdown", e => { if (!e.target.closest(".go")) return; e.preventDefault(); goDown = performance.now();
+  if (AUTO.on && AUTO.go) { AUTO.on = false; AUTO.go = false; FOOT.spd = 0; updCtx(); return; } const m = MIS.cur, t = m && m.target ? m.target() : null; if (t) autoGo(t); });
+document.getElementById("tasks").addEventListener("click", e => { if (performance.now() - goDown < 700 || e.target.closest(".go")) return; if (e.target.closest(".mis")) mapOpen(); });
+// ---- the minimap: the area round you, the nearest names ----
+function miniMap(mc) { const W = mc.canvas.width, H = mc.canvas.height, me = mePos(), s = 1.05;   // pixels per metre
+  const T = {rot: false, s, w2s: (x, z) => [W / 2 + (x - me.x) * s, H / 2 + (z - me.z) * s]};
+  mc.fillStyle = "#b9a37c"; mc.fillRect(0, 0, W, H);
+  const S = WMB.s, sx = (me.x - W / 2 / s - WMB.x0) * S, sy = (me.z - H / 2 / s - WMB.z0) * S; mc.drawImage(WM, sx, sy, W / s * S, H / s * S, 0, 0, W, H);
+  const [ox, oy] = T.w2s(0, 0); mc.drawImage(mapCanvas, ox, oy, WX * s, WZ * s);
+  mc.fillStyle = "#7fe3ff"; for (const w of CREW) { const [x, y] = T.w2s(w.x, w.z); if (x > 0 && y > 0 && x < W && y < H) mc.fillRect(x - 1, y - 1, 2.2, 2.2); }   // the soldiers on the site
+  drawMarks(mc, T, false);
+  if (WP.on) { const [x, y] = T.w2s(WP.x, WP.z); if (x < 4 || y < 4 || x > W - 4 || y > H - 4) { const a = Math.atan2(y - H / 2, x - W / 2), ex = W / 2 + Math.cos(a) * (W / 2 - 7), ey = H / 2 + Math.sin(a) * (H / 2 - 7);   // the ring is off the edge: a green pointer at the edge
+      mc.save(); mc.translate(Math.max(7, Math.min(W - 7, ex)), Math.max(7, Math.min(H - 7, ey))); mc.rotate(a); mc.fillStyle = "#39e46f"; mc.beginPath(); mc.moveTo(7, 0); mc.lineTo(-5, 5); mc.lineTo(-5, -5); mc.closePath(); mc.fill(); mc.restore(); } } }
+
+// ---------------- the tasks: a chain for the day, trouble in between, a goal for the week ----------------
+const MIS = {q: [], cur: null};
+function misAdd(m) { if (MIS.q.some(q => q.k === m.k)) return null; m.done = false; MIS.q.push(m); return m; }
+function misOpen(m) { return !m.done && (m.from == null || DAY.t >= m.from) && (!m.after || MIS.q.some(q => q.k === m.after && q.done)); }
+function misPick() { const o = MIS.q.filter(m => misOpen(m) && !m.info); return o.find(m => m.urgent) || o[0] || null; }
+function misEnd(m, ok, why) { if (m.done) return; m.done = true; m.ok = ok; if (m.end) m.end(ok);
+  if (!m.quiet) toast((ok ? "✓ GÖREV TAMAM · " : "✗ GÖREV KAÇTI · ") + m.t + (why ? " · " + why : ""), 2.6);
+  if (WP.src === "mis" && WP.m === m) wpClear(); if (MIS.cur === m) MIS.cur = null; }
+function misPoint(m) { // the ring goes where the task is (unless you put your own mark on the map)
+  if (WP.src === "map") return; const t = m && m.target ? m.target() : null;
+  if (!t) { if (WP.src === "mis" || WP.src === "call") wpClear(); return; }
+  if (!WP.on || WP.src !== "mis" || WP.m !== m) wpSet(t, "mis", m); else { WP.x = t.x; WP.z = t.z; WP.n = t.n || WP.n; WP.r = t.r || WP.r; } }
+function misFrame(dt) {
+  callBtn(); if (!DAY.on || DAY.rep) return;
+  for (const m of MIS.q) if (!m.done && m.until != null && DAY.t > m.until) misEnd(m, !!m.okLate, m.lateWhy);
+  for (const m of MIS.q) if (misOpen(m)) { if (m.tick) m.tick(dt); if (!m.done && m.check && m.check()) misEnd(m, true); }   // every open task counts what you do, not only the one on the ring
+  const c = misPick(); if (c !== MIS.cur) { MIS.cur = c; if (c && c.begin && !c.begun) { c.begun = true; c.begin(); } }
+  if (!c) { if (WP.src === "mis") wpClear(); return; }
+  misPoint(c); }
+function misHtml() { if (!DAY.on) return ""; let h = "";
+  for (const m of MIS.q) if (m.info && misOpen(m)) h += `<section class="mis urg"><b>⚠ ${m.t}</b><p>${typeof m.d === "function" ? m.d() : m.d}</p></section>`;
+  const m = MIS.cur; if (!m) return h;
+  const t = m.target ? m.target() : null, d = t ? Math.round(distTo(t)) : null, txt = typeof m.d === "function" ? m.d() : m.d;
+  const go = t && d > (t.r || 4) + 2 && FOOT.on && !FOOT.seq ? `<button type="button" class="go">${AUTO.on && AUTO.go ? "DUR · " + d + " m" : "GİT · " + d + " m"}</button>` : "";
+  return h + `<section class="mis${m.urgent ? " urg" : ""}"><b>▶ ${m.t}</b>${d != null && !go ? `<em>${d} m</em>` : ""}<p>${go}${txt}</p></section>`; }
+// a status report from the officer in charge when you come to his site (or from the site's sergeant when he is away or is you)
+const SITEREP = {
+  siginak: ["furkan", () => `Komutanım, sığınakta bugün ${Math.max(0, (stats.kemparM || 0) - DAY.s0.tunnel).toFixed(0)} metre ilerledik. Kempar kesiyor.`],
+  bunker: ["kaan", () => `Komutanım, bunker çukurundan bugüne kadar ${Math.round(stats.pit)} metreküp toprak çıktı.`],
+  stok: ["ahmet", () => `Komutanım, kamyonlar bugün ${DAY.trips - DAY.s0.trips} sefer yaptı, stok sahası toparlanıyor.`],
+  atis: ["ali", () => `Komutanım, atış alanı yüzde ${Math.round(RNG.p * 100)} tamam. Hedef çerçeveleri dikiliyor.`],
+  parkur: ["orhan", () => `Komutanım, drone parkuru yüzde ${Math.round(DRC.p * 100)}. Kapılar yerine oturuyor.`]};
+function siteReport(k) { const [who, f] = SITEREP[k], o = OFFM[who], txt = f();
+  if (o && o.S && !isPlayer(o) && o.S.root.visible && Math.hypot(o.x - mePos().x, o.z - mePos().z) < 22) say(o, txt, 3.2); else { subEl.innerHTML = `<span style="color:#ffd27a">ŞANTİYE ÇAVUŞU:</span> ${txt}`; subEl.style.opacity = 1; subEl._t = 3.2; } }
+// the inspection round: every site once, the nearest first
+const TOUR = ["siginak", "bunker", "stok", "atis", "parkur"];
+function tourNext(m) { let best = null, bd = 1e9; for (const k of TOUR) { if (m.seen[k]) continue; const t = plTarget(PLK[k]), d = distTo(t); if (d < bd) { bd = d; best = t; best.k = k; } } return best; }
+function storyDay() { // the day's chain
+  MIS.q = []; MIS.cur = null; if (WP.src !== "map") wpClear();
+  misAdd({k: "sabah", t: "Sabah çayı", d: "Çay ocağında masaya otur.", until: 449, target: () => SEAT.on ? null : tableT(), check: () => SEAT.on, quiet: true});
+  misAdd({k: "brif", t: "Görev dağılımı", d: "Azizhan Üsteğmen görevleri veriyor · masaya otur, dinle.", from: 450, target: () => SEAT.on || BRIEF.on && AUTO.on ? null : tableT(), check: () => DAY.rolled && !BRIEF.on, until: 540, okLate: true, quiet: true});
+  const tour = misAdd({k: "tur", t: "Denetim turu", seen: {}, n: 0, from: 450, after: "brif",
+    d: () => { const nx = tourNext(tour); return `Şantiyeleri dolaş (${tour.n}/${TOUR.length})` + (nx ? ` · sıradaki: ${nx.n}` : ""); },
+    target: () => tourNext(tour),
+    tick: () => { for (const k of TOUR) { if (tour.seen[k]) continue; const t = plTarget(PLK[k]); if (distTo(t) < t.r) { tour.seen[k] = true; tour.n++; siteReport(k); satAdd(1, PLK[k].n.toLowerCase() + " denetlendi"); } } },
+    check: () => tour.n >= TOUR.length, end: ok => ok && satAdd(3, "denetim turu tamam")});
+  // ten o'clock: tea with the officers (you call them, you sit, ten minutes), then everybody back to work
+  if (!(DAY.day >= CAMP.day && !CAMP.done)) { const mola = misAdd({k: "mola", t: "Çay molası", hold: 0, from: 600, until: 690, urgent: true, quiet: true,
+    d: () => !MEET.called ? "TOPLA ile subayları çağır, masaya otur." : !SEAT.on ? "Subaylar geliyor · sen de masaya otur." : seated().length < 3 ? "Subayları bekle…" : `Çay içiliyor · ${Math.max(0, 10 - Math.floor(mola.hold))} dk`,
+    target: () => SEAT.on ? null : tableT(),
+    tick: dt => { if (SEAT.on && MEET.called && seated().length >= 3) mola.hold += dt; },
+    check: () => mola.hold >= 10,
+    end: ok => { if (!ok) { toast("Çay molası kaçtı", 2); return; } satAdd(2, "çay molasında subaylar bir arada"); toast("Mola bitti · İŞ BAŞINA ile herkesi görevine gönder", 2.8);
+      misAdd({k: "molason", t: "İş başına", urgent: true, quiet: true, d: "İŞ BAŞINA ile herkesi görevine gönder.", until: DAY.t + 40, check: () => !MEET.called,
+        end: ok2 => { if (ok2) satAdd(1, "mola zamanında bitti"); else toast("Subaylar hâlâ çay ocağında!", 2.2); }}); }}); }
+  // at the wheel yourself: one day the excavator in the bunker pit, the next a full truck to the dump
+  const mk = DAY.day % 2 ? "ex" : "tr", bestTruck = () => vehicles.filter(v => v.type === "tr" && !v.broken).sort((a, b) => (b.load - (b.aiState === "wait" ? 0 : 2)) - (a.load - (a.aiState === "wait" ? 0 : 2)))[0];
+  const myTruck = () => { const v = vehicles[cur]; return mine(v) && v.type === "tr" ? v : null; };
+  const mach = misAdd(mk === "ex" ? {k: "makine", t: "Ekskavatöre geç", acc: 0, last: null, after: "tur",
+    d: () => mine(EXC) ? `Bunker çukurunu kaz · ${mach.acc.toFixed(1)} / 2 m³` : "E ile bin · bunker çukurunda 2 m³ kaz.",
+    target: () => mine(EXC) ? null : {x: EXC.x, z: EXC.z, n: "EKSKAVATÖR", r: 5},
+    tick: () => { const s = stats.pit; if (mine(EXC) && mach.last != null) mach.acc += Math.max(0, s - mach.last); mach.last = s; },
+    check: () => mach.acc >= 2, end: ok => ok && satAdd(3, "ekskavatörü bizzat kullandın")} :
+    {k: "makine", t: "Kamyonla sefer", acc: 0, last: null, after: "tur",
+    d: () => { const v = myTruck(); if (v) return v.load > .5 ? `Döküm sahasına götür, damperi kaldır · kasa ${v.load.toFixed(1)}/${v.cap}` : "Kamyon boş · in (E), şoför devralır."; const t = bestTruck(); return t && t.load >= 3 ? "Dolu kamyona bin (E) · döküm sahasında boşalt." : "Kamyon yükleniyor · yanına git, dolunca bin (E)."; },
+    target: () => { const v = myTruck(); if (v) return v.load > .5 ? {x: DUMPC.x, z: DUMPC.z, n: "DÖKÜM SAHASI", r: 6} : null; const t = bestTruck(); return t ? {x: t.x, z: t.z, n: "KAMYON", r: 5} : null; },
+    tick: () => { const s = stats.dumped, v = myTruck(); if (v && mach.last != null) mach.acc += Math.max(0, s - mach.last); mach.last = s;
+      if (!v && FOOT.on) { const t = bestTruck(); if (t && t.ai && Math.hypot(t.x - FOOT.x, t.z - FOOT.z) < 14) t.hold = .3; } },   // the driver waits for you when you come up to the truck
+    check: () => mach.acc >= 3, end: ok => { if (!ok) return; DAY.trips++; satAdd(3, "bir seferi de sen çektin"); }});
+  misAdd({k: "ogle", t: "Öğle yemeği", d: "Subay yemekhanesine git.", from: 720, until: 772, urgent: true, quiet: true, target: () => plTarget(PLK.gazino), check: () => distTo(PLK.gazino) < 5, end: ok => ok && lunchSkip()});
+  // the afternoon: two sites again for the evening report
+  const two = TOUR.slice().sort(() => Math.random() - .5).slice(0, 2);
+  const kon = misAdd({k: "kontrol", t: "Öğleden sonra kontrolü", seen: {}, n: 0, from: 810, after: "tur",
+    d: () => "Uğra: " + two.map(k => (kon.seen[k] ? "✓ " : "") + PLK[k].n).join(" · "),
+    target: () => { let best = null, bd = 1e9; for (const k of two) { if (kon.seen[k]) continue; const t = plTarget(PLK[k]), dd = distTo(t); if (dd < bd) { bd = dd; best = t; } } return best; },
+    tick: () => { for (const k of two) { if (kon.seen[k]) continue; const t = plTarget(PLK[k]); if (distTo(t) < t.r) { kon.seen[k] = true; kon.n++; siteReport(k); } } },
+    check: () => kon.n >= 2, end: ok => ok && satAdd(2, "öğleden sonra kontrolü tamam")});
+  misAdd({k: "aksam", t: "Akşam çayı", d: "Mesai bitti · çay ocağında masaya otur.", from: 1050, until: 1168, urgent: true, target: () => SEAT.on ? null : tableT(), check: () => SEAT.on, end: ok => ok && satAdd(2, "akşam çayında tabur bir arada"), lateWhy: "masaya gelmedin"});
+  misAdd({k: "gece", t: "Günü kapat", after: "aksam", quiet: true, d: "Sohbetin tadını çıkar ya da saat düğmesiyle (▸) geceye geç · gün sonu raporu gelir.", check: () => DAY.block && DAY.block.k === "gece"});
+  storyCamp(); gTimeout(() => dayPlanNote(mk), 2500); }
+// the day's plan on the phone, from the coordinator
+function dayPlanNote(mk) { if (!DAY.on) return; const left = Math.max(0, CAMP.day - DAY.day);
+  const t = !CAMP.done && DAY.day >= CAMP.day ? "Bugün BÜYÜK TEFTİŞ! Levent Paşa 10.00'da geliyor, herkes görev başında olsun." :
+    `${DAY.day}. gün: 07.30 görev dağılımı, denetim turu, 10.00 çay molası, ${mk === "ex" ? "ekskavatör" : "kamyon seferi"}, 12.00 öğle, öğleden sonra kontrol, 17.30 akşam çayı.` + (CAMP.done ? "" : ` Büyük teftişe ${left} gün!`);
+  phoneNote("Mesaj · Tabur", "Azizhan Üsteğmen", t); }
+// trouble on the site: an urgent task to go there (the repair team comes anyway, later)
+function storyEvent(e) { const name = e.v ? e.v.name : "İSG";
+  misAdd({k: "ev" + DAY.evN + ":" + DAY.day, urgent: true, quiet: true, t: e.v ? (e.kind === "saplandi" ? "SAPLANAN KAMYON" : "ARIZA · " + name) : "İSG İHLALİ",
+    d: e.v ? "Yanına git · seni görünce tamir ekibi hızlanır." : "Yanına git, askeri ikaz et.",
+    target: () => { const p = e.v || e.w; return {x: p.x, z: p.z, n: e.v ? name : "İSG", r: e.kind === "isg" ? 4 : 9}; },
+    check: () => !DAY.ev.includes(e)}); }
+// the brigade commander is on his way: a warning from the battalion commander a quarter of an hour before
+function storyRaidWarn() { phoneNote("Mesaj · Tabur", "Ufuk Binbaşı", "Paşa yola çıktı, çeyrek saate burada! Herkes görev başında olsun, çay ocağında kimse kalmasın.");
+  misAdd({k: "baskin:" + DAY.day, info: true, t: "PAŞA GELİYOR", d: () => MEET.called ? "Subaylar çay ocağında! İŞ BAŞINA'ya bas." : "Herkes görev başında olsun · sen de bir şantiyeye geç.",
+    check: () => DAY.raidRes != null, quiet: true,
+    end: () => toast(DAY.raidRes === "iyi" ? "✓ PAŞA HERKESİ İŞ BAŞINDA BULDU" : DAY.raidRes === "orta" ? "Paşa 'gevşemeyin' dedi" : "✗ PAŞA ÇAY OCAĞINDA YAKALADI", 3)}); }
+// the battalion commander drops in at the tea house: gather the officers before he sits down
+function storyVisitWarn() { phoneNote("Mesaj · Tabur", "Ufuk Binbaşı", "Birazdan çay ocağına uğrayacağım, subaylar orada olsun.");
+  const m = misAdd({k: "ziyaret:" + DAY.day, urgent: true, t: "UFUK BİNBAŞI GELİYOR", d: () => MEET.called ? "Subaylar geliyor · sen de masaya otur." : "TOPLA ile subayları çağır, masaya otur.",
+    target: () => SEAT.on ? null : tableT(), until: DAY.t + 60, okLate: true, quiet: true,
+    check: () => MEET.visit && MEET.visit.st === "seat",
+    end: () => { if (!MEET.visit) return; const n = seated().filter(o => o !== MEET.visit).length; const ok = SEAT.on && n >= 3; satAdd(ok ? 3 : -2, ok ? "Ufuk Binbaşı masayı dolu buldu" : "Ufuk Binbaşı masayı boş buldu");
+      toast(ok ? "✓ GÖREV TAMAM · Ufuk Binbaşı karşılandı" : "✗ Ufuk Binbaşı masayı boş buldu", 2.6); }}); }
+// the fuel tanker waits at the main gate for someone to meet it
+function storyTanker() { phoneNote("Nizamiye", "NİZAMİYE NÖBETÇİSİ", "Yakıt tankeri nizamiyede bekliyor, karşılayacak birini istiyor.");
+  const m = misAdd({k: "tanker:" + DAY.day, urgent: true, t: "YAKIT TANKERİ", st: 0,
+    d: () => m.st ? "Tankerin peşinden şantiyeye git." : "Nizamiyeye git, tankeri karşıla.",
+    target: () => m.st ? {x: TANKER.x, z: TANKER.z, n: "YAKIT TANKERİ", r: 10} : {x: MAINGATE.x + 4, z: MAINGATE.z, n: "NİZAMİYE", r: 9},
+    tick: () => { if (!m.st && TANKER.waiting && distTo({x: MAINGATE.x + 4, z: MAINGATE.z}) < 12) { m.st = 1; m.met = true; tankerGo(); toast("Tankeri karşıladın · şantiyeye kadar eşlik et", 2.4); } if (!m.st && !TANKER.waiting && TANKER.inside) m.st = 1; },
+    check: () => TANKER.refuelled, quiet: true,
+    end: () => { if (m.met) satAdd(3, "yakıt tankeri karşılandı"); toast(m.met ? "✓ GÖREV TAMAM · Yakıt ikmali" : "Tanker kendi başına girdi · karşılanmadı", 2.6); }}); }
+// the evening report: which tasks were done
+function misReport() { const L = MIS.q.filter(m => !m.info); if (!L.length) return ""; const ok = L.filter(m => m.done && m.ok).length;
+  return `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #ffffff1a"><span>Görevler</span><b style="color:${ok === L.length ? "#7ac943" : "#f2b705"}">${ok} / ${L.length}</b></div>` +
+    `<div style="font-size:12.5px;opacity:.85;padding:6px 0 2px;line-height:1.5">${L.map(m => `<span style="color:${m.done && m.ok ? "#9fe08a" : "#ff9b8a"}">${m.done && m.ok ? "✓" : "✗"} ${m.t}</span>`).join(" · ")}</div>`; }
+// lunch: a short fade and the clock jumps to five to one
+const FADE = (() => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:26;background:#0d0e0b;color:#f2b705;display:grid;place-items:center;font:800 clamp(22px,5vw,40px)/1.2 system-ui,sans-serif;letter-spacing:.06em;opacity:0;pointer-events:none;transition:opacity .35s"; document.body.appendChild(d); return d; })();
+function fadeSkip(text, fn) { FADE.textContent = text; FADE.style.opacity = 1; gTimeout(() => { fn(); gTimeout(() => { FADE.style.opacity = 0; }, 650); }, 380); }
+function lunchSkip() { fadeSkip("AFİYET OLSUN · 12.55", () => { DAY.t = Math.max(DAY.t, 775); }); }
+
+// ---------------- the week's goal: the brigade commander's big inspection ----------------
+const CAMP = {day: 5, goal: {tunnel: 100, pit: 80, atis: 1, parkur: 1}, start: null};
+try { const s = JSON.parse(localStorage.getItem("hs-camp") || "null"); if (s) Object.assign(CAMP, s); } catch (e) {}
+function campSave() { try { localStorage.setItem("hs-camp", JSON.stringify({day: CAMP.day, start: CAMP.start, done: CAMP.done, res: CAMP.res})); } catch (e) {} }
+function campState() { const g = CAMP.goal, tun = stats.kemparM || 0;
+  return [["Kapalı drone sığınağı", Math.min(1, tun / g.tunnel), `${tun.toFixed(0)}/${g.tunnel} m`], ["Bunker çukuru", Math.min(1, (stats.pit || 0) / g.pit), `${Math.round(stats.pit || 0)}/${g.pit} m³`],
+    ["400 m atış alanı", RNG.p, "%" + Math.round(RNG.p * 100)], ["Drone parkuru", DRC.p, "%" + Math.round(DRC.p * 100)]]; }
+function campHtml() { const left = Math.max(0, CAMP.day - DAY.day);
+  return `<div class="ob camp"><span class="r"><span>${CAMP.done ? "Büyük teftiş yapıldı" : left ? "Büyük teftişe " + left + " gün" : "BUGÜN BÜYÜK TEFTİŞ"}</span><span>${Math.round(campState().reduce((a, r) => a + r[1], 0) / 4 * 100)}%</span></span></div>`; }
+function storyCamp() { if (CAMP.start == null) { CAMP.start = DAY.day; CAMP.day = DAY.day + 4; campSave(); }
+  if (CAMP.done || DAY.day < CAMP.day) return;
+  // the big day: the paşa comes at ten with the battalion commander and looks at everything
+  if (DAY.plan) { DAY.plan.raidAt = 600; DAY.plan.visit = 2000; DAY.plan.caught = 2000; }
+  misAdd({k: "teftis:" + DAY.day, info: true, from: 480, t: "BÜYÜK TEFTİŞ", d: "Levent Paşa 10.00'da geliyor · herkes görev başında olsun.", check: () => DAY.raidRes != null, quiet: true, end: () => gTimeout(campEnd, 9000)}); }
+function campEnd() { const st = campState(), done = st.filter(r => r[1] >= .999).length, ok = done >= 3 && DAY.raidRes !== "kotu" && DAY.sat >= 55;
+  CAMP.done = true; CAMP.res = ok ? "takdir" : "eksik"; campSave(); if (ok) { DAY.stars++; saveDay(); }
+  const rows = st.map(([n, p, v]) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid #ffffff1a"><span>${n}</span><b style="color:${p >= .999 ? "#7ac943" : "#e0452b"}">${v}</b></div>`).join("");
+  const el = document.createElement("div"); el.style.cssText = "position:fixed;inset:0;z-index:25;display:grid;place-items:center;background:rgba(8,10,12,.8)";
+  el.innerHTML = `<div style="width:min(92vw,440px);background:#1d2023;color:#eef0f2;border-radius:16px;padding:18px;font:14px/1.35 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.5)">
+    <div style="font:700 13px system-ui;letter-spacing:.12em;opacity:.7">BÜYÜK TEFTİŞ</div><div style="font:800 24px system-ui;margin:2px 0 10px">${ok ? "🎖️ TAKDİRNAME" : "EKSİKLER VAR"}</div>${rows}
+    <p style="margin:10px 0 0">${ok ? "Levent Paşa: “Aferin, tabur iyi çalışmış. Hepinizi tebrik ediyorum.” Takdirname tabur komutanına teslim edildi." : "Levent Paşa: “Bu iş böyle olmaz. Üç gün sonra tekrar geleceğim, eksikler tamamlansın!”"}</p>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px"><button type="button" class="big" id="bCampOk">DEVAM ▸</button></div></div>`;
+  document.body.appendChild(el); el.querySelector("#bCampOk").onclick = () => { el.remove(); if (!ok) { CAMP.done = false; CAMP.day = DAY.day + 3; campSave(); } }; }
+
+// ---------------- per frame ----------------
+UPD.push(dt => { wpFrame(dt); misFrame(dt); });
+window.__hs.story = {MIS, WP, PL, PLK, wpSet, wpClear, mapOpen, mapClose, storyDay, CAMP, campState, callToggle};
+
+;(window.__INIT || (window.__INIT = [])).push(["story", performance.now()]);
 
 // ======================= FX: night glows, light pools, moon, load spill on fast turns =======================
 const glowTex = texCanvas(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.18, "rgba(255,246,226,.85)"); gr.addColorStop(.48, "rgba(255,214,160,.22)"); gr.addColorStop(1, "rgba(255,190,120,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });

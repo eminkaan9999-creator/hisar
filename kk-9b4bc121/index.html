@@ -432,6 +432,7 @@ function ekranYuksekligi(){ let h=innerHeight; try{ if(/iPhone|iPod/.test(naviga
 function boyut(){ const w=innerWidth,h=ekranYuksekligi(); document.documentElement.style.setProperty("--tamH",h+"px"); renderer.setSize(w,h,false); camera.aspect=w/h; camera.fov = w<h? 62 : 48; camera.updateProjectionMatrix(); }
 addEventListener("resize",boyut); boyut();
 let composer=null, bloom=null;
+let sonPass=null;
 function efektKur(){
   if(!THREE.EffectComposer||!THREE.UnrealBloomPass) return;
   try{
@@ -439,18 +440,46 @@ function efektKur(){
     const ops={type:THREE.HalfFloatType,format:THREE.RGBAFormat};
     const rt=(renderer.capabilities.isWebGL2&&THREE.WebGLMultisampleRenderTarget)? new THREE.WebGLMultisampleRenderTarget(w*pr,h*pr,ops) : new THREE.WebGLRenderTarget(w*pr,h*pr,ops);
     composer=new THREE.EffectComposer(renderer,rt);
+    // hazır hedefle kurulunca birleştirici piksel oranını 1 sanıyordu: ilk boyut değişiminde (iPhone'da açılışta, döndürünce) görüntü ekran
+    // çözünürlüğünün yarısından da düşüğe iniyor, bulanıklaşıyordu. Boyut CSS pikseli, oran ayrı tutulur.
+    composer._pixelRatio=pr; composer._width=w; composer._height=h;
     composer.addPass(new THREE.RenderPass(scene||new THREE.Scene(),camera));
     bloom=new THREE.UnrealBloomPass(new THREE.Vector2(w/2,h/2),.55,.55,.86); composer.addPass(bloom);
-    const son=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null},pozlama:{value:1.05}},
+    // son geçiş: ACES ton eşleme + keskinleştirme + renk derecelendirme (hafif doygunluk, yumuşak S eğrisi, serin gölge / sıcak ışık) + vinyet + ince gren
+    const son=new THREE.ShaderPass({uniforms:{tDiffuse:{value:null},pozlama:{value:1.05},zaman:{value:0},keskin:{value:.28},piksel:{value:new THREE.Vector2(1/(w*pr),1/(h*pr))}},
       vertexShader:"varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
-      fragmentShader:`uniform sampler2D tDiffuse; uniform float pozlama; varying vec2 vUv;
+      fragmentShader:`uniform sampler2D tDiffuse; uniform float pozlama,zaman,keskin; uniform vec2 piksel; varying vec2 vUv;
         vec3 aces(vec3 x){ x*=pozlama*0.6; return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }
-        void main(){ vec4 c=texture2D(tDiffuse,vUv); vec3 m=aces(c.rgb); m=pow(m,vec3(1.0/2.2)); float v=smoothstep(1.15,.35,length(vUv-.5)*1.25); gl_FragColor=vec4(m*mix(.82,1.0,v),1.0); }`});
-    composer.addPass(son);
+        float h12(vec2 p){ vec3 q=fract(vec3(p.xyx)*.1031); q+=dot(q,q.yzx+33.33); return fract((q.x+q.y)*q.z); }
+        void main(){ vec3 c=texture2D(tDiffuse,vUv).rgb;
+          vec3 o=(texture2D(tDiffuse,vUv+vec2(piksel.x,0.0)).rgb+texture2D(tDiffuse,vUv-vec2(piksel.x,0.0)).rgb+texture2D(tDiffuse,vUv+vec2(0.0,piksel.y)).rgb+texture2D(tDiffuse,vUv-vec2(0.0,piksel.y)).rgb)*0.25;
+          c=max(c+(c-o)*keskin,0.0);
+          vec3 m=pow(aces(c),vec3(1.0/2.2));
+          float l=dot(m,vec3(0.2126,0.7152,0.0722));
+          m=mix(vec3(l),m,1.07); m=mix(m,m*m*(3.0-2.0*m),0.14);
+          m+=vec3(0.010,0.003,-0.010)*smoothstep(0.5,1.0,l)+vec3(-0.006,0.0,0.010)*(1.0-smoothstep(0.0,0.4,l));
+          float v=smoothstep(1.15,.35,length(vUv-.5)*1.25); m*=mix(.84,1.0,v);
+          m+=(h12(gl_FragCoord.xy+fract(zaman*13.7)*vec2(97.0,57.0))-0.5)*0.014;
+          gl_FragColor=vec4(clamp(m,0.0,1.0),1.0); }`});
+    composer.addPass(son); sonPass=son;
     renderer.toneMapping=THREE.NoToneMapping;
-    addEventListener("resize",()=>{ composer.setSize(innerWidth,ekranYuksekligi()); });
-  }catch(e){ composer=null; renderer.toneMapping=THREE.ACESFilmicToneMapping; }
+    addEventListener("resize",()=>{ composer.setSize(innerWidth,ekranYuksekligi()); pikselGuncelle(); });
+  }catch(e){ composer=null; sonPass=null; renderer.toneMapping=THREE.ACESFilmicToneMapping; }
 }
+function pikselGuncelle(){ if(!sonPass) return; const pr=renderer.getPixelRatio(); sonPass.uniforms.piksel.value.set(1/(innerWidth*pr),1/(ekranYuksekligi()*pr)); }
+/* uyarlamalı çözünürlük: kareler akıcıysa piksel oranı adım adım artar (en çok 2: daha keskin görüntü), kare kaçırmaya başlarsa eski değerine (1,6) döner.
+   (1,6'nın altına inmez: düşük güç modunda iPhone kareleri zaten 30'a sabitliyor, çözünürlüğü düşürmek bir şey kazandırmaz)
+   Düşürülen bir orana o oturumda bir daha çıkılmaz (sürekli inip çıkıp takılmasın); sahne yüklenirken ve geçişten hemen sonra ölçülmez. */
+const CZ={pr:renderer.getPixelRatio(),n:0,top:0,bekle:3,tavan:Math.min(2,Math.max(1,devicePixelRatio||1)),taban:renderer.getPixelRatio()};
+function cozunurlukAyarla(ham){
+  if(YUKLENIYOR||document.hidden||!(ham>0)||ham>.2){ CZ.n=0; CZ.top=0; if(YUKLENIYOR) CZ.bekle=Math.max(CZ.bekle,2); return; }
+  CZ.top+=ham; if(++CZ.n<90) return; const ort=CZ.top/CZ.n; CZ.n=0; CZ.top=0;
+  if(CZ.bekle>0){ CZ.bekle--; return; }
+  let yeni=CZ.pr;
+  if(ort>1/48&&CZ.pr>CZ.taban+.01){ yeni=Math.max(CZ.taban,CZ.pr-.25); CZ.tavan=Math.min(CZ.tavan,CZ.pr-.05); }
+  else if(ort<1/57.5&&CZ.pr<CZ.tavan-.01) yeni=Math.min(CZ.tavan,CZ.pr+.2);
+  if(Math.abs(yeni-CZ.pr)<.01) return;
+  CZ.pr=yeni; renderer.setPixelRatio(yeni); boyut(); if(composer) composer.setPixelRatio(yeni); pikselGuncelle(); CZ.bekle=1; }
 efektKur();
 
 const renk=h=>new THREE.Color(h).convertSRGBToLinear();
@@ -752,7 +781,7 @@ const GECIS_OLC=[];
 async function gecis(fn){ PERDE.classList.add("kapali"); await bekle(560); YUKLENIYOR=true; const t0=performance.now();
   try{ await fn(); } finally{ YUKLENIYOR=false; }
   // yan sahneler de (tren içi, telefondaki oda…) şimdi derlenir: bölüm onlardan biriyle açılırsa ilk karede donmasın
-  const t1=performance.now(); for(const s of [scene,...EK_SAHNELER]){ if(!s) continue; try{ kucukGolgeleriKapat(s); cokluMalzemeSadelestir(s); statikBirlestir(s); isiklariDengele(s); renderer.compile(s,camera); }catch(e){} } const t2=performance.now();
+  const t1=performance.now(); for(const s of [scene,...EK_SAHNELER]){ if(!s) continue; try{ kucukGolgeleriKapat(s); cokluMalzemeSadelestir(s); statikBirlestir(s); isiklariDengele(s); if(s===scene) ortamYakala(s); renderer.compile(s,camera); }catch(e){} } const t2=performance.now();
   let n=3; const ac=()=>{ if(--n>0) requestAnimationFrame(ac); else { PERDE.classList.remove("kapali"); GECIS_OLC.push({kur:Math.round(t1-t0),derle:Math.round(t2-t1),kare:Math.round(performance.now()-t2)}); if(GECIS_OLC.length>30) GECIS_OLC.shift(); } }; requestAnimationFrame(ac); }
 
 /* ================= SAHNE ORTAK ================= */
@@ -799,6 +828,37 @@ function sahneyiBirak(s){ if(!s) return; kaliciKaynaklar();
 // ışık sayısı aynı olan sahneler aynı gölgelendirici programlarını paylaşır: 1-3 noktasal ışıklı sahneler 4'e tamamlanır (karakter gölgelendiricileri yeniden derlenmez)
 function isiklariDengele(s){ if(!s||s.userData.dengeli) return; s.userData.dengeli=true; let P=0; s.traverse(o=>{ if(o.isPointLight) P++; });
   if(P>0&&P<4) for(let i=P;i<4;i++){ const l=new THREE.PointLight(0x000000,0,1,2); l.position.set(0,-500,0); l.userData.bos=true; s.add(l); } }
+/* gölge kutusu kameranın baktığı yere oturur: yakın çekimde dar (keskin, ayrıntılı gölge), uzak çekimde geniş. Kutu ışık uzayında gölge
+   pikseline hizalanır: kamera kayarken gölge kenarları titremez. Boyut 2 m basamaklarla değişir; büyüme hemen, küçülme ancak iki basamak gerekince (sınırda gidip gelmesin). */
+const _gk=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()];
+function golgeKadraj(s){ const gun=s&&s.userData.gun; if(!gun) return; const sc=gun.shadow.camera, yon=s.userData.gunesYon;
+  const ileri=camera.getWorldDirection(_gk[0]); let ref=(Kamera.sinema&&camera.userData.bakis)? camera.userData.bakis : _gk[1].copy(Kamera.hedef).add(_gk[2].set(0,1,0));
+  let D=_gk[3].copy(ref).sub(camera.position).dot(ileri); if(!(D>0)||!isFinite(D)) D=6; D=clamp(D,1.5,26);
+  const M=_gk[1].copy(camera.position).addScaledVector(ileri,D*.92);
+  let R=clamp(D*.95+5.5,8,24); R=Math.ceil(R/2)*2; const R0=gun.userData.R; if(!R0||R>R0||R<=R0-4){ gun.userData.R=R; sc.left=-R; sc.right=R; sc.top=R; sc.bottom=-R; sc.updateProjectionMatrix(); }
+  R=gun.userData.R; const tex=2*R/gun.shadow.mapSize.x;
+  const X=_gk[2].set(0,1,0).cross(yon); if(X.lengthSq()<1e-6) X.set(1,0,0); X.normalize(); const Y=_gk[3].copy(yon).cross(X);
+  const px=Math.round(M.dot(X)/tex)*tex, py=Math.round(M.dot(Y)/tex)*tex, pz=M.dot(yon);
+  gun.target.position.set(0,0,0).addScaledVector(X,px).addScaledVector(Y,py).addScaledVector(yon,pz); gun.position.copy(gun.target.position).addScaledVector(yon,60); }
+/* ortam yansıması sahnenin kendisinden: sahne kurulunca karakterlerin durduğu yerden altı yöne çekilir (binalar, zemin, odanın duvarları, lambalar).
+   Önceden yalnız gökyüzü yansıyordu: oda içinde parlak yüzeylerde gök mavisi görünüyor, karakterler alttan zeminin rengini almıyordu.
+   Biçim gökyüzü dokusuyla aynı (8 bit sRGB küp, mipmap): gölgelendiriciler yeniden derlenmez. Karakterler çekimde gizlenir. */
+let ORTAM_RT=null;
+function ortamYakala(s){ if(!s||!renderer||!s.userData.gok) return;
+  const gizli=[], gok=s.userData.gok, gun=s.userData.gun, gEski=gok.position.clone(), env=s.environment; let gK=null;
+  try{ const P=new THREE.Vector3(); let n=0;
+    for(const c of KARAKTERLER){ if(c.userData.kalabalik||!c.parent) continue; let r=c; while(r.parent) r=r.parent; if(r!==s) continue; P.add(c.getWorldPosition(new THREE.Vector3())); n++; }
+    if(n) P.multiplyScalar(1/n).add(new THREE.Vector3(0,1.35,0)); else P.copy(camera.position);
+    for(const c of KARAKTERLER) if(c.visible){ c.visible=false; gizli.push(c); }
+    gok.position.copy(P);
+    if(gun){ gK=[gun.position.clone(),gun.target.position.clone()]; gun.target.position.copy(P); gun.position.copy(P).addScaledVector(s.userData.gunesYon,60); }
+    if(!ORTAM_RT) ORTAM_RT=new THREE.WebGLCubeRenderTarget(256,{format:THREE.RGBAFormat,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter,magFilter:THREE.LinearFilter,encoding:THREE.sRGBEncoding});
+    const cc=new THREE.CubeCamera(.15,2000,ORTAM_RT); cc.position.copy(P); s.add(cc); cc.updateMatrixWorld(true);
+    if(sahneKur.envRT) s.environment=sahneKur.envRT.texture; // çekim sırasında gökyüzü yansıması (hedef doku kendine yazılırken okunmasın)
+    s.updateMatrixWorld(true); cc.update(renderer,s); s.remove(cc); s.environment=ORTAM_RT.texture;
+  }catch(e){ console.warn("ortam yakala",e); s.environment=env; }
+  gok.position.copy(gEski); if(gun&&gK){ gun.position.copy(gK[0]); gun.target.position.copy(gK[1]); }
+  for(const c of gizli) c.visible=true; }
 function sahneKur(ayar){
   if(scene) sahneyiBirak(scene); for(const e of EK_SAHNELER) sahneyiBirak(e); EK_SAHNELER=[]; STATIK=[];
   KARAKTERLER=[]; Ses.zemin=null; Ses.ortamDur();
@@ -815,7 +875,8 @@ function sahneKur(ayar){
   const gun=new THREE.DirectionalLight(renk(ayar.isik||"#ffd2a1"),ayar.isikGuc||2.2);
   const isikYon=(ayar.isikYon||ayar.gunesYon).clone().normalize();
   gun.position.copy(isikYon.clone().multiplyScalar(60)); gun.castShadow=true;
-  gun.shadow.mapSize.set(1024,1024); const sc=gun.shadow.camera; sc.left=-22; sc.right=22; sc.top=22; sc.bottom=-22; sc.near=1; sc.far=160; gun.shadow.bias=-.0006; gun.shadow.normalBias=.02;
+  // gölge haritası 2048 ve kameranın baktığı yere göre daralan kutu (golgeKadraj): yakın çekimde 1 cm'lik gölge pikseli (önceden 1024 ve ±22 m: 4 cm)
+  gun.shadow.mapSize.set(2048,2048); const sc=gun.shadow.camera; sc.left=-22; sc.right=22; sc.top=22; sc.bottom=-22; sc.near=1; sc.far=160; gun.shadow.bias=-.00035; gun.shadow.normalBias=.018;
   scene.add(gun); scene.add(gun.target); scene.userData.gun=gun; scene.userData.gunesYon=isikYon;
   const dolgu=new THREE.DirectionalLight(renk(ayar.dolguRenk||"#ffe6d0"),ayar.dolgu||.9); dolgu.position.set(-isikYon.x*40,25,-isikYon.z*40+20); scene.add(dolgu); scene.userData.dolgu=dolgu;
   return scene;
@@ -1121,6 +1182,11 @@ function otlar(alan,adet,renkH="#6f9443",yuk=.35,haric){
 /* ================= KARAKTERLER: gerçekçi avatarlar ================= */
 const AVATAR={}; let KARAKTERLER=[];
 const AV_BOY={kaan:1.84, kardelen:1.68, rpm:1.76, michelle:1.66};
+/* deri gölgelendirmesi: ışığın deride yumuşak ve sıcak sönmesi (deri altı saçılmanın ucuz benzeri). Lambert yerine kanal başına üstel eğri:
+   kırmızı ışık gölgeye doğru daha geç söner, aydınlıktan karanlığa geçiş plastik gibi sert değil; nl=0'da sıfır olduğu için gölge sınırında çizgi oluşmaz */
+const DERI_CHUNK=THREE.ShaderChunk.lights_physical_pars_fragment.replace("reflectedLight.directDiffuse += ( 1.0 - clearcoatDHR ) * irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );",
+  "vec3 irrDeri = pow( vec3( max( dot( geometry.normal, directLight.direction ), 1e-4 ) ), vec3( 0.74, 0.9, 0.97 ) ) * directLight.color;\n#ifndef PHYSICALLY_CORRECT_LIGHTS\n\tirrDeri *= PI;\n#endif\n\treflectedLight.directDiffuse += ( 1.0 - clearcoatDHR ) * irrDeri * BRDF_Diffuse_Lambert( material.diffuseColor );");
+function deriDerle(sh){ sh.fragmentShader=sh.fragmentShader.replace("#include <lights_physical_pars_fragment>",DERI_CHUNK); }
 function kalicila(sahne){
   sahne.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=true; o.receiveShadow=false; o.userData.kalici=true;
     (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ m.userData.kalici=true; for(const k of ["map","normalMap","roughnessMap","metalnessMap","emissiveMap","aoMap"]) if(m[k]) m[k].__kalici=true; }); } });
@@ -1139,7 +1205,7 @@ async function avatarlariYukle(kok,ilerleme){
         if(/haircut|Eyelashes/i.test(n)){ m.alphaTest=.4; m.transparent=false; m.depthWrite=true; m.side=THREE.DoubleSide; }
         if(/Cornea/i.test(n)){ m.transparent=true; m.opacity=.18; m.depthWrite=false; m.roughness=.05; }
         if(/Headwear/.test(n)) o.visible=false;
-        if(m.isMeshStandardMaterial){ m.envMapIntensity=.65; if(/Avatar(Head|Body)|Skin/.test(n)){ m.roughness=Math.max(m.roughness,.58); m.metalness=0; } } }); }); // deri metal değildir: hazır şablonun metal kanalı burun kanadında ve kulakta "halka/küpe" gibi parlıyordu
+        if(m.isMeshStandardMaterial){ m.envMapIntensity=.65; if(/Avatar(Head|Body)|Skin/.test(n)){ m.roughness=Math.max(m.roughness,.58); m.metalness=0; if(DERI_CHUNK!==THREE.ShaderChunk.lights_physical_pars_fragment) m.onBeforeCompile=deriDerle; } } }); }); // deri metal değildir: hazır şablonun metal kanalı burun kanadında ve kulakta "halka/küpe" gibi parlıyordu
     // Mixamo (Michelle) dosyasında iskelet kökü 90° döndürülmüş; animasyonlar zaten dik duruş verdiği için kökü sıfırla
     let q0=null; if(k==="michelle") sahne.traverse(n=>{ if(n.name==="Character"){ q0=n.quaternion.clone(); n.rotation.set(0,0,0); } });
     // kalçanın bağlanma konumu da aynı dönüşle düzeltilir: yoksa idle/walk kliplerinde (kalça konum izi yok) beden grubun 1 m gerisinde duruyordu
@@ -1603,6 +1669,9 @@ function kalabalik(tip,ayar={}){
   const kemik={}; m.traverse(n=>{ if(n.isBone) kemik[n.name.replace(/^mixamorig/,"")]=n; });
   let kin=null;
   if(tip==="rpm"){ if(TUH){ kin=ogrenciGiydir(m,kemik).kin; } else sivilDuzelt(m,ayar.resmi); sacEkle(m,ayar.sac); }
+  // parmaklar: rahat el (bağlama pozunda dümdüz ve açıktı); telefonlu yolcunun sağ eli telefonu kavrar, alkışlayanın elleri düz.
+  // klipte parmak izi olmadığından bir kez kurmak yeter (animGuncelle ilk karede bu hali saklar)
+  try{ g.updateMatrixWorld(true); for(const yan of ["Left","Right"]) parmakUygula(kemik,yan,ayar.alkis?"alkis":(yan==="Right"&&ayar.telefon&&!TUH)?"telefon":"rahat"); }catch(e){}
   const mixer=new THREE.AnimationMixer(m); const eylem={};
   for(const c of A.klipler){ const e=mixer.clipAction(c); eylem[c.name]=e; }
   const ad=ayar.anim||"idle"; const e=eylem[ad]||eylem.idle; e.play(); e.time=Math.random()*e.getClip().duration; e.timeScale=rnd(.85,1.1);
@@ -1684,12 +1753,68 @@ function elYonelt(B,yan,F,N,w){
 }
 /* parmakları avuca doğru kıvır (her karede dinlenme açısından) */
 function parmakSifirla(B,yan){ for(const f of PARMAK) for(let j=1;j<=3;j++){ const b=B[yan+"Hand"+f+j]; if(!b) continue; if(!b.userData.q0) b.userData.q0=b.quaternion.clone(); else b.quaternion.copy(b.userData.q0); } }
-function parmakKapa(B,yan,acilar,bas,w){
+function parmakKapaHam(B,yan,acilar,bas,w,kademe){
   const N=avucNormal(B,yan);
-  for(const f of PARMAK){ const ac=f==="Thumb"?bas:acilar;
+  for(const f of PARMAK){ const ac=f==="Thumb"?bas:acilar; const k=kademe?(kademe[f]||1):(f==="Pinky"?1.08:f==="Index"?.92:1);
     for(let j=1;j<=3;j++){ const b=B[yan+"Hand"+f+j], c=B[yan+"Hand"+f+(j+1)]; if(!b||!c) continue;
       const F=kemikPoz(c,new THREE.Vector3()).sub(kemikPoz(b,new THREE.Vector3())).normalize(); const eks=F.clone().cross(N); if(eks.lengthSq()<1e-8) continue;
-      kemikDondur(b,eks.normalize(),ac[j-1]*w*(f==="Pinky"?1.08:f==="Index"?.92:1)); } }
+      kemikDondur(b,eks.normalize(),ac[j-1]*w*k); } }
+}
+/* ---------- parmak duruşları ----------
+   Animasyon kliplerinde parmak izi yok: parmaklar bağlama pozunda (dümdüz, birbirinden açık, başparmak yana fırlamış) kalıyordu; eller manken eli
+   gibi duruyordu, telefon ve kutu avucun üstünde havada görünüyordu. Gerçek el dinlenirken parmaklar işaretten serçeye doğru artan bir kıvrımla
+   bükülür, aralar kapanır, başparmak işaret parmağının yanına gelir. Her duruş bir kez hesaplanıp kemiklerin yerel dönüşü olarak saklanır;
+   her karede yalnız kopyalanır (dünya hesabı yok). a: parmak eklemleri (kök, orta, uç), b: başparmak eklemleri, yay: parmak aralarını kapama (0-1),
+   bas: [başparmakla işaret parmağı arasındaki açı (avuç düzleminde), başparmağın avuç önüne kalkışı] (radyan); b: başparmağın orta ve uç eklem bükümü */
+const PK={Index:.82,Middle:1,Ring:1.12,Pinky:1.24,Thumb:1};
+const PD={
+  rahat:{a:[.22,.42,.24],b:[0,.22,.2],yay:.85,bas:[.5,.36]},
+  tut:{a:[1.0,1.1,.7],b:[0,.4,.35],yay:.9,bas:[.62,.8]},
+  telefon:{a:[.2,.3,.22],b:[0,.2,.16],yay:.9,bas:[.32,.72]},
+  plaket:{a:[.42,.62,.42],b:[0,.25,.2],yay:.95,bas:[.55,.42]},
+  bel:{a:[.14,.24,.16],b:[0,.1,.1],yay:.95,bas:[.55,.2]},
+  kalp:{a:[.5,.74,.52],b:[0,.3,.25],yay:1,bas:[.5,.4]},
+  ac:{a:[.1,.2,.14],b:[0,.1,.08],yay:.45,bas:[.65,.22]},
+  alkis:{a:[.06,.12,.1],b:[0,.08,.06],yay:.95,bas:[.42,.2]},
+  salla:{a:[.04,.08,.06],b:[0,.05,.04],yay:.5,bas:[.7,.15]},
+  jest:{a:[.18,.36,.22],b:[0,.15,.12],yay:.65,bas:[.58,.3]} };
+function parmakAyarla(B,yan,P){ // bağlama pozundan P duruşunu kurar (kemiklere yazar)
+  parmakSifirla(B,yan); const H=B[yan+"Hand"]; H.updateMatrixWorld(true);
+  const N=avucNormal(B,yan), dz=(b,c)=>{ const F=kemikPoz(c,new THREE.Vector3()).sub(kemikPoz(b,new THREE.Vector3())); return F.addScaledVector(N,-F.dot(N)).normalize(); };
+  const M1=B[yan+"HandMiddle1"], M2=B[yan+"HandMiddle2"];
+  // parmak aralarını kapa: işaret, yüzük ve serçe orta parmağa doğru döner (avuç düzleminde); tam bitişik olmasın diye küçük pay kalır
+  if(P.yay&&M1&&M2){ const Fm=dz(M1,M2);
+    for(const f of ["Index","Ring","Pinky"]){ const b=B[yan+"Hand"+f+"1"], c=B[yan+"Hand"+f+"2"]; if(!b||!c) continue; const F=dz(b,c);
+      const a=Math.atan2(F.clone().cross(Fm).dot(N),F.dot(Fm)), pay=f==="Pinky"?.1:.06; if(Math.abs(a)>pay) kemikDondur(b,N,(a-Math.sign(a)*pay)*P.yay); } }
+  // başparmak: el uzayında hedef yöne çevrilir (işaret parmağından bas[0] kadar başparmak tarafına, avucun önüne bas[1] kadar). Modellerin bağlama
+  // pozu farklı (MetaPerson'da başparmak avuçtan ~20°, RPM'de ~40° önde; ek döndürme başparmağı avuçtan dışarı fırlatıyordu), bu yüzden hedef yön kullanılır.
+  // sonra orta ve uç eklemi işaret parmağının orta boğumuna doğru bükülür (gerçek elde başparmak ucu oraya yaslanır)
+  const T1=B[yan+"HandThumb1"], T2=B[yan+"HandThumb2"], T3=B[yan+"HandThumb3"], T4=B[yan+"HandThumb4"], I1=B[yan+"HandIndex1"], I2=B[yan+"HandIndex2"], P1=B[yan+"HandPinky1"];
+  if(P.bas&&T1&&T2&&I1&&I2&&P1){ const Fi=dz(I1,I2); const Wr=kemikPoz(I1,new THREE.Vector3()).sub(kemikPoz(P1,new THREE.Vector3())); Wr.addScaledVector(N,-Wr.dot(N)); Wr.addScaledVector(Fi,-Wr.dot(Fi)).normalize();
+    const th=P.bas[0], ph=P.bas[1]; const hedef=Fi.clone().multiplyScalar(Math.cos(th)).addScaledVector(Wr,Math.sin(th)).multiplyScalar(Math.cos(ph)).addScaledVector(N,Math.sin(ph)).normalize();
+    kemikYonelt(T1,T2,hedef,1);
+    const hI=kemikPoz(I2,new THREE.Vector3());
+    for(const [b,c,ac] of [[T2,T3,P.b[1]],[T3,T4,P.b[2]]]){ if(!b||!c||!ac) continue; const pb=kemikPoz(b,new THREE.Vector3()), F=kemikPoz(c,new THREE.Vector3()).sub(pb).normalize(); const eks=F.clone().cross(hI.clone().sub(pb)); if(eks.lengthSq()<1e-10) continue; kemikDondur(b,eks.normalize(),ac); } }
+  parmakKapaHam(B,yan,P.a,[0,0,0],1,PK);
+}
+const _PB=[]; for(const f of PARMAK) for(let j=1;j<=3;j++) _PB.push(f+j);
+const PD_ON=new WeakMap(); // el kemiği -> hesaplanmış duruşlar (userData'ya konmaz: kemik kopyalanırken JSON'a çevrilir)
+function parmakDurus(B,yan,ad){ const H=B[yan+"Hand"]; if(!H||!B[yan+"HandMiddle2"]) return null; let C=PD_ON.get(H); if(!C){ C={}; PD_ON.set(H,C); } if(C[ad]) return C[ad];
+  const L=_PB.map(n=>B[yan+"Hand"+n]||null); const eski=L.map(x=>x&&x.quaternion.clone());
+  parmakAyarla(B,yan,PD[ad]||PD.rahat); const S=L.map(x=>x&&x.quaternion.clone());
+  if(ad==="rahat") L.forEach((x,i)=>{ if(x) x.userData.qR=S[i].clone(); });
+  L.forEach((x,i)=>{ if(x) x.quaternion.copy(eski[i]); }); H.updateMatrixWorld(true);
+  return C[ad]={L,S}; }
+function parmakUygula(B,yan,ad){ const D=parmakDurus(B,yan,ad); if(!D) return; for(let i=0;i<D.L.length;i++) if(D.L[i]) D.L[i].quaternion.copy(D.S[i]); }
+// el başka bir sistemin (el ele, sarılma, poz...) olmadığı karelerde: hedef duruşa ~0,25 sn'de yumuşak geçiş
+function parmakGecis(u,B,yan,ad,dt){ const D=parmakDurus(B,yan,ad); if(!D) return; const G=(u._pg||(u._pg={}))[yan]||(u._pg[yan]={ad,w:1,son:D.S.map(q=>q&&q.clone()),bas:null});
+  if(G.ad!==ad){ G.ad=ad; G.w=0; G.bas=G.son.map(q=>q&&q.clone()); }
+  G.w=Math.min(1,G.w+dt/.25); const s=G.w*G.w*(3-2*G.w);
+  for(let i=0;i<D.L.length;i++){ const x=D.L[i]; if(!x) continue; if(s>=1||!G.bas) x.quaternion.copy(D.S[i]); else x.quaternion.copy(G.bas[i]).slerp(D.S[i],s); G.son[i].copy(x.quaternion); } }
+/* eski çağrılar için: parmaklar "rahat" duruştan başlar, hedef kıvrıma w oranında gider (w=0: rahat el, önceden dümdüz bağlama pozuydu) */
+function parmakKapa(B,yan,acilar,bas,w){
+  parmakUygula(B,yan,"rahat"); const R=PD.rahat; if(w<=.001) return;
+  parmakKapaHam(B,yan,acilar.map((x,i)=>(x-R.a[i])*w),bas.map((x,i)=>(x-R.b[i])*w),1);
 }
 /* el kutusu: avuç + parmak köklerini kaplayan döndürülmüş kutu (parmakların karşıdaki ele girmemesi için) */
 function elKutu(B,yan){
@@ -1787,7 +1912,9 @@ function eleleIK(c,es,w){ const B=c.userData.kemik, r=eleleHedef(c,es);
     const Q=kavraCoz(B,r.yan,S,[1.05,1.2,.85],[.5,.55,.45],avucNormal(B,r.yan));
     u._kavra3={yan:r.yan,Q,ayri,t0:kv&&kv.yan===r.yan?kv.t0:zaman,rel:new THREE.Matrix4().copy(es.userData.kemik[yanE+"Hand"].matrixWorld).invert().multiply(B[r.yan+"Hand"].matrixWorld)}; }
   const k2=u._kavra3&&u._kavra3.yan===r.yan?u._kavra3:null;
-  if(k2){ const bl=clamp((zaman-k2.t0)/.35,0,1)*w; for(const f of PARMAK) for(let j=1;j<=3;j++){ const b=B[r.yan+"Hand"+f+j]; const q=b&&k2.Q[b.name]; if(q) b.quaternion.copy(b.userData.q0).slerp(q,bl); } B[r.yan+"Hand"].updateMatrixWorld(true); }
+  parmakDurus(B,r.yan,"rahat");
+  if(k2){ const bl=clamp((zaman-k2.t0)/.35,0,1)*w; for(const f of PARMAK) for(let j=1;j<=3;j++){ const b=B[r.yan+"Hand"+f+j]; const q=b&&k2.Q[b.name]; if(q) b.quaternion.copy(b.userData.qR||b.userData.q0).slerp(q,bl); } B[r.yan+"Hand"].updateMatrixWorld(true); }
+  else parmakUygula(B,r.yan,"rahat"); // kavrayış henüz çözülmediyse el rahat dursun (önceden parmaklar dümdüz açıktı)
   return r.yan; }
 /* omuzdan sarılma (hatıra fotoğrafı pozu): uzun olan yakın kolunu onun omuzlarına atar, kısa olan yakın koluyla belinden sarar; ikisi de kameraya bakar */
 function omuzIK(c,es,w){
@@ -1859,13 +1986,13 @@ function sarilIK(c,es,w){
 // kişiye göre duruş düzeltme açıları (radyan)
 // adlandırılmış kol pozları (karakter yerel uzayı: +x sol yan, +z ileri; L: gövde yükseklikleri, s: boy oranı)
 const POZ_IK={
-  bel:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.195*s,L.bel+.03,.0), kutup:sx=>new THREE.Vector3(sx,-.05,-.35), F:sx=>new THREE.Vector3(0,-.55,.85), N:sx=>new THREE.Vector3(-sx,0,.1) },
-  kalp:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.06*s,L.bas+.2*s,.05*s), kutup:sx=>new THREE.Vector3(sx,.25,.35), F:sx=>new THREE.Vector3(-sx,.15,.3), N:sx=>new THREE.Vector3(0,-.6,.6) },
-  ac:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.6*s,L.omuz+.1,.32*s), kutup:sx=>new THREE.Vector3(0,-1,-.3), F:sx=>new THREE.Vector3(sx,.15,.45), N:sx=>new THREE.Vector3(0,.3,1) },
+  bel:{ parmak:"bel", hedef:(L,sx,s)=>new THREE.Vector3(sx*.195*s,L.bel+.03,.0), kutup:sx=>new THREE.Vector3(sx,-.05,-.35), F:sx=>new THREE.Vector3(0,-.55,.85), N:sx=>new THREE.Vector3(-sx,0,.1) },
+  kalp:{ parmak:"kalp", hedef:(L,sx,s)=>new THREE.Vector3(sx*.06*s,L.bas+.2*s,.05*s), kutup:sx=>new THREE.Vector3(sx,.25,.35), F:sx=>new THREE.Vector3(-sx,.15,.3), N:sx=>new THREE.Vector3(0,-.6,.6) },
+  ac:{ parmak:"ac", hedef:(L,sx,s)=>new THREE.Vector3(sx*.6*s,L.omuz+.1,.32*s), kutup:sx=>new THREE.Vector3(0,-1,-.3), F:sx=>new THREE.Vector3(sx,.15,.45), N:sx=>new THREE.Vector3(0,.3,1) },
   // plaket: iki eliyle göğsünün önünde, yüzü objektife dönük tutar (önceden tek kolu göğsünün önünden çapraz uzanıyordu)
-  plaket:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.165*s,L.omuz-.27,.25*s), kutup:sx=>new THREE.Vector3(sx,-.5,-.3), F:sx=>new THREE.Vector3(-sx*.2,.15,1), N:sx=>new THREE.Vector3(-sx,0,0) },
+  plaket:{ parmak:"plaket", hedef:(L,sx,s)=>new THREE.Vector3(sx*.165*s,L.omuz-.27,.25*s), kutup:sx=>new THREE.Vector3(sx,-.5,-.3), F:sx=>new THREE.Vector3(-sx*.2,.15,1), N:sx=>new THREE.Vector3(-sx,0,0) },
   // buket: sağ el göğüs önünde, dirsek bükük; çiçekler omuz hizasında, yüzü kapatmaz
-  buket:{ yanlar:["Right"], hedef:(L,sx,s)=>new THREE.Vector3(sx*.07*s,L.omuz-.33,.25*s), kutup:sx=>new THREE.Vector3(sx*.7,-1,-.15), F:sx=>new THREE.Vector3(-sx*.85,.15,.3), N:sx=>new THREE.Vector3(0,-.25,-1) } };
+  buket:{ parmak:"tut", yanlar:["Right"], hedef:(L,sx,s)=>new THREE.Vector3(sx*.07*s,L.omuz-.33,.25*s), kutup:sx=>new THREE.Vector3(sx*.7,-1,-.15), F:sx=>new THREE.Vector3(-sx*.85,.15,.3), N:sx=>new THREE.Vector3(0,-.25,-1) } };
 const _v5=new THREE.Vector3();
 const DURUS={kaan:{kalca:.1,sirt:.05,gogus:.05,boyun:.05,dar:.06}, kardelen:{kalca:.16,sirt:.04,gogus:.04,boyun:.05,dar:.08}};
 // Karıştırıcı (AnimationMixer) bir kemiğin hesapladığı değer bir önceki kareyle aynıysa o kemiğe hiç yazmaz (ör. bekleme klibinde
@@ -1976,6 +2103,11 @@ function karakterleriGuncelle(dt){
     if(u._ayril>0){ u._ayril-=dt; const e2=esBul(c); if(e2&&!(u.saril>0)&&!(u.elele>.05)&&!(u.dans>0)&&!(u.arkadan>0)&&!(u.omuz>0)&&!(u.otur>0)&&!(e2.userData.otur>0)&&hiz<.3){ const dv=c.position.clone().sub(e2.position); dv.y=0; const d=dv.length(); if(d>.01&&d<.56) c.position.addScaledVector(dv.multiplyScalar(1/d),Math.min(.56-d,.24*dt)); else u._ayril=0; } else u._ayril=0; }
     const pozIK=POZ_IK[u.kolPoz]; u._pozW=lerp(u._pozW||0,pozIK?1:0,1-Math.pow(.003,dt)); if(pozIK) u._pozSon=u.kolPoz;
     const pozKol=u._pozW>.02&&POZ_IK[u._pozSon]&&!es, pozYan=pozKol?(POZ_IK[u._pozSon].yanlar||["Left","Right"]):[];
+    // konuşma jestleri: konuşan karakter (ayakta, eli boşken) ara ara bir ya da iki eliyle sözüne eşlik eder; önkol öne kalkar, vurgularda hafifçe iner kalkar
+    const J=u._jest||(u._jest={D:0,S:0,hD:0,hS:0,t:0,tip:0});
+    if(u.konus>0){ J.t-=dt; if(J.t<=0){ J.t=rnd(1.2,2.6); const r=Math.random(); J.tip=r<.3?0:r<.62?1:r<.84?2:3; J.hS=(J.tip===1||J.tip===3)?1:0; J.hD=(J.tip===2||J.tip===3)?1:0; } }
+    else { J.hD=J.hS=0; J.t=rnd(.15,.5); }
+    J.D=lerp(J.D,J.hD,1-Math.pow(.03,dt)); J.S=lerp(J.S,J.hS,1-Math.pow(.03,dt));
     for(const [anah,kmk] of [["D","Left"],["S","Right"]]){
       if((ikKol&&ikKol[kmk]&&u._ikW>.02)||(u.elHedef&&u.elHedef[kmk])||pozYan.includes(kmk)) continue;
       const vk=anah==="D"?u.kolD:u.kolS, st=u._kol[anah], isaret=anah==="D"?1:-1;
@@ -1985,7 +2117,7 @@ function karakterleriGuncelle(dt){
       if(!aktif&&u.saril>0){ aktif=true; if(u.kim==="kaan"){ px=-.95; pz=-isaret*.15; } else { px=-1.55; pz=-isaret*.25; } }
       if(!aktif&&u._dans>.05){ aktif=true; if(u.kim==="kaan"){ px=-.75; pz=-isaret*.25; } else { px=-1.45; pz=-isaret*.3; } }
       if(!aktif&&u.kilic>0&&anah==="S"){ aktif=true; if(u.kilicYon){ const ky=u.kilicYon.clone().normalize().add(new THREE.Vector3(0,(u.titre||0)*.4,0)).normalize(); ozel=ky.clone().applyQuaternion(kq.clone().invert()); onKol=ky; } else { px=-1.0-u.kilic*.72; pz=-.12; onKol=yon(-.2,.55+u.kilic*.25,.9); } }
-      if(!aktif&&u.telefon>0&&anah==="S"){ aktif=true; if(u.telefon>2.5){ px=-1.0; pz=.08; onKol=yon(.16,.95,.5); } else if(u.telefon>1.5){ px=-.35; pz=-.55; onKol=yon(.3,1,.25); } else { px=-.55; pz=.12; onKol=yon(.25,.55,1); } } // 3: görüntülü arama (telefon yüz hizasında)
+      if(!aktif&&u.telefon>0&&anah==="S"){ aktif=true; if(u.telefon>2.5){ px=-1.0; pz=.08; onKol=yon(.16,.95,.5); } else if(u.telefon>1.5){ px=-.4; pz=.1; onKol=yon(.42,.88,.72); } else { px=-.55; pz=.12; onKol=yon(.25,.55,1); } } // 1: göğüs önünde, 2: telefona bakıyor (yüzün önünde, önceden kol yana açık, el omuz hizasında havadaydı), 3: görüntülü arama (telefon yüz hizasında)
       if(!aktif&&u.alkis>0){ aktif=true; px=-.55; pz=-isaret*.12; onKol=yon(-isaret*(.55+Math.sin(zaman*14)*.2),.35,.8); }
       if(!aktif&&u.elele>.05&&anah===elKol&&!es){ aktif=true; px=-.1+Math.sin(u.faz)*.06*Math.min(1,hiz); pz=isaret*.32; }
       if(!aktif&&u.salla>0&&anah==="D"){ aktif=true; px=0; pz=2.5+Math.sin(zaman*8)*.25; onKol=yon(isaret*.25,1,.15); }
@@ -1993,15 +2125,21 @@ function karakterleriGuncelle(dt){
       // sandalyede, bankta, yatakta otururken eller dizlerin üstünde (önceden kollar sandalyenin yanından dümdüz sarkıyordu)
       if(!aktif&&u._otur>.5&&u.oturY>.2&&u.oturTip!=="ata"){ aktif=true; px=-.32; pz=isaret*.12; onKol=yon(-isaret*.18,-.32,1); }
       // ayakta beklerken kollar gövdeye biraz daha yakın ve dirsek hafif bükük (bekleme klibinde kollar yana açık, eller havada duruyordu); yarı ağırlıkla
-      let agir=1; if(!aktif&&u._otur<.1&&u._dans<.1&&(A.walk+A.run)<.15&&!(u.elele>.05)){ aktif=true; agir=.55; px=-.05; pz=isaret*.12; onKol=yon(isaret*.02,-1,.22); }
+      let agir=1; if(!aktif&&u._otur<.1&&u._dans<.1&&(A.walk+A.run)<.15&&!(u.elele>.05)){ aktif=true; agir=.55; px=-.05; pz=isaret*.12; onKol=yon(isaret*.02,-1,.22);
+        const jw=(u.eldeki&&u.eldekiEl===anah)?0:J[anah];
+        if(jw>.01){ const t=zaman+u.faz*3+(anah==="D"?1.7:0), vur=.16*Math.sin(t*6.3)*Math.max(0,Math.sin(t*2.1))+.05*Math.sin(t*1.3), ikiEl=J.tip===3;
+          // önce dirsek bükülür (önkol öne-yukarı kalkar), üst kol biraz geriden gelir: ara karede kol dümdüz öne uzanmış gibi görünmez
+          const wf=Math.min(1,jw*1.8); agir=lerp(.55,.95,jw); px=lerp(-.05,-.28,jw); pz=isaret*lerp(.12,ikiEl?.16:.1,jw);
+          onKol=new THREE.Vector3(isaret*.02,-1,.22).normalize().lerp(new THREE.Vector3(isaret*(ikiEl?.05:-.35),.12+vur,1).normalize(),wf).normalize().applyQuaternion(kq); } }
       st.w=lerp(st.w,aktif?agir:0,1-Math.pow(.003,dt));
       if(aktif){ if(ozel) _v3.copy(ozel); else { _e.set(px,0,pz); _v3.set(0,-1,0).applyEuler(_e); } st.d.lerp(_v3,1-Math.pow(.0005,dt)).normalize(); st.on=onKol; }
       if(st.w>.01){
         const d=st.d.clone().applyQuaternion(kq);
         kemikYonelt(B[kmk+"Arm"],B[kmk+"ForeArm"],d,st.w);
-        let d2=st.on;
-        if(!d2){ if(st.d.z>.55) d2=yon(-isaret*1,st.d.y*.4,.45); else d2=st.d.clone().add(new THREE.Vector3(0,.15,.35)).normalize().applyQuaternion(kq); }
-        kemikYonelt(B[kmk+"ForeArm"],B[kmk+"Hand"],d2,st.w*.85);
+        // önkol yönü gövdeye göre yumuşatılır: bir pozdan ötekine (bekleme, jest, telefon...) geçerken önkol bir anda sıçramasın (alkış ve kılıç hızlı izlenir)
+        const hL=st.on? st.on.clone().applyQuaternion(kq.clone().invert()) : (st.d.z>.55? new THREE.Vector3(-isaret,st.d.y*.4,.45).normalize() : st.d.clone().add(new THREE.Vector3(0,.15,.35)).normalize());
+        if(!st.onL||ozel||u.alkis>0) st.onL=hL; else st.onL.lerp(hL,1-Math.pow(.0005,dt)).normalize();
+        kemikYonelt(B[kmk+"ForeArm"],B[kmk+"Hand"],st.onL.clone().applyQuaternion(kq),st.w*.85);
       }
     }
     // fotoğraf pozları: eller gövdeye göre hedef noktalara IK ile gider (bel: eller belde, kalp: eller başın üstünde, aç: kollar açık)
@@ -2009,17 +2147,20 @@ function karakterleriGuncelle(dt){
       const L={bel:B.Spine.getWorldPosition(_v1).y-_v5.y, bas:B.Head.getWorldPosition(_v1).y-_v5.y, omuz:B.LeftArm.getWorldPosition(_v1).y-_v5.y};
       for(const [yan,sx] of [["Left",1],["Right",-1]]){ if(!pozYan.includes(yan)) continue; const T=Q.hedef(L,sx,s).applyQuaternion(kq).add(_v5);
         kolIK(B,yan,T,Q.kutup(sx).normalize().applyQuaternion(kq),w); elYonelt(B,yan,Q.F(sx).normalize().applyQuaternion(kq),Q.N(sx).normalize().applyQuaternion(kq),w*.9); } }
+    const yonet={}; // bu karede parmaklarını başka bir sistemin kurduğu eller
     if(es&&u._ikW>.01){ const w=u._ikW;
-      if(u.saril>0){ sarilIK(c,es,w); u._kavra2=true; }
-      else if(u.omuz>0){ omuzIK(c,es,w); u._kavra2=true; }
-      else if(u.arkadan>0){ arkadanIK(c,es,w); u._kavra2=true; }
-      else if(u._ele){ u._kavra2=eleleIK(c,es,w); } }
+      if(u.saril>0){ sarilIK(c,es,w); u._kavra2=true; yonet.Left=yonet.Right=1; }
+      else if(u.omuz>0){ yonet[omuzIK(c,es,w)]=1; u._kavra2=true; }
+      else if(u.arkadan>0){ arkadanIK(c,es,w); u._kavra2=true; yonet.Left=yonet.Right=1; }
+      else if(u._ele){ u._kavra2=eleleIK(c,es,w); yonet[u._kavra2]=1; } }
     else if(u._kavra2){ elSifirla(B,"Left"); elSifirla(B,"Right"); u._kavra2=null; u._kavra3=null; }
-    if(u.elHedef){ for(const yan in u.elHedef){ const h=u.elHedef[yan]; if(!h||!B[yan+"Arm"]) continue; parmakSifirla(B,yan); kolIK(B,yan,h.p,h.kutup||yon(0,-.5,-1),1); if(h.F&&h.N) elYonelt(B,yan,h.F,h.N,1); parmakKapa(B,yan,h.kivrim||[1.1,1.3,.9],h.bas||[.6,.6,.5],1); } u._elH=true; }
+    if(u.elHedef){ for(const yan in u.elHedef){ const h=u.elHedef[yan]; if(!h||!B[yan+"Arm"]) continue; yonet[yan]=1; parmakSifirla(B,yan); kolIK(B,yan,h.p,h.kutup||yon(0,-.5,-1),1); if(h.F&&h.N) elYonelt(B,yan,h.F,h.N,1); parmakKapa(B,yan,h.kivrim||[1.1,1.3,.9],h.bas||[.6,.6,.5],1); } u._elH=true; }
     else if(u._elH){ elSifirla(B,"Left"); elSifirla(B,"Right"); u._elH=false; }
     // baş: bakNokta > bak açısı; kafa vekilinin z dönüşü = yana eğme
+    // elinde telefon varken (başka yere bakması istenmediyse) telefona bakar
+    const bakH=u.bakNokta||(u.telefon>0&&u.eldeki&&u.eldeki.userData.telefon&&u.eldeki.parent?u.eldeki.getWorldPosition(new THREE.Vector3()):null);
     { let bk=u.bak||0, by=0;
-      if(u.bakNokta){ B.Neck.getWorldPosition(_v1); _v2.copy(u.bakNokta).sub(_v1); const yerel=_v2.clone().applyQuaternion(kq.clone().invert()); bk=Math.atan2(yerel.x,yerel.z); by=Math.atan2(yerel.y,Math.hypot(yerel.x,yerel.z)); }
+      if(bakH){ B.Neck.getWorldPosition(_v1); _v2.copy(bakH).sub(_v1); const yerel=_v2.clone().applyQuaternion(kq.clone().invert()); bk=Math.atan2(yerel.x,yerel.z); by=Math.atan2(yerel.y,Math.hypot(yerel.x,yerel.z)); }
       bk=Math.atan2(Math.sin(bk),Math.cos(bk));
       // hedef tam arkaya geçince baş sağ-sol uç arasında çırpınmasın: arkadaysa bulunduğu taraftan bakmayı sürdürür
       if(Math.abs(bk)>2.0&&Math.sign(bk)!==Math.sign(u._bak||0)&&Math.abs(u._bak||0)>.2) bk=Math.sign(u._bak)*1.1;
@@ -2037,7 +2178,7 @@ function karakterleriGuncelle(dt){
     // gözler: bakılan noktaya ya da konuşulan kişinin yüzüne döner; boşta ara ara küçük sıçramalarla (sakkad) etrafa bakar.
     // göz yuvası sınırı ~20°: gözler asla kayıp şaşı/ters görünmez
     if(u._gozF){
-      let T=null; if(u.bakNokta) T=u.bakNokta;
+      let T=null; if(bakH) T=bakH;
       else { const es2=esBul(c); if(es2&&(u.konus>0||es2.userData.konus>0||u.saril>0||u.dans>0)){ T=bas(es2); T.y-=.03; } }
       u._sakT=(u._sakT||0)-dt; if(u._sakT<=0){ u._sakT=T?rnd(.9,2.2):rnd(.6,2.0); u._sakX=rnd(-1,1)*(T?.025:.16); u._sakY=rnd(-1,1)*(T?.02:.07); }
       const gm=B.LeftEye.getWorldPosition(_v1).add(B.RightEye.getWorldPosition(_v2)).multiplyScalar(.5);
@@ -2049,6 +2190,7 @@ function karakterleriGuncelle(dt){
       // göz yuvası sınırı: baş yönünden en fazla ~20°
       const a=fw.angleTo(d), MAX=.36; if(a>MAX){ const q=new THREE.Quaternion().setFromUnitVectors(fw,d); d=fw.clone().applyQuaternion(new THREE.Quaternion().slerp(q,MAX/a)); }
       if(!u._gozD) u._gozD=d.clone(); else u._gozD.lerp(d,1-Math.pow(.00002,dt)).normalize();
+      u._gozAsagi=Math.max(0,Math.asin(clamp(fw.y,-1,1))-Math.asin(clamp(u._gozD.y,-1,1))); // gözün başa göre aşağı bakışı (göz kapağı için)
       for(const g of ["LeftEye","RightEye"]){ B[g].getWorldQuaternion(_q4); const f=u._gozF[g].clone().applyQuaternion(_q4); const hedefY=T? T.clone().sub(B[g].getWorldPosition(_v3)).normalize().lerp(u._gozD,.5).normalize() : u._gozD;
         const b=f.angleTo(hedefY); if(b>1e-3){ const q=new THREE.Quaternion().setFromUnitVectors(f,hedefY); if(b>MAX+.05) q.slerp(new THREE.Quaternion(),1-(MAX+.05)/b); B[g].parent.getWorldQuaternion(_q3); const qa=_q4.clone().premultiply(q); B[g].quaternion.copy(_q3.invert().multiply(qa)); } } }
     // sarılırken başlar: kısa olan yanağını göğsüne yaslar (başı yana döner), uzun olan başını eğip onun başının üstüne yaslar; ikisi de aynı yöne bakar
@@ -2060,12 +2202,24 @@ function karakterleriGuncelle(dt){
       u._kirp-=dt; let kir=0; if(u._kirp<0){ u._kirpT+=dt; kir=Math.sin(Math.min(1,u._kirpT/.16)*Math.PI); if(u._kirpT>.16){ u._kirpT=0; u._kirp=rnd(2.2,5.5); } }
       u._gul=lerp(u._gul,u.gulumse,1-Math.pow(.05,dt));
       const kn=u.konus>0? clamp(.12+.22*Math.sin(zaman*17+u.faz)*Math.sin(zaman*5.3)+.12*Math.sin(zaman*9.1),0,.45):0; u._cene=lerp(u._cene,kn,.5);
-      yuzAyarla(u,"eyeBlinkLeft",kir); yuzAyarla(u,"eyeBlinkRight",kir);
+      // aşağı bakarken üst göz kapağı da iner (gerçekte kapak gözü izler; inmeyince telefona bakarken "şaşkın, faltaşı gibi" bakıyordu)
+      const kapak=Math.max(kir,clamp((u._gozAsagi||0)*1.25-.04,0,.42));
+      yuzAyarla(u,"eyeBlinkLeft",kapak); yuzAyarla(u,"eyeBlinkRight",kapak);
       const gl=Math.max(u._gul,u.kim==="kardelen"?.2:.06); // hafif, doğal tebessüm
       yuzAyarla(u,"mouthSmileLeft",gl*.7); yuzAyarla(u,"mouthSmileRight",gl*.7); yuzAyarla(u,"cheekSquintLeft",gl*.35); yuzAyarla(u,"cheekSquintRight",gl*.35);
       yuzAyarla(u,"jawOpen",u._cene); yuzAyarla(u,"mouthFunnel",u._cene*.3); yuzAyarla(u,"browInnerUp",u.baslik||0);
       if(u.kim==="kardelen"){ /* göz ve kaş biçimi kardelenYuzSekli'nde geometriye işlendi (dosyada eyeWide/browOuterUp hedefi yok) */ } // biraz daha açık, ışıltılı bakış
     }
+    // parmaklar: başka bir sistemin yönetmediği eller hedef duruşa yumuşakça geçer (rahat el, elde nesne, fotoğraf pozu, alkış, el sallama, konuşma jesti)
+    for(const yan of ["Left","Right"]){ if(yonet[yan]) continue; const anah=yan==="Left"?"D":"S", elde=u.eldeki&&(u.eldekiEl==="S"?"Right":"Left")===yan;
+      if(elde&&u.eldeki.userData.kilic) continue;
+      let ad="rahat";
+      if(elde) ad=u.eldeki.userData.telefon?"telefon":"tut";
+      else if(pozYan.includes(yan)&&u._pozW>.3) ad=POZ_IK[u._pozSon].parmak||"rahat";
+      else if(u.alkis>0) ad="alkis";
+      else if(u.salla>0&&anah==="D") ad="salla";
+      else if(u._jest&&u._jest[anah]>.35) ad="jest";
+      parmakGecis(u,B,yan,ad,dt); }
     // elde tutulan nesne
     if(u.titre>0) u.titre=Math.max(0,u.titre-dt*2.2);
     if(u.eldeki&&u.eldeki.userData.kilic){ u._kavra=u.eldekiEl==="S"?"Right":"Left"; kilicKavra(B,u._kavra,u.eldeki,u.kilicYon?u.kilicYon.clone().normalize().add(new THREE.Vector3(0,(u.titre||0)*.4,0)).normalize():yon(.05,1,.32),1); }
@@ -2077,12 +2231,31 @@ function karakterleriGuncelle(dt){
         // avucun ortasından tutulur (bilekten değil); tutY: nesnenin tutulan yüksekliği (buket sapından)
         const M1=B[el+"HandMiddle1"]; if(M1){ M1.getWorldPosition(_v3); u.eldeki.position.copy(_v1).lerp(_v3,.6); } if(u.eldeki.userData.tutY) u.eldeki.position.y-=u.eldeki.userData.tutY;
         if(u.eldeki.userData.egim) u.eldeki.rotateX(u.eldeki.userData.egim); } // dik tutulan (buket, kutu): dünya yukarısı korunur
-      else if(u.eldeki.userData.telefon){ u.eldeki.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),_v4); u.eldeki.rotateY(Math.PI/2); }
+      else if(u.eldeki.userData.telefon){
+        // telefon avucun içinde: arkası avuca ve parmaklara yaslanır, ekranı avucun baktığı yöne döner (önceden elin sırtında, parmaklar telefonun dışında kalıyordu).
+        // telefona bakarken ya da kulağa tutarken avuç başa döner: ekran yüze/kulağa bakar
+        if(u.telefon>0&&B.Head){ const bs=B.Head.getWorldPosition(new THREE.Vector3()).sub(_v1), Fh=_v4.clone().add(new THREE.Vector3(0,.18,0)).normalize(); bs.addScaledVector(Fh,-bs.dot(Fh));
+          if(bs.lengthSq()>1e-6){ elYonelt(B,el,Fh,bs.normalize(),1); h.getWorldPosition(_v1); } }
+        const M1=B[el+"HandMiddle1"], N=avucNormal(B,el); M1.getWorldPosition(_v3); const F=_v3.clone().sub(_v1); F.addScaledVector(N,-F.dot(N)).normalize();
+        u.eldeki.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(F.clone().cross(N).normalize(),F,N));
+        u.eldeki.position.copy(_v1).addScaledVector(F,.085).addScaledVector(N,.024); }
       else u.eldeki.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),_v4); }
+    temasGuncelle(c,u,B);
     // etek kalçayı izler
     if(u.etek){ B.Hips.getWorldPosition(_v1); c.worldToLocal(_v1); u.etek.position.set(_v1.x,_v1.y+.07,_v1.z); u.etek.scale.set(1,1-(u._otur*.55),1+u._otur*.3); u.etek.rotation.x=-u._otur*.35; }
   }
 }
+/* temas gölgesi: ayakların altında yumuşak koyuluk. Güneş gölgesinin düşmediği yerlerde (gölgelik, iç mekân, akşam) karakterler zemine basıyor
+   görünsün, havada süzülür gibi durmasın. Ayaklar yerden kalkınca (taşınma, sıçrama) solar. */
+let TEMAS_DOKU=null;
+function temasDoku(){ if(TEMAS_DOKU) return TEMAS_DOKU; const c=document.createElement("canvas"); c.width=c.height=64; const x=c.getContext("2d"); const g=x.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,"rgba(0,0,0,1)"); g.addColorStop(.4,"rgba(0,0,0,.6)"); g.addColorStop(1,"rgba(0,0,0,0)"); x.fillStyle=g; x.fillRect(0,0,64,64); TEMAS_DOKU=new THREE.CanvasTexture(c); TEMAS_DOKU.__kalici=true; return TEMAS_DOKU; }
+const TEMAS_GEO=new THREE.PlaneGeometry(1,1); TEMAS_GEO.rotateX(-Math.PI/2); TEMAS_GEO.userData.kalici=true;
+function temasGuncelle(c,u,B){ if(!B.LeftFoot||!B.RightFoot) return;
+  if(!u._temas){ const mt=new THREE.MeshBasicMaterial({map:temasDoku(),color:0x000000,transparent:true,depthWrite:false,opacity:.4,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-4,fog:true}); mt.userData.kalici=true;
+    const m=new THREE.Mesh(TEMAS_GEO,mt); m.renderOrder=1; m.castShadow=m.receiveShadow=false; m.userData.temas=true; c.add(m); u._temas=m; }
+  const m=u._temas, o=B.LeftFoot.getWorldPosition(new THREE.Vector3()).add(B.RightFoot.getWorldPosition(new THREE.Vector3())).multiplyScalar(.5); c.worldToLocal(o);
+  const yuk=Math.max(0,o.y-.12); m.position.set(o.x,.008,o.z); m.rotation.y=u.model.rotation.y; m.scale.set(.55,1,.72); m.material.opacity=.34*clamp(1-yuk*3,0,1); m.visible=m.material.opacity>.02; }
 function kalabalikGuncelle(c,dt){
   const u=c.userData; u._sayac+=dt;
   // yolun sonunda geri dönen yürüyenler bir anda 180° çevrilmesin: gövde ~0,3 sn'de döner (görsel yön yumuşatması)
@@ -9088,7 +9261,7 @@ function kurulumIpucu(){
 
 
 /* ================= GÜNCELLEME (telefondan) ================= */
-const SURUM="2026.10.30-233005";
+const SURUM="2026.10.31-024952";
 async function sunucuSurumu(){ try{ const r=await fetch("surum.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const j=await r.json(); return j.surum||null; }catch(e){ return null; } }
 function tost(t,sure=2600){ const d=el(`<div class="tost">${t}</div>`); document.body.appendChild(d); requestAnimationFrame(()=>d.classList.add("gor")); setTimeout(()=>{ d.classList.remove("gor"); setTimeout(()=>d.remove(),500); },sure); }
 async function guncelle(){
@@ -9191,18 +9364,19 @@ const Final={
 /* ================= DÖNGÜ ================= */
 let onceki=0;
 function dongu(t){
-  const dt=Math.min(window.__dtMax||.05,(t-(onceki||t))/1000)*ZAMAN_OLCEK; onceki=t; zaman+=dt; BITKI.ruzgar.value=zaman;
+  const ham=(t-(onceki||t))/1000; const dt=Math.min(window.__dtMax||.05,ham)*ZAMAN_OLCEK; onceki=t; zaman+=dt; BITKI.ruzgar.value=zaman; cozunurlukAyarla(ham);
   try{
     if(bolum&&bolum.guncelle) bolum.guncelle(dt);
     hikayeGuncelle(dt); kalpGuncelle(dt);
-    if(scene){ const g=scene.userData.gok; if(g){ g.position.copy(camera.position); g.material.uniforms.zaman.value=zaman; }
-      const gun=scene.userData.gun; if(gun){ gun.target.position.copy(Kamera.hedef); gun.position.copy(Kamera.hedef).addScaledVector(scene.userData.gunesYon,60); } }
     kameraGuncelle(dt);
     karakterleriGuncelle(dt);
+    // gökyüzü kameranın yeni yerini izler, gölge kutusu kameranın baktığı yere oturur (kamera güncellendikten sonra: bir kare geriden gelmesin)
+    if(scene){ const g=scene.userData.gok; if(g){ g.position.copy(camera.position); g.material.uniforms.zaman.value=zaman; } golgeKadraj(scene); }
     statikIzle(dt);
     Ses.guncelle();
   }catch(e){ console.error(e); }
   Girdi.aksiyonBas=false;
+  if(sonPass) sonPass.uniforms.zaman.value=zaman;
   if(scene&&!YUKLENIYOR){ if(!scene.userData.dengeli) isiklariDengele(scene); if(composer){ composer.passes[0].scene=scene; composer.passes[0].camera=camera; composer.render(dt); } else renderer.render(scene,camera); }
   yeniProgramlariIgnele();
   if(ICSAHNE&&ICSAHNE.el&&ICSAHNE.el.isConnected){ try{ const r=ICSAHNE.el.getBoundingClientRect(), H=ekranYuksekligi(); const tm=renderer.toneMapping;

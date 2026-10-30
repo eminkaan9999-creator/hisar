@@ -4450,7 +4450,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'57',LOGO=window.HISAR_LOGO;
+const VER=+'58',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -6722,6 +6722,113 @@ FRAME_HOOKS.push(dr=>{dr=dr||0;const pl=game==='play'&&!window.mapOpen;window.TK
 {const ie=window.initExtra;window.initExtra=function(){const r=ie.apply(this,arguments);try{FUEL.v=100;FUEL.w25=FUEL.w0=0;APS.n=apsMax();APS.cd=0;RWS.ammo=300;RWS.tgt=null;RWS.yaw=0;RWS.el=0;RB.length=0;CMD.e=null;CMD.last=null;
  DZ.dig=null;DZ.cur=null;DZ.sink=0;for(const m of DZ.berms){m.parent&&m.parent.remove(m);m.geometry.dispose()}DZ.berms.length=0;if(typeof COV!=='undefined')for(let i=COV.length-1;i>=0;i--)if(COV[i].berm)COV.splice(i,1);
  NET.on=0;NET.k=0;NET.still=0;REV.t=0;P.rpmK=0;attach()}catch(e){}return r}}
+})();
+
+
+// ===== m_drone2 =====
+// ============ UCANGOZ GOVDELERI + ELEKTRONIK HARP: garajdan secilen 3 govde (KESIF uzun pil ve menzil, hedefleri kendisi isaretler; SALDIRI bomba atar; FPV cok hizli, tek kullanimlik guclu savas basligi), zayif sinyalde goruntu yirtilmasi ve donma, sinyal tamamen kesilince otomatik eve donus, dusman karistirici (EH) araci: yakininda sinyal bozulur, GPS kayar ============
+(function(){
+const PI=Math.PI,RN=Math.random,rr=(a,b)=>a+RN()*(b-a),cl=(v,a,b)=>v<a?a:v>b?b:v,FX=window.FXP;
+const snd=f=>{try{if(typeof AC!=='undefined'&&AC&&typeof AU!=='undefined'&&AU)f(AC.currentTime)}catch(e){}};
+const say2=(t,s,k,c)=>{try{if(window.CREW&&CREW.say)CREW.say(t,s||1,k,c)}catch(e){}};
+const ss=(a,b,t)=>{t=cl((t-a)/(b-a),0,1);return t*t*(3-2*t)};
+// ---------------- 1) govdeler ----------------
+const BODY={
+ kesif:{n:'KEŞİF',ic:'🛰️',d:'Uzun pil ve menzil, termal gimbal kamera; görüş alanındaki hedefleri kendisi işaretler. Bomba ve savaş başlığı yok.',price:500,bat:1.65,sig:1.6,spd:1.1,ammo:0,kz:0},
+ saldiri:{n:'SALDIRI',ic:'💣',d:'Standart gövde: bomba şarjörü, orta pil ve hız.',price:0,bat:1,sig:1,spd:1,ammo:1,kz:1},
+ fpv:{n:'FPV',ic:'⚡',d:'Çok hızlı yarış gövdesi, güçlü tanksavar başlığı; tek kullanımlık kamikaze. Pili kısa.',price:350,bat:.55,sig:.85,spd:1.6,ammo:0,kz:1.7}};
+if(!SV.dbody||!BODY[SV.dbody])SV.dbody='saldiri';if(!Array.isArray(SV.dbodies))SV.dbodies=['saldiri'];
+const B=()=>BODY[SV.dbody]||BODY.saldiri;window.DBODY=B;
+const MM=c=>new THREE.MeshStandardMaterial({color:c,roughness:.6,metalness:.25});
+function rotor(g,x,y,z,r,rot,BK,GR){const q=new THREE.Group();q.position.set(x,y,z);g.add(q);for(let k=0;k<3;k++){const a=k*2.094,b=new THREE.Mesh(new THREE.BoxGeometry(r,.012,.09),BK);b.position.set(Math.cos(a)*r/2,0,Math.sin(a)*r/2);b.rotation.y=-a;q.add(b)}
+ const hub=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.06,10),GR);q.add(hub);const dk=new THREE.Mesh(new THREE.CylinderGeometry(r,r,.004,20),new THREE.MeshBasicMaterial({color:0xaab0b8,transparent:true,opacity:.1}));q.add(dk);rot.push(q)}
+function mkKesif(){const g=new THREE.Group(),rot=[],G=MM(0x6e746a),D=MM(0x2a2e2a),BK=MM(0x0e0f10),GR=MM(0x8a9096);
+ const bd=new THREE.Mesh(new THREE.BoxGeometry(.5,.24,1.1),G);bd.position.y=.12;g.add(bd);const tp=new THREE.Mesh(new THREE.SphereGeometry(.3,14,8,0,2*PI,0,PI/2),G);tp.scale.set(.85,.5,1.6);tp.position.y=.24;g.add(tp);
+ for(const[sx,sz]of[[-1,-1],[1,-1],[-1,1],[1,1]]){const X=sx*1.35,Z=sz*1.25,arm=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,Math.hypot(X,Z),8),D);arm.rotation.z=PI/2;arm.rotation.y=-Math.atan2(Z,X);arm.position.set(X/2,.12,Z/2);g.add(arm);
+  const mt=new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.14,12),BK);mt.position.set(X,.18,Z);g.add(mt);const leg=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.42,6),D);leg.position.set(X*.4,-.12,Z*.4);g.add(leg);rotor(g,X,.28,Z,1.0,rot,BK,GR)}
+ const gm=new THREE.Mesh(new THREE.SphereGeometry(.15,14,10),D);gm.position.set(0,-.12,.38);g.add(gm);const ln=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.05,12),new THREE.MeshBasicMaterial({color:0x3fa9d6}));ln.rotation.x=PI/2;ln.position.set(0,-.13,.52);g.add(ln);
+ const an=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.5,5),MM(0xdddddd));an.position.set(0,.5,-.4);g.add(an);
+ g.userData.rot=rot;g.userData.pl=new THREE.Group();g.add(g.userData.pl);return g}
+function mkRacer(){const g=new THREE.Group(),rot=[],CF=MM(0x141518),BK=MM(0x0b0b0c),GR=MM(0x6a7077),OL=MM(0x4c5a34),RD=MM(0xb81c1c);
+ for(const a of[PI/4,-PI/4]){const p=new THREE.Mesh(new THREE.BoxGeometry(.09,.03,1.7),CF);p.rotation.y=a;g.add(p)}
+ const st=new THREE.Mesh(new THREE.BoxGeometry(.3,.16,.42),BK);st.position.y=.1;g.add(st);const cam=new THREE.Mesh(new THREE.BoxGeometry(.12,.12,.1),BK);cam.position.set(0,.13,.26);cam.rotation.x=-.4;g.add(cam);
+ const ln=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.03,10),new THREE.MeshBasicMaterial({color:0xd6a33f}));ln.rotation.x=PI/2-.4;ln.position.set(0,.14,.32);g.add(ln);
+ for(const[sx,sz]of[[-1,-1],[1,-1],[-1,1],[1,1]]){const X=sx*.6,Z=sz*.6,mt=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.1,10),BK);mt.position.set(X,.06,Z);g.add(mt);rotor(g,X,.13,Z,.56,rot,BK,GR)}
+ // tanksavar savas basligi (alt tarafta, ileri bakan)
+ const wh=new THREE.Group();wh.position.set(0,-.12,.05);g.add(wh);const tube=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.5,10),OL);tube.rotation.x=PI/2;wh.add(tube);
+ const cone=new THREE.Mesh(new THREE.ConeGeometry(.09,.32,12),OL);cone.rotation.x=PI/2;cone.position.z=.38;wh.add(cone);const bulb=new THREE.Mesh(new THREE.CylinderGeometry(.095,.095,.14,12),OL);bulb.rotation.x=PI/2;bulb.position.z=.18;wh.add(bulb);
+ for(const z of[-.12,.08]){const t=new THREE.Mesh(new THREE.TorusGeometry(.06,.008,4,12),BK);t.position.z=z;wh.add(t)}const pin=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.08,6),RD);pin.rotation.x=PI/2;pin.position.z=.56;wh.add(pin);
+ g.userData.rot=rot;g.userData.pl=new THREE.Group();g.add(g.userData.pl);return g}
+let STD=null;   // standart (saldiri) govdenin cocuklari
+function setBody(k){if(!BODY[k])k='saldiri';const g=DR.g;if(!g)return;if(!STD)STD={ch:g.children.slice(),rot:g.userData.rot,pl:g.userData.pl};
+ for(const c of g.children.slice())g.remove(c);
+ if(k==='saldiri'){for(const c of STD.ch)g.add(c);g.userData.rot=STD.rot;g.userData.pl=STD.pl}
+ else{const m=k==='kesif'?mkKesif():mkRacer();for(const c of m.children.slice())g.add(c);g.userData.rot=m.userData.rot;g.userData.pl=m.userData.pl}
+ g.traverse(o=>{if(o.isMesh){o.castShadow=true}});g.userData.body=k}
+// ---------------- 2) govde etkileri: hiz, pil, menzil, bomba, kamikaze ----------------
+{const am=window.AMX;window.AMX=function(){return B().ammo?am.apply(this,arguments):0}}
+{const up=window.update;window.update=function(dt){const b=B();if(b.spd===1)return up.apply(this,arguments);const d0=SV.U.dsp;SV.U.dsp=(b.spd*(1+.08*d0)-1)/.08;try{return up.apply(this,arguments)}finally{SV.U.dsp=d0}}}
+{const fu=window.fpvUp;window.fpvUp=function(dt){const b=B(),b0=SV.U.bat,s0=SV.U.sig,m0=SV.U.bmb;SV.U.bat=(b.bat*(1+.25*b0)-1)/.25;SV.U.sig=(b.sig*(1+.3*s0)-1)/.3;if(DR.kz&&b.kz!==1)SV.U.bmb=(b.kz*(1+.15*m0)-1)/.15;
+ let r;try{r=fu.apply(this,arguments)}finally{SV.U.bat=b0;SV.U.sig=s0;SV.U.bmb=m0}try{jam(dt)}catch(e){}return r}}
+{const kz=window.kamikaze;window.kamikaze=function(){if(B().kz===0){say('KEŞİF GÖVDESİNDE SAVAŞ BAŞLIĞI YOK',1.6);return}return kz.apply(this,arguments)}}
+// FPV: genis aci kamera
+{const cu=window.camUpdate;window.camUpdate=function(){const r=cu.apply(this,arguments);if(mode==='drone'&&DR.on&&SV.dbody==='fpv'&&CAM.fov===85){CAM.fov=98;CAM.updateProjectionMatrix()}return r}}
+// ---------------- 3) dusman elektronik harp (karistirici) araci ----------------
+function mkEW(){const g=new THREE.Group(),T=typeof camo==='function'?camo(0x8a7552):M(0x8a7552),K=M(0x1a1a1a),A=M(0x8d9286),R_=new THREE.MeshBasicMaterial({color:0xff2a20});
+ bx(g,2.6,.5,7.4,K,0,.8,0);bx(g,2.5,1.5,2.2,T,0,1.75,2.6);bx(g,2.2,.7,.1,M(0x25404f),0,2.15,3.72);bx(g,2.6,2.5,4.4,T,0,2.15,-1.3);
+ for(const q of[-1,1])for(const z of[-2.6,-.6,2.7])cy(g,.58,.58,.42,K,q*1.32,.58,z,0,PI/2);
+ cy(g,.18,.22,6.5,A,0,6.6,-1.6);for(let i=0;i<4;i++){const y=6.2+i*.95,b=bx(g,2.6-i*.35,.08,.08,A,0,y,-1.6);b.rotation.y=i*.6;for(const s of[-1,1]){const t=cy(g,.025,.025,.9,A,s*(1.25-i*.17)*Math.cos(i*.6),y+.45,-1.6-s*(1.25-i*.17)*Math.sin(i*.6))}}
+ const dish=new THREE.Mesh(new THREE.SphereGeometry(.7,16,8,0,2*PI,0,PI/2.4),A);dish.rotation.x=-PI/2.2;dish.position.set(0,4.3,-3.2);g.add(dish);
+ const lt=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),R_);lt.position.set(0,10.2,-1.6);g.add(lt);g.userData.lt=lt;
+ bx(g,2.62,.8,.06,M(0x3a3d36),0,2.6,-3.52);return g}
+// yeni dusman turu: tum tablolara kaydet (etiket, can, carpisma, ekran cercevesi, odul)
+function regType(t,o){const S_=(f)=>{try{f()}catch(e){}};S_(()=>HPT[t]=o.hp);S_(()=>RADI[t]=o.r);S_(()=>TOPI[t]=o.top);S_(()=>DKI[t]=o.dk||1);S_(()=>ENT[t]=o.n);S_(()=>ENN[t]=o.n);S_(()=>EHT[t]=o.eh);S_(()=>ERD[t]=o.erd);S_(()=>KR[t]=o.kr);S_(()=>NM[t]=o.n);
+ if(o.dm)S_(()=>SH.forEach((q,i)=>{if(o.dm[i]!=null)q.dm[t]=o.dm[i]}))}
+window.regType=regType;
+regType('ew',{hp:70,r:3.8,top:6,dk:1,n:'KARIŞTIRICI',eh:10,erd:3.6,kr:120,dm:[90,100,0,110]});
+{const me=window.mkE;window.mkE=function(t){if(t==='ew')return mkEW();return me.apply(this,arguments)}}
+const EWR=88;
+function ews(){return E.filter(e=>e.type==='ew')}
+function jam(dt){if(!DR.on)return;let k=1;for(const e of ews()){const d=Math.hypot(DR.x-e.x,DR.z-e.z);k=Math.min(k,ss(18,EWR,d))}
+ J.k=1-k;if(J.k>0){DR.sig=(DR.sig==null?1:DR.sig)*k;if(mode==='drone'&&!DR.rt){const t=performance.now()/1000;DR.x+=(Math.sin(t*.7)+Math.sin(t*1.9+1))*J.k*2.2*dt;DR.z+=(Math.cos(t*.8)+Math.cos(t*1.6+2))*J.k*2.2*dt}
+  if(!J.warn&&mode==='drone'){J.warn=1;say('⚠ ELEKTRONİK KARIŞTIRMA · sinyal ve GPS bozuluyor',2.4);say2('Karıştırma var! Vericiyi bulup tankla vurun.',1,'ew',25)}}else J.warn=0}
+const J={k:0,warn:0,lost:0};window.EWJAM=J;
+// gorev basinda bazen bir karistirici
+{const sm=window.startMission;if(sm)window.startMission=function(){const r=sm.apply(this,arguments);try{
+ const ok={kesif:.9,kopru:.75,depo:.6,koy:.55,dalga:.45}[mis]||0;if(RN()<ok){for(let k=0;k<20;k++){const a=RN()*2*PI,d=rr(115,165),x=cl(P.x+Math.sin(a)*d,-175,175),z=cl(P.z+Math.cos(a)*d,-175,175);
+   if(hAt(x,z)<-.6)continue;let bad=0;for(const b of BLD)if(Math.hypot(b.x-x,b.z-z)<b.r+6)bad=1;if(bad)continue;const e=addE('ew',x,z);if(e){e.cd=1e9;e.ew=1;setTimeout(()=>{try{radio('Komuta: Bölgede düşman elektronik harp aracı var. Yakınında Uçangöz sinyali bozulur, önce onu imha edin!')}catch(x){}},4000)}break}}}catch(e){}return r}}
+// ---------------- 4) zayif sinyal: goruntu yirtilmasi + donma; sinyal kaybinda eve donus ----------------
+const GC=document.createElement('canvas');GC.id='fpvG';GC.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;display:none';R.domElement.insertAdjacentElement('afterend',GC);
+const gx=GC.getContext('2d');let gw=0,gh=0,frz=0,frzT=0,gOn=false;
+function glitch(dr){const dm=mode==='drone'&&DR.on&&game==='play';const sig=DR.sig==null?1:DR.sig,k=dm?cl((.55-sig)/.55,0,1):0;
+ if(k<=0){if(gOn){gOn=false;GC.style.display='none';frz=0}return}
+ if(!gOn){gOn=true;GC.style.display='block'}const W=Math.round(Math.min(innerWidth,900)/2),H=Math.round(W*innerHeight/innerWidth);if(W!==gw||H!==gh){gw=GC.width=W;gh=GC.height=H}
+ const src=R.domElement;
+ if(frz>0){frz-=dr;return}
+ gx.clearRect(0,0,W,H);
+ if(RN()<dr*k*2.2){frz=rr(.12,.35)*k;try{gx.globalAlpha=1;gx.drawImage(src,0,0,W,H)}catch(e){}snd(T=>nburst(T,.15,{type:'bandpass',f:2400,q:.6,v:.05*k}));return}
+ const n=Math.round(2+k*7);for(let i=0;i<n;i++){const y=RN()*H,h=rr(2,6+k*16),sy=y/H*src.height,sh=h/H*src.height,off=rr(-1,1)*(6+k*40);try{gx.globalAlpha=.85;gx.drawImage(src,0,sy,src.width,sh,off,y,W,h)}catch(e){}}
+ if(k>.4){gx.globalAlpha=.25*k;gx.fillStyle=RN()<.5?'#3a6':'#c36';gx.fillRect(0,RN()*H,W,rr(1,4))}gx.globalAlpha=1}
+// ---------------- 5) KESIF govdesi: goruntudeki hedefleri isaretler ----------------
+let mkT=0;const _d=new THREE.Vector3();
+function autoMark(dr){if(SV.dbody!=='kesif'||mode!=='drone'||!DR.on||game!=='play'||DR.fall)return;mkT-=dr;if(mkT>0)return;mkT=.6;if((DR.sig==null?1:DR.sig)<.3)return;
+ CAM.getWorldDirection(_d);const alt=DR.y-hAt(DR.x,DR.z),R0=(60+alt*.9)*1.3;
+ for(const e of E){if(e.mark||e.type==='bridge')continue;const dx=e.x-CAM.position.x,dy=hAt(e.x,e.z)+1-CAM.position.y,dz=e.z-CAM.position.z,l=Math.hypot(dx,dy,dz);if(l>R0||l<3)continue;if((dx*_d.x+dy*_d.y+dz*_d.z)/l<Math.cos(.42))continue;
+  const r0=window.radio;window.radio=()=>{};try{toggleMark(e)}finally{window.radio=r0}say('🛰 KEŞİF: '+((typeof ENT!=='undefined'&&ENT[e.type])||'HEDEF')+' İŞARETLENDİ',1.2);break}}
+// ---------------- 6) garaj: govde secimi (Ucangoz sekmesinde) ----------------
+document.head.insertAdjacentHTML('beforeend','<style>#dBody{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}#dBody button{flex:1 1 0;min-width:96px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px 11px;border-radius:12px;border:1px solid rgba(214,236,190,.25);background:rgba(20,26,16,.75);color:#e9f0dc;-webkit-text-fill-color:#e9f0dc;text-align:left;font:700 11px/1.3 system-ui,sans-serif;cursor:pointer}#dBody button b{font:900 13px system-ui,sans-serif;letter-spacing:.6px}#dBody button.sel{border-color:#ffd27a;background:linear-gradient(160deg,rgba(80,62,18,.92),rgba(28,22,8,.92));box-shadow:0 0 0 2px rgba(255,210,122,.25)}#dBody button small{opacity:.75;font-weight:600}#dBody button i{font-style:normal;color:#ffd27a;font-weight:900}#dBody h4{flex-basis:100%;margin:2px 2px 0;font:900 11px system-ui,sans-serif;letter-spacing:1.5px;opacity:.7}</style>');
+function bodyUI(){if(typeof gG==='undefined'||gG!=='d')return;const up=document.getElementById('upl');if(!up)return;let w=document.getElementById('dBody');if(!w){w=document.createElement('div');w.id='dBody'}up.parentNode.insertBefore(w,up);
+ w.innerHTML='<h4>UÇANGÖZ GÖVDESİ</h4>'+Object.keys(BODY).map(k=>{const b=BODY[k],own=SV.dbodies.includes(k),sel=SV.dbody===k;return'<button data-db="'+k+'" class="'+(sel?'sel':'')+'"><b>'+b.ic+' '+b.n+'</b><small>'+b.d+'</small><i>'+(sel?'✔ SEÇİLİ':own?'SEÇ':b.price+' kr')+'</i></button>'}).join('');
+ w.querySelectorAll('[data-db]').forEach(bt=>bt.onclick=()=>{const k=bt.dataset.db,b=BODY[k];if(!SV.dbodies.includes(k)){if(SV.kr<b.price){bt.querySelector('i').textContent='Kredi yetersiz';return}SV.kr-=b.price;SV.dbodies.push(k)}SV.dbody=k;save();setBody(k);try{if(typeof AC!=='undefined'&&AC)sndBip()}catch(e){}renderGar()})}
+{const rg=window.renderGar;if(rg)window.renderGar=function(){const r=rg.apply(this,arguments);try{const w=document.getElementById('dBody');if(w&&gG!=='d')w.remove();bodyUI()}catch(e){}return r}}
+// ---------------- her kare ----------------
+let lostT=0;
+FRAME_HOOKS.push(dr=>{dr=dr||0;if(DR.g&&DR.g.userData.body!==SV.dbody)setBody(SV.dbody);try{const mx=AMX();if(ammo>mx)ammo=mx}catch(e){}
+ for(const e of ews()){e.cd=1e9;const lt=e.g&&e.g.userData.lt;if(lt)lt.visible=(performance.now()/350|0)%2===0}
+ glitch(dr);autoMark(dr);
+ if(game==='play'&&mode==='drone'&&DR.on&&!DR.rt&&!DR.fall){const sig=DR.sig==null?1:DR.sig;if(sig<=.03){lostT+=dr;if(lostT>1.6){lostT=0;say('📡 SİNYAL KAYBI · Uçangöz otomatik eve dönüyor',2.4);say2('Sinyal koptu, Uçangöz kendi kendine dönüyor!',1,'rth',10);try{recall()}catch(e){}}}else lostT=0}});
+setBody(SV.dbody);
+window.DRONE2={BODY,setBody,J,mkEW};
 })();
 
 </script>

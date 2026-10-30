@@ -650,7 +650,7 @@ function propsAt(x, z) {
   return PIDX.get(Math.floor(x / 8) * 10007 + Math.floor(z / 8));
 }
 const stats = {dug: 0, dumped: 0, road: 0, garageOpen: false, parked: 0, pit: 0, exTruck: 0, ldTruck: 0, belt: 0, tunnel: 0, isg: 0, spill: 0, depotDone: false};
-const PIT = {x: 58, y: 96, w: 13, h: 9};
+const PIT = {x: 58, y: 96, w: 13, h: 9}, BNKZ = {x: 52, y: 88, w: 32, h: 22};   // (the bunker's ground: its row, its stack, its earth crew)
 const DUG_GOAL = 160, DUMP_GOAL = 25, TANK_GOAL = 2;
 const cellAt = (x, z) => { const gx = Math.floor(x / CS), gz = Math.floor(z / CS); if (gx < 0 || gz < 0 || gx >= GX || gz >= GZ) return 1; return grid[gz * GX + gx]; };
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -1145,7 +1145,7 @@ function instGLB(key, list, tint, dec) { const g = ASSET.glb[key]; if (!g || !li
   for (let i = 0; i < 18; i++) { const z = 6 + r() * (WZ - 12), x = edgeX(z) - 3 - r() * 6; if (cellAt(x, z) !== 0 || Math.abs(z - 63.3) < 6 || [24, 36, 48].some(g => Math.abs(z - g) < 5)) continue; bl.push([x, z, r() * 6.28, .7 + r() * .7]); }
   SCAN.boulders = instGLB("boulders", bl, 0xd2d4d6, MOBILE ? .07 : 0);
   for (let i = 0; i < 70; i++) { const z = 3 + r() * (WZ - 6), x = edgeX(z) + 2 + r() * 55; const gi = Math.floor(z / CS) * GX + Math.floor(x / CS); if (grid[gi] !== 1) continue; rk.push([x, z, r() * 6.28, .8 + r() * 1.4, colH[gi] - .15]); }
-  for (let i = 0; i < 30; i++) { const x = 6 + r() * 118, z = 6 + r() * 100; if (cellAt(x, z) !== 0 || [DUMP, PARK, ROAD, OFFICE, PIT].some(o => rectDist(o, x, z) < 4) || PROPS.some(p => x > p[0] - 2 && x < p[1] + 2 && z > p[2] - 2 && z < p[3] + 2)) continue; rk.push([x, z, r() * 6.28, .35 + r() * .5]); PROPS.push([x - .4, x + .4, z - .4, z + .4, 1]); }   // 1: the machines roll over these small stones (people step round them)
+  for (let i = 0; i < 30; i++) { const x = 6 + r() * 118, z = 6 + r() * 100; if (cellAt(x, z) !== 0 || [DUMP, PARK, ROAD, OFFICE, PIT, BNKZ].some(o => rectDist(o, x, z) < 4) || PROPS.some(p => x > p[0] - 2 && x < p[1] + 2 && z > p[2] - 2 && z < p[3] + 2)) continue; rk.push([x, z, r() * 6.28, .35 + r() * .5]); PROPS.push([x - .4, x + .4, z - .4, z + .4, 1]); }   // 1: the machines roll over these small stones (people step round them)
   SCAN.rock = instGLB("rock", rk, 0xc9d2dc, MOBILE ? .08 : 0);
 }
 // oak scrub: photographic billboards baked from scanned shrubs: three crossed cards and a canopy card each, growing in clumps, swaying in the wind
@@ -1156,7 +1156,7 @@ const bushU = {uT: {value: 0}};
     { const b = pos.length / 3, r = w * .36, y = h * .62; pos.push(-r, y, -r, r, y, -r, r, y, r, -r, y, r); for (let q = 0; q < 4; q++) nrm.push(0, 1, 0); uv.push(.22, .25, .78, .25, .78, .72, .22, .72); idx.push(b, b + 2, b + 1, b, b + 3, b + 2); }
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("normal", new THREE.Float32BufferAttribute(nrm, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); return g; };
   const DIM = [[5.1, 2.55], [6.92, 3.46], [3.53, 1.77]], r = rndF(311), sets = [[], [], []];
-  const okSite = (x, z) => cellAt(x, z) === 0 && ![DUMP, PARK, ROAD, OFFICE, PIT].some(o => rectDist(o, x, z) < 5) && !PROPS.some(p => x > p[0] - 2.5 && x < p[1] + 2.5 && z > p[2] - 2.5 && z < p[3] + 2.5) && Math.abs(z - 53) > 9 && !(x > 100 && z < 60);
+  const okSite = (x, z) => cellAt(x, z) === 0 && ![DUMP, PARK, ROAD, OFFICE, PIT, BNKZ].some(o => rectDist(o, x, z) < 5) && !PROPS.some(p => x > p[0] - 2.5 && x < p[1] + 2.5 && z > p[2] - 2.5 && z < p[3] + 2.5) && Math.abs(z - 53) > 9 && !(x > 100 && z < 60);
   const add = (x, z, sc, y) => sets[(sets[0].length + sets[1].length + sets[2].length) % 3].push([x, z, r() * 6.28, sc, y]);
   const clump = (cx, cz, n, rad, sc, yf) => { for (let i = 0; i < n; i++) { const a = r() * 6.28, d = Math.sqrt(r()) * rad, x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d; const y = yf(x, z); if (y != null) add(x, z, sc * (.7 + r() * .6), y); } };
   // on the massif: in clumps along the ledges
@@ -1930,7 +1930,7 @@ const W3 = new THREE.Vector3(), W4 = new THREE.Vector3();
 function wpos(o, out) { return o.getWorldPosition(out || W3); }
 function toLocal(v, x, z) { const dx = x - v.x, dz = z - v.z, c = Math.cos(v.a), s = Math.sin(v.a); return {lx: dx * c + dz * s, lz: -dx * s + dz * c}; }
 function truckAt(p, margin) { for (const t of vehicles) { if (t.type !== "tr") continue; const {lx, lz} = toLocal(t, p.x, p.z); if (lx > -4.3 - margin && lx < 2.9 + margin && Math.abs(lz) < 1.3 + margin && p.y > t.y + 1.0) return t; } return null; }
-function dropDirt(p, amt) { if (inRect(p, DUMP)) { stats.dumped += amt; return "dump"; } const q = piles.find(q => dist2(q, p) < pr(q) + .3); if (q) { q.amt += amt; syncPile(q); } else addPile(p.x, p.z, amt); return "pile"; }
+function dropDirt(p, amt) { if (bnkTakeDirt(p, amt)) return "bunker"; if (inRect(p, DUMP)) { stats.dumped += amt; return "dump"; } const q = piles.find(q => dist2(q, p) < pr(q) + .3); if (q) { q.amt += amt; syncPile(q); } else addPile(p.x, p.z, amt); return "pile"; }
 function pileUnder(p) { let best = null, bh = -1; for (const q of piles) { const h = pileTop(q, p.x, p.z); if (h > bh) { bh = h; best = q; } } return best && {q: best, h: bh}; }
 function blocked(v, x, z, a) {
   const Lf = v.front != null ? v.front : v.L / 2, B = v.back != null ? v.back : -v.L / 2, s = v.Wd / 2 - .1;
@@ -2590,7 +2590,7 @@ function openProject(k) {
 let newArm = 0;
 bNew.addEventListener("click", () => {
   if (Date.now() - newArm > 3500) { newArm = Date.now(); bNew.textContent = "EMİN MİSİN? TEKRAR BAS"; setTimeout(() => { bNew.textContent = "YENİ OYUN"; }, 3500); return; }
-  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
+  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker", "hs-bunker2"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
 });
 document.getElementById("cards").addEventListener("click", () => { if (GM.on) return; if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
 const _openMenu = openMenu;
@@ -2683,6 +2683,7 @@ const bAI = document.getElementById("bAI");
 const DUMPC = {x: DUMP.x + DUMP.w * .5, z: DUMP.y + DUMP.h * .55};
 const wrapA = a => Math.atan2(Math.sin(a), Math.cos(a));
 function aiStation(t) {
+  if (t.cover) return t.cover === "bunker" ? CVB : CVS;   // the bunker's earth: its two stations
   if (t.aiBelt) { const gt = vehicles[0]; return {x: gt.x - Math.cos(gt.a) * 12.6, z: gt.z - Math.sin(gt.a) * 12.6, a: gt.a + Math.PI}; }
   return t.home;
 }
@@ -2704,9 +2705,34 @@ function steerTo(t, x, z, speed, stopAt) { // pursuit steering + speed control (
   const des = Math.atan2(z - t.z, x - t.x), d = wrapA(des - t.a), dist = Math.hypot(x - t.x, z - t.z), st = clamp(d * 2.0, -1, 1);
   let vDes = Math.min(5.3 * speed / .85, 2 + Math.max(0, dist - (stopAt || 0)) * .45) * (1 - Math.min(.8, Math.abs(d) * .6)); vDes = Math.max(stopAt != null ? 0 : 1.5, vDes);
   const th = clamp((vDes - t.v) * .6, -1, 1); if (th < 0) t.aiBrake = true; return [th, st, dist]; }
-function aiTruck(t, dt) {
-  let th = 0, st = 0, ry = 0; t.aiBrake = false; const S = aiStation(t);
+// the bunker's earth: filled by the loader at the stock yard, straight back down the line to the bunker, tipped beside the row, forward up to the stock yard again
+// (null: a state the usual driver handles — finding its way back onto the line)
+function coverT(t, S) {
+  const ux = Math.cos(S.a), uz = Math.sin(S.a), proj = (t.x - S.x) * ux + (t.z - S.z) * uz, lat = Math.abs(-(t.x - S.x) * uz + (t.z - S.z) * ux), he = Math.abs(wrapA(t.a - S.a));
+  const need = BNK.mods >= BNKN && BNK.cover < 1; let th = 0, st = 0, ry = 0;
   switch (t.aiState) {
+    case "todump": case "wait": t.aiBrake = true; th = clamp(-t.v * 1.5, -1, 1);
+      if (Math.hypot(t.x - S.x, t.z - S.z) > 3) { t.aiState = "return"; return null; }
+      if (t.cover === "stock") { if (need && t.load > Math.min(t.cap - 2.3, Math.max(1.5, (1 - BNK.cover) * BCOVER - bdpHeap() + .4))) { t.cover = "bunker"; t.aiState = "reverse"; } else t.aiState = "wait"; }   // full, or enough to finish
+      else if (t.load > .05) t.aiState = "tip"; else { t.cover = "stock"; t.aiState = "cfwd"; }
+      break;
+    case "tip": ry = -1; t.aiBrake = true; if (t.load <= .01 && t.t.bed >= .84) t.aiState = "lower"; break;
+    case "lower": ry = 1; t.aiBrake = true; if (t.t.bed <= .01) { t.cover = "stock"; t.aiState = "cfwd"; } break;
+    case "cfwd": { // forward up the line to the stock yard's station
+      if (lat > 2.5 || he > .5 || proj > 3) { t.aiState = "return"; return null; }
+      const cp = Math.min(proj + 7, 0), px = S.x + ux * cp, pz = S.z + uz * cp; st = clamp(wrapA(Math.atan2(pz - t.z, px - t.x) - t.a) * 2, -1, 1);
+      th = clamp((clamp(-proj * .35 + .3, 0, 3.5) - t.v) * .8, -1, 1); if (th < 0) t.aiBrake = true;
+      if (proj > -.35) { th = clamp(-t.v * 2, -1, 0); t.aiBrake = true; if (Math.abs(t.v) < .25) t.aiState = "wait"; } break; }
+    case "reverse": { // straight back down the line into the station
+      const cp = Math.max(proj - 5, -1), cx = S.x + ux * cp, cz = S.z + uz * cp, al = wrapA(Math.atan2(cz - t.z, cx - t.x) - (t.a + Math.PI)); st = clamp(-al * 2.4, -1, 1);
+      th = clamp((-Math.min(3, .5 + Math.max(0, proj) * .3) - t.v) * .8, -1, 1); if (th > 0) t.aiBrake = true;
+      if (proj < .4) { th = clamp(-t.v * 2, 0, 1); t.aiBrake = true; if (Math.abs(t.v) < .25) t.aiState = "wait"; } break; }
+    default: return null;
+  }
+  return [th, st, ry]; }
+function aiTruck(t, dt) {
+  let th = 0, st = 0, ry = 0; t.aiBrake = false; const S = aiStation(t), cv = t.cover ? coverT(t, S) : null;
+  if (cv) [th, st, ry] = cv; else switch (t.aiState) {
     case "wait": t.aiBrake = true; if (t.load >= t.cap - .05) { t.aiState = "todump"; } break;
     case "todump": { const w = routeTo(t, DUMPC.x, DUMPC.z), fin = w.x === DUMPC.x; const [a, b, d] = steerTo(t, w.x, w.z, .85, fin ? 3 : null); th = a; st = b;
       if (fin && (d < 5 || inRect(t, DUMP) && d < 9) && Math.abs(t.v) < .4) t.aiState = "tip"; break; }
@@ -2743,7 +2769,7 @@ function aiTruck(t, dt) {
   if (t.hold > 0) { t.hold -= dt; if (ry < 0) ry = 0; th = clamp(-t.v * 1.5, -1, 1); st = 0; t.aiBrake = true; }   // waiting for the commander who is coming to drive it
   drive(t, dt, th, st); work(t, dt, {rx: 0, ry, L: {x: 0, y: 0}}); t.aiTh = th;
 }
-const AIST = {wait: "yükleme bekliyor", todump: "döküm sahasına gidiyor", tip: "damperi kaldırıyor", lower: "damperi indiriyor", return: "yükleme noktasına dönüyor", align: "hizalanıyor", reverse: "geri geri yanaşıyor"};
+const AIST = {wait: "yükleme bekliyor", todump: "döküm sahasına gidiyor", tip: "damperi kaldırıyor", lower: "damperi indiriyor", return: "yükleme noktasına dönüyor", align: "hizalanıyor", reverse: "geri geri yanaşıyor", cfwd: "stok sahasına dönüyor"};
 window.__hs.setAI = setAI; window.__hs.tod = setTOD;
 
 ;(window.__INIT || (window.__INIT = [])).push(["extras", performance.now()]);
@@ -4212,6 +4238,16 @@ const VB = {
     T.box(.45, 1.5, .45, -3.3, 1.85, 0, 0x55585b); T.cyl(.55, .3, .55, -3.4, 2.95, 0, 0x6a6d70, null, 12); T.box(.5, .08, .45, -3.55, 2.5, 0, 0x55585b);
     T.box(.35, .7, 2.1, 1.75, 1.75, 0, 0x2f5f8a);                                                                        // the water tank behind the cab
     return {L: 7.5, W: 2.4, H: 3.7, hl: [[3.63, 1.6, .85], [3.63, 1.6, -.85]], tl: [[-3.6, 1.3, 1.0], [-3.6, 1.3, -1.0]], drum: {x: -1.0, y: 2.3, z: 0, tilt: .2}, label: ["BETON", 2.75, 2.1, 1.18, 1.3, .38]}; },
+  crane(T) { const C = VC.olv;                     // a crane truck: three axles, the cab, the crane's base behind it (its column turns, built apart), a flat bed, the boom rest at the back
+    for (const x of [2.5, -1.2, -2.5]) for (const z of [1.0, -1.0]) vWheel(T, x, z, .52, .4);
+    T.box(6.9, .3, 1.0, -.1, .95, 0, VC.ch);
+    T.box(1.7, 1.35, 2.35, 2.75, 1.85, 0, C); T.box(1.6, .72, 2.25, 2.72, 2.78, 0, VC.gl); T.box(1.7, .1, 2.35, 2.75, 3.2, 0, C);
+    T.box(.05, .66, 2.1, 3.58, 2.72, 0, VC.gl, 0, 0, .06); T.box(.2, .3, 2.4, 3.62, 1.08, 0, VC.tr); T.box(.06, .45, 1.5, 3.62, 1.7, 0, 0x2b2e31);
+    for (const z of [-1.05, 1.05]) { T.box(1.1, .1, .5, 2.5, 1.5, z, VC.tr); T.box(2.7, .1, .45, -1.85, 1.5, z, VC.tr); }
+    T.box(.95, .5, 2.3, 1.45, 1.3, 0, 0x3a3d40); for (const x of [1.45, -3.0]) for (const z of [-1, 1]) T.box(.26, .26, .36, x, 1.1, z * 1.2, 0xf2b705);   // the crane's base, the outrigger boxes
+    T.box(4.3, .16, 2.4, -1.2, 1.42, 0, 0x3b3f35); for (const z of [-1.18, 1.18]) T.box(4.3, .3, .06, -1.2, 1.62, z, C); T.box(.06, .3, 2.4, -3.33, 1.62, 0, C);
+    T.box(.2, 1.15, .2, -2.9, 2.1, 0, 0x2a2d30); T.box(.5, .12, .34, -2.9, 2.72, 0, 0x2a2d30);   // the boom rest
+    return {L: 7.6, W: 2.4, H: 3.4, hl: [[3.63, 1.6, .85], [3.63, 1.6, -.85]], tl: [[-3.4, 1.3, 1.0], [-3.4, 1.3, -1.0]], label: ["VİNÇ", 2.75, 2.12, 1.18, 1.0, .36]}; },
   zpt(T, col) { const C = col || VC.olv2;          // a tracked armoured personnel carrier
     for (const z of [-1.1, 1.1]) { T.box(4.9, .5, .46, 0, .42, z, 0x1e1f1d); T.box(4.4, .12, .48, 0, .74, z, 0x2a2b28);
       for (let k = 0; k < 5; k++) T.cyl(.3, .3, .12, -1.7 + k * .85, .35, z * 1.22, 0x2d2f2b, "z", 12);
@@ -4966,22 +5002,23 @@ function timersFrame(dt) { if (!TIMERS.length) return; const due = []; for (cons
 // each conversation: when it fits (sabah: before the briefing; is: a break in the working day; ogle: about lunch; aksam: after work; any), who speaks, what;
 // a line can be a function, so what they say is what is really happening on the sites
 const DX = {tun: () => Math.max(0, Math.round((stats.kemparM || 0) - (typeof DAY !== "undefined" && DAY.s0 ? DAY.s0.tunnel : 0))), trips: () => typeof DAY !== "undefined" && DAY.s0 ? DAY.trips - DAY.s0.trips : 0,
-  bnk: () => typeof BNK !== "undefined" ? Math.round(BNK.p * 100) : 0, stage: () => typeof bnkStage === "function" ? bnkStage() : "kazı", rng: () => Math.round(RNG.p * 100), gates: () => Math.floor(DRC.p * DGATES.length),
+  bnk: () => typeof BNK !== "undefined" ? Math.round(BNK.p * 100) : 0, stage: () => typeof bnkStage === "function" ? bnkStage() : "zemin tesviyesi", rng: () => Math.round(RNG.p * 100), gates: () => Math.floor(DRC.p * DGATES.length),
   left: () => typeof CAMP !== "undefined" ? Math.max(0, CAMP.day - DAY.day) : 0, goal: () => typeof GOAL !== "undefined" ? GOAL.trips : 4,
-  bnkSay: () => typeof BNK !== "undefined" && BNK.p >= .999 ? "Bunker bitti komutanım, kum torbası ve kamuflaj da tamam." : BNK.p < .01 ? "Kazıya yeni başlıyoruz komutanım, ekskavatör hazır." : `${DX.stage()[0].toLocaleUpperCase("tr-TR") + DX.stage().slice(1)} aşamasındayız komutanım, iş yüzde ${DX.bnk()}.`,
+  bnkSay: () => BNK.p >= .999 ? "Bunker bitti komutanım, koruganlar toprağın altında, yukarıdan hiç görünmüyor." : BNK.ground < 1 ? (BNK.ground < .02 ? "Koruganlar istifte komutanım, zemini düzeltip dizmeye başlıyoruz." : "Dozer zemini düzeltiyor komutanım, sonra koruganları dizeceğiz.")
+    : BNK.mods < BNKN ? `${BNK.mods} korugan dizildi komutanım, ${BNKN - BNK.mods} tane kaldı.` : `Koruganlar dizildi komutanım, toprak örtü yüzde ${Math.round(BNK.cover * 100)}.`,
   gateSay: () => DX.gates() ? `Parkurda ${DX.gates()} kapı dikildi, dron kapılardan geçiyor.` : "Parkurun direkleri geldi, bugün ilk kapıları dikiyoruz."};
 const DLG = (when, lines, need) => Object.assign(lines, {when, need: need || null});
 const DIALOGS_DYN = [
   DLG("sabah", [["azizhan", "Günaydın arkadaşlar. Görev dağılımından önce bir durum alalım, kim nerede?"], ["furkan", "Sığınakta Kempar hazır komutanım, görevden sonra askerle aşağı iniyorum."], ["kaan", () => BNK.p >= .999 || BNK.p < .01 ? "Bunker: " + DX.bnkSay().replace(/^Bunker /, "") : `Bunkerde ${DX.stage()} aşamasındayız komutanım, iş yüzde ${DX.bnk()}.`], ["ali", () => `Atış alanı yüzde ${DX.rng()}, set çekmeye devam ediyoruz.`], ["orhan", () => DX.gateSay()], ["azizhan", "Tamam. Yedi buçukta görevleri vereceğim, çayınızı için."]]),
   DLG("is", [["azizhan", "Sığınak ne durumda Furkan?"], ["furkan", () => `Bugün ${DX.tun()} metre ilerledik komutanım. Kempar aynada, kamyonlar dönüyor.`], ["boran", "Ben de koordine ediyorum komutanım, arz ederim."], ["azizhan", "La Boran, bir kürek de sen al."], ["boran", "Emredersiniz komutanım… koordinasyondan sonra."]]),
-  DLG("is", [["azizhan", "Kaan, bunker ne durumda?"], ["kaan", () => DX.bnkSay()], ["azizhan", () => BNK.wait ? "Beton ne zaman geliyor?" : "Gecikme var mı?"], ["kaan", () => BNK.wait ? "Santrale söyledik komutanım, mikser gelince dökeceğiz." : "Yok komutanım, plana göre gidiyoruz."], ["azizhan", "La bana çok güvenme, teftişe kadar bitmezse ikimiz de yanarız."], ["kaan", "Yansın Hisar, bitecek komutanım!"]], () => typeof BNK !== "undefined" && BNK.p < 1),
+  DLG("is", [["azizhan", "Kaan, bunker ne durumda?"], ["kaan", () => DX.bnkSay()], ["azizhan", "Gecikme var mı?"], ["kaan", () => BNK.mods > 0 && BNK.mods < BNKN ? "Yok komutanım, vinç koruganları sırayla diziyor." : "Yok komutanım, plana göre gidiyoruz."], ["azizhan", "La bana çok güvenme, teftişe kadar bitmezse ikimiz de yanarız."], ["kaan", "Yansın Hisar, bitecek komutanım!"]], () => typeof BNK !== "undefined" && BNK.p < 1),
   DLG("is", [["ali", () => `Atış alanı yüzde ${DX.rng()} oldu, hedef çerçeveleri dikiliyor.`], ["orhan", () => DX.gateSay()], ["azizhan", "Paşam teftişte ilk oralara bakar, eksik olmasın."], ["ali", "Çakı gibi olacak komutanım."], ["orhan", "Yukarıdan bakınca her şey belli, bir eksik görürsem söylerim."]]),
   DLG("any", [["ahmet", "Kamyonlar kaç sefer yaptı bugün?"], ["boran", () => `Şu an ${DX.trips()} sefer komutanım, hedef ${DX.goal()}.`], ["ahmet", () => DX.trips() >= DX.goal() ? "Sen kralsın kardeşim, hedef tamam." : "Teknik iyi ama geliştirmen lazım, kamyon boş beklemesin."], ["boran", "Arz ederim komutanım, ekip sağlam."]], () => typeof DAY !== "undefined" && DAY.on && DAY.t > 600),
   DLG("any", [["ahmet", "Ocakçı, çay nerede?"], ["kaan", "Tüp bitmiş komutanım."], ["ali", "Tüpsüz çay ocağı mı olur kardeşim?"], ["azizhan", "La bugün su içeriz, olur biter."], ["boran", "Hisar taburunda şenlik havası… biraz azaldı komutanım."]], () => typeof DAY !== "undefined" && DAY.noTea > DAY.t),
   DLG("any", [["orhan", "Paşam yine 'Barkan 4'ler hazır mı' dedi."], ["kaan", "Bizde Barkan-2 var ama komutanım?"], ["orhan", "Ben de 'hazır komutanım' dedim, ne diyeyim."], ["boran", "Barkan 4 hâlâ fabrikada komutanım, arz ederim."], ["azizhan", "La güldürmeyin, paşam duyarsa…"], ["ahmet", "Haaahaaa haaa!"]], () => MEET.barkan),
   DLG("any", [["ahmet", "Arkadaşlar, ben bugün bütün şantiyeleri gezdim."], ["kaan", "Paşama yakalanmadınız inşallah komutanım?"], ["ahmet", () => DAY.catchDone ? "Yakalandım tabii! Nereye gitsem paşam orada." : "Bu sefer yakalanmadım, şansım yaver gitti."], ["ali", "Senin şansın belli kardeşim."], ["ahmet", "Haaahaaa!"]], () => typeof DAY !== "undefined" && DAY.on && DAY.t > 640),
   DLG("aksam", [["azizhan", () => `Bugün kamyonlar ${DX.trips()} sefer yaptı, sığınak ${DX.tun()} metre ilerledi.`], ["azizhan", () => DX.trips() >= DX.goal() ? "Fena değil arkadaşlar, böyle devam." : "Yarın daha sıkı çalışacağız, kamyon boş beklemeyecek."], ["furkan", "Emredersiniz komutanım."], ["kaan", "Yarının planını tablete işledim, herkese gönderiyorum."]]),
-  DLG("aksam", [["azizhan", () => `Arkadaşlar, büyük teftişe ${DX.left()} gün kaldı.`], ["ali", "Atış alanı yetişir komutanım."], ["orhan", "Parkur da yetişir."], ["kaan", () => BNK.p >= .999 ? "Bunker bitti komutanım, teftişe hazır." : `Bunker yüzde ${DX.bnk()}, beton zamanında gelirse yetişir.`], ["azizhan", "La bana çok güvenme, yetişmezse Paşam hepimizi nöbete yazar."]], () => typeof CAMP !== "undefined" && !CAMP.done && CAMP.day - DAY.day >= 1),
+  DLG("aksam", [["azizhan", () => `Arkadaşlar, büyük teftişe ${DX.left()} gün kaldı.`], ["ali", "Atış alanı yetişir komutanım."], ["orhan", "Parkur da yetişir."], ["kaan", () => BNK.p >= .999 ? "Bunker bitti komutanım, teftişe hazır." : `Bunker yüzde ${DX.bnk()}, koruganlar dizildi mi toprağı çabuk örteriz.`], ["azizhan", "La bana çok güvenme, yetişmezse Paşam hepimizi nöbete yazar."]], () => typeof CAMP !== "undefined" && !CAMP.done && CAMP.day - DAY.day >= 1),
   // the battalion commander at the table
   DLG("any", [["ufuk", "Naber mankiler? İşler nasıl gidiyor?"], ["ahmet", "Bütün şantiyeleri gezdim komutanım, işler yolunda."], ["ufuk", "Güzel. Asker yorulmasın, nöbetleşe çalışsın."], ["azizhan", "Emredersiniz komutanım."], ["ufuk", "İyi gidiyorsunuz, aynen devam."]]),
   DLG("any", [["ufuk", "Bunker ne durumda Kaan?"], ["kaan", () => DX.bnkSay()], ["ufuk", () => BNK.p >= .999 ? "Aferin. Paşam teftişte ilk oraya bakacak." : "Teftişe yetişsin. Paşam ilk oraya bakacak."], ["kaan", () => BNK.p >= .999 ? "Hazır komutanım, içini de düzenledik." : "Yetişecek komutanım."]]),
@@ -5430,7 +5467,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261030-2010";
+const PORTKEY = "hs-portraits-20261031-0105";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5549,8 +5586,8 @@ const KEMPAR = vOf("gt"), TRB = vOf("tr", 0), EXC = vOf("ex"), DOZ = vOf("dz"), 
 mkJob(KEMPAR, "siginak", "Kapalı drone sığınağı · kazı", "furkan", () => ({x: KEMPAR.x - 10, z: KEMPAR.z + 7}));
 mkJob(TRB, "siginak", "Sığınak · bant altı nakliye", "boran", () => ({x: DUMP.x + DUMP.w + 4, z: DUMP.y + DUMP.h + 3}));
 mkJob(BHL, "siginak", "Sığınak · bant altı temizlik", "boran", () => ({x: (KEMPAR ? KEMPAR.x : 110) - 16, z: (KEMPAR ? KEMPAR.z : 63) - 9}));
-mkJob(EXC, "bunker", "Bunker yaşam alanı · kazı", "kaan", () => ({x: EXC.x - 7.5, z: EXC.z - 5.5}));
-mkJob(TRX, "bunker", "Bunker · nakliye", "kaan", () => ({x: DUMP.x + DUMP.w + 4, z: DUMP.y + DUMP.h + 3}));
+mkJob(EXC, "bunker", "Bunker yaşam alanı · toprak örtü", "kaan", () => ({x: BCX - 7, z: BZ1 + 3.2}));
+mkJob(TRX, "bunker", "Bunker · toprak nakliyesi", "kaan", () => ({x: CVS.x - 6, z: CVS.z + 6}));
 mkJob(DOZ, "stok", "Stok sahası · yığınları toplama", "ahmet", () => ({x: OPS.sp.x - 9, z: OPS.sp.z - 7}));
 mkJob(LDR, "stok", "Stoktan döküm sahasına", "ahmet", () => ({x: OPS.sp.x - 9, z: OPS.sp.z - 7}));
 mkJob(GRD, "yol", "Yol bakımı", "ahmet", () => ({x: 62, z: ROAD.y - 4.5}));
@@ -5567,12 +5604,12 @@ function opsGive(v) {
     v.aiState = v.load >= v.cap - .05 ? "todump" : v.t.bed > .05 ? "lower" : Math.hypot(v.x - v.home.x, v.z - v.home.z) > 3 ? "return" : "wait"; }
 }
 function opsTake(v) { if (!v) return; v.ai = false; v.aiState = null; npcDriver(v, false); if (v.type === "gt") v.cutter = false; }
-// first start: the excavator moves to the foundation pit with its truck beside it, every driver climbs in
+// first start: the excavator to its place beside the bunker's row, its truck to the stock yard's station, every driver climbs in
 function opsStart() {
   if (OPS.started) { for (const j of JOBS) if (j.v.P.seated !== PLAYER && !j.v.ai) opsGive(j.v); return; }
   OPS.started = true;
-  if (EXC && !EXC.opsPlaced) { EXC.x = PIT.x + PIT.w / 2; EXC.z = PIT.y - 3.4; EXC.a = Math.PI / 2; EXC.prev = null; EXC.opsPlaced = true; }
-  if (TRX && EXC) { TRX.x = EXC.x + 5.0; TRX.z = EXC.z - 2.2; TRX.a = -Math.PI / 2; TRX.prev = null; TRX.home = {x: TRX.x, z: TRX.z, a: TRX.a}; TRX.aiBelt = false; }
+  if (EXC && !EXC.opsPlaced) { EXC.x = EXH.x; EXC.z = EXH.z; EXC.a = EXH.a; EXC.prev = null; EXC.opsPlaced = true; EXC.aiState = null; Object.assign(EXC.t, {swing: 0, boom: .85, stick: -2.4, bucket: 1.35}); applyTool(EXC); }
+  if (TRX && TRX.P.seated !== PLAYER) { TRX.x = CVS.x; TRX.z = CVS.z; TRX.a = CVS.a; TRX.prev = null; TRX.home = {x: CVS.x, z: CVS.z, a: CVS.a}; TRX.aiBelt = false; TRX.aiState = "wait"; }
   if (TRB && KEMPAR) { const gt = KEMPAR; TRB.aiBelt = true; TRB.home = null; }
   for (const j of JOBS) if (j.v.P.seated !== PLAYER) opsGive(j.v);
   vehicles.forEach(o => { pose(o, 0); o.g.updateMatrixWorld(true); });
@@ -5641,11 +5678,60 @@ function aiEx(o, dt) {
   o.st = o.aiState === "hold" ? "kamyon bekliyor" : o.aiState === "dump" || o.aiState === "over" ? "kamyonu yüklüyor" : "kazıyor";
 }
 
+// ---- the excavator at the bunker: takes the earth the truck tipped beside the row and spreads it over the korugans, a bucket at a time ----
+const CVP = [-4, -2, 0, 2, 4];   // where along the row it pours, from the middle
+function coverPile(up) { let best = null, bd = 1e9;
+  for (const q of piles) { if (q.amt < .12 || inRect(q, COV)) continue; const d = Math.hypot(q.x - up.x, q.z - up.z); if (d < 3.6 || d > 7.6 + pr(q) * .4) continue; if (d < bd) { bd = d; best = q; } } return best; }
+function aiCover(o, dt) {
+  if (o.hold) { drive(o, dt, 0, 0); o.aiBrake = true; work(o, dt, NOIN); o.st = "operatör yok"; return; }   // the operator is away: the machine waits
+  const P = o.P, T = o.t; o.aiT += dt;
+  // off its place (you drove it somewhere): the arm in, back to its place beside the row
+  if (o.aiState === "home" || Math.hypot(o.x - EXH.x, o.z - EXH.z) > 3) { if (o.aiState !== "home") { o.aiState = "home"; o.aiT = 0; }
+    const [a, b, d] = steerTo(o, EXH.x, EXH.z, .45, .4); let th = a, st = b;
+    if (d < 1.2) { th = clamp(-o.v * 2, -1, 1); o.aiBrake = true; const e = wrapA(EXH.a - o.a); st = clamp(e * 2.5, -1, 1); if ((Math.abs(e) < .05 && Math.abs(o.v) < .2) || o.aiT > 60) { o.aiState = "rest"; o.aiT = 0; } }
+    T.swing += clamp(wrapA(-T.swing), -.75 * dt, .75 * dt); T.stick = clamp(T.stick + clamp(-2.0 - T.stick, -.8 * dt, .8 * dt), -2.4, -.45);
+    aiMove(o, th, st, dt); work(o, dt, {rx: toward(T.bucket, 1.2, 3), ry: toward(T.boom, .6, 5), L: {x: 0, y: 0}}); o.st = "yerine dönüyor"; return; }
+  drive(o, dt, 0, 0); o.aiBrake = true;
+  P.up.updateMatrixWorld(true); const up = P.up.getWorldPosition(EXW).clone(), tip = wpos(P.tip, new THREE.Vector3());
+  const need = BNK.mods >= BNKN && BNK.cover < 1;
+  let tSw = T.swing, tB = null, tS = null, rx = 0; const sw = psi => wrapA(o.a - psi), reachTo = (r, h) => { const e = exReach(r, h); tB = e[0]; tS = e[1]; };
+  const bk = a => toward(T.bucket, clamp(a - T.boom - T.stick, -2, 1.45), 3), absA = T.boom + T.stick + T.bucket;
+  const surf = (q, r, psi) => { const x = up.x + Math.cos(psi) * r, z = up.z + Math.sin(psi) * r, h = q ? pileTop(q, x, z) : -1; return (h > -1 ? h : heightAt(x, z)) - up.y; };
+  switch (o.aiState) {
+    default: o.aiState = "rest"; break;
+    case "rest": { tSw = sw(o.a); reachTo(4.6, 1.4); rx = bk(.7); const q = need ? coverPile(up) : null;
+      o.st = need ? "toprak bekliyor" : BNK.cover >= 1 ? "bunker tamam" : "koruganları bekliyor"; if (q) { o.cq = q; o.aiState = "toDig"; o.aiT = 0; } break; }
+    case "toDig": { const q = o.cq; if (!q || !piles.includes(q)) { o.aiState = "rest"; break; }
+      const psi = Math.atan2(q.z - up.z, q.x - up.x); o.cpsi = psi; o.cr = clamp(Math.hypot(q.x - up.x, q.z - up.z) - pr(q) * .45, 4.3, 8); tSw = sw(psi); reachTo(4.5, 2.4); rx = bk(-1.35);
+      if (Math.abs(wrapA(T.swing - tSw)) < .05) { o.aiState = "lower"; o.aiT = 0; } o.st = "toprağı alıyor"; break; }
+    case "lower": { const q = piles.includes(o.cq) ? o.cq : null; if (!q) { o.aiState = "back"; o.aiT = 0; break; } tSw = sw(o.cpsi); reachTo(o.cr, surf(q, o.cr, o.cpsi) + .7); rx = bk(-1.35);
+      const ph = pileTop(q, tip.x, tip.z); if ((ph > -1 && tip.y < ph + .05) || tip.y < heightAt(tip.x, tip.z) + .05 || (Math.abs(T.boom - tB) < .03 && Math.abs(T.stick - tS) < .04 && Math.abs(absA + 1.35) < .08) || o.aiT > 6) { o.aiState = "curl"; o.aiT = 0; }
+      o.st = "toprağı alıyor"; break; }
+    case "curl": { const q = piles.includes(o.cq) ? o.cq : null, r = o.cr - Math.min(1, o.aiT * .6); tSw = sw(o.cpsi); reachTo(r, surf(q, r, o.cpsi) + .5); rx = -1;
+      if (absA >= .45 || T.bucket >= 1.42 || o.load >= 1.1 || o.aiT > 3.5) { o.aiState = "raise"; o.aiT = 0; } o.st = "toprağı alıyor"; break; }
+    case "raise": reachTo(4.6, 3.4); rx = bk(.7); if (T.boom > .5 || o.aiT > 4) { o.aiState = o.load > .05 ? (need ? "toPour" : "spill") : "rest"; o.aiT = 0; o.ck = ((o.ck || 0) + 1) % CVP.length; } break;
+    case "toPour": case "over": { const z = BCZ + CVP[o.ck || 0], x = BCX - BMW / 2 + .5, psi = Math.atan2(z - up.z, x - up.x), r = Math.min(8, Math.hypot(x - up.x, z - up.z)), sH = BG0 + MND.hAt(x, z) * BNK.cover - up.y;
+      tSw = sw(psi); reachTo(o.aiState === "toPour" ? 4.6 : r, Math.max(3.0, sH + 1.6)); rx = bk(.7);
+      if (o.aiState === "toPour") { if (Math.abs(wrapA(T.swing - tSw)) < .06) { o.aiState = "over"; o.aiT = 0; } }
+      else if ((Math.abs(T.boom - tB) < .04 && Math.abs(T.stick - tS) < .06 && Math.abs(wrapA(T.swing - tSw)) < .04) || o.aiT > 8) { o.aiState = "dump"; o.aiT = 0; }
+      o.st = "koruganları örtüyor"; break; }
+    case "spill": { const psi = Math.atan2(BDP.z - up.z, BDP.x - up.x); tSw = sw(psi); reachTo(clamp(Math.hypot(BDP.x - up.x, BDP.z - up.z), 4.5, 8), 1.4);   // the bunker filled meanwhile: back on the heap
+      if (Math.abs(wrapA(T.swing - tSw)) < .06) { rx = 1; if ((o.load <= .02 && absA < -1.9) || o.aiT > 7) { o.aiState = "back"; o.aiT = 0; } } else rx = bk(.7); break; }
+    case "dump": rx = 1; if ((o.load <= .02 && absA < -1.9) || o.aiT > 5) { o.aiState = "back"; o.aiT = 0; } o.st = "koruganları örtüyor"; break;
+    case "back": reachTo(4.4, 3.1); rx = bk(-1.35); if (T.boom > .4 || o.aiT > 3) { o.aiState = "rest"; o.aiT = 0; } break;
+  }
+  T.swing += clamp(wrapA(tSw - T.swing), -.75 * dt, .75 * dt);
+  if (tS != null) T.stick = clamp(T.stick + clamp(tS - T.stick, -.8 * dt, .8 * dt), -2.4, -.45);
+  work(o, dt, {rx, ry: tB != null ? toward(T.boom, tB, 5) : 0, L: {x: 0, y: 0}});
+}
+
 // ---- loader / backhoe: scoop a heap, carry it to the dump, tip it ----
 const DUMPD = {x: DUMP.x + DUMP.w - 4.5, z: DUMP.y + DUMP.h * .5};
 function pickPile(o) {
   let best = null, bd = 1e9;
+  const fd = o.type === "ld" && feeding(o);
   for (const q of piles) { if (q.amt < .25 || inRect(q, DUMP) || (q.claim && q.claim !== o && q.claimT > TT)) continue;
+    if (fd && (q.x < CVS.x + 7 || Math.hypot(q.x - OPS.sp.x, q.z - OPS.sp.z) > 24)) continue;   // filling the bunker's truck: the stock yard's heaps, east of its station
     let d = Math.hypot(q.x - o.x, q.z - o.z);
     if (o.type === "ld") d -= Math.min(30, q.amt * 2.5);                              // the loader likes the big stockpile
     if (o.type === "bh" && KEMPAR) d = Math.hypot(q.x - KEMPAR.x, q.z - KEMPAR.z) * .7 + d * .3;   // the backhoe keeps the belt end clear
@@ -5661,14 +5747,17 @@ function aiLoad(o, dt) {
   const T = o.t, cap = o.type === "ld" ? 2.2 : 1.2; let th = 0, st = 0, rx = 0, ry = 0, tL = T.lift, tT = T.tilt; o.aiBrake = false; o.aiT += dt;
   switch (o.aiState) {
     default: o.aiState = "seek"; break;
-    case "seek": { o.tgt = pickPile(o); th = 0; o.aiBrake = true; tL = .25; tT = .1; if (o.tgt) { o.aiState = "approach"; o.aiT = 0; } else o.st = "iş bekliyor"; break; }
+    case "seek": { o.tgt = pickPile(o); th = 0; o.aiBrake = true; tL = .25; tT = .1; if (o.tgt) { o.aiState = "approach"; o.aiT = 0; o.l0 = o.load; } else o.st = "iş bekliyor"; break; }
     case "approach": { const q = o.tgt; if (!q || !piles.includes(q)) { o.aiState = "seek"; break; }
       const [a, b, d] = steerTo(o, q.x, q.z, d0(o, q) < 9 ? .35 : .75, null); th = a; st = b; tL = d < 12 ? 0 : .3; tT = d < 12 ? 0 : .15;
       if (d < 12) th = Math.min(th, .55);
-      if (o.load > .05) { o.aiState = "scoop"; o.aiT = 0; } if (o.aiT > 40) { o.aiState = "seek"; q.claimT = TT + 20; } o.st = "yığına gidiyor"; break; }
-    case "scoop": th = .6; tL = 0; tT = 0; if (o.load >= cap * .92 || o.aiT > 3.5) { o.aiState = "back"; o.aiT = 0; } o.st = "yüklüyor"; break;
-    case "back": th = -.6; tL = .6; tT = .6; if (o.aiT > 1.8) { o.aiState = o.load > .1 ? "carry" : "seek"; o.aiT = 0; } break;
-    case "carry": { const w = viaDump(o, DUMPD.x, DUMPD.z), fin = w.x === DUMPD.x; const [a, b, d] = steerTo(o, w.x, w.z, .8, fin ? 1.5 : null); th = a; st = b; tL = .8; tT = .6;
+      if (o.load > (o.l0 || 0) + .05) { o.aiState = "scoop"; o.aiT = 0; } if (o.aiT > 40) { o.aiState = "seek"; q.claimT = TT + 20; } o.st = "yığına gidiyor"; break; }
+    case "scoop": { th = .6; tL = 0; tT = 0; const q = o.tgt; if (q && piles.includes(q)) st = clamp(wrapA(Math.atan2(q.z - o.z, q.x - o.x) - o.a) * 1.5, -1, 1);   // through the middle of the heap
+      if (o.load >= cap * .92 || o.aiT > 3.5) { o.aiState = "back"; o.aiT = 0; } o.st = "yüklüyor"; break; }
+    case "back": th = -.6; tL = .6; tT = .6; if (o.aiT > 1.8) { const more = o.type === "ld" && o.load < 1.2 && o.tgt && piles.includes(o.tgt) && o.tgt.amt > .3 && (o.tries = (o.tries || 0) + 1) < 3;   // a light bucket: into the heap once more
+        if (!more) o.tries = 0; o.aiState = more ? "approach" : o.load > .1 ? "carry" : "seek"; o.aiT = 0; o.l0 = o.load; } break;
+    case "carry": { if (feeding(o)) { [th, st, tL, tT] = feedTruck(o); break; }
+      const w = viaDump(o, DUMPD.x, DUMPD.z), fin = w.x === DUMPD.x; const [a, b, d] = steerTo(o, w.x, w.z, .8, fin ? 1.5 : null); th = a; st = b; tL = .8; tT = .6;
       if (fin && d < 2.2 && Math.abs(o.v) < .5) { o.aiState = "dump"; o.aiT = 0; } if (o.aiT > 90) o.aiState = "dump"; o.st = "döküm sahasına taşıyor"; break; }
     case "dump": o.aiBrake = true; tL = .85; tT = -1.05; if (o.load <= .02 || o.aiT > 5) { o.aiState = "retreat"; o.aiT = 0; } o.st = "döküyor"; break;
     case "retreat": th = -.6; tL = .3; tT = .15; if (o.aiT > 2.4) { o.aiState = "seek"; o.aiT = 0; } break;
@@ -5677,13 +5766,30 @@ function aiLoad(o, dt) {
   aiMove(o, th, st, dt); work(o, dt, {rx, ry, L: {x: 0, y: 0}});
 }
 const d0 = (o, q) => Math.hypot(q.x - o.x, q.z - o.z);
+// the loader filling the bunker's truck at the stock yard: out to a point square off the bed's side, then in slowly with the bucket up, until the bucket is over the bed
+// (it waits out there while the truck is away, or full and about to go)
+const feeding = o => !!(o.feed && o.feed.cover && o.feed.ai && BNK.mods >= BNKN && BNK.cover < 1);
+function feedTruck(o) {
+  const T = o.feed, S = CVS, c = Math.cos(S.a), s = Math.sin(S.a), bx = S.x - c * 2.3, bz = S.z - s * 2.3, nx = -s, nz = c;   // the bed at the station; its right-hand side
+  const ready = T.cover === "stock" && T.aiState === "wait" && Math.hypot(T.x - S.x, T.z - S.z) < 1.5 && Math.abs(T.v) < .3 && T.load <= T.cap - 2.3;
+  const out = (o.x - bx) * nx + (o.z - bz) * nz; let th = 0, st = 0, tL = .8, tT = .6; if (o.fst === "in" && out > 11) o.fst = null;
+  if (o.fst !== "in") { const fx = bx + nx * 7.5, fz = bz + nz * 7.5, d = Math.hypot(fx - o.x, fz - o.z), [a, b] = steerTo(o, fx, fz, .7, 1); st = b;
+    th = d < 4 ? clamp((clamp(d * .5, 0, 2) - o.v) * .8, -1, 1) : a; if (th < 0) o.aiBrake = true;
+    if (d < 2.6) { th = clamp(-o.v * 2, -1, 1); o.aiBrake = true; if (ready && Math.abs(o.v) < .5) o.fst = "in"; }
+    o.st = ready ? "kamyona yanaşıyor" : "kamyonu bekliyor"; }
+  else { const ax = bx + nx * .8, az = bz + nz * .8, rem = out - 3.85; st = clamp(wrapA(Math.atan2(az - o.z, ax - o.x) - o.a) * 2.2, -1, 1); tL = .85;   // aimed through the bed: square to its side
+    th = clamp((clamp(rem * .8, .45, 1.4) - o.v) * .9, -1, 1); if (th < 0) o.aiBrake = true;
+    if (rem < .12 || (!ready && rem < 1.5)) { th = clamp(-o.v * 2, -1, 1); o.aiBrake = true; if (Math.abs(o.v) < .3 && ready && rem < .5) { o.aiState = "dump"; o.aiT = 0; o.fst = null; } }
+    o.st = ready ? "kamyona yüklüyor" : "kamyonu bekliyor"; }
+  if (o.aiT > 150) { o.aiState = "dump"; o.aiT = 0; o.fst = null; }
+  return [th, st, tL, tT]; }
 
 // ---- the dozer: pushes the scattered heaps together into one stockpile for the loader ----
 function aiDoz(o, dt) {
   const T = o.t, SPP = OPS.sp; let th = 0, st = 0, tD = .3; o.aiBrake = false; o.aiT += dt;
   switch (o.aiState) {
     default: o.aiState = "seek"; break;
-    case "seek": { let best = null, bd = 1e9; for (const q of piles) { if (q.amt < .2 || inRect(q, DUMP) || Math.hypot(q.x - SPP.x, q.z - SPP.z) < 4.5 || Math.hypot(q.x - SPP.x, q.z - SPP.z) > 30 || q.dzBad > TT || (q.claim && q.claim !== o && q.claimT > TT)) continue;   /* the heaps of the stock yard */ const d = d0(o, q); if (d < bd) { bd = d; best = q; } }
+    case "seek": { let best = null, bd = 1e9; for (const q of piles) { if (q.amt < .2 || inRect(q, DUMP) || Math.hypot(q.x - SPP.x, q.z - SPP.z) < 4.5 || Math.hypot(q.x - SPP.x, q.z - SPP.z) > 30 || Math.hypot(q.x - BCX, q.z - BCZ) < 16 || q.dzBad > TT || (q.claim && q.claim !== o && q.claimT > TT)) continue;   /* the heaps of the stock yard */ const d = d0(o, q); if (d < bd) { bd = d; best = q; } }
       o.tgt = best; o.aiBrake = true; if (best) { best.claim = o; best.claimT = TT + 80; o.aiState = "approach"; o.aiT = 0; } else { o.aiState = "level"; o.aiT = 0; } break; }
     case "approach": { const q = o.tgt; if (!q || !piles.includes(q)) { o.aiState = "seek"; break; }
       const ux = SPP.x - q.x, uz = SPP.z - q.z, l = Math.hypot(ux, uz) || 1, ax = q.x - ux / l * (pr(q) + 4.4), az = q.z - uz / l * (pr(q) + 4.4);
@@ -5700,6 +5806,26 @@ function aiDoz(o, dt) {
   }
   const ry = toward(T.dz, tD, 5); aiMove(o, th, st, dt); work(o, dt, {rx: 0, ry, L: {x: 0, y: 0}});
 }
+// the dozer on the bunker's pad: a pass down the row's line with the blade at grade, back up in reverse with it raised, over to the other lane for the next pass
+function aiPad(o, dt) {
+  const T = o.t, z0 = BPAD.y - 2.4, z1 = BPAD.y + BPAD.h + .6, lanes = [BPAD.x + 1.3, BPAD.x + BPAD.w - 1.3];
+  if (o.pst == null) { o.plane = 0; o.pst = Math.sin(o.a) > 0 ? "fwd" : "rev"; }
+  let th, st, blade = false;
+  if (o.pst === "fwd") { const lx = lanes[o.plane], e = wrapA(Math.atan2(9, lx - o.x) - o.a); st = clamp(e * 2, -1, 1);
+    const onLane = Math.abs(o.x - lx) < .9 && Math.abs(wrapA(o.a - Math.PI / 2)) < .3;
+    th = clamp(((onLane ? 1.8 : 1.3) - o.v) * .6, -1, 1); blade = onLane && o.z > BPAD.y - 1 && o.z < BPAD.y + BPAD.h;
+    if (o.z >= z1) { o.pst = "rev"; o.plane = 1 - o.plane; }
+    o.st = blade ? "zemini düzeltiyor" : "pede giriyor"; }
+  else { const nx = lanes[o.plane], al = wrapA(Math.atan2(-9, nx - o.x) - (o.a + Math.PI)); st = clamp(-al * 2.4, -1, 1);
+    th = clamp((-2 - o.v) * .6, -1, 1); if (th > 0) o.aiBrake = true;
+    if (o.z <= z0) o.pst = "fwd";
+    o.st = "geri geri dönüyor"; }
+  aiMove(o, th, st, dt); work(o, dt, {rx: 0, ry: toward(T.dz, blade ? .04 : .3, 5), L: {x: 0, y: 0}});
+}
+// the pad levelled: off it, to wait north of the row while the crane works (nothing crosses the pad under a load)
+function aiParkDoz(o, dt) { const P = DZP, T = o.t, [a, b, d] = steerTo(o, P.x, P.z, .55, .8); let th = a, st = b;
+  if (d < 1.4) { th = clamp(-o.v * 2, -1, 1); o.aiBrake = true; st = Math.abs(o.v) < .3 ? clamp(wrapA(P.a - o.a) * 2.5, -1, 1) : 0; o.st = "zemin hazır, bekliyor"; } else o.st = "pedden çıkıyor";
+  aiMove(o, th, st, dt); work(o, dt, {rx: 0, ry: toward(T.dz, .3, 5), L: {x: 0, y: 0}}); }
 function mergeStock() { // heaps pushed onto the stockpile become one
   const SPP = OPS.sp, near = piles.filter(q => Math.hypot(q.x - SPP.x, q.z - SPP.z) < 4.2); if (near.length < 2) return;
   const keep = near.reduce((a, b) => a.amt >= b.amt ? a : b); for (const q of near) if (q !== keep) { keep.amt += q.amt; removePile(q); } keep.x += (SPP.x - keep.x) * .5; keep.z += (SPP.z - keep.z) * .5; syncPile(keep);
@@ -5752,15 +5878,16 @@ function aiKempar(o, dt) {
 }
 
 // ---- every machine's driver ----
+const cvSt = o => o.aiState === "wait" ? (o.cover === "bunker" ? "" : BNK.cover >= 1 ? "bunker tamam, bekliyor" : o.load > o.cap - 2.3 ? "dolu, çıkıyor" : "kepçe dolduruyor") : o.aiState === "reverse" ? (o.cover === "bunker" ? "bunkere geri geri gidiyor" : "") : o.aiState === "tip" ? "toprağı bunkerin yanına döküyor" : "";
 function aiDrive(o, dt) {
   const j = o.job;
   if ((j && !j.on) || OPS.pause || o.broken) { o.aiBrake = true; drive(o, dt, 0, 0); if (o.type === "gt") o.cutter = false; o.st = o.broken ? "arızalı · tamir bekliyor" : OPS.pause ? "mola · operatör yemekte" : "durduruldu"; if (o.type !== "tr") work(o, dt, NOIN); return; }
   if (GM.on && o.type !== "tr" && o.type !== "ex" && o.hold > 0) { o.aiBrake = true; drive(o, dt, 0, 0); o.st = o.holdMode ? "operatör yok" : "başka işte"; if (o.type !== "gt") work(o, dt, NOIN); return; }
   switch (o.type) {
-    case "tr": aiTruck(o, dt); o.st = AIST[o.aiState] || ""; break;
-    case "ex": aiEx(o, dt * wx("bunker")); break;
-    case "ld": case "bh": aiLoad(o, dt * (o.type === "ld" ? wx("stok") : 1)); break;
-    case "dz": aiDoz(o, dt * wx("stok")); break;
+    case "tr": aiTruck(o, dt); o.st = (o.cover && cvSt(o)) || AIST[o.aiState] || ""; break;
+    case "ex": (o.cover === false ? aiEx : aiCover)(o, dt * wx("bunker")); break;
+    case "ld": case "bh": aiLoad(o, dt * (o.type === "ld" ? wx(feeding(o) ? "bunker" : "stok") : 1)); break;
+    case "dz": if (o.pad) (BNK.ground < 1 ? aiPad : aiParkDoz)(o, dt * wx("bunker")); else aiDoz(o, dt * wx("stok")); break;
     case "gr": aiGrade(o, dt * wx("yol")); break;
     case "gt": aiKempar(o, dt * wx("siginak")); break;
     default: drive(o, dt, 0, 0);
@@ -6113,7 +6240,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261030-2010";
+const BUILD = "20261031-0105";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -6387,196 +6514,248 @@ window.__hs.crowd = CROWD;
 
 ;(window.__INIT || (window.__INIT = [])).push(["crowd", performance.now()]);
 
-// ======================= THE BUNKER LIVING AREA (Kaan Teğmen's project by the 1st tank company): a semi-buried reinforced-concrete bunker built in the stages
-// you can see — the pit, the floor slab, the wall cages and the formwork, the walls, the roof slab, the waterproofing, the earth cover, then sandbags, vents and
-// the camouflage net. Every pour waits for the concrete mixer, which comes in through the main gate and pours from the road beside the bunker =======================
-const BNK = {p: 0, x0: 59.5, x1: 69.5, z0: 99.5, z1: 105.5, mix: "away", wait: "", ph: -1, seen: -1, boost: 1, done: false, k: 0};
-try { const s = JSON.parse(localStorage.getItem("hs-bunker") || "null"); if (s && s.p != null) BNK.p = clamp(+s.p, 0, 1); } catch (e) {}
-function bnkSave() { try { localStorage.setItem("hs-bunker", JSON.stringify({p: +BNK.p.toFixed(4)})); } catch (e) {} }
-const BCX = (BNK.x0 + BNK.x1) / 2, BCZ = (BNK.z0 + BNK.z1) / 2, BG0 = baseH(BCX, BCZ), BYF = BG0 - 2.4, BH = 2.75, BYW = BYF + BH, BWT = .35, BRT = .45, BYR = BYW + BRT;
-const BDOOR = {x0: 63.6, x1: 65.4, h: 2.15};                            // the door in the south wall, onto the stairs
-const BSTAIR = {x0: 63.3, x1: 65.7, z0: BNK.z1, z1: 110.4};             // the stairs come down from the road side
-// the stages on BNK.p; the three pours need the mixer
-const BPH = {exc: .30, mesh: .36, slab: .42, cage: .50, form: .56, wall: .62, shore: .68, rmesh: .72, roof: .78, wp: .84, fill: .92, done: 1};
-const BPOUR = [{a: .36, b: .42, n: "temel"}, {a: .56, b: .62, n: "duvar"}, {a: .72, b: .78, n: "tavan"}];
-const BNAMES = [[.3, "kazı"], [.36, "temel demiri"], [.42, "temel betonu"], [.5, "duvar demiri"], [.56, "duvar kalıbı"], [.62, "duvar betonu"], [.68, "tavan iskelesi"], [.72, "tavan demiri"], [.78, "tavan betonu"], [.84, "yalıtım ve merdiven"], [.92, "toprak örtü"], [1.01, "kum torbası ve kamuflaj"]];
-const bnkStage = () => BNK.p >= .999 ? "tamam" : (BNAMES.find(q => BNK.p < q[0]) || BNAMES[BNAMES.length - 1])[1];
+// ======================= THE BUNKER LIVING AREA (Kaan Teğmen's project, 1st tank company), built the way the unit builds it: precast concrete bunker
+// modules — korugans — set straight on the levelled ground one after another in a row, then buried under earth until from above nothing shows but a grassy
+// mound. The dozer levels the pad, a crane truck lifts the korugans off their stack into the row, the loader fills a truck with earth at the stock yard,
+// the truck tips it beside the row and the excavator spreads it over the korugans =======================
+const BNKN = 6, BMW = 3.2, BML = 2.0, BMH = 2.6, BCOVER = 11;   // korugans in the row; one korugan's width, length and height (m); the earth (m³) that buries the row
+const BNK = {mods: 0, cover: 0, ground: 0, crack: false, crackK: -1, p: 0, wait: "", mix: "away", done: false, seen: -1, fresh: true, lg: -1, lc: -1, lm: -1};
+try { const s = JSON.parse(localStorage.getItem("hs-bunker2") || "null"); if (s) { BNK.fresh = false; BNK.mods = clamp(s.mods | 0, 0, BNKN); BNK.cover = clamp(+s.cover || 0, 0, 1); BNK.ground = clamp(+s.ground || 0, 0, 1); BNK.crack = !!s.crack; BNK.crackK = s.crackK == null ? -1 : s.crackK | 0; } } catch (e) {}
+function bnkSave() { try { localStorage.setItem("hs-bunker2", JSON.stringify({mods: BNK.mods, cover: +BNK.cover.toFixed(4), ground: +BNK.ground.toFixed(4), crack: BNK.crack, crackK: BNK.crackK})); } catch (e) {} }
+function bnkSync() { BNK.p = BNK.ground * .1 + BNK.mods / BNKN * .45 + BNK.cover * .45; if (BNK.p > .999) BNK.p = 1; BNK.done = BNK.p >= .999; }
+const bnkStage = () => BNK.p >= .999 ? "tamam" : BNK.ground < 1 ? "zemin tesviyesi" : BNK.mods < BNKN ? "korugan dizimi" : "toprak örtü";
+const BPH = {exc: 0, done: 1}, BPOUR = [], BNAMES = [];   // (the old cast-in-place stages: nothing waits for concrete any more)
+bnkSync();
+const BCX = 64.5, BCZ = 101, BZ0 = BCZ - BNKN * BML / 2, BZ1 = BCZ + BNKN * BML / 2;   // the row runs north to south, the door at the south end towards the road
+const BG0 = baseH(BCX, BCZ);                                                             // the pad's level
+const BPAD = {x: BCX - BMW / 2 - 1, y: BZ0 - .6, w: BMW + 2, h: BZ1 - BZ0 + 3.1};         // the levelled pad under the row, the door's apron included
+const COV = {x: BCX - 4.8, y: BZ0 - 3.4, w: 9.6, h: BZ1 - BZ0 + 3.4};                    // earth poured in here goes onto the row
+const slotZ = k => BZ0 + (k + .5) * BML;                                                // the korugans' places: the closed end first (north), the door last (south)
+const BSTK = [0, 1, 2, 3, 4, 5].map(k => ({x: BCX + 11.1 + (k % 2) * 3.7, z: BCZ - 2.5 + Math.floor(k / 2) * 2.5}));   // the stack they came on
+const bKind = k => k === 0 ? "end" : k === BNKN - 1 ? "door" : "mid";
+// the earth crew's places: the excavator west of the row facing it; the truck's two stations on one line, the stock yard (where the loader fills it) and the bunker
+// (where it tips beside the row, BDP: the heap the excavator takes from)
+const EXH = {x: BCX - 8.5, z: BCZ, a: 0}, CVS = {x: 56, z: 70, a: -Math.PI / 2}, CVB = {x: 56, z: 89.6, a: -Math.PI / 2};
+const BDP = {x: CVB.x - Math.cos(CVB.a) * 5, z: CVB.z - Math.sin(CVB.a) * 5}, DZP = {x: BCX, z: BZ0 - 9, a: -Math.PI / 2};   // (DZP: where the dozer waits once the pad is level)
+const bdpHeap = () => piles.reduce((s, q) => s + (Math.hypot(q.x - BDP.x, q.z - BDP.z) < 4 ? q.amt : 0), 0);   // the earth already tipped there
 
-// ---------------- the pit: the dig as planned (working space round the walls, 1:1 slopes, the stair trench), shaped into the ground as the work goes on ----------------
-function bnkDepth(x, z) {
-  const ws = .9, D = BG0 - BYF + .12;
-  const dx = Math.max(BNK.x0 - ws - x, x - BNK.x1 - ws, 0), dz = Math.max(BNK.z0 - ws - z, z - BNK.z1 - ws, 0);
-  let d = Math.max(0, D - Math.hypot(dx, dz) * 1.05);
-  if (x > BSTAIR.x0 - 1.5 && x < BSTAIR.x1 + 1.5 && z > BNK.z1 && z < BSTAIR.z1 + 1.5) { const t = clamp((BSTAIR.z1 - z) / (BSTAIR.z1 - BNK.z1), 0, 1), side = Math.max(0, BSTAIR.x0 - .3 - x, x - BSTAIR.x1 - .3); d = Math.max(d, D * t - side * 1.4); }
-  return Math.max(0, d); }
-const BREG = {x0: Math.floor(BNK.x0 - 4), x1: Math.ceil(BNK.x1 + 4), z0: Math.floor(BNK.z0 - 4), z1: Math.ceil(BSTAIR.z1 + 2)};
-function bnkShape(e, fill) { // e: share of the dig done; fill: share of the backfill against the walls done
-  const p = groundGeo.attributes.position, col = groundGeo.attributes.color; let any = false;
-  for (let iz = BREG.z0; iz <= BREG.z1; iz++) for (let ix = BREG.x0; ix <= BREG.x1; ix++) {
-    if (ix < 0 || iz < 0 || ix > WX || iz > WZ) continue; const D = bnkDepth(ix, iz); if (D <= 0) continue;
-    const i = iz * (WX + 1) + ix, inBox = ix > BNK.x0 - .1 && ix < BNK.x1 + .1 && iz > BNK.z0 - .1 && iz < BNK.z1 + .1, stair = iz >= BNK.z1 && ix > BSTAIR.x0 - .6 && ix < BSTAIR.x1 + .6;
-    let v = Math.max(DV[i], D * e);
-    if (fill > 0 && !inBox && !stair) v = Math.min(v, D * e * (1 - fill));      // the backfill brings the ground back up round the walls
-    v = Math.min(3.2, v); if (Math.abs(v - DV[i]) < 1e-3) continue;
-    DV[i] = v; p.setY(i, heightAt(ix, iz)); const k = Math.max(.42, 1 - DV[i] * .2); col.setXYZ(i, k, k * .85, k * .72); any = true; }
-  if (any) { GDR.x0 = Math.min(GDR.x0, BREG.x0); GDR.x1 = Math.max(GDR.x1, BREG.x1); GDR.z0 = Math.min(GDR.z0, BREG.z0); GDR.z1 = Math.max(GDR.z1, BREG.z1);
-    groundRows(p, BREG.z0, BREG.z1); groundRows(col, BREG.z0, BREG.z1); groundDirty = true; } }
+// ---------------- the pad: the dozer cuts the high ground and fills the low to one level (and the old dig, from when the bunker was to be cast in a pit, is filled back in) ----------------
+const BLV = {x0: 54, x1: 76, z0: 89, z1: 113};
+function bnkLevel() { const g = BNK.ground, p = groundGeo.attributes.position, col = groundGeo.attributes.color; let any = false;
+  for (let iz = BLV.z0; iz <= BLV.z1; iz++) for (let ix = BLV.x0; ix <= BLV.x1; ix++) { const i = iz * (WX + 1) + ix, w = 1 - sstep(0, 1.6, rectDist(BPAD, ix, iz)), v = (baseH(ix, iz) - BG0) * g * w;
+    if (Math.abs(DV[i] - v) < 1e-3) continue;
+    DV[i] = v; p.setY(i, heightAt(ix, iz)); const k = w * g; col.setXYZ(i, 1 + .02 * k, 1 - .05 * k, 1 - .13 * k); any = true; }
+  if (!any) return;
+  GDR.x0 = Math.min(GDR.x0, BLV.x0); GDR.x1 = Math.max(GDR.x1, BLV.x1); GDR.z0 = Math.min(GDR.z0, BLV.z0); GDR.z1 = Math.max(GDR.z1, BLV.z1);
+  groundRows(p, BLV.z0, BLV.z1); groundRows(col, BLV.z0, BLV.z1); groundDirty = true;
+  for (const q of piles) if (q.x > BLV.x0 - 3 && q.x < BLV.x1 + 3 && q.z > BLV.z0 - 3 && q.z < BLV.z1 + 3) syncPile(q); }
 
-// ---------------- the parts, each one mesh, shown by stage ----------------
-const BCON = 0x9d9b95, BCON2 = 0x8f8d87, BREB = 0x7a4b2c, BPLY = 0xc79b5e, BWAL = 0x343434, BDIRT = 0x8f7454, BSAND = 0xb9a67c, BBLK = 0x1d1e1f;
+// ---------------- the parts ----------------
+const BCON = 0x9d9b95, BCON2 = 0x8f8d87, BDIRT = 0x8f7454, BGRASS = 0x667338;
 const BPART = {};
 function bnkPart(k, s, cast, y0) { const g = new THREE.Group(); if (y0 != null) g.position.y = y0; const m = putP(g, s, cast !== false, .04); if (!m) return null; g.visible = false; scene.add(g); BPART[k] = g; return g; }
+// one korugan: the floor, the two walls, the roof, the joint lines, the lifting loops on top; the first has its back closed, the last the door (a steel door, a vent)
+function korugan(s, kind, x, y, z) { const w = BMW, l = BML, h = BMH, t = .22, z0 = z - l / 2, z1 = z + l / 2;
+  s.box(w - 2 * t, .2, l, x, y + .1, z, BCON2);
+  for (const sd of [-1, 1]) { s.box(t, h, l, x + sd * (w / 2 - t / 2), y + h / 2, z, BCON); for (const zz of [z0 + .02, z1 - .02]) s.box(.03, h, .04, x + sd * (w / 2 + .005), y + h / 2, zz, 0x6f6d68); }
+  s.box(w, .26, l, x, y + h - .13, z, BCON); for (const zz of [z0 + .02, z1 - .02]) s.box(w + .02, .03, .04, x, y + h + .005, zz, 0x6f6d68);
+  for (const dz of [-.55, .55]) { for (const dx of [-.3, .3]) s.box(.05, .16, .05, x + dx, y + h + .08, z + dz, 0x6a4a2c); s.box(.65, .05, .05, x, y + h + .16, z + dz, 0x6a4a2c); }
+  if (kind === "end") s.box(w, h, t, x, y + h / 2, z0 + t / 2, BCON);
+  if (kind === "door") { const dw = 1.0, dh = 2.0, zf = z1 - t / 2;
+    s.box((w - dw) / 2, h, t, x - (w + dw) / 4, y + h / 2, zf, BCON); s.box((w - dw) / 2, h, t, x + (w + dw) / 4, y + h / 2, zf, BCON); s.box(dw, h - dh, t, x, y + dh + (h - dh) / 2, zf, BCON);
+    s.box(dw - .04, dh - .04, .08, x, y + dh / 2, z1 + .02, 0x4a5236); s.cyl(.1, .1, .05, x - .25, y + 1.05, z1 + .09, 0x9a9a9a, "z", 10);
+    for (const yy of [.45, 1.6]) s.box(.1, .14, .06, x + .45, y + yy, z1 + .07, 0x2a2c2e);
+    s.box(.36, .2, .06, x + 1.0, y + 1.9, z1 + .01, 0x1a1c1e); }
+}
 {
-  const X0 = BNK.x0, X1 = BNK.x1, Z0 = BNK.z0, Z1 = BNK.z1, W = X1 - X0, D = Z1 - Z0, cx = BCX, cz = BCZ;
-  // the floor's rebar mat (two layers of bars both ways)
-  let s = SP(); for (let x = X0 + .15; x <= X1 - .15; x += .3) s.box(.016, .016, D - .2, x, .06, cz, BREB); for (let z = Z0 + .15; z <= Z1 - .15; z += .3) s.box(W - .2, .016, .016, cx, .08, z, BREB);
-  for (let x = X0 + .4; x <= X1 - .4; x += 1.2) for (let z = Z0 + .4; z <= Z1 - .4; z += 1.2) s.box(.08, .05, .08, x, .025, z, 0x6d6a64);   // spacers
-  s.box(W + .3, .06, D + .3, cx, -.04, cz, 0xa8a59e);                                                                                   // blinding concrete under it
-  bnkPart("mesh", s, false, BYF);
-  // the floor slab
-  s = SP(); s.box(W + .2, .3, D + .2, cx, -.15, cz, BCON); bnkPart("slab", s, true, BYF);
-  // the wall cages: bars on both faces, starters standing out above; they grow up from the slab
-  s = SP(); const faces = [[X0 + .07, X0 + BWT - .07, "x"], [X1 - .07, X1 - BWT + .07, "x"], [Z0 + .07, Z0 + BWT - .07, "z"], [Z1 - .07, Z1 - BWT + .07, "z"]];
-  for (const [a, b, ax] of faces) for (const f of [a, b]) {
-    if (ax === "x") { for (let z = Z0 + .1; z <= Z1 - .1; z += .25) s.box(.016, BH + .45, .016, f, (BH + .45) / 2, z, BREB); for (let y = .2; y < BH; y += .3) s.box(.016, .016, D - .1, f, y, cz, BREB); }
-    else { for (let x = X0 + .1; x <= X1 - .1; x += .25) { if (f > cz && x > BDOOR.x0 && x < BDOOR.x1) continue; s.box(.016, BH + .45, .016, x, (BH + .45) / 2, f, BREB); } for (let y = .2; y < BH; y += .3) s.box(W - .1, .016, .016, cx, y, f, BREB); } }
-  bnkPart("cage", s, false, BYF);
-  // the formwork: plywood both faces, walers, push-pull props on the outside
-  s = SP(); const fh = BH + .1;
-  for (const [x, sd] of [[X0 - .03, -1], [X1 + .03, 1], [X0 + BWT + .03, 1], [X1 - BWT - .03, -1]]) { s.box(.04, fh, D + (sd * (x - cx) > 0 ? .2 : -.7), x, fh / 2, cz, BPLY); for (let y = .35; y < fh; y += .8) s.box(.08, .1, D, x + sd * .06 * Math.sign(x - cx), y, cz, 0x2d2f31); }
-  for (const [z, sd] of [[Z0 - .03, -1], [Z1 + .03, 1], [Z0 + BWT + .03, 1], [Z1 - BWT - .03, -1]]) { const out = sd * (z - cz) > 0;
-    for (const [a, b] of z > cz ? [[X0 - .1, BDOOR.x0], [BDOOR.x1, X1 + .1]] : [[X0 - .1, X1 + .1]]) { const w = b - a - (out ? 0 : .7); s.box(w, fh, .04, (a + b) / 2, fh / 2, z, BPLY); for (let y = .35; y < fh; y += .8) s.box(w, .1, .08, (a + b) / 2, y, z + .06 * Math.sign(z - cz), 0x2d2f31); } }
-  for (let k = 0; k < 6; k++) { const x = X0 + .8 + k * (W - 1.6) / 5; for (const [z, sd] of [[Z0, -1], [Z1, 1]]) s.rod([x, fh * .7, z + sd * .08], [x, .05, z + sd * 1.6], .03, 0xd0a020, 6); }
-  for (let k = 0; k < 3; k++) { const z = Z0 + .8 + k * (D - 1.6) / 2; for (const [x, sd] of [[X0, -1], [X1, 1]]) s.rod([x + sd * .08, fh * .7, z], [x + sd * 1.6, .05, z], .03, 0xd0a020, 6); }
-  bnkPart("form", s, true, BYF);
-  // the walls (the door in the south wall), the portal round the stairs
-  s = SP(); s.box(BWT, BH, D, X0 + BWT / 2, BH / 2, cz, BCON); s.box(BWT, BH, D, X1 - BWT / 2, BH / 2, cz, BCON); s.box(W, BH, BWT, cx, BH / 2, Z0 + BWT / 2, BCON);
-  s.box(BDOOR.x0 - X0, BH, BWT, (X0 + BDOOR.x0) / 2, BH / 2, Z1 - BWT / 2, BCON); s.box(X1 - BDOOR.x1, BH, BWT, (X1 + BDOOR.x1) / 2, BH / 2, Z1 - BWT / 2, BCON); s.box(BDOOR.x1 - BDOOR.x0, BH - BDOOR.h, BWT, (BDOOR.x0 + BDOOR.x1) / 2, (BH + BDOOR.h) / 2, Z1 - BWT / 2, BCON);
-  s.box(W - 2 * BWT, .02, D - 2 * BWT, cx, .01, cz, 0x7d7a74);                                                                        // the floor inside
-  bnkPart("wall", s, true, BYF);
-  // shoring under the roof deck, the deck and its edge boards
-  s = SP(); for (let x = X0 + .9; x < X1 - .5; x += 1.2) for (let z = Z0 + .9; z < Z1 - .5; z += 1.2) { s.cyl(.03, .03, BH - .12, x, (BH - .12) / 2, z, 0xc9a227, null, 6); s.box(.12, .12, D - 2 * BWT, x, BH - .1, cz, 0x6b5233); }
-  s.box(W - 2 * BWT, .04, D - 2 * BWT, cx, BH - .02, cz, BPLY); for (const [x, z, w, d] of [[cx, Z0 - .05, W + .3, .04], [cx, Z1 + .05, W + .3, .04], [X0 - .05, cz, .04, D + .3], [X1 + .05, cz, .04, D + .3]]) s.box(w, .55, d, x, BH + .2, z, BPLY);
-  bnkPart("shore", s, true, BYF);
-  // the roof's rebar mat
-  s = SP(); for (let x = X0 + .15; x <= X1 - .15; x += .3) s.box(.018, .018, D - .1, x, BH + .12, cz, BREB); for (let z = Z0 + .15; z <= Z1 - .15; z += .3) s.box(W - .1, .018, .018, cx, BH + .15, z, BREB);
-  bnkPart("rmesh", s, false, BYF);
-  // the roof slab
-  s = SP(); s.box(W + .2, BRT, D + .2, cx, BH + BRT / 2, cz, BCON2); bnkPart("roof", s, true, BYF);
-  // the waterproofing: black on the outside of the walls and the roof
-  s = SP(); s.box(.03, BH + BRT, D + .26, X0 - .02, (BH + BRT) / 2, cz, BBLK); s.box(.03, BH + BRT, D + .26, X1 + .02, (BH + BRT) / 2, cz, BBLK); s.box(W + .26, BH + BRT, .03, cx, (BH + BRT) / 2, Z0 - .02, BBLK);
-  s.box(W + .26, .03, D + .26, cx, BH + BRT + .015, cz, BBLK); bnkPart("wp", s, true, BYF);
-  // the stairs down to the door, their side walls rising into a parapet, the steel blast door, a lamp over it
-  s = SP(); const sw = BSTAIR.x1 - BSTAIR.x0, sx = (BSTAIR.x0 + BSTAIR.x1) / 2, L = BSTAIR.z1 - BSTAIR.z0, n = 14, rise = (BG0 - BYF) / n, run = L / n;
-  for (let k = 0; k < n; k++) { const zt = BSTAIR.z0 + .4 + k * run; s.box(sw, (k + 1) * rise, run + .02, sx, (k + 1) * rise / 2, zt + run / 2, k % 2 ? 0x96938c : 0x9a978f); }
-  s.box(sw + .7, .12, .9, sx, -.06, BSTAIR.z0 + .2, 0x8e8b85);                                                                            // the landing at the door
-  for (const x of [BSTAIR.x0 - .17, BSTAIR.x1 + .17]) { s.box(.3, BG0 - BYF + .5, L + .4, x, (BG0 - BYF + .5) / 2, (BSTAIR.z0 + BSTAIR.z1) / 2, BCON); for (let z = BSTAIR.z0 + 1; z < BSTAIR.z1; z += 1.6) s.cyl(.02, .02, .9, x, BG0 - BYF + .95, z, 0xd8d8d0, null, 6); s.rod([x, BG0 - BYF + 1.4, BSTAIR.z0 + 1], [x, BG0 - BYF + 1.4, BSTAIR.z1 - .2], .02, 0xd8d8d0, 6); }
-  s.box(BDOOR.x1 - BDOOR.x0 + .3, BDOOR.h + .15, .12, (BDOOR.x0 + BDOOR.x1) / 2, (BDOOR.h + .15) / 2, Z1 + .02, 0x2a2c2e); s.box(BDOOR.x1 - BDOOR.x0 - .04, BDOOR.h - .04, .1, (BDOOR.x0 + BDOOR.x1) / 2, BDOOR.h / 2, Z1 + .08, 0x4a5236);
-  for (const y of [.5, 1.6]) s.box(.18, .1, .06, BDOOR.x0 + .2, y, Z1 + .15, 0x2a2c2e); s.cyl(.06, .06, .12, BDOOR.x1 - .25, 1.05, Z1 + .16, 0x9a9a9a, "z", 10);   // hinges, the wheel
-  s.box(W + .5, BG0 - BYF + 1.0 - BH, .4, (X0 + X1) / 2, BH + (BG0 - BYF + 1.0 - BH) / 2, Z1 + .2, BCON);                                 // the parapet over the door face
-  s.box(.5, .14, .22, (BDOOR.x0 + BDOOR.x1) / 2, BDOOR.h + .45, Z1 + .25, 0x2a2a2a);
-  bnkPart("stair", s, true, BYF);
-  BPART.stairLamp = (() => { const m = new THREE.Mesh(new THREE.BoxGeometry(.38, .06, .12), new THREE.MeshBasicMaterial({color: 0xfff1c8})); m.position.set((BDOOR.x0 + BDOOR.x1) / 2, BYF + BDOOR.h + .38, Z1 + .3); m.visible = false; scene.add(m); return m; })();
-  // the earth cover: a mound over the roof sloping down to the ground on three sides; the south face is the parapet
-  s = SP(); { const top = BG0 + 1.75, base = BG0 - .05, m = 2.4, i = 1.1, E = (x, z, y) => [x, y, z];
-    const B = [E(X0 - m, Z0 - m, base), E(X1 + m, Z0 - m, base), E(X1 + m, Z1 + .4, base + .2), E(X0 - m, Z1 + .4, base + .2)], T = [E(X0 + i, Z0 + i, top), E(X1 - i, Z0 + i, top), E(X1 - i, Z1 + .4, top), E(X0 + i, Z1 + .4, top)];
-    const col = BDIRT; s.quad(T[0], T[1], T[2], T[3], col, [0, 1, 0]); s.quad(B[0], B[1], T[1], T[0], col, [0, .6, -1]); s.quad(B[1], B[2], T[2], T[1], col, [1, .6, 0]); s.quad(B[3], B[0], T[0], T[3], col, [-1, .6, 0]);
-    s.quad(T[3], T[2], B[2], B[3], 0x857052, [0, 0, 1]);
-    const r = rndF(31); for (let k = 0; k < 70; k++) { const x = X0 - 1.6 + r() * (W + 3.2), z = Z0 - 1.6 + r() * (D + 1.8), u = Math.min(1, Math.max(0, Math.min(x - (X0 - m), X1 + m - x, z - (Z0 - m)) / (m + i)));
-      s.sph(.18 + r() * .2, .1 + r() * .1, .18 + r() * .2, x, base + (top - base) * Math.min(1, u * 1.4) + .02, Math.min(z, Z1 + .2), r() < .5 ? 0x6f7a3e : 0x7f8a48, 6); } }
-  bnkPart("fill", s, true, 0);
-  // the finish: sandbags round the top and along the stairs, two vents, the camouflage net on poles, the sign
-  s = SP(); { const top = BG0 + 1.75, bag = (x, y, z, ry) => s.box(.55, .16, .3, x, y, z, BSAND, 0, ry, 0);
-    for (let l = 0; l < 2; l++) { for (let x = X0 + 1.4; x <= X1 - 1.4; x += .58) { bag(x + (l % 2) * .29, top + .08 + l * .16, BNK.z0 + 1.15, 0); } for (let z = Z0 + 1.4; z <= Z1; z += .58) { bag(X0 + 1.15, top + .08 + l * .16, z + (l % 2) * .29, Math.PI / 2); bag(X1 - 1.15, top + .08 + l * .16, z + (l % 2) * .29, Math.PI / 2); } }
-    for (const x of [BSTAIR.x0 - .2, BSTAIR.x1 + .2]) for (let l = 0; l < 3; l++) for (let z = BSTAIR.z0 + 1.2; z < BSTAIR.z1 + .4; z += .58) bag(x, BG0 + .58 + l * .16, z + (l % 2) * .29, Math.PI / 2);
-    for (const [x, z] of [[X0 + 2.6, Z0 + 2.4], [X1 - 2.6, Z0 + 2.4]]) { s.cyl(.14, .14, 1.5, x, top + .5, z, 0xc9c9c2, null, 12); s.cyl(.3, .18, .2, x, top + 1.3, z, 0xb8b8b0, null, 12); s.cyl(.32, .32, .04, x, top + 1.42, z, 0x9a9a92, null, 12); }
-    for (const [x, z] of [[X0 - 1.2, Z0 - 1.2], [X1 + 1.2, Z0 - 1.2], [X0 - 1.2, Z1 + .8], [X1 + 1.2, Z1 + .8], [cx, Z0 - .4], [cx, Z1 + .3]]) s.cyl(.04, .05, 2.6, x, BG0 + 1.0, z, 0x5b5b48, null, 6);
-    // the board on its two posts by the top of the stairs
-    s.box(.08, 1.7, .08, BSTAIR.x1 + 1.7, BG0 + .85, BSTAIR.z1 + .3, 0x3a3d40); s.box(.08, 1.7, .08, BSTAIR.x1 + 3.3, BG0 + .85, BSTAIR.z1 + .3, 0x3a3d40); }
-  bnkPart("finish", s, true, 0);
-  // the camouflage net over the mound
-  { const nt = texCanvas(128, 128, g => { g.clearRect(0, 0, 128, 128); const r = rndF(9); for (let k = 0; k < 260; k++) { g.fillStyle = ["#4d5a2e", "#6b6a3a", "#3e4a26", "#7a6a46"][k % 4]; g.beginPath(); const x = r() * 128, y = r() * 128, w = 4 + r() * 10; g.ellipse(x, y, w, w * .6, r() * 3, 0, 7); g.fill(); }
-      g.strokeStyle = "rgba(40,44,28,.9)"; g.lineWidth = 1.2; for (let k = 0; k <= 128; k += 8) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k, 128); g.stroke(); g.beginPath(); g.moveTo(0, k); g.lineTo(128, k); g.stroke(); } });
-    nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.repeat.set(4, 3);
-    const W2 = BNK.x1 - BNK.x0 + 3.4, D2 = BNK.z1 - BNK.z0 + 2.6, g = new THREE.PlaneGeometry(W2, D2, 16, 10); g.rotateX(-Math.PI / 2); const P = g.attributes.position;
-    for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i), u = 1 - Math.max(Math.abs(x) / (W2 / 2), Math.abs(z) / (D2 / 2)); P.setY(i, .4 + u * 1.9 + Math.sin(x * 1.3 + z) * .08); }
-    g.computeVertexNormals(); const net = new THREE.Mesh(g, new THREE.MeshStandardMaterial({map: nt, alphaTest: .45, side: THREE.DoubleSide, roughness: .95}));
-    net.position.set(BCX, BG0 + .2, BCZ - .3); net.castShadow = true; net.visible = false; net.userData.noAO = true; scene.add(net); BPART.net = net; }
-  { const tex = texCanvas(512, 200, (g, w, h) => { g.fillStyle = "#26301f"; g.fillRect(0, 0, w, h); g.strokeStyle = "#e9d9a6"; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
-      g.fillStyle = "#f3e6bd"; g.textAlign = "center"; g.font = "bold 46px 'Arial Narrow', Arial, sans-serif"; g.fillText("BUNKER YAŞAM ALANI", w / 2, 82); g.font = "28px Arial, sans-serif"; g.fillText("1. TANK BÖLÜĞÜ · Sorumlu: Kaan Teğmen", w / 2, 140); });
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.9, .74), new THREE.MeshStandardMaterial({map: tex, roughness: .7})); sign.position.set(BSTAIR.x1 + 2.5, BG0 + 1.45, BSTAIR.z1 + .36); sign.visible = false; scene.add(sign); BPART.sign = sign; }
-  // the materials yard east of the pit: rebar bundles, formwork panels, cement on pallets, a water tank, the tool container
-  s = SP(); { const x0 = BNK.x1 + 3.2, z0 = BNK.z0 - .5;
-    for (let k = 0; k < 4; k++) for (let j = 0; j < 9; j++) s.cyl(.02, .02, 6, x0 + .2 + (j % 3) * .06 + k * .5, .1 + Math.floor(j / 3) * .05, z0 + 1, BREB, "z", 5);
-    for (const z of [z0 + 1 - 2.7, z0 + 1 + 2.7]) s.box(.15, .15, .4, x0 + 1, .07, z, 0x5a4630);
-    for (let k = 0; k < 8; k++) s.box(1.2, .03, 2.4, x0 + 1.1 + (k % 2) * .05, .2 + k * .035, z0 + 5, k % 3 ? BPLY : 0xb48a52);
-    s.box(1.3, .14, 2.5, x0 + 1.1, .07, z0 + 5, 0x5a4630);
-    for (let p = 0; p < 2; p++) { s.box(1.1, .14, 1.1, x0 + 3.4, .07, z0 + 1 + p * 1.6, 0x6a5236); for (let k = 0; k < 10; k++) s.box(.48, .14, .34, x0 + 3.15 + (k % 2) * .5, .2 + Math.floor(k / 4) * .15, z0 + .7 + p * 1.6 + (Math.floor(k / 2) % 2) * .36, 0xcfc9bb); }
-    s.box(1.1, 1.1, 1.1, x0 + 3.4, .55, z0 + 4.6, 0xe8e8e2); s.box(1.16, .1, 1.16, x0 + 3.4, .05, z0 + 4.6, 0x8a8a84);   // IBC water tank
-    s.box(2.4, 2.4, 4.6, x0 + 5.9, 1.2, z0 + 3.2, 0x55603f); s.box(.06, 2.0, .9, x0 + 4.68, 1.0, z0 + 3.2, 0x3e4630); }
-  bnkPart("yard", s, true, 0);
-  PROPS.push([BNK.x1 + 3.3, BNK.x1 + 7.3, BNK.z0, BNK.z0 + 5.5], [BNK.x1 + 7.3 + .3, BNK.x1 + 10.3, BNK.z0 + .5, BNK.z0 + 5.6]);
+  // the korugans in the row (each its own part, shown as it is set down) and on the stack, on timber sleepers
+  for (let k = 0; k < BNKN; k++) { let s = SP(); korugan(s, bKind(k), BCX, 0, slotZ(k)); bnkPart("m" + k, s, true, BG0);
+    s = SP(); const p = BSTK[k]; for (const dz of [-.65, .65]) s.box(BMW + .4, .14, .22, p.x, .07, p.z + dz, 0x6b5233); korugan(s, bKind(k), p.x, .14, p.z); bnkPart("s" + k, s, true, heightAt(p.x, p.z)); }
+  // the one hanging on the crane (one of each kind)
+  for (const kind of ["end", "mid", "door"]) { const s = SP(); korugan(s, kind, 0, 0, 0); bnkPart("c" + kind, s, true, 0); }
+  // Kaan's stakes and string round the row, before the first one is down
+  let s = SP(); const x0 = BCX - BMW / 2 - .3, x1 = BCX + BMW / 2 + .3, z0 = BZ0 - .3, z1 = BZ1 + .3;
+  for (const [x, z] of [[x0, z0], [x1, z0], [x1, z1], [x0, z1]]) { s.box(.06, 1.05, .06, x, .17, z, 0x9b7a4c); s.box(.08, .1, .08, x, .7, z, 0xd2261c); }
+  for (const [a, b] of [[[x0, z0], [x1, z0]], [[x1, z0], [x1, z1]], [[x1, z1], [x0, z1]], [[x0, z1], [x0, z0]]]) s.rod([a[0], .55, a[1]], [b[0], .55, b[1]], .012, 0xf0f0f0, 4);
+  bnkPart("stakes", s, false, BG0);
+  // the levelled pad: fine gravel, rolled
+  s = SP(); s.box(BPAD.w, .05, BPAD.h, BCX, .025, BPAD.y + BPAD.h / 2, 0xb7a98d); { const r = rndF(70); for (let k = 0; k < 46; k++) s.box(.25 + r() * .3, .055, .2 + r() * .3, BPAD.x + .3 + r() * (BPAD.w - .6), .03, BPAD.y + .3 + r() * (BPAD.h - .6), 0xa49577); }
+  bnkPart("pad", s, false, BG0);
+  // the entrance: wing walls splayed out from the door's corners to hold the earth back, their tops following the slope; the lintel over the door
+  s = SP(); { const sp = .44, cs = Math.cos(sp), sn = Math.sin(sp);
+    for (const sd of [-1, 1]) for (let k = 0; k < 9; k++) { const d = .17 + k * .34, hh = Math.max(.35, BMH + .55 - d * cs * 1.05); s.box(.25, hh, .36, BCX + sd * (BMW / 2 + .1 + sn * d), hh / 2, BZ1 + cs * d, BCON, 0, sd * sp, 0); }
+    s.box(BMW + .5, .55, .3, BCX, BMH + .27, BZ1 + .12, BCON); }
+  bnkPart("portal", s, true, BG0);
 }
-// collision for the walls (the door stays open) and later the whole covered mound
-let BPROPN = 0;
-function bnkProps(stage) { if (stage <= BPROPN) return; const X0 = BNK.x0, X1 = BNK.x1, Z0 = BNK.z0, Z1 = BNK.z1;
-  if (stage >= 1 && BPROPN < 1) PROPS.push([X0, X0 + BWT, Z0, Z1], [X1 - BWT, X1, Z0, Z1], [X0, X1, Z0, Z0 + BWT], [X0, BDOOR.x0, Z1 - BWT, Z1], [BDOOR.x1, X1, Z1 - BWT, Z1]);
-  if (stage >= 2 && BPROPN < 2) PROPS.push([X0 - 1.6, X1 + 1.6, Z0 - 1.6, Z1 - .3], [X0 - 1.6, BSTAIR.x0 - .4, Z1 - .3, Z1 + .6], [BSTAIR.x1 + .4, X1 + 1.6, Z1 - .3, Z1 + .6]);
-  BPROPN = stage; }
+// the earth over the row: a mound with a flat top over the roofs and slopes all round, cut open in front of the door; it rises from the ground as the earth comes
+const MND = (() => { const nx = 26, nz = 40, x0 = BCX - 5.4, x1 = BCX + 5.4, z0 = BZ0 - 3.9, z1 = BZ1 + 3.5, top = BMH + .55, r = rndF(41), N = (nx + 1) * (nz + 1);
+  const hAt = (x, z) => { const ax = Math.abs(x - BCX) - (BMW / 2 + .35), dn = (BZ0 - .4) - z, ds = z - BZ1;
+    if (ds > -.05 && Math.abs(x - BCX) < BMW / 2 + .1 + Math.max(0, ds) * .47) return 0;   // the door's notch, widening between the wing walls
+    return Math.max(0, top - Math.max(0, ax, dn, ds) * 1.05); };
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), H = new Float32Array(N), J = new Float32Array(N), K = new Float32Array(N), idx = [];
+  for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) { const q = j * (nx + 1) + i, x = x0 + (x1 - x0) * i / nx, z = z0 + (z1 - z0) * j / nz; pos[q * 3] = x; pos[q * 3 + 2] = z; H[q] = hAt(x, z); J[q] = H[q] > .4 ? (r() - .5) * .12 : 0; K[q] = .82 + r() * .3; }
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const a = j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3)); g.setIndex(idx);
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color: 0xffffff, vertexColors: true, roughness: 1})); m.castShadow = true; m.receiveShadow = true; m.visible = false; m.userData.noAO = true; scene.add(m);
+  return {m, g, H, J, K, top, hAt, c: -1}; })();
+const BMC0 = new THREE.Color(BDIRT).convertSRGBToLinear(), BMC1 = new THREE.Color(BGRASS).convertSRGBToLinear(), BMC = new THREE.Color();   // (vertex colours are linear here, as the models' are)
+function moundSet(c) { const M = MND, P = M.g.attributes.position, A = P.array, C = M.g.attributes.color.array, green = clamp((c - .92) / .08, 0, 1);
+  for (let q = 0; q < M.H.length; q++) { const x = A[q * 3], z = A[q * 3 + 2], gr = heightAt(x, z) - .06, h = M.H[q];
+    A[q * 3 + 1] = h > 0 ? gr + (BG0 + h + M.J[q] - gr) * c : gr - .05;
+    BMC.copy(BMC0).lerp(BMC1, green * clamp(h / .7, 0, 1)).multiplyScalar(M.K[q]); C[q * 3] = BMC.r; C[q * 3 + 1] = BMC.g; C[q * 3 + 2] = BMC.b; }
+  P.needsUpdate = true; M.g.attributes.color.needsUpdate = true; M.g.computeVertexNormals(); M.g.computeBoundingSphere(); M.c = c; }
+// grown over: grass tufts and scrub on the mound, two low vents, the camouflage net over all of it (the entrance too), the sign by the door
+{ const s = SP(), r = rndF(52), top = BG0 + BMH + .55;
+  for (let k = 0; k < 64; k++) { const x = BCX - 4.2 + r() * 8.4, z = BZ0 - 3 + r() * (BZ1 - BZ0 + 5), h = MND.hAt(x, z); if (h < .35) continue; s.sph(.22 + r() * .32, .12 + r() * .16, .22 + r() * .32, x, BG0 + h + .04, z, r() < .5 ? 0x5a6630 : 0x707c3e, 6); }
+  for (const z of [BZ0 + 2.5, BZ1 - 3.5]) { s.cyl(.08, .08, .5, BCX + .8, top + .15, z, 0x4b5536, null, 10); s.cyl(.14, .1, .1, BCX + .8, top + .42, z, 0x3e4630, null, 10); }
+  bnkPart("grass", s, true, 0);
+  const nt = texCanvas(128, 128, g => { g.clearRect(0, 0, 128, 128); const q = rndF(9); for (let k = 0; k < 260; k++) { g.fillStyle = ["#4d5a2e", "#6b6a3a", "#3e4a26", "#7a6a46"][k % 4]; g.beginPath(); const x = q() * 128, y = q() * 128, w = 4 + q() * 10; g.ellipse(x, y, w, w * .6, q() * 3, 0, 7); g.fill(); }
+    g.strokeStyle = "rgba(40,44,28,.9)"; g.lineWidth = 1.2; for (let k = 0; k <= 128; k += 8) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k, 128); g.stroke(); g.beginPath(); g.moveTo(0, k); g.lineTo(128, k); g.stroke(); } });
+  nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.repeat.set(3, 5);
+  const W2 = 10.6, D2 = BZ1 - BZ0 + 6.2, ng = new THREE.PlaneGeometry(W2, D2, 14, 24); ng.rotateX(-Math.PI / 2);   // (its south edge where the canopy over the entrance ends: no curtain in front of the door)
+  const net = new THREE.Mesh(ng, new THREE.MeshStandardMaterial({map: nt, alphaTest: .45, side: THREE.DoubleSide, roughness: .95})); net.position.set(BCX, 0, BZ0 - 3.4 + D2 / 2); net.castShadow = true; net.visible = false; net.userData.noAO = true; scene.add(net); BPART.net = net;
+  const tex = texCanvas(512, 200, (g, w, h) => { g.fillStyle = "#26301f"; g.fillRect(0, 0, w, h); g.strokeStyle = "#e9d9a6"; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
+    g.fillStyle = "#f3e6bd"; g.textAlign = "center"; g.font = "bold 46px 'Arial Narrow', Arial, sans-serif"; g.fillText("BUNKER YAŞAM ALANI", w / 2, 82); g.font = "28px Arial, sans-serif"; g.fillText("1. TANK BÖLÜĞÜ · Sorumlu: Kaan Teğmen", w / 2, 140); });
+  const sx = BCX + 3.4, sz = BZ1 + 3.7, sy = heightAt(sx, sz);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.9, .74), new THREE.MeshStandardMaterial({map: tex, roughness: .7})); sign.position.set(sx, sy + 1.3, sz); sign.visible = false; scene.add(sign); BPART.sign = sign;
+  const s2 = SP(); for (const dx of [-.8, .8]) s2.box(.08, 1.6, .08, sx + dx, .8, sz - .04, 0x3a3d40); bnkPart("signpost", s2, true, sy); }
+// the net hangs a little over the mound and over the entrance on its poles, down to the ground at its edges (fitted when it goes up: the pad is level by then)
+function netFit() { const n = BPART.net, P = n.geometry.attributes.position;
+  for (let i = 0; i < P.count; i++) { const x = P.getX(i) + n.position.x, z = P.getZ(i) + n.position.z, gr = heightAt(x, z), door = z > BZ1 - .3 && Math.abs(x - BCX) < BMW / 2 + 1.5;
+    P.setY(i, Math.max(gr + .12, BG0 + (door ? MND.top : MND.hAt(x, z)) + .24) + Math.sin(x * 1.3 + z * .9) * .05); }
+  P.needsUpdate = true; n.geometry.computeVertexNormals(); n.geometry.computeBoundingSphere(); }
+// the crack the soldiers patched with mortar, if that is what you said (the Paşa sees it at the inspection, until the earth covers it)
+function bnkPatch() { if (BPART.patch || BNK.crackK < 0) return; const s = SP(), k = BNK.crackK, x = BCX + BMW / 2 + .015, z = slotZ(Math.min(BNKN - 1, k));
+  for (let i = 0; i < 7; i++) s.box(.03, .3, .07, x, .45 + i * .27, z - .45 + (i % 2) * .14, 0xcfcac0); bnkPart("patch", s, false, BG0); }
 
-// ---------------- what is shown at each stage ----------------
+// ---------------- what stands in the way: the korugans (in the row and on the stack), the mound, the wing walls, the crane truck while it works ----------------
+const BPROPS = {};
+function propOn(k, r) { if (BPROPS[k]) return; BPROPS[k] = r; PROPS.push(r); }
+function propOff(k) { const r = BPROPS[k]; if (!r) return; const i = PROPS.indexOf(r); if (i >= 0) PROPS.splice(i, 1); delete BPROPS[k]; }
+function bnkProps() {
+  for (let k = 0; k < BNKN; k++) { const z = slotZ(k), p = BSTK[k];
+    if (k < BNK.mods) propOn("m" + k, [BCX - BMW / 2, BCX + BMW / 2, z - BML / 2, z + BML / 2]);
+    if (k >= BNK.mods && CR.k !== k) propOn("s" + k, [p.x - BMW / 2 - .2, p.x + BMW / 2 + .2, p.z - BML / 2 - .1, p.z + BML / 2 + .1]); else propOff("s" + k); }
+  if (BNK.cover >= .4) propOn("mound", [BCX - 3.7, BCX + 3.7, BZ0 - 2.3, BZ1 - .1]);
+  if (BNK.mods >= BNKN && BNK.cover > .02) { propOn("wingL", [BCX - BMW / 2 - 1.5, BCX - BMW / 2 - .05, BZ1, BZ1 + 2.6]); propOn("wingR", [BCX + BMW / 2 + .05, BCX + BMW / 2 + 1.5, BZ1, BZ1 + 2.6]); } }
+
+// ---------------- what is shown ----------------
 function bnkVisuals() {
-  const p = BNK.p, on = (k, v) => { const g = BPART[k]; if (g && g.visible !== v) g.visible = v; };
-  const exc = Math.min(1, p / BPH.exc), fill = clamp((p - BPH.wp) / (BPH.fill - BPH.wp), 0, 1);
-  bnkShape(exc, fill);
-  on("yard", p > .06 && p < .95);
-  on("mesh", p >= BPH.exc && p < BPH.slab - .03); on("slab", p >= BPH.slab - .03);
-  const cage = clamp((p - BPH.slab) / (BPH.cage - BPH.slab), 0, 1); on("cage", cage > 0 && p < BPH.wall); if (BPART.cage) BPART.cage.scale.y = Math.max(.02, cage);
-  const form = clamp((p - BPH.cage) / (BPH.form - BPH.cage), 0, 1); on("form", form > 0 && p < BPH.wall); if (BPART.form) BPART.form.scale.y = Math.max(.02, form);
-  on("wall", p >= BPH.wall); on("shore", p >= BPH.wall && p < BPH.roof + .02); on("rmesh", p >= BPH.shore && p < BPH.roof);
-  on("roof", p >= BPH.roof); on("wp", p >= BPH.roof + .02); on("stair", p >= BPH.roof + .03);
-  if (BPART.fill) { on("fill", fill > 0); BPART.fill.scale.y = Math.max(.02, fill); BPART.fill.position.y = (BG0 - .05) * (1 - BPART.fill.scale.y); }
-  on("finish", p >= BPH.fill + .03); on("net", p >= .985); on("sign", p >= BPH.fill + .03); if (BPART.stairLamp) BPART.stairLamp.visible = p >= BPH.fill + .03;
-  bnkProps(p >= BPH.wall ? (p >= BPH.fill ? 2 : 1) : 0);
+  const on = (k, v) => { const g = BPART[k]; if (g && g.visible !== v) g.visible = v; }, c = BNK.cover;
+  on("stakes", BNK.mods === 0); on("pad", BNK.ground >= .999 && c < .5);
+  for (let k = 0; k < BNKN; k++) { on("m" + k, k < BNK.mods); if (k !== CR.k) on("s" + k, k >= BNK.mods); }
+  on("portal", BNK.mods >= BNKN && c > .02);
+  const vis = BNK.mods >= BNKN && c > .005; if (MND.m.visible !== vis) MND.m.visible = vis; if (vis && Math.abs(MND.c - c) > 1e-4) moundSet(c);
+  const fin = c >= .999; on("grass", fin); on("signpost", fin); if (BPART.sign.visible !== fin) BPART.sign.visible = fin; if (BPART.net.visible !== fin) { if (fin) netFit(); BPART.net.visible = fin; }
+  if (BNK.crack) bnkPatch(); on("patch", BNK.crack && BNK.crackK >= 0 && BNK.crackK < BNK.mods && c < .45);
+  bnkProps();
 }
+// earth poured over the row (from a bucket or a truck's bed) goes into the mound
+function bnkTakeDirt(p, amt) { if (BNK.mods < BNKN || BNK.cover >= 1 || !inRect(p, COV)) return false; const c0 = BNK.cover; BNK.cover = Math.min(1, BNK.cover + amt / BCOVER); bnkSync();
+  if (BNK.cover >= 1 && c0 < 1) { BNK.cover = 1; toast("🎉 BUNKER TOPRAĞIN ALTINDA · yukarıdan görünmüyor", 3); bnkVisuals(); bnkSave(); } return true; }
 
-// ---------------- the concrete mixer: called by the concrete plant, waits at the main gate, drives in, pours from the road beside the bunker ----------------
+// ---------------- the crane truck: comes in from the main gate, parks between the stack and the row, puts its legs down, lifts the korugans one by one ----------------
+const CRN = mkVehicle("crane");
+const CRB = (() => {
+  const col = new THREE.Group(), s = SP(); s.cyl(.3, .34, 1.5, 0, .75, 0, 0xf2b705, null, 14); s.box(.72, .55, .72, 0, 1.6, 0, 0xf2b705); s.box(.3, .3, .3, .42, 1.6, 0, 0x2b2e31);
+  putP(col, s, true, 0); col.position.set(1.45, 1.45, 0); CRN.g.add(col);
+  const legs = new THREE.Group(), L = SP(); for (const x of [1.45, -3.0]) for (const sd of [-1, 1]) { L.box(.2, .2, 1.05, x, 1.1, sd * 1.62, 0xf2b705); L.box(.16, 1.1, .16, x, .55, sd * 2.05, 0x2a2d30); L.box(.5, .08, .5, x, .04, sd * 2.05, 0x2a2d30); }
+  putP(legs, L, true, 0); legs.visible = false; CRN.g.add(legs);
+  const M = c => new THREE.MeshStandardMaterial({color: c, roughness: .6, metalness: .2});
+  const cg = new THREE.CylinderGeometry(.022, .022, 1, 5), sg = new THREE.CylinderGeometry(.016, .016, 1, 4); cg.rotateX(Math.PI / 2); sg.rotateX(Math.PI / 2);   // lengths along z, for stretching
+  const boom = new THREE.Mesh(new THREE.BoxGeometry(.36, .36, 1), M(0xf2b705)), boom2 = new THREE.Mesh(new THREE.BoxGeometry(.26, .26, 1), M(0xe0a800));
+  const cable = new THREE.Mesh(cg, M(0x1e1f20)), hook = new THREE.Mesh(new THREE.BoxGeometry(.26, .32, .26), M(0xd8251d)), slings = [0, 1, 2, 3].map(() => new THREE.Mesh(sg, M(0x2a2b2c)));
+  for (const m of [boom, boom2, cable, hook].concat(slings)) { m.castShadow = true; m.visible = false; scene.add(m); }
+  return {col, legs, boom, boom2, cable, hook, slings}; })();
+const CR = {st: "away", t: 0, k: -1, hold: 0, until: 0, onTimeout: null, bye: false, toldT: 0, tp: null, park: {x: BCX + 6.5, z: BCZ + 1.45}};
+const CRIN = [[-200, 60], [-130, 60], [-60, 60], [-30, 60], [-14, 59], [-5, 55.4], [2.5, 53], [10, 54.2], [20, 55], [24, 66], [26, 82], [27, 97], [31, 107], [38, 112.6], [48, 114.6], [58, 114.75], [65.5, 114.6], [69.8, 112.4], [71, 108.2], [CR.park.x, CR.park.z]];
+const CROUT = [[CR.park.x, CR.park.z], [71, 96], [74, 91], [80, 89.5], [86, 92.5], [88, 99], [87.5, 106], [84, 111.2], [78, 114.5], [67.5, 114.75], [58, 114.75], [48, 114.6], [38, 112.6], [31, 107], [27, 97], [26, 82], [24, 66], [20, 55], [10, 54.2], [2.5, 53], [-5, 55.4], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-290, 60]];
+function craneCall() { if (CR.st !== "away" || BNK.mods >= BNKN) return; CR.st = "coming"; CR.bye = false; CR.k = -1; carGo(CRN, CRIN, 13, () => { CR.st = "ready"; CR.hold = Math.max(CR.hold, 2); toast("VİNÇ KAMYONU · koruganların yanında, ayaklarını açtı", 2.4); }); }
+function craneLeave() { if (CR.st !== "ready") return; CR.st = "going"; CR.k = -1; CR.tp = null; propOff("crane"); carGo(CRN, CROUT, 13, () => { CRN.g.visible = false; CR.st = "away"; CR.bye = false; craneDraw(null); }); }
+const craneMay = () => GM.on ? !!(GM.cur && GM.cur.M.crane && PROJ.active && !PROJ.done) : true;   // it lifts while its job is on
+function padClear(k) { const z = slotZ(k); for (const v of vehicles) if (Math.abs(v.x - BCX) < BMW / 2 + (v.Wd || 3) / 2 + .6 && Math.abs(v.z - z) < BML / 2 + (v.L || 5) / 2 + .4) return false;
+  return !(FOOT.on && Math.abs(FOOT.x - BCX) < BMW / 2 + .7 && Math.abs(FOOT.z - z) < BML / 2 + .7); }
+const craneSt = () => CR.st === "away" ? (BNK.mods >= BNKN ? "işini bitirdi" : "çağrılmadı") : CR.st === "coming" ? "yolda, geliyor" : CR.st === "going" ? "işini bitirdi, dönüyor" : CR.st === "lift" ? `korugan ${CR.k + 1}/${BNKN} taşınıyor` : CR.hold >= 1e8 ? "çatlak korugan · kontrol bekliyor" : CR.hold > 2.5 ? "bekliyor" : BNK.ground < 1 ? "zemin hazır olsun diye bekliyor" : "hazır";
+const CRV = new THREE.Vector3(), CRV2 = new THREE.Vector3(), CRV3 = new THREE.Vector3(), CRV4 = new THREE.Vector3();
+function stretch(m, a, b) { m.position.addVectors(a, b).multiplyScalar(.5); m.scale.set(1, 1, Math.max(.01, a.distanceTo(b))); m.lookAt(b); m.visible = true; }
+// the boom from the top of the column to over the load, the cable down to the hook, four slings to the korugan's loops (load: where the korugan is, or null: the boom folded on its rest)
+function craneDraw(load) { const B = CRB, all = [B.boom, B.boom2, B.cable, B.hook].concat(B.slings);
+  if (!CRN.g.visible) { for (const m of all) if (m.visible) m.visible = false; return; }
+  CRN.g.updateMatrixWorld(true); const P0 = CRN.g.localToWorld(CRV.set(1.45, 3.35, 0));
+  const tip = load ? CRV2.set(load.x, Math.max(load.y + BMH + 2.4, P0.y + 2.2), load.z) : CRN.g.localToWorld(CRV2.set(-2.9, 2.9, 0));
+  const lc = CRN.g.worldToLocal(CRV3.copy(tip)); B.col.rotation.y = -Math.atan2(lc.z, lc.x - 1.45);
+  CRV4.copy(P0).lerp(tip, .55); stretch(B.boom, P0, CRV4); stretch(B.boom2, CRV4, tip);
+  if (!load) { B.cable.visible = B.hook.visible = false; for (const m of B.slings) m.visible = false; return; }
+  const hy = load.y + BMH + .95; CRV3.set(tip.x, hy, tip.z); stretch(B.cable, tip, CRV3); B.hook.position.set(tip.x, hy - .1, tip.z); B.hook.visible = true;
+  B.slings.forEach((m, i) => { if (!load.hang) { m.visible = false; return; } CRV4.set(load.x + (i % 2 ? .3 : -.3), load.y + BMH + .17, load.z + (i < 2 ? -.55 : .55)); stretch(m, CRV3, CRV4); }); }
+const CRT = 9, CRUP = BMH + .55;   // seconds from the stack to the row; how high it carries them (clear over the ones already down)
+function craneLift(dt) {
+  CR.t += dt * (GM.on ? wx("bunker") : 1);
+  if (CR.t / CRT > .72 && CR.t / CRT < .9 && !padClear(CR.k)) { CR.t = Math.max(CR.t - dt * 2, .72 * CRT); if (!(CR.toldT > TT)) { CR.toldT = TT + 6; toast("VİNÇ · yük havada, altından çekilin!", 2); } }   // nobody under a load coming down
+  const u = Math.min(1, CR.t / CRT), k = CR.k, a = BSTK[k], b = {x: BCX, z: slotZ(k)}, ya = heightAt(a.x, a.z) + .14, yb = BG0;
+  CRN.g.updateMatrixWorld(true); const C = CRN.g.localToWorld(CRV.set(1.45, 0, 0)), ra = Math.hypot(a.x - C.x, a.z - C.z), rb = Math.hypot(b.x - C.x, b.z - C.z);
+  const th0 = Math.atan2(a.z - C.z, a.x - C.x), th1 = th0 + wrapA(Math.atan2(b.z - C.z, b.x - C.x) - th0), e = q => q * q * (3 - 2 * q);
+  let x = a.x, z = a.z, y = ya, hang = true, show = true, hy = null;
+  if (u < .2) { show = false; hang = u > .17; hy = ya + 1.8 * (1 - e(u / .2)); }                                                 // the hook comes down onto it, the slings go on
+  else if (u < .34) y = ya + CRUP * e((u - .2) / .14);                                                                            // up off the sleepers
+  else if (u < .72) { const q = e((u - .34) / .38), th = th0 + (th1 - th0) * q, r = ra + (rb - ra) * q; x = C.x + Math.cos(th) * r; z = C.z + Math.sin(th) * r; y = ya + CRUP + (yb - ya) * q; }   // slewed round
+  else if (u < .9) { x = b.x; z = b.z; y = yb + CRUP * (1 - e((u - .72) / .18)); }                                              // lowered into its place
+  else { x = b.x; z = b.z; y = yb; show = false; hang = u < .95;                                                                  // down: unhooked
+    if (BNK.mods <= k) { BNK.mods = k + 1; bnkSync(); bnkVisuals(); bnkSave(); toast(`KORUGAN ${k + 1}/${BNKN} · yerine oturdu`, 1.6); } }
+  if (show) { const m = BPART["c" + bKind(k)]; m.visible = true; m.position.set(x, y, z); }
+  const sk = BPART["s" + k]; if (sk && sk.visible !== (u < .2)) { sk.visible = u < .2; if (u >= .2) propOff("s" + k); }
+  CR.tp = {x, y: hy != null ? hy : y, z, hang}; craneDraw(CR.tp);
+  if (u >= 1) { CR.st = "ready"; CR.k = -1; CR.hold = Math.max(CR.hold, 1.4); bnkVisuals(); } }
+function craneFrame(dt) {
+  carFrame(CRN, dt);
+  const parked = CR.st === "ready" || CR.st === "lift"; if (CRB.legs.visible !== parked) CRB.legs.visible = parked;
+  if (parked) propOn("crane", [CR.park.x - 1.3, CR.park.x + 1.3, CR.park.z - 3.8, CR.park.z + 3.8]);
+  for (const kind of ["end", "mid", "door"]) { const m = BPART["c" + kind]; if (m && m.visible) m.visible = false; }
+  if (CR.st === "lift") { craneLift(dt); return; }
+  if (CR.st !== "ready") { craneDraw(null); return; }
+  const k = BNK.mods;
+  if (k >= BNKN) { craneDraw(null); if (!CR.bye) { CR.bye = true; gTimeout(craneLeave, 2500); } return; }
+  // waiting: the hook swings over to the next one on the stack
+  const a = BSTK[k], want = {x: a.x, y: heightAt(a.x, a.z) + .14 + 1.8, z: a.z, hang: false};
+  if (!CR.tp) CR.tp = Object.assign({}, want); else { const dx = want.x - CR.tp.x, dz = want.z - CR.tp.z, d = Math.hypot(dx, dz), st = Math.min(1, 5 * dt / Math.max(d, 1e-3)); CR.tp.x += dx * st; CR.tp.z += dz * st; CR.tp.y += (want.y - CR.tp.y) * Math.min(1, dt * 3); CR.tp.hang = false; }
+  craneDraw(CR.tp);
+  if (CR.hold > 0 && CR.hold < 1e8) CR.hold = Math.max(0, CR.hold - dt * (GM.on ? wx("bunker") : 1));
+  if (CR.hold >= 1e8 && TT > CR.until) { CR.hold = 0; const f = CR.onTimeout; CR.onTimeout = null; if (f) f(); }
+  if (CR.hold > 0 || BNK.ground < 1 || !craneMay() || Math.hypot(want.x - CR.tp.x, want.z - CR.tp.z) > .3) return;
+  if (!padClear(k)) { if (!(CR.toldT > TT)) { CR.toldT = TT + 8; toast("VİNÇ · korugan inecek, sıranın yerini boşaltın", 2); } return; }
+  CR.st = "lift"; CR.t = 0; CR.k = k; }
+
+// ---------------- the concrete mixer (from when the bunker was to be cast: kept for the old day mode) ----------------
 const MIXER = mkVehicle("mixer");
 const ROUTE_M_SITE = [[20, 55], [24, 66], [26, 82], [27, 97], [31, 107], [38, 112.6], [48, 114.6], [58, 114.75], [67.5, 114.75]];
 const ROUTE_M_OUT = [[67.5, 114.75], [84, 114.75], [100, 114.7], [110, 113], [116, 106], [116, 95], [110, 86], [98, 82], [84, 81], [70, 81], [56, 80], [42, 77], [31, 69], [24, 61], [19, 55], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-270, 60], [-290, 60], [-310, 60], [-360, 60], [-420, 60]];
 const MIXF = {chute: null, flow: null};
 { const ch = new THREE.Group(), s = SP(); s.box(2.6, .05, .32, -1.3, 0, 0, 0x8a8f94); for (const z of [-.16, .16]) s.box(2.6, .14, .03, -1.3, .07, z, 0x8a8f94); putP(ch, s, true, 0); ch.visible = false; scene.add(ch); MIXF.chute = ch;
   const fl = new THREE.Mesh(new THREE.CylinderGeometry(.09, .14, 1, 8), new THREE.MeshStandardMaterial({color: 0x8d8a83, roughness: .9})); fl.visible = false; scene.add(fl); MIXF.flow = fl; }
-function mixerPour(on) { // the chute swung out to the side, a stream of concrete into the stair trench
+function mixerPour(on) {
   MIXF.chute.visible = on; MIXF.flow.visible = on; if (!on) return; const a = MIXER.a, c = Math.cos(a), s = Math.sin(a), rx = MIXER.x - c * 4.2, rz = MIXER.z - s * 4.2, y = heightAt(rx, rz) + 1.45;
-  const dx = .95 * s - .3 * c, dz = -.95 * c - .3 * s;                       // the truck's left side (the bunker), a little to the back
+  const dx = .95 * s - .3 * c, dz = -.95 * c - .3 * s;
   MIXF.chute.position.set(rx, y, rz); MIXF.chute.rotation.set(0, Math.atan2(dz, -dx), .3);
   MIXF.chute.updateMatrixWorld(true); const end = new THREE.Vector3(-2.5, -.05, 0).applyMatrix4(MIXF.chute.matrixWorld), gy = Math.min(heightAt(end.x, end.z), BG0 - .2);
   MIXF.flow.position.set(end.x, (end.y + gy) / 2, end.z); MIXF.flow.scale.set(1, Math.max(.2, end.y - gy), 1); }
-function bnkMixerCall() { // the plant sends a mixer: it waits outside the main gate for someone to bring it in
-  if (BNK.mix !== "away") return; BNK.mix = "gate"; MIXER.waitT = 0; carGo(MIXER, [[-420, 60], [-370, 60], [-340, 60], [-326, 60]], 12, () => { if (BNK.mix === "gate") MIXER.atGate = true; }); }
-function bnkMixerIn() { // somebody met it: through the garrison, into the site, along the road to the bunker
-  if (BNK.mix !== "gate") return; BNK.mix = "in"; MIXER.atGate = false;
-  carGo(MIXER, ROUTE_T_IN.concat(ROUTE_M_SITE.slice(1)), 12, () => { BNK.mix = "pour"; BNK.pourT = 0; mixerPour(true); toast("BETON MİKSERİ · döküm başladı (" + (BNK.wait || "beton") + ")", 2.6); }); }
+function bnkMixerCall() { if (BNK.mix !== "away") return; BNK.mix = "gate"; MIXER.waitT = 0; carGo(MIXER, [[-420, 60], [-370, 60], [-340, 60], [-326, 60]], 12, () => { if (BNK.mix === "gate") MIXER.atGate = true; }); }
+function bnkMixerIn() { if (BNK.mix !== "gate") return; BNK.mix = "in"; MIXER.atGate = false; carGo(MIXER, ROUTE_T_IN.concat(ROUTE_M_SITE.slice(1)), 12, () => { BNK.mix = "out"; mixerPour(false); carGo(MIXER, ROUTE_M_OUT, 12, () => { MIXER.g.visible = false; BNK.mix = "away"; }); }); }
 function bnkMixerOut() { BNK.mix = "out"; mixerPour(false); carGo(MIXER, ROUTE_M_OUT, 12, () => { MIXER.g.visible = false; BNK.mix = "away"; }); }
 
-// ---------------- the work goes on in working hours; the pours wait for the concrete ----------------
+// ---------------- the work goes on ----------------
 let BVT = 0;
 function bnkFrame(dt) {
-  carFrame(MIXER, dt); if (MIXER.drum) MIXER.drum.rotation.x += dt * (BNK.mix === "pour" ? 3.2 : 1.1);
-  if (BNK.mix === "pour") mixerPour(true);
-  if (typeof DAY === "undefined" || (!DAY.on && !GM.on) || DAY.rep) { if (BNK.seen < 0) { BNK.seen = 0; bnkVisuals(); } return; }
-  const p0 = BNK.p;
-  if (BNK.p < BPH.exc) BNK.p = Math.max(BNK.p, Math.min(1, (stats.pit || 0) / 30) * BPH.exc);
-  else if (BNK.p < 1) {
-    const pour = BPOUR.find(q => BNK.p >= q.a - 1e-6 && BNK.p < q.b);
-    if (pour) { BNK.wait = pour.n; if (BNK.mix === "pour") { BNK.pourT += dt; BNK.p = Math.min(pour.b, BNK.p + dt * (pour.b - pour.a) / (GM.on ? 22 : 38)); if (BNK.p >= pour.b - 1e-6) { BNK.p = pour.b; BNK.wait = ""; bnkMixerOut(); toast("✓ " + pour.n.toUpperCase() + " BETONU DÖKÜLDÜ · bunker yükseliyor", 2.8); } } }   // a pour, once started, goes on to the end
-    else if (isWork()) { BNK.wait = ""; const next = BPOUR.find(q => q.a > BNK.p); const r = .00043 * BNK.boost * wx("bunker") * (GM.on ? 7 : 1); BNK.p = Math.min(next ? next.a : 1, BNK.p + dt * r); } }
-  if (BNK.p >= .999 && !BNK.done) { BNK.done = true; BNK.p = 1; if (typeof satAdd === "function") satAdd(4, "bunker yaşam alanı tamamlandı"); toast("🎉 BUNKER YAŞAM ALANI TAMAM", 3); }
-  BVT -= dt; if (BNK.p !== p0 || BNK.seen < 0) { if (BVT <= 0 || BNK.seen < 0 || Math.floor(BNK.p * 200) !== Math.floor(p0 * 200)) { BVT = 1.5; BNK.seen = 1; bnkVisuals(); bnkSave(); } } }
+  carFrame(MIXER, dt); if (MIXER.drum) MIXER.drum.rotation.x += dt * 1.1;
+  if (BNK.seen < 0) { BNK.seen = 0; bnkLevel(); bnkVisuals(); BNK.lg = BNK.ground; BNK.lc = BNK.cover; BNK.lm = BNK.mods; }   // (after the world save is loaded: the old pit gone, the pad as levelled)
+  if (typeof DAY === "undefined" || (!DAY.on && !GM.on) || DAY.rep) return;
+  // the pad: a dozer on it, moving, the blade at grade (the soldier's or yours)
+  if (BNK.ground < 1) for (const v of vehicles) if (v.type === "dz" && inRect(v, BPAD) && Math.abs(v.v) > .35 && v.t.dz < .16) { BNK.ground = Math.min(1, BNK.ground + dt / 26 * wx("bunker")); if (BNK.ground >= 1) { toast("ZEMİN HAZIR · koruganlar dizilebilir", 2.2); BVT = 0; } break; }
+  craneFrame(dt);
+  bnkSync(); BVT -= dt;
+  if (BVT <= 0 && (BNK.ground !== BNK.lg || BNK.cover !== BNK.lc || BNK.mods !== BNK.lm)) { BVT = .4; if (BNK.ground !== BNK.lg) bnkLevel(); BNK.lg = BNK.ground; BNK.lc = BNK.cover; BNK.lm = BNK.mods; bnkVisuals(); bnkSave(); }
+}
 UPD.push(bnkFrame);
-bnkVisuals();
-window.__hs.bnk = BNK;
+window.__hs.bnk = BNK; window.__hs.cr = CR;
 
 ;(window.__INIT || (window.__INIT = [])).push(["bunker", performance.now()]);
 
@@ -6830,7 +7009,7 @@ function misHtml() { if (!DAY.on) return ""; let h = "";
 // a status report from the officer in charge when you come to his site (or from the site's sergeant when he is away or is you)
 const SITEREP = {
   siginak: ["furkan", () => `Komutanım, sığınakta bugün ${Math.max(0, (stats.kemparM || 0) - DAY.s0.tunnel).toFixed(0)} metre ilerledik. ` + (KEMPAR.broken ? "Kempar arızalı, bakım ekibini bekliyoruz." : "Kempar aynada, kesiyor.")],
-  bunker: ["kaan", () => BNK.p < BPH.exc ? `Komutanım, bunkerin kazısı sürüyor, ${Math.round(Math.min(30, stats.pit))} metreküp çıktı, otuz metreküpte temele geçiyoruz.` : BNK.wait && BNK.mix !== "pour" ? `Komutanım, ${BNK.wait} demiri hazır, betonu bekliyoruz.` : `Komutanım, bunkerde ${bnkStage()} aşamasındayız, iş yüzde ${Math.round(BNK.p * 100)}.`],
+  bunker: ["kaan", () => DX.bnkSay()],
   stok: ["ahmet", () => `Komutanım, kamyonlar bugün ${DAY.trips - DAY.s0.trips} sefer yaptı, stok sahası toparlanıyor.`],
   atis: ["ali", () => RNG.p >= .999 ? "Komutanım, atış alanı tamam, teftişe hazır." : `Komutanım, atış alanı yüzde ${Math.round(RNG.p * 100)} tamam. Hedef çerçeveleri dikiliyor.`],
   parkur: ["orhan", () => DRC.p >= .999 ? "Komutanım, drone parkuru tamam, dron bütün kapılardan geçiyor." : `Komutanım, drone parkuru yüzde ${Math.round(DRC.p * 100)}. Kapılar yerine oturuyor.`]};
@@ -7097,25 +7276,41 @@ window.__hs.dur = DUR;
 const TCX = {};   // the values a job is measured from (set when it starts)
 const roadPct = () => roadCells.length ? roadCells.filter(c => !c.rough).length / roadCells.length * 100 : 100;
 const kemM = () => stats.kemparM || 0;
-const nextPour = () => BPOUR.find(q => q.b > BNK.p + 1e-4) || null;
-const pourName = () => { const q = nextPour(); return q ? q.n : "son kat"; };
-const pourPct = () => { const q = TCX.pour, b0 = TCX.bnk == null ? BNK.p : TCX.bnk, b1 = q ? q.b : 1; return b1 - b0 < .001 || BNK.p >= b1 - 1e-4 ? 100 : clamp((BNK.p - b0) / (b1 - b0), 0, 1) * 100; };
 const kempDone = () => !!(KEMPAR && KEMPAR.job && KEMPAR.job.done);
 // the shelter's machine back on its gallery if it was left somewhere else (the galleries run along +x into the rock)
 function kempReady() { const o = KEMPAR; if (!o) return; const z = o.gi ? KGAL[o.gi] : 63.3, e = edgeX(z);
   if (Math.abs(o.z - z) > 2.5 || o.x < e - 22 || Math.abs(wrapA(o.a)) > .35) { o.z = z; o.x = Math.max(e - 8, Math.min(o.x, e + Math.max(0, galDepth(z) - 5))); o.a = 0; o.prev = null; o.kst = "cut"; o.gmax = Math.max(0, o.x - e); }
   o.a0 = 0; if (o.kst == null) { o.kst = "cut"; o.gmax = Math.max(0, o.x - edgeX(o.z)); } }
-// the excavator and its truck at the bunker pit
-function exReady() { if (!EXC) return; const x = PIT.x + PIT.w / 2, z = PIT.y - 3.4;
-  if (Math.hypot(EXC.x - x, EXC.z - z) > 5 || Math.abs(wrapA(EXC.a - Math.PI / 2)) > .4) { EXC.x = x; EXC.z = z; EXC.a = Math.PI / 2; EXC.prev = null; EXC.aiState = null; }
-  if (TRX) { const hx = EXC.x + 5, hz = EXC.z - 2.2; if (!TRX.home || Math.hypot(TRX.home.x - hx, TRX.home.z - hz) > 2) TRX.home = {x: hx, z: hz, a: -Math.PI / 2};
-    if (Math.hypot(TRX.x - hx, TRX.z - hz) > 40) { TRX.x = hx; TRX.z = hz; TRX.a = -Math.PI / 2; TRX.prev = null; TRX.aiState = "wait"; } TRX.aiBelt = false; } }
+// the bunker's machines where its jobs need them: the excavator at its place beside the row, the dozer at the head of the pad
+function exHome() { if (!EXC || EXC.P.seated === PLAYER) return; if (Math.hypot(EXC.x - EXH.x, EXC.z - EXH.z) > 2.5 || Math.abs(wrapA(EXC.a - EXH.a)) > .3) { EXC.x = EXH.x; EXC.z = EXH.z; EXC.a = EXH.a; EXC.prev = null; EXC.v = 0; Object.assign(EXC.t, {swing: 0, boom: .85, stick: -2.4, bucket: 1.35}); applyTool(EXC); } EXC.aiState = null; EXC.cover = true; }
+function dozHome() { const o = DOZ; if (!o || o.P.seated === PLAYER) return; const on = o.x > BPAD.x - 2 && o.x < BPAD.x + BPAD.w + 2 && o.z > BPAD.y - 5 && o.z < BPAD.y + BPAD.h + 3;
+  if (!on) { o.x = BPAD.x + 1.3; o.z = BPAD.y - 2.4; o.a = Math.PI / 2; o.prev = null; o.v = 0; } o.pst = null; o.aiState = null; }
+// heaps in the way moved over to the stock yard (east of the truck's station, where the loader takes from)
+const STOCKAT = [[69, 66], [71.5, 72.5], [69, 79], [75, 68.5], [75.5, 77]];
+function stockAt(amt, i) { const [x, z] = STOCKAT[i % STOCKAT.length], q = piles.find(p => Math.hypot(p.x - x, p.z - z) < 1.2); if (q) { q.amt += amt; syncPile(q); } else addPile(x, z, amt); }
+function movePiles(pred) { let i = 0; for (const q of piles.slice()) if (!inRect(q, DUMP) && pred(q)) { const a = q.amt; removePile(q); stockAt(a, i++); } }
+// the korugans' job: the pad and the stack clear of heaps
+function clearPad() { movePiles(q => (q.x > BPAD.x - 3 && q.x < BPAD.x + BPAD.w + 3 && q.z > BPAD.y - 4 && q.z < BPAD.y + BPAD.h + 2) || (q.x > BCX + 5 && q.x < BCX + 18 && q.z > BZ0 - 1 && q.z < BZ1 + 1)); }
+// the earth's job: the row complete, the excavator at its place, the truck loaded at the stock yard's station, the loader on the heaps (enough earth there for it)
+function coverStart() {
+  if (BNK.ground < 1 || BNK.mods < BNKN) { BNK.ground = 1; BNK.mods = BNKN; bnkSync(); bnkLevel(); bnkVisuals(); bnkSave(); }
+  exHome(); if (DOZ && DOZ.P.seated !== PLAYER && DOZ.x > BPAD.x - 3 && DOZ.x < BPAD.x + BPAD.w + 3 && DOZ.z > BPAD.y - 4 && DOZ.z < BPAD.y + BPAD.h + 3) { DOZ.x = DZP.x; DOZ.z = DZP.z; DOZ.a = DZP.a; DOZ.prev = null; DOZ.v = 0; }   // never inside the row
+  const T = TRX; if (T && T.P.seated !== PLAYER) { Object.assign(T, {x: CVS.x, z: CVS.z, a: CVS.a, v: 0, prev: null, aiBelt: false, cover: "stock", aiState: "wait", home: {x: CVS.x, z: CVS.z, a: CVS.a}}); T.t.bed = 0; T.load = T.cap; applyTool(T); }
+  if (LDR) { LDR.feed = TRX; LDR.fst = null; LDR.aiState = null; }
+  movePiles(q => (Math.abs(q.x - CVS.x) < 4.5 && q.z > CVS.z - 7 && q.z < CVB.z + 3) || inRect(q, COV) || (Math.hypot(q.x - EXH.x, q.z - EXH.z) < 9 && Math.hypot(q.x - BDP.x, q.z - BDP.z) > 3.5) || (q.x > CVS.x + 1 && q.x < CVS.x + 8.5 && Math.abs(q.z - CVS.z - 2.3) < 3));
+  let have = 0; for (const q of piles) if (q.x > CVS.x + 7 && Math.hypot(q.x - OPS.sp.x, q.z - OPS.sp.z) < 22) have += q.amt;
+  for (let i = 0; have < 11 && i < STOCKAT.length; i++) { stockAt(2.6, i); have += 2.6; } }
+const ORDN = ["birinci", "ikinci", "üçüncü", "dördüncü", "beşinci", "altıncı"];
+// the cracked korugan: looked at (by you, or by Kaan when you do not come), set down if the crack is only on the surface, sent back to the factory if not
+function crackLook(me) { CR.hold = 0; CR.onTimeout = null;
+  if (Math.random() < .65) { CR.hold = 2; radioK("kaan", me ? "Gördünüz {h}, çatlak yüzeysel, taşıyıcı değil. Koyuyoruz." : "Ben baktım {h}, çatlak yüzeysel. Koyuyoruz."); if (me) satAdd(1, "koruganı bizzat kontrol ettin"); }
+  else { CR.hold = 24; radioK("kaan", "Derin çatlak {h}, bu korugan fabrikaya dönüyor. Yenisi yolda, gelince dizmeye devam."); satAdd(-2, "çatlak korugan değişiyor"); } }
 // heaps in the stock yard for the dozer and the loader
 function stockPiles() { const S = OPS.sp; let have = 0; for (const q of piles) if (Math.hypot(q.x - S.x, q.z - S.z) < 20 && !inRect(q, DUMP)) have += q.amt;
   for (let k = 0; k < 40 && have < 11; k++) { const a = Math.random() * 6.283, r = 6 + Math.random() * 11, x = S.x + Math.cos(a) * r, z = S.z + Math.sin(a) * r, amt = 1.4 + Math.random() * 1.2;
     if (crewBlocked(x, z) || inRect({x, z}, DUMP) || piles.some(q => dist2(q, {x, z}) < 9) || vehicles.some(v => Math.hypot(v.x - x, v.z - z) < 5)) continue; addPile(x, z, amt); have += amt; } }
 
-// ---- the campaign: each job's officer in his own words ({H}/{h}: how he addresses you, {n}: your first name, {b}: the concrete pour) ----
+// ---- the campaign: each job's officer in his own words ({H}/{h}: how he addresses you, {n}: your first name) ----
 const TIPDRV = "Makineleri askerler sürer, sen yönetirsin: işin başında durursan iş hızlanır. İstediğin makineyi SÜR ile alırsın, İN ile askere geri verirsin.";
 const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "9 görev · taburun projeleri, sonunda Levent Paşa'nın büyük teftişi",
   get end() { const r = GM.inspRes; return r === "iyi" ? "Levent Paşa teftişten memnun ayrıldı: yol, stok sahası, sığınak, bunker, atış alanı ve drone parkuru tugayın en düzgün şantiyesi seçildi. Ufuk Binbaşı bu akşam herkese çay ısmarlıyor."
@@ -7148,18 +7343,21 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "9 göre
           {t: "İdare edin", d: "Kesim yavaşlar · dişler tamamen bitebilir", go: () => { wmod("siginak", .55, 9999); if (Math.random() < .45) gTimeout(() => { if (PROJ.active && !PROJ.done) breakJ(KEMPAR, "Komutanım, dişler tamamen bitti, Kempar durdu!", true); }, (25 + Math.random() * 25) * 1000); }},
           {t: "Gidip kendim bakarım", d: "Kempar'ın yanına git · sen oradayken bakım hemen biter", go: () => gmGo("Kempar'a bak", () => ({x: KEMPAR.x - 7, z: KEMPAR.z + 4.5, n: "KEMPAR", r: 9}), () => {
             radioK("furkan", "Bakın {h}, dişler bitmiş. Ekibi çağırdım, hemen geliyorlar."); breakJ(KEMPAR, "Dişler değişiyor.", false, true); wmod("siginak", 1.35, 9999); satAdd(1, "Kempar'a bizzat baktın"); })}]})}},
-    {title: "Bunker Çukuru", g: "kaan", site: "bunker", veh: ["ex", "tr"], mach: () => [EXC, TRX], pay: 25000,
-      zone: {rect: PIT, beam: [PIT.x + PIT.w / 2, PIT.y + PIT.h / 2]}, spot: () => ({x: EXC.x - 7.5, z: EXC.z - 5.5, lx: EXC.x, lz: EXC.z}),
-      brief: "Garajın yanındaki bunker yaşam alanının çukuru kazılıyor. Ekskavatör kazıp toprağı kamyona yüklüyor, kamyon döküm sahasına taşıyor. Çukur bitmeden temel atılamaz.",
-      tip: "Ekskavatörü SÜR ile alırsan kabinden kollarla kazarsın: bom, arm, kova. Kamyon dolunca şoför kendi götürür. " + "İşin başında durursan asker de hızlanır.",
-      obj: [{t: "Kamyona yüklenen toprak", f: B => stats.exTruck - B.exTruck, goal: 8, u: " m³"}],
-      spawn: () => { exReady(); }, done: () => { if (stats.pit < 30) stats.pit = 30; },
-      G: {brief: "{H}, bunkerin çukurunu bitiriyoruz! Ekskavatör kazıyor, kamyon taşıyor. Ölçüleri tablete işledim, kazı tamam olunca temel demirine geçeceğiz. Yansın Hisar!",
-        go: "Kova toprağa girdi {h}, kamyon da hazır!", mid: "Çukur derinleşiyor, tablette yarısı göründü!", ok: "Yansın Hisar! Çukur hazır, temel demirine geçiyoruz."},
-      card: {at: .28, mk: () => ({app: "Telsiz · Bunker yaşam alanı", who: "Ekskavatör operatörü", ic: "🏗️", col: "#b45309", title: "Ekskavatörde nöbet değişimi",
-        text: "Komutanım, nöbetim bitti, öbür operatör yarım saate gelir. Kazı durmasın diyorsanız…",
-        opts: [{t: "Kazıyı ben sürdürürüm", d: "Ekskavatöre bin, kamyonu sen doldur · Kaan çok sevinir", go: () => { holdFor(EXC, 1e9, "away"); gmGo("Ekskavatöre bin, kamyonu doldur", () => mine(EXC) ? null : {x: EXC.x, z: EXC.z, n: "EKSKAVATÖR", r: 6}, null, {done: () => mine(EXC)}); }},
-          {t: "Yarım saat beklesin", d: "Kazı bir süre durur", go: () => { holdFor(EXC, 32, "away"); }}]})}},
+    {title: "Korugan Dizimi", g: "kaan", site: "bunker", veh: ["dz"], mach: () => [DOZ], pay: 25000, crane: true,
+      zone: {rect: BPAD, beam: [BCX, BCZ]}, spot: () => ({x: BCX - 6.5, z: BZ1 + 3.2, lx: BCX, lz: BCZ}),
+      brief: "Bunker yaşam alanı hazır beton koruganlardan yapılıyor: zemin düzeltilir, koruganlar art arda dizilir, sonra üstleri toprakla örtülüp gömülür. Önce dozer zemini tesviye edecek, sonra vinç kamyonu koruganları istiften alıp sıraya koyacak.",
+      tip: "Dozeri SÜR ile alırsan bıçağı yere indir, pedin üstünde ileri geri git. Zemin hazır olunca vinç kamyonu koruganları kendisi dizer. İşin başında durursan iş hızlanır.",
+      obj: [{t: "Zemin tesviyesi", f: () => BNK.ground * 100, goal: 100, u: " %"}, {t: "Dizilen korugan", f: () => BNK.mods, goal: BNKN, u: ""}],
+      info: () => [["VİNÇ KAMYONU", craneSt()]],
+      spawn: () => { dozHome(); clearPad(); DOZ.pad = true; craneCall(); }, done: () => { DOZ.pad = null; },
+      G: {brief: "{H}, bunker için koruganlar geldi, istifte duruyor! Önce dozer zemini düzeltsin, sonra vinç kamyonu koruganları art arda dizecek. Ölçüleri tablete işledim, sıra şaşmasın. Yansın Hisar!",
+        go: "Dozer pede girdi {h}, vinç kamyonu da yolda!", mid: "Koruganların yarısı yerinde {h}, tablette sıra düzgün!", ok: "Yansın Hisar! Altı korugan sıraya girdi {h}. Sırada toprak örtü var, gömünce yukarıdan hiçbir şey görünmeyecek."},
+      card: {cond: () => BNK.mods >= 2 && BNK.mods < BNKN - 1 && CR.st === "ready" && CR.hold < 1e8, mk: () => ({app: "Telsiz · Bunker yaşam alanı", who: "Vinç operatörü", ic: "🏗️", col: "#b45309", title: "Korugan çatlak gelmiş",
+        text: `Komutanım, istifteki ${ORDN[BNK.mods]} korugan çatlak gelmiş, köşesinde bir çatlak var. Kaldırmadan önce ne yapalım?`,
+        opts: [{t: "Gidip kendim bakarım", d: "İstifin yanına git · çatlak yüzeyselse koyarız", go: () => { CR.hold = 1e9; CR.until = TT + 60; CR.onTimeout = () => crackLook(false);
+            gmGo("Çatlak koruganı kontrol et", () => { const p = BSTK[BNK.mods]; return p && CR.hold >= 1e8 ? {x: p.x - 2.7, z: p.z + .4, n: "KORUGAN", r: 4.5} : null; }, () => crackLook(true), {done: () => !(CR.hold >= 1e8)}); }},
+          {t: "Fabrikaya geri gönderin", d: "Yenisi gelir · vinç bir süre bekler", go: () => { CR.hold = 30; radioK("kaan", "Fabrikayı aradım {h}, yenisi yolda. Gelince dizmeye devam."); }},
+          {t: "Harçla kapatıp koyun", d: "Vinç durmaz · Paşa teftişte görebilir", go: () => { BNK.crack = true; BNK.crackK = BNK.mods; bnkSave(); radioK("kaan", "Peki {h}, harçla kapatıyoruz… Paşam görmesin de."); }}]})}},
     {title: "Stok Sahası", g: "ahmet", site: "stok", veh: ["ld", "dz"], mach: () => [LDR, DOZ], pay: 20000,
       zone: {beam: [OPS.sp.x, OPS.sp.z]}, spot: () => ({x: OPS.sp.x + 11, z: OPS.sp.z - 8, lx: OPS.sp.x, lz: OPS.sp.z}),   /* off the loader's way to the dump */
       brief: "Sığınaktan ve bunkerden çıkan hafriyat stok sahasında yığıldı. Dozer yığınları ortada topluyor, kepçe de döküm sahasına taşıyor. Teftişte saha tertemiz olmalı.",
@@ -7200,21 +7398,18 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "9 göre
           {t: "Rotayı yapay zekâyla ayarlayalım", d: "Pilot çadırına git · parkur çok hızlanır", go: () => { DRONE.hideT = 1e9; const W = slow("parkur", .6);
             gmGo("Pilot çadırına git", () => ({x: -74, z: -31.5, n: "PİLOT ÇADIRI", r: 5}), () => { W.until = 0; DRONE.hideT = 0; radioK("orhan", "Rota tamam {h}, kapılardan tam ortadan geçiyor!"); wmod("parkur", 1.5, 9999); satAdd(1, "parkurun rotası düzeldi"); }); }},
           {t: "Bir süre ara verin", d: "Parkur bir süre durur", go: () => { DRONE.hideT = 40; wmod("parkur", 0, 40); }}]})}},
-    {title: "Bunker Betonu", g: "kaan", site: "bunker", veh: [], mach: () => [], pay: 30000, pour: true,
-      zone: {rect: PIT, beam: [BCX, BCZ]}, spot: () => ({x: 56.5, z: 110.5, lx: BCX, lz: BCZ}),
-      brief: "Bunkerin demiri bağlanıyor, sırada beton var. Santral mikseri gönderecek; mikser şantiye kapısında karşılanıp bunkere getirilmeli. Döküm bitince bunker bir kat yükselir.",
-      tip: "Demir bitince santral arar: mikseri ya sen karşılarsın ya da Ahmet. Mikser bunkerin yanındaki yoldan döker.",
-      obj: [{get t() { return cap1(pourName()) + " betonu"; }, f: () => pourPct(), goal: 100, u: " %"}],
-      spawn: () => { if (stats.pit < 30) stats.pit = 30; if (BNK.p < BPH.exc) BNK.p = BPH.exc; const q = nextPour(); if (q && BNK.p < q.a - .05) BNK.p = q.a - .05; TCX.pour = q; TCX.bnk = BNK.p; BNK.done = BNK.p >= .999; bnkVisuals(); bnkSave(); },
-      G: {brief: "{H}, bunkerde {b} betonu sırada! Santral mikseri yollayacak, biri şantiye kapısında karşılayıp bunkere getirmeli. Döküm bitince tablette bir kat daha yükseliyor. Yansın Hisar!",
-        go: "Demirciler son bağları atıyor {h}, mikser yolda olacak.", mid: "Beton akıyor {h}, kalıp sağlam!", ok: "Yansın Hisar! Beton döküldü, bunker yükseliyor."},
-      card: {cond: () => !!BNK.wait && BNK.mix === "away", mk: () => { const n = BNK.wait, A = OFFM.ahmet && !isPlayer(OFFM.ahmet) ? "ahmet" : "azizhan";
-        return {app: "Telefon · Beton santrali", who: "Santral şefi", ic: "🚚", col: "#c2410c", title: `Bunkerin ${n} betonu hazır`,
-          text: `Komutanım, ${n} betonu için mikser yola çıktı, birazdan şantiye kapısında. İçeri alacak, bunkere kadar götürecek biri lazım.`,
-          opts: [{t: "Ben karşılarım", d: "Şantiye kapısına git, mikseri bunkere getir · Kaan çok sevinir", go: () => { gmMixerCall();
-              gmGo("Beton mikserini karşıla", () => BNK.mix === "gate" ? {x: MIXW[MIXW.length - 1][0] + 4, z: MIXW[MIXW.length - 1][1] - 3.5, n: "BETON MİKSERİ", r: 9} : null, () => { gmMixerIn(); toast("Mikseri aldın · bunkere gidiyor", 2.4); satAdd(2, "betonu bizzat karşıladın"); },
-                {ready: () => !!MIXER.atGate, notYet: "Mikser yolda · birazdan kapıda", done: () => BNK.mix !== "gate"}); }},
-            {t: `${cardName(A)} karşılasın`, d: "Sen işine bak · biraz gecikir", go: () => { gmMixerCall(); GM.mixBy = A; }}]}; }}},
+    {title: "Bunker Gömülüyor", g: "kaan", site: "bunker", veh: ["ex", "tr", "ld"], mach: () => [EXC, TRX, LDR], pay: 30000,
+      zone: {beam: [BCX, BCZ]}, spot: () => ({x: EXH.x - 6, z: BZ1 + 1, lx: BCX, lz: BCZ}),
+      brief: "Koruganlar dizildi, şimdi üstleri toprakla örtülecek. Kepçe stok sahasında kamyonu dolduruyor, kamyon toprağı bunkerin yanına döküyor, ekskavatör de koruganların üstüne seriyor. Bitince yukarıdan bakan sadece çimenli bir tepe görecek.",
+      tip: "Ekskavatörü SÜR ile alırsan kabinden toprağı koruganların üstüne serersin. Kamyonu ya da kepçeyi de alabilirsin: bunkerin üstüne dökülen her kova toprak sayılır.",
+      obj: [{t: "Toprak örtü", f: () => BNK.cover * 100, goal: 100, u: " %"}],
+      spawn: () => { coverStart(); },
+      G: {brief: "{H}, koruganları gömüyoruz! Kepçe stoktan kamyonu doldursun, kamyon bunkerin yanına döksün, ekskavatör de üstüne sersin. Bitince yukarıdan hiçbir şey görünmeyecek, Orhan dronla bakacak. Yansın Hisar!",
+        go: "Kamyon yüklü geliyor {h}, ekskavatör hazır!", mid: "Koruganların yarısı toprağın altında {h}!", ok: "Yansın Hisar! Bunker toprağın altında {h}. Orhan dronla baktı: yukarıdan hiçbir şey görünmüyor, sadece çimenli bir tepe."},
+      card: {at: .3, mk: () => ({app: "Telsiz · Bunker yaşam alanı", who: "Ekskavatör operatörü", ic: "🏗️", col: "#b45309", title: "Ekskavatörde nöbet değişimi",
+        text: "Komutanım, nöbetim bitti, öbür operatör yarım saate gelir. Toprak serme durmasın diyorsanız…",
+        opts: [{t: "Ekskavatörü ben sürerim", d: "Ekskavatöre bin, toprağı koruganların üstüne ser · Kaan çok sevinir", go: () => { holdFor(EXC, 1e9, "away"); gmGo("Ekskavatöre bin, toprağı ser", () => mine(EXC) ? null : {x: EXC.x, z: EXC.z, n: "EKSKAVATÖR", r: 6}, null, {done: () => mine(EXC)}); }},
+          {t: "Yarım saat beklesin", d: "Toprak serme bir süre durur", go: () => { holdFor(EXC, 32, "away"); }}]})}},
     {title: "Sığınak Derinleşiyor", g: "boran", site: "siginak", veh: ["gt", "tr", "bh"], mach: () => [KEMPAR, TRB, BHL], pay: 30000,
       get zone() { return {beam: [KEMPAR.x + 4, KEMPAR.z]}; }, spot: () => ({x: KEMPAR.x - 10, z: KEMPAR.z + 7, lx: KEMPAR.x, lz: KEMPAR.z}),
       brief: "Sığınağın galerisi derinleştikçe kamyonun yolu uzuyor. Kempar kesiyor, kamyon taşıyor, beko loder temizliyor. Teftişe kadar galeri biraz daha ilerlemeli.",
@@ -7237,6 +7432,10 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "9 göre
         get ok() { const r = GM.inspRes; return r === "iyi" ? "Aferin mankiler! Paşam çok memnun kaldı. Bu akşam çaylar benden." : r === "orta" ? "Fena değil mankiler ama eksikler var. Paşam bir ay sonra yine gelecek, bitirelim." : "Mankiler… Paşam çok kızdı. Eksik işleri bitirin, teftişe yeniden hazırlanalım."; }}}
   ]};
 PROJECTS.length = 0; PROJECTS.push(TEFTIS); PROJ.p = 0; if (PROJ.prog.teftis == null) PROJ.prog.teftis = 0;
+// an older save had the bunker dug and cast: those two jobs are the korugans and their earth now, played again (the rest stays done)
+if (BNK.fresh) { const D = PROJ.dn.teftis || (PROJ.dn.teftis = []), p0 = PROJ.prog.teftis || 0;
+  if (p0 > 2 || D[2] || D[6]) { for (let i = 0; i < p0; i++) D[i] = true; D[2] = false; D[6] = false; PROJ.prog.teftis = Math.min(p0, 2); saveProj(); }
+  BNK.fresh = false; bnkSave(); }
 const MSITE = {yol: "ŞANTİYE YOLU", siginak: "KAPALI DRONE SIĞINAĞI", bunker: "BUNKER YAŞAM ALANI", stok: "STOK SAHASI", atis: "400 m ATIŞ ALANI", parkur: "DRONE PARKURU"};
 
 // ---- how they address you ----
@@ -7244,7 +7443,7 @@ const isSen = (a, b) => a.rank > b.rank || (a.rank === b.rank && (a.cls || 9999)
 const meO = () => GM.pick || CUR;   // who you are (the one picked on the menu counts already)
 function hitap(g) { const p = meO().d, d = g.d; if (g === meO()) return "komutanım"; if (devre(p.key, d.key)) return "devrem"; if (isSen(p, d)) return "komutanım"; if (p.rank === d.rank && p.cls && p.cls === d.cls) return "devrem"; return d.key === "ahmet" || d.key === "ali" ? p.short + " kardeşim" : p.short; }
 const cap1 = s => s ? s[0].toLocaleUpperCase("tr-TR") + s.slice(1) : s;
-function fillT(s, g) { const h = hitap(g); return s.replace(/\{H\}/g, cap1(h)).replace(/\{h\}/g, h).replace(/\{n\}/g, meO().d.short).replace(/\{b\}/g, pourName()); }
+function fillT(s, g) { const h = hitap(g); return s.replace(/\{H\}/g, cap1(h)).replace(/\{h\}/g, h).replace(/\{n\}/g, meO().d.short); }
 const fillK = (k, s) => fillT(s, OFFM[k] || meO());
 const oName = o => o.d.short + " " + o.d.name.split(" ").slice(1).map(w => w[0] + w.slice(1).toLocaleLowerCase("tr-TR")).join(" ");   // "Furkan Teğmen"
 // a card from one of the officers (when that officer is you, his sergeant calls instead)
@@ -7265,7 +7464,7 @@ function gmCard(B, done) {
   if (!B) { MPOR.hidden = true; return; }
   MPOR.hidden = false; MPOR.innerHTML = `<i style="background-image:url('${portraitOf(B.o)}')"></i><span><b>${oName(B.o)}</b><small>${B.app}</small></span>`; }
 function gmBrief(P, m, M) { const g = giverOf(P, m); if (!g) return null;
-  const text = g.alt ? `La ${meO().d.short}, “${M.title}” işi senden. ${M.brief.replace(/\{b\}/g, pourName())} Bana çok güvenme, kendin bitir.` : fillT(g.G.brief, g.o);
+  const text = g.alt ? `La ${meO().d.short}, “${M.title}” işi senden. ${M.brief} Bana çok güvenme, kendin bitir.` : fillT(g.G.brief, g.o);
   return {o: g.o, app: "📻 Telsiz · görevi veriyor", text}; }
 
 // ---- the radio: the bubble over him if he is in sight, the line at the bottom anyway ----
@@ -7320,11 +7519,6 @@ function goFrame() { const G = GM.go; if (!G) return;
   if (WP.src !== "map") { if (!WP.on || WP.src !== "gm") wpSet(t, "gm"); else { WP.x = t.x; WP.z = t.z; WP.n = t.n || WP.n; WP.r = t.r || WP.r; } }
   if (G.arrive && distTo(t) < (t.r || 6)) { if (G.ready && !G.ready()) { if (!G.toldT || TT - G.toldT > 8) { G.toldT = TT; toast(G.notYet || "Biraz bekle…", 1.8); } return; }
     GM.go = null; if (WP.src === "gm") wpClear(); G.arrive(); } }
-// the concrete mixer: from the main gate to the site gate, where it waits to be met; then in to the bunker
-const MIXW = [[-330, 60], [-290, 60], [-200, 60], [-130, 60], [-60, 60], [-30, 60], [-14, 59], [-6, 55.6]];
-function gmMixerCall() { if (BNK.mix !== "away") return; BNK.mix = "gate"; MIXER.atGate = false; MIXER.waitT = 0; carGo(MIXER, MIXW, 16, () => { if (BNK.mix === "gate") MIXER.atGate = true; }); }
-function gmMixerIn() { if (BNK.mix !== "gate") return; BNK.mix = "in"; MIXER.atGate = false;
-  carGo(MIXER, [[-6, 55.6], [2.5, 53], [10, 54.2]].concat(ROUTE_M_SITE), 12, () => { BNK.mix = "pour"; BNK.pourT = 0; mixerPour(true); toast("BETON MİKSERİ · döküm başladı (" + (BNK.wait || "beton") + ")", 2.6); }); }
 
 // ---- the start of a job: you on foot at the work, the officer who gave it beside you, the soldiers at the controls ----
 function gmStart(M) {
@@ -7338,9 +7532,9 @@ function gmStart(M) {
   const sp = M.spot ? M.spot() : chiefSpot(M); let px = sp.x - 1.3, pz = sp.z - 1.5; if (!footFree(px, pz)) { px = sp.x; pz = sp.z; }
   footInstant(px, pz, Math.atan2(sp.lz - pz, sp.lx - px)); camMode = 0; CAM.pitch = .3; CAM.dist = 4.6; CAM.cyaw = 0; CAM.cpitch = -.1; camSnap = true; toastT = 0; toastEl.classList.remove("on");
   document.getElementById("bCam").textContent = "KAMERA: " + camName(camMode);
-  Object.assign(TCX, {kem: kemM(), rng: RNG.p, drc: DRC.p}); if (!M.pour) { TCX.pour = null; TCX.bnk = null; } if (!M.hand) TCX.front = null;   // (the concrete job set its own in spawn)
+  Object.assign(TCX, {kem: kemM(), rng: RNG.p, drc: DRC.p}); if (!M.hand) TCX.front = null;
   if (!M.insp && GM.insp) { GM.insp = null; GM.cine = null; CLK.hold = false; }
-  GM.cur = {P, m, M, g}; GM.giver = g ? g.o : null; GM.said = {}; GM.t = 0; GM.started = true; GM.go = null; GM.card = false; GM.near = true; GM.mixBy = null; if (WP.src === "gm") wpClear();
+  GM.cur = {P, m, M, g}; GM.giver = g ? g.o : null; GM.said = {}; GM.t = 0; GM.started = true; GM.go = null; GM.card = false; GM.near = true; if (WP.src === "gm") wpClear();
   gmPlace(M);
   if (M.insp) gmInspStart(M);
   else if (g) gTimeout(() => gmRadio(g.o, fillT(g.alt ? "Hadi {n}, bekliyorum." : g.G.go, g.o)), 900);
@@ -7381,6 +7575,7 @@ function gmPanel(M) {
   h += GM.near ? `<div class="gmrow ok">📍 İşin başındasın · iş hızlı</div>` : `<div class="gmrow">📍 İş ${d} m uzakta<button type="button" class="gmb" data-gm="go">${AUTO.on && AUTO.go ? "DUR" : "GİT"}</button></div>`;
   for (const v of (M.mach ? M.mach() : [])) { const me = v.P.seated === PLAYER && !FOOT.on, st = me ? "sen sürüyorsun" : v.broken ? "arızalı" : v.hold > 0 ? (v.holdMode ? "operatör yok" : "başka işte") : (v.st || "çalışıyor");
     h += `<div class="gmrow mc${me ? " me" : ""}"><span><b>${v.name}</b>${st}</span><button type="button" class="gmb${me ? " alt" : ""}" data-take="${vehicles.indexOf(v)}">${me ? "İN" : "SÜR"}</button></div>`; }
+  if (M.info) for (const [n, t] of M.info()) h += `<div class="gmrow mc"><span><b>${n}</b>${t}</span></div>`;   // what works without a driver of ours (the crane truck)
   if (GM.go) { const t = GM.go.target(), dd = t ? Math.round(distTo(t)) : null; h += `<div class="gmrow go"><span>▶ ${GM.go.t}${dd != null ? ` · ${dd} m` : ""}</span>${t && dd > (t.r || 4) + 2 && FOOT.on && !FOOT.seq ? `<button type="button" class="gmb" data-gm="errand">GİT</button>` : ""}</div>`; }
   h += `<div class="gmrow tea"><button type="button" class="gmb alt" data-gm="tea">${SEAT.on ? "KALK" : "☕ ÇAY OCAĞI"}</button></div>`;
   return h; }
@@ -7505,7 +7700,7 @@ function gmRaidCancel() { const R = GM.raid; GM.raid = null; raidChip.hidden = t
 
 // ---- the end of a job: his line ----
 function gmDone(P, mi, M) { const g = giverOf(P, mi); if (M.done) M.done();
-  for (const v of vehicles) { v.hold = 0; v.holdMode = null; } GM.go = null; if (M.insp) GM.insp = null; if (WP.src === "gm") wpClear(); GM.mixBy = null;
+  for (const v of vehicles) { v.hold = 0; v.holdMode = null; } GM.go = null; if (M.insp) GM.insp = null; if (WP.src === "gm") wpClear();
   if (!g) return null;
   const text = g.alt ? `Aferin ${meO().d.short}, “${M.title}” tamam. Bana çok güvenme ama bu sefer güzel olmuş.` : fillT(g.G.ok, g.o);
   return {o: g.o, app: "📻 Telsiz · görevi veren", text}; }
@@ -7532,10 +7727,11 @@ const INSPSTOPS = [
     return a && b ? [["furkan", `Komutanım, kapalı drone sığınağının galerisi ${kemM() >= 2 ? Math.round(kemM()) + " metreye ulaştı" : "hedef derinliğe ulaştı"}. Kempar aynada kesiyor.`, 3.4], ["boran", "Koordinasyon bendeydi komutanım, arz ederim.", 2.4], ["levent", "Baran, sen hep koordinasyon diyorsun ama iş güzel olmuş. Aferin.", 3.2], ["boran", "Boran, komutanım…", 1.8]]
       : a || b ? [["furkan", "Komutanım, sığınağın galerisi ilerliyor ama hedefin biraz gerisindeyiz.", 3], ["levent", "Dronlar nerede saklanacak? Bitirin şunu!", 2.6]]
       : [["furkan", "Komutanım, Kempar aynada, galeri daha yeni başladı…", 2.8], ["levent", "Sığınak bitmeden dronlar ortada mı kalacak?! Bu ne rehavet!", 3]]; }, ok: () => dn(1) && dn(7)},
-  {n: "BUNKER YAŞAM ALANI", cam: () => camAt(BCX + 7, BCZ + 15, 8.5, BCX, BCZ - 1, 0, -.7, 0), lines: () => { const a = dn(2), b = dn(6), pct = Math.round(BNK.p * 100);
-    return a && b ? [["kaan", `Komutanım, bunker yaşam alanı ${bnkStage()} aşamasında, iş yüzde ${pct}. Ölçüler tabletimde.`, 3.4], ["levent", "Proje yapan çocuk! Bu sefer projen kâğıtta kalmamış, aferin.", 3.2], ["kaan", "Yansın Hisar komutanım!", 1.8]]
-      : a || b ? [["kaan", "Komutanım, çukur hazır, beton sırada…", 2.6], ["levent", "Proje yapan çocuk! Projen bitti mi de buradasın? Betonu dökün!", 3]]
-      : [["kaan", "Komutanım, bunkerin kazısı sürüyor…", 2.4], ["levent", "Proje yapan çocuk! Tabletle bunker olmaz, toprağı kaz!", 3]]; }, ok: () => dn(2) && dn(6)},
+  {n: "BUNKER YAŞAM ALANI", cam: () => camAt(BCX + 6, BZ1 + 9, 5.5, BCX, BCZ + 1, 1, -.6, 0), lines: () => { const cr = BNK.crack && BNK.crackK >= 0 && BNK.crackK < BNK.mods, top = () => camAt(BCX - 9, BCZ + 13, 30, BCX, BCZ, 0, .5, 0);
+    if (BNK.cover >= .999) return [["kaan", "Komutanım, bunker yaşam alanı hazır: altı korugan zemine art arda dizildi, üstü toprakla örtüldü.", 3.4], ["orhan", "Komutanım, dronla yukarıdan bakın: bunker hiç görünmüyor, sadece çimenli bir tepe var.", 3.4, top], ["levent", "Proje yapan çocuk! Bu sefer projen kâğıtta kalmamış, aferin.", 3.2]]
+      .concat(cr ? [["levent", "Ama koruganın birindeki çatlağı harçla kapatmışsınız, raporda gördüm! Bir daha olmasın.", 3.2], ["kaan", "Emredersiniz komutanım.", 1.8]] : [["kaan", "Yansın Hisar komutanım!", 1.8]]);
+    if (BNK.mods >= BNKN) return [["kaan", "Komutanım, koruganlar dizildi, toprak örtü sürüyor…", 2.8], ["levent", "Proje yapan çocuk! Koruganlar ortada duruyor, yukarıdan her şey görünüyor! Gömün şunu!", 3.2]];
+    return [["kaan", BNK.mods ? `Komutanım, ${BNK.mods} korugan dizildi, kalanlar istifte…` : "Komutanım, koruganlar istifte bekliyor, zemin tesviyesi sürüyor…", 2.8], ["levent", "Proje yapan çocuk! Tabletle bunker olmaz, koruganları dizin!", 3]]; }, ok: () => dn(2) && dn(6)},
   {n: "400 m ATIŞ ALANI", cam: () => { const f = rangeFront(); camAt(f.x - 18, f.z + 16, 7, f.x + 4, f.z, 1, 1, 0); }, lines: () => dn(4)
     ? [["ali", `Komutanım, 400 metre atış alanı yüzde ${Math.round(RNG.p * 100)}, hedef çerçeveleri dikildi.`, 3.2], ["levent", "Ali… Seni hiç sevmem, biliyorsun. Ama atış alanı olmuş.", 3], ["ali", "Sağ olun komutanım, kapım her daim açık.", 2.2]]
     : [["ali", "Komutanım, atış alanında çerçevelerin bir kısmı eksik…", 2.8], ["levent", "Ali! Seni de hiç sevmem! Çerçeveler nerede?!", 2.8]], ok: () => dn(4)},
@@ -7562,10 +7758,10 @@ function inspArrive(M) {
       {f: () => { RECV.salute = false; say(L, "Rahat. Ufuk, bakalım teftişe nasıl hazırlanmışsınız.", 3); }, d: 3.2},
       {f: () => { if (U) say(U, "Buyurun komutanım, projeleri tek tek gezelim.", 2.6); }, d: 2.8}], () => inspTour(M)); }); }
 function inspTour(M) { const I = GM.insp; if (!I) return; I.st = "tour"; const steps = [];
-  INSPSTOPS.forEach(S => { steps.push({f: () => fadeSkip(S.n, () => S.cam()), d: 1.2}); for (const [k, t, d] of S.lines()) steps.push({f: () => inspSay(k, t, d), d: d + .25}); steps.push({f: () => { I.k++; }, d: .2}); });
+  INSPSTOPS.forEach(S => { steps.push({f: () => fadeSkip(S.n, () => S.cam()), d: 1.2}); for (const [k, t, d, cf] of S.lines()) steps.push({f: () => { if (cf) cf(); inspSay(k, t, d); }, d: d + .25}); steps.push({f: () => { I.k++; }, d: .2}); });
   seqRun(steps, () => inspVerdict(M)); }
 function inspVerdict(M) { const I = GM.insp; if (!I) return; I.st = "end"; const L = OFFM.levent, U = GM.giver;
-  let n = 0; for (let i = 0; i < 8; i++) if (dn(i)) n++; const res = n >= 7 ? "iyi" : n >= 4 ? "orta" : "kotu";
+  let n = 0; for (let i = 0; i < 8; i++) if (dn(i)) n++; if (BNK.crack && BNK.crackK >= 0 && BNK.crackK < BNK.mods) n--; const res = n >= 7 ? "iyi" : n >= 4 ? "orta" : "kotu";   // (the patched korugan costs him a point)
   const lines = res === "iyi" ? [["levent", "Ufuk, taburun iyi çalışmış. Bu şantiye tugayın en düzgün şantiyesi.", 3.4], ["ufuk", "Sağ olun komutanım, arkadaşlar gece gündüz çalıştı.", 2.8], ["levent", "Hepinize aferin. Ama bir daha çay ocağında görürsem…", 3]]
     : res === "orta" ? [["levent", "Fena değil ama eksikler var. Bir ay sonra yine geleceğim, hepsi bitmiş olacak!", 3.4], ["ufuk", "Emredersiniz komutanım.", 2]]
     : [["levent", "Bu ne rezalet! Teftişe bu hâlde mi çıktınız?!", 3], ["levent", pick(RAGE_END), 2.8], ["ufuk", "Komutanım, arkadaşlar…", 2], ["levent", "Ufuk, sen karışma!", 2]];
@@ -7610,7 +7806,8 @@ const DIALOGS_GM = [
   DLG("any", [["azizhan", "Arkadaşlar, teftişe kaç iş kaldı?"], ["boran", () => { const P = TEFTIS, left = P.missions.filter((M, i) => !isDone(P, i) && !M.insp), nx = left[0]; return nx ? `${left.length} iş kaldı komutanım, sırada “${nx.title}” var. Arz ederim.` : "Bütün işler bitti komutanım, teftişe hazırız. Arz ederim."; }], ["azizhan", "La bana çok güvenme, makineler boş durmasın."], ["furkan", "Emredersiniz komutanım."]]),
   DLG("any", [["ahmet", "Paşam bugün şantiyeye uğradı mı?"], ["ali", () => GM.lastRaid === "iyi" ? "Uğradı, makineler çalışıyordu, memnun kaldı." : GM.lastRaid === "cay" ? "Uğradı, çay ocağında yakaladı! Tansiyonu çıktı." : GM.lastRaid === "kotu" || GM.lastRaid === "orta" ? "Uğradı, işi beğenmedi. Tansiyonu çıktı." : "Bugün uğramadı kardeşim, ama her an gelebilir."], ["ahmet", () => GM.lastRaid === "cay" || GM.lastRaid === "kotu" ? "Haaahaaa! Nereye gitsek Paşam orada." : "Sen kralsın kardeşim."]]),
   DLG("any", [["orhan", () => `Dronla baktım, sığınağın galerisi ${Math.round(kemM())} metre olmuş.`], ["kaan", "Görüntüleri bana at, kazı hacmini tablette hesaplarım."], ["orhan", "Yukarıdan bakınca her şey belli."]], () => kemM() > 1),
-  DLG("any", [["kaan", () => BNK.p >= .999 ? "Bunker bitti, kum torbası ve kamuflaj da tamam." : BNK.p >= BPH.exc ? `Bunkerde ${bnkStage()} aşamasına geldik, yüzde ${Math.round(BNK.p * 100)}.` : "Bunkerin çukuru sırada, ekskavatör hazır."], ["azizhan", "Teftişten önce bitsin, Paşam ilk oraya bakar."], ["kaan", "Yansın Hisar, bitecek komutanım!"]]),
+  DLG("any", [["kaan", () => BNK.p >= .999 ? "Bunker bitti, koruganlar toprağın altında, kamuflaj ağı da gerildi." : BNK.mods >= BNKN ? `Koruganlar dizildi, üstüne toprak örtüyoruz, yüzde ${Math.round(BNK.cover * 100)} oldu.` : BNK.mods ? `${BNK.mods} korugan dizildi, ${BNKN - BNK.mods} tane istifte bekliyor.` : "Koruganlar geldi, istifte duruyor. Önce zemini düzelteceğiz."],
+    ["azizhan", "Teftişten önce bitsin, Paşam ilk oraya bakar."], ["orhan", () => BNK.cover >= .999 ? "Dronla yukarıdan baktım, bunker hiç görünmüyor. Sadece bir tepe var." : "Bitince dronla yukarıdan bakarım, bir yeri görünüyorsa söylerim."], ["kaan", "Yansın Hisar, bitecek komutanım!"]]),
   DLG("any", [["ali", () => `Atış alanı yüzde ${Math.round(RNG.p * 100)} oldu, çerçeveler dikiliyor.`], ["orhan", () => `Parkurda ${Math.floor(DRC.p * DGATES.length)} kapı dikildi, dron her birinden geçiyor.`], ["ali", "Teftişte ikimiz de çakı gibi olacağız."]])];
 
 // ---- per frame ----
@@ -7622,7 +7819,6 @@ function gmFrame(dt) {
   const C = GM.cur; if (!C || !PROJ.active || PROJ.done) return;
   const M = C.M; GM.t += dt; GM.nt = (GM.nt || 0) - dt; if (GM.nt <= 0) { GM.nt = .25; GM.near = gmNear(M); }
   goFrame();
-  if (GM.mixBy && BNK.mix === "gate" && MIXER.atGate) { const k = GM.mixBy; GM.mixBy = null; gTimeout(() => { radioK(k, "Mikseri aldım {h}, bunkere gönderiyorum."); gmMixerIn(); }, 5000); }
   if (M.insp) return;
   const g = C.g; if (g && !g.alt && !GM.said.mid && GM.t > 8 && gmProg(M) >= .5) { GM.said.mid = true; gmRadio(g.o, fillT(g.G.mid, g.o)); }
   if (M.card && !GM.card && GM.t > 10 && !DUR.open && !FOOT.seq && !RECV.on && !GM.raid && (M.card.cond ? M.card.cond() : gmProg(M) >= M.card.at)) { GM.card = true; durShow(Object.assign({k: "gm" + C.m}, M.card.mk())); }

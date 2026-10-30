@@ -1108,7 +1108,7 @@ function instGLB(key, list, tint, dec) { const g = ASSET.glb[key]; if (!g || !li
   const BS = new THREE.Sphere(); BB.getBoundingSphere(BS); BS.radius += r0 * sm + 1; geo.boundingSphere = BS; im.frustumCulled = true;
   im.castShadow = im.receiveShadow = true; scene.add(im); return im; }
 {
-  const bar = []; for (let x = ROAD.x - 2; x < ROAD.x + ROAD.w + 2; x += 3.2) bar.push([x, ROAD.y - 1.7, 0, 1], [x + 1.6, ROAD.y + ROAD.h + 1.7, Math.PI, 1]);
+  const bar = []; for (let x = ROAD.x - 2; x < ROAD.x + ROAD.w + 2; x += 3.2) { if (x < 61.8 || x > 67.2) bar.push([x, ROAD.y - 1.7, 0, 1]); bar.push([x + 1.6, ROAD.y + ROAD.h + 1.7, Math.PI, 1]); }   // a gap where the bunker's stairs come up
   for (const [x, z, a] of [[6, 47.2, Math.PI / 2], [6, 58.8, Math.PI / 2], [9.5, 50, 0], [9.5, 56, 0]]) bar.push([x, z, a, 1]);
   SCAN.barrier = instGLB("barrier", bar, 0, MOBILE ? .05 : 0);
   const r = rndF(77), bl = [], rk = [];
@@ -3055,16 +3055,23 @@ function faceGlowAll(mat, k) {
   mat.customProgramCacheKey = () => "faceglowall" + k;
 }
 // sunglasses with black lenses, built round the person's own eyes and nose bridge; the arms follow the sides of the head
+const GLASSES = {};   // glasses for someone beyond the ones traced from the photos (e.g. {key: "rect"}: thin dark frames, clear lenses)
+function armLine(gl, sd) { const own = sd > 0 ? gl.armL : gl.armR; if (own) return own;
+  const T = ASSET.chars && ASSET.chars.chars.azizhan && ASSET.chars.chars.azizhan.av && ASSET.chars.chars.azizhan.av.gl; if (!T || !T.armL) return [];
+  const tA = sd > 0 ? T.tL : T.tR, tB = sd > 0 ? gl.tL : gl.tR, k = tB[0] / tA[0];
+  return (sd > 0 ? T.armL : T.armR).map(p => [p[0] * k * 1.03, p[1] + (tB[1] - tA[1]), p[2] + (tB[2] - tA[2])]); }
 function addSunglasses(S, kind, gl, eyes) {
   const B = S.bones, sk = S.skin; if (!B.Head || !sk || !gl) return; const bi = sk.skeleton.bones.indexOf(B.Head); if (bi < 0) return;
-  const g = new THREE.Group(), V3 = THREE.Vector3, round = kind === "round";
-  const frameM = new THREE.MeshStandardMaterial(round ? {color: 0x141414, metalness: .85, roughness: .32, envMapIntensity: 1} : {color: 0x0c0c0c, metalness: 0, roughness: .26, envMapIntensity: .9});
-  const lensM = new THREE.MeshStandardMaterial({color: 0x040405, metalness: .55, roughness: .06, envMapIntensity: 1.7});
+  const g = new THREE.Group(), V3 = THREE.Vector3, rect = kind === "rect", round = kind === "round" || rect;
+  const frameM = new THREE.MeshStandardMaterial(rect ? {color: 0x1b1c1e, metalness: .5, roughness: .38, envMapIntensity: .9} : round ? {color: 0x141414, metalness: .85, roughness: .32, envMapIntensity: 1} : {color: 0x0c0c0c, metalness: 0, roughness: .26, envMapIntensity: .9});
+  const lensM = rect ? new THREE.MeshStandardMaterial({color: 0xeef4f8, transparent: true, opacity: .16, metalness: 0, roughness: .04, envMapIntensity: 2.2, depthWrite: false})
+    : new THREE.MeshStandardMaterial({color: 0x040405, metalness: .55, roughness: .06, envMapIntensity: 1.7});
   const eL = new V3().fromArray(eyes[0]), eR = new V3().fromArray(eyes[1]), br = new V3().fromArray(gl.bridge), half = (eL.x - eR.x) / 2;
   // lens outline (lens-local, x outward): wayfarer = a trapezoid with soft corners, wider on top; round = a panto circle with a flatter top
   const outline = (() => { const pts = [], N = 48;
     for (let i = 0; i < N; i++) { const a = i / N * Math.PI * 2, c = Math.cos(a), s = Math.sin(a); let x, y;
-      if (round) { x = c * .0238; y = s * (s > 0 ? .0205 : .0228); if (s > 0) y -= Math.pow(Math.abs(c), 6) * .002; }
+      if (rect) { const p = 7, se = v => Math.sign(v) * Math.pow(Math.abs(v), 2 / p); x = se(c) * .0252; y = se(s) * (s > 0 ? .0158 : .0166); if (s < 0) x *= 1 - .07 * -s; }   // a soft rectangle, a little narrower at the bottom
+      else if (round) { x = c * .0238; y = s * (s > 0 ? .0205 : .0228); if (s > 0) y -= Math.pow(Math.abs(c), 6) * .002; }
       else { const p = 5, se = (v) => Math.sign(v) * Math.pow(Math.abs(v), 2 / p); x = se(c) * (.0243 - (s < 0 ? .0026 * -s : 0)); y = se(s) * (s > 0 ? .0168 : .0188); if (s > 0) x += c > 0 ? .0011 * s : 0; }
       pts.push(new THREE.Vector2(x, y)); } return pts; })();
   const offset = (pts, t, tTop) => pts.map((p, i) => { const a = pts[(i + pts.length - 1) % pts.length], b = pts[(i + 1) % pts.length], nx = b.y - a.y, ny = a.x - b.x, l = Math.hypot(nx, ny) || 1, tt = t + (tTop - t) * Math.max(0, p.y / .02); return new THREE.Vector2(p.x + nx / l * tt, p.y + ny / l * tt); });
@@ -3078,7 +3085,7 @@ function addSunglasses(S, kind, gl, eyes) {
     for (let i = 0; i < lp.count; i++) { const x = lp.getX(i), y = lp.getY(i); lp.setZ(i, -(x * x + y * y) * 1.6); } lens.geometry.computeVertexNormals(); lg.add(lens);
     if (round) {   // thin metal rim
       const curve = new THREE.CatmullRomCurve3(loc.map(p => new V3(p.x, p.y, -(p.x * p.x + p.y * p.y) * 1.6 + .0004)), true);
-      lg.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 72, .00105, 6, true), frameM));
+      lg.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 72, rect ? .00125 : .00105, 6, true), frameM));
     } else {      // thick acetate front: the rim is a ring extruded backwards, heavier on top
       const outer = offset(ccw, .0033, .0055).map(p => new THREE.Vector2(p.x * sd, p.y)), shp = new THREE.Shape(sd > 0 ? outer : outer.slice().reverse());
       shp.holes.push(new THREE.Path(sd > 0 ? loc.slice().reverse() : loc));
@@ -3088,16 +3095,20 @@ function addSunglasses(S, kind, gl, eyes) {
       for (const dy of [.0172]) { const rv = new THREE.Mesh(new THREE.CylinderGeometry(.0011, .0011, .0012, 10), new THREE.MeshStandardMaterial({color: 0xd8d8d8, metalness: 1, roughness: .25})); rv.rotation.x = Math.PI / 2; rv.position.set(sd * .0238, dy - .0012, .0012 - .0243 * .0243 * 1.6); lg.add(rv); }
     }
     // the arm: a hinge at the frame's outer end, then along the head's side and over the ear
-    lg.updateMatrix(); const hinge = new V3(sd * (round ? .0245 : .0272), round ? .006 : .0135, -.004).applyMatrix4(lg.matrix);
-    const path = [hinge].concat((sd > 0 ? gl.armL : gl.armR).map(a => new V3().fromArray(a)).filter(p => p.z < hinge.z - .006));
+    lg.updateMatrix(); const hinge = new V3(sd * (rect ? .0262 : round ? .0245 : .0272), rect ? .0095 : round ? .006 : .0135, -.004).applyMatrix4(lg.matrix);
+    const path = [hinge].concat(armLine(gl, sd).map(a => new V3().fromArray(a)).filter(p => p.z < hinge.z - .006));
     if (path.length > 2) g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path), 24, round ? .0011 : .0021, 6, false), frameM));
   }
   // the bridge between the lenses
-  const bpts = round ? [new V3(-inner - .0004, cy + .006, br.z - .002), new V3(0, cy + .0105, br.z + .0006), new V3(inner + .0004, cy + .006, br.z - .002)]
+  const bpts = rect ? [new V3(-inner - .0006, cy + .0085, br.z - .002), new V3(0, cy + .0112, br.z + .0006), new V3(inner + .0006, cy + .0085, br.z - .002)]
+    : round ? [new V3(-inner - .0004, cy + .006, br.z - .002), new V3(0, cy + .0105, br.z + .0006), new V3(inner + .0004, cy + .006, br.z - .002)]
                      : [new V3(-inner - .002, cy + .0135, br.z - .0022), new V3(0, cy + .0128, br.z + .0004), new V3(inner + .002, cy + .0135, br.z - .0022)];
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(bpts), 12, round ? .0011 : .0027, 6, false), frameM));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(bpts), 12, rect ? .0012 : round ? .0011 : .0027, 6, false), frameM));
+  if (rect) for (const sd of [1, -1]) {   // nose pads on little arms
+    const pad = new THREE.Mesh(new THREE.SphereGeometry(.0028, 8, 6), new THREE.MeshStandardMaterial({color: 0xdfe6ea, transparent: true, opacity: .55, roughness: .3, depthWrite: false})); pad.scale.set(.55, 1, .8);
+    pad.position.set(sd * (inner - .0012), cy - .004, br.z - .0072); g.add(pad); }
   g.matrixAutoUpdate = false; g.matrix.copy(sk.skeleton.boneInverses[bi]).multiply(sk.bindMatrix); B.Head.add(g); S.glasses = g;
-  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  g.traverse(o => { if (o.isMesh) { o.castShadow = !o.material.transparent; o.frustumCulled = false; if (o.material.transparent) o.renderOrder = 2; } });
 }
 // hands in the person's skin tone (the hands are coloured by one patch of the atlas)
 function skinPatch(F) { return x => { if (!F || !F.skin) return; x.fillStyle = F.skin; x.fillRect(772, 772, 56, 56); }; }
@@ -3109,7 +3120,7 @@ function mkOfficer(key, scale) {
   if (mat && mat !== SOLD.mat) faceGlow(mat);
   const S = mkSoldier(mat, scale); if (!S) return null; S.setHelmet(false); S.key = key;
   if (own && applyOwnHead(S, key)) return S;
-  if (avh && applyAvHead(S, key)) { if (F.glasses) addSunglasses(S, F.glasses, F.av.gl, [F.av.eyeL.c1, F.av.eyeR.c1]); return S; }
+  if (avh && applyAvHead(S, key)) { const gk = F.glasses || GLASSES[key]; if (gk) addSunglasses(S, gk, F.av.gl, [F.av.eyeL.c1, F.av.eyeR.c1]); return S; }
   applyFace(S, key);
   if (F && F.glasses && F.eyes) addGlasses(S, F.eyes, F.glasses);
   if (F && F.hair) addHair(S, F.hair.image, parseInt((F.hairc || "#2a2220").slice(1), 16), Math.min(.013, (F.hairLen || .02) * .55), 6, null, F.hairDen || 1);
@@ -3211,6 +3222,16 @@ function gesture(S, pose, T) {
     case "wave": { const s = Math.sin(T * 1.6) * .35; armDirs(S, "Right", [-.55, .8, .2], [-.25 + s, .95, .15]); break; }
   }
 }
+// ---- blending two poses: keep a copy of some bones, then mix the new pose back towards it (sitting down, standing up, a salute coming up, a gesture) ----
+const PBQ = new THREE.Quaternion(), PBV = new THREE.Vector3();
+const PB_ARMS = ["RightArm", "RightForeArm", "RightHand", "LeftArm", "LeftForeArm", "LeftHand"];
+const PB_BODY = ["Spine", "Spine1", "Spine2", "Neck", "Head", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftToeBase", "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase"].concat(PB_ARMS);
+const ease = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+function poseKeep(S, names, out) { out = out || {}; for (const n of names) { const b = S.bones[n]; if (b) (out[n] || (out[n] = new THREE.Quaternion())).copy(b.quaternion); }
+  if (S.bones.Hips) (out.$hp || (out.$hp = new THREE.Vector3())).copy(S.bones.Hips.position); return out; }
+function poseMix(S, names, keep, w) { // w: how much of the pose now on the bones (1: all of it, 0: the kept one)
+  if (w >= 1 || !keep) return; for (const n of names) { const b = S.bones[n], q = keep[n]; if (!b || !q) continue; PBQ.copy(b.quaternion); b.quaternion.copy(q).slerp(PBQ, w); }
+  if (keep.$hp && S.bones.Hips) { PBV.copy(S.bones.Hips.position); S.bones.Hips.position.copy(keep.$hp).lerp(PBV, w); } }
 // ---- the seated driver: legs bent, slight lean back, hands on the controls ----
 const SEATB = ["Spine", "Spine1", "Spine2", "Neck", "Head", "LeftArm", "LeftForeArm", "LeftHand", "RightArm", "RightForeArm", "RightHand", "LeftUpLeg", "LeftLeg", "LeftFoot", "RightUpLeg", "RightLeg", "RightFoot"];
 const SWT = new THREE.Vector3();
@@ -3747,7 +3768,7 @@ const DOORA = -1.5;                       // the cab door swings fully open
 const BOARDK = .36;                       // climbing in and out takes under half the old time
 function doorTo(v, ang, u) { if (v.P.door) v.P.door.rotation.y = ang * u; }
 function nearestVehicle() {
-  let best = null, bd = 3.4;
+  let best = null, bd = 4.6;
   for (const o of vehicles) { if ((o.x - FOOT.x) ** 2 + (o.z - FOOT.z) ** 2 > 225) continue; const E = entryOf(o); if (!E) continue;
     const d = Math.hypot(E.stand.x - FOOT.x, E.stand.z - FOOT.z); const {lx, lz} = toLocal(o, FOOT.x, FOOT.z), f = o.front != null ? o.front : o.L / 2, b = o.back != null ? o.back : -o.L / 2;
     const dBody = Math.max(0, Math.max(b - lx, lx - f), Math.abs(lz) - o.Wd / 2); const s = Math.min(d, dBody + .6); if (s < bd) { bd = s; best = o; } }
@@ -3902,7 +3923,7 @@ function footUpdate(dt) {
   if (Rj.on && !WHL.open) { CAM.yaw -= dz(Rj.x) * dt * 2.6 * SENS.k; CAM.pitch = clamp(CAM.pitch + dz(Rj.y) * dt * 1.7 * SENS.k, -.12, 1.25); CAM.last = TT; }
   const busy = FOOT.sw >= 0, m = Math.min(1, Math.hypot(mx, mz)); let tx = 0, tz = 0;
   if (m > .05 && !busy && !WHL.open) { const cy = Math.cos(CAM.yaw), sy = Math.sin(CAM.yaw); tx = -cy * mz + sy * mx; tz = -sy * mz - cy * mx; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l; }
-  const vmax = (run ? 5.6 : 2.5) * m * (FOOT.tool ? .88 : 1) * (FOOT.carry > 0 ? .8 : 1), k = Math.min(1, dt * 9);
+  const vmax = (run ? 5.6 : 2.5) * m * (FOOT.tool ? .88 : 1) * (FOOT.carry > 0 ? .8 : 1) * (FOOT.rise ? ease(FOOT.rise.t / FOOT.rise.dur) : 1), k = Math.min(1, dt * 9);
   FOOT.vx += (tx * vmax - FOOT.vx) * k; FOOT.vz += (tz * vmax - FOOT.vz) * k;
   const nx = FOOT.x + FOOT.vx * dt, nz = FOOT.z + FOOT.vz * dt;
   if (footFree(nx, FOOT.z)) FOOT.x = nx; else FOOT.vx *= .2; if (footFree(FOOT.x, nz)) FOOT.z = nz; else FOOT.vz *= .2;
@@ -3921,6 +3942,7 @@ function footUpdate(dt) {
     else toolPose(S, g, CARRY[FOOT.tool], false, FOOT.tool, true);
   }
   else { curl(S, "Left", 0); curl(S, "Right", 0); }
+  if (FOOT.rise && riseBlend(S, FOOT.rise, dt)) FOOT.rise = null;   // just got up from the chair
   TOOLM.lump.visible = FOOT.tool === "kurek" && FOOT.carry > 0;
   FOOT.useReq = false; FOOT.useHeld = false;
   // the nearest machine you could board
@@ -3987,7 +4009,7 @@ function footHud() {
   if (FOOT.seq) st = FOOT.seq.dir === "in" ? "Araca biniyor…" : "Araçtan iniyor…";
   else if (FOOT.tool === "kazma") st = (FOOT.wall ? "Kayaya vuruyorsun" : "Kazma elinde") + " · BOŞLUK / tık: vur";
   else if (FOOT.tool === "kurek") st = FOOT.carry > 0 ? "Kürek dolu · sağ tarafa atar: yığın, döküm sahası ya da kamyon kasası" : "Kürek elinde · BOŞLUK / tık: kürekle";
-  else st = n ? n.name + " · " + (n.broken ? "arızalı" : n.ai || n.P.seated ? "asker çalıştırıyor" : "operatör yok") + " · E: bin, sen sür" : "G: görev dağılımı · Tab: alet çarkı · makineye yaklaşıp E: bin";
+  else st = n ? n.name + " · " + (n.broken ? "arızalı" : n.ai || n.P.seated ? "asker çalıştırıyor" : "operatör yok") + (MOBILE ? " · BİN'e bas, sen sür" : " · E: bin, sen sür") : MOBILE ? "Makineye yaklaş, BİN'e bas · HARİTA'dan yerleri gör" : "G: görev dağılımı · Tab: alet çarkı · makineye yaklaşıp E: bin";
   if (n && FOOT.tool) st += " · E: " + n.name;
   if (SEAT.on) st = "Çay ocağındasın · G: görev dağılımı · ENTER: kalk · B: karakter"; else { const ch = nearChair(); if (ch) st = "ENTER: sandalyeye otur" + (n ? " · E: " + n.name : ""); }
   chairBtns();
@@ -3998,14 +4020,18 @@ function footHud() {
   miniMap(mc);
 }
 // touch buttons and stick labels on foot
+const bBoard = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "bBoard"; b.textContent = "BİN"; b.hidden = true; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => keyE()); return b; })();
+function boardBtn() { const foot = FOOT.on && !FOOT.seq, n = FOOT.near, v = vehicles[cur];
+  const t = foot ? (n && !NOTOOLS ? "BİN · " + n.name : "") : FOOT.seq ? "" : v && v.P.seated === PLAYER ? "İN" : "";
+  if (bBoard.textContent !== t && t) bBoard.textContent = t; bBoard.hidden = !t || !!(typeof AUTO !== "undefined" && AUTO.on) || !!(typeof SEAT !== "undefined" && SEAT.on); }
 const bWheel = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.id = "bWheel"; b.textContent = "ÇARK"; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => { if (WHL.open) closeWheel(false); else openWheel("touch"); }); return b; })();
 function footCtx() {
   const foot = FOOT.on || !!FOOT.seq, v = vehicles[cur];
   bWheel.hidden = !PLAYER || NOTOOLS;
-  if (!foot) { if (!v.eng && !v.ai) { bCtx2.hidden = false; bCtx2.textContent = "MOTOR"; } return; }
+  if (!foot) { if (!v.eng && !v.ai) { bCtx2.hidden = false; bCtx2.textContent = "MOTOR"; } boardBtn(); return; }
   padLlbl.textContent = "YÜRÜ"; padRlbl.textContent = "BAK"; document.getElementById("padR").hidden = false;
   bCtx.hidden = !FOOT.tool; bCtx.textContent = FOOT.tool === "kurek" ? "KÜREKLE" : "KAZ";
-  bCtx2.hidden = !FOOT.near || NOTOOLS; bCtx2.textContent = "BİN";
+  bCtx2.hidden = true; boardBtn();
   bHorn.hidden = true; bFuel.hidden = true; bAI.hidden = true;
 }
 bCtx.addEventListener("pointerdown", () => { if (FOOT.on) FOOT.touchUse = true; });
@@ -4129,6 +4155,16 @@ const VB = {
     T.cyl(.22, .22, .2, -.9, 3.2, 0, 0x4f5639, null, 10); T.box(4.2, .06, .5, -.95, 3.17, 0, 0x3b3f35);
     return {L: 7.0, W: 2.4, H: 3.3, hl: [[3.45, 1.55, .85], [3.45, 1.55, -.85]], tl: [[-3.2, 1.3, 1.0], [-3.2, 1.3, -1.0]], label: ["SU", -.95, 2.15, 1.04, 1.6, .7]}; },
   fuel(T) { const r = VB.water(T); r.label = ["YAKIT", -.95, 2.15, 1.04, 2.0, .7]; return r; },
+  mixer(T) { const C = 0xe6e3da;                   // a concrete mixer: three axles, the turning drum (built apart), the hopper and the chute stand at the back
+    for (const x of [2.5, -1.0, -2.3]) for (const z of [1.0, -1.0]) vWheel(T, x, z, .52, .4);
+    T.box(6.7, .3, 1.0, -.1, .95, 0, VC.ch);
+    T.box(1.7, 1.35, 2.35, 2.75, 1.85, 0, C); T.box(1.6, .72, 2.25, 2.72, 2.78, 0, VC.gl); T.box(1.7, .1, 2.35, 2.75, 3.2, 0, C);
+    T.box(.05, .66, 2.1, 3.58, 2.72, 0, VC.gl, 0, 0, .06); T.box(.2, .3, 2.4, 3.62, 1.08, 0, VC.tr); T.box(.06, .45, 1.5, 3.62, 1.7, 0, 0x2b2e31);
+    for (const z of [-1.05, 1.05]) { T.box(1.1, .1, .5, 2.5, 1.5, z, VC.tr); T.box(2.4, .1, .45, -1.65, 1.5, z, VC.tr); }
+    T.box(4.6, .22, 1.7, -.95, 1.22, 0, 0x3a3d40); for (const x of [-2.6, .6]) T.box(.3, .9, 1.5, x, 1.7, 0, 0x45484b);   // the frame and the drum's cradles
+    T.box(.45, 1.5, .45, -3.3, 1.85, 0, 0x55585b); T.cyl(.55, .3, .55, -3.4, 2.95, 0, 0x6a6d70, null, 12); T.box(.5, .08, .45, -3.55, 2.5, 0, 0x55585b);
+    T.box(.35, .7, 2.1, 1.75, 1.75, 0, 0x2f5f8a);                                                                        // the water tank behind the cab
+    return {L: 7.5, W: 2.4, H: 3.7, hl: [[3.63, 1.6, .85], [3.63, 1.6, -.85]], tl: [[-3.6, 1.3, 1.0], [-3.6, 1.3, -1.0]], drum: {x: -1.0, y: 2.3, z: 0, tilt: .2}, label: ["BETON", 2.75, 2.1, 1.18, 1.3, .38]}; },
   zpt(T, col) { const C = col || VC.olv2;          // a tracked armoured personnel carrier
     for (const z of [-1.1, 1.1]) { T.box(4.9, .5, .46, 0, .42, z, 0x1e1f1d); T.box(4.4, .12, .48, 0, .74, z, 0x2a2b28);
       for (let k = 0; k < 5; k++) T.cyl(.3, .3, .12, -1.7 + k * .85, .35, z * 1.22, 0x2d2f2b, "z", 12);
@@ -4163,6 +4199,12 @@ function mkVehicle(kind, col) {
   for (const [x, y, z] of info.tl || []) { const m = new THREE.Mesh(new THREE.BoxGeometry(.05, .15, .2), tm); m.position.set(x, y, z); g.add(m); }
   const V = {g, kind, info, curve: null, s: 0, v: 0, a: 0, x: 0, z: 0, hm, tm};
   if (info.bar) { const [x, y, z] = info.bar; V.beacon = [0xd81414, 0x1a4dff].map((c, i) => { const m = new THREE.Mesh(new THREE.BoxGeometry(.24, .09, .56), new THREE.MeshBasicMaterial({color: 0x222222})); m.position.set(x, y, z + (i ? .33 : -.33)); m.userData.c = c; g.add(m); return m; }); }
+  if (info.drum) { // the mixer's drum: a fat barrel tilted up at the back, three spiral stripes, turning about its axis
+    const d = info.drum, holder = new THREE.Group(); holder.position.set(d.x, d.y, d.z); holder.rotation.z = d.tilt; const ds = SP();
+    ds.cyl(1.05, 1.05, 2.2, 0, 0, 0, 0xe9e6dd, "x", 22); ds.cyl(.5, 1.05, 1.6, -1.9, 0, 0, 0xe2dfd6, "x", 22); ds.cyl(1.05, .72, .6, 1.4, 0, 0, 0xe2dfd6, "x", 22); ds.cyl(.52, .52, .12, -2.72, 0, 0, 0x6a6d70, "x", 16);
+    for (let st = 0; st < 3; st++) for (let k = 0; k < 16; k++) { const t = k / 16, x = -2.4 + t * 3.9, an = st * 2.094 + t * 7.5, r = x < -1.1 ? .5 + (x + 2.7) / 1.6 * .55 : x > 1.1 ? 1.05 - (x - 1.1) / .6 * .33 : 1.05;
+      ds.box(.32, .06, .2, x, Math.cos(an) * (r + .015), Math.sin(an) * (r + .015), 0xd2561a, an, 0, 0); }
+    const inner = new THREE.Group(); putP(inner, ds, true, 0); holder.add(inner); g.add(holder); V.drum = inner; }
   if (info.flag) { const [x, y, z] = info.flag, f = new THREE.Mesh(new THREE.PlaneGeometry(.36, .24), new THREE.MeshStandardMaterial({map: PENNANT, side: THREE.DoubleSide, roughness: .8})); f.position.set(x - .19, y, z); g.add(f); V.pennant = f; }
   g.visible = false; scene.add(g); VLIT.push(V); return V;
 }
@@ -4469,22 +4511,66 @@ const RFRAME = (() => { const s = SP(); s.box(.09, 1.7, .09, 0, .85, -.55, 0x6b5
   m.castShadow = true; m.frustumCulled = false; m.count = 0; scene.add(m); return m; })();
 const rangeFront = () => { const i = Math.min(RANGEF.length - 1, Math.floor(RNG.p * RANGEF.length)), [x, z] = RANGEF[i]; return {x: x - 2.5, z, i}; };
 
-// ---------------- Orhan's project: the drone course — gates to fly through, a net tunnel, take-off pads; the gates go up as the work goes on ----------------
+// ---------------- Orhan's project: the drone course — a racing course for FPV drones: numbered gates in bright padding (squares, arches, a ladder, a dive gate,
+// the start/finish arch), feather flags, the take-off pads, a net tunnel, a safety net round it all and the pilots' tent; the gates go up as the work goes on ----------------
 const DGATES = [[-72, -62, 0], [-62, -46, .5], [-52, -60, -.4], [-42, -42, .2], [-34, -58, .8], [-26, -44, -.3], [-20, -62, .4], [-16, -40, 0], [-44, -52, 1.2], [-58, -38, -.6]];
-{ const s = SP(); const y = GH(-76, -40); s.cyl(2.2, 2.2, .06, -76, y + .04, -40, 0x6d6f6a, null, 24); s.box(3, .02, .4, -76, y + .08, -40, 0xf2f2f2); s.cyl(2.2, 2.2, .06, -70, GH(-70, -40) + .04, -40, 0x6d6f6a, null, 24);
+const DGKIND = ["start", "sq", "arch", "sq", "ladder", "sq", "arch", "dive", "sq", "arch"];
+const DGCOL = [[0xff6a10, 0x1d1d1d], [0x1e6fd8, 0xf2f2f2], [0xffd21f, 0x1d1d1d], [0xe0207a, 0xf2f2f2], [0x22c55e, 0x1d1d1d]];
+{ const s = SP();
+  // the take-off pads by the start: square mats with an H
+  const pad = (x, z) => { const y = GH(x, z) + .025; s.box(1.8, .04, 1.8, x, y, z, 0x2e3134); for (const [w, d, dx, dz] of [[1.82, .08, 0, -.86], [1.82, .08, 0, .86], [.08, 1.82, -.86, 0], [.08, 1.82, .86, 0], [.1, .9, -.25, 0], [.1, .9, .25, 0], [.5, .1, 0, 0]]) s.box(w, .044, d, x + dx, y + .002, z + dz, 0xf2f2f2); };
+  pad(-77.5, -39.2); pad(-75.2, -39.2); pad(-72.9, -39.2);
+  // the net tunnel
   for (let k = 0; k <= 6; k++) { const x = -40 + k * 3, z0 = -69, z1 = -64; for (const zz of [z0, z1]) s.box(.08, 3, .08, x, GH(x, zz) + 1.5, zz, 0x555a5e); s.box(.06, .06, 5, x, GH(x, z0) + 3, (z0 + z1) / 2, 0x555a5e); }
-  for (const [x, z] of [[-79, -35], [-13, -35], [-79, -69], [-13, -69]]) s.cyl(.05, .05, 5, x, GH(x, z) + 2.5, z, 0xdddddd, null, 6);
-  for (let k = 0; k < 6; k++) s.box(2.6, .1, .1, -70 + (k % 3) * .2, GH(-70, -68) + .1 + Math.floor(k / 3) * .12, -68 + (k % 3) * .4, 0xf0f0f0);   // poles waiting to go up
+  // the safety net's posts (the net itself below), a gap by the pilots' tent
+  const NX0 = -81.5, NX1 = -10.5, NZ0 = -71.5, NZ1 = -32.5, GAP = [-79, -69];
+  for (let x = NX0; x <= NX1 + .1; x += 5.92) for (const z of [NZ0, NZ1]) if (z === NZ0 || x < GAP[0] || x > GAP[1]) s.cyl(.05, .06, 3.6, x, GH(x, z) + 1.8, z, 0x9aa0a6, null, 6);
+  for (let z = NZ0 + 5.4; z < NZ1; z += 5.4) for (const x of [NX0, NX1]) s.cyl(.05, .06, 3.6, x, GH(x, z) + 1.8, z, 0x9aa0a6, null, 6);
+  // the pilots' tent: a blue canopy, a table with two screens and a laptop, three chairs, the goggles' case, the antenna mast
+  { const tx = -74, tz = -29.2, y = GH(tx, tz);
+    for (const [dx, dz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) s.cyl(.03, .03, 2.3, tx + dx, y + 1.15, tz + dz, 0xd8d8d8, null, 6);
+    s.box(3.3, .06, 3.3, tx, y + 2.33, tz, 0x1f5fa8); for (const [w, d, dx, dz] of [[3.3, .03, 0, -1.65], [3.3, .03, 0, 1.65], [.03, 3.3, -1.65, 0], [.03, 3.3, 1.65, 0]]) s.box(w, .3, d, tx + dx, y + 2.15, tz + dz, 0xf2f2f2);
+    s.box(1.8, .04, .7, tx, y + .74, tz - .6, 0xeeeeee); for (const [dx, dz] of [[-.8, -.28], [.8, -.28], [-.8, .28], [.8, .28]]) s.box(.03, .72, .03, tx + dx, y + .36, tz - .6 + dz, 0x888888);
+    for (const dx of [-.45, .35]) { s.box(.55, .34, .04, tx + dx, y + 1.0, tz - .82, 0x1a1c1e); s.box(.5, .29, .01, tx + dx, y + 1.0, tz - .795, 0x3d6f9a); s.box(.06, .16, .06, tx + dx, y + .82, tz - .84, 0x1a1c1e); }
+    s.box(.34, .02, .24, tx + .85, y + .77, tz - .5, 0x2a2c2e); s.box(.34, .22, .02, tx + .85, y + .88, tz - .62, 0x2a2c2e);
+    for (const dx of [-.6, 0, .6]) { s.box(.42, .04, .42, tx + dx, y + .45, tz + .05, 0x2f5f2f); s.box(.42, .45, .04, tx + dx, y + .7, tz + .26, 0x2f5f2f); for (const [ex, ez] of [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]]) s.box(.025, .45, .025, tx + dx + ex, y + .22, tz + .05 + ez, 0x777777); }
+    s.box(.6, .3, .4, tx - 1.1, y + .15, tz + .9, 0x151515);
+    s.cyl(.04, .05, 5.2, tx + 2.2, y + 2.6, tz + 1.2, 0x9aa0a6, null, 6); s.box(.32, .45, .06, tx + 2.2, y + 5.0, tz + 1.12, 0xe8e8e8); s.cyl(.25, .25, .06, tx + 2.2, y + .03, tz + 1.2, 0x3a3d40, null, 10); }
+  // poles and gates still waiting to go up
+  for (let k = 0; k < 6; k++) s.box(2.6, .1, .1, -70 + (k % 3) * .2, GH(-70, -68) + .1 + Math.floor(k / 3) * .12, -68 + (k % 3) * .4, 0xf0f0f0);
   putP(scene, s, true, .02);
   const nt = texCanvas(64, 64, g => { g.clearRect(0, 0, 64, 64); g.strokeStyle = "rgba(30,30,30,.9)"; g.lineWidth = 2; for (let k = 0; k <= 64; k += 16) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k, 64); g.stroke(); g.beginPath(); g.moveTo(0, k); g.lineTo(64, k); g.stroke(); } }); nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.repeat.set(9, 3);
   const ng = new THREE.PlaneGeometry(18, 6.2, 12, 4); ng.rotateX(-Math.PI / 2); const P = ng.attributes.position; for (let i = 0; i < P.count; i++) { const zz = P.getZ(i); P.setY(i, -.5 * (1 - (zz / 3.1) ** 2)); }
   const net = new THREE.Mesh(ng, new THREE.MeshStandardMaterial({map: nt, alphaTest: .4, side: THREE.DoubleSide, roughness: .9})); net.position.set(-31, GH(-31, -66.5) + 3.05, -66.5); net.userData.noAO = true; scene.add(net);
+  // the safety net: one mesh round the course, a metre of texture per metre of net
+  { const pos = [], uv = [], H = 3.3, quad = (x0, z0, x1, z1) => { const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / 6)); for (let k = 0; k < n; k++) { const ax = x0 + (x1 - x0) * k / n, az = z0 + (z1 - z0) * k / n, bx = x0 + (x1 - x0) * (k + 1) / n, bz = z0 + (z1 - z0) * (k + 1) / n, ya = GH(ax, az) + .15, yb = GH(bx, bz) + .15, u0 = L * k / n / 1.2, u1 = L * (k + 1) / n / 1.2;
+        pos.push(ax, ya, az, bx, yb, bz, bx, yb + H, bz, ax, ya, az, bx, yb + H, bz, ax, ya + H, az); uv.push(u0, 0, u1, 0, u1, H / 1.2, u0, 0, u1, H / 1.2, u0, H / 1.2); } };
+    quad(NX0, NZ0, NX1, NZ0); quad(NX1, NZ0, NX1, NZ1); quad(NX1, NZ1, GAP[1], NZ1); quad(GAP[0], NZ1, NX0, NZ1); quad(NX0, NZ1, NX0, NZ0);
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
+    const st = texCanvas(64, 64, c => { c.clearRect(0, 0, 64, 64); c.strokeStyle = "rgba(44,58,40,.95)"; c.lineWidth = 2.2; for (let k = 0; k <= 64; k += 8) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k, 64); c.stroke(); c.beginPath(); c.moveTo(0, k); c.lineTo(64, k); c.stroke(); } c.fillStyle = "rgba(30,36,28,.95)"; c.fillRect(0, 0, 64, 3); });
+    st.wrapS = st.wrapT = THREE.RepeatWrapping; const sn = new THREE.Mesh(g, new THREE.MeshStandardMaterial({map: st, alphaTest: .35, side: THREE.DoubleSide, roughness: .9})); sn.userData.noAO = true; scene.add(sn); }
   gPostSign("DRONE PARKURU · İNŞAAT", -46, -31, 0, 7, 1.4, "Sorumlu: Orhan Üsteğmen", "#0f2a3a", "#7fe3ff"); }
-const DGATE = (() => { const s = SP(); s.box(.1, 2.8, .1, 0, 1.4, -1.25, 0xf0f0f0); s.box(.1, 2.8, .1, 0, 1.4, 1.25, 0xf0f0f0); s.box(.12, .55, 2.6, 0, 2.6, 0, 0xff6a10); s.box(.13, .2, 2.62, 0, 2.6, 0, 0x111111);
-  const m = new THREE.InstancedMesh(s.mesh(null, false), MVP, DGATES.length); DGATES.forEach(([x, z, a], i) => { TV.set(x, GH(x, z), z); TQ.setFromAxisAngle(UPV, a); TS.set(1, 1, 1); TM.compose(TV, TQ, TS); m.setMatrixAt(i, TM); });
-  m.castShadow = true; m.frustumCulled = false; m.count = 0; scene.add(m); return m; })();
+// one gate: the opening across the local z axis, the drone flies through along local x
+function dgBuild(kind, i) {
+  const s = SP(), [ca, cb] = DGCOL[i % DGCOL.length], t = .2;
+  const sq = (w, h, y0, a, b) => { const seg = 6; for (const sd of [-1, 1]) { const z = sd * (w / 2 + t / 2); for (let k = 0; k < seg; k++) s.box(t, h / seg, t, 0, y0 + (k + .5) * h / seg, z, k % 2 ? b : a); }
+    for (const y of [y0 - t / 2, y0 + h + t / 2]) for (let k = 0; k < seg; k++) s.box(t, t, (w + 2 * t) / seg, 0, y, -(w / 2 + t) + (k + .5) * (w + 2 * t) / seg, k % 2 ? b : a); };
+  const legs = (w, top) => { for (const sd of [-1, 1]) { const z = sd * (w / 2 + t / 2); if (top > t) s.box(.08, top - t, .08, 0, (top - t) / 2, z, 0xd8d8d8); s.box(.75, .12, .55, 0, .06, z, 0x3a3d40); s.box(.5, .22, .34, -.05, .23, z, 0x8a7a50); } };
+  const flag = (z, col) => { s.cyl(.025, .03, 3.7, 0, 1.85, z, 0xe8e8e8, null, 6); s.box(.4, .1, .4, 0, .05, z, 0x2a2c2e);
+    for (let k = 0; k < 9; k++) { const y = 1.0 + k * .29, u = (k + .5) / 9, w = .1 + .5 * Math.pow(Math.sin(Math.PI * Math.min(1, u * 1.15)), .7); s.box(w, .3, .02, w / 2 + .03, y, z, k === 4 ? 0xf2f2f2 : col, 0, 0, -.06 * k); } };
+  if (kind === "start") { // two padded pillars, a checkered banner, the start line on the ground
+    for (const sd of [-1, 1]) for (let k = 0; k < 6; k++) s.box(.32, .5, .32, 0, .25 + k * .5, sd * 2.3, k % 2 ? 0xf2f2f2 : 0x1d1d1d);
+    for (let r = 0; r < 2; r++) for (let k = 0; k < 14; k++) for (const f of [-.06, .06]) s.box(.04, .35, .35, f, 2.75 + r * .35, -2.45 + k * .35 + .175, (k + r) % 2 ? 0xf2f2f2 : 0x1d1d1d);
+    for (let k = 0; k < 14; k++) for (let r = 0; r < 2; r++) s.box(.25, .02, .33, -.12 + r * .25, .02, -2.3 + k * .33 + .165, (k + r) % 2 ? 0xf2f2f2 : 0x1d1d1d); }
+  else if (kind === "sq") { sq(1.8, 1.8, .7, ca, cb); legs(1.8, .7); flag(3.0, ca); }
+  else if (kind === "arch") { const n = 16, w = 2.6, h = 2.4; let prev = null; for (let k = 0; k <= n; k++) { const th = Math.PI * k / n, p = [0, Math.sin(th) * h + .1, -Math.cos(th) * w / 2]; if (prev) s.rod(prev, p, .12, k % 2 ? cb : ca, 8); prev = p; }
+    for (const sd of [-1, 1]) { s.box(.7, .12, .5, 0, .06, sd * w / 2, 0x3a3d40); s.box(.45, .22, .3, -.05, .23, sd * w / 2, 0x8a7a50); } flag(-3.0, ca); }
+  else if (kind === "ladder") { sq(1.8, 1.5, .6, ca, cb); sq(1.8, 1.5, .6 + 1.5 + t, cb === 0xf2f2f2 ? ca : 0xf2f2f2, ca); legs(1.8, .6); flag(3.0, ca); }
+  else if (kind === "dive") { sq(1.9, 1.9, 2.9, ca, cb); for (const sd of [-1, 1]) for (const dx of [-.7, .7]) { s.rod([dx, 0, sd * 1.15], [0, 2.8, sd * 1.05], .045, 0xd8d8d8, 6); s.box(.4, .1, .4, dx, .05, sd * 1.15, 0x3a3d40); } flag(-3.2, ca); }
+  const [x, z, a] = DGATES[i], g = new THREE.Group(); g.position.set(x, GH(x, z) - .02, z); g.rotation.y = a; putP(g, s, true, .03); g.visible = false; scene.add(g); return g; }
+const DGM = DGATES.map((q, i) => dgBuild(DGKIND[i], i));
 const courseFront = () => { const i = Math.min(DGATES.length - 1, Math.floor(DRC.p * DGATES.length)), [x, z] = DGATES[i]; return {x: x + 2.2, z: z + 1.5, i}; };
-function projVisuals() { RFRAME.count = Math.floor(RNG.p * RANGEF.length + 1e-6); DGATE.count = Math.floor(DRC.p * DGATES.length + 1e-6); }
+function projVisuals() { RFRAME.count = Math.floor(RNG.p * RANGEF.length + 1e-6); const n = Math.floor(DRC.p * DGATES.length + 1e-6); DGM.forEach((g, i) => { g.visible = i < n; }); }
 projVisuals();
 
 // ---------------- the hill: railings, steps down towards the site, a flag for the roll call, benches, parking marks ----------------
@@ -4597,7 +4683,7 @@ function projFrame(dt) {
   if (typeof DAY === "undefined" || !DAY.on || DAY.rep || !(DAY.block && DAY.block.k === "is")) return;
   const at = (k, p) => { const o = typeof OFFM !== "undefined" ? OFFM[k] : null; return !!o && ((o.st === "work" && Math.hypot(o.x - p.x, o.z - p.z) < 25) || (typeof isPlayer === "function" && isPlayer(o) && FOOT.on && Math.hypot(FOOT.x - p.x, FOOT.z - p.z) < 25)); };
   const m = dt / 60, r0 = RNG.p, d0 = DRC.p;
-  RNG.p = Math.min(1, RNG.p + m * (at("ali", rangeFront()) ? .032 : .01)); DRC.p = Math.min(1, DRC.p + m * (at("orhan", courseFront()) ? .034 : .011));
+  RNG.p = Math.min(1, RNG.p + m * (at("ali", rangeFront()) ? .032 : .01) * wx("atis")); DRC.p = Math.min(1, DRC.p + m * (at("orhan", courseFront()) ? .034 : .011) * wx("parkur"));
   if (Math.floor(r0 * RANGEF.length) !== Math.floor(RNG.p * RANGEF.length) || Math.floor(d0 * DGATES.length) !== Math.floor(DRC.p * DGATES.length)) { projVisuals(); saveGarProj(); }
 }
 
@@ -4667,7 +4753,7 @@ const CHAIRS = [[-1.95, 0, 0], [-.9, -.86, Math.PI / 2], [0, -.86, Math.PI / 2],
   // tea glasses, saucers, the plan, a tablet, a teapot on the table
   const r = rndF(5);
   for (const c of CHAIRS) { const fx = Math.cos(c.a), fz = Math.sin(c.a), gx = c.x + fx * .42 + fz * .12, gz = c.z + fz * .42 - fx * .12;
-    s.cyl(.045, .045, .008, gx, y + .8, gz, 0xe9e5dc, null, 10); s.cyl(.022, .02, .085, gx, y + .846, gz, 0xb5501c, null, 8); }
+    s.cyl(.045, .045, .008, gx, y + .8, gz, 0xe9e5dc, null, 10); c.glass = new THREE.Vector3(gx, y + .846, gz); }
   s.box(.9, .004, .6, TH.x - .2, y + .798, TH.z, 0xe7e1cf); for (let k = 0; k < 6; k++) s.box(.02, .005, .5, TH.x - .55 + k * .14, y + .8, TH.z, 0x6d7a8a);   // the planning sheet
   s.box(.24, .012, .17, TH.x + .9, y + .801, TH.z + .5, 0x1b1d20);                                                                         // tablet
   s.cyl(.07, .09, .14, TH.x + .5, y + .87, TH.z - .1, 0xc9ccd0, null, 12); s.cyl(.05, .06, .1, TH.x + .5, y + .99, TH.z - .1, 0xd9dcdf, null, 12);  // double teapot (çaydanlık)
@@ -4687,6 +4773,13 @@ const CHAIRS = [[-1.95, 0, 0], [-.9, -.86, Math.PI / 2], [0, -.86, Math.PI / 2],
   const sign2 = sign.clone(); sign2.position.set(TH.x, y + 2.95, TH.z - 2.12); sign2.rotation.y = Math.PI; scene.add(sign2);
 }
 
+// the tea in its glasses (thin-waisted, dark red tea): one instanced mesh, a glass follows the hand of whoever drinks from it
+const TEAG = (() => { const g = new THREE.CylinderGeometry(.023, .02, .085, 10), P = g.attributes.position; for (let i = 0; i < P.count; i++) { const y = P.getY(i), k = 1 - .18 * Math.exp(-(((y - .005) / .018) ** 2)); P.setX(i, P.getX(i) * k); P.setZ(i, P.getZ(i) * k); }
+  g.computeVertexNormals(); const im = new THREE.InstancedMesh(g, new THREE.MeshStandardMaterial({color: 0x9a3a12, roughness: .2, metalness: 0, transparent: true, opacity: .9}), CHAIRS.length);
+  CHAIRS.forEach((c, i) => { TM.makeTranslation(c.glass.x, c.glass.y, c.glass.z); im.setMatrixAt(i, TM); }); im.castShadow = false; im.frustumCulled = false; scene.add(im); return im; })();
+function teaGlassFrame() { let ch = false; CHAIRS.forEach((c, i) => { const o = c.occ, S = o && (o === CUR ? PLAYER : o.S), g = S && S.tg, held = !!(g && g.held && g.gp), key = held ? 1 : 0;
+    if (!held && c.gk === 0) return; c.gk = key; ch = true; const p = held ? g.gp : c.glass; TM.makeTranslation(p.x, p.y, p.z); TEAG.setMatrixAt(i, TM); });
+  if (ch) TEAG.instanceMatrix.needsUpdate = true; }
 // ---------------- the officers ----------------
 const OFFS = OFF_DEF.map(d => ({d, S: null, st: "init", t: 0, x: 0, z: 0, a: 0, chair: d.chair == null ? -1 : d.chair, path: null, pi: 0, spd: 0, talk: 0, line: "", look: null, next: null}));
 const OFFM = {}; for (const o of OFFS) OFFM[o.d.key] = o;
@@ -4717,16 +4810,36 @@ function offLodFrame() { const T = QUAL.offLod, T0 = T * .45;
 let CUR = OFFM.furkan;                        // the officer you play
 const isPlayer = o => o === CUR;
 const chairOf = o => o.chair >= 0 ? CHAIRS[o.chair] : null;
-function seatAt(o, c) { // seated on chair c: hips on the seat, facing the table, forearms on the table
-  const S = o.S; c.occ = o; o.st = "seat"; o.x = c.x; o.z = c.z; o.a = c.a; S.root.visible = true;
+function seatAt(o, c) { // seated on chair c: hips on the seat, facing the table, forearms on the table (sitting down takes a moment when he was on his feet)
+  const S = o.S, anim = S.root.visible && ["walk", "stand", "standby"].includes(o.st) && Math.hypot(S.root.position.x - c.x, S.root.position.z - c.z) < 1.6, p0 = anim ? S.root.position.clone() : null, q0 = anim ? S.root.quaternion.clone() : null, keep = anim ? poseKeep(S, PB_BODY) : null;
+  c.occ = o; o.st = "seat"; o.x = c.x; o.z = c.z; o.a = c.a; S.root.visible = true; o.rise = null;
   S.root.position.set(c.x - Math.cos(c.a) * .08, TH.y + .5 - S.hipY, c.z - Math.sin(c.a) * .08); headingQ(c.a, S.root.quaternion);
+  if (anim) { o.trans = {t: 0, dur: .75, p0, q0, p1: S.root.position.clone(), q1: S.root.quaternion.clone(), keep}; S.root.position.copy(p0); S.root.quaternion.copy(q0); }
 }
 function leaveChair(o) { for (const c of CHAIRS) if (c.occ === o) c.occ = null; }
-function tablePose(S, talk, T) {
-  const B = S.bones; seatPose(S, null, null, false); S.root.updateMatrixWorld(true);
-  if (talk > 0) { const w = Math.sin(T * 5.2) * .25; armDirs(S, "Right", [-.3, -.35, .88], [-.15 + w * .4, .35 + w, .9]); armDirs(S, "Left", [.25, -.55, .78], [.08, -.08, 1]); }
-  else { armDirs(S, "Right", [-.25, -.55, .78], [-.08, -.08, 1]); armDirs(S, "Left", [.25, -.55, .78], [.08, -.08, 1]); }
-  curl(S, "Left", .35); curl(S, "Right", .35);
+const TPOSE = [[[-.3, -.4, .86], [-.2, .42, .88]], [[-.28, -.3, .9], [-.04, .18, 1]], [[-.32, -.38, .87], [-.12, .6, .8]], [[-.22, -.6, .76], [.42, .3, .85]], [[-.25, -.55, .78], [-.08, -.08, 1]]];   // open hand, pointing, making a point, hand to the chest, on the table
+const TREST = TPOSE[4], TSV = new THREE.Vector3(), TSW = new THREE.Vector3(), TSH = new THREE.Vector3(), TSO = new THREE.Vector3(), TSG = new THREE.Vector3(), TSL = new THREE.Vector3(), TSQ = new THREE.Quaternion();
+function tablePose(S, talk, T, dt, glass) {
+  const B = S.bones; seatPose(S, null, null, false); S.root.updateMatrixWorld(true); dt = dt || 1 / 30;
+  const g = S.tg || (S.tg = {r: [TREST[0].slice(), TREST[1].slice()], l: [TREST[0].slice(), TREST[1].slice()], tr: TREST, tl: null, k: 0, nod: 0, sip: null, sipK: 8 + Math.random() * 30, held: false});
+  if (talk > 0) { g.sip = null; g.k -= dt; if (g.k <= 0) { g.k = .55 + Math.random() * 1.0; g.tr = TPOSE[Math.floor(Math.random() * 4)]; g.tl = Math.random() < .3 ? TPOSE[Math.floor(Math.random() * 2)] : null; g.nod = 1; } }
+  else { g.tr = TREST; g.tl = null; if (glass && !g.sip) { g.sipK -= dt; if (g.sipK <= 0) { g.sip = {t: 0}; g.sipK = 22 + Math.random() * 40; } } }
+  const e = Math.min(1, dt * 5.5), mv = (cur, tgt, mir) => { for (let i = 0; i < 2; i++) for (let j = 0; j < 3; j++) cur[i][j] += ((mir && j === 0 ? -tgt[i][j] : tgt[i][j]) - cur[i][j]) * e; };
+  mv(g.r, g.tr, false); mv(g.l, g.tl || TREST, true);
+  armDirs(S, "Right", g.r[0], g.r[1]); armDirs(S, "Left", g.l[0], g.l[1]); curl(S, "Left", .35); curl(S, "Right", .35);
+  g.held = false;
+  if (g.sip && glass && B.Head) { // a sip: the hand to the glass, the glass to the lips, a moment, back on its saucer (offsets in metres, the soldier's frame: x left, y up, z forward)
+    const t = g.sip.t += dt, D = [.7, 1.35, 2.3, 3.0, 3.5]; if (t > D[4]) { g.sip = null; } else {
+      S.root.getWorldQuaternion(TSQ); B.Head.getWorldPosition(TSH);
+      const off = TSO.set(.015, .02, .06).applyQuaternion(TSQ);                          // where the glass sits in the fingers, from the wrist
+      const grip = TSG.copy(glass).sub(off);                                              // the wrist with the glass still on its saucer
+      const lips = TSV.copy(TSH).add(TSL.set(-.01, 0, .05).applyQuaternion(TSQ));   // the wrist with the glass at the lips
+      const lerp3 = (a, b, u) => TSW.copy(a).lerp(b, ease(u));
+      let tgt, k = 1; if (t < D[0]) { tgt = grip; k = ease(t / D[0]); } else if (t < D[1]) { tgt = lerp3(grip, lips, (t - D[0]) / (D[1] - D[0])); g.held = true; } else if (t < D[2]) { tgt = lips; g.held = true; }
+      else if (t < D[3]) { tgt = lerp3(lips, grip, (t - D[2]) / (D[3] - D[2])); g.held = true; } else { tgt = grip; k = 1 - ease((t - D[3]) / (D[4] - D[3])); }
+      const keep = poseKeep(S, PB_ARMS, g.kp || (g.kp = {})); ikArm(S, "Right", tgt, [-.8, -.55, -.15]); curl(S, "Right", .75); poseMix(S, PB_ARMS, keep, k);
+      if (g.held) { B.RightHand.getWorldPosition(TSH); g.gp = (g.gp || new THREE.Vector3()).copy(TSH).add(off); } } }
+  if (g.nod > 0 && B.Head) { g.nod = Math.max(0, g.nod - dt * 1.6); B.Head.rotateX(Math.sin(g.nod * 9) * .07 * g.nod); }
 }
 const LKV = new THREE.Vector3(), LKH = new THREE.Vector3(), LKD = new THREE.Vector3(), LKF = new THREE.Vector3(), LKU = new THREE.Vector3(), LKT = new THREE.Vector3();
 function lookAtHead(S, target, k) { // turn neck and head towards a world point
@@ -4755,21 +4868,25 @@ function legPath(ax, az, bx, bz) {
 function walkRoute(x0, z0, x1, z1) { const out = []; let ax = x0, az = z0; for (const [bx, bz] of legsFor(x0, z0, x1, z1).concat([[x1, z1]])) { out.push(...legPath(ax, az, bx, bz)); ax = bx; az = bz; } return out.length ? out : [[x1, z1]]; }
 const pathLen = (x, z, P) => { let L = 0; for (const [px, pz] of P) { L += Math.hypot(px - x, pz - z); x = px; z = pz; } return L; };
 function walkTo(o, x, z, then, run) {
-  const S = o.S; leaveChair(o); o.st = "walk"; o.next = then || null; o.run = !!run; o.hurry = false; o.tx = x; o.tz = z; if (o.tool) o.tool.visible = false;
+  const S = o.S; if (o.st === "seat" && S.root.visible) { const c = CHAIRS.find(q => q.occ === o) || chairOf(o); if (c) { o.x = c.x - Math.cos(c.a) * .42; o.z = c.z - Math.sin(c.a) * .42; } o.rise = riseOf(S); o.trans = null; }
+  leaveChair(o); o.st = "walk"; o.next = then || null; o.run = run === "run"; o.hurry = !!run && !o.run; /* an order makes them walk briskly; only "run" runs */ o.tx = x; o.tz = z; if (o.tool) o.tool.visible = false;
   o.path = walkRoute(o.x, o.z, x, z); o.pi = 0; o.far = pathLen(o.x, o.z, o.path) > 60; S.root.visible = true;
 }
+const FRU = new THREE.Frustum(), FRM = new THREE.Matrix4(), FRV = new THREE.Vector3();
+function frustUpd() { cam.updateMatrixWorld(); FRM.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); FRU.setFromProjectionMatrix(FRM); }
+const seenAt = (x, z) => { const d = Math.hypot(x - cam.position.x, z - cam.position.z); return d < 24 || (d < 95 && FRU.containsPoint(FRV.set(x, footGround(x, z) + 1, z))); };
 function stepWalk(o, dt) {
   const S = o.S, p = o.path[o.pi]; if (!p) { o.st = "stand"; return true; }
-  const dx = p[0] - o.x, dz = p[1] - o.z, d = Math.hypot(dx, dz), v = o.run ? 4.9 : (o.vw || (o.hurry ? 3.6 : o.far ? 3.0 : 2.2));
+  const dx = p[0] - o.x, dz = p[1] - o.z, d = Math.hypot(dx, dz), v0 = o.run ? 3.5 : (o.vw || (o.hurry ? 1.85 : o.far ? 1.65 : 1.5)), v = (o.seenT = (o.seenT || 0) - dt) > 0 ? o.seenV : (o.seenT = .4, o.seenV = seenAt(o.x, o.z) ? v0 : v0 * 3.4);
   if (d < .12) { o.pi++; if (o.pi >= o.path.length) { o.spd = 0; return true; } return false; }
-  const s = Math.min(d, v * dt); o.x += dx / d * s; o.z += dz / d * s; o.a += wrapA(Math.atan2(dz, dx) - o.a) * Math.min(1, dt * 8); o.spd = v;
+  const s = Math.min(d, v * dt); o.x += dx / d * s; o.z += dz / d * s; o.a += wrapA(Math.atan2(dz, dx) - o.a) * Math.min(1, dt * 6); o.spd = v0;
   S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion); return false;
 }
 
 // ---------------- speech: a bubble over the speaker, a subtitle line ----------------
 const talkLayer = document.createElement("div"); talkLayer.id = "talk"; talkLayer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:5;overflow:hidden";
 document.body.appendChild(talkLayer);
-const subEl = document.createElement("div"); subEl.className = "subl"; subEl.style.cssText = "position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);transform:translateX(-50%);max-width:min(92vw,620px);text-align:center;font:600 15px/1.35 system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;z-index:6;opacity:0;transition:opacity .3s";
+const subEl = document.createElement("div"); subEl.className = "subl"; subEl.style.cssText = "position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 150px);transform:translateX(-50%);width:max-content;max-width:min(92vw,620px);text-align:center;font:600 15px/1.35 system-ui,sans-serif;color:#fff;text-shadow:0 1px 3px #000,0 0 8px #000;pointer-events:none;z-index:6;opacity:0;transition:opacity .3s";
 document.body.appendChild(subEl);
 const BUB = new Map(); const PRJ = new THREE.Vector3();
 function say(o, text, dur) {
@@ -4777,7 +4894,7 @@ function say(o, text, dur) {
   let b = BUB.get(o); if (!b) { b = document.createElement("div"); b.style.cssText = "position:absolute;transform:translate(-50%,-100%);background:rgba(255,255,255,.93);color:#1d1f21;font:600 13px/1.3 system-ui,sans-serif;padding:6px 10px;border-radius:12px;max-width:220px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.35);white-space:normal"; talkLayer.appendChild(b); BUB.set(o, b); }
   b.textContent = text; b.style.display = "block";
   const d = Math.hypot(o.x - (FOOT.on ? FOOT.x : vehicles[cur].x), o.z - (FOOT.on ? FOOT.z : vehicles[cur].z));
-  if (d < 30) { subEl.innerHTML = `<span style="color:#ffd27a">${o.d.name}:</span> ${text}`; subEl.style.opacity = 1; subEl._t = o.talk; }
+  if (d < 30) subShow(`<span style="color:#ffd27a">${o.d.name}:</span> ${text}`, o.talk);
 }
 function talkFrame(dt) {
   for (const o of OFFS) { const b = BUB.get(o); if (!b) continue; if (o.talk > 0) o.talk -= dt;
@@ -4794,45 +4911,59 @@ function timersFrame(dt) { if (!TIMERS.length) return; const due = []; for (cons
   TIMERS = TIMERS.filter(q => q.t > 0); due.sort((a, b) => a.t - b.t); for (const q of due) { try { q.fn(); } catch (e) { console.error(e); } } }
 
 // ---------------- the conversations at the table: whole exchanges between the people sitting there ----------------
-const DIALOGS = [
-  [["azizhan", "Arkadaşlar, yarının planını konuşalım."], ["ahmet", "Sabah ilk iş tünel, öğleden sonra döküm sahası."], ["kaan", "Planı tablete işledim komutanım, herkese gönderiyorum."], ["azizhan", "La bana çok güvenme, cuma günü gidebilirim, eline kalırsın bak."], ["boran", "Yarın sabah tam teçhizat. Çelik plakalar dahil."], ["furkan", "Planlama ve koordinasyon için beklemekteyiz, arz ederim."], ["azizhan", "Tamam. Herkes görevini biliyor."]],
-  [["ahmet", "Arkadaşlar, lahmacun saat 18.30'da tabldotta."], ["ali", "Bu sefer erken gidelim, geçen sefer bitmişti."], ["boran", "Furkan kaçma, gel Furkan, sıraya beraber gireriz."], ["furkan", "Emredersiniz komutanım."], ["ahmet", "Sen kralsın kardeşim."], ["ali", "Ben de akşam kendi ellerimle çorba yapacağım devrelerime."], ["boran", "Afiyet olsun şimdiden komutanım."]],
-  [["ali", "Tek rakibim kendim. Her gün daha iyi olmak için çabalıyorum."], ["kaan", "Ben de bu işi nasıl daha iyi yaparım, onu düşünüyorum."], ["ahmet", "Teknik iyi ama geliştirmen lazım."], ["ali", "Daha iyisi beni aşar, o senin işin kardeşim."], ["boran", "Ekip sağlam."]],
-  [["boran", "Ali Üsteğmenim, bölüğüme karışmayın lütfen. Cuma günü takım komutanıma bir takım emirler vereceğim."], ["ali", "Hizmete özel olmayan hiçbir emri veremezsin."], ["boran", "Emir çeşitleri ve emir verme yöntemleri ile ilgili yeterince bilgiye haiz olmamdan mütevellit, amirlerim beni bu göreve layık görmüşlerdir. Sağ olun."], ["furkan", "Aslan komutanım."], ["ahmet", "Kesin ulan develer, buranın ağası Azizhan Üsteğmen!"], ["azizhan", "La, bana bakmayın."]],
-  [["boran", "Furkan kaçma gel Furkan, mümkünü yok, Ali Üsteğmen kurtaramaz seni!"], ["ali", "Kapım sana her daim açık Furkan. Bir telefon uzağındayım sadece."], ["furkan", "Sağ olun komutanım, varlığınız yeter. Kıdemli teğmenler kaldırdı geliyor, hedef benim galiba."], ["ali", "Sen yine de beni bırak, üst devrelerinle arayı iyi tutmaya çalış."], ["furkan", "Benim kılıç daha yeni, daha parlak, siz merak etmeyin komutanım."], ["ali", "Furkan, iyi misin kardeşim?"], ["furkan", "Yeni uyandım sadece komutanım."]],
-  [["kaan", "Eskiden yapay zekâ mı vardı? Projeleri hayal ederdik sadece."], ["ali", "Bu çocuk son günlerde iyi değil, kendi kendine konuşmaya başlamış."], ["ali", "Sen yakında kendi kendinle kavga edersin, seni hiç iyi görmüyorum."], ["kaan", "Orada da devreye siz gireceksiniz komutanım."], ["ali", "Ben araya girmem kardeşim. Bir tek Furkan'a destek olurum, o bir şey isteyince yok diyemiyorum."], ["furkan", "Cansınız komutanım."]],
-  [["furkan", "Kaan, ben bu fotoğrafın yapay zekâ ürünü olduğunu düşünüyorum."], ["boran", "Teğmen Asmaca diye bir oyun çıkaralım, yapay zekâ projesi!"], ["kaan", "Yazarım, iki günde çıkar."], ["ahmet", "Sen kralsın kardeşim."], ["azizhan", "Önce bu şantiyenin yazılımı bitsin."]],
-  [["furkan", "Bu makam bu adama ayrı yakışıyor."], ["ahmet", "Hayırlı olsun Kaan, yeni makamın."], ["kaan", "Resmen enkaz devraldım."], ["furkan", "Yazıya dikkat komutanım."], ["ahmet", "Ben seni tümen komutanına arz yaparken göreceğim."], ["kaan", "Yansın Hisar!"]],
-  [["kaan", "Yeni zil sesim: Yansın Hisar!"], ["boran", "Şarkının adında değişiklik yapabilir miyiz? Yansın Hisar!"], ["boran", "Nefesinize sağlık komutanım."], ["ahmet", "Sen kimsin?"], ["boran", "Yarın sabah gelince tanırsınız kim olduğumu komutanım."], ["ahmet", "Onun sonunu bağla!"], ["boran", "Bağladım komutanım."]],
-  [["boran", "Ali Üsteğmenim, spor geçmişi olan bir subaysınız. Bomba ve barfikse sizin yazılmanız daha uygun olmaz mıydı? Arz ederim."], ["ali", "Ne alakası var la! Kötü kötü konuşturma beni şimdi."], ["boran", "Bu faaliyetlerde sizi de görmek isteriz komutanım."], ["ali", "Adı üstünde, geçmiş kardeşim. Şu an genç dimağlara güvenim sonsuz."], ["furkan", "Ah o koşular…"], ["ahmet", "Altı kilometre!"], ["ali", "Bir de utanmadan övünüyor musun?"]],
-  [["ahmet", "Bizim devrede de böyle şeyler olurdu."], ["boran", "Bizim devrede de olmuştu komutanım. Kovdu bizi sonra binadan zaten."], ["kaan", "Komutanım, sizin devrede de vukuat ha, tehlikelisiniz."], ["ahmet", "Var biraz."], ["ali", "En tehlikelimizdir kardeşim."]],
-  [["ahmet", "Vay be, ne güzel günlerdi."], ["ali", "Senden ayrı kalmanın acı tebessümü vardı yüzümüzde kardeşim."], ["ahmet", "O gece ışıklar sabaha kadar açık kaldı…"], ["azizhan", "Senin ışıklar hiç kapanmıyor zaten."], ["ahmet", "Sen benim geceleri uyuduğumu mu sanıyorsun?"], ["azizhan", "Uyumuyorsan ne işler karıştırıyorsun?"], ["ali", "Kim dost kim düşman, geç oldu ama öğrenmiş oldun."]],
-  [["boran", "Hisar taburunda şenlik havası hakim!"], ["azizhan", "Tugayda bir iş yapılıyorsa Hisar yapıyordur, gayet normal."], ["boran", "Komutanım siz cansınız vallaha."], ["kaan", "Yansın Hisar!"], ["ali", "En kötü günümüz böyle olsun, abim ve kardeşlerim."]],
-  [["ahmet", "Boran, akşam ne yapıyoruz?"], ["boran", "Mesaj bekleniyor. Bu işlem biraz zaman alabilir."], ["ali", "Mesaj bekleniyor. Bu işlem biraz zaman alabilir."], ["ali", "Ben böyle bir kaçış görmedim."], ["azizhan", "Yolunu buldu bu işin."], ["ahmet", "Ahmet sinirli, bulaşmayın."]],
-  [["azizhan", "Ali, çalışma hayatı zordur."], ["ali", "Sağ olsun devrelerim de bir bardak su vermiyor."], ["azizhan", "Devrelerin içebiliyor mu diye sordun mu?"], ["ali", "Malzeme, araç olarak hiç yardımcı olmuyorsunuz."], ["ahmet", "Altmış kişi her gün iki defa bu yolda intikal yapıyor, nedense bir tek sen kalıyorsun."], ["ali", "Bunlar özel konular. Herkesin içinde konuşulmaz devrem. Özel olarak konuşalım bunu."]],
-  [["azizhan", "Ali ile Kaan bölük komutanlığına başladığında hallerini görecektiniz."], ["ali", "Ben eksik bir şey göremedim komutanım, gayet disiplinli biri."], ["ali", "Çakı gibi asker!"], ["kaan", "Sağ olun komutanım."], ["ahmet", "Haaahaaa haaa!"], ["ali", "Gülüşün bile tehlikeli devrem."]],
-  [["furkan", "Ali Üsteğmenim, tabur komutanı sizi çağırıyor. Okçuluk kursu verecekmişsiniz."], ["ali", "Furkan, hedef diye de seni koyarım okun karşısına, haberin olsun."], ["ali", "Sen sen ol, benimle ters düşme."], ["furkan", "Komutanın raconunu kıdemli teğmenlere kesiyordunuz, hedef ne ara ben oldum?"], ["boran", "Furkan kaçma, gel Furkan!"]],
-  [["ali", "Kıskançlık sezdim sanki."], ["ali", "Kral öldü, yaşasın yeni kral!"], ["furkan", "Ne kıskanması komutanım, canım komutanım kuvvete layık."], ["ahmet", "Fotoğrafını duvardan indirdim ama masama koydum Furkan."], ["furkan", "Cansınız komutanım."]],
-  [["orhan", "Dronu kaldırdım, saha temiz görünüyor."], ["kaan", "Görüntüleri yapay zekâya verelim, hafriyat hacmini hesaplasın."], ["orhan", "Yukarıdan bakınca her şey belli zaten."], ["ali", "Pili de unutma, geçen sefer yarıda indi."], ["orhan", "Pil yarıda, iniyorum dedim ya, ondan."], ["azizhan", "Tamam, akşam raporu getir."]],
-  [["azizhan", "Çaylar tazelensin."], ["ahmet", "Ocakçı, demli olsun!"], ["kaan", "Bu çay yapay zekâdan daha iyi çalışıyor."], ["orhan", "Yukarıdan bile kokusu geliyor."], ["boran", "Afiyet olsun komutanım, arkadaşlar."], ["ali", "Çay bizden, muhabbet sizden."]],
-  [["azizhan", "Sığınak ne durumda?"], ["furkan", "Kempar aynada komutanım, ben de askerle aşağıdayım, küreği bırakmadık."], ["boran", "Kamyonlar döküm sahasına gidip geliyor, ben koordine ediyorum."], ["ali", "Yakıt tankeri öğleden sonra geliyor, sorun yok."], ["azizhan", "Güzel. Akşama kadar galeri yirmi metre olsun."], ["furkan", "Emredersiniz komutanım."]],
-  [["boran", "Komutanım, Allah aşkına sizin işiniz gücünüz yok mu? İzindesiniz, ailenizle vakit geçirin."], ["ahmet", "Bir dakika baktım telefona, hepsini kapattım."], ["boran", "Yirmi gün uzaklaşın, keyfinize bakın."], ["ahmet", "Ben burayı çok seviyorum, ayrılmak istemiyorum."]],
-  [["ahmet", "Yarın buraya verzalit masa ve sandalye geliyor."], ["ali", "Yağmur yağarsa ne olacak?"], ["azizhan", "Tente var, merak etme."], ["kaan", "Çay ocağına bir de internet lazım komutanım."], ["boran", "Hisar taburunda şenlik havası hakim!"]],
-  [["furkan", "Komutanım, yeni projeler var, birazdan gelir."], ["furkan", "Sizi rahatlatmak için uğraşıyoruz teğmenler olarak."], ["ali", "Eyvallah kardeşim."], ["boran", "Vallahi sizinle çok şaka yaptık herhalde komutanım."], ["ali", "Benim için hiç önemli değil kardeşim, inan."]],
-  [["ali", "Okey mokey yok kardeşim, bitti o devirler."], ["boran", "Bize yok zaten."], ["ali", "Devrelerimi üç gündür göremiyorum bile."], ["ali", "Onlar için zaman yaratır, ayarlarım bir şeyler."], ["ahmet", "Seferberlik ilan ediyoruz, herkes akşam buraya!"]],
+// each conversation: when it fits (sabah: before the briefing; is: a break in the working day; ogle: about lunch; aksam: after work; any), who speaks, what;
+// a line can be a function, so what they say is what is really happening on the sites
+const DX = {tun: () => Math.max(0, Math.round((stats.kemparM || 0) - (typeof DAY !== "undefined" && DAY.s0 ? DAY.s0.tunnel : 0))), trips: () => typeof DAY !== "undefined" && DAY.s0 ? DAY.trips - DAY.s0.trips : 0,
+  bnk: () => typeof BNK !== "undefined" ? Math.round(BNK.p * 100) : 0, stage: () => typeof bnkStage === "function" ? bnkStage() : "kazı", rng: () => Math.round(RNG.p * 100), gates: () => Math.floor(DRC.p * DGATES.length),
+  left: () => typeof CAMP !== "undefined" ? Math.max(0, CAMP.day - DAY.day) : 0, goal: () => typeof GOAL !== "undefined" ? GOAL.trips : 4,
+  bnkSay: () => typeof BNK !== "undefined" && BNK.p >= .999 ? "Bunker bitti komutanım, kum torbası ve kamuflaj da tamam." : BNK.p < .01 ? "Kazıya yeni başlıyoruz komutanım, ekskavatör hazır." : `${DX.stage()[0].toLocaleUpperCase("tr-TR") + DX.stage().slice(1)} aşamasındayız komutanım, iş yüzde ${DX.bnk()}.`,
+  gateSay: () => DX.gates() ? `Parkurda ${DX.gates()} kapı dikildi komutanım, dron kapılardan geçiyor.` : "Parkurun direkleri geldi komutanım, bugün ilk kapıları dikiyoruz."};
+const DLG = (when, lines, need) => Object.assign(lines, {when, need: need || null});
+const DIALOGS_DYN = [
+  DLG("sabah", [["azizhan", "Günaydın arkadaşlar. Görev dağılımından önce bir durum alalım, kim nerede?"], ["furkan", "Sığınakta Kempar hazır komutanım, görevden sonra askerle aşağı iniyorum."], ["kaan", () => BNK.p >= .999 || BNK.p < .01 ? "Bunker: " + DX.bnkSay().replace(/^Bunker /, "") : `Bunkerde ${DX.stage()} aşamasındayız komutanım, iş yüzde ${DX.bnk()}.`], ["ali", () => `Atış alanı yüzde ${DX.rng()}, set çekmeye devam ediyoruz.`], ["orhan", () => DX.gateSay()], ["azizhan", "Tamam. Yedi buçukta görevleri vereceğim, çayınızı için."]]),
+  DLG("is", [["azizhan", "Sığınak ne durumda Furkan?"], ["furkan", () => `Bugün ${DX.tun()} metre ilerledik komutanım. Kempar aynada, kamyonlar dönüyor.`], ["boran", "Ben de koordine ediyorum komutanım, arz ederim."], ["azizhan", "La Boran, bir kürek de sen al."], ["boran", "Emredersiniz komutanım… koordinasyondan sonra."]]),
+  DLG("is", [["azizhan", "Kaan, bunker ne durumda?"], ["kaan", () => DX.bnkSay()], ["azizhan", () => BNK.wait ? "Beton ne zaman geliyor?" : "Gecikme var mı?"], ["kaan", () => BNK.wait ? "Santrale söyledik komutanım, mikser gelince dökeceğiz." : "Yok komutanım, plana göre gidiyoruz."], ["azizhan", "La bana çok güvenme, teftişe kadar bitmezse ikimiz de yanarız."], ["kaan", "Yansın Hisar, bitecek komutanım!"]], () => typeof BNK !== "undefined" && BNK.p < 1),
+  DLG("is", [["ali", () => `Atış alanı yüzde ${DX.rng()} oldu, hedef çerçeveleri dikiliyor.`], ["orhan", () => DX.gateSay()], ["azizhan", "Paşam teftişte ilk oralara bakar, eksik olmasın."], ["ali", "Çakı gibi olacak komutanım."], ["orhan", "Yukarıdan bakınca her şey belli, bir eksik görürsem söylerim."]]),
+  DLG("any", [["ahmet", "Kamyonlar kaç sefer yaptı bugün?"], ["boran", () => `Şu an ${DX.trips()} sefer komutanım, hedef ${DX.goal()}.`], ["ahmet", () => DX.trips() >= DX.goal() ? "Sen kralsın kardeşim, hedef tamam." : "Teknik iyi ama geliştirmen lazım, kamyon boş beklemesin."], ["boran", "Arz ederim komutanım, ekip sağlam."]], () => typeof DAY !== "undefined" && DAY.on && DAY.t > 600),
+  DLG("any", [["ahmet", "Ocakçı, çay nerede?"], ["kaan", "Tüp bitmiş komutanım."], ["ali", "Tüpsüz çay ocağı mı olur kardeşim?"], ["azizhan", "La bugün su içeriz, olur biter."], ["boran", "Hisar taburunda şenlik havası… biraz azaldı komutanım."]], () => typeof DAY !== "undefined" && DAY.noTea > DAY.t),
+  DLG("any", [["orhan", "Paşam yine 'Barkan 4'ler hazır mı' dedi."], ["kaan", "Bizde Barkan-2 var ama komutanım?"], ["orhan", "Ben de 'hazır komutanım' dedim, ne diyeyim."], ["boran", "Barkan 4 hâlâ fabrikada komutanım, arz ederim."], ["azizhan", "La güldürmeyin, paşam duyarsa…"], ["ahmet", "Haaahaaa haaa!"]], () => MEET.barkan),
+  DLG("any", [["ahmet", "Arkadaşlar, ben bugün bütün şantiyeleri gezdim."], ["kaan", "Paşama yakalanmadınız inşallah komutanım?"], ["ahmet", () => DAY.catchDone ? "Yakalandım tabii! Nereye gitsem paşam orada." : "Bu sefer yakalanmadım, şansım yaver gitti."], ["ali", "Senin şansın belli kardeşim."], ["ahmet", "Haaahaaa!"]], () => typeof DAY !== "undefined" && DAY.on && DAY.t > 640),
+  DLG("aksam", [["azizhan", () => `Bugün kamyonlar ${DX.trips()} sefer yaptı, sığınak ${DX.tun()} metre ilerledi.`], ["azizhan", () => DX.trips() >= DX.goal() ? "Fena değil arkadaşlar, böyle devam." : "Yarın daha sıkı çalışacağız, kamyon boş beklemeyecek."], ["furkan", "Emredersiniz komutanım."], ["kaan", "Yarının planını tablete işledim, herkese gönderiyorum."]]),
+  DLG("aksam", [["azizhan", () => `Arkadaşlar, büyük teftişe ${DX.left()} gün kaldı.`], ["ali", "Atış alanı yetişir komutanım."], ["orhan", "Parkur da yetişir."], ["kaan", () => BNK.p >= .999 ? "Bunker bitti komutanım, teftişe hazır." : `Bunker yüzde ${DX.bnk()}, beton zamanında gelirse yetişir.`], ["azizhan", "La bana çok güvenme, yetişmezse Paşam hepimizi nöbete yazar."]], () => typeof CAMP !== "undefined" && !CAMP.done && CAMP.day - DAY.day >= 1),
   // the battalion commander at the table
-  [["ufuk", "Naber mankiler? Kazı nasıl gidiyor?"], ["ahmet", "Bütün şantiyeleri gezdim komutanım, Kempar aynada, kamyonlar dönüyor."], ["ufuk", "Güzel. Asker yorulmasın, nöbetleşe çalışsın."], ["azizhan", "Emredersiniz komutanım."], ["ufuk", "İyi gidiyorsunuz, aynen devam."]],
-  [["ufuk", "Sabah koşusuna herkes geliyor, değil mi?"], ["ali", "Tek rakibim kendim komutanım, ben hep oradayım."], ["ufuk", "Teğmenler de gelsin."], ["boran", "Furkan kaçma, gel Furkan!"], ["furkan", "Emredersiniz komutanım."]],
-  [["ufuk", "Paşam bugün yine Barkan 4'ü sordu mu?"], ["orhan", "Sordu komutanım. Barkan-2'yi gösterdim, 'bu Barkan 4 değil mi' dedi."], ["ufuk", "Barkan 4'ü bulursan bana da haber ver Orhan."], ["orhan", "Emredersiniz komutanım, keşfe çıkarız, belki buluruz."], ["ali", "Haaahaha!"], ["ufuk", "Naber mankiler, gülmeyin!"], ["kaan", "Ben bunun yazılımını yaparım komutanım, Barkan 4 olur."]],
-  [["ufuk", "Atış alanı kaç metreye geldi Ali?"], ["ali", "Hedef çerçeveleri dikiliyor komutanım, dört yüz metreye kadar gideceğiz."], ["ufuk", "Orhan, drone parkuru?"], ["orhan", "Kapılar yükseliyor komutanım, ağ tüneli de kuruldu."], ["ufuk", "Aferin mankiler, iyi gidiyorsunuz."]],
-  [["ufuk", "Bugün kaç sefer döküm yaptık?"], ["boran", "Saymaya devam ediyoruz komutanım, kamyonlar boş durmuyor."], ["ufuk", "Çay da güzel olmuş, ellerinize sağlık."], ["kaan", "Hepsi tablette kayıtlı komutanım."]],
-  // the projects, Ahmet and the paşa, the joke about the vehicle that does not exist
-  [["azizhan", "Projeler ne durumda arkadaşlar?"], ["furkan", "Kempar sığınağı kazıyor komutanım, ben de askerle beraber küreğe girdim."], ["boran", "Ben de koordine ediyorum komutanım, arz ederim."], ["kaan", "Garajdaki bunker yaşam alanının çukuru açılıyor."], ["ali", "Atış alanında hedef çerçeveleri dikiliyor, dört yüz metreye kadar gideceğiz."], ["orhan", "Drone parkurunun kapıları yükseliyor."], ["azizhan", "Güzel. Genel koordinasyon bende, akşam herkes rapor versin."]],
-  [["ahmet", "Arkadaşlar, ben sabah bütün şantiyeleri gezdim."], ["kaan", "Paşama yakalanmadınız inşallah komutanım?"], ["ahmet", "Üç yerde yakalandım! Nereye gitsem paşam orada."], ["boran", "Komutanım, paşam sizi takip ediyor olabilir mi? Arz ederim."], ["ahmet", "Sus Boran, sus."], ["ali", "Sen kralsın kardeşim."]],
-  [["boran", "Furkan, sen yine mi kazdın?"], ["furkan", "Askerle beraber çalışınca iş daha hızlı gidiyor komutanım."], ["boran", "Ben de iş yaptırıyorum, o da bir sanat."], ["ahmet", "Sanatını görüyoruz Boran."], ["azizhan", "La Boran, bir kürek de sen al bari."]],
-  [["orhan", "Paşam yine 'Barkan 4'ler hazır mı' dedi."], ["kaan", "Barkan 4 mü? Bizdeki Barkan-2 değil miydi?"], ["orhan", "Öyle bir araç yok ki! Ben de 'hazır komutanım' dedim."], ["boran", "Arz ederim, Barkan 4 hâlâ fabrikada komutanım."], ["azizhan", "La güldürmeyin, paşam duyarsa…"], ["ahmet", "Haaahaaa haaa!"]],
-  [["kaan", "Barkan 4'ün yazılımını ben yapayım bari, paşam sorunca gösteririz."], ["orhan", "Keşifte tank yok, ZPT var, bir de Barkan-2. Dördü nereden çıktı bilmiyorum."], ["ali", "Paşam bizden bir adım önde, iki model sonrasını biliyor."], ["furkan", "Cansınız komutanım."], ["boran", "Hisar taburunda şenlik havası hakim!"]],
+  DLG("any", [["ufuk", "Naber mankiler? İşler nasıl gidiyor?"], ["ahmet", "Bütün şantiyeleri gezdim komutanım, işler yolunda."], ["ufuk", "Güzel. Asker yorulmasın, nöbetleşe çalışsın."], ["azizhan", "Emredersiniz komutanım."], ["ufuk", "İyi gidiyorsunuz, aynen devam."]]),
+  DLG("any", [["ufuk", "Bunker ne durumda Kaan?"], ["kaan", () => DX.bnkSay()], ["ufuk", () => BNK.p >= .999 ? "Aferin. Paşam teftişte ilk oraya bakacak." : "Teftişe yetişsin. Paşam ilk oraya bakacak."], ["kaan", () => BNK.p >= .999 ? "Hazır komutanım, içini de düzenledik." : "Yetişecek komutanım."]]),
+  DLG("any", [["ufuk", "Bugün kamyonlar kaç sefer döküm yaptı?"], ["boran", () => DX.trips() ? `${DX.trips()} sefer komutanım, kamyonlar boş durmuyor.` : "İlk sefer yolda komutanım, kamyon yükleniyor."], ["ufuk", "Çay da güzel olmuş, ellerinize sağlık."], ["kaan", "Hepsi tablette kayıtlı komutanım."]], () => typeof DAY !== "undefined" && DAY.on && DAY.t > 560),
 ];
+// the ones that do not depend on the day's numbers (sohbetler.txt can replace these)
+const DIALOGS = [
+  DLG("sabah", [["ahmet", "Arkadaşlar, dün akşam kantinde lahmacun vardı, haberiniz oldu mu?"], ["ali", "Olmadı. Kendin yemişsin kardeşim."], ["ahmet", "Seferberlik ilan etmiştim ama kimse gelmedi!"], ["boran", "Mesajınız bize ulaşmadı komutanım, arz ederim."], ["ahmet", "Haaahaaa! Sen kralsın Boran."]]),
+  DLG("sabah", [["boran", "Komutanım, yarın sabah tam teçhizat mıyız?"], ["azizhan", "La ne teçhizatı, sabah koşusu var."], ["boran", "Çelik plakalar dahil mi komutanım?"], ["ali", "Plakayı sen tak Boran, biz koşarız."], ["furkan", "Ben koşarım komutanım."]]),
+  DLG("sabah", [["orhan", "Sabah dronu kaldırdım, garnizonun üstünden bir tur attım."], ["kaan", "Görüntüleri bana at, yapay zekâya kazı hacmini hesaplatırım."], ["orhan", "Yukarıdan bakınca her şey belli. Şantiyeler güzel ilerliyor."], ["kaan", "Yansın Hisar!"]]),
+  DLG("sabah", [["ali", "Furkan, sabah koşusunda yine en öndeydin."], ["furkan", "Cansınız komutanım, siz de az kalsın geçiyordunuz."], ["ali", "Tek rakibim kendim kardeşim. Yakında seni de geçerim."], ["ahmet", "Ali'nin geçmişi sporcu, göbeği yeni."], ["ali", "Bunlar özel konular. Özel olarak konuşalım bunu."]]),
+  DLG("is", [["ali", "Furkan, kapım sana her daim açık, biliyorsun."], ["furkan", "Biliyorum komutanım, cansınız."], ["boran", "Furkan kaçma, gel Furkan, sığınak seni bekliyor."], ["furkan", "Planlama ve koordinasyon için beklemekteyiz, arz ederim."], ["ali", "Çakı gibi asker!"]]),
+  DLG("is", [["kaan", "Komutanım, şantiyedeki bütün işleri tablete işledim, kim ne yapıyor buradan görünüyor."], ["azizhan", "La bana çok güvenme, ben kâğıda yazarım."], ["kaan", "Kâğıt da olur komutanım, ama tablet hesabı kendisi yapıyor."], ["ahmet", "Teknik iyi ama geliştirmen lazım Kaan."], ["kaan", "Geliştiriyorum komutanım, yapay zekâ da yardım ediyor."]]),
+  DLG("is", [["azizhan", "Çaylar tazelensin."], ["ahmet", "Ocakçı, demli olsun!"], ["kaan", "Bu çay yapay zekâdan iyi çalışıyor."], ["orhan", "Yukarıdan bile kokusu geliyor."], ["boran", "Afiyet olsun komutanım, arkadaşlar."], ["ali", "Çay bizden, muhabbet sizden."]]),
+  DLG("is", [["boran", "Furkan, sen yine mi kazdın?"], ["furkan", "Askerle beraber çalışınca iş daha hızlı gidiyor komutanım."], ["boran", "Ben de iş yaptırıyorum, o da bir sanat."], ["ahmet", "Sanatını görüyoruz Boran."], ["azizhan", "La Boran, bir kürek de sen al bari."]]),
+  DLG("is", [["boran", "Ali Üsteğmenim, spor geçmişi olan bir subaysınız. Barfikse sizin yazılmanız daha uygun olmaz mıydı? Arz ederim."], ["ali", "Ne alakası var la! Kötü kötü konuşturma beni şimdi."], ["boran", "Bu faaliyetlerde sizi de görmek isteriz komutanım."], ["ali", "Adı üstünde, geçmiş kardeşim. Şu an genç dimağlara güvenim sonsuz."], ["ahmet", "Altı kilometre koştuğunu biliyoruz Ali."], ["ali", "Bir de utanmadan övünüyor musun?"]]),
+  DLG("ogle", [["ahmet", "Bugün yemekte ne var?"], ["ali", "Kuru fasulye, pilav, ayran."], ["ahmet", "Sen kralsın kardeşim, bu menüyü kim seçtiyse."], ["boran", "Afiyet olsun şimdiden komutanım."], ["furkan", "Ben ilk sıraya giriyorum komutanım."]]),
+  DLG("aksam", [["ahmet", "Arkadaşlar, lahmacun saat 18.30'da tabldotta."], ["ali", "Bu sefer erken gidelim, geçen sefer bitmişti."], ["boran", "Furkan kaçma, gel Furkan, sıraya beraber gireriz."], ["furkan", "Emredersiniz komutanım."], ["ahmet", "Sen kralsın kardeşim."]]),
+  DLG("aksam", [["boran", "Hisar taburunda şenlik havası hakim!"], ["azizhan", "Tugayda bir iş yapılıyorsa Hisar yapıyordur, gayet normal."], ["boran", "Komutanım siz cansınız vallahi."], ["kaan", "Yansın Hisar!"], ["ali", "En kötü günümüz böyle olsun."]]),
+  DLG("aksam", [["ali", "Ben akşam devrelerime kendi ellerimle çorba yapacağım."], ["ahmet", "Bizi çağırmıyor musun kardeşim?"], ["ali", "Kapım her daim açık. Ama çorba az."], ["ahmet", "Haaahaaa! Seferberlik ilan ediyoruz, herkes Ali'ye!"]]),
+  DLG("aksam", [["ahmet", "Bizim devrede de böyle şantiyeler olurdu."], ["boran", "Sizin devrede kazmayı kim tutardı komutanım?"], ["ahmet", "Herkes! Teğmenler de tutardı."], ["furkan", "Biz de tutuyoruz komutanım."], ["ali", "Furkan'dan başka kimse tutmuyor, bunu bilelim."]]),
+  DLG("aksam", [["azizhan", "Ali ile Kaan bölük komutanlığına başladığında hallerini görecektiniz."], ["ali", "Ben eksik bir şey görmedim komutanım, gayet disiplinli biri."], ["ali", "Çakı gibi asker!"], ["kaan", "Sağ olun komutanım."], ["ahmet", "Haaahaaa haaa!"], ["ali", "Gülüşün bile tehlikeli devrem."]]),
+  DLG("any", [["ufuk", "Sabah koşusuna herkes geliyor, değil mi?"], ["ali", "Tek rakibim kendim komutanım, ben hep oradayım."], ["ufuk", "Teğmenler de gelsin."], ["boran", "Furkan kaçma, gel Furkan!"], ["furkan", "Emredersiniz komutanım."]]),
+  DLG("any", [["ufuk", "Paşam bugün yine Barkan 4'ü sordu mu?"], ["orhan", "Sordu komutanım. Barkan-2'yi gösterdim, 'bu Barkan 4 değil mi' dedi."], ["ufuk", "Barkan 4'ü bulursan bana da haber ver Orhan."], ["orhan", "Emredersiniz komutanım, keşfe çıkarız, belki buluruz."], ["ali", "Haaahaha!"], ["ufuk", "Gülmeyin mankiler!"]]),
+];
+// what each one says on his own at the table (no conversation fits): table talk, not work orders
+const TLINES = {azizhan: ["Çaylar tazelensin.", "La bana çok güvenme.", "Herkes görevini biliyor mu?", "Teftişe az kaldı, gevşemek yok."], ahmet: ["Sen kralsın kardeşim.", "Nereye gitsem paşam orada, inanmıyorum!", "Ocakçı, demli olsun!", "Teknik iyi ama geliştirmen lazım."],
+  ali: ["Tek rakibim kendim.", "Çakı gibi asker.", "Özel olarak konuşalım bunu.", "Çay bizden, muhabbet sizden."], orhan: ["Yukarıdan bakınca her şey belli.", "Dronun pilleri şarjda, yarın erken uçuş var.", "Keşifte ZPT'ler hazır."],
+  kaan: ["Yansın Hisar!", "Resmen enkaz devraldım.", "Bunun yazılımını yaparız komutanım.", "Planı tablete işledim."], furkan: ["Emredersiniz komutanım.", "Cansınız komutanım.", "Planlama ve koordinasyon için beklemekteyiz, arz ederim."],
+  boran: ["Hisar taburunda şenlik havası hakim.", "Arz ederim komutanım.", "Ekip sağlam.", "Bir şey diyeceğim ama…"], ufuk: ["Naber mankiler!", "Kolay gelsin arkadaşlar.", "İyi gidiyorsunuz, aynen devam."], levent: ["Hı."]};
+const dlgText = t => typeof t === "function" ? t() : t;
+const dlgAll = () => DIALOGS.concat(DIALOGS_DYN);
+function dlgCtx() { if (typeof DAY === "undefined" || !DAY.on || !DAY.block) return "is"; const k = DAY.block.k;
+  return k === "sabah" || k === "ictima" ? "sabah" : k === "ogle" || (k === "is" && DAY.t > 690 && DAY.t < 720) ? "ogle" : k === "cay" || k === "aksam" || k === "sohbet" || k === "gece" ? "aksam" : "is"; }
 // what each commander calls out while watching over his job
 const SUPL = {siginak: ["Kesiciyi yavaş sür, aynaya dikkat!", "Kamyon dolunca hemen gönder!", "Sığınağın ekseninden sapma!", "Bant temiz mi? Kontrol et!", "Ver küreği, ben de gireyim!"],
   bunker: ["Kovayı tam doldur!", "Kamyon geldi, yükle!", "Çukurun kenarına yaklaşmayın!", "Bunkerin ölçülerini tablete işledim."],
@@ -4850,17 +4981,19 @@ const MEET = {t: 4, visit: null, vt: 85 + Math.random() * 40, boss: null, bt: 23
 const seated = () => OFFS.filter(o => o.st === "seat" && !isPlayer(o));
 const atTable = k => { const o = OFFM[k]; return !!o && !!o.S && ((o.st === "seat" && !isPlayer(o)) || (isPlayer(o) && SEAT.on)); };
 function startDialog() {
-  const pool = []; DIALOGS.forEach((d, i) => { if (!MEET.last.includes(i) && d.every(([k]) => atTable(k))) pool.push(i); });
-  const bk = MEET.barkan ? pool.filter(i => DIALOGS[i].some(([, t]) => /Barkan 4/.test(t))) : [];
-  const uf = pool.filter(i => DIALOGS[i].some(([k]) => k === "ufuk")), P = bk.length ? bk : MEET.visit && uf.length ? uf : pool;   // just after the raid the paşa's "Barkan 4"; the commander at the table: his topics first
+  const A = dlgAll(), ctx = dlgCtx(), pool = [];
+  A.forEach((d, i) => { if (MEET.last.includes(d)) return; if (d.when && d.when !== "any" && d.when !== ctx) return; if (d.need) { try { if (!d.need()) return; } catch (e) { return; } } if (d.every(([k]) => atTable(k))) pool.push(d); });
+  const bk = MEET.barkan ? pool.filter(d => d.some(([, t]) => typeof t === "string" && /Barkan 4/.test(t))) : [];
+  const uf = pool.filter(d => d.some(([k]) => k === "ufuk")), P = bk.length ? bk : MEET.visit && uf.length ? uf : pool.filter(d => !d.some(([k]) => k === "ufuk"));   // just after the raid the paşa's "Barkan 4"; the commander at the table: his topics first
   if (bk.length) MEET.barkan = false;
-  if (!P.length) return false; const i = pick(P); MEET.dlg = {i, k: 0, t: .3}; MEET.last.push(i); if (MEET.last.length > 12) MEET.last.shift(); return true;
+  if (!P.length) return false; const d = pick(P); MEET.dlg = {d, k: 0, t: .3}; MEET.last.push(d); if (MEET.last.length > 14) MEET.last.shift(); return true;
 }
 function dialogFrame(dt) {
-  const D = MEET.dlg; D.t -= dt; if (D.t > 0) return; const L0 = DIALOGS[D.i];
-  if (D.k >= L0.length) { MEET.dlg = null; MEET.t = 4 + Math.random() * 5; return; }
-  const [k, text] = L0[D.k]; if (!atTable(k)) { MEET.dlg = null; MEET.t = 3; return; }
-  const dur = Math.max(2.6, text.length * .072); say(OFFM[k], text, dur); D.k++; D.t = dur + .5;
+  const D = MEET.dlg; D.t -= dt; if (D.t > 0) return; const L0 = D.d;
+  if (D.k >= L0.length) { MEET.dlg = null; MEET.t = 6 + Math.random() * 8; return; }
+  const [k, t0] = L0[D.k]; if (!atTable(k)) { MEET.dlg = null; MEET.t = 3; return; }
+  let text = ""; try { text = dlgText(t0); } catch (e) { text = ""; } if (!text) { D.k++; return; }
+  const dur = Math.max(2.4, text.length * .068); say(OFFM[k], text, dur); D.k++; D.t = dur + .45 + Math.random() * .5 + (/\?$/.test(text) ? .3 : 0);
 }
 function greet(arr) { // someone sat down at the table: the juniors greet the seniors, classmates greet each other
   const s = seated().filter(o => o !== arr); if (!s.length || MEET.hush) return; let t = .6;
@@ -4878,7 +5011,7 @@ function meetFrame(dt, T) {
   if (MEET.hush) MEET.dlg = null;
   else if (MEET.dlg) dialogFrame(dt);
   else { MEET.t -= dt; if (MEET.t <= 0) { MEET.t = 3.5 + Math.random() * 3;
-    if (!startDialog()) { const s = seated(); if (s.length) { const chief = MEET.visit && MEET.visit.st === "seat" ? MEET.visit : s.find(o => o.d.chief); const o = chief && Math.random() < .38 ? chief : pick(s); say(o, pick(o.d.lines)); MEET.t = 6 + Math.random() * 4; } } } }
+    if (!startDialog()) { const s = seated(); if (s.length) { const chief = MEET.visit && MEET.visit.st === "seat" ? MEET.visit : s.find(o => o.d.chief); const o = chief && Math.random() < .38 ? chief : pick(s); say(o, pick(TLINES[o.d.key] || o.d.lines)); MEET.t = 9 + Math.random() * 6; } } } }
   // the battalion commander drops by now and then, the brigade commander raids
   if (typeof DAY !== "undefined" && DAY.on) return;
   if (!MEET.visit && !MEET.boss) { MEET.vt -= dt; if (MEET.vt <= 0) startVisit(OFFM.ufuk); }
@@ -4886,7 +5019,7 @@ function meetFrame(dt, T) {
 }
 const senior = () => seated().sort((a, b) => b.d.rank - a.d.rank)[0] || null;
 const attention = () => { const o = senior(); if (o) say(o, "Dikkat!", 1.5); };
-function standAll(except) { for (const o of OFFS) if (o.st === "seat" && !isPlayer(o) && o !== except) { o.st = "standby"; o.t = 0; } }
+function standAll(except) { for (const o of OFFS) if (o.st === "seat" && !isPlayer(o) && o !== except) { const S = o.S; o.rise = S.root.visible ? riseOf(S) : null; o.trans = null; o.st = "standby"; o.t = 0; } }
 function sitAll() { for (const o of OFFS) if (o.st === "standby" && !isPlayer(o)) { const c = chairOf(o); if (c && (!c.occ || c.occ === o)) seatAt(o, c); else { leaveChair(o); o.st = "stand"; o.t = .3; } } }
 
 // ---------------- the commanders' cars: Levent Paşa's black SUV comes in through the main gate, along the main road and up the ramp;
@@ -4930,7 +5063,7 @@ function outOfCar(o, car) { const p = carDoor(car); o.x = p.x; o.z = p.z; o.a = 
 // Ufuk Binbaşı: his car pulls up, he walks over, everyone stands, he takes the head of the table, chats a while, then sends them back to work kindly
 function startVisit(u) {
   if (!u || !u.S || isPlayer(u)) { MEET.vt = 200; return; }
-  MEET.visit = u; u.st = "car"; u.vw = 2.3; const car = CARS.ufuk; toast("Ufuk Binbaşı'nın aracı karargâhtan çıktı · çay ocağına geliyor", 2.6);
+  MEET.visit = u; u.st = "car"; u.vw = 1.6; const car = CARS.ufuk; toast("Ufuk Binbaşı'nın aracı karargâhtan çıktı · çay ocağına geliyor", 2.6);
   carGo(car, ROUTE_U_IN, 16, () => { outOfCar(u, car); walkTo(u, CHAIRS[0].x - .9, CHAIRS[0].z, () => {
     if (MEET.visit !== u) return;
     if (!seated().length) { say(u, SEAT.on ? "Naber mankiler? Herkes iş başında, aferin. Sen de bir göz at, kolay gelsin." : "Naber mankiler? Masa boş, herkes iş başında. Aferin, kolay gelsin!", 3); gTimeout(() => leaveVisit(u), 3400); return; }
@@ -5033,7 +5166,7 @@ function bossLines(L, U, res) { // what he says depends on what he found and on 
 const CARCAM = {on: false, done: false, t: 0}, CCL = new THREE.Vector3(), CCT = new THREE.Vector3();
 function startBoss(L) {
   if (!L || !L.S || isPlayer(L)) { MEET.bt = 300; return; }
-  MEET.boss = L; MEET.hush = true; MEET.dlg = null; L.st = "car"; L.vw = 2.6; const car = CARS.levent, U = OFFM.ufuk;
+  MEET.boss = L; MEET.hush = true; MEET.dlg = null; L.st = "car"; L.vw = 1.55; const car = CARS.levent, U = OFFM.ufuk;
   car.gateNote = false; carGo(car, ROUTE_L_IN, 22, () => gTimeout(() => arrive(L), 400)); lineUp(car); RECV.on = true; RECV.salute = false; CARCAM.done = false; CARCAM.on = false; CARCAM.t = 0;
   MEET.bossU = U && U.S && !isPlayer(U) && (U.st === "away" || U === MEET.visit) ? U : null;
 }
@@ -5087,8 +5220,9 @@ function autoFrame(dt) { // true while the game walks you
       else { const st = Math.min(d, v * dt); FOOT.x += dx / d * st; FOOT.z += dz / d * st; FOOT.a += wrapA(Math.atan2(dz, dx) - FOOT.a) * Math.min(1, dt * 10); FOOT.spd = v; } } }
   if (AUTO.arrived) { FOOT.spd = 0; FOOT.a += wrapA(AUTO.face - FOOT.a) * Math.min(1, dt * 6); }
   FOOT.y += (footGround(FOOT.x, FOOT.z) - FOOT.y) * Math.min(1, dt * 12); FOOT.vx = FOOT.vz = 0;
-  S.root.position.set(FOOT.x, FOOT.y, FOOT.z); headingQ(FOOT.a, S.root.quaternion); locoSoldier(S, FOOT.spd, dt);
-  if (AUTO.arrived && RECV.salute) salutePose(S); else if (AUTO.arrived && MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); }
+  S.root.position.set(FOOT.x, FOOT.y, FOOT.z); headingQ(FOOT.a, S.root.quaternion); locoSoldier(S, FOOT.spd, dt); if (FOOT.rise && riseBlend(S, FOOT.rise, dt)) FOOT.rise = null;
+  S.salW = clamp((S.salW || 0) + (AUTO.arrived && RECV.salute ? dt * 3.2 : -dt * 2.6), 0, 1);
+  if (S.salW > 0) { const keep = poseKeep(S, PB_ARMS, S.pk || (S.pk = {})); salutePose(S); poseMix(S, PB_ARMS, keep, ease(S.salW)); } else if (AUTO.arrived && MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); }
   return true;
 }
 function carCamFrame(dt) { // the raid on camera: first the black car pulling up, then the commander in front of the line
@@ -5130,7 +5264,17 @@ const DRONE = (() => { const g = new THREE.Group(), s = SP(); s.box(.36, .09, .3
 // ---------------- each officer that is not you ----------------
 const MCH = new THREE.Vector3();
 const LPV = {x: 0, y: 0, z: 0}, GESTS = ["sagGos", "ileri", "ok", "clip"];
+// the subtitle line: on a narrow (portrait) screen it sits just above the buttons, however many rows they take
+function subShow(html, t) { subEl.innerHTML = html; subEl.style.opacity = 1; subEl._t = t;
+  if (innerWidth <= 640) { let top = innerHeight - 150; for (const s of [".ctxL", ".ctx"]) { const e = document.querySelector(s); if (e) for (const c of e.children) { const r = c.getBoundingClientRect(); if (r.height > 0 && r.top < top) top = r.top; } }
+    subEl.style.setProperty("bottom", Math.round(innerHeight - top + 10) + "px", "important"); }
+  else subEl.style.setProperty("bottom", "calc(env(safe-area-inset-bottom,0px) + 150px)"); }
 function talkerAt(o) { for (const q of OFFS) if (q !== o && q.talk > 0 && q.S && q.S.root.visible && Math.hypot(q.x - TH.x, q.z - TH.z) < 6) return q; return null; }
+const RSV = new THREE.Vector3(), RSQ = new THREE.Quaternion();
+// getting up: from the kept seated pose and place into what the bones and root hold now; sitting down: from the standing pose into the chair
+function riseBlend(S, tr, dt) { tr.t += dt; const u = ease(tr.t / tr.dur); poseMix(S, PB_BODY, tr.keep, u); RSV.copy(S.root.position); S.root.position.lerpVectors(tr.p0, RSV, u); RSQ.copy(S.root.quaternion); S.root.quaternion.slerpQuaternions(tr.q0, RSQ, u); return tr.t >= tr.dur; }
+function sitBlend(S, tr, dt) { tr.t += dt; const u = ease(tr.t / tr.dur); poseMix(S, PB_BODY, tr.keep, u); S.root.position.lerpVectors(tr.p0, tr.p1, u); S.root.quaternion.slerpQuaternions(tr.q0, tr.q1, u); return tr.t >= tr.dur; }
+const riseOf = S => ({t: 0, dur: .6, p0: S.root.position.clone(), q0: S.root.quaternion.clone(), keep: poseKeep(S, PB_BODY)});
 // far from the camera an officer's bones are updated less often (the walking, the jobs and the talk go on every frame)
 function animTick(o, dt) { o.acc = (o.acc || 0) + dt; const d = Math.hypot(o.x - cam.position.x, o.z - cam.position.z), th = QUAL.offLod;
   const iv = d < th * 1.6 ? 0 : d < th * 3.5 ? .09 : .2; if (o.acc < iv) return false; o.adt = Math.min(.25, o.acc); o.acc = 0; return true; }
@@ -5143,17 +5287,21 @@ function offFrame(dt, T) {
       const c = chairOf(o); if (c && !c.occ) seatAt(o, c); else { o.x = TH.x + 3; o.z = TH.z + 3; o.st = "stand"; } o.supT = 40 + Math.random() * 120;
     }
     if (o.st === "away" || o.st === "car") continue;
+    if (o.st === "walk" && o.rise) { S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion); locoSoldier(S, 0, dt); if (riseBlend(S, o.rise, dt)) o.rise = null; continue; }
     if (o.st === "walk") { if (stepWalk(o, dt)) { const f = o.next; o.next = null; o.st = "stand"; if (f) f(); } if (animTick(o, dt)) locoSoldier(S, o.spd, o.adt); continue; }
-    if (o.st === "seat") { if (animTick(o, dt)) { S.mixer.update(o.adt); tablePose(S, o.talk, T); const sp = talkerAt(o); if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); } }
+    if (o.st === "seat") { const ch = chairOf(o) || CHAIRS.find(c => c.occ === o), tk = animTick(o, dt); if (tk || o.trans) { const adt = tk ? o.adt : dt; S.mixer.update(adt); tablePose(S, o.talk, T, adt, ch && ch.glass); const sp = talkerAt(o);
+        if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); } else if (o.talk > 0) { const q = seated().find(x => x !== o && Math.floor(T / 2.5 + x.d.h * 3) % 3 === 0) || OFFM.azizhan; if (q && q.S && q !== o) { q.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .6); } }
+        if (o.trans && sitBlend(S, o.trans, dt)) o.trans = null; }
       if (o === MEET.visit) { o.t -= dt; if (o.t <= 0) endVisit(); continue; }
       // now and then a commander gets up to look in on his job (never everybody at once, never in the middle of his own conversation)
-      if (!o.d.visitor && !MEET.visit && !MEET.boss && !MEET.called && (typeof isWork !== "function" || isWork())) { o.supT = Math.min(o.supT == null ? 12 : o.supT, 25) - dt;   // working hours: everyone's place is at his job
-        if (o.supT <= 0 && o.talk <= 0 && !(MEET.dlg && DIALOGS[MEET.dlg.i].some(([k]) => k === o.d.key))) {
+      if (!o.d.visitor && !MEET.visit && !MEET.boss && !MEET.called && (typeof isWork !== "function" || isWork())) { o.supT = Math.min(o.supT == null ? 12 : o.supT, o.d.chief ? 160 : 25) - dt;   // working hours: everyone's place is at his job (the coordinator's is the table with the plan)
+        if (o.supT <= 0 && o.talk <= 0 && !(MEET.dlg && MEET.dlg.d.some(([k]) => k === o.d.key))) {
           o.supT = 30 + Math.random() * 30; const j = siteOf(o.d.key, null);
           if (j && j.on) { say(o, pick(["Ben bir sahaya bakıp geleyim.", "Şuna bir göz atayım, geliyorum.", "Arkadaşlar, ben işin başına geçiyorum."]), 2.2); const oo = o, k = j.k; gTimeout(() => { if (oo.st === "seat") sendToSite(oo.d.key, k, false); }, 1500); } } }
       continue; }
     if (o.st === "standby") { // on their feet next to the chair (a commander came)
       const c = chairOf(o) || CHAIRS[0]; o.x = c.x - Math.cos(c.a) * .45; o.z = c.z - Math.sin(c.a) * .45; o.a = c.a; S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion);
+      if (o.rise) { locoSoldier(S, 0, dt); if (riseBlend(S, o.rise, dt)) o.rise = null; continue; }
       if (animTick(o, dt)) { locoSoldier(S, 0, o.adt); const boss = MEET.boss || MEET.visit; if (boss && boss.S && boss.S.root.visible) { boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .8); } } continue; }
     if (o.st === "work") { // at his job: Furkan digs with the soldiers, Boran now and then; the others watch, point and call out
       const tick = animTick(o, dt); if (tick) locoSoldier(S, 0, o.adt); o.t -= dt; const v = o.jobV; let lp = o.jobP; if (v) { lp = LPV; LPV.x = v.x; LPV.y = (v.y || 0) + 1.8; LPV.z = v.z; }
@@ -5162,25 +5310,28 @@ function offFrame(dt, T) {
       if (dig) { if (!o.tool) { o.tool = TOOLM.kurek.clone(true); scene.add(o.tool); } o.tool.visible = true; S.root.position.set(o.x, footGround(o.x, o.z), o.z);
         if (tick) toolPose(S, o.tool, kfAt(KF.kurek, ((T * .85 + o.d.h * 3) % SWDUR.kurek) / SWDUR.kurek), true, "kurek"); }
       else { if (o.tool) o.tool.visible = false; const gs = GESTS[Math.floor((T + o.d.h * 5) / 14) % 4];
-        if (!tick) {} else if ((T + o.d.h * 5) % 14 < 2.4) gesture(S, gs, T * 3); else if (lp) { MCH.set(lp.x, lp.y != null ? lp.y : footGround(lp.x, lp.z) + 1.2, lp.z); lookAtHead(S, MCH, .6); } }
+        const gph = (T + o.d.h * 5) % 14;
+        if (!tick) {} else if (gph < 2.4) { const keep = poseKeep(S, PB_ARMS, o.pk || (o.pk = {})); gesture(S, gs, T * 3); poseMix(S, PB_ARMS, keep, ease(Math.min(1, Math.sin(Math.PI * gph / 2.4) * 1.7))); } else if (lp) { MCH.set(lp.x, lp.y != null ? lp.y : footGround(lp.x, lp.z) + 1.2, lp.z); lookAtHead(S, MCH, .6); } }
       o.sayT = (o.sayT || 5) - dt;
       if (o.sayT <= 0) { o.sayT = 13 + Math.random() * 13; const L0 = v && v.type === "tr" ? SUPL.nakliye : SUPL[o.site] || SUPL.cukur; if (FOOT.on && Math.hypot(FOOT.x - o.x, FOOT.z - o.z) < 30) say(o, pick(L0), 2.4); }
       if (o.d.key === "orhan") { droneOn = true;
         if (o.site === "parkur" && typeof DGATES !== "undefined") { const p = DRONEPATH.getPointAt((T * .035) % 1), q = DRONEPATH.getTangentAt((T * .035) % 1); DRONE.position.copy(p); DRONE.rotation.y = -Math.atan2(q.z, q.x); }   // round the course, through the gates
         else { DRONE.position.set(o.x + Math.sin(T * .4) * 6 + 3, footGround(o.x, o.z) + 9 + Math.sin(T * 1.3) * .4, o.z + Math.cos(T * .33) * 5); DRONE.rotation.y = T * .5; } }
       if (o.t <= 0 && !MEET.boss && !(typeof CATCH !== "undefined" && CATCH.on && o.d.key === "ahmet")) { const w = typeof isWork !== "function" || isWork();
-        if (w && (o.d.chief || o.d.roam)) { if (!sendToSite(o.d.key, null, false, 70 + Math.random() * 50)) o.t = 30; } else if (w) o.t = 1e9; else goBack(o); }
+        if (w && o.d.roam) { if (!sendToSite(o.d.key, null, false, 150 + Math.random() * 70)) o.t = 30; } else if (w && o.d.chief) goBack(o); else if (w) o.t = 1e9; else goBack(o); }
       continue; }
     if (o.st === "line") { // in the line for the brigade commander
       const form = !RECV.on && o.lineFace != null && typeof FORM !== "undefined" && FORM.on;
       const tick = animTick(o, dt); if (tick) locoSoldier(S, 0, o.adt); o.a += wrapA((form ? o.lineFace : RECV.face) - o.a) * Math.min(1, dt * 6); S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion);
       if (form) { if (FORM.salute && tick) salutePose(S); continue; }
-      if (!tick) {} else if (RECV.salute) salutePose(S); else if (MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); }
+      o.salW = clamp((o.salW || 0) + (RECV.salute ? dt * 3.2 : -dt * 2.6), 0, 1);
+      if (!tick) {} else if (o.salW > 0) { const keep = poseKeep(S, PB_ARMS, o.pk || (o.pk = {})); salutePose(S); poseMix(S, PB_ARMS, keep, ease(o.salW)); } else if (MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); }
       if (!RECV.on) { o.st = "stand"; o.t = 1; } continue; }
-    if (o.st === "stand") { if (animTick(o, dt)) locoSoldier(S, 0, o.adt); o.t -= dt; if (o.saluteT > 0) { o.saluteT -= dt; salutePose(S); }
+    if (o.st === "stand") { const tick = animTick(o, dt); if (tick) locoSoldier(S, 0, o.adt); o.t -= dt; if (o.saluteT > 0) o.saluteT -= dt; o.salW = clamp((o.salW || 0) + (o.saluteT > 0 ? dt * 3.2 : -dt * 2.6), 0, 1);
+      if (tick && o.salW > 0) { const keep = poseKeep(S, PB_ARMS, o.pk || (o.pk = {})); salutePose(S); poseMix(S, PB_ARMS, keep, ease(o.salW)); }
       if (!o.d.visitor && o.t <= 0) goBack(o); continue; }
   }
-  DRONE.visible = droneOn;
+  DRONE.visible = droneOn && !(DRONE.hideT > 0);
   carFrame(CARS.ufuk, dt); carFrame(CARS.levent, dt);
 }
 function goBack(o) { // back to my chair at the table (or the foot of the table if mine is taken)
@@ -5193,14 +5344,16 @@ function goBack(o) { // back to my chair at the table (or the foot of the table 
 // ---------------- you at the table: Enter by an empty chair to sit, Enter again (or move) to get up ----------------
 const SEAT = {on: false, c: null};
 function nearChair() { if (!FOOT.on) return null; let best = null, bd = 1.5; for (const c of CHAIRS) { if (c.occ) continue; const d = Math.hypot(c.x - FOOT.x, c.z - FOOT.z); if (d < bd) { bd = d; best = c; } } return best; }
-function sitDown(c, quiet) {
+function sitDown(c, quiet, smooth) {
   if (!c || c.occ) return; if (c.i === 0 && CUR.d.rank < 3) { if (!quiet) toast("Baş köşe Azizhan Üsteğmen'in · başka sandalyeye geç", 2); return; }
   FOOT.sw = -1; TOOLM.kazma.visible = TOOLM.kurek.visible = false; SEAT.on = true; SEAT.c = c; c.occ = CUR; CUR.chair = c.i;
-  const S = PLAYER; S.root.visible = true; S.root.position.set(c.x - Math.cos(c.a) * .08, TH.y + .5 - S.hipY, c.z - Math.sin(c.a) * .08); headingQ(c.a, S.root.quaternion); FOOT.x = c.x; FOOT.z = c.z; FOOT.a = c.a; FOOT.y = footGround(c.x, c.z);
+  const S = PLAYER, anim = (smooth != null ? smooth : !quiet) && S.root.visible && Math.hypot(S.root.position.x - c.x, S.root.position.z - c.z) < 1.6, p0 = anim ? S.root.position.clone() : null, q0 = anim ? S.root.quaternion.clone() : null, keep = anim ? poseKeep(S, PB_BODY) : null;
+  S.root.visible = true; S.root.position.set(c.x - Math.cos(c.a) * .08, TH.y + .5 - S.hipY, c.z - Math.sin(c.a) * .08); headingQ(c.a, S.root.quaternion); FOOT.x = c.x; FOOT.z = c.z; FOOT.a = c.a; FOOT.y = footGround(c.x, c.z);
+  SEAT.trans = anim ? {t: 0, dur: .75, p0, q0, p1: S.root.position.clone(), q1: S.root.quaternion.clone(), keep} : null; if (anim) { S.root.position.copy(p0); S.root.quaternion.copy(q0); }
   if (!quiet) { toast("Çay ocağındasın · G: görev dağılımı · ENTER: kalk", 2.4); greet(CUR); }
   updCtx();
 }
-function standUp() { if (!SEAT.on) return; const c = SEAT.c; SEAT.on = false; if (c && c.occ === CUR) c.occ = null; FOOT.x = c.x - Math.cos(c.a) * .55; FOOT.z = c.z - Math.sin(c.a) * .55; FOOT.y = footGround(FOOT.x, FOOT.z); updCtx(); }
+function standUp(still) { if (!SEAT.on) return; const c = SEAT.c; SEAT.on = false; SEAT.trans = null; FOOT.rise = still || !PLAYER.root.visible ? null : riseOf(PLAYER); if (c && c.occ === CUR) c.occ = null; FOOT.x = c.x - Math.cos(c.a) * .55; FOOT.z = c.z - Math.sin(c.a) * .55; FOOT.y = footGround(FOOT.x, FOOT.z); updCtx(); }
 addEventListener("keydown", e => {
   if (!running || e.repeat) return;
   if (AUTO.on) return;
@@ -5210,7 +5363,8 @@ addEventListener("keydown", e => {
 // player-character hook: seated at the table (instead of walking)
 function seatedFrame(dt, T) {
   if (autoFrame(dt)) return true;
-  if (!SEAT.on) return false; const S = PLAYER; S.mixer.update(dt); tablePose(S, CUR.talk, T);
+  if (!SEAT.on) return false; const S = PLAYER; S.mixer.update(dt); tablePose(S, CUR.talk, T, dt, SEAT.c && SEAT.c.glass);
+  if (SEAT.trans && sitBlend(S, SEAT.trans, dt)) SEAT.trans = null;
   if (keys.KeyW || keys.KeyS || keys.KeyA || keys.KeyD || (L.on && Math.hypot(L.x, L.y) > .5)) { standUp(); return false; }
   const sp = OFFS.find(q => q.talk > 0 && q.S && q.S.root.visible && !isPlayer(q) && Math.hypot(q.x - TH.x, q.z - TH.z) < 6); if (sp) { sp.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .6); }
   return true;
@@ -5219,7 +5373,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261030-0319";
+const PORTKEY = "hs-portraits-20261030-1324";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5251,7 +5405,7 @@ const titleEl = document.createElement("div"); titleEl.style.cssText = "position
 document.body.appendChild(titleEl);
 function switchOfficer(n, quiet) {
   if (!n || !n.S || n.d.visitor) return; const old = CUR;
-  const oc0 = SEAT.on ? SEAT.c : null; if (SEAT.on) standUp();
+  const oc0 = SEAT.on ? SEAT.c : null; if (SEAT.on) standUp(true); FOOT.rise = null;
   // the one you leave: steps off any machine (its soldier takes it back), stays in his chair or walks back to it
   for (const v of vehicles) if (v.P.seated === PLAYER) { unseat(v); doorTo(v, DOORA, 0); scene.add(PLAYER.root); if (v.job) gTimeout(() => { if (!v.P.seated) opsGive(v); }, 1200); }
   FOOT.seq = null; TOOLM.kazma.visible = TOOLM.kurek.visible = false; FOOT.sw = -1;
@@ -5281,7 +5435,7 @@ function startOfficer(o) {
   if (typeof lifeStart === "function") lifeStart();
   for (const q of OFFS) if (q.st === "init" && !q.d.visitor && !isPlayer(q)) { const c = chairOf(q); if (c && !c.occ) seatAt(q, c); q.supT = 40 + Math.random() * 120; }   // the table fills before the first frame
   if (!o || o.d.visitor || !o.S) o = CUR;
-  const oc = chairOf(CUR); FOOT.on = true; FOOT.seq = null; if (SEAT.on) standUp();
+  const oc = chairOf(CUR); FOOT.on = true; FOOT.seq = null; if (SEAT.on) standUp(true); FOOT.rise = null;
   if (o !== CUR) { if (oc && (!oc.occ || oc.occ === CUR)) { oc.occ = null; FOOT.x = oc.x; FOOT.z = oc.z; SEAT.on = true; SEAT.c = oc; oc.occ = CUR; } switchOfficer(o, true); }
   if (!SEAT.on) { let c = chairOf(CUR); if (c && c.occ && c.occ !== CUR) c = null; if (!c) c = CHAIRS.find(q => !q.occ && (q.i !== 0 || CUR.d.rank >= 3)); if (c) { c.occ = null; sitDown(c, true); } }
   CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .3; CAM.dist = 4.6; CAM.cyaw = 0; CAM.cpitch = -.1; camSnap = true; camMode = 0; document.getElementById("bCam").textContent = "KAMERA: " + camName(camMode); MEET.t = 2;
@@ -5312,7 +5466,7 @@ function cineFrame(dt) { // returns true while the close-up runs (it owns the ca
 function charsFrame(dt, T) {
   if (CUR && FOOT.on) { CUR.x = FOOT.x; CUR.z = FOOT.z; CUR.a = FOOT.a; }
   if (CUR && CUR.talk > 0 && !SEAT.on) CUR.talk = Math.min(CUR.talk, .01);
-  timersFrame(dt); offFrame(dt, T); meetFrame(dt, T); talkFrame(dt); offLodFrame();
+  frustUpd(); timersFrame(dt); offFrame(dt, T); meetFrame(dt, T); talkFrame(dt); offLodFrame(); teaGlassFrame();
 }
 window.__hs.offs = OFFS; window.__hs.th = TH; window.__hs.switchTo2 = k => switchOfficer(OFFM[k]); window.__hs.meet = MEET; window.__hs.visit = () => startVisit(OFFM.ufuk); window.__hs.boss = () => startBoss(OFFM.levent);
 window.__hs.startOfficer = k => startOfficer(OFFM[k]); window.__hs.cars = CARS; window.__hs.sendToSite = sendToSite; window.__hs.dialogs = DIALOGS; window.__hs.seat = SEAT; window.__hs.cur = () => CUR;
@@ -5388,6 +5542,7 @@ const EXK = (() => { // arm reach table: bucket pivot (r forward, h up) in the u
 function exReach(r, h) { let best = null, bd = 1e9; for (const e of EXK) { const d = (e[2] - r) ** 2 + (e[3] - h) ** 2; if (d < bd) { bd = d; best = e; } } return best; }
 const EXW = new THREE.Vector3();
 function aiEx(o, dt) {
+  if (o.hold) { drive(o, dt, 0, 0); o.aiBrake = true; work(o, dt, NOIN); o.st = "operatör yok"; return; }   // the operator is away: the machine waits
   const P = o.P, T = o.t; drive(o, dt, 0, 0); o.aiBrake = true; o.aiT += dt;
   P.up.updateMatrixWorld(true); const up = P.up.getWorldPosition(EXW).clone(), tip = wpos(P.tip, new THREE.Vector3());
   const tr = TRX && TRX.ai && TRX.aiState === "wait" && TRX.home && Math.hypot(TRX.x - TRX.home.x, TRX.z - TRX.home.z) < 2.6 && TRX.load < TRX.cap - .05 ? TRX : null;
@@ -5538,7 +5693,7 @@ function aiDrive(o, dt) {
     case "ld": case "bh": aiLoad(o, dt); break;
     case "dz": aiDoz(o, dt); break;
     case "gr": aiGrade(o, dt); break;
-    case "gt": aiKempar(o, dt); break;
+    case "gt": aiKempar(o, dt * wx("siginak")); break;
     default: drive(o, dt, 0, 0);
   }
 }
@@ -5663,7 +5818,7 @@ const BRIEF = {on: false};
 function toTable() { // you are walked to your chair and sit down
   let c = chairOf(CUR); if (!c || (c.occ && c.occ !== CUR) || (c.i === 0 && CUR.d.rank < 3)) c = CHAIRS.find(q => !q.occ && q.i !== 0); if (!c) return;
   autoWalk(c.x - Math.cos(c.a) * .7, c.z - Math.sin(c.a) * .7, c.a);
-  const wait = () => { if (!AUTO.on) return; if (AUTO.arrived) { AUTO.on = false; updCtx(); if (!c.occ) sitDown(c, true); return; } gTimeout(wait, 250); }; gTimeout(wait, 250); }
+  const wait = () => { if (!AUTO.on) return; if (AUTO.arrived) { AUTO.on = false; updCtx(); if (!c.occ) sitDown(c, true, true); return; } gTimeout(wait, 250); }; gTimeout(wait, 250); }
 function rollCall() {
   DAY.rolled = true; BRIEF.on = true;
   const lead = OFFM.azizhan && OFFM.azizhan.S ? OFFM.azizhan : regulars()[0], O = OFFM, g = GOAL; BRIEF.lead = lead;
@@ -5699,7 +5854,7 @@ function raidEval() {
   const atTea = o => isPlayer(o) ? (SEAT.on || (FOOT.on && Math.hypot(FOOT.x - TH.x, FOOT.z - TH.z) < 7)) : (["seat", "standby"].includes(o.st) || (["stand", "walk"].includes(o.st) && !o.site && Math.hypot(o.x - TH.x, o.z - TH.z) < 9));
   const caught = OFFS.filter(o => !o.d.visitor && o.S && atTea(o));
   const idle = JOBS.filter(j => !j.done && (!j.on || j.v.broken || (j.v.P.seated !== PLAYER && !j.v.ai)));
-  const score = caught.length + idle.length * .7;
+  let score = caught.length + idle.length * .7; if (DAY.barkanReady) { score -= 1.5; DAY.barkanReady = false; }   // the Barkan-2s shone: the paşa is in a better mood
   return {res: score <= 1.5 ? "iyi" : score <= 3.5 ? "orta" : "kotu", caught: caught.map(o => o.d.key), idle: idle.length};
 }
 
@@ -5723,11 +5878,13 @@ function newEvent() {
     const w = pick(crew); const e = {kind: "isg", w, t0: DAY.t, fix: 0, need: 4, crewAt: DAY.t + 12 + Math.random() * 10, mark: mkMarker(ISGTEX), txt: pick(["Asker çalışan makinenin dönüş alanına girdi!", "Asker baretsiz dolaşıyor!", "Asker kamyonun arkasından geçiyor!"])};
     DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz · İSG", "İŞ GÜVENLİĞİ", e.txt + " Gidip ikaz et."); storyEvent(e); return; }
   if (!machines.length) return;
-  const j = pick(machines), v = j.v, txt = pick(EVTXT[v.type] || ["Komutanım, makine arıza yaptı!"]);
-  v.broken = true; const e = {kind: v.type === "tr" && /saplandı/.test(txt) ? "saplandi" : "ariza", v, j, t0: DAY.t, fix: 0, need: v.type === "tr" ? 12 : 16, crewAt: DAY.t + 20 + Math.random() * 15, mark: mkMarker(MARKTEX), txt};
-  DAY.ev.push(e); DAY.evN++; phoneNote("Telsiz", v.name + " operatörü", txt); storyEvent(e);
-  const sup = OFFM[j.sup]; if (sup && !isPlayer(sup)) { e.helpAt = DAY.t + 25 + Math.random() * 25; }   // if you do nothing, the officer in charge goes himself a while later
+  const j = pick(machines); breakEvent(j, pick(EVTXT[j.v.type] || ["Komutanım, makine arıza yaptı!"]));
 }
+function breakEvent(j, txt, quick, quiet) { // a machine down: the marker, the repair team on its way (sooner when someone is already there)
+  const v = j.v; if (v.broken) return null; v.broken = true; const e = {kind: v.type === "tr" && /saplandı/.test(txt) ? "saplandi" : "ariza", v, j, t0: DAY.t, fix: 0, need: v.type === "tr" ? 12 : 16, crewAt: DAY.t + (quick ? 4 : 20 + Math.random() * 15), mark: mkMarker(MARKTEX), txt};
+  DAY.ev.push(e); DAY.evN++; if (!quiet) phoneNote("Telsiz", v.name + " operatörü", txt); storyEvent(e);
+  const sup = OFFM[j.sup]; if (sup && !isPlayer(sup)) { e.helpAt = DAY.t + 25 + Math.random() * 25; }   // if you do nothing, the officer in charge goes himself a while later
+  return e; }
 function evFrame(dt) {
   const T = TT;
   for (const e of DAY.ev.slice()) {
@@ -5783,7 +5940,7 @@ function ahmetCaught() {
   const me = isPlayer(A), ax = me ? FOOT.x : A.x, az = me ? FOOT.z : A.z;
   if (me ? (!FOOT.on || SEAT.on || FOOT.seq) : A.st !== "work") return false;
   if (zoneOf(ax, az) !== "S" || Math.hypot(ax - 20, az - 55) > 150) return false;   // on the site, where the black car can get to
-  CATCH.on = true; MEET.catchL = true; L.st = "car"; L.vw = 2.7; const car = CARS.levent; car.gateNote = true;
+  CATCH.on = true; MEET.catchL = true; L.st = "car"; L.vw = 1.6; const car = CARS.levent; car.gateNote = true;
   carGo(car, ROUTE_C_IN, 20, () => { toast("LEVENT PAŞA ŞANTİYEDE!", 2.2); outOfCar(L, car);
     const tx = () => isPlayer(A) ? FOOT.x : A.x, tz = () => isPlayer(A) ? FOOT.z : A.z;
     const go = () => { const x = tx(), z = tz(), a = Math.atan2(L.z - z, L.x - x); walkTo(L, x + Math.cos(a) * 1.6, z + Math.sin(a) * 1.6, () => { L.st = "stand"; L.t = 1e9; L.a = Math.atan2(tz() - L.z, tx() - L.x); headingQ(L.a, L.S.root.quaternion); talk(); }); };
@@ -5849,16 +6006,17 @@ const trLow = s => s.toLocaleLowerCase("tr-TR").replace(/[^a-zçğıöşü]/g, "
 function loadTexts() {
   if (location.protocol === "file:") return;
   fetch("sohbetler.txt?" + Date.now()).then(r => r.ok ? r.text() : "").then(txt => {
-    if (!txt) return; let sec = "", cur = [], dl = [], lines = {}, rage = [];
-    const flush = () => { if (cur.length) dl.push(cur); cur = []; };
+    if (!txt) return; let sec = "", when = "any", cur = [], dl = [], lines = {}, rage = [];
+    const flush = () => { if (cur.length) dl.push(DG(when, cur)); cur = []; };
     for (const raw of txt.split(/\r?\n/)) { const l = raw.trim(); if (!l || l.startsWith("#")) { if (!l && sec === "sohbet") flush(); continue; }
-      const h = l.match(/^\[(.+)\]$/); if (h) { flush(); const n = trLow(h[1]); sec = n.startsWith("sohbet") ? "sohbet" : n.startsWith("tek") ? "tek" : n.startsWith("levent") ? "levent" : ""; continue; }
+      const h = l.match(/^\[(.+)\]$/); if (h) { flush(); const n = trLow(h[1]); sec = n.includes("sohbet") ? "sohbet" : n.startsWith("tek") ? "tek" : n.startsWith("levent") ? "levent" : "";   // [SABAH SOHBETLERİ], [İŞ ARASI …], [ÖĞLE …], [AKŞAM …], [SOHBETLER] (her saat)
+        when = n.startsWith("sabah") ? "sabah" : n.startsWith("is") ? "is" : n.startsWith("ogle") ? "ogle" : n.startsWith("aksam") ? "aksam" : "any"; continue; }
       if (sec === "levent") { rage.push(l.replace(/^levent\s*:\s*/i, "")); continue; }
       const m = l.match(/^([^:]{2,24}):\s*(.+)$/); if (!m) continue; const k = NAMEKEY[trLow(m[1])]; if (!k) continue;
       if (sec === "sohbet") cur.push([k, m[2]]); else if (sec === "tek") (lines[k] = lines[k] || []).push(m[2]); }
     flush();
     if (dl.length) { DIALOGS.length = 0; dl.forEach(d => DIALOGS.push(d)); MEET.last = []; }
-    for (const k in lines) if (OFFM[k] && lines[k].length) OFFM[k].d.lines = lines[k];
+    for (const k in lines) if (lines[k].length) TLINES[k] = lines[k];
     if (rage.length) { RAGE_MID.length = 0; rage.forEach(r => RAGE_MID.push(r)); }
     console.log("sohbetler.txt:", dl.length, "sohbet");
   }).catch(() => {});
@@ -5886,7 +6044,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261030-0319";
+const BUILD = "20261030-1324";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -6057,7 +6215,8 @@ const CROWD = (() => {
     // towers: always manned, turning slowly to look out
     for (const g of GG.tower) { g.mode = "idle"; g.a += Math.sin(T * .2 + g.seed * 9) * dt * .25; }
     // running squad: daytime outside meals and the night
-    const runOn = !night(k) && !meal(k) && k !== "aksam";
+    const tm = typeof DAY !== "undefined" && DAY.on ? DAY.t % 1440 : 600, inW = (a, b) => tm >= a && tm < b;
+    const runOn = k === "sabah" || (k === "cay" && inW(1050, 1095));
     for (const g of GG.run) { setActive(g, runOn); if (!g.act || g.leaving) continue;
       const u = ((T * 3.3 / (Math.PI * (SPORT.rx + SPORT.rz))) + g.u) % 1, an = u * Math.PI * 2, r = g.lane ? 1.1 : -.1, x = SPORT.cx + Math.cos(an) * (SPORT.rx + r), z = SPORT.cz + Math.sin(an) * (SPORT.rz + r);
       if (g.coming) { if (!g.path) go(g, x, z, true); if (step(g, dt)) g.coming = false; continue; }
@@ -6070,13 +6229,13 @@ const CROWD = (() => {
       const dx = gx - g.x, dz = gz - g.z, d = Math.hypot(dx, dz), v = d > 6 ? 4 : d > 1.5 ? 1.8 : 0; if (d > .3) { const s = Math.min(d, v * dt); g.x += dx / d * s; g.z += dz / d * s; }
       g.a += wrapA(Math.atan2(B.z - g.z, B.x - g.x) - g.a) * Math.min(1, dt * 5); g.mode = v > 2.5 ? "run" : v > 0 ? "walk" : "idle"; g.v = v; }
     // the platoon marching: working hours
-    const marchOn = work(k) && k !== "sabah";
+    const marchOn = work(k) && k !== "sabah" && (inW(480, 600) || inW(810, 900));
     for (const g of GG.march) { setActive(g, marchOn); if (!g.act || g.leaving) continue;
       const per = 2 * (36 + 22), u = ((T * 1.4) % per), lead = u - g.row * 1.6, P = rectPath(-141, -109, 28, 48, lead), sx = P[2], sz = P[3], x = P[0] + (-sz) * (g.col - 1) * 1.1, z = P[1] + sx * (g.col - 1) * 1.1;
       if (g.coming) { if (!g.path) go(g, x, z); if (step(g, dt)) g.coming = false; continue; }
       g.a = Math.atan2(sz, sx); g.x = x; g.z = z; g.mode = "walk"; g.v = 1.4; g.sync = true; g.ph = (T * 1.4 / 1.45 / SOLD.clips.Walk.duration) % 1; }
     // the obstacle course
-    for (const g of GG.obst) { setActive(g, work(k)); if (!g.act || g.leaving) continue; if (g.coming) { if (!g.path) go(g, OBST[0][0], OBST[0][1] + 3); if (step(g, dt)) g.coming = false; continue; }
+    for (const g of GG.obst) { setActive(g, work(k) && (inW(540, 660) || inW(840, 930))); if (!g.act || g.leaving) continue; if (g.coming) { if (!g.path) go(g, OBST[0][0], OBST[0][1] + 3); if (step(g, dt)) g.coming = false; continue; }
       if (g.wait > 0) { g.wait -= dt; g.mode = g.wait > 1.2 ? "bend0" : "idle"; g.v = 0; continue; }
       const nx = OBST[Math.floor(g.k) % OBST.length]; if (!g.path) { g.path = [[nx[0] + rr(-1, 1), nx[1] + rr(-1, 1)]]; g.pi = 0; g.road = false; g.spd = 3.4; g.mode = "run"; }
       if (step(g, dt)) { g.k = (Math.floor(g.k) + 1) % OBST.length; g.wait = rr(1.8, 3.5); } }
@@ -6158,6 +6317,199 @@ UPD.push(dt => CROWD.frame && CROWD.frame(dt));
 window.__hs.crowd = CROWD;
 
 ;(window.__INIT || (window.__INIT = [])).push(["crowd", performance.now()]);
+
+// ======================= THE BUNKER LIVING AREA (Kaan Teğmen's project by the 1st tank company): a semi-buried reinforced-concrete bunker built in the stages
+// you can see — the pit, the floor slab, the wall cages and the formwork, the walls, the roof slab, the waterproofing, the earth cover, then sandbags, vents and
+// the camouflage net. Every pour waits for the concrete mixer, which comes in through the main gate and pours from the road beside the bunker =======================
+const BNK = {p: 0, x0: 59.5, x1: 69.5, z0: 99.5, z1: 105.5, mix: "away", wait: "", ph: -1, seen: -1, boost: 1, done: false, k: 0};
+try { const s = JSON.parse(localStorage.getItem("hs-bunker") || "null"); if (s && s.p != null) BNK.p = clamp(+s.p, 0, 1); } catch (e) {}
+function bnkSave() { try { localStorage.setItem("hs-bunker", JSON.stringify({p: +BNK.p.toFixed(4)})); } catch (e) {} }
+const BCX = (BNK.x0 + BNK.x1) / 2, BCZ = (BNK.z0 + BNK.z1) / 2, BG0 = baseH(BCX, BCZ), BYF = BG0 - 2.4, BH = 2.75, BYW = BYF + BH, BWT = .35, BRT = .45, BYR = BYW + BRT;
+const BDOOR = {x0: 63.6, x1: 65.4, h: 2.15};                            // the door in the south wall, onto the stairs
+const BSTAIR = {x0: 63.3, x1: 65.7, z0: BNK.z1, z1: 110.4};             // the stairs come down from the road side
+// the stages on BNK.p; the three pours need the mixer
+const BPH = {exc: .30, mesh: .36, slab: .42, cage: .50, form: .56, wall: .62, shore: .68, rmesh: .72, roof: .78, wp: .84, fill: .92, done: 1};
+const BPOUR = [{a: .36, b: .42, n: "temel"}, {a: .56, b: .62, n: "duvar"}, {a: .72, b: .78, n: "tavan"}];
+const BNAMES = [[.3, "kazı"], [.36, "temel demiri"], [.42, "temel betonu"], [.5, "duvar demiri"], [.56, "duvar kalıbı"], [.62, "duvar betonu"], [.68, "tavan iskelesi"], [.72, "tavan demiri"], [.78, "tavan betonu"], [.84, "yalıtım ve merdiven"], [.92, "toprak örtü"], [1.01, "kum torbası ve kamuflaj"]];
+const bnkStage = () => BNK.p >= .999 ? "tamam" : (BNAMES.find(q => BNK.p < q[0]) || BNAMES[BNAMES.length - 1])[1];
+
+// ---------------- the pit: the dig as planned (working space round the walls, 1:1 slopes, the stair trench), shaped into the ground as the work goes on ----------------
+function bnkDepth(x, z) {
+  const ws = .9, D = BG0 - BYF + .12;
+  const dx = Math.max(BNK.x0 - ws - x, x - BNK.x1 - ws, 0), dz = Math.max(BNK.z0 - ws - z, z - BNK.z1 - ws, 0);
+  let d = Math.max(0, D - Math.hypot(dx, dz) * 1.05);
+  if (x > BSTAIR.x0 - 1.5 && x < BSTAIR.x1 + 1.5 && z > BNK.z1 && z < BSTAIR.z1 + 1.5) { const t = clamp((BSTAIR.z1 - z) / (BSTAIR.z1 - BNK.z1), 0, 1), side = Math.max(0, BSTAIR.x0 - .3 - x, x - BSTAIR.x1 - .3); d = Math.max(d, D * t - side * 1.4); }
+  return Math.max(0, d); }
+const BREG = {x0: Math.floor(BNK.x0 - 4), x1: Math.ceil(BNK.x1 + 4), z0: Math.floor(BNK.z0 - 4), z1: Math.ceil(BSTAIR.z1 + 2)};
+function bnkShape(e, fill) { // e: share of the dig done; fill: share of the backfill against the walls done
+  const p = groundGeo.attributes.position, col = groundGeo.attributes.color; let any = false;
+  for (let iz = BREG.z0; iz <= BREG.z1; iz++) for (let ix = BREG.x0; ix <= BREG.x1; ix++) {
+    if (ix < 0 || iz < 0 || ix > WX || iz > WZ) continue; const D = bnkDepth(ix, iz); if (D <= 0) continue;
+    const i = iz * (WX + 1) + ix, inBox = ix > BNK.x0 - .1 && ix < BNK.x1 + .1 && iz > BNK.z0 - .1 && iz < BNK.z1 + .1, stair = iz >= BNK.z1 && ix > BSTAIR.x0 - .6 && ix < BSTAIR.x1 + .6;
+    let v = Math.max(DV[i], D * e);
+    if (fill > 0 && !inBox && !stair) v = Math.min(v, D * e * (1 - fill));      // the backfill brings the ground back up round the walls
+    v = Math.min(3.2, v); if (Math.abs(v - DV[i]) < 1e-3) continue;
+    DV[i] = v; p.setY(i, heightAt(ix, iz)); const k = Math.max(.42, 1 - DV[i] * .2); col.setXYZ(i, k, k * .85, k * .72); any = true; }
+  if (any) { GDR.x0 = Math.min(GDR.x0, BREG.x0); GDR.x1 = Math.max(GDR.x1, BREG.x1); GDR.z0 = Math.min(GDR.z0, BREG.z0); GDR.z1 = Math.max(GDR.z1, BREG.z1);
+    groundRows(p, BREG.z0, BREG.z1); groundRows(col, BREG.z0, BREG.z1); groundDirty = true; } }
+
+// ---------------- the parts, each one mesh, shown by stage ----------------
+const BCON = 0x9d9b95, BCON2 = 0x8f8d87, BREB = 0x7a4b2c, BPLY = 0xc79b5e, BWAL = 0x343434, BDIRT = 0x8f7454, BSAND = 0xb9a67c, BBLK = 0x1d1e1f;
+const BPART = {};
+function bnkPart(k, s, cast, y0) { const g = new THREE.Group(); if (y0 != null) g.position.y = y0; const m = putP(g, s, cast !== false, .04); if (!m) return null; g.visible = false; scene.add(g); BPART[k] = g; return g; }
+{
+  const X0 = BNK.x0, X1 = BNK.x1, Z0 = BNK.z0, Z1 = BNK.z1, W = X1 - X0, D = Z1 - Z0, cx = BCX, cz = BCZ;
+  // the floor's rebar mat (two layers of bars both ways)
+  let s = SP(); for (let x = X0 + .15; x <= X1 - .15; x += .3) s.box(.016, .016, D - .2, x, .06, cz, BREB); for (let z = Z0 + .15; z <= Z1 - .15; z += .3) s.box(W - .2, .016, .016, cx, .08, z, BREB);
+  for (let x = X0 + .4; x <= X1 - .4; x += 1.2) for (let z = Z0 + .4; z <= Z1 - .4; z += 1.2) s.box(.08, .05, .08, x, .025, z, 0x6d6a64);   // spacers
+  s.box(W + .3, .06, D + .3, cx, -.04, cz, 0xa8a59e);                                                                                   // blinding concrete under it
+  bnkPart("mesh", s, false, BYF);
+  // the floor slab
+  s = SP(); s.box(W + .2, .3, D + .2, cx, -.15, cz, BCON); bnkPart("slab", s, true, BYF);
+  // the wall cages: bars on both faces, starters standing out above; they grow up from the slab
+  s = SP(); const faces = [[X0 + .07, X0 + BWT - .07, "x"], [X1 - .07, X1 - BWT + .07, "x"], [Z0 + .07, Z0 + BWT - .07, "z"], [Z1 - .07, Z1 - BWT + .07, "z"]];
+  for (const [a, b, ax] of faces) for (const f of [a, b]) {
+    if (ax === "x") { for (let z = Z0 + .1; z <= Z1 - .1; z += .25) s.box(.016, BH + .45, .016, f, (BH + .45) / 2, z, BREB); for (let y = .2; y < BH; y += .3) s.box(.016, .016, D - .1, f, y, cz, BREB); }
+    else { for (let x = X0 + .1; x <= X1 - .1; x += .25) { if (f > cz && x > BDOOR.x0 && x < BDOOR.x1) continue; s.box(.016, BH + .45, .016, x, (BH + .45) / 2, f, BREB); } for (let y = .2; y < BH; y += .3) s.box(W - .1, .016, .016, cx, y, f, BREB); } }
+  bnkPart("cage", s, false, BYF);
+  // the formwork: plywood both faces, walers, push-pull props on the outside
+  s = SP(); const fh = BH + .1;
+  for (const [x, sd] of [[X0 - .03, -1], [X1 + .03, 1], [X0 + BWT + .03, 1], [X1 - BWT - .03, -1]]) { s.box(.04, fh, D + (sd * (x - cx) > 0 ? .2 : -.7), x, fh / 2, cz, BPLY); for (let y = .35; y < fh; y += .8) s.box(.08, .1, D, x + sd * .06 * Math.sign(x - cx), y, cz, 0x2d2f31); }
+  for (const [z, sd] of [[Z0 - .03, -1], [Z1 + .03, 1], [Z0 + BWT + .03, 1], [Z1 - BWT - .03, -1]]) { const out = sd * (z - cz) > 0;
+    for (const [a, b] of z > cz ? [[X0 - .1, BDOOR.x0], [BDOOR.x1, X1 + .1]] : [[X0 - .1, X1 + .1]]) { const w = b - a - (out ? 0 : .7); s.box(w, fh, .04, (a + b) / 2, fh / 2, z, BPLY); for (let y = .35; y < fh; y += .8) s.box(w, .1, .08, (a + b) / 2, y, z + .06 * Math.sign(z - cz), 0x2d2f31); } }
+  for (let k = 0; k < 6; k++) { const x = X0 + .8 + k * (W - 1.6) / 5; for (const [z, sd] of [[Z0, -1], [Z1, 1]]) s.rod([x, fh * .7, z + sd * .08], [x, .05, z + sd * 1.6], .03, 0xd0a020, 6); }
+  for (let k = 0; k < 3; k++) { const z = Z0 + .8 + k * (D - 1.6) / 2; for (const [x, sd] of [[X0, -1], [X1, 1]]) s.rod([x + sd * .08, fh * .7, z], [x + sd * 1.6, .05, z], .03, 0xd0a020, 6); }
+  bnkPart("form", s, true, BYF);
+  // the walls (the door in the south wall), the portal round the stairs
+  s = SP(); s.box(BWT, BH, D, X0 + BWT / 2, BH / 2, cz, BCON); s.box(BWT, BH, D, X1 - BWT / 2, BH / 2, cz, BCON); s.box(W, BH, BWT, cx, BH / 2, Z0 + BWT / 2, BCON);
+  s.box(BDOOR.x0 - X0, BH, BWT, (X0 + BDOOR.x0) / 2, BH / 2, Z1 - BWT / 2, BCON); s.box(X1 - BDOOR.x1, BH, BWT, (X1 + BDOOR.x1) / 2, BH / 2, Z1 - BWT / 2, BCON); s.box(BDOOR.x1 - BDOOR.x0, BH - BDOOR.h, BWT, (BDOOR.x0 + BDOOR.x1) / 2, (BH + BDOOR.h) / 2, Z1 - BWT / 2, BCON);
+  s.box(W - 2 * BWT, .02, D - 2 * BWT, cx, .01, cz, 0x7d7a74);                                                                        // the floor inside
+  bnkPart("wall", s, true, BYF);
+  // shoring under the roof deck, the deck and its edge boards
+  s = SP(); for (let x = X0 + .9; x < X1 - .5; x += 1.2) for (let z = Z0 + .9; z < Z1 - .5; z += 1.2) { s.cyl(.03, .03, BH - .12, x, (BH - .12) / 2, z, 0xc9a227, null, 6); s.box(.12, .12, D - 2 * BWT, x, BH - .1, cz, 0x6b5233); }
+  s.box(W - 2 * BWT, .04, D - 2 * BWT, cx, BH - .02, cz, BPLY); for (const [x, z, w, d] of [[cx, Z0 - .05, W + .3, .04], [cx, Z1 + .05, W + .3, .04], [X0 - .05, cz, .04, D + .3], [X1 + .05, cz, .04, D + .3]]) s.box(w, .55, d, x, BH + .2, z, BPLY);
+  bnkPart("shore", s, true, BYF);
+  // the roof's rebar mat
+  s = SP(); for (let x = X0 + .15; x <= X1 - .15; x += .3) s.box(.018, .018, D - .1, x, BH + .12, cz, BREB); for (let z = Z0 + .15; z <= Z1 - .15; z += .3) s.box(W - .1, .018, .018, cx, BH + .15, z, BREB);
+  bnkPart("rmesh", s, false, BYF);
+  // the roof slab
+  s = SP(); s.box(W + .2, BRT, D + .2, cx, BH + BRT / 2, cz, BCON2); bnkPart("roof", s, true, BYF);
+  // the waterproofing: black on the outside of the walls and the roof
+  s = SP(); s.box(.03, BH + BRT, D + .26, X0 - .02, (BH + BRT) / 2, cz, BBLK); s.box(.03, BH + BRT, D + .26, X1 + .02, (BH + BRT) / 2, cz, BBLK); s.box(W + .26, BH + BRT, .03, cx, (BH + BRT) / 2, Z0 - .02, BBLK);
+  s.box(W + .26, .03, D + .26, cx, BH + BRT + .015, cz, BBLK); bnkPart("wp", s, true, BYF);
+  // the stairs down to the door, their side walls rising into a parapet, the steel blast door, a lamp over it
+  s = SP(); const sw = BSTAIR.x1 - BSTAIR.x0, sx = (BSTAIR.x0 + BSTAIR.x1) / 2, L = BSTAIR.z1 - BSTAIR.z0, n = 14, rise = (BG0 - BYF) / n, run = L / n;
+  for (let k = 0; k < n; k++) { const zt = BSTAIR.z0 + .4 + k * run; s.box(sw, (k + 1) * rise, run + .02, sx, (k + 1) * rise / 2, zt + run / 2, k % 2 ? 0x96938c : 0x9a978f); }
+  s.box(sw + .7, .12, .9, sx, -.06, BSTAIR.z0 + .2, 0x8e8b85);                                                                            // the landing at the door
+  for (const x of [BSTAIR.x0 - .17, BSTAIR.x1 + .17]) { s.box(.3, BG0 - BYF + .5, L + .4, x, (BG0 - BYF + .5) / 2, (BSTAIR.z0 + BSTAIR.z1) / 2, BCON); for (let z = BSTAIR.z0 + 1; z < BSTAIR.z1; z += 1.6) s.cyl(.02, .02, .9, x, BG0 - BYF + .95, z, 0xd8d8d0, null, 6); s.rod([x, BG0 - BYF + 1.4, BSTAIR.z0 + 1], [x, BG0 - BYF + 1.4, BSTAIR.z1 - .2], .02, 0xd8d8d0, 6); }
+  s.box(BDOOR.x1 - BDOOR.x0 + .3, BDOOR.h + .15, .12, (BDOOR.x0 + BDOOR.x1) / 2, (BDOOR.h + .15) / 2, Z1 + .02, 0x2a2c2e); s.box(BDOOR.x1 - BDOOR.x0 - .04, BDOOR.h - .04, .1, (BDOOR.x0 + BDOOR.x1) / 2, BDOOR.h / 2, Z1 + .08, 0x4a5236);
+  for (const y of [.5, 1.6]) s.box(.18, .1, .06, BDOOR.x0 + .2, y, Z1 + .15, 0x2a2c2e); s.cyl(.06, .06, .12, BDOOR.x1 - .25, 1.05, Z1 + .16, 0x9a9a9a, "z", 10);   // hinges, the wheel
+  s.box(W + .5, BG0 - BYF + 1.0 - BH, .4, (X0 + X1) / 2, BH + (BG0 - BYF + 1.0 - BH) / 2, Z1 + .2, BCON);                                 // the parapet over the door face
+  s.box(.5, .14, .22, (BDOOR.x0 + BDOOR.x1) / 2, BDOOR.h + .45, Z1 + .25, 0x2a2a2a);
+  bnkPart("stair", s, true, BYF);
+  BPART.stairLamp = (() => { const m = new THREE.Mesh(new THREE.BoxGeometry(.38, .06, .12), new THREE.MeshBasicMaterial({color: 0xfff1c8})); m.position.set((BDOOR.x0 + BDOOR.x1) / 2, BYF + BDOOR.h + .38, Z1 + .3); m.visible = false; scene.add(m); return m; })();
+  // the earth cover: a mound over the roof sloping down to the ground on three sides; the south face is the parapet
+  s = SP(); { const top = BG0 + 1.75, base = BG0 - .05, m = 2.4, i = 1.1, E = (x, z, y) => [x, y, z];
+    const B = [E(X0 - m, Z0 - m, base), E(X1 + m, Z0 - m, base), E(X1 + m, Z1 + .4, base + .2), E(X0 - m, Z1 + .4, base + .2)], T = [E(X0 + i, Z0 + i, top), E(X1 - i, Z0 + i, top), E(X1 - i, Z1 + .4, top), E(X0 + i, Z1 + .4, top)];
+    const col = BDIRT; s.quad(T[0], T[1], T[2], T[3], col, [0, 1, 0]); s.quad(B[0], B[1], T[1], T[0], col, [0, .6, -1]); s.quad(B[1], B[2], T[2], T[1], col, [1, .6, 0]); s.quad(B[3], B[0], T[0], T[3], col, [-1, .6, 0]);
+    s.quad(T[3], T[2], B[2], B[3], 0x857052, [0, 0, 1]);
+    const r = rndF(31); for (let k = 0; k < 70; k++) { const x = X0 - 1.6 + r() * (W + 3.2), z = Z0 - 1.6 + r() * (D + 1.8), u = Math.min(1, Math.max(0, Math.min(x - (X0 - m), X1 + m - x, z - (Z0 - m)) / (m + i)));
+      s.sph(.18 + r() * .2, .1 + r() * .1, .18 + r() * .2, x, base + (top - base) * Math.min(1, u * 1.4) + .02, Math.min(z, Z1 + .2), r() < .5 ? 0x6f7a3e : 0x7f8a48, 6); } }
+  bnkPart("fill", s, true, 0);
+  // the finish: sandbags round the top and along the stairs, two vents, the camouflage net on poles, the sign
+  s = SP(); { const top = BG0 + 1.75, bag = (x, y, z, ry) => s.box(.55, .16, .3, x, y, z, BSAND, 0, ry, 0);
+    for (let l = 0; l < 2; l++) { for (let x = X0 + 1.4; x <= X1 - 1.4; x += .58) { bag(x + (l % 2) * .29, top + .08 + l * .16, BNK.z0 + 1.15, 0); } for (let z = Z0 + 1.4; z <= Z1; z += .58) { bag(X0 + 1.15, top + .08 + l * .16, z + (l % 2) * .29, Math.PI / 2); bag(X1 - 1.15, top + .08 + l * .16, z + (l % 2) * .29, Math.PI / 2); } }
+    for (const x of [BSTAIR.x0 - .2, BSTAIR.x1 + .2]) for (let l = 0; l < 3; l++) for (let z = BSTAIR.z0 + 1.2; z < BSTAIR.z1 + .4; z += .58) bag(x, BG0 + .58 + l * .16, z + (l % 2) * .29, Math.PI / 2);
+    for (const [x, z] of [[X0 + 2.6, Z0 + 2.4], [X1 - 2.6, Z0 + 2.4]]) { s.cyl(.14, .14, 1.5, x, top + .5, z, 0xc9c9c2, null, 12); s.cyl(.3, .18, .2, x, top + 1.3, z, 0xb8b8b0, null, 12); s.cyl(.32, .32, .04, x, top + 1.42, z, 0x9a9a92, null, 12); }
+    for (const [x, z] of [[X0 - 1.2, Z0 - 1.2], [X1 + 1.2, Z0 - 1.2], [X0 - 1.2, Z1 + .8], [X1 + 1.2, Z1 + .8], [cx, Z0 - .4], [cx, Z1 + .3]]) s.cyl(.04, .05, 2.6, x, BG0 + 1.0, z, 0x5b5b48, null, 6);
+    // the board on its two posts by the top of the stairs
+    s.box(.08, 1.7, .08, BSTAIR.x1 + 1.7, BG0 + .85, BSTAIR.z1 + .3, 0x3a3d40); s.box(.08, 1.7, .08, BSTAIR.x1 + 3.3, BG0 + .85, BSTAIR.z1 + .3, 0x3a3d40); }
+  bnkPart("finish", s, true, 0);
+  // the camouflage net over the mound
+  { const nt = texCanvas(128, 128, g => { g.clearRect(0, 0, 128, 128); const r = rndF(9); for (let k = 0; k < 260; k++) { g.fillStyle = ["#4d5a2e", "#6b6a3a", "#3e4a26", "#7a6a46"][k % 4]; g.beginPath(); const x = r() * 128, y = r() * 128, w = 4 + r() * 10; g.ellipse(x, y, w, w * .6, r() * 3, 0, 7); g.fill(); }
+      g.strokeStyle = "rgba(40,44,28,.9)"; g.lineWidth = 1.2; for (let k = 0; k <= 128; k += 8) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k, 128); g.stroke(); g.beginPath(); g.moveTo(0, k); g.lineTo(128, k); g.stroke(); } });
+    nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.repeat.set(4, 3);
+    const W2 = BNK.x1 - BNK.x0 + 3.4, D2 = BNK.z1 - BNK.z0 + 2.6, g = new THREE.PlaneGeometry(W2, D2, 16, 10); g.rotateX(-Math.PI / 2); const P = g.attributes.position;
+    for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i), u = 1 - Math.max(Math.abs(x) / (W2 / 2), Math.abs(z) / (D2 / 2)); P.setY(i, .4 + u * 1.9 + Math.sin(x * 1.3 + z) * .08); }
+    g.computeVertexNormals(); const net = new THREE.Mesh(g, new THREE.MeshStandardMaterial({map: nt, alphaTest: .45, side: THREE.DoubleSide, roughness: .95}));
+    net.position.set(BCX, BG0 + .2, BCZ - .3); net.castShadow = true; net.visible = false; net.userData.noAO = true; scene.add(net); BPART.net = net; }
+  { const tex = texCanvas(512, 200, (g, w, h) => { g.fillStyle = "#26301f"; g.fillRect(0, 0, w, h); g.strokeStyle = "#e9d9a6"; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
+      g.fillStyle = "#f3e6bd"; g.textAlign = "center"; g.font = "bold 46px 'Arial Narrow', Arial, sans-serif"; g.fillText("BUNKER YAŞAM ALANI", w / 2, 82); g.font = "28px Arial, sans-serif"; g.fillText("1. TANK BÖLÜĞÜ · Sorumlu: Kaan Teğmen", w / 2, 140); });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.9, .74), new THREE.MeshStandardMaterial({map: tex, roughness: .7})); sign.position.set(BSTAIR.x1 + 2.5, BG0 + 1.45, BSTAIR.z1 + .36); sign.visible = false; scene.add(sign); BPART.sign = sign; }
+  // the materials yard east of the pit: rebar bundles, formwork panels, cement on pallets, a water tank, the tool container
+  s = SP(); { const x0 = BNK.x1 + 3.2, z0 = BNK.z0 - .5;
+    for (let k = 0; k < 4; k++) for (let j = 0; j < 9; j++) s.cyl(.02, .02, 6, x0 + .2 + (j % 3) * .06 + k * .5, .1 + Math.floor(j / 3) * .05, z0 + 1, BREB, "z", 5);
+    for (const z of [z0 + 1 - 2.7, z0 + 1 + 2.7]) s.box(.15, .15, .4, x0 + 1, .07, z, 0x5a4630);
+    for (let k = 0; k < 8; k++) s.box(1.2, .03, 2.4, x0 + 1.1 + (k % 2) * .05, .2 + k * .035, z0 + 5, k % 3 ? BPLY : 0xb48a52);
+    s.box(1.3, .14, 2.5, x0 + 1.1, .07, z0 + 5, 0x5a4630);
+    for (let p = 0; p < 2; p++) { s.box(1.1, .14, 1.1, x0 + 3.4, .07, z0 + 1 + p * 1.6, 0x6a5236); for (let k = 0; k < 10; k++) s.box(.48, .14, .34, x0 + 3.15 + (k % 2) * .5, .2 + Math.floor(k / 4) * .15, z0 + .7 + p * 1.6 + (Math.floor(k / 2) % 2) * .36, 0xcfc9bb); }
+    s.box(1.1, 1.1, 1.1, x0 + 3.4, .55, z0 + 4.6, 0xe8e8e2); s.box(1.16, .1, 1.16, x0 + 3.4, .05, z0 + 4.6, 0x8a8a84);   // IBC water tank
+    s.box(2.4, 2.4, 4.6, x0 + 5.9, 1.2, z0 + 3.2, 0x55603f); s.box(.06, 2.0, .9, x0 + 4.68, 1.0, z0 + 3.2, 0x3e4630); }
+  bnkPart("yard", s, true, 0);
+  PROPS.push([BNK.x1 + 3.3, BNK.x1 + 7.3, BNK.z0, BNK.z0 + 5.5], [BNK.x1 + 7.3 + .3, BNK.x1 + 10.3, BNK.z0 + .5, BNK.z0 + 5.6]);
+}
+// collision for the walls (the door stays open) and later the whole covered mound
+let BPROPN = 0;
+function bnkProps(stage) { if (stage <= BPROPN) return; const X0 = BNK.x0, X1 = BNK.x1, Z0 = BNK.z0, Z1 = BNK.z1;
+  if (stage >= 1 && BPROPN < 1) PROPS.push([X0, X0 + BWT, Z0, Z1], [X1 - BWT, X1, Z0, Z1], [X0, X1, Z0, Z0 + BWT], [X0, BDOOR.x0, Z1 - BWT, Z1], [BDOOR.x1, X1, Z1 - BWT, Z1]);
+  if (stage >= 2 && BPROPN < 2) PROPS.push([X0 - 1.6, X1 + 1.6, Z0 - 1.6, Z1 - .3], [X0 - 1.6, BSTAIR.x0 - .4, Z1 - .3, Z1 + .6], [BSTAIR.x1 + .4, X1 + 1.6, Z1 - .3, Z1 + .6]);
+  BPROPN = stage; }
+
+// ---------------- what is shown at each stage ----------------
+function bnkVisuals() {
+  const p = BNK.p, on = (k, v) => { const g = BPART[k]; if (g && g.visible !== v) g.visible = v; };
+  const exc = Math.min(1, p / BPH.exc), fill = clamp((p - BPH.wp) / (BPH.fill - BPH.wp), 0, 1);
+  bnkShape(exc, fill);
+  on("yard", p > .06 && p < .95);
+  on("mesh", p >= BPH.exc && p < BPH.slab - .03); on("slab", p >= BPH.slab - .03);
+  const cage = clamp((p - BPH.slab) / (BPH.cage - BPH.slab), 0, 1); on("cage", cage > 0 && p < BPH.wall); if (BPART.cage) BPART.cage.scale.y = Math.max(.02, cage);
+  const form = clamp((p - BPH.cage) / (BPH.form - BPH.cage), 0, 1); on("form", form > 0 && p < BPH.wall); if (BPART.form) BPART.form.scale.y = Math.max(.02, form);
+  on("wall", p >= BPH.wall); on("shore", p >= BPH.wall && p < BPH.roof + .02); on("rmesh", p >= BPH.shore && p < BPH.roof);
+  on("roof", p >= BPH.roof); on("wp", p >= BPH.roof + .02); on("stair", p >= BPH.roof + .03);
+  if (BPART.fill) { on("fill", fill > 0); BPART.fill.scale.y = Math.max(.02, fill); BPART.fill.position.y = (BG0 - .05) * (1 - BPART.fill.scale.y); }
+  on("finish", p >= BPH.fill + .03); on("net", p >= .985); on("sign", p >= BPH.fill + .03); if (BPART.stairLamp) BPART.stairLamp.visible = p >= BPH.fill + .03;
+  bnkProps(p >= BPH.wall ? (p >= BPH.fill ? 2 : 1) : 0);
+}
+
+// ---------------- the concrete mixer: called by the concrete plant, waits at the main gate, drives in, pours from the road beside the bunker ----------------
+const MIXER = mkVehicle("mixer");
+const ROUTE_M_SITE = [[20, 55], [24, 66], [26, 82], [27, 97], [31, 107], [38, 112.6], [48, 114.6], [58, 114.75], [67.5, 114.75]];
+const ROUTE_M_OUT = [[67.5, 114.75], [84, 114.75], [100, 114.7], [110, 113], [116, 106], [116, 95], [110, 86], [98, 82], [84, 81], [70, 81], [56, 80], [42, 77], [31, 69], [24, 61], [19, 55], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-270, 60], [-290, 60], [-310, 60], [-360, 60], [-420, 60]];
+const MIXF = {chute: null, flow: null};
+{ const ch = new THREE.Group(), s = SP(); s.box(2.6, .05, .32, -1.3, 0, 0, 0x8a8f94); for (const z of [-.16, .16]) s.box(2.6, .14, .03, -1.3, .07, z, 0x8a8f94); putP(ch, s, true, 0); ch.visible = false; scene.add(ch); MIXF.chute = ch;
+  const fl = new THREE.Mesh(new THREE.CylinderGeometry(.09, .14, 1, 8), new THREE.MeshStandardMaterial({color: 0x8d8a83, roughness: .9})); fl.visible = false; scene.add(fl); MIXF.flow = fl; }
+function mixerPour(on) { // the chute swung out to the side, a stream of concrete into the stair trench
+  MIXF.chute.visible = on; MIXF.flow.visible = on; if (!on) return; const a = MIXER.a, c = Math.cos(a), s = Math.sin(a), rx = MIXER.x - c * 4.2, rz = MIXER.z - s * 4.2, y = heightAt(rx, rz) + 1.45;
+  const dx = .95 * s - .3 * c, dz = -.95 * c - .3 * s;                       // the truck's left side (the bunker), a little to the back
+  MIXF.chute.position.set(rx, y, rz); MIXF.chute.rotation.set(0, Math.atan2(dz, -dx), .3);
+  MIXF.chute.updateMatrixWorld(true); const end = new THREE.Vector3(-2.5, -.05, 0).applyMatrix4(MIXF.chute.matrixWorld), gy = Math.min(heightAt(end.x, end.z), BG0 - .2);
+  MIXF.flow.position.set(end.x, (end.y + gy) / 2, end.z); MIXF.flow.scale.set(1, Math.max(.2, end.y - gy), 1); }
+function bnkMixerCall() { // the plant sends a mixer: it waits outside the main gate for someone to bring it in
+  if (BNK.mix !== "away") return; BNK.mix = "gate"; MIXER.waitT = 0; carGo(MIXER, [[-420, 60], [-370, 60], [-340, 60], [-326, 60]], 12, () => { if (BNK.mix === "gate") MIXER.atGate = true; }); }
+function bnkMixerIn() { // somebody met it: through the garrison, into the site, along the road to the bunker
+  if (BNK.mix !== "gate") return; BNK.mix = "in"; MIXER.atGate = false;
+  carGo(MIXER, ROUTE_T_IN.concat(ROUTE_M_SITE.slice(1)), 12, () => { BNK.mix = "pour"; BNK.pourT = 0; mixerPour(true); toast("BETON MİKSERİ · döküm başladı (" + (BNK.wait || "beton") + ")", 2.6); }); }
+function bnkMixerOut() { BNK.mix = "out"; mixerPour(false); carGo(MIXER, ROUTE_M_OUT, 12, () => { MIXER.g.visible = false; BNK.mix = "away"; }); }
+
+// ---------------- the work goes on in working hours; the pours wait for the concrete ----------------
+let BVT = 0;
+function bnkFrame(dt) {
+  carFrame(MIXER, dt); if (MIXER.drum) MIXER.drum.rotation.x += dt * (BNK.mix === "pour" ? 3.2 : 1.1);
+  if (BNK.mix === "pour") mixerPour(true);
+  if (typeof DAY === "undefined" || !DAY.on || DAY.rep) { if (BNK.seen < 0) { BNK.seen = 0; bnkVisuals(); } return; }
+  const p0 = BNK.p;
+  if (BNK.p < BPH.exc) BNK.p = Math.max(BNK.p, Math.min(1, (stats.pit || 0) / 30) * BPH.exc);
+  else if (BNK.p < 1) {
+    const pour = BPOUR.find(q => BNK.p >= q.a - 1e-6 && BNK.p < q.b);
+    if (pour) { BNK.wait = pour.n; if (BNK.mix === "pour") { BNK.pourT += dt; BNK.p = Math.min(pour.b, BNK.p + dt * (pour.b - pour.a) / 38); if (BNK.p >= pour.b - 1e-6) { BNK.wait = ""; bnkMixerOut(); toast("✓ " + pour.n.toUpperCase() + " BETONU DÖKÜLDÜ · bunker yükseliyor", 2.8); } } }   // a pour, once started, goes on to the end
+    else if (isWork()) { BNK.wait = ""; const next = BPOUR.find(q => q.a > BNK.p); const r = .00043 * BNK.boost * wx("bunker"); BNK.p = Math.min(next ? next.a : 1, BNK.p + dt * r); } }
+  if (BNK.p >= .999 && !BNK.done) { BNK.done = true; BNK.p = 1; if (typeof satAdd === "function") satAdd(4, "bunker yaşam alanı tamamlandı"); toast("🎉 BUNKER YAŞAM ALANI TAMAM", 3); }
+  BVT -= dt; if (BNK.p !== p0 || BNK.seen < 0) { if (BVT <= 0 || BNK.seen < 0 || Math.floor(BNK.p * 200) !== Math.floor(p0 * 200)) { BVT = 1.5; BNK.seen = 1; bnkVisuals(); bnkSave(); } } }
+UPD.push(bnkFrame);
+bnkVisuals();
+window.__hs.bnk = BNK;
+
+;(window.__INIT || (window.__INIT = [])).push(["bunker", performance.now()]);
 
 // ======================= STORY: what the commander does all day (a chain of tasks with a purpose), the big map with every place named,
 // the green ring and the green arrow that lead you, the call to the tea house and back to work, the battalion's goal: the big inspection =======================
@@ -6243,7 +6595,7 @@ function wpmFrame(d) {
 function autoGo(t) { if (!t || !running) return;
   if (!FOOT.on || FOOT.seq) { toast("Önce araçtan in (E)", 1.6); return; }
   if (BRIEF.on || MEET.boss || RECV.on || FORM.on || PICK.cine || (AUTO.on && !AUTO.go)) { toast("Şu an olmaz", 1.4); return; }
-  autoWalk(t.x, t.z, Math.atan2(t.z - FOOT.z, t.x - FOOT.x)); AUTO.go = true; AUTO.line = false; AUTO.v = 6.2; AUTO.stop = t.seat ? .3 : Math.max(1.2, (t.r || 3) - 1.5); AUTO.seat = !!t.seat;
+  autoWalk(t.x, t.z, Math.atan2(t.z - FOOT.z, t.x - FOOT.x)); AUTO.go = true; AUTO.line = false; AUTO.v = 4.4; AUTO.stop = t.seat ? .3 : Math.max(1.2, (t.r || 3) - 1.5); AUTO.seat = !!t.seat;
   toast("Gidiyorsun · durmak için joystick'i oynat", 2.2); }
 
 // ---------------- the call: everyone to the tea house, and back to work ----------------
@@ -6408,13 +6760,13 @@ function misHtml() { if (!DAY.on) return ""; let h = "";
   return h + `<section class="mis${m.urgent ? " urg" : ""}"><b>▶ ${m.t}</b>${d != null && !go ? `<em>${d} m</em>` : ""}<p>${go}${txt}</p></section>`; }
 // a status report from the officer in charge when you come to his site (or from the site's sergeant when he is away or is you)
 const SITEREP = {
-  siginak: ["furkan", () => `Komutanım, sığınakta bugün ${Math.max(0, (stats.kemparM || 0) - DAY.s0.tunnel).toFixed(0)} metre ilerledik. Kempar kesiyor.`],
-  bunker: ["kaan", () => `Komutanım, bunker çukurundan bugüne kadar ${Math.round(stats.pit)} metreküp toprak çıktı.`],
+  siginak: ["furkan", () => `Komutanım, sığınakta bugün ${Math.max(0, (stats.kemparM || 0) - DAY.s0.tunnel).toFixed(0)} metre ilerledik. ` + (KEMPAR.broken ? "Kempar arızalı, bakım ekibini bekliyoruz." : "Kempar aynada, kesiyor.")],
+  bunker: ["kaan", () => BNK.p < BPH.exc ? `Komutanım, bunkerin kazısı sürüyor, ${Math.round(Math.min(30, stats.pit))} metreküp çıktı, otuz metreküpte temele geçiyoruz.` : BNK.wait && BNK.mix !== "pour" ? `Komutanım, ${BNK.wait} demiri hazır, betonu bekliyoruz.` : `Komutanım, bunkerde ${bnkStage()} aşamasındayız, iş yüzde ${Math.round(BNK.p * 100)}.`],
   stok: ["ahmet", () => `Komutanım, kamyonlar bugün ${DAY.trips - DAY.s0.trips} sefer yaptı, stok sahası toparlanıyor.`],
-  atis: ["ali", () => `Komutanım, atış alanı yüzde ${Math.round(RNG.p * 100)} tamam. Hedef çerçeveleri dikiliyor.`],
-  parkur: ["orhan", () => `Komutanım, drone parkuru yüzde ${Math.round(DRC.p * 100)}. Kapılar yerine oturuyor.`]};
+  atis: ["ali", () => RNG.p >= .999 ? "Komutanım, atış alanı tamam, teftişe hazır." : `Komutanım, atış alanı yüzde ${Math.round(RNG.p * 100)} tamam. Hedef çerçeveleri dikiliyor.`],
+  parkur: ["orhan", () => DRC.p >= .999 ? "Komutanım, drone parkuru tamam, dron bütün kapılardan geçiyor." : `Komutanım, drone parkuru yüzde ${Math.round(DRC.p * 100)}. Kapılar yerine oturuyor.`]};
 function siteReport(k) { const [who, f] = SITEREP[k], o = OFFM[who], txt = f();
-  if (o && o.S && !isPlayer(o) && o.S.root.visible && Math.hypot(o.x - mePos().x, o.z - mePos().z) < 22) say(o, txt, 3.2); else { subEl.innerHTML = `<span style="color:#ffd27a">ŞANTİYE ÇAVUŞU:</span> ${txt}`; subEl.style.opacity = 1; subEl._t = 3.2; } }
+  if (o && o.S && !isPlayer(o) && o.S.root.visible && Math.hypot(o.x - mePos().x, o.z - mePos().z) < 22) say(o, txt, 3.2); else subShow(`<span style="color:#ffd27a">ŞANTİYE ÇAVUŞU:</span> ${txt}`, 3.2); }
 // the inspection round: every site once, the nearest first
 const TOUR = ["siginak", "bunker", "stok", "atis", "parkur"];
 function tourNext(m) { let best = null, bd = 1e9; for (const k of TOUR) { if (m.seen[k]) continue; const t = plTarget(PLK[k]), d = distTo(t); if (d < bd) { bd = d; best = t; best.k = k; } } return best; }
@@ -6422,11 +6774,9 @@ function storyDay() { // the day's chain
   MIS.q = []; MIS.cur = null; if (WP.src !== "map") wpClear();
   misAdd({k: "sabah", t: "Sabah çayı", d: "Çay ocağında masaya otur.", until: 449, target: () => SEAT.on ? null : tableT(), check: () => SEAT.on, quiet: true});
   misAdd({k: "brif", t: "Görev dağılımı", d: "Azizhan Üsteğmen görevleri veriyor · masaya otur, dinle.", from: 450, target: () => SEAT.on || BRIEF.on && AUTO.on ? null : tableT(), check: () => DAY.rolled && !BRIEF.on, until: 540, okLate: true, quiet: true});
-  const tour = misAdd({k: "tur", t: "Denetim turu", seen: {}, n: 0, from: 450, after: "brif",
-    d: () => { const nx = tourNext(tour); return `Şantiyeleri dolaş (${tour.n}/${TOUR.length})` + (nx ? ` · sıradaki: ${nx.n}` : ""); },
-    target: () => tourNext(tour),
-    tick: () => { for (const k of TOUR) { if (tour.seen[k]) continue; const t = plTarget(PLK[k]); if (distTo(t) < t.r) { tour.seen[k] = true; tour.n++; siteReport(k); satAdd(1, PLK[k].n.toLowerCase() + " denetlendi"); } } },
-    check: () => tour.n >= TOUR.length, end: ok => ok && satAdd(3, "denetim turu tamam")});
+  // after the briefing: to your own site (standing over it, the work goes faster)
+  misAdd({k: "isbasi", t: "İşinin başına geç", after: "brif", until: 600, quiet: true, d: () => mySite() ? `${PLK[mySite()].n} senin şantiyen · başında durdukça iş hızlanır.` : "Şantiyeleri dolaş, işler yolunda mı bak.",
+    target: () => mySite() ? plTarget(PLK[mySite()]) : null, check: () => !mySite() || DUR.here === mySite(), end: ok => { if (ok && mySite()) satAdd(1, "işinin başında"); }});
   // ten o'clock: tea with the officers (you call them, you sit, ten minutes), then everybody back to work
   if (!(DAY.day >= CAMP.day && !CAMP.done)) { const mola = misAdd({k: "mola", t: "Çay molası", hold: 0, from: 600, until: 690, urgent: true, quiet: true,
     d: () => !MEET.called ? "TOPLA ile subayları çağır, masaya otur." : !SEAT.on ? "Subaylar geliyor · sen de masaya otur." : seated().length < 3 ? "Subayları bekle…" : `Çay içiliyor · ${Math.max(0, 10 - Math.floor(mola.hold))} dk`,
@@ -6436,35 +6786,17 @@ function storyDay() { // the day's chain
     end: ok => { if (!ok) { toast("Çay molası kaçtı", 2); return; } satAdd(2, "çay molasında subaylar bir arada"); toast("Mola bitti · İŞ BAŞINA ile herkesi görevine gönder", 2.8);
       misAdd({k: "molason", t: "İş başına", urgent: true, quiet: true, d: "İŞ BAŞINA ile herkesi görevine gönder.", until: DAY.t + 40, check: () => !MEET.called,
         end: ok2 => { if (ok2) satAdd(1, "mola zamanında bitti"); else toast("Subaylar hâlâ çay ocağında!", 2.2); }}); }}); }
-  // at the wheel yourself: one day the excavator in the bunker pit, the next a full truck to the dump
-  const mk = DAY.day % 2 ? "ex" : "tr", bestTruck = () => vehicles.filter(v => v.type === "tr" && !v.broken).sort((a, b) => (b.load - (b.aiState === "wait" ? 0 : 2)) - (a.load - (a.aiState === "wait" ? 0 : 2)))[0];
-  const myTruck = () => { const v = vehicles[cur]; return mine(v) && v.type === "tr" ? v : null; };
-  const mach = misAdd(mk === "ex" ? {k: "makine", t: "Ekskavatöre geç", acc: 0, last: null, after: "tur",
-    d: () => mine(EXC) ? `Bunker çukurunu kaz · ${mach.acc.toFixed(1)} / 2 m³` : "E ile bin · bunker çukurunda 2 m³ kaz.",
-    target: () => mine(EXC) ? null : {x: EXC.x, z: EXC.z, n: "EKSKAVATÖR", r: 5},
-    tick: () => { const s = stats.pit; if (mine(EXC) && mach.last != null) mach.acc += Math.max(0, s - mach.last); mach.last = s; },
-    check: () => mach.acc >= 2, end: ok => ok && satAdd(3, "ekskavatörü bizzat kullandın")} :
-    {k: "makine", t: "Kamyonla sefer", acc: 0, last: null, after: "tur",
-    d: () => { const v = myTruck(); if (v) return v.load > .5 ? `Döküm sahasına götür, damperi kaldır · kasa ${v.load.toFixed(1)}/${v.cap}` : "Kamyon boş · in (E), şoför devralır."; const t = bestTruck(); return t && t.load >= 3 ? "Dolu kamyona bin (E) · döküm sahasında boşalt." : "Kamyon yükleniyor · yanına git, dolunca bin (E)."; },
-    target: () => { const v = myTruck(); if (v) return v.load > .5 ? {x: DUMPC.x, z: DUMPC.z, n: "DÖKÜM SAHASI", r: 6} : null; const t = bestTruck(); return t ? {x: t.x, z: t.z, n: "KAMYON", r: 5} : null; },
-    tick: () => { const s = stats.dumped, v = myTruck(); if (v && mach.last != null) mach.acc += Math.max(0, s - mach.last); mach.last = s;
-      if (!v && FOOT.on) { const t = bestTruck(); if (t && t.ai && Math.hypot(t.x - FOOT.x, t.z - FOOT.z) < 14) t.hold = .3; } },   // the driver waits for you when you come up to the truck
-    check: () => mach.acc >= 3, end: ok => { if (!ok) return; DAY.trips++; satAdd(3, "bir seferi de sen çektin"); }});
   misAdd({k: "ogle", t: "Öğle yemeği", d: "Subay yemekhanesine git.", from: 720, until: 772, urgent: true, quiet: true, target: () => plTarget(PLK.gazino), check: () => distTo(PLK.gazino) < 5, end: ok => ok && lunchSkip()});
-  // the afternoon: two sites again for the evening report
-  const two = TOUR.slice().sort(() => Math.random() - .5).slice(0, 2);
-  const kon = misAdd({k: "kontrol", t: "Öğleden sonra kontrolü", seen: {}, n: 0, from: 810, after: "tur",
-    d: () => "Uğra: " + two.map(k => (kon.seen[k] ? "✓ " : "") + PLK[k].n).join(" · "),
-    target: () => { let best = null, bd = 1e9; for (const k of two) { if (kon.seen[k]) continue; const t = plTarget(PLK[k]), dd = distTo(t); if (dd < bd) { bd = dd; best = t; } } return best; },
-    tick: () => { for (const k of two) { if (kon.seen[k]) continue; const t = plTarget(PLK[k]); if (distTo(t) < t.r) { kon.seen[k] = true; kon.n++; siteReport(k); } } },
-    check: () => kon.n >= 2, end: ok => ok && satAdd(2, "öğleden sonra kontrolü tamam")});
   misAdd({k: "aksam", t: "Akşam çayı", d: "Mesai bitti · çay ocağında masaya otur.", from: 1050, until: 1168, urgent: true, target: () => SEAT.on ? null : tableT(), check: () => SEAT.on, end: ok => ok && satAdd(2, "akşam çayında tabur bir arada"), lateWhy: "masaya gelmedin"});
   misAdd({k: "gece", t: "Günü kapat", after: "aksam", quiet: true, d: "Sohbetin tadını çıkar ya da saat düğmesiyle (▸) geceye geç · gün sonu raporu gelir.", check: () => DAY.block && DAY.block.k === "gece"});
-  storyCamp(); gTimeout(() => dayPlanNote(mk), 2500); }
+  storyCamp(); if (typeof durDay === "function") durDay(); gTimeout(() => dayPlanNote(), 2500); }
+// whose site is whose (the coordinator has none: the plan at the table and every site)
+const MYSITE = {kaan: "bunker", ahmet: "bunker", furkan: "siginak", boran: "siginak", ali: "atis", orhan: "parkur"};
+const mySite = () => CUR && MYSITE[CUR.d.key] || null;
 // the day's plan on the phone, from the coordinator
-function dayPlanNote(mk) { if (!DAY.on) return; const left = Math.max(0, CAMP.day - DAY.day);
+function dayPlanNote() { if (!DAY.on) return; const left = Math.max(0, CAMP.day - DAY.day);
   const t = !CAMP.done && DAY.day >= CAMP.day ? "Bugün BÜYÜK TEFTİŞ! Levent Paşa 10.00'da geliyor, herkes görev başında olsun." :
-    `${DAY.day}. gün: 07.30 görev dağılımı, denetim turu, 10.00 çay molası, ${mk === "ex" ? "ekskavatör" : "kamyon seferi"}, 12.00 öğle, öğleden sonra kontrol, 17.30 akşam çayı.` + (CAMP.done ? "" : ` Büyük teftişe ${left} gün!`);
+    `${DAY.day}. gün. 07.30'da görev dağılımı, 10.00'da çay, 17.30'da akşam çayı. Arada telsize kulak ver, karar senden. Bunker: ${bnkStage()}.` + (CAMP.done ? "" : ` Büyük teftişe ${left} gün!`);
   phoneNote("Mesaj · Tabur", "Azizhan Üsteğmen", t); }
 // trouble on the site: an urgent task to go there (the repair team comes anyway, later)
 function storyEvent(e) { const name = e.v ? e.v.name : "İSG";
@@ -6506,7 +6838,7 @@ const CAMP = {day: 5, goal: {tunnel: 100, pit: 80, atis: 1, parkur: 1}, start: n
 try { const s = JSON.parse(localStorage.getItem("hs-camp") || "null"); if (s) Object.assign(CAMP, s); } catch (e) {}
 function campSave() { try { localStorage.setItem("hs-camp", JSON.stringify({day: CAMP.day, start: CAMP.start, done: CAMP.done, res: CAMP.res})); } catch (e) {} }
 function campState() { const g = CAMP.goal, tun = stats.kemparM || 0;
-  return [["Kapalı drone sığınağı", Math.min(1, tun / g.tunnel), `${tun.toFixed(0)}/${g.tunnel} m`], ["Bunker çukuru", Math.min(1, (stats.pit || 0) / g.pit), `${Math.round(stats.pit || 0)}/${g.pit} m³`],
+  return [["Kapalı drone sığınağı", Math.min(1, tun / g.tunnel), `${tun.toFixed(0)}/${g.tunnel} m`], ["Bunker yaşam alanı", BNK.p, "%" + Math.round(BNK.p * 100)],
     ["400 m atış alanı", RNG.p, "%" + Math.round(RNG.p * 100)], ["Drone parkuru", DRC.p, "%" + Math.round(DRC.p * 100)]]; }
 function campHtml() { const left = Math.max(0, CAMP.day - DAY.day);
   return `<div class="ob camp"><span class="r"><span>${CAMP.done ? "Büyük teftiş yapıldı" : left ? "Büyük teftişe " + left + " gün" : "BUGÜN BÜYÜK TEFTİŞ"}</span><span>${Math.round(campState().reduce((a, r) => a + r[1], 0) / 4 * 100)}%</span></span></div>`; }
@@ -6530,6 +6862,162 @@ UPD.push(dt => { wpFrame(dt); misFrame(dt); });
 window.__hs.story = {MIS, WP, PL, PLK, wpSet, wpClear, mapOpen, mapClose, storyDay, CAMP, campState, callToggle};
 
 ;(window.__INIT || (window.__INIT = [])).push(["story", performance.now()]);
+
+// ======================= SITUATIONS: what comes up during the day — a call on the radio or the phone, a decision for you, and what follows on the site
+// (the work speeds up or stalls, someone walks over, a truck drives in, the commander is pleased or not) =======================
+const DUR = {q: [], open: null, was: false, log: [], betonDay: 0, betonAsk: "", used: {}, n: 0, here: null, hereT: 0, rep: {}};
+// ---- the work's pace by what was decided: factors per job, each for a while ----
+const WMOD = [];
+function wmod(k, f, mins) { WMOD.push({k, f, until: DAY.t + mins}); }
+function wx(k) { if (typeof DAY === "undefined" || !DAY.on) return 1; let f = DUR.here === k && isWork() ? 1.4 : 1; for (const m of WMOD) if (m.k === k && DAY.t < m.until) f *= m.f; return f; }   // the site you stand over goes faster
+// which site you are at (on foot or in a machine there)
+const HERE_K = ["bunker", "siginak", "atis", "parkur"];
+function hereFrame(dt) { DUR.hereT -= dt; if (DUR.hereT > 0) return; DUR.hereT = .5; const p = mePos(); let h = null;
+  if (p && running) for (const k of HERE_K) { const P = PLK[k]; if (!P) continue; const t = plTarget(P); if (Math.hypot(t.x - p.x, t.z - p.z) < (P.r || 10) + 14) { h = k; break; } }
+  if (h !== DUR.here) { DUR.here = h;
+    if (h && DAY.on && isWork() && !durBusy() && !(DUR.rep[h] > DAY.t)) { DUR.rep[h] = DAY.t + 120; siteReport(h); gTimeout(() => { if (DUR.here === h) toast(PLK[h].n + " · başındasın, iş daha hızlı gidiyor", 2.4); }, 3400); } } }
+UPD.push(hereFrame);
+const who = k => { const o = OFFM[k]; return o && o.S && !isPlayer(o) ? o : null; };
+const meName = () => CUR ? CUR.d.short : "Komutan";
+const jobV = v => JOBS.find(j => j.v === v) || null;
+// a route along the garrison's roads between two points
+function roadRoute(x0, z0, x1, z1) { const a = gNear(x0, z0), b = gNear(x1, z1), out = [[x0, z0]]; if (a && b && a !== b) for (const k of gRoute(a, b)) out.push(GN[k].slice()); out.push([x1, z1]); return out; }
+// the water tanker from the battalion's motor pool
+const WTR = mkVehicle("water");
+function waterRun(x, z, then) { const r = roadRoute(HQ.x - 6, HQ.z + 2, x, z); carGo(WTR, r, 11, () => { if (then) then(); gTimeout(() => carGo(WTR, r.slice().reverse(), 11, () => { WTR.g.visible = false; }), 40000); }); }
+UPD.push(dt => carFrame(WTR, dt));
+// an officer walks somewhere, says something there, then back to his work
+function errand(k, x, z, line, then) { const o = who(k); if (!o || o.st === "away" || o.st === "car") { if (then) then(null); return false; }
+  o.site = null; walkTo(o, x, z, () => { o.st = "stand"; o.t = 1e9; if (line) say(o, line, 2.8); gTimeout(() => { if (then) then(o); if (o.st === "stand") { if (isWork()) sendToSite(o.d.key, null, false); else goBack(o); } }, 3200); }); return true; }
+
+// ---- the card: who calls, what about, two or three things you can do ----
+const DCARD = (() => { const d = document.createElement("div"); d.hidden = true; d.style.cssText = "position:fixed;inset:0;z-index:24;display:grid;place-items:center;background:rgba(8,10,12,.58);padding:14px"; document.body.appendChild(d); return d; })();
+UICOVER.push(() => !!DUR.open);
+function durShow(c) {
+  DUR.open = c; DUR.was = running; running = false; ding(false); try { if (navigator.vibrate) navigator.vibrate([160]); } catch (e) {}
+  DCARD.innerHTML = `<div style="width:min(94vw,430px);background:#1d2023;color:#eef0f2;border-radius:16px;padding:15px;font:14px/1.4 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.5)">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="flex:none;width:38px;height:38px;border-radius:10px;background:${c.col || "#b3141b"};display:grid;place-items:center;font-size:20px">${c.ic || "📻"}</div>
+    <div><div style="font-size:11px;opacity:.7;letter-spacing:.06em">${c.app}</div><b style="font-size:15px">${c.who}</b></div></div>
+    <div style="font:800 19px/1.2 system-ui,sans-serif;margin:6px 0">${c.title}</div><p style="margin:0 0 12px;opacity:.93">“${c.text}”</p>
+    <div style="display:flex;flex-direction:column;gap:8px">${c.opts.map((o, i) => `<button type="button" data-i="${i}" style="text-align:left;background:#2b3035;color:#fff;border:1px solid #ffffff26;border-radius:12px;padding:10px 12px;font:700 15px/1.3 system-ui,sans-serif;cursor:pointer;touch-action:manipulation"><span style="display:block">${o.t}</span>${o.d ? `<span style="display:block;font-weight:400;font-size:12.5px;opacity:.78;margin-top:2px">${o.d}</span>` : ""}</button>`).join("")}</div></div>`;
+  DCARD.hidden = false; DCARD.querySelectorAll("button").forEach(b => b.onclick = () => durPick(c, +b.dataset.i)); }
+function durPick(c, i) { DCARD.hidden = true; DUR.open = null; running = DUR.was; const o = c.opts[i]; DUR.log.push({day: DAY.day, t: hhmm(DAY.t), k: c.k, title: c.title, pick: o.t}); try { o.go(); } catch (e) { console.error(e); } }
+const durBusy = () => !running || !DAY.on || DAY.rep || !!DUR.open || BRIEF.on || !!MEET.boss || RECV.on || CARCAM.on || !!PICK.cine || MAPS.open || PICK.open;
+// a task with the green ring for the situations that want you there
+function goTask(k, t, d, target, arrive, opt) { const m = misAdd(Object.assign({k: k + ":" + DAY.day + ":" + (++DUR.n), urgent: true, quiet: true, t, d, target, arrived: false,
+  tick: () => { if (!m.arrived) { const p = target(); if (p && distTo(p) < (p.r || 6)) { if (m.ready && !m.ready()) { if (!m.toldT || TT - m.toldT > 8) { m.toldT = TT; toast(m.notYet || "Biraz bekle…", 1.8); } return; } m.arrived = true; arrive(m); } } }, check: () => m.arrived}, opt || {})); return m; }
+
+// ---------------- the concrete for the bunker: the plant calls when a pour is due ----------------
+function betonCard() {
+  const n = BNK.wait, A = who("ahmet") ? "ahmet" : "azizhan", aN = OFFK[A].name.split(" ")[0][0] + OFFK[A].name.split(" ")[0].slice(1).toLocaleLowerCase("tr-TR");
+  return {k: "beton", app: "Telefon · Beton santrali", who: "Santral şefi", ic: "🚚", col: "#c2410c", title: `Bunkerin ${n} betonu hazır`,
+    text: `Komutanım, ${n} betonu için mikser yola çıktı, yirmi dakikaya nizamiyede. İçeri alacak, şantiyeye kadar götürecek biri lazım.`,
+    opts: [{t: "Ben karşılarım", d: "Nizamiyeye git, mikseri bunkere getir · komutan memnun olur", go: () => { bnkMixerCall();
+        const m = goTask("beton", "Beton mikserini karşıla", "Nizamiyede bekliyor · yanına git, şantiyeye getir.", () => ({x: MIXER.x, z: MIXER.z, n: "BETON MİKSERİ", r: 12}), () => {
+          bnkMixerIn(); toast("Mikseri aldın · bunkere gidiyor, istersen peşinden git", 2.6); }, {ready: () => !!MIXER.atGate, notYet: "Mikser yolda · birazdan nizamiyede", end: ok => { if (ok) satAdd(2, "betonu bizzat karşıladın"); }}); }},
+      {t: `${aN} karşılasın`, d: "Sen işine bak · biraz gecikir", go: () => { bnkMixerCall(); gTimeout(() => { if (!errand(A, MAINGATE.x + 8, MAINGATE.z + 3, "Mikseri aldım, şantiyeye gönderiyorum.", () => bnkMixerIn())) bnkMixerIn(); }, 9000); }},
+      {t: "Yarına ertele", d: "Bunker bugün bekler · komutan pek hoşlanmaz", go: () => { DUR.betonDay = DAY.day + 1; satAdd(-1, "bunker betonu ertelendi"); }}]}; }
+
+// ---------------- the situations of a day ----------------
+const SIT = [
+  {k: "kempar", win: [560, 900], w: 3, cond: () => !KEMPAR.broken && wx("siginak") >= 1, card: () => ({app: "Telsiz · Kapalı drone sığınağı", who: "Furkan Teğmen", ic: "⚙️", col: "#334155", title: "Kempar'ın dişleri aşındı",
+    text: "Komutanım, Kempar'ın kesici dişleri aşındı, aynada zor ilerliyoruz. Ne yapalım?",
+    opts: [{t: "Bakım ekibini çağır", d: "Kempar bir süre durur, dişler değişince eskisinden hızlı keser", go: () => { const j = jobV(KEMPAR); if (j) breakEvent(j, "Kesici dişleri değişiyor, bakım ekibi geliyor.", false, true); wmod("siginak", 1.35, 300); say(who("furkan") || OFFM.furkan, "Bakımcılar geliyor komutanım.", 2.4); }},
+      {t: "Akşama kadar idare edin", d: "Kesim yavaşlar · arıza da yapabilir", go: () => { wmod("siginak", .55, Math.max(30, 1050 - DAY.t)); if (Math.random() < .45) gTimeout(() => { const j = jobV(KEMPAR); if (j && isWork()) breakEvent(j, "Komutanım, dişler tamamen bitti, Kempar durdu!"); }, (60 + Math.random() * 90) * 1000); }},
+      {t: "Gidip kendim bakacağım", d: "Sığınağa git · sen oradayken bakım hemen gelir", go: () => goTask("kempar", "Kempar'a bak", "Sığınağa git, Furkan'la dişlere bak.", () => plTarget(PLK.siginak), () => {
+          const f = who("furkan"); if (f) say(f, "Bakın komutanım, dişler bitmiş. Ekibi çağırdım, hemen geliyorlar.", 3.2); const j = jobV(KEMPAR); if (j) breakEvent(j, "Dişler değişiyor.", true, true); wmod("siginak", 1.35, 300); satAdd(1, "Kempar'a bizzat baktın"); })}]})},
+  {k: "dron", win: [600, 960], w: 3, card: () => ({app: "Telsiz · Drone parkuru", who: "Orhan Üsteğmen", ic: "🛸", col: "#0f766e", title: "Dron kapıya çarptı",
+    text: "Komutanım, test uçuşunda dron üçüncü kapıya çarptı, iki pervanesi kırıldı.",
+    opts: [{t: "Yedek dronu kullanın", d: "İş durmaz", go: () => { DRONE.hideT = 8; say(who("orhan") || OFFM.orhan, "Yedek dron havada komutanım, devam.", 2.4); }},
+      {t: "Rotayı yapay zekâyla ayarlayalım", d: "Pilot çadırına git · parkur bugün çok hızlanır", go: () => { DRONE.hideT = 30; goTask("dron", "Pilot çadırına git", "Orhan'la rotayı yeniden ayarla.", () => ({x: -74, z: -31.5, n: "PİLOT ÇADIRI", r: 5}), () => {
+          const o = who("orhan"); if (o) say(o, "Rota tamam komutanım, kapılardan tam ortadan geçiyor!", 3); DRONE.hideT = 0; wmod("parkur", 1.5, 300); satAdd(1, "parkurun rotası düzeldi"); }); }},
+      {t: "Bugünlük ara verin", d: "Parkur iki saat durur", go: () => { DRONE.hideT = 120; wmod("parkur", 0, 120); }}]})},
+  {k: "su", win: [690, 960], w: 2, card: () => ({app: "Telsiz · 400 m atış alanı", who: "Ali Üsteğmen", ic: "💧", col: "#1d4ed8", title: "Atış alanında su bitti",
+    text: "Komutanım, hava çok sıcak, sette çalışan askerin suyu bitti.",
+    opts: [{t: "Su tankerini gönderin", d: "Tanker karargâhtan atış alanına gider · askerin şevki artar", go: () => { const f = rangeFront(); waterRun(f.x + 4, f.z + 9, () => { const a = who("ali"); if (a) say(a, "Su geldi komutanım, sağ olun!", 2.4); wmod("atis", 1.25, 240); satAdd(1, "atış alanına su yetişti"); }); }},
+      {t: "Kantinden su aldırın", d: "Yarım saat yavaşlar", go: () => { wmod("atis", .5, 35); const a = who("ali"); if (a) say(a, "İki asker kantine gitti komutanım.", 2.2); }},
+      {t: "Akşama kadar dayansınlar", d: "İş yavaşlar · bir asker fenalaşabilir", go: () => { wmod("atis", .6, Math.max(30, 1050 - DAY.t)); if (Math.random() < .5) gTimeout(() => { if (!isWork()) return; satAdd(-3, "atış alanında bir asker sıcaktan fenalaştı"); phoneNote("Telsiz · 400 m atış alanı", "Ali Üsteğmen", "Komutanım, bir asker sıcaktan fenalaştı, revire götürüyoruz!"); }, (50 + Math.random() * 60) * 1000); }}]})},
+  {k: "barkan", win: [540, 900], w: 2, days: [1, 4], card: () => ({app: "Telefon · Tugay", who: "Paşa'nın yaveri", ic: "📞", col: "#7c2d12", title: "Paşam Barkan 4'leri soruyor",
+    text: "Komutanım, Paşam keşif bölüğüne uğrayınca Barkan 4'leri de görmek istiyor, hazır olsun dedi.",
+    opts: [{t: "Orhan Barkan-2'leri hazırlasın", d: "Orhan parkurdan bir süre ayrılır · Paşa bir dahaki gelişinde memnun kalır", go: () => { DAY.barkanReady = true; wmod("parkur", .4, 90); errand("orhan", -258, 14, "Barkan-2'ler yıkandı, yağlandı. Barkan 4 olmasa da bunlar parlıyor!"); }},
+      {t: "Öyle bir araç olmadığını söyle", d: "Doğrusu bu · Paşa bozulur", go: () => { satAdd(-2, "Paşa'ya Barkan 4 yok dendi"); gTimeout(() => phoneNote("Telefon · Tugay", "Paşa'nın yaveri", "Paşam 'bulun' dedi komutanım…"), 4000); }},
+      {t: `${meName() === "Kaan" ? "Ben" : "Kaan"} bir Barkan 4 yazılımı yazsın`, d: "Şaka · çay ocağında herkes güler", go: () => { satAdd(1, "Barkan 4 şakası tabura moral oldu"); const k = who("kaan"); if (k) say(k, "Barkan 4'ün yazılımı hazır komutanım, donanımı bekliyor!", 3); }}]})},
+  {k: "nisan", win: [520, 980], w: 2, card: () => ({app: "Telsiz · Kapalı drone sığınağı", who: "Furkan Teğmen", ic: "💍", col: "#9d174d", title: "Askerin nişanı var",
+    text: "Komutanım, sığınakta çalışan bir askerimizin hafta sonu nişanı var, iki gün izin istiyor.",
+    opts: [{t: "Ver izni, mutlu olsun", d: "Bir kişi eksik çalışılır · tabur sever", go: () => { wmod("siginak", .92, 600); satAdd(1, "askere nişan izni verildi"); const f = who("furkan"); if (f) say(f, "Çok sevindi komutanım, sağ olun!", 2.4); }},
+      {t: "Sığınak bitince gitsin", d: "İş aksamaz · moral bozulur", go: () => { satAdd(-1, "askerin izni ertelendi"); }},
+      {t: "Bölük komutanı karar versin", d: "İşi sahibine bırak", go: () => { const a = who("azizhan"); if (a) say(a, "La verin izni, nişan bir kere olur.", 2.6); wmod("siginak", .95, 600); }}]})},
+  {k: "kavga", win: [560, 980], w: 2, cond: () => !!who("boran"), card: () => ({app: "Telsiz · Kapalı drone sığınağı", who: "Furkan Teğmen", ic: "⚠️", col: "#a16207", title: "Sığınakta tartışma",
+    text: "Komutanım, Boran Teğmen ile bir çavuş kürek yüzünden tartıştı, sığınakta iş durdu.",
+    opts: [{t: "Ben gelip konuşurum", d: "Sığınağa git · iş yeniden başlar", go: () => { wmod("siginak", .3, 90); const m = goTask("kavga", "Sığınaktaki tartışma", "Sığınağa git, Boran'la çavuşu barıştır.", () => plTarget(PLK.siginak), () => {
+          WMOD.forEach(q => { if (q.k === "siginak" && q.f === .3) q.until = 0; }); const b = who("boran"); if (b) { say(b, "Komutanım, ben sadece koordine ediyordum…", 2.8); gTimeout(() => say(b, "Tamam, küreği ben de alıyorum.", 2.4), 3200); } satAdd(2, "sığınaktaki tartışmayı çözdün"); }); }},
+      {t: "Azizhan Üsteğmen halletsin", d: "Yarım saat sürer", go: () => { wmod("siginak", .5, 40); errand("azizhan", plTarget(PLK.siginak).x + 2, plTarget(PLK.siginak).z, "La Boran, bir kürek de sen al. Tamam, herkes işine!"); }},
+      {t: "Boran'ı çay ocağına çağır", d: "Asker rahat çalışır · Boran biraz bozulur", go: () => { const b = who("boran"); if (b) { goBack(b); say(b, "Emredersiniz… ben sadece koordine ediyordum.", 2.6); } }}]})},
+  {k: "tup", win: [600, 1000], w: 2, card: () => ({app: "Çay ocağı", who: "Ocakçı asker", ic: "🫖", col: "#78350f", title: "Ocağın tüpü bitti",
+    text: "Komutanım, çay ocağının tüpü bitti. Çay yok!",
+    opts: [{t: "Kantinden tüp aldır", d: "Yarım saate çay gelir", go: () => { DAY.noTea = DAY.t + 30; toast("Ocakçı kantine koştu · çay yarım saate", 2.2); }},
+      {t: "Karargâhtan semaver iste", d: "Hemen çözülür · Ufuk Binbaşı duyar", go: () => { DAY.noTea = 0; satAdd(-1, "karargâhtan semaver istendi"); gTimeout(() => phoneNote("Mesaj · Tabur", "Ufuk Binbaşı", "Semaver gönderdim mankiler, tüpü de alın artık!"), 3000); }},
+      {t: "Bugün çaysız idare edin", d: "Subaylar homurdanır", go: () => { DAY.noTea = 1440; satAdd(-2, "çay ocağı çaysız kaldı"); }}]})},
+  {k: "sofor", win: [560, 930], w: 3, cond: () => TRX && TRX.ai && !TRX.broken, card: () => ({app: "Telsiz · Bunker yaşam alanı", who: "Ahmet Üsteğmen", ic: "🚛", col: "#475569", title: "Kamyon şoförü revirde",
+    text: "Komutanım, bunker kamyonunun şoförü rahatsızlandı, revire gitti. Kamyon yükleme yerinde öyle bekliyor.",
+    opts: [{t: "Kamyonu ben sürerim", d: "Bin, döküm sahasına götür, boşalt · bir sefer de senden", go: () => { TRX.hold = 120; truckTask(); }},
+      {t: "Ahmet bir şoför bulsun", d: "Kamyon kırk dakika bekler", go: () => { TRX.hold = 40; const a = who("ahmet"); if (a) say(a, "Garajdan bir ehliyetli bulurum komutanım.", 2.4); }},
+      {t: "Öğlene kadar beklesin", d: "Sefer sayısı düşer", go: () => { TRX.hold = Math.max(20, 720 - DAY.t); }}]})},
+  {k: "operator", win: [470, 690], w: 3, cond: () => BNK.p < BPH.exc - .02 && EXC && EXC.ai && !EXC.broken, card: () => ({app: "Telsiz · Bunker yaşam alanı", who: "Ekskavatör operatörü", ic: "🏗️", col: "#b45309", title: "Ekskavatör boşta",
+    text: "Komutanım, nöbet değişimi var, öbür operatör yarım saate gelir. Kazı durmasın diyorsanız…",
+    opts: [{t: "Kazıyı ben sürdürürüm", d: "Ekskavatöre bin, 2 m³ kaz · bunker hızlanır", go: () => { EXC.hold = 1; digTask(); }},
+      {t: "Yarım saat beklesin", d: "Kazı biraz gecikir", go: () => { EXC.pauseT = 30; }}]})},
+  {k: "rapor", win: [930, 1010], w: 3, once: true, card: () => { const tr = DAY.trips - DAY.s0.trips; return {app: "Telefon · Tabur", who: "Ufuk Binbaşı", ic: "📞", col: "#14532d", title: "Akşam raporu",
+    text: `Mankiler, akşam tugaya rapor geçeceğim. Bugün kaç kamyon seferi yaptık?`,
+    opts: [{t: `Doğrusunu söyle: ${tr} sefer`, d: tr >= GOAL.trips ? "Hedef tamam" : "Hedefin altında", go: () => { if (tr >= GOAL.trips) satAdd(2, "Ufuk Binbaşı sefer sayısından memnun"); else { satAdd(-1, "sefer sayısı az"); gTimeout(() => phoneNote("Mesaj · Tabur", "Ufuk Binbaşı", "Yarın daha çok olsun, Paşam soruyor."), 2500); } }},
+      {t: `Biraz yuvarla: ${tr + 2} sefer`, d: "Ya tutar ya tutmaz", go: () => { if (Math.random() < .5) { satAdd(-3, "Paşa seferleri saydırmış, rapor tutmadı"); gTimeout(() => phoneNote("Mesaj · Tabur", "Ufuk Binbaşı", "Mankiler, Paşam saydırmış! Bir daha olmasın."), 2500); } else satAdd(1, "rapor geçti"); }}]}; }}];
+
+// the truck task: drive the waiting truck to the dump and tip it
+function truckTask() { const v = TRX; let acc = 0, last = stats.dumped;
+  const mine2 = () => mine(v), m = misAdd({k: "kamyon:" + DAY.day + ":" + (++DUR.n), urgent: true, quiet: true, t: "Kamyonla sefer",
+    d: () => mine2() ? (v.load > .5 ? `Döküm sahasına götür, damperi kaldır (sağ kol ↑) · kasa ${v.load.toFixed(1)}/${v.cap}` : "Kamyon boş · yükleme yerine getir ya da in, şoför devralır") : (MOBILE ? "Kamyona yaklaş, BİN'e bas." : "Kamyona yaklaş, E ile bin."),
+    target: () => mine2() ? (v.load > .5 ? {x: DUMPC.x, z: DUMPC.z, n: "DÖKÜM SAHASI", r: 7} : null) : {x: v.x, z: v.z, n: "KAMYON", r: 5},
+    tick: () => { const s = stats.dumped; if (mine2()) acc += Math.max(0, s - last); last = s; if (!mine2() && v.ai) v.hold = Math.max(v.hold || 0, 2); },
+    check: () => acc >= 3, end: ok => { v.hold = 0; if (!ok) return; DAY.trips++; satAdd(2, "kamyonu bizzat sürdün, bir sefer de senden"); }, until: Math.min(1050, DAY.t + 150), okLate: false});
+  if (v.load < 3) v.load = v.cap; }   // loaded and waiting
+// the dig task: the excavator's seat for half an hour
+function digTask() { const v = EXC; let acc = 0, last = stats.pit;
+  misAdd({k: "kazi:" + DAY.day + ":" + (++DUR.n), urgent: true, quiet: true, t: "Bunker kazısı",
+    d: () => mine(v) ? `Kepçeyle kaz · ${acc.toFixed(1)} / 2 m³` : (MOBILE ? "Ekskavatöre yaklaş, BİN'e bas." : "Ekskavatöre yaklaş, E ile bin."),
+    target: () => mine(v) ? null : {x: v.x, z: v.z, n: "EKSKAVATÖR", r: 5},
+    tick: () => { const s = stats.pit; if (mine(v)) acc += Math.max(0, s - last); last = s; },
+    check: () => acc >= 2, end: ok => { v.hold = 0; if (ok) satAdd(2, "bunkerin kazısını bizzat sürdürdün"); }, until: Math.min(1050, DAY.t + 120), okLate: false}); }
+
+// ---------------- the day's plan: two or three situations at their hours, the concrete when the bunker waits for it ----------------
+// a situation that can come today: its days, not twice in two days
+const sitFits = (s, plan) => (!s.days || (DAY.day >= s.days[0] && DAY.day <= s.days[1])) && !(DUR.used[s.k] >= DAY.day - 1) && (plan || ((!s.cond || s.cond()) && DAY.t >= s.win[0] && DAY.t <= s.win[1]));
+function durDay() {
+  WMOD.length = 0; DUR.q = []; DUR.rep = {}; DAY.barkanReady = DAY.barkanReady || false; DAY.noTea = 0;
+  const P = DAY.plan || {}, clash = t => [P.raidAt, P.visit, P.tank].some(x => x && Math.abs(x - t) < 30);
+  const pool = SIT.filter(s => s.k !== "rapor" && sitFits(s, true)).sort(() => Math.random() - .5);
+  const n = DAY.day >= CAMP.day && !CAMP.done ? 1 : 4, slots = [[490, 585], [650, 712], [790, 875], [880, 948]], picked = [];   // the first soon after the briefing
+  const avoid = t => clash(t) || (t > 595 && t < 650) || (t > 712 && t < 785);   // not on a commander's visit, not at the ten o'clock tea, not at lunch
+  for (const s of pool) { if (picked.length >= n) break;
+    for (const sl of slots) { if (sl.used) continue; const a = Math.max(sl[0], s.win[0]), b = Math.min(sl[1], s.win[1]); if (b <= a) continue;
+      let t = -1; for (let k = 0; k < 10 && t < 0; k++) { const c = a + Math.random() * (b - a); if (!avoid(c)) t = c; } if (t < 0) continue;
+      sl.used = true; picked.push({s, at: t}); break; } }
+  if (!picked.some(q => q.s.k === "rapor") && DAY.day < CAMP.day) picked.push({s: SIT.find(q => q.k === "rapor"), at: 955 + Math.random() * 30});
+  DUR.q = picked.sort((a, b) => a.at - b.at); }
+function durFrame(dt) {
+  if (DRONE.hideT > 0) { DRONE.hideT -= dt; if (DRONE.hideT <= 0) DRONE.hideT = 0; }
+  if (EXC && EXC.pauseT > 0) { EXC.pauseT -= dt; EXC.hold = EXC.pauseT > 0 ? 1 : 0; }
+  if (durBusy()) return;
+  // the concrete: when the bunker waits for a pour and nobody has the mixer coming
+  if (BNK.wait && BNK.mix === "away" && isWork() && DAY.day >= DUR.betonDay && DAY.t > 500 && !(DUR.betonT > DAY.t && DUR.betonAskDay === DAY.day)) { DUR.betonT = DAY.t + 90; DUR.betonAskDay = DAY.day; durShow(betonCard()); return; }
+  if (BNK.mix === "gate" && MIXER.atGate) { MIXER.waitT = (MIXER.waitT || 0) + dt; if (MIXER.waitT > 160) { MIXER.atGate = false; bnkMixerOut(); phoneNote("Telefon · Beton santrali", "Santral şefi", "Mikser nizamiyede çok bekledi, geri döndü komutanım. Yeniden yollarız."); } }
+  if (!isWork()) return;
+  for (const it of DUR.q) if (!it.fired && DAY.t >= it.at) { it.fired = true; if (DAY.t > it.at + 90) continue; let s = it.s;   // long past (the clock was skipped): let it go
+    if (s.cond && !s.cond()) { s = SIT.filter(q => q.k !== "rapor" && !DUR.q.some(x => x.s === q) && sitFits(q, false)).sort(() => Math.random() - .5)[0]; if (!s) continue; }   // it no longer fits (the machine broke down meanwhile): something else comes up
+    DUR.used[s.k] = DAY.day; durShow(Object.assign({k: s.k}, s.card())); break; } }
+UPD.push(durFrame);
+window.__hs.dur = DUR;
+
+;(window.__INIT || (window.__INIT = [])).push(["durum", performance.now()]);
 
 // ======================= FX: night glows, light pools, moon, load spill on fast turns =======================
 const glowTex = texCanvas(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.18, "rgba(255,246,226,.85)"); gr.addColorStop(.48, "rgba(255,214,160,.22)"); gr.addColorStop(1, "rgba(255,190,120,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });

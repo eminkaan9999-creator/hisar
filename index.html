@@ -4450,7 +4450,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=+'58',LOGO=window.HISAR_LOGO;
+const VER=+'59',LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -6764,7 +6764,7 @@ function setBody(k){if(!BODY[k])k='saldiri';const g=DR.g;if(!g)return;if(!STD)ST
  for(const c of g.children.slice())g.remove(c);
  if(k==='saldiri'){for(const c of STD.ch)g.add(c);g.userData.rot=STD.rot;g.userData.pl=STD.pl}
  else{const m=k==='kesif'?mkKesif():mkRacer();for(const c of m.children.slice())g.add(c);g.userData.rot=m.userData.rot;g.userData.pl=m.userData.pl}
- g.traverse(o=>{if(o.isMesh){o.castShadow=true}});g.userData.body=k}
+ g.traverse(o=>{if(o.isMesh){o.castShadow=!(o.material&&(o.material.transparent||o.material.opacity<1||o.material.isMeshBasicMaterial))}});g.userData.body=k}
 // ---------------- 2) govde etkileri: hiz, pil, menzil, bomba, kamikaze ----------------
 {const am=window.AMX;window.AMX=function(){return B().ammo?am.apply(this,arguments):0}}
 {const up=window.update;window.update=function(dt){const b=B();if(b.spd===1)return up.apply(this,arguments);const d0=SV.U.dsp;SV.U.dsp=(b.spd*(1+.08*d0)-1)/.08;try{return up.apply(this,arguments)}finally{SV.U.dsp=d0}}}
@@ -6829,6 +6829,149 @@ FRAME_HOOKS.push(dr=>{dr=dr||0;if(DR.g&&DR.g.userData.body!==SV.dbody)setBody(SV
  if(game==='play'&&mode==='drone'&&DR.on&&!DR.rt&&!DR.fall){const sig=DR.sig==null?1:DR.sig;if(sig<=.03){lostT+=dr;if(lostT>1.6){lostT=0;say('📡 SİNYAL KAYBI · Uçangöz otomatik eve dönüyor',2.4);say2('Sinyal koptu, Uçangöz kendi kendine dönüyor!',1,'rth',10);try{recall()}catch(e){}}}else lostT=0}});
 setBody(SV.dbody);
 window.DRONE2={BODY,setBody,J,mkEW};
+})();
+
+
+// ===== m_units2 =====
+// ============ YENI DUSMANLAR VE DOST DESTEK: BMP (30 mm seri atis + tel gudumlu tanksavar fuzesi, vurulunca piyade iner), SILKA (ZSU-23-4: radarla Ucangoz avlar, dort namlu), cok namlulu roketatar (gokte iz birakan roket salvosu), cagirilabilen ikmal kamyonu ve kurtarma tanki (onarir, paleti kopuk tanki ceker) ============
+(function(){
+const PI=Math.PI,RN=Math.random,rr=(a,b)=>a+RN()*(b-a),cl=(v,a,b)=>v<a?a:v>b?b:v,FX=window.FXP;
+const snd=f=>{try{if(typeof AC!=='undefined'&&AC&&typeof AU!=='undefined'&&AU)f(AC.currentTime)}catch(e){}};
+const say2=(t,s,k,c)=>{try{if(window.CREW&&CREW.say)CREW.say(t,s||1,k,c)}catch(e){}};
+const clock=(x,z)=>{const b=angd(Math.atan2(x-P.x,z-P.z),P.h);let c=Math.round(-b/(PI/6));c=((c%12)+12)%12;return c===0?12:c};
+const dist3=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+// ---------------- modeller ----------------
+function mkBMP(){const g=new THREE.Group(),H=camo(0x8a7552),K=M(0x1c1c1c),DK=M(0x2a2d2a),G=M(0x3a3d38),Y=PI/2;
+ bx(g,2.9,1.1,6.4,H,0,1.25,-.2);const nf=bx(g,2.9,.9,1.6,H,0,1.05,3.3);nf.rotation.x=-.62;bx(g,2.9,.4,1.2,H,0,.9,3.65).rotation.x=.55;bx(g,2.6,.12,2.4,DK,0,1.84,-1.9);
+ for(const q of[-1,1]){for(let i=0;i<6;i++){cy(g,.4,.4,.42,K,q*1.32,.48,-2.7+i*1.05,0,Y);cy(g,.18,.18,.44,G,q*1.32,.48,-2.7+i*1.05,0,Y)}bx(g,.5,.25,6.6,K,q*1.32,.95,-.15);bx(g,.06,.55,5.6,H,q*1.48,1.05,-.2)}
+ for(const z of[-3.2,-2.5])bx(g,.9,.6,.06,DK,(z<-3?-.7:.7),1.35,-3.42);
+ const tu=new THREE.Group();tu.position.set(0,1.82,.5);g.add(tu);const tb=new THREE.Mesh(new THREE.CylinderGeometry(.75,.95,.55,12),H);tb.position.y=.27;tu.add(tb);
+ const gn=new THREE.Group();gn.position.set(0,.35,.6);tu.add(gn);cy(gn,.05,.06,2.6,K,0,0,1.3,Y);cy(gn,.09,.09,.35,K,0,0,.1,Y);cy(gn,.07,.07,.25,K,0,0,2.65,Y);
+ const at=new THREE.Group();at.position.set(.35,.75,-.1);tu.add(at);cy(at,.11,.11,1.3,M(0x5a6a4a),0,0,.2,Y);bx(at,.08,.25,.08,K,0,-.15,-.2);
+ bx(tu,.35,.25,.3,K,-.45,.6,.1);
+ g.userData={tu,cl:[],tp:[0,0],bmp:1,gn};return g}
+function mkZSU(){const g=new THREE.Group(),H=camo(0x8a7552),K=M(0x1c1c1c),G=M(0x3a3d38),R_=M(0x5a5e52),Y=PI/2;
+ bx(g,3.0,1.1,6.2,H,0,1.2,0);bx(g,3.0,.7,1.2,H,0,1.0,3.3).rotation.x=-.5;for(const q of[-1,1]){for(let i=0;i<6;i++){cy(g,.38,.38,.42,K,q*1.3,.45,-2.5+i*1.0,0,Y)}bx(g,.5,.22,6.3,K,q*1.3,.9,0)}
+ const t=new THREE.Group();t.position.set(0,1.75,-.2);g.add(t);bx(t,2.6,1.1,2.8,H,0,.55,0);bx(t,2.7,.2,2.9,G,0,1.12,0);
+ const gm=new THREE.Group();gm.position.set(0,.7,1.25);t.add(gm);for(const[x,y]of[[-.42,.12],[.42,.12],[-.42,-.12],[.42,-.12]]){cy(gm,.045,.05,2.3,K,x,y,1.15,Y);cy(gm,.07,.07,.2,K,x,y,2.25,Y)}bx(gm,1.1,.5,.5,R_,0,0,.1);
+ const d=new THREE.Group();d.position.set(0,1.75,-1.0);t.add(d);cy(t,.06,.06,.6,K,0,1.45,-1.0);const dish=new THREE.Mesh(new THREE.SphereGeometry(.8,14,8,0,2*PI,0,PI/2.6),R_);dish.rotation.x=-PI/2;dish.scale.set(1,.55,1);d.add(dish);
+ g.userData={t,dish:d,gm,zsu:1};return g}
+function mkMLRS(){const g=new THREE.Group(),H=camo(0x8a7552),K=M(0x1c1c1c),C=M(0x6a6a52),Y=PI/2;
+ bx(g,2.5,.45,7.4,K,0,.8,0);bx(g,2.45,1.5,2.1,H,0,1.75,2.7);bx(g,2.2,.7,.1,M(0x25404f),0,2.15,3.76);bx(g,2.5,.5,4.6,H,0,1.3,-1.2);
+ for(const q of[-1,1])for(const z of[-2.6,-1.1,2.75])cy(g,.58,.58,.42,K,q*1.28,.58,z,0,Y);
+ const L_=new THREE.Group();L_.position.set(0,1.95,-1.4);L_.rotation.x=-.55;g.add(L_);bx(L_,2.2,.12,3.4,C,0,-.55,0);
+ for(let r=0;r<4;r++)for(let c=0;c<10;c++){cy(L_,.085,.085,3.2,M(0x4e5244),-.95+c*.21,-.35+r*.2,0,Y)}
+ g.userData={L:L_,mlrs:1};return g}
+function swapModel(e,mk){const g=e.g,keep=e.heat;for(const c of g.children.slice())if(c!==keep)g.remove(c);const n=mk();for(const c of n.children.slice())g.add(c);g.userData=n.userData;try{shad(g)}catch(x){}}
+// ---------------- addE: varyantlar ----------------
+const VR={apc:.5,aa:.55,arty:.45};
+{const ad=window.addE;window.addE=function(type,x,z,o){const e=ad.apply(this,arguments);try{if(e&&!(o&&o.plain)){
+ if(type==='apc'&&RN()<VR.apc){swapModel(e,mkBMP);e.bmp=1;e.hp=e.hp0=95;e.atgmT=rr(8,14);e.disT=0}
+ else if(type==='aa'&&RN()<VR.aa){swapModel(e,mkZSU);e.zsu=1;e.hp=e.hp0=80;e.cd=1e9;e.zb=0;e.zt=rr(1,3)}
+ else if(type==='arty'&&RN()<VR.arty){swapModel(e,mkMLRS);e.mlrs=1;e.hp=e.hp0=70}}}catch(x){}return e}}
+// ---------------- BMP: 30 mm seri atis + fuze ----------------
+{const es=window.eshot;window.eshot=function(e,tx,ty,tz,sp,tgt){if(!e||!e.bmp||tgt==='drone')return es.apply(this,arguments);
+ const shot=()=>{if(!E.includes(e)||game!=='play')return;const n0=ebul.length;es.call(this,e,tx,ty,tz,62,tgt);const b=ebul[ebul.length-1];if(b&&ebul.length>n0){b.dk=.28;b.m.scale.setScalar(.45);b.m.position.y+=.4}};
+ shot();setTimeout(shot,110);setTimeout(shot,220)}}
+const MSL=new THREE.MeshBasicMaterial({color:0xe8e4d4});const MG_=new THREE.CylinderGeometry(.09,.09,1.1,8);MG_.rotateX(PI/2);
+function fireATGM(e){const gy=hAt(e.x,e.z),y=gy+2.9,dx=P.x-e.x,dz=P.z-e.z,d=Math.hypot(dx,dz)||1,sp=38;const m=new THREE.Mesh(MG_,MSL);m.position.set(e.x+dx/d*1.5,y,e.z+dz/d*1.5);S.add(m);
+ const b={m,vx:dx/d*sp,vy:(hAt(P.x,P.z)+1.8-y)/d*sp,vz:dz/d*sp,tgt:'tank',life:9,dk:2.6,rk:1,atgm:1,src:e};ebul.push(b);m.lookAt(m.position.x+b.vx,m.position.y+b.vy,m.position.z+b.vz);
+ if(FX){for(let i=0;i<8;i++)FX.puff(e.x-dx/d*1.2,y-.4,e.z-dz/d*1.2,-dx/d*rr(3,7)+rr(-1,1),rr(.3,1.2),-dz/d*rr(3,7)+rr(-1,1),rr(.8,1.4),.5,2.4,0xc8c0b0,0xd8d0c0,.55,1.2)}
+ try{sndFire(e.x,e.z,.8)}catch(x){}say('⚠ TANKSAVAR FÜZESİ · SAAT '+clock(e.x,e.z),2);say2('Füze geliyor, saat '+clock(e.x,e.z)+'! Sis at ya da manevra yap!',2,'atgm',6)}
+function atgmGuide(dt){for(const b of ebul){if(!b.atgm||b.life<=0)continue;const p=b.m.position;if(typeof smoked==='function'&&smoked(P.x,P.z))b.lost=1;if(b.lost)continue;
+  const tx=P.x-p.x,ty=hAt(P.x,P.z)+1.6-p.y,tz=P.z-p.z,l=Math.hypot(tx,ty,tz)||1,sp=Math.hypot(b.vx,b.vy,b.vz)||38,k=Math.min(1,dt*1.6);
+  b.vx+=(tx/l*sp-b.vx)*k;b.vy+=(ty/l*sp-b.vy)*k;b.vz+=(tz/l*sp-b.vz)*k;const s2=Math.hypot(b.vx,b.vy,b.vz)||1;b.vx*=sp/s2;b.vy*=sp/s2;b.vz*=sp/s2;b.m.lookAt(p.x+b.vx,p.y+b.vy,p.z+b.vz)}}
+function bmpStep(e,dt){e.atgmT-=dt;const d=dist3(e,P);if(e.atgmT<=0){e.atgmT=rr(13,19);if(L.cd&&d<175&&d>25&&!(e.fl>0)&&!(typeof smoked==='function'&&smoked(P.x,P.z))){window.__curE=e;fireATGM(e)}}
+ if(!e.dis&&e.hp<e.hp0*.5){e.dis=1;dismount(e,2)}}
+function dismount(e,n){for(let i=0;i<n;i++){const a=(e.h||0)+PI+rr(-.6,.6),r=rr(4,6);try{addE('inf',e.x+Math.sin(a)*r,e.z+Math.cos(a)*r)}catch(x){}}if(dist3(e,P)<160)say2('BMP\'den piyade indi!',1,'dism',8)}
+{const k=window.killE;window.killE=function(e){const was=e&&E.includes(e);const r=k.apply(this,arguments);try{if(was&&!E.includes(e)&&e.bmp&&!e.dis2){e.dis2=1;if(RN()<.7)dismount(e,e.dis?1:2)}}catch(x){}return r}}
+// ---------------- SILKA ----------------
+const DV={x:0,y:0,z:0,vx:0,vy:0,vz:0,ok:0};
+function zsuStep(e,dt){const u=e.g.userData;if(!u||!u.t)return;e.cd=1e9;if(u.dish)u.dish.rotation.y+=dt*4;
+ const air=DR.on&&!DR.fall,dd=air?Math.hypot(DR.x-e.x,DR.z-e.z,DR.y-hAt(e.x,e.z)):1e9,dg=dist3(e,P);let tx=null,ty,tz,sp=95,isD=0;
+ if(air&&dd<155){const t=dd/sp;tx=DR.x+DV.vx*t;ty=DR.y+DV.vy*t;tz=DR.z+DV.vz*t;isD=1;if(!e.lock){e.lock=1;if(mode==='drone'){say('⚠ ŞİLKA RADARI KİLİTLENDİ · alçal, uzaklaş!',2.2);snd(T=>{for(let i=0;i<6;i++)tone(T+i*.09,.05,{f0:1800,f1:1800,v:.04,type:'square'})})}}}
+ else{e.lock=0;if(dg<85&&L.cd&&!(typeof smoked==='function'&&smoked(P.x,P.z))){tx=P.x;ty=hAt(P.x,P.z)+1.5;tz=P.z}}
+ const want=tx!=null?Math.atan2(tx-e.x,tz-e.z)-e.g.rotation.y:u.t.rotation.y;u.t.rotation.y+=cl(angd(want,u.t.rotation.y),-2.2*dt,2.2*dt);
+ if(u.gm&&tx!=null){const el=Math.atan2(ty-(hAt(e.x,e.z)+2.5),Math.hypot(tx-e.x,tz-e.z));u.gm.rotation.x+=(-el-u.gm.rotation.x)*Math.min(1,dt*4)}
+ if(!L.cd||tx==null||Math.abs(angd(want,u.t.rotation.y))>.08)return;e.zt-=dt;if(e.zt>0)return;
+ if(e.zb<=0){e.zb=isD?8:6}e.zb--;e.zt=e.zb>0?.07:rr(1.8,2.6);
+ const gy=hAt(e.x,e.z)+2.6,sx=e.x+Math.sin(u.t.rotation.y+e.g.rotation.y)*2.8,sz=e.z+Math.cos(u.t.rotation.y+e.g.rotation.y)*2.8,s_=isD?.018*dd:.03*dg,ax=tx+rr(-s_,s_),ay=ty+rr(-s_,s_)*.6,az=tz+rr(-s_,s_),dx=ax-sx,dy=ay-gy,dz=az-sz,l=Math.hypot(dx,dy,dz)||1;
+ const m=new THREE.Mesh(BULG,isD?BULM_D:BULM);m.position.set(sx,gy,sz);S.add(m);ebul.push({m,vx:dx/l*sp,vy:dy/l*sp,vz:dz/l*sp,tgt:isD?'drone':'tank',life:2.2,dk:isD?1:.12});
+ if(FX&&FX._s)FX._s.FI.emit(sx,gy,sz,dx/l*3,dy/l*3,dz/l*3,.06,.8,1.4,0xfff0c0,0xff9040,1,0,0,0,0,0);
+ const v=Math.max(.04,.45-dist3(e,CAM.position)/320);snd(T=>{nburst(T,.06,{type:'bandpass',f:1100,q:.8,v:.3*v});tone(T,.07,{f0:130,f1:60,v:.18*v})})}
+const BULG=new THREE.SphereGeometry(.18,6,4),BULM=new THREE.MeshBasicMaterial({color:0xffd27a}),BULM_D=new THREE.MeshBasicMaterial({color:0xff6040});BULG.userData.sh=1;
+// rm() paylasilan geometriyi silmesin
+{const r0=window.rm;if(r0)window.rm=function(o){if(o&&o.geometry===BULG){S.remove(o);return}if(o&&o.geometry===MG_){S.remove(o);return}return r0.apply(this,arguments)}}
+// ---------------- ROKETATAR (salvo) ----------------
+const RK=[];
+{const as=window.artyShot;window.artyShot=function(e){if(!e||!e.mlrs)return as.apply(this,arguments);salvo(e)}}
+function salvo(e){const n=Math.round(rr(9,12)),gy=hAt(e.x,e.z),cx=P.x+(window.__spd||0)*Math.sin(P.h)*1.5,cz=P.z+(window.__spd||0)*Math.cos(P.h)*1.5;e.salvoT=rr(16,24);
+ for(let i=0;i<n;i++){const T=rr(5.2,6.4),a=RN()*2*PI,r=Math.sqrt(RN())*16,tx=cx+Math.cos(a)*r,tz=cz+Math.sin(a)*r,sx=e.x+rr(-.6,.6),sy=gy+3.2,sz=e.z+rr(-.6,.6),ty=hAt(tx,tz);
+  RK.push({t:-i*.2,x:sx,y:sy,z:sz,vx:(tx-sx)/T,vy:(ty-sy+.5*9.8*T*T)/T,vz:(tz-sz)/T,tx,tz,a:0})}
+ const d=dist3(e,P),dl=Math.min(d/343,1.4);snd(T=>{for(let i=0;i<n;i++){nburst(T+dl+i*.2,.9,{type:'lowpass',f0:1800,f1:300,v:.12*Math.max(.15,1-d/300)});tone(T+dl+i*.2,.5,{f0:220,f1:90,v:.05})}});
+ setTimeout(()=>{try{if(game==='play'){say('⚠ ROKET SALVOSU! Hemen yer değiştir!',2.6);say2('Roket salvosu geliyor, kaç kaç kaç!',2,'mlrs',8)}}catch(x){}},500)}
+function rkStep(dt){for(let i=RK.length-1;i>=0;i--){const r=RK[i];r.t+=dt;if(r.t<0)continue;if(!r.a){r.a=1;if(FX){for(let k=0;k<4;k++)FX.puff(r.x,r.y,r.z,rr(-2,2),rr(-1,1),rr(-2,2),rr(1,1.8),.8,3.2,0xd8d0c0,0xc8c0b0,.6,1.2);FX._s&&FX._s.FI.emit(r.x,r.y,r.z,0,0,0,.12,1.4,2.4,0xfff0c0,0xff9040,1,0,0,0,0,0)}}
+  r.vy-=9.8*dt;r.x+=r.vx*dt;r.y+=r.vy*dt;r.z+=r.vz*dt;if(FX){FX.smokeTrail(r.x,r.y,r.z);FX._s&&FX._s.FI.emit(r.x,r.y,r.z,0,0,0,.08,.7,.3,0xfff2c0,0xff7020,.95,0,0,0,0,0)}
+  if(r.y<=hAt(r.x,r.z)+.2&&r.vy<0){RK.splice(i,1);try{bigBoom(r.x,r.z,4.5)}catch(x){}const d=Math.hypot(r.x-P.x,r.z-P.z);if(d<7&&L.dmg&&mode!=='x')hitP(1.5*(1-d/9),new THREE.Vector3(r.x,hAt(r.x,r.z)+1,r.z));
+   if(typeof AL!=='undefined')for(const a of AL)if(!a.dead&&Math.hypot(a.x-r.x,a.z-r.z)<6)try{hitAl(a,1)}catch(x){}}}}
+// ---------------- DOST DESTEK: ikmal kamyonu + kurtarma tanki ----------------
+function mkSupTruck(){const g=mkTruck();g.traverse(o=>{if(o.isMesh)o.castShadow=true});const C=M(0x6a5a3a);for(let i=0;i<4;i++)bx(g,.8,.5,.6,C,(i%2?.5:-.5),3.45,-1.6+(i>>1)*.8);return g}
+function mkM88(){const g=new THREE.Group(),H=camo(0x4a5a38),K=M(0x1c1c1c),G=M(0x3a3d38),Y=PI/2;
+ bx(g,3.2,1.6,6.6,H,0,1.5,0);bx(g,3.2,.8,1.2,H,0,1.2,3.6).rotation.x=-.4;bx(g,2.0,.9,2.4,H,-.4,2.75,1.3);bx(g,.9,.5,.06,M(0x25404f),-.4,2.9,2.52);
+ for(const q of[-1,1]){for(let i=0;i<6;i++)cy(g,.42,.42,.44,K,q*1.45,.5,-2.6+i*1.04,0,Y);bx(g,.55,.25,6.8,K,q*1.45,1.0,0)}
+ const bl=new THREE.Group();bl.position.set(0,.55,4.1);g.add(bl);bx(bl,3.3,.9,.18,G,0,.3,0);g.userData.blade=bl;
+ const boom=new THREE.Group();boom.position.set(.9,2.3,2.6);g.add(boom);for(const s of[-.35,.35]){const b=bx(boom,.14,.14,4.2,G,s,0,1.6);b.rotation.x=-.2}bx(boom,.9,.14,.14,G,0,.4,3.6);g.userData.boom=boom;boom.rotation.x=-.9;
+ cy(g,.25,.25,.6,K,-.4,2.3,-2.8,Y);bx(g,.08,.08,.9,M(0xff9a20),.9,3.3,-.2);g.userData.lt=bx(g,.18,.12,.18,new THREE.MeshBasicMaterial({color:0xffa020}),.9,3.75,-.2);
+ g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return g}
+const SUPV={tr:{cd:0,v:null},rc:{cd:0,v:null},tow:null};window.SUPV=SUPV;
+const CDW=150;
+function callSup(k){const s=SUPV[k];if(s.v||s.cd>0||game!=='play')return;const toS=Math.atan2(SUP.x-P.x,SUP.z-P.z),d0=Math.min(k==='rc'?65:120,Math.hypot(SUP.x-P.x,SUP.z-P.z)-4),x=cl(P.x+Math.sin(toS)*d0,-185,185),z=cl(P.z+Math.cos(toS)*d0,-185,185);
+ const g=k==='tr'?mkSupTruck():mkM88();g.position.set(x,hAt(x,z),z);S.add(g);s.v={g,x,z,h:toS+PI,st:'in',t:0,k,sx:x,sz:z,a:0,lx:x,lz:z};
+ const eta=Math.round(d0/11);radio(k==='tr'?'Komuta: İkmal kamyonu yola çıktı, yaklaşık '+eta+' saniyede yanınızda.':'Komuta: Kurtarma tankı yola çıktı, yaklaşık '+eta+' saniyede yanınızda.');say(k==='tr'?'🚚 İKMAL KAMYONU GELİYOR':'🔧 KURTARMA TANKI GELİYOR',2)}
+window.callSup=callSup;
+function supStep(dt){for(const k of['tr','rc']){const s=SUPV[k];if(s.cd>0&&!s.v)s.cd-=dt;const v=s.v;if(!v)continue;v.t+=dt;const g=v.g;
+  let tx,tz,stop=1.4,sp=k==='rc'?14:11;
+  if(v.st==='in'){const sn=Math.sin(P.h),cs=Math.cos(P.h);if(k==='tr'){tx=P.x+cs*6;tz=P.z-sn*6}else{tx=P.x+sn*9.5;tz=P.z+cs*9.5}}
+  else if(v.st==='tow'){tx=v.tx;tz=v.tz;sp=6;stop=1}
+  else if(v.st==='out'){tx=v.sx;tz=v.sz;stop=3}
+  if(tx!=null&&v.st!=='work'){const dx=tx-v.x,dz=tz-v.z,d=Math.hypot(dx,dz);if(d>stop){const th=Math.atan2(dx,dz);if(v.st!=='tow')v.h+=angd(th,v.h)*Math.min(1,2.4*dt);const m=Math.min(sp,d*1.2)*(Math.abs(angd(th,v.h))<1.2||v.st==='tow'?1:.25);v.x+=Math.sin(v.h)*m*dt;v.z+=Math.cos(v.h)*m*dt;if(v.st!=='tow'){const o={x:v.x,z:v.z};pushOut(o,2.4);v.x=o.x;v.z=o.z}
+     if(RN()<dt*6&&FX)FX.dust(v.x-Math.sin(v.h)*3,v.z-Math.cos(v.h)*3,.6)}
+   else{if(v.st==='in'){v.st=k==='rc'&&P.dz&&P.dz.trk<=0?'hook':'work';v.t=0;if(k==='tr'){say2('İkmal kamyonu geldi, mühimmat aktarılıyor!',1,'sup',5)}else say2(v.st==='hook'?'Kurtarma tankı geldi, halatı bağlıyoruz!':'Kurtarma tankı geldi, onarım başlıyor!',1,'rec',5)}
+    else if(v.st==='tow'){v.st='work';v.t=0;SUPV.tow=null;say2('Güvenli yere çekildik, onarım başlıyor!',1,'rec2',5)}
+    else if(v.st==='out'){S.remove(g);s.v=null;s.cd=CDW;continue}}}
+  if(v.st==='hook'){const dir=Math.atan2(v.x-P.x,v.z-P.z);v.h+=angd(dir,v.h)*Math.min(1,3*dt);if(v.t>1.5){v.h=dir;v.toff=Math.max(8,Math.hypot(v.x-P.x,v.z-P.z));v.tx=cl(v.x+Math.sin(dir)*26,-185,185);v.tz=cl(v.z+Math.cos(dir)*26,-185,185);v.st='tow';v.t=0;SUPV.tow=v;say('🔧 ÇEKİLİYORUZ',1.6)}}
+  if(v.st==='work'&&Math.hypot(v.x-P.x,v.z-P.z)>15){v.st='in'}
+  if(v.st==='work'){if(k==='tr'){v.a+=dt;if(v.a>.5){v.a=0;for(let i=0;i<TA.length;i++)if(TA[i]<TA0[i])TA[i]=Math.min(TA0[i],TA[i]+Math.ceil(TA0[i]/10));try{if(window.FUEL)FUEL.v=Math.min(100,FUEL.v+9)}catch(e){}}
+     if(v.t>6){for(let i=0;i<TA.length;i++)TA[i]=TA0[i];try{if(typeof SG!=='undefined')SG.n=SG.max;if(window.FUEL)FUEL.v=100;if(window.APS&&typeof APS.n==='number'){const mx=(SV.tank==='altay'?4:0)+(SV.U.aps|0)*2;APS.n=mx}if(window.RWS)RWS.ammo=300;ammo=Math.max(ammo,AMX())}catch(e){}
+      say('✚ İKMAL KAMYONU · mühimmat, yakıt ve sis dolduruldu',2.2);radio('İkmal kamyonu: aktarma tamam, geri dönüyoruz.');v.st='out';v.t=0}}
+    else{const sn=Math.sin(P.h),cs=Math.cos(P.h);if(RN()<dt*10&&FX){const x=P.x+sn*3.6+cs*rr(-1,1),z=P.z+cs*3.6-sn*rr(-1,1);FX.sparks(x,hAt(x,z)+1.2,z,sn,cs,10)}
+     if(g.userData.boom)g.userData.boom.rotation.x+=(-.4-g.userData.boom.rotation.x)*Math.min(1,dt*2);
+     P.hp=Math.min(P.mx,P.hp+P.mx*.4/8*dt);if(RN()<dt*2)snd(T=>{nburst(T,.12,{type:'highpass',f:3000,v:.05});tone(T,.08,{f0:900,f1:600,v:.03,type:'square'})});
+     if(v.t>8){P.dz={trk:100,tur:100,eng:100};say('🔧 KURTARMA TANKI · palet, taret, motor onarıldı',2.2);radio('Kurtarma tankı: onarım tamam, kolay gelsin.');v.st='out';v.t=0;if(g.userData.boom)g.userData.boom.rotation.x=-.9}}}
+  // cekme: tank kurtarma tankinin arkasinda
+  if(v.st==='tow'){const bx_=v.x-Math.sin(v.h)*v.toff,bz_=v.z-Math.cos(v.h)*v.toff;P.x=bx_;P.z=bz_;P.h=v.h}
+  // gorunum
+  g.position.set(v.x,hAt(v.x,v.z),v.z);g.rotation.y=v.h;if(g.userData.lt)g.userData.lt.visible=(performance.now()/300|0)%2===0;
+  if(v.st==='tow'||v.st==='hook'){if(!v.cab){v.cab=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1,6),M(0x1a1a1a));S.add(v.cab)}const ax=v.x-Math.sin(v.h)*3.4,az=v.z-Math.cos(v.h)*3.4,ay=hAt(ax,az)+1.1,b2x=P.x+Math.sin(P.h)*3.5,b2z=P.z+Math.cos(P.h)*3.5,b2y=hAt(b2x,b2z)+1.1;
+   v.cab.position.set((ax+b2x)/2,(ay+b2y)/2,(az+b2z)/2);v.cab.scale.y=Math.hypot(ax-b2x,ay-b2y,az-b2z);v.cab.lookAt(b2x,b2y,b2z);v.cab.rotateX(PI/2);v.cab.visible=true}else if(v.cab){S.remove(v.cab);v.cab=null}}}
+// cekilirken suruculuk yok
+{const up=window.update;window.update=function(dt){if(!SUPV.tow)return up.apply(this,arguments);const e0=SV.U.eng;SV.U.eng=-1/.07;let r;try{r=up.apply(this,arguments)}finally{SV.U.eng=e0}return r}}
+// ---------------- baglam dugmeleri + cark ----------------
+const needTr=()=>{const tot=TA.reduce((a,b)=>a+b,0),mx=TA0.reduce((a,b)=>a+b,0);return tot<mx*.45||(window.FUEL&&FUEL.v<35)||(typeof SG!=='undefined'&&SG.n===0)},
+ needRc=()=>P.hp<P.mx*.55||(P.dz&&(P.dz.trk<60||P.dz.tur<60||P.dz.eng<60)),farSup=()=>Math.hypot(P.x-SUP.x,P.z-SUP.z)>60;
+(window.CTX_XP=window.CTX_XP||[]).push(()=>{const o=[];if(mode!=='tank'||game!=='play')return o;
+ if(!SUPV.tr.v&&SUPV.tr.cd<=0&&needTr()&&farSup())o.push({k:'ctr',t:'🚚 İKMAL KAMYONU ÇAĞIR',c:'p',f:()=>callSup('tr')});
+ if(!SUPV.rc.v&&SUPV.rc.cd<=0&&needRc()&&farSup())o.push({k:'crc',t:'🔧 KURTARMA TANKI ÇAĞIR',c:'r',f:()=>callSup('rc')});return o});
+{const ICT='<path d="M2 15h13V7H2zM15 10h4l3 3v2h-7"/><circle cx="6" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>',ICR='<path d="M14 6a4 4 0 00-5 5l-6 6 2 2 6-6a4 4 0 005-5l-2 2-2-2z"/>';
+ (window.WHEEL_XP=window.WHEEL_XP||[]).push(c=>c==='tank'?[{id:'str',t:'İKMAL KAMYONU',d:SUPV.tr.v?'Yolda':SUPV.tr.cd>0?'Hazırlanıyor '+Math.ceil(SUPV.tr.cd)+' sn':'Mühimmat, yakıt, sis getirir',ic:ICT,dis:!!SUPV.tr.v||SUPV.tr.cd>0,act:()=>callSup('tr')},
+  {id:'src',t:'KURTARMA',d:SUPV.rc.v?'Yolda':SUPV.rc.cd>0?'Hazırlanıyor '+Math.ceil(SUPV.rc.cd)+' sn':'Onarır, paleti kopuksa çeker',ic:ICR,dis:!!SUPV.rc.v||SUPV.rc.cd>0,act:()=>callSup('rc')}]:[])}
+// ---------------- her kare ----------------
+FRAME_HOOKS.push(dr=>{if(game==='menu')return;if(game!=='play'||window.mapOpen)return;let dt=dr||0;if(typeof kc!=='undefined'&&kc&&kc.t>0)dt*=.3;if(!(dt>0))return;
+ if(DR.on){if(DV.ok){DV.vx+=((DR.x-DV.x)/dt-DV.vx)*Math.min(1,dt*6);DV.vy+=((DR.y-DV.y)/dt-DV.vy)*Math.min(1,dt*6);DV.vz+=((DR.z-DV.z)/dt-DV.vz)*Math.min(1,dt*6)}DV.x=DR.x;DV.y=DR.y;DV.z=DR.z;DV.ok=1}else DV.ok=0;
+ for(const e of E){if(e.bmp)bmpStep(e,dt);else if(e.zsu)zsuStep(e,dt);else if(e.mlrs){if(e.salvoT>0){e.salvoT-=dt;e.cd=Math.max(e.cd,e.salvoT)}const u=e.g.userData;if(u&&u.L){const want=angd(Math.atan2(P.x-e.x,P.z-e.z),e.g.rotation.y);u.L.rotation.y+=cl(want-u.L.rotation.y,-dt*.5,dt*.5)}}}
+ atgmGuide(dt);rkStep(dt);supStep(dt)});
+{const ie=window.initExtra;window.initExtra=function(){const r=ie.apply(this,arguments);try{RK.length=0;for(const k of['tr','rc']){const s=SUPV[k];if(s.v){S.remove(s.v.g);if(s.v.cab)S.remove(s.v.cab)}s.v=null;s.cd=0}SUPV.tow=null}catch(e){}return r}}
+window.UNITS2={RK,SUPV,callSup,salvo,fireATGM,mkBMP,mkZSU,mkMLRS};
 })();
 
 </script>

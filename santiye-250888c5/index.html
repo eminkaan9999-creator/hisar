@@ -4771,6 +4771,11 @@ const OFF_DEF = [
     lines: ["Bu ne rehavet! Saha sahipsiz kalmış!", "Çay ocağı mı burası, karargâh mı?!", "Makineler kendi kendine mi çalışıyor sanıyorsunuz?!", "Asker sahada ter dökerken siz burada keyif mi çatıyorsunuz?!", "Disiplin diye bir şey kalmamış!", "Hepinize ayrı ayrı hesap soracağım!", "Akşama kadar raporlar masamda olacak!"]},
 ];
 const OFFK = {}; for (const d of OFF_DEF) OFFK[d.key] = d;
+// devre (the same class) talk like friends whatever their posts: Orhan and Azizhan, Kaan and Boran, Ahmet and Ali
+const DEVRE = [["orhan", "azizhan"], ["kaan", "boran"], ["ahmet", "ali"]];
+const devre = (a, b) => DEVRE.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
+// how one speaks to another: "devrem" between classmates, "komutanım" up the ranks, the first name down them
+function hitapTo(from, to) { const f = from.d || from, t = to.d || to; if (devre(f.key, t.key)) return "devrem"; if (t.rank > f.rank || (t.rank === f.rank && (t.cls || 9999) < (f.cls || 9999))) return "komutanım"; return t.short; }
 const TALK_ON = {v: true};
 
 // ---------------- the tea house: on top of the hill in the corner by the site, looking down over the work ----------------
@@ -4956,7 +4961,7 @@ const DX = {tun: () => Math.max(0, Math.round((stats.kemparM || 0) - (typeof DAY
   bnk: () => typeof BNK !== "undefined" ? Math.round(BNK.p * 100) : 0, stage: () => typeof bnkStage === "function" ? bnkStage() : "kazı", rng: () => Math.round(RNG.p * 100), gates: () => Math.floor(DRC.p * DGATES.length),
   left: () => typeof CAMP !== "undefined" ? Math.max(0, CAMP.day - DAY.day) : 0, goal: () => typeof GOAL !== "undefined" ? GOAL.trips : 4,
   bnkSay: () => typeof BNK !== "undefined" && BNK.p >= .999 ? "Bunker bitti komutanım, kum torbası ve kamuflaj da tamam." : BNK.p < .01 ? "Kazıya yeni başlıyoruz komutanım, ekskavatör hazır." : `${DX.stage()[0].toLocaleUpperCase("tr-TR") + DX.stage().slice(1)} aşamasındayız komutanım, iş yüzde ${DX.bnk()}.`,
-  gateSay: () => DX.gates() ? `Parkurda ${DX.gates()} kapı dikildi komutanım, dron kapılardan geçiyor.` : "Parkurun direkleri geldi komutanım, bugün ilk kapıları dikiyoruz."};
+  gateSay: () => DX.gates() ? `Parkurda ${DX.gates()} kapı dikildi, dron kapılardan geçiyor.` : "Parkurun direkleri geldi, bugün ilk kapıları dikiyoruz."};
 const DLG = (when, lines, need) => Object.assign(lines, {when, need: need || null});
 const DIALOGS_DYN = [
   DLG("sabah", [["azizhan", "Günaydın arkadaşlar. Görev dağılımından önce bir durum alalım, kim nerede?"], ["furkan", "Sığınakta Kempar hazır komutanım, görevden sonra askerle aşağı iniyorum."], ["kaan", () => BNK.p >= .999 || BNK.p < .01 ? "Bunker: " + DX.bnkSay().replace(/^Bunker /, "") : `Bunkerde ${DX.stage()} aşamasındayız komutanım, iş yüzde ${DX.bnk()}.`], ["ali", () => `Atış alanı yüzde ${DX.rng()}, set çekmeye devam ediyoruz.`], ["orhan", () => DX.gateSay()], ["azizhan", "Tamam. Yedi buçukta görevleri vereceğim, çayınızı için."]]),
@@ -4991,6 +4996,7 @@ const DIALOGS = [
   DLG("aksam", [["ali", "Ben akşam devrelerime kendi ellerimle çorba yapacağım."], ["ahmet", "Bizi çağırmıyor musun kardeşim?"], ["ali", "Kapım her daim açık. Ama çorba az."], ["ahmet", "Haaahaaa! Seferberlik ilan ediyoruz, herkes Ali'ye!"]]),
   DLG("aksam", [["ahmet", "Bizim devrede de böyle şantiyeler olurdu."], ["boran", "Sizin devrede kazmayı kim tutardı komutanım?"], ["ahmet", "Herkes! Teğmenler de tutardı."], ["furkan", "Biz de tutuyoruz komutanım."], ["ali", "Furkan'dan başka kimse tutmuyor, bunu bilelim."]]),
   DLG("aksam", [["azizhan", "Ali ile Kaan bölük komutanlığına başladığında hallerini görecektiniz."], ["ali", "Ben eksik bir şey görmedim komutanım, gayet disiplinli biri."], ["ali", "Çakı gibi asker!"], ["kaan", "Sağ olun komutanım."], ["ahmet", "Haaahaaa haaa!"], ["ali", "Gülüşün bile tehlikeli devrem."]]),
+  DLG("any", [["azizhan", "Orhan, dronla bir tur at da şantiyeye yukarıdan bakalım."], ["orhan", "Tamamdır devrem, piller şarjda, kalkıyorum."], ["azizhan", "La bana çok güvenme, yukarıya bak ama aşağıyı da unutma."], ["orhan", "Merak etme devrem, yukarıdan bakınca her şey belli."]]),
   DLG("any", [["ufuk", "Sabah koşusuna herkes geliyor, değil mi?"], ["ali", "Tek rakibim kendim komutanım, ben hep oradayım."], ["ufuk", "Teğmenler de gelsin."], ["boran", "Furkan kaçma, gel Furkan!"], ["furkan", "Emredersiniz komutanım."]]),
   DLG("any", [["ufuk", "Paşam bugün yine Barkan 4'ü sordu mu?"], ["orhan", "Sordu komutanım. Barkan-2'yi gösterdim, 'bu Barkan 4 değil mi' dedi."], ["ufuk", "Barkan 4'ü bulursan bana da haber ver Orhan."], ["orhan", "Emredersiniz komutanım, keşfe çıkarız, belki buluruz."], ["ali", "Haaahaha!"], ["ufuk", "Gülmeyin mankiler!"]]),
 ];
@@ -5037,7 +5043,8 @@ function dialogFrame(dt) {
 function greet(arr) { // someone sat down at the table: the juniors greet the seniors, classmates greet each other
   const s = seated().filter(o => o !== arr); if (!s.length || MEET.hush) return; let t = .6;
   for (const o of s) { let line = null;
-    if ((o.d.key === "boran" || o.d.key === "furkan") && arr.d.rank === 2) line = "Hoş geldiniz komutanım.";
+    if (devre(o.d.key, arr.d.key)) line = "Hoş geldin devrem.";
+    else if ((o.d.key === "boran" || o.d.key === "furkan") && arr.d.rank === 2) line = "Hoş geldiniz komutanım.";
     else if (o.d.key === "boran" && arr.d.key === "kaan") line = "Hoş geldin devrem.";
     else if (o.d.key === "kaan" && arr.d.key === "boran") line = "Hoş geldin devrem.";
     else if (o.d.key === "furkan" && arr.d.key === "kaan") line = "Hoş geldiniz komutanım.";
@@ -5137,7 +5144,8 @@ const nearT = (o, r) => !!o && Math.hypot(o.x - TH.x, o.z - TH.z) < (r || 7);
 // lines play one after another; a line whose speaker is no longer there is skipped
 function playSeq(seq, done) {
   const step = () => { while (seq.length) { const [o, text, dur, cond] = seq.shift(); if (!o || (!o.all && !o.S) || (cond && !cond())) continue;
-      if (o.all) { const who = OFFS.filter(q => q.S && !isPlayer(q) && (q.st === "line" || (BRIEF.on && q.st === "seat" && !q.d.visitor && q !== BRIEF.lead))); if (!who.length) continue; who.forEach((q, i) => say(q, text, dur)); } else say(o, text, dur);
+      const tx = q => typeof text === "function" ? text(q) : text;   // a line can depend on who says it (classmates do not say "komutanım" to each other)
+      if (o.all) { const who = OFFS.filter(q => q.S && !isPlayer(q) && (q.st === "line" || (BRIEF.on && q.st === "seat" && !q.d.visitor && q !== BRIEF.lead))); if (!who.length) continue; who.forEach((q, i) => say(q, tx(q), dur)); } else say(o, tx(o), dur);
       gTimeout(step, (dur + .15) * 1000); return; } if (done) done(); };
   step();
 }
@@ -5292,7 +5300,8 @@ function sendToSite(key, site, run, stay) {
 }
 function allToSites(run) { MEET.called = false; let k = 0; for (const o of OFFS) { if (o.d.visitor || isPlayer(o)) continue; if (["seat", "standby", "stand"].includes(o.st)) { const oo = o; gTimeout(() => { if (["seat", "standby", "stand"].includes(oo.st)) sendToSite(oo.d.key, null, run); }, (k++) * 380); } } }
 function allToTea(quiet) { MEET.called = true; for (const o of OFFS) if (!o.d.visitor && !isPlayer(o) && (o.st === "work" || (o.st === "walk" && o.site))) { goBack(o); o.hurry = true; } if (!quiet) toast("Çay molası · herkes çay ocağına", 1.8); }
-function sayOrder(j) { const o = OFFM[j.sup]; if (o && o.S && !isPlayer(o) && (o.st === "seat" || o.st === "work")) say(o, j.on ? "Emredersiniz komutanım, başlıyoruz." : "Anlaşıldı komutanım, durduruyorum.", 2.4); }
+function sayOrder(j) { const o = OFFM[j.sup]; if (!o || !o.S || isPlayer(o) || !(o.st === "seat" || o.st === "work")) return; const h = hitapTo(o, CUR);
+  say(o, h === "komutanım" ? (j.on ? "Emredersiniz komutanım, başlıyoruz." : "Anlaşıldı komutanım, durduruyorum.") : (j.on ? `Tamamdır ${h}, başlıyoruz.` : `Tamam ${h}, durduruyorum.`), 2.4); }
 // the drone's line round the course: through every gate at about head height
 const DRONEPATH = typeof DGATES !== "undefined" ? new THREE.CatmullRomCurve3([[-76, -40]].concat(DGATES.map(([x, z]) => [x, z])).map(([x, z], i) => new THREE.Vector3(x, heightAt(x, z) + (i ? 1.45 : 3), z)), true, "centripetal") : null;
 // Orhan's drone: up over the site while he watches
@@ -5413,7 +5422,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261030-1537";
+const PORTKEY = "hs-portraits-20261030-1804";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5870,7 +5879,7 @@ function rollCall() {
   const tip = pick(["Arıza olursa hemen telsizden bildirin.", "İş güvenliği önce gelir, baretler takılı olsun.", "Paşa'nın bugün sahaya gelme ihtimali var, gevşemek yok!", "Kamyonlar boş beklemesin, sefer sayısı önemli."]);
   playSeqAt(1.5, [
     [lead, "Arkadaşlar günaydın. Tabur olarak bugünün görev dağılımını yapıyorum.", 2.6],
-    ["all", "Günaydın komutanım!", 1.3],
+    ["all", q => devre(q.d.key, lead.d.key) ? "Günaydın devrem!" : "Günaydın komutanım!", 1.3],
     [lead, `Furkan, Boran: Kempar'la kapalı drone sığınağı. Hedef ${g.tunnel} metre.`, 2.6],
     [O.furkan, "Emredersiniz komutanım, kürek bende!", 1.7],
     [O.boran, "Emredersiniz komutanım, askerleri ben yönetirim.", 1.9],
@@ -5878,12 +5887,12 @@ function rollCall() {
     [O.kaan, "Emredersiniz komutanım!", 1.4],
     [lead, "Ali: 400 metrelik atış alanı. Orhan: drone parkuru.", 2.3],
     [O.ali, "Emredersiniz komutanım!", 1.3],
-    [O.orhan, "Emredersiniz, parkur hızlı ilerliyor.", 1.6],
+    [O.orhan, devre("orhan", lead.d.key) ? "Tamamdır devrem, parkur hızlı ilerliyor." : "Emredersiniz komutanım, parkur hızlı ilerliyor.", 1.6],
     [lead, "Ahmet: stok sahası ile yollar senden, bütün şantiyeleri de gez.", 2.4],
     [O.ahmet, "Emredersiniz… yeter ki Paşa'ya yakalanmayayım!", 2.1],
     [lead, `Kamyonlar bugün en az ${g.trips} sefer. Koordinasyon bende. ${tip}`, 3],
     [lead, "Hadi, herkes görev başına! Kolay gelsin.", 1.9],
-    ["all", "Sağ olun komutanım!", 1.4]], () => {
+    ["all", q => devre(q.d.key, lead.d.key) ? "Sağ ol devrem!" : "Sağ olun komutanım!", 1.4]], () => {
     BRIEF.on = false; MEET.hush = BRIEF.hush0 || false; if (AUTO.on && !RECV.on) { AUTO.on = false; updCtx(); CAM.yaw = FOOT.a + Math.PI; camSnap = true; }
     let i = 0; for (const o of regulars()) { const oo = o; gTimeout(() => { if (!sendToSite(oo.d.key, null, false, 30 + Math.random() * 50)) goBack(oo); }, (i++) * 250); }
     if (typeof OPS !== "undefined") OPS.pause = DAY.block && DAY.block.k !== "is"; });
@@ -6085,7 +6094,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261030-1537";
+const BUILD = "20261030-1804";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -6968,8 +6977,8 @@ const SIT = [
       {t: "Gidip kendim bakacağım", d: "Sığınağa git · sen oradayken bakım hemen gelir", go: () => goTask("kempar", "Kempar'a bak", "Sığınağa git, Furkan'la dişlere bak.", () => plTarget(PLK.siginak), () => {
           const f = who("furkan"); if (f) say(f, "Bakın komutanım, dişler bitmiş. Ekibi çağırdım, hemen geliyorlar.", 3.2); const j = jobV(KEMPAR); if (j) breakEvent(j, "Dişler değişiyor.", true, true); wmod("siginak", 1.35, 300); satAdd(1, "Kempar'a bizzat baktın"); })}]})},
   {k: "dron", win: [600, 960], w: 3, card: () => ({app: "Telsiz · Drone parkuru", who: "Orhan Üsteğmen", ic: "🛸", col: "#0f766e", title: "Dron kapıya çarptı",
-    text: "Komutanım, test uçuşunda dron üçüncü kapıya çarptı, iki pervanesi kırıldı.",
-    opts: [{t: "Yedek dronu kullanın", d: "İş durmaz", go: () => { DRONE.hideT = 8; say(who("orhan") || OFFM.orhan, "Yedek dron havada komutanım, devam.", 2.4); }},
+    text: `${cap1(hitapTo(OFFM.orhan, CUR))}, test uçuşunda dron üçüncü kapıya çarptı, iki pervanesi kırıldı.`,
+    opts: [{t: "Yedek dronu kullanın", d: "İş durmaz", go: () => { DRONE.hideT = 8; say(who("orhan") || OFFM.orhan, `Yedek dron havada ${hitapTo(OFFM.orhan, CUR)}, devam.`, 2.4); }},
       {t: "Rotayı yapay zekâyla ayarlayalım", d: "Pilot çadırına git · parkur bugün çok hızlanır", go: () => { DRONE.hideT = 30; goTask("dron", "Pilot çadırına git", "Orhan'la rotayı yeniden ayarla.", () => ({x: -74, z: -31.5, n: "PİLOT ÇADIRI", r: 5}), () => {
           const o = who("orhan"); if (o) say(o, "Rota tamam komutanım, kapılardan tam ortadan geçiyor!", 3); DRONE.hideT = 0; wmod("parkur", 1.5, 300); satAdd(1, "parkurun rotası düzeldi"); }); }},
       {t: "Bugünlük ara verin", d: "Parkur iki saat durur", go: () => { DRONE.hideT = 120; wmod("parkur", 0, 120); }}]})},
@@ -7088,7 +7097,7 @@ const GIVE = {
 // seniority: rank first, then the earlier class
 const isSen = (a, b) => a.rank > b.rank || (a.rank === b.rank && (a.cls || 9999) < (b.cls || 9999));
 const meO = () => GM.pick || CUR;   // who you are (the one picked on the menu counts already)
-function hitap(g) { const p = meO().d, d = g.d; if (isSen(p, d)) return "komutanım"; if (p.rank === d.rank && p.cls && p.cls === d.cls) return "devrem"; return d.key === "ahmet" || d.key === "ali" ? p.short + " kardeşim" : p.short; }
+function hitap(g) { const p = meO().d, d = g.d; if (devre(p.key, d.key)) return "devrem"; if (isSen(p, d)) return "komutanım"; if (p.rank === d.rank && p.cls && p.cls === d.cls) return "devrem"; return d.key === "ahmet" || d.key === "ali" ? p.short + " kardeşim" : p.short; }
 const cap1 = s => s ? s[0].toLocaleUpperCase("tr-TR") + s.slice(1) : s;
 function fillT(s, g) { const h = hitap(g); return s.replace(/\{H\}/g, cap1(h)).replace(/\{h\}/g, h).replace(/\{n\}/g, meO().d.short); }
 const oName = o => o.d.short + " " + o.d.name.split(" ").slice(1).map(w => w[0] + w.slice(1).toLocaleLowerCase("tr-TR")).join(" ");   // "Furkan Teğmen"

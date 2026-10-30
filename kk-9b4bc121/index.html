@@ -57,7 +57,7 @@ h1,h2{font-family:var(--f-serif);font-weight:500;margin:0;line-height:1;text-wra
 .kart-baslik.gor{opacity:1}
 .kart-baslik h2{font-size:clamp(46px,12vw,90px);text-shadow:0 4px 40px #000c}
 .kart-baslik p{margin:0;font-family:var(--f-serif);font-style:italic;font-size:22px;color:var(--krem);text-shadow:0 2px 16px #000}
-.hedef{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);background:var(--panel);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:9px 18px;font-size:15px;font-weight:600;white-space:nowrap;max-width:calc(100% - 120px);overflow:hidden;text-overflow:ellipsis;transition:opacity .5s}
+.hedef{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);background:var(--panel);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:8px 16px;font-size:14px;line-height:1.3;font-weight:600;width:max-content;max-width:calc(100% - 124px);text-align:center;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;transition:opacity .5s} /* uzun görev yazısı kesilmez, iki satıra iner */
 .menu-btn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:max(12px,env(safe-area-inset-right,0px));width:42px;height:42px;border-radius:50%;background:var(--panel);border:1px solid rgba(255,255,255,.14);font-size:18px;pointer-events:auto}
 .ses-btn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:max(12px,env(safe-area-inset-left,0px));width:42px;height:42px;border-radius:50%;background:var(--panel);border:1px solid rgba(255,255,255,.14);font-size:17px;pointer-events:auto}
 .joy{position:absolute;left:max(22px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 26px);width:132px;height:132px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);pointer-events:auto;touch-action:none;backdrop-filter:blur(3px)}
@@ -1572,6 +1572,10 @@ function karakter(kim,kiyafetAd){
   return g;
 }
 function eldeTut(c,nesne,el){ c.userData.eldeki=nesne; c.userData.eldekiEl=el||"D"; if(!nesne.parent) scene.add(nesne); }
+// iki elle göğsünün önünde, yüzü öne dönük tutar (plaket, diploma): nesne görsel modele bağlanır (dönerken gövdeyle döner), eller IK ile kenarlarından tutar
+function gogusteTut(c,nesne,yatik){ const u=c.userData, m=u.model; u.eldeki=null; c.updateMatrixWorld(true); const om=u.kemik.LeftArm.getWorldPosition(new THREE.Vector3()).y-c.getWorldPosition(new THREE.Vector3()).y;
+  m.add(nesne); nesne.visible=true; nesne.position.set(0,(om-.27)/m.scale.y,.29/m.scale.z); nesne.rotation.set(yatik?-Math.PI/2:0,0,0); nesne.scale.setScalar(1/m.scale.x); u.kolS.rotation.set(0,0,0); u.kolD.rotation.set(0,0,0); u.kolPoz="plaket"; }
+function gogustenBirak(c,nesne,el){ c.userData.kolPoz=null; scene.add(nesne); nesne.scale.setScalar(1); if(el) eldeTut(c,nesne,el); else nesne.visible=false; }
 function animasyon(){}
 
 /* ---------- kalabalık ---------- */
@@ -1858,6 +1862,8 @@ const POZ_IK={
   bel:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.195*s,L.bel+.03,.0), kutup:sx=>new THREE.Vector3(sx,-.05,-.35), F:sx=>new THREE.Vector3(0,-.55,.85), N:sx=>new THREE.Vector3(-sx,0,.1) },
   kalp:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.06*s,L.bas+.2*s,.05*s), kutup:sx=>new THREE.Vector3(sx,.25,.35), F:sx=>new THREE.Vector3(-sx,.15,.3), N:sx=>new THREE.Vector3(0,-.6,.6) },
   ac:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.6*s,L.omuz+.1,.32*s), kutup:sx=>new THREE.Vector3(0,-1,-.3), F:sx=>new THREE.Vector3(sx,.15,.45), N:sx=>new THREE.Vector3(0,.3,1) },
+  // plaket: iki eliyle göğsünün önünde, yüzü objektife dönük tutar (önceden tek kolu göğsünün önünden çapraz uzanıyordu)
+  plaket:{ hedef:(L,sx,s)=>new THREE.Vector3(sx*.165*s,L.omuz-.27,.25*s), kutup:sx=>new THREE.Vector3(sx,-.5,-.3), F:sx=>new THREE.Vector3(-sx*.2,.15,1), N:sx=>new THREE.Vector3(-sx,0,0) },
   // buket: sağ el göğüs önünde, dirsek bükük; çiçekler omuz hizasında, yüzü kapatmaz
   buket:{ yanlar:["Right"], hedef:(L,sx,s)=>new THREE.Vector3(sx*.07*s,L.omuz-.33,.25*s), kutup:sx=>new THREE.Vector3(sx*.7,-1,-.15), F:sx=>new THREE.Vector3(-sx*.85,.15,.3), N:sx=>new THREE.Vector3(0,-.25,-1) } };
 const _v5=new THREE.Vector3();
@@ -1984,6 +1990,8 @@ function karakterleriGuncelle(dt){
       if(!aktif&&u.elele>.05&&anah===elKol&&!es){ aktif=true; px=-.1+Math.sin(u.faz)*.06*Math.min(1,hiz); pz=isaret*.32; }
       if(!aktif&&u.salla>0&&anah==="D"){ aktif=true; px=0; pz=2.5+Math.sin(zaman*8)*.25; onKol=yon(isaret*.25,1,.15); }
       if(!aktif&&u._otur>.5&&!(u.oturY>.2)){ aktif=true; px=.45; pz=isaret*.3; onKol=yon(isaret*.1,-1,-.3); }
+      // sandalyede, bankta, yatakta otururken eller dizlerin üstünde (önceden kollar sandalyenin yanından dümdüz sarkıyordu)
+      if(!aktif&&u._otur>.5&&u.oturY>.2&&u.oturTip!=="ata"){ aktif=true; px=-.32; pz=isaret*.12; onKol=yon(-isaret*.18,-.32,1); }
       st.w=lerp(st.w,aktif?1:0,1-Math.pow(.003,dt));
       if(aktif){ if(ozel) _v3.copy(ozel); else { _e.set(px,0,pz); _v3.set(0,-1,0).applyEuler(_e); } st.d.lerp(_v3,1-Math.pow(.0005,dt)).normalize(); st.on=onKol; }
       if(st.w>.01){
@@ -3108,6 +3116,16 @@ let fotoIstegi=null;
 /* anı fotoğrafı: önceki çekim ne olursa olsun (masa, manzara…) kamera ikisini önden, yüzleri ve üst bedenleri kadrajda olacak
    biçimde çerçeveler; araya duvar/eşya giriyorsa yaklaşır ya da öbür taraftan çeker. Oyuncunun kendi kadrajladığı fotoğraflarda {kendi:true}. */
 function ataMi(ata,o){ for(let x=o;x;x=x.parent) if(x===ata) return true; return false; }
+function kadrajIyi(L){ camera.updateMatrixWorld(); const H=L.map(c=>bas(c)), _p=new THREE.Vector3();
+  for(const h of H){ _p.copy(h).project(camera); if(_p.z>1||Math.abs(_p.x)>.7||_p.y>.55||_p.y<-.45) return false; // dikey: fotoğraf 2:3 kırpılır, yüzler ortaya yakın olmalı
+    const ust=h.clone().add(new THREE.Vector3(0,.11,0)).project(camera), alt=h.clone().add(new THREE.Vector3(0,-.13,0)).project(camera), boy=Math.abs(ust.y-alt.y)*.5*(window.innerHeight/window.innerWidth);
+    if(boy<.07||boy>.4) return false; } // yüz kadraj genişliğinin %7'sinden küçükse çok uzak, %40'tan büyükse çok yakın
+  const engel=[]; scene.traverse(o=>{ if(!o.isMesh||!o.visible||o.isSkinnedMesh||o===scene.userData.gok||o.userData.isaret) return; const mt=Array.isArray(o.material)?o.material[0]:o.material;
+    if(mt&&mt.transparent&&mt.opacity<.45) return; if(L.some(c=>ataMi(c,o))) return; engel.push(o); });
+  const ray=new THREE.Raycaster(); for(const h of H){ const d=h.clone().sub(camera.position), uz=d.length(); ray.set(camera.position,d.normalize()); ray.near=.05; ray.far=uz-.12; if(ray.intersectObjects(engel,false).length) return false; }
+  // yüzleri kameraya dönük mü (sırtları ya da tam profilleri değil)
+  for(const c of L){ const f=c.getWorldDirection(new THREE.Vector3()).setY(0).normalize(), k=camera.position.clone().sub(c.position).setY(0).normalize(); if(f.dot(k)<.25) return false; }
+  return true; }
 function fotoCercevesi(){
   const L=["kaan","kardelen"].map(k=>KONUSANLAR&&KONUSANLAR[k]).filter(c=>c&&c.visible&&ataMi(scene,c));
   if(!L.length) return null;
@@ -3115,13 +3133,20 @@ function fotoCercevesi(){
   const ileri=new THREE.Vector3(), f=new THREE.Vector3(); L.forEach(c=>{ c.getWorldDirection(f); f.y=0; if(f.lengthSq()>1e-6) ileri.add(f.normalize()); });
   const kamTaraf=camera.position.clone().sub(m).setY(0);
   let yon;
-  if(L.length===2){ const ab=H[1].clone().sub(H[0]).setY(0); yon=ab.lengthSq()>1e-4?new THREE.Vector3(-ab.z,0,ab.x).normalize():ileri.clone().normalize();
-    const ref=ileri.lengthSq()>.09?ileri:kamTaraf; if(yon.dot(ref)<0) yon.negate(); }
+  if(L.length===2){ const ab=H[1].clone().sub(H[0]).setY(0); const fN=ileri.lengthSq()>.09?ileri.clone().normalize():null;
+    if(fN&&ab.lengthSq()>1e-4&&Math.abs(ab.clone().normalize().dot(fN))>.75){
+      // biri ötekinin arkasında (ATV, arkadan sarılma): yandan değil, önden çaprazdan; arkadakinin başı hangi yana kaymışsa o taraftan
+      const onI=ab.dot(fN)>0?1:0, yan=new THREE.Vector3(fN.z,0,-fN.x); const sg=Math.sign(H[1-onI].clone().sub(H[onI]).dot(yan)||kamTaraf.dot(yan)||1);
+      yon=fN.clone().applyAxisAngle(new THREE.Vector3(0,1,0),sg*.6).normalize(); }
+    else { yon=ab.lengthSq()>1e-4?new THREE.Vector3(-ab.z,0,ab.x).normalize():ileri.clone().normalize();
+      const ref=ileri.lengthSq()>.09?ileri:kamTaraf; if(yon.dot(ref)<0) yon.negate(); } }
   else yon=(ileri.lengthSq()>1e-6?ileri:kamTaraf).normalize();
   const vf=THREE.MathUtils.degToRad(camera.fov), hf=2*Math.atan(Math.tan(vf/2)*camera.aspect);
   const yari=(L.length===2?Math.hypot(H[0].x-H[1].x,H[0].z-H[1].z)/2:0)+.42;
   const d=clamp(Math.max(yari/Math.tan(hf/2),.6/Math.tan(vf/2)),1.0,5.5);
-  const hedef=m.clone().add(new THREE.Vector3(0,-.16,0));
+  // elinde gösterdiği bir şey varsa (diploma, plaket, buket) kadrajın ortası biraz aşağı: o da kesilmeden girer
+  const tutuyor=L.some(c=>c.userData.kolPoz==="plaket"||c.userData.kolPoz==="buket"||c.userData.eldeki);
+  const hedef=m.clone().add(new THREE.Vector3(0,tutuyor?-.3:-.16,0));
   const engel=[]; scene.traverse(o=>{ if(!o.isMesh||!o.visible||o.isSkinnedMesh||o===scene.userData.gok||o.userData.isaret) return; const mt=Array.isArray(o.material)?o.material[0]:o.material;
     if(mt&&mt.transparent&&mt.opacity<.45) return; if(L.some(c=>ataMi(c,o))) return; engel.push(o); });
   const ray=new THREE.Raycaster(); ray.camera=camera;
@@ -3137,17 +3162,33 @@ function fotoCercevesi(){
   // yer darsa objektif genişler: iki yüz de kadraja sığar (önceden kamera yüzlere dayanıp yüzleri kesiyordu)
   let fov=null; if(uz<d-.05){ const gH=2*Math.atan(yari/uz), gV=Math.max(2*Math.atan(Math.tan(gH/2)/camera.aspect),2*Math.atan(.6/uz)); fov=clamp(gV*180/Math.PI,camera.fov,95); }
   const pos=hedef.clone().addScaledVector(yon,uz); pos.y=m.y-.02;
+  // yerde/alçakta oturuyorlarsa (battaniye, kum) ayakta duran birinin çektiği gibi biraz yukarıdan: ayaklar kadrajın önünü kaplamaz
+  const bY=m.y-L.reduce((t,c)=>t+c.getWorldPosition(new THREE.Vector3()).y,0)/L.length; if(bY<1.15) pos.y+=Math.min(.45,(1.15-bY)*.9);
   return {pos,hedef,fov,kisiler:L};
 }
 const kareBekle=n=>new Promise(r=>{ const f=()=>{ if(--n<=0) r(); else requestAnimationFrame(f); }; requestAnimationFrame(f); });
 function hatiraFoto(baslik,ops={}){ return new Promise(async r=>{
-  let fk=null, onceki=null, bakislar=null, fovDegisti=false;
+  let fk=null, onceki=null, bakislar=null, fovDegisti=false, dondu=false;
+  // yüz yüze duruyorlarsa (konuşurken) fotoğraf için ikisi de objektife döner, yan yana poz verir (önceden profilden, birbirine bakarken çekiliyordu)
+  if(!ops.kendi){ try{ const L=["kaan","kardelen"].map(k=>KONUSANLAR&&KONUSANLAR[k]).filter(c=>c&&c.visible&&ataMi(scene,c));
+    if(L.length===2){ const [a,b]=L, serbest=u=>!(u.otur>0)&&!(u.saril>0)&&!(u.dans>0)&&!(u.arkadan>0)&&!(u.omuz>0)&&!(u.elele>.05)&&!u.elHedef&&!((u.hiz||0)>.3);
+      const fa=a.getWorldDirection(new THREE.Vector3()).setY(0).normalize(), fb=b.getWorldDirection(new THREE.Vector3()).setY(0).normalize();
+      if(serbest(a.userData)&&serbest(b.userData)&&fa.dot(fb)<-.3){ const ab=b.position.clone().sub(a.position).setY(0); const n=new THREE.Vector3(-ab.z,0,ab.x).normalize();
+        const kt=camera.position.clone().sub(a.position.clone().lerp(b.position,.5)).setY(0); if(n.dot(kt)<0) n.negate(); a.rotation.y=b.rotation.y=Math.atan2(n.x,n.z); dondu=true;
+        // dönerken birbirlerine yaklaşırlar (yüz yüzeyken aralarındaki boşlukla yan yana durunca fazla ayrık görünüyorlardı)
+        const dAB=ab.length(); if(dAB>.6){ const k=Math.min(.18,(dAB-.55)/2), u=ab.clone().normalize(), a0=a.position.clone(), b0=b.position.clone(), a1=a0.clone().addScaledVector(u,k), b1=b0.clone().addScaledVector(u,-k), t0=performance.now();
+          a.userData.hiz=b.userData.hiz=.5; await new Promise(r=>{ const f=()=>{ const t=Math.min(1,(performance.now()-t0)/420); a.position.lerpVectors(a0,a1,t); b.position.lerpVectors(b0,b1,t); if(t<1) requestAnimationFrame(f); else r(); }; f(); }); a.userData.hiz=b.userData.hiz=0; }
+        else await bekle(300); } } }catch(e){ console.warn("foto dön",e); } }
+  // sahnenin kendi kamerası ikisini de iyi çerçeveliyorsa (yüzler kadrajda, arada engel yok, ne çok uzak ne çok yakın) o kare korunur;
+  // yalnız ikisi de objektife bakar. Değilse (masayı, sırtlarını, yarım yüzleri çeken açılar) kamera yeniden yerleşir.
+  if(!ops.kendi){ try{ const L=["kaan","kardelen"].map(k=>KONUSANLAR&&KONUSANLAR[k]).filter(c=>c&&c.visible&&ataMi(scene,c));
+    if(L.length&&kadrajIyi(L)){ const kp=camera.position.clone(); bakislar=L.map(k=>[k,k.userData.bakNokta,kp]); for(const [k,,h] of bakislar) k.userData.bakNokta=h; ops={...ops,kendi:true,_bakti:true}; await bekle(dondu?650:480); } }catch(e){ console.warn("foto kadraj",e); } }
   if(!ops.kendi){ try{ const c=fotoCercevesi(); if(c){ onceki=Kamera.sinema;
       if(c.fov){ camera.fov=c.fov; camera.updateProjectionMatrix(); fovDegisti=true; }
       fk=dt=>{ camera.position.copy(c.pos); camera.lookAt(c.hedef); camera.userData.bakis=c.hedef; }; Kamera.sinema=fk;
       // hatıra fotoğrafında ikisi de objektife bakar: başlar ve gözler dönsün diye deklanşörden önce kısa bir an beklenir
       bakislar=c.kisiler.map(k=>[k,k.userData.bakNokta,c.pos.clone()]); for(const [k,,h] of bakislar) k.userData.bakNokta=h;
-      await bekle(480); } }catch(e){ console.warn("foto",e); } }
+      await bekle(dondu?650:480); } }catch(e){ console.warn("foto",e); } }
   fotoIstegi={baslik,r:v=>{ if(fk||bakislar) setTimeout(()=>{ if(fk&&Kamera.sinema===fk) Kamera.sinema=onceki; if(fovDegisti) boyut(); if(bakislar) for(const [k,b,h] of bakislar) if(k.userData.bakNokta===h) k.userData.bakNokta=b; },1100); r(v); }}; }); }
 function fotoAl(){
   if(!fotoIstegi) return; const {baslik,r}=fotoIstegi; fotoIstegi=null;
@@ -3228,11 +3269,11 @@ async function fotoModu(foto,model,ops={}){
   }
 }
 function pozVer(c,poz){ const u=c.userData; u.kolS.rotation.set(0,0,0); u.kolD.rotation.set(0,0,0); u.salla=0; u.kafa.rotation.z=0; u.gulumse=poz?1:u.gulumse;
-  u.kolPoz=(poz==="bel"||poz==="kalp"||poz==="ac")?poz:null; // bu pozlarda eller IK ile gövdeye göre yerleşir
+  u.kolPoz=(poz==="bel"||poz==="kalp"||poz==="ac"||poz==="plaket")?poz:null; // bu pozlarda eller IK ile gövdeye göre yerleşir
   if(poz==="bel"){ u.kafa.rotation.z=-.12; }
   if(poz==="el"){ u.salla=1; u.kafa.rotation.z=.1; }
   if(poz==="kalp"){ u.kafa.rotation.z=.06; }
-  if(poz==="plaket"){ u.kolD.rotation.set(-1.1,0,.1); u.kafa.rotation.z=.08; }
+  if(poz==="plaket"){ u.kafa.rotation.z=.08; }
   if(poz==="ac"){ u.kafa.rotation.z=.12; } }
 /* ================= BÖLÜM 1: İLK MESAJ (2021) ================= */
 /* Gece harp okulu yatakhanesi → Instagram'dan ilk mesaj → aylarca yazışma → altı ay sonra sahilde ilk buluşma */
@@ -4780,18 +4821,18 @@ const B4={
       await anlat("Dereceye girenler sahneye çağrıldı. Bölüm birincisi: onun adı okundu.",3200);
       this.misafir.concat(this.arkadas).forEach(c=>c.userData.alkis=1); K.userData.alkis=1; K.userData.gulumse=1; Ses.efekt("alkis");
       await yuruHedef(D,new THREE.Vector3(0,.6,-16.8),1.1,{yer:()=>.6}); D.rotation.y=0;
-      this.plaket.visible=true; eldeTut(D,this.plaket,"D"); D.userData.kolD.rotation.set(-1.1,0,.1); D.userData.gulumse=1;
+      gogusteTut(D,this.plaket); D.userData.gulumse=1;
       await bekle(1200); this.misafir.concat(this.arkadas).forEach(c=>c.userData.alkis=0); K.userData.alkis=0;
       await anlat("Telefonumu çıkardım. Bu kareyi kaçıramazdım.",2400);
     });
     // Kaan sahnedeki onu çeker (netlik ibresi)
-    await sahne(async()=>{ await fotoModu(K,D,{baslik:"Bölüm birincisi · 29 Mayıs 2025",bakY:1.25,fov:30,pozlar:["plaket"]}); D.userData.kolD.rotation.set(-1.1,0,.1); });
+    await sahne(async()=>{ await fotoModu(K,D,{baslik:"Bölüm birincisi · 29 Mayıs 2025",bakY:1.25,fov:30,pozlar:["plaket"]}); D.userData.kolPoz="plaket"; });
     await sahne(async()=>{
       await kameraNoktasi(new THREE.Vector3(2.2,1.7,-8.5),bas(K),1.2);
       await anlat("O kadar kişinin önünde plaketini aldı. Ondan daha çok ben gurur duydum.",3400);
       await yuruHedef(D,new THREE.Vector3(2.6,.6,-16),1.2,{yer:()=>.6}); await yuruHedef(D,new THREE.Vector3(2.4,0,-13),1.2,{yer:(x,z)=>this.sahneY(x,z)});
       await yuruHedef(D,K.position.clone().add(new THREE.Vector3(-.2,0,-1)),2.6);
-      yuzYuze(K,D); D.userData.kolD.rotation.set(0,0,0);
+      yuzYuze(K,D); gogustenBirak(D,this.plaket,"D"); // konuşurken plaket yanında, elinde
       await konus("kardelen",["Bölüm birincisi 🥹","İnanamıyorum"],{gul:1});
       await konus("kaan","Ben hep inandım. Sen inanmayınca bile.",{gul:.8});
       await konus("kardelen",["İyi ki geldin","O kadar kişinin önünde","Sen de oradaydın"],{gul:.8});
@@ -7167,7 +7208,10 @@ const BK={
   },
   async parlat(){
     const D=this.kar, b=D.userData.bileklik;
-    D.userData.kolS.rotation.set(-1.25,0,.35); { const p=new THREE.Vector3(); (b||D.userData.kafa).getWorldPosition(p); sabitKamera(p.clone().add(new THREE.Vector3(-.08,.1,.28)),p); }
+    // kamera yönleri onun baktığı yöne göre (önceden dünya eksenine göreydi: yana baktığı için kamera kolunun/gövdesinin içine giriyordu)
+    const f=D.getWorldDirection(new THREE.Vector3()).setY(0).normalize(), sg=new THREE.Vector3(-f.z,0,f.x), yk=new THREE.Vector3(0,1,0);
+    // kol önce kalkar (yarım saniye), sonra kamera bileğe yaklaşır: önceden kamera kolun eski (aşağıdaki) yerine bakıp omzu gösteriyordu
+    D.userData.kolS.rotation.set(-1.25,0,.35); await bekle(550); { const p=new THREE.Vector3(); (b||D.userData.kafa).getWorldPosition(p); sabitKamera(p.clone().addScaledVector(f,.3).addScaledVector(yk,.08).addScaledVector(sg,.06),p); }
     gorev("Temizleme beziyle parlat");
     const ui=el(`<div class="sim"><div class="baslik">Temizleme bezi</div><div class="ipucu">Parmağını sağa sola sürterek bilekliği parlat</div>
       <div class="bk-ovma"><span>✨ Sürt</span></div><div class="olcek" style="align-self:center;width:100%"><div class="bar"><i style="width:0%"></i></div></div></div>`); katman.appendChild(ui);
@@ -7176,9 +7220,12 @@ const BK={
       pad.addEventListener("pointerdown",e=>{ son=e.clientX; try{ pad.setPointerCapture(e.pointerId); }catch(_){} }); pad.addEventListener("pointermove",e=>{ if(e.buttons||e.pointerType==="touch") hareket(e); }); pad.addEventListener("pointerup",()=>{ son=null; }); });
     ui.remove(); gorev(null); Ses.efekt("parilti");
     await sahne(async()=>{ D.userData.gulumse=1; const p=new THREE.Vector3(); (b||D.userData.kafa).getWorldPosition(p);
-      await kameraNoktasi(p.clone().add(new THREE.Vector3(-.12,.1,.3)),p.clone().add(new THREE.Vector3(.03,.02,0)),1.0);
+      // hatıra karesi: önde bileklik, arkasında gülümseyen yüzü (ikisi de kadrajda); objektife bakar
+      const h=bas(D), hedef=p.clone().lerp(h,.38), kam=hedef.clone().addScaledVector(f,.78).addScaledVector(sg,-.12).addScaledVector(yk,.05);
+      const bak0=D.userData.bakNokta; D.userData.bakNokta=kam.clone();
+      await kameraNoktasi(kam,hedef,1.0); await bekle(350);
       await hatiraFoto("Bileklik · 31 Aralık 2024",{kendi:true}); await bekle(1400);
-      D.userData.kolS.rotation.set(0,0,0); });
+      D.userData.bakNokta=bak0; D.userData.kolS.rotation.set(0,0,0); });
   },
   async yilbasiGecesi(){
     await gecis(async()=>{ katmanTemizle(); await this.odaKur("gece"); katmanTemizle(); ustDugmeler(); joystickEkle(); this.btn=aksiyonEkle(); });
@@ -8359,9 +8406,11 @@ const BD={
       const kart=el(`<div class="diploma-kart"><small>T.C.</small><b>LİSANS DİPLOMASI</b><span>Kardelen</span><i>Bütün emeklerin karşılığı</i></div>`); katman.appendChild(kart); requestAnimationFrame(()=>kart.classList.add("gor"));
       await bekle(2800); kart.classList.remove("gor"); setTimeout(()=>kart.remove(),600);
       await yuruHedef(D,new THREE.Vector3(0,0,2.2),1.2); D.rotation.y=0;
+      gogusteTut(D,this.dosya,true); // diplomayı iki eliyle göğsünün önünde, objektife dönük tutar (önceden tepsi gibi yatay tutuyordu)
       await kameraNoktasi(ondenNokta(D,1.5,.2,.1),bas(D).add(new THREE.Vector3(0,-.2,0)),1.2); D.userData.gulumse=1;
       await hatiraFoto("Diploma günü · 26 Eylül 2025"); await bekle(1400);
       const foto=await kareAl(300);
+      gogustenBirak(D,this.dosya); // diploma çantaya; telefon çıkar (önceden diploma havada asılı kalıyordu)
       D.userData.kolS.rotation.set(0,0,0); D.userData.telefon=2; this.tel.visible=true; eldeTut(D,this.tel,"S");
       const dm=DM.ac("Kaan 💙","son görülme 00:26"); dm.zaman("11:38");
       if(foto) await dmResim("ben",foto); await dm.yaz("ben","Diploma elimde 🎓");
@@ -8416,9 +8465,9 @@ const BD={
       const c=await sec(["Gurur duyuyorum seninle minnakım.","Ankaralı diplomalı kız, haberin olsun 😄"]);
       if(c===0){ await konus("kaan","Gurur duyuyorum seninle minnakım.",{gul:.7}); await konus("kardelen",["Ben de kendimle 🥹","Şaka şaka, seninle de"],{gul:1}); }
       else { await konus("kaan","Ankaralı diplomalı kız, haberin olsun 😄",{gul:.8}); await konus("kardelen",["Şapşik","Yürüyerek geldim ama kdkdkd"],{gul:1}); }
-      yuzYuze(K,D); K.position.x+=.05; await kameraNoktasi(ondenNokta(K,1.9,.5,.15),bas(K).lerp(bas(D),.5),1.3);
+      yuzYuze(K,D); K.position.x+=.05; gogusteTut(D,this.dosya2,true); await kameraNoktasi(ondenNokta(K,1.9,.5,.15),bas(K).lerp(bas(D),.5),1.3);
       await hatiraFoto("AŞTİ · Diploma günü · 26 Eylül 2025"); await bekle(1500);
-      D.userData.kolS.rotation.set(0,0,0); D.userData.eldeki=null; this.dosya2.visible=false;
+      gogustenBirak(D,this.dosya2); D.userData.kolS.rotation.set(0,0,0);
       await anlat("O gece Ankara'nın ışıkları bize diploma töreni gibi geldi.",3000);
     });
     bolumBitti(this.no);
@@ -8938,8 +8987,9 @@ const BN={
       await konus("kardelen",["Gördün mü","Prova işe yaradı 😍"],{gul:1});
       await konus("kaan","Bundan sonra her müzikte, haberin olsun.",{gul:.9});
       for(const c of this.misafir) c.userData.alkis=0;
+      K.userData.dans=D.userData.dans=1; // kameramanın karesinde dans tutuşuyla ("fotoğrafların hepsinde dans ediyoruz")
       await kameraNoktasi(ondenNokta(K,2.0,.5,.15),bas(K).lerp(bas(D),.5),1.3);
-      await hatiraFoto("Nişanda dans · Mayıs 2026"); await bekle(1500);
+      await hatiraFoto("Nişanda dans · Mayıs 2026"); await bekle(1500); K.userData.dans=D.userData.dans=0;
       await anlat("Kameraman bizi çekti. Fotoğrafların hepsinde dans ediyoruz; başka türlü çekilmedik ki.",3400);
     });
     bolumBitti(this.no);
@@ -9032,7 +9082,7 @@ function kurulumIpucu(){
 
 
 /* ================= GÜNCELLEME (telefondan) ================= */
-const SURUM="2026.10.30-202502";
+const SURUM="2026.10.30-222558";
 async function sunucuSurumu(){ try{ const r=await fetch("surum.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) return null; const j=await r.json(); return j.surum||null; }catch(e){ return null; } }
 function tost(t,sure=2600){ const d=el(`<div class="tost">${t}</div>`); document.body.appendChild(d); requestAnimationFrame(()=>d.classList.add("gor")); setTimeout(()=>{ d.classList.remove("gor"); setTimeout(()=>d.remove(),500); },sure); }
 async function guncelle(){
@@ -9164,7 +9214,7 @@ function dongu(t){
   cub.style.width="100%"; await bekle(250);
   await Menu.ac(); yk.classList.add("bitti"); setTimeout(()=>yk.remove(),900); PERDE.classList.remove("kapali"); requestAnimationFrame(dongu);
   setTimeout(()=>guncellemeKontrol(false),1500); })();
-window.__oyun3d={testBasla:(B,kurAd,basAd,arg)=>{ const T=Object.create(B); T.kareler=[]; T.bolumKur=null; const kurF=B[kurAd], basF=B[basAd]; T.kur=async function(){ await kurF.call(this,arg); }; T.basla=async function(){ katmanTemizle(); ustDugmeler(); joystickEkle(); this.btn=aksiyonEkle(); const f=basF||this[basAd]; await f.call(this); window.__segmentBitti=true; }; window.__B=T; bolumAc(T); return T; },B0,B1,BA,BK,B2,BI,BY,B3,B4,B5,BD,B5K,BT,BN,B6,BOLUMLER,Album,AlbumDB,Yarisma,Sozluk,Menu,Final,bolumAc,Girdi,kayit,Kamera,camera,get bolum(){return bolum;},get kilit(){return kilit;},get GIZLI(){return GIZLI;},gizliKalpler,joystickEkle,get ETK(){return ETK;},get scene(){return scene;},kalabalik,AVATAR,karakter,kilicYap,kinYap,sapkaYap,eldeTut,uniformaHazirla,kemigeBagla,torenHazirla,kisHazirla,takimHazirla,pembeHazirla,yazHazirla,ceketAktar,bindPoz,eslemeMatris,parcaBagla,TU,Ses,get KARAKTERLER(){return KARAKTERLER;},get renderer(){return renderer;},karakterleriGuncelle,engelIt,engelleriTopla,agac,otlar,hatiraFoto,konus,GECIS_OLC,get STATIK(){return STATIK;}};
+window.__oyun3d={testBasla:(B,kurAd,basAd,arg)=>{ const T=Object.create(B); T.kareler=[]; T.bolumKur=null; const kurF=B[kurAd], basF=B[basAd]; T.kur=async function(){ await kurF.call(this,arg); }; T.basla=async function(){ katmanTemizle(); ustDugmeler(); joystickEkle(); this.btn=aksiyonEkle(); const f=basF||this[basAd]; await f.call(this); window.__segmentBitti=true; }; window.__B=T; bolumAc(T); return T; },B0,B1,BA,BK,B2,BI,BY,B3,B4,B5,BD,B5K,BT,BN,B6,BOLUMLER,Album,AlbumDB,Yarisma,Sozluk,Menu,Final,bolumAc,Girdi,kayit,Kamera,camera,get bolum(){return bolum;},get kilit(){return kilit;},get GIZLI(){return GIZLI;},gizliKalpler,joystickEkle,get ETK(){return ETK;},get scene(){return scene;},kalabalik,AVATAR,karakter,kilicYap,kinYap,sapkaYap,eldeTut,uniformaHazirla,kemigeBagla,torenHazirla,kisHazirla,takimHazirla,pembeHazirla,yazHazirla,ceketAktar,bindPoz,eslemeMatris,parcaBagla,TU,Ses,get KARAKTERLER(){return KARAKTERLER;},get renderer(){return renderer;},karakterleriGuncelle,engelIt,engelleriTopla,agac,otlar,hatiraFoto,konus,DM,GECIS_OLC,get STATIK(){return STATIK;}};
 })();
 </script>
 

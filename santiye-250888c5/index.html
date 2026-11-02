@@ -159,13 +159,18 @@ body.cab #mini{display:none}
 .mchip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:#24211d;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:6px 10px;font:700 13px/1.2 system-ui,sans-serif;cursor:pointer;text-align:left;touch-action:manipulation}
 .mchip b{color:var(--cat);margin-right:4px}.mchip small{font:600 10.5px system-ui,sans-serif;opacity:.7;letter-spacing:.02em}
 .mchip.ok{border-color:#6cc24a66}.mchip.ok b::after{content:" ✓";color:#7ac943}.mchip.nx{border-color:var(--cat);box-shadow:0 0 0 2px rgba(242,183,5,.25)}
+/* the shop: a row an item, the price on the button; the stars on the job chips */
+.shoprow{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid #ffffff14}.shoprow .ic{font-size:22px;width:30px;text-align:center}.shoprow .tx{flex:1;min-width:0}.shoprow .tx b{display:block;font:700 14px system-ui,sans-serif}.shoprow .tx small{display:block;font:12px system-ui,sans-serif;opacity:.7;line-height:1.25}
+.shoprow .got{font:800 12px system-ui,sans-serif;color:#7ac943;letter-spacing:.05em}.shoprow .big{min-width:0;height:38px;font-size:15px;padding:0 12px}.shoprow.got{opacity:.75}
+.shopmenu{margin:10px 0 4px;padding:4px 10px 6px;background:#17191c;border:1px solid var(--line);border-radius:10px;color:var(--ink)}.shopmenu .pj-k{display:block;margin:6px 0 2px}
+.mchip .stars{display:block;font-style:normal;color:#ffd24a;font-size:11px;letter-spacing:.1em;margin-top:1px}
 /* the job panel in the missions: where you are, each machine with its soldier (SÜR / İN), the errand, the tea house */
 .tasks .gmrow{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px;font:600 12px/1.2 system-ui,sans-serif;color:var(--ink)}
 .tasks .gmrow.ok{color:#7dff9e}.tasks .gmrow.go{color:#ffd24a}.tasks .gmrow.tea{justify-content:flex-start}
 .tasks .gmrow.mc>span{flex:1;min-width:0;opacity:.9}.tasks .gmrow.mc b{display:block;font:800 10.5px/1.15 system-ui,sans-serif;letter-spacing:.05em;color:var(--cat)}.tasks .gmrow.me b{color:#7dff9e}
 .tasks .gmb{pointer-events:auto;flex:none;font:800 12px system-ui,sans-serif;padding:5px 10px;border-radius:8px;border:0;background:var(--cat);color:#1b1500;cursor:pointer;touch-action:manipulation}
 .tasks .gmb.alt{background:#2b3035;color:#fff;border:1px solid #ffffff30}
-@media (max-height:500px){.tasks .gmrow{margin-top:2px;font-size:11px}.tasks .gmb{padding:3px 8px;font-size:11px}}
+@media (max-height:500px){.tasks .gmrow{margin-top:2px;font-size:11px}.tasks .gmb{padding:3px 8px;font-size:11px}.tasks{max-height:calc(100vh - env(safe-area-inset-top,0px) - var(--joy,150px) - 92px);overflow-y:auto;overscroll-behavior:contain}}
 .tasks .gmrow.mc i{font-style:normal}.tasks .gmrow.site>span{min-width:0}
 /* phone held sideways: the machines two to a row (name and SÜR), the sites and the crane on one line each */
 @media (max-height:500px){.tasks .gmrow.mc:not(.info){display:inline-flex;width:calc(50% - 3px);gap:2px;margin-right:2px;vertical-align:top}.tasks .gmrow.mc:not(.info) i{display:none}.tasks .gmrow.mc:not(.info) b{font-size:9px;letter-spacing:.02em}
@@ -1942,8 +1947,24 @@ function blocked(v, x, z, a) {
   const pts = [[Lf, s], [Lf, -s], [B, s], [B, -s], [(Lf + B) / 2, s], [(Lf + B) / 2, -s], [Lf, 0]];
   const c = Math.cos(a), si = Math.sin(a);
   for (const [dx, dy] of pts) { const px = x + c * dx - si * dy, pz = z + si * dx + c * dy; if (px < 1 || pz < 1 || px > WX - 1 || pz > WZ - 1) return true; if (cellAt(px, pz) === 1) return true; const pa = propsAt(px, pz); if (pa) for (const r of pa) if (r[4] !== 1 && px > r[0] && px < r[1] && pz > r[2] && pz < r[3]) return true; }
+  if (vehHitV(v, x, z, a)) return true;
   return beltHit(v, x, z, a);
 }
+// machines do not drive through each other: the body as a rectangle, a few points of the moving one against the others' (not the loaders and the excavator
+// against a truck: they lean over its bed to fill it; and one already overlapping may always move, so nothing ever stays locked)
+const VHP = [[1, 0], [1, 1], [1, -1], [0, 1], [0, -1], [-1, 1], [-1, -1], [-1, 0], [0, 0]];
+const noColl = (a, b) => (a.type === "tr" && (b.type === "ld" || b.type === "bh" || b.type === "ex")) || (b.type === "tr" && (a.type === "ld" || a.type === "bh" || a.type === "ex"));
+function inBody(o, px, pz, m) { const dx = px - o.x, dz = pz - o.z, c = Math.cos(o.a), s = Math.sin(o.a), lx = dx * c + dz * s, lz = -dx * s + dz * c, f = (o.front != null ? o.front : o.L / 2) - m, b = (o.back != null ? o.back : -o.L / 2) + m;
+  return lx > b && lx < f && Math.abs(lz) < o.Wd / 2 - m; }
+function bodyHit(v, x, z, a, o, m) { const Lf = v.front != null ? v.front : v.L / 2, B = v.back != null ? v.back : -v.L / 2, hw = v.Wd / 2, c = Math.cos(a), si = Math.sin(a);
+  for (const [fx, fz] of VHP) { const dx = fx > 0 ? Lf : fx < 0 ? B : (Lf + B) / 2, dz = fz * hw; if (inBody(o, x + c * dx - si * dz, z + si * dx + c * dz, m)) return true; }
+  const Lo = o.front != null ? o.front : o.L / 2, Bo = o.back != null ? o.back : -o.L / 2, co = Math.cos(o.a), so = Math.sin(o.a), T = {x, z, a, front: Lf, back: B, Wd: v.Wd, L: v.L};
+  for (const [fx, fz] of VHP) { const dx = fx > 0 ? Lo : fx < 0 ? Bo : (Lo + Bo) / 2, dz = fz * o.Wd / 2; if (inBody(T, o.x + co * dx - so * dz, o.z + so * dx + co * dz, m)) return true; }
+  return false; }
+function vehHitV(v, x, z, a) {
+  for (const o of vehicles) { if (o === v || noColl(v, o)) continue; const dd = (o.x - x) ** 2 + (o.z - z) ** 2, rr = (v.L + o.L) * .5 + 2; if (dd > rr * rr) continue;
+    if (bodyHit(v, x, z, a, o, .15) && !bodyHit(v, v.x, v.z, v.a, o, -.2)) return true; }
+  return false; }
 function beltHit(v, x, z, a) {
   if (v.type !== "tr") return false; const gt = vehicles[0]; if (!gt || gt.type !== "gt") return false;
   const c = Math.cos(a), s = Math.sin(a), cg = Math.cos(gt.a), sg = Math.sin(gt.a);
@@ -2427,12 +2448,12 @@ const PROJECTS = [
         spawn: () => GAL.forEach(zc => { const ex = edgeX(zc); for (const [dx, dz, a] of [[-3.4, -1.5, 2.8], [-6.2, 1.3, 1.9], [-2.6, 2.1, 1.5]]) { const x = ex + dx, z = zc + dz; if (!crewBlocked(x, z) && !piles.some(q => dist2(q, {x, z}) < 1.2)) addPile(x, z, a); } })}
     ]}
 ];
-const PROJ = {p: 0, m: 0, prog: {kapadokya: 0, depo: 0}, dn: {}, money: 0, active: false, base: {}, t0: 0, done: false, f0: []};
+const PROJ = {p: 0, m: 0, prog: {kapadokya: 0, depo: 0}, dn: {}, stars: {}, buy: {}, money: 0, active: false, base: {}, t0: 0, done: false, f0: []};
 const projOf = () => PROJECTS[PROJ.p], missionsOf = () => projOf().missions;
-try { const s = JSON.parse(localStorage.getItem("hs-proj") || "null"); if (s) { if (s.prog) Object.assign(PROJ.prog, s.prog); else PROJ.prog.kapadokya = Math.min(s.m | 0, 5); PROJ.money = s.money | 0; if (s.dn) PROJ.dn = s.dn; } } catch (e) {}
+try { const s = JSON.parse(localStorage.getItem("hs-proj") || "null"); if (s) { if (s.prog) Object.assign(PROJ.prog, s.prog); else PROJ.prog.kapadokya = Math.min(s.m | 0, 5); PROJ.money = s.money | 0; if (s.dn) PROJ.dn = s.dn; if (s.stars) PROJ.stars = s.stars; if (s.buy) PROJ.buy = s.buy; } } catch (e) {}
 // which jobs are done (any order can be played from the menu); prog stays "how far in order" for the older saves
 const isDone = (P, i) => i < (PROJ.prog[P.id] || 0) || !!(PROJ.dn[P.id] && PROJ.dn[P.id][i]);
-function saveProj() { const id = projOf().id; if (!GM.on) PROJ.prog[id] = PROJ.m; else { let p = PROJ.prog[id] || 0; while (PROJ.dn[id] && PROJ.dn[id][p]) p++; PROJ.prog[id] = p; } try { localStorage.setItem("hs-proj", JSON.stringify({prog: PROJ.prog, money: PROJ.money, dn: PROJ.dn})); } catch (e) {} }
+function saveProj() { const id = projOf().id; if (!GM.on) PROJ.prog[id] = PROJ.m; else { let p = PROJ.prog[id] || 0; while (PROJ.dn[id] && PROJ.dn[id][p]) p++; PROJ.prog[id] = p; } try { localStorage.setItem("hs-proj", JSON.stringify({prog: PROJ.prog, money: PROJ.money, dn: PROJ.dn, stars: PROJ.stars, buy: PROJ.buy})); } catch (e) {} }
 const fmtTL = n => (n < 0 ? "-₺" : "₺") + Math.abs(Math.round(n)).toLocaleString("tr-TR");
 const idxOf = t => vehicles.findIndex(o => o.type === t);
 
@@ -2544,15 +2565,18 @@ function briefMission() {
 }
 function completeMission() {
   PROJ.done = true; const P = projOf(), M = P.missions[PROJ.m], sec = Math.max(1, TT - PROJ.t0);
-  const bonus = sec < 600 ? Math.round(M.pay * .2 / 1000) * 1000 : 0, isg = stats.isg - (PROJ.base.isg || 0), safe = isg === 0 ? Math.round(M.pay * .1 / 1000) * 1000 : 0;
+  const par = M.par || 600, bonus = sec < par ? Math.round(M.pay * .2 / 1000) * 1000 : 0, isg = stats.isg - (PROJ.base.isg || 0), safe = isg === 0 ? Math.round(M.pay * .1 / 1000) * 1000 : 0;
   const raid = GM.on ? gmRaidResult() : null, mi = PROJ.m;
   (PROJ.dn[P.id] || (PROJ.dn[P.id] = []))[mi] = true;
+  // the stars: in time, no OHS violation, the paşa content (or not come at all)
+  const pasha = !GM.on || !GM.lastRaidM || GM.lastRaidM !== mi || GM.lastRaid === "iyi", stars = Math.max(1, (sec < par ? 1 : 0) + (isg === 0 ? 1 : 0) + (pasha ? 1 : 0));
+  const SA = PROJ.stars[P.id] || (PROJ.stars[P.id] = []); SA[mi] = Math.max(SA[mi] || 0, stars);
   PROJ.money += M.pay + bonus + safe; PROJ.m++; saveProj(); setZone(null); chiefOk();
   if (P.id === "depo" && PROJ.m >= P.missions.length) { stats.depotDone = true; buildDoors(); }
   const D = GM.on ? gmDone(P, mi, M) : null;
   if (typeof saveWorld === "function") saveWorld();
   const mm = Math.floor(sec / 60), ss = Math.floor(sec % 60);
-  setTimeout(() => { showModal("GÖREV TAMAMLANDI", M.title, D ? D.text : "Şantiye şefi işi kontrol etti ve onayladı.", [["Süre", `${mm} dk ${ss} sn`], ["Hakediş", fmtTL(M.pay)], ["Hız primi", bonus ? fmtTL(bonus) : "—"], ["İSG ihlali", String(isg)], ["İSG primi", safe ? fmtTL(safe) : "—"]].concat(raid ? [raid] : []).concat([["Tabur bütçesi", fmtTL(PROJ.money)]]), [],
+  setTimeout(() => { showModal("GÖREV TAMAMLANDI", M.title, D ? D.text : "Şantiye şefi işi kontrol etti ve onayladı.", [["Yıldız", "★".repeat(stars) + "☆".repeat(3 - stars) + (stars < 3 ? " · " + [sec >= par ? "süre" : "", isg ? "İSG" : "", !pasha ? "Paşa" : ""].filter(Boolean).join(", ") : "")], ["Süre", `${mm} dk ${ss} sn`], ["Hakediş", fmtTL(M.pay)], ["Hız primi", bonus ? fmtTL(bonus) : "—"], ["İSG ihlali", String(isg)], ["İSG primi", safe ? fmtTL(safe) : "—"]].concat(raid ? [raid] : []).concat([["Tabur bütçesi", fmtTL(PROJ.money)]]), [],
     PROJ.m < P.missions.length ? "SONRAKİ GÖREV" : "DEVAM", () => briefMission()); if (GM.on) gmCard(D, true); }, 900);
 }
 // legacy: older saves only stored the mission number, rebuild what earlier missions produced
@@ -2573,9 +2597,10 @@ function updProjBtn() {
     if (GM.on && !done) { const g = gmGiverName(P, m); if (g) d.querySelector(".pj-s").textContent += " · görevi " + g + " veriyor"; }
     const b = d.querySelector("button"); if (b) b.addEventListener("click", () => openProject(k)); projList.appendChild(d);
     if (GM.on) { const row = document.createElement("div"); row.className = "mchips";   // every job of the project, playable in any order
-      P.missions.forEach((M, i) => { const c = document.createElement("button"); c.type = "button"; c.className = "mchip" + (isDone(P, i) ? " ok" : "") + (i === m && !done ? " nx" : "");
-        c.innerHTML = `<b>${i + 1}</b> ${M.title}<small>${M.veh.map(t => TYPES[t].name).join(" · ")}</small>`; c.addEventListener("click", () => openMission(k, i)); row.appendChild(c); });
+      P.missions.forEach((M, i) => { const c = document.createElement("button"); c.type = "button"; c.className = "mchip" + (isDone(P, i) ? " ok" : "") + (i === m && !done ? " nx" : ""); const st = (PROJ.stars[P.id] || [])[i] || 0;
+        c.innerHTML = `<b>${i + 1}</b> ${M.title}${st ? `<em class="stars">${"★".repeat(st)}${"☆".repeat(3 - st)}</em>` : ""}<small>${M.veh.map(t => TYPES[t].name).join(" · ")}</small>`; c.addEventListener("click", () => openMission(k, i)); row.appendChild(c); });
       projList.appendChild(row); } });
+  if (GM.on && typeof shopMenu === "function") projList.appendChild(shopMenu());   // the budget's shop under the jobs
   bankEl.textContent = `Tabur bütçesi ${fmtTL(PROJ.money)}`; bankEl.hidden = !GM.on;
   if (typeof saveInfo === "function") saveEl.textContent = saveInfo();
 }
@@ -2647,14 +2672,15 @@ function lightsFrame(dt, v) {
 // ---------- brake / reverse lamps + beacon on every machine ----------
 const RL = {ex: ["up", -3.27, .45, 1.0], dz: ["g", -2.32, 1.95, .7], bh: ["g", -2.34, 1.45, 1.0], ld: ["g", -3.54, 1.12, .65], tr: ["g", -4.36, .9, .9], gr: ["g", -4.64, 1.15, .8], gt: ["g", -3.32, 1.55, 1.0], tk: ["g", -3.62, 1.25, 1.35]};
 const LAMPG = new THREE.BoxGeometry(.05, .14, .18);
-vehicles.forEach(v => {
+function lampsFor(v) {   // (also for a machine bought later)
   const r = RL[v.type], par = r[0] === "up" ? v.P.up : v.g;
   v.brakeM = new THREE.MeshBasicMaterial({color: 0x3a0806}); v.revM = new THREE.MeshBasicMaterial({color: 0x2a2a28});
   v.brakeMeshes = [];
   for (const sd of [-1, 1]) { const b = new THREE.Mesh(LAMPG, v.brakeM); b.position.set(r[1], r[2], sd * r[3]); par.add(b); v.brakeMeshes.push(b); const rv = new THREE.Mesh(LAMPG, v.revM); rv.scale.set(1, .7, .7); rv.position.set(r[1], r[2] - .16, sd * r[3]); par.add(rv); }
   const ci = v.P.ci; if (ci && ci.xb != null) { v.beaconM = new THREE.MeshBasicMaterial({color: 0x5a3a10}); const bm = new THREE.Mesh(new THREE.CylinderGeometry(.075, .075, .14, 10), v.beaconM); bm.position.set(ci.xb + .25, ci.yt + .2, ci.zr - .25); v.P.seatPar.add(bm); v.beaconMesh = bm; }
   v.fuel = 1;
-});
+}
+vehicles.forEach(lampsFor);
 function lampsFrame(v, th) {
   for (const o of vehicles) {
     const braking = (o === v && ((th < -.05 && o.v > .3) || (th > .05 && o.v < -.3))) || (o.ai && o.aiBrake);
@@ -2710,6 +2736,8 @@ function steerTo(t, x, z, speed, stopAt) { // pursuit steering + speed control (
   const des = Math.atan2(z - t.z, x - t.x), d = wrapA(des - t.a), dist = Math.hypot(x - t.x, z - t.z), st = clamp(d * 2.0, -1, 1);
   let vDes = Math.min(5.3 * speed / .85, 2 + Math.max(0, dist - (stopAt || 0)) * .45) * (1 - Math.min(.8, Math.abs(d) * .6)); vDes = Math.max(stopAt != null ? 0 : 1.5, vDes);
   const th = clamp((vDes - t.v) * .6, -1, 1); if (th < 0) t.aiBrake = true; return [th, st, dist]; }
+const queueSpot = S => ({x: S.x + Math.cos(S.a) * 18 + Math.sin(S.a) * 7, z: S.z + Math.sin(S.a) * 18 - Math.cos(S.a) * 7});
+const stationBusy = t => { const S = t.home; if (!S || !t.fed) return false; return vehicles.some(o => o !== t && o.type === "tr" && o.fed && o.home && Math.hypot(o.home.x - S.x, o.home.z - S.z) < 1 && (Math.hypot(o.x - S.x, o.z - S.z) < 7 || (o.aiState === "align" || o.aiState === "reverse")) && o.aiState !== "queue"); };
 function aiTruck(t, dt) {
   let th = 0, st = 0, ry = 0; t.aiBrake = false; const S = aiStation(t);
   switch (t.aiState) {
@@ -2724,7 +2752,9 @@ function aiTruck(t, dt) {
     case "lower": ry = 1; t.aiBrake = true; if (t.t.bed <= .01) { t.aiState = "return"; } break;
     case "return": { // head for a point on the loading line, well in front of the spot
       const ax = S.x + Math.cos(S.a) * 24, az = S.z + Math.sin(S.a) * 24; const w = routeTo(t, ax, az); const [a, b, d] = steerTo(t, w.x, w.z, .85, w.x === ax ? 6 : null); th = a; st = b;
-      if (w.x === ax && d < 11) t.aiState = "align"; break; }
+      if (w.x === ax && d < 11) t.aiState = stationBusy(t) ? "queue" : "align"; break; }
+    case "queue": { // a second truck: off the loading line while the other is at the station, in again when it leaves
+      const Q = queueSpot(S), [a, b, d] = steerTo(t, Q.x, Q.z, .4, 4); th = a; st = b; if (d < 6 || t.qIn) { t.qIn = true; th = clamp(-t.v * 2, -1, 1); st = 0; t.aiBrake = true; if (!stationBusy(t)) { t.aiState = "return"; t.qIn = false; } } break; }
     case "align": { // follow the loading line forward until the truck points straight away from the spot
       const ux = Math.cos(S.a), uz = Math.sin(S.a), proj = (t.x - S.x) * ux + (t.z - S.z) * uz, cp = Math.max(proj, 0) + 9;
       const [a, b] = steerTo(t, S.x + ux * cp, S.z + uz * cp, .3, null); th = clamp(a, -1, .6); st = b;
@@ -2753,7 +2783,7 @@ function aiTruck(t, dt) {
   if (t.hold > 0) { t.hold -= dt; if (ry < 0) ry = 0; th = clamp(-t.v * 1.5, -1, 1); st = 0; t.aiBrake = true; }   // waiting for the commander who is coming to drive it
   drive(t, dt, th, st); work(t, dt, {rx: 0, ry, L: {x: 0, y: 0}}); t.aiTh = th;
 }
-const AIST = {wait: "yükleme bekliyor", todump: "döküm sahasına gidiyor", tip: "damperi kaldırıyor", lower: "damperi indiriyor", return: "yükleme noktasına dönüyor", align: "hizalanıyor", reverse: "geri geri yanaşıyor", cfwd: "stok sahasına dönüyor"};
+const AIST = {queue: "sıra bekliyor", wait: "yükleme bekliyor", todump: "döküm sahasına gidiyor", tip: "damperi kaldırıyor", lower: "damperi indiriyor", return: "yükleme noktasına dönüyor", align: "hizalanıyor", reverse: "geri geri yanaşıyor", cfwd: "stok sahasına dönüyor"};
 window.__hs.setAI = setAI; window.__hs.tod = setTOD;
 
 ;(window.__INIT || (window.__INIT = [])).push(["extras", performance.now()]);
@@ -5462,7 +5492,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261031-0329";
+const PORTKEY = "hs-portraits-20261102-1842";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5755,7 +5785,7 @@ function pickPile(o) {
   let best = null, bd = 1e9;
   const fd = o.type === "ld" && feeding(o);
   for (const q of piles) { if (q.amt < .25 || inRect(q, DUMP) || coverHeap(q) || (q.claim && q.claim !== o && q.claimT > TT)) continue;   // (the command post's earth is the excavator's)
-    if (fd && (q.x < o.feed.home.x + 7 || Math.hypot(q.x - OPS.sp.x, q.z - OPS.sp.z) > 24)) continue;   // filling the truck: the stock yard's heaps, east of its station
+    if (fd && (q.x < o.feedAt.x + 7 || Math.hypot(q.x - OPS.sp.x, q.z - OPS.sp.z) > 24)) continue;   // filling the truck: the stock yard's heaps, east of its station
     let d = Math.hypot(q.x - o.x, q.z - o.z);
     if (o.type === "ld") d -= Math.min(30, q.amt * 2.5);                              // the loader likes the big stockpile
     if (o.type === "bh" && KEMPAR) d = Math.hypot(q.x - KEMPAR.x, q.z - KEMPAR.z) * .7 + d * .3;   // the backhoe keeps the belt end clear
@@ -5792,10 +5822,11 @@ function aiLoad(o, dt) {
 const d0 = (o, q) => Math.hypot(q.x - o.x, q.z - o.z);
 // the loader filling the stock yard's truck at its station: out to a point square off the bed's side, then in slowly with the bucket up, until the bucket is over the bed
 // (it waits out there while the truck is away, or full and about to go)
-const feeding = o => !!(o.feed && o.feed.ai && o.feed.fed && o.feed.home && !o.feed.aiBelt);
+const feeding = o => !!o.feedAt && vehicles.some(t => t.type === "tr" && t.ai && t.fed && t.home && !t.aiBelt);
+const feedT = o => { const S = o.feedAt; let best = null, bd = 12; for (const t of vehicles) { if (t.type !== "tr" || !t.ai || !t.fed || !t.home || t.aiBelt) continue; const d = Math.hypot(t.x - S.x, t.z - S.z); if (d < bd) { bd = d; best = t; } } return best; };   // the truck at (or coming into) the station
 function feedTruck(o) {
-  const T = o.feed, S = T.home, c = Math.cos(S.a), s = Math.sin(S.a), bx = S.x - c * 2.3, bz = S.z - s * 2.3, nx = -s, nz = c;   // the bed at the station; its right-hand side
-  const ready = T.aiState === "wait" && Math.hypot(T.x - S.x, T.z - S.z) < 1.5 && Math.abs(T.v) < .3 && T.load <= T.cap - 2.3;
+  const T = feedT(o), S = o.feedAt, c = Math.cos(S.a), s = Math.sin(S.a), bx = S.x - c * 2.3, bz = S.z - s * 2.3, nx = -s, nz = c;   // the bed at the station; its right-hand side
+  const ready = !!T && T.aiState === "wait" && Math.hypot(T.x - S.x, T.z - S.z) < 1.5 && Math.abs(T.v) < .3 && T.load <= T.cap - 2.3;
   const out = (o.x - bx) * nx + (o.z - bz) * nz; let th = 0, st = 0, tL = .8, tT = .6; if (o.fst === "in" && out > 11) o.fst = null;
   if (o.fst !== "in") { const fx = bx + nx * 7.5, fz = bz + nz * 7.5, d = Math.hypot(fx - o.x, fz - o.z), [a, b] = steerTo(o, fx, fz, .7, 1); st = b;
     th = d < 4 ? clamp((clamp(d * .5, 0, 2) - o.v) * .8, -1, 1) : a; if (th < 0) o.aiBrake = true;
@@ -5897,7 +5928,7 @@ function aiDrive(o, dt) {
     case "ld": case "bh": aiLoad(o, dt * (o.type === "ld" ? wx("stok") : 1)); break;
     case "dz": aiDoz(o, dt * wx("stok")); break;
     case "gr": aiGrade(o, dt * wx("yol")); break;
-    case "gt": if (o.trench) aiTrench(o, dt * wx("bunker")); else aiKempar(o, dt * wx("siginak")); break;
+    case "gt": { const tm = GM.on && PROJ.buy.teeth ? 1.3 : 1; if (o.trench) aiTrench(o, dt * wx("bunker") * tm); else aiKempar(o, dt * wx("siginak") * tm); break; }   // (new cutter teeth: a third faster)
     default: drive(o, dt, 0, 0);
   }
 }
@@ -6248,7 +6279,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261031-0329";
+const BUILD = "20261102-1842";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -7360,12 +7391,17 @@ function stockPiles(want) { const S = OPS.sp; let have = 0; for (const q of pile
 function roughRoad(f) { const n = Math.ceil(roadCells.length * f) - roadCells.filter(c => c.rough).length; if (n <= 0) return;
   const L = roadCells.map((c, i) => i).filter(i => !roadCells[i].rough).sort(() => Math.random() - .5); for (let k = 0; k < n && k < L.length; k++) { const i = L[k]; roadCells[i].rough = true; setRoad(roadCells[i], i); } }
 // the stock yard's loader fills the truck at its station; the truck carries to the dump
-function feedOn() { if (LDR) { LDR.feed = TRX; LDR.fst = null; LDR.aiState = null; }
-  const T = TRX; if (!T || mineV(T)) return; T.fed = true; T.aiBelt = false; T.dumpAt = null; T.home = Object.assign({}, TRXH);
-  if (Math.hypot(T.x - TRXH.x, T.z - TRXH.z) > 40) { placeV(T, TRXH.x, TRXH.z, TRXH.a); T.load = 0; T.t.bed = 0; applyTool(T); T.aiState = "wait"; }
-  else if (!T.aiState) T.aiState = "return"; }
+function feedOn() { if (LDR) { LDR.feedAt = Object.assign({}, TRXH); LDR.fst = null; LDR.aiState = null; }
+  [TRX, TRX2].forEach((T, i) => { if (!T || mineV(T)) return; T.fed = true; T.aiBelt = false; T.dumpAt = null; T.home = Object.assign({}, TRXH);
+    if (Math.hypot(T.x - TRXH.x, T.z - TRXH.z) > 40) { const Q = i ? queueSpot(TRXH) : TRXH; placeV(T, Q.x, Q.z, TRXH.a); T.load = 0; T.t.bed = 0; applyTool(T); T.aiState = i ? "queue" : "wait"; }
+    else if (!T.aiState) T.aiState = "return"; }); }
+// the second truck of the stock yard (bought from the budget): it comes once, and is there from then on
+let TRX2 = null;
+function truck2Make() { if (TRX2 || !PROJ.buy.truck2) return; const Q = queueSpot(TRXH); TRX2 = addV("tr", Q.x, Q.z, TRXH.a); TRX2.name = "2. KAMYON"; lampsFor(TRX2); TRX2.fed = true; TRX2.home = Object.assign({}, TRXH); TRX2.aiState = "queue";
+  mkJob(TRX2, "stok", "Stok sahası · ikinci kamyon", "ahmet", () => ({x: TRXH.x - 6, z: TRXH.z + 6})); pose(TRX2, 0); TRX2.g.updateMatrixWorld(true); if (typeof updHyd === "function") updHyd(TRX2.P); if (OPS.started) opsGive(TRX2); }
+truck2Make();
 // the machines of the other jobs out of a job's ground (each has its own place to wait)
-const PARKV = () => [[DOZ, 88, 66, Math.PI], [LDR, 86, 58, Math.PI], [GRD, 9.5, 114.7, 0], [BHL, 108, 46, Math.PI], [TRX, TRXH.x, TRXH.z, TRXH.a]];
+const PARKV = () => [[TRX2, queueSpot(TRXH).x, queueSpot(TRXH).z, TRXH.a], [DOZ, 88, 66, Math.PI], [LDR, 86, 58, Math.PI], [GRD, 9.5, 114.7, 0], [BHL, 108, 46, Math.PI], [TRX, TRXH.x, TRXH.z, TRXH.a]];
 function clearArea(x0, x1, z0, z1, keep) { for (const [v, x, z, a] of PARKV()) if (v && !mineV(v) && !keep.includes(v) && v.x > x0 && v.x < x1 && v.z > z0 && v.z < z1) { placeV(v, x, z, a); if (v.type === "tr") { v.home = {x, z, a}; v.aiState = "wait"; } } }
 const ORDN = ["birinci", "ikinci", "üçüncü", "dördüncü", "beşinci", "altıncı"];
 // the cracked korugan: looked at (by you, or by Kaan when you do not come), set down if the crack is only on the surface, sent back to the factory if not
@@ -7418,9 +7454,9 @@ const C_WATER = () => ({app: "Telsiz · Gömülü komuta yeri", who: cardName("k
     {t: "Gidip kendim bakarım", d: "Yarmanın başına git · sen oradayken pompa hemen kurulur", go: () => { pumpRun(60); gmGo("Yarmaya bak", () => ({x: XR0 - 6, z: BCZ + 6.2, n: "YARMA", r: 6}), () => {
       pumpRun(9); wmod("bunker", 1.25, 9999); radioK("kaan", "Siz gelince iş çözüldü {h}, pompa çalışıyor."); satAdd(1, "yarmaya bizzat baktın"); }); }}]});
 const C_CRACK = () => ({app: "Telsiz · Gömülü komuta yeri", who: "Vinç operatörü", ic: "🏗️", col: "#b45309", title: "Korugan çatlak gelmiş",
-  text: `Komutanım, istifteki ${ORDN[BNK.mods]} korugan çatlak gelmiş, köşesinde bir çatlak var. Kaldırmadan önce ne yapalım?`,
+  text: `Komutanım, istifteki ${ORDN[CR.ck = CR.st === "lift" ? BNK.mods + 1 : BNK.mods]} korugan çatlak gelmiş, köşesinde bir çatlak var. Kaldırmadan önce ne yapalım?`,
   opts: [{t: "Gidip kendim bakarım", d: "İstifin yanına git · çatlak yüzeyselse koyarız", go: () => { CR.hold = 1e9; CR.until = TT + 60; CR.onTimeout = () => crackLook(false);
-      gmGo("Çatlak koruganı kontrol et", () => { const p = BSTK[BNK.mods]; return p && CR.hold >= 1e8 ? {x: p.x - 2.7, z: p.z - 2.4, n: "KORUGAN", r: 4.5} : null; }, () => crackLook(true), {done: () => !(CR.hold >= 1e8)}); }},
+      gmGo("Çatlak koruganı kontrol et", () => { const p = BSTK[CR.ck]; return p && CR.hold >= 1e8 ? {x: p.x - 2.7, z: p.z - 2.4, n: "KORUGAN", r: 4.5} : null; }, () => crackLook(true), {done: () => !(CR.hold >= 1e8)}); }},
     {t: "Fabrikaya geri gönderin", d: "Yenisi gelir · vinç bir süre bekler", go: () => { CR.hold = 30; radioK("kaan", "Fabrikayı aradım {h}, yenisi yolda. Gelince dizmeye devam."); }},
     {t: "Harçla kapatıp koyun", d: "Vinç durmaz · Paşa teftişte görebilir", go: () => { BNK.crack = true; BNK.crackK = BNK.mods; bnkSave(); radioK("kaan", "Peki {h}, harçla kapatıyoruz… Paşam görmesin de."); }}]});
 const C_SHIFT = () => ({app: "Telsiz · Gömülü komuta yeri", who: "Ekskavatör operatörü", ic: "🏗️", col: "#b45309", title: "Ekskavatörde nöbet değişimi",
@@ -7448,7 +7484,7 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
     : r === "orta" ? "Teftiş bitti. Paşa eksikleri not aldı, bir ay sonra yeniden gelecek. Kalan işleri menüden bitirip teftişi yeniden oynayabilirsin."
     : "Teftiş kötü geçti, Paşa çok kızdı. Görevleri menüden tamamla, sonra teftişe yeniden çık."; },
   missions: [
-    {title: "Yol ve Stok Sahası", g: "ahmet", sites: ["stok", "yol"], veh: ["gr", "ld", "tr", "dz"], mach: () => [GRD, LDR, TRX, DOZ], pay: 40000,
+    {title: "Yol ve Stok Sahası", g: "ahmet", sites: ["stok", "yol"], veh: ["gr", "ld", "tr", "dz"], mach: () => [GRD, LDR, TRX, DOZ].concat(TRX2 ? [TRX2] : []), pay: 40000, par: 480,
       get zone() { return siteZone(["stok", "yol"], ROAD); },
       brief: "Teftişte Paşa'nın konvoyu şantiye yolundan geçecek; yol perişan. Stok sahası da hafriyatla dolu. İki iş aynı anda yürüyor: greyder yolu baştan sona düzeltiyor; kepçe stoktaki hafriyatı kamyona yüklüyor, kamyon döküm sahasına taşıyor, dozer de yığınları topluyor. Hangi işin başında durursan o iş hızlanır.",
       tip: TIPDRV, obj: [{t: "Düzgün yol", f: () => roadPct(), goal: 90, u: " %"}, {t: "Döküm sahasına taşınan", f: B => (stats.dumped || 0) - (B.dumped || 0), goal: 16, u: " m³"}],
@@ -7456,7 +7492,7 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
       G: {brief: "{H}, Paşam teftişte şantiye yolundan geçecek, yol da perişan! Stok sahası da dağ gibi. Greyder yolu düzeltsin; kepçe kamyonu doldursun, kamyon döküm sahasına taşısın, dozer de yığınları toplasın. İkisi aynı anda yürüsün, sen hangisinin başındaysan o hızlanır. Paşam beni yine burada yakalamasın da…",
         go: "Greyder yolda, kepçe kamyonun başında {h}. Sen kralsın!", mid: "İşlerin yarısı tamam {h}, aynen devam!", ok: "Sen kralsın {h}! Yol pürüzsüz, stok sahası tertemiz. Paşam'ın konvoyu uçar."},
       cards: [{at: .16, mk: C_GRADER}, {at: .52, mk: C_TIRE}]},
-    {title: "Kapalı Drone Sığınağı", g: "furkan", sites: ["siginak"], veh: ["gt", "tr", "bh"], mach: () => [KEMPAR, TRB, BHL], pay: 45000,
+    {title: "Kapalı Drone Sığınağı", g: "furkan", sites: ["siginak"], veh: ["gt", "tr", "bh"], mach: () => [KEMPAR, TRB, BHL], pay: 45000, par: 360,
       get zone() { return siteZone(["siginak"]); },
       brief: "Kapalı drone sığınağının galerilerini Kempar açıyor. Kesilen kaya banttan kamyona akıyor, kamyon dolunca döküm sahasına boşaltıyor, beko loder de bant altını temizliyor. Galeri teftişe kadar yirmi altı metre ilerlemeli.",
       tip: TIPDRV, obj: [{t: "Galeri ilerlemesi", f: () => kempDone() ? 99 : kemM() - (TCX.kem || 0), goal: 26, u: " m"}],
@@ -7464,7 +7500,7 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
       G: {brief: "{H}, sığınakta asıl iş bu! Kempar aynada, kamyon bant altında, beko loder de temizlikte. Galeriyi yirmi altı metre daha ilerletmemiz lazım. Ben askerle aşağıdayım, kürek bende!",
         go: "Kesici döndü {h}, aynaya giriyoruz!", mid: "Yarısını geçtik {h}, asker coştu!", ok: "Galeri yirmi altı metre ilerledi {h}! Cansınız."},
       cards: [{at: .22, mk: C_TEETH}, {at: .58, mk: C_MUD}]},
-    {title: "Gömülü Komuta Yeri", g: "kaan", sites: ["bunker"], veh: ["gt", "tr", "ex"], mach: () => [KEMPAR, TRB, EXC], pay: 50000, crane: true,
+    {title: "Gömülü Komuta Yeri", g: "kaan", sites: ["bunker"], veh: ["gt", "tr", "ex"], mach: () => [KEMPAR, TRB, EXC], pay: 50000, par: 540, crane: true,
       get zone() { return siteZone(["bunker"]); },
       brief: "Bölüğün gömülü komuta yeri hazır beton koruganlardan yapılıyor. Önce Kempar korugan hattı boyunca yarma açıyor, çıkan toprağı kamyon kuzey şevine yığıyor. Yarma bitince vinç kamyonu altı koruganı istiften alıp yarmanın içine art arda diziyor; ekskavatör de her korugan yerine oturur oturmaz üstünü o toprakla örtüyor. Bitince yukarıdan bakan sadece çimenli bir tepe görecek.",
       tip: "Kempar'ı, kamyonu ya da ekskavatörü SÜR ile alabilirsin. Vinç kamyonu koruganları kendisi dizer; yük havadayken yarmanın içinde kimse durmasın.",
@@ -7473,8 +7509,8 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
       spawn: () => { kempTrench(); excReady(); clearTrench(); clearArea(26, 88, 80, 112, [KEMPAR, TRB, EXC]); if (BNK.trench >= 1) craneCall(); },
       G: {brief: "{H}, gömülü komuta yerine başlıyoruz! Kempar korugan hattı boyunca yarmayı açacak, kamyon toprağı şeve yığacak. Yarma bitince vinç koruganları içine dizecek, ekskavatör de üstünü hemen örtecek. Ölçüleri tablete işledim, sıra şaşmasın. Yansın Hisar!",
         go: "Kempar yarmaya giriyor {h}, kamyon bant altında!", mid: "Yarı yoldayız {h}, tablette her şey yerinde!", ok: "Yansın Hisar! Komuta yeri toprağın altında {h}. Orhan dronla baktı: yukarıdan sadece çimenli bir tepe görünüyor."},
-      cards: [{cond: () => BNK.trench > .36 && BNK.trench < .8 && !(KEMPAR.hold > 0), mk: C_WATER}, {cond: () => BNK.mods >= 2 && BNK.mods < BNKN - 1 && CR.st === "ready" && CR.hold < 1e8, mk: C_CRACK}, {cond: () => bnkCover() > .2 && bnkCover() < .72, mk: C_SHIFT}]},
-    {title: "Atış Alanı ve Drone Parkuru", g: "ali", sites: ["atis", "parkur"], veh: [], mach: () => [], pay: 40000, hand: true,
+      cards: [{cond: () => BNK.trench > .36 && BNK.trench < .8 && !(KEMPAR.hold > 0), mk: C_WATER}, {cond: () => BNK.mods >= 1 && (CR.st === "lift" ? BNK.mods + 1 : BNK.mods) < BNKN && (CR.st === "ready" || CR.st === "lift") && CR.hold < 1e8, mk: C_CRACK}, {cond: () => bnkCover() > .2 && bnkCover() < .72, mk: C_SHIFT}]},
+    {title: "Atış Alanı ve Drone Parkuru", g: "ali", sites: ["atis", "parkur"], veh: [], mach: () => [], pay: 40000, par: 420, hand: true,
       get zone() { return siteZone(["atis", "parkur"]); },
       brief: "Garnizonda iki iş birden: Ali Üsteğmen'in askerleri 400 metrelik atış alanında hedef çerçevelerini dikiyor, setleri yükseltiyor; Orhan Üsteğmen'in drone parkurunda kapılar dikiliyor, dron her yeni kapıdan test uçuşu yapıyor. Makine yok; iş kürekle, kum torbasıyla. Hangi işin başında durursan o hızlanır.",
       tip: "Burada makine yok: askerin başında dur, iş hızlansın. İki saha da garnizonun güneyinde; GİT ile gidebilirsin.",
@@ -7482,8 +7518,8 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
       spawn: () => { let ch = false; if (RNG.p > .7) { RNG.p = .7; ch = true; } if (DRC.p > .65) { DRC.p = .65; ch = true; } if (ch) { projVisuals(); saveGarProj(); } },
       G: {brief: "{H}, atış alanında hedef çerçevelerini dikiyoruz, setleri de yükseltiyoruz. Orhan da parkurun kapılarını dikiyor. Makine yok, iş asker işi. Hangimizin başında durursan o iş çakı gibi olur. Tek rakibin kendinsin!",
         go: "İp çekildi {h}, çerçeveler geliyor! Orhan da dronu havaya aldı.", mid: "Yarısı oldu {h}, aynen böyle.", ok: "Çakı gibi oldu {h}! Atış alanı da parkur da hazır. Kapım her daim açık, çaya gel."},
-      cards: [{at: .2, mk: C_RWATER}, {at: .55, mk: C_DRONE}]},
-    {title: "Büyük Teftiş", g: "ufuk", sites: [], veh: [], mach: () => [], pay: 30000, insp: true,
+      cards: [{at: .2, mk: C_RWATER, skip: () => !!PROJ.buy.tanker}, {at: .55, mk: C_DRONE}]},
+    {title: "Büyük Teftiş", g: "ufuk", sites: [], veh: [], mach: () => [], pay: 30000, par: 300, insp: true,
       zone: {beam: [9.5, 55.3]}, spot: () => ({x: 21, z: 53.5, lx: 9.5, lz: 55.3}),
       brief: "Levent Paşa büyük teftiş için geliyor. Paşa'yı şantiye kapısında karşıla; bütün sahaları tek tek gezeceksiniz. Ne kadar iş bitmişse o kadar memnun kalır.",
       tip: "Paşa'yı karşıla, gerisini o gezer. Bitirdiğin her görev teftişte puan.",
@@ -7599,7 +7635,7 @@ function gmStart(M) {
   document.getElementById("bCam").textContent = "KAMERA: " + camName(camMode);
   if (!M.insp && GM.insp) { GM.insp = null; GM.cine = null; CLK.hold = false; }
   GM.cur = {P, m, M, g}; GM.giver = g ? g.o : null; GM.said = {}; GM.t = 0; GM.started = true; GM.go = null; GM.card = false; GM.cshown = {}; GM.cardT = -99; GM.near = true; GM.nearK = M.site; if (WP.src === "gm") wpClear();
-  raidPlan(true);
+  raidPlan(true); if (!M.insp) { if (GM.dayM != null) CLK.day++; CLK.t = 450; clkSave(); GM.dayM = m; }   // every job starts a new morning at 07.30
   gmPlace(M);
   if (M.insp) gmInspStart(M);
   else if (g) gTimeout(() => gmRadio(g.o, fillT(g.alt ? "Hadi {n}, bekliyorum." : g.G.go, g.o)), 900);
@@ -7623,7 +7659,9 @@ function gmPlace(M) {
     o.a = o.jobP ? Math.atan2(o.jobP.z - o.z, o.jobP.x - o.x) : o.a; S.root.visible = true; S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion); }
 }
 // the work goes faster where you are: standing over it (or driving one of its machines)
-function gmPace(k) { const C = GM.cur; if (!C || !PROJ.active || PROJ.done) return 1; return GM.nearK === k && (C.M.sites || []).includes(k) ? 1.6 : 1; }
+function gmPace(k) { const C = GM.cur; if (!C || !PROJ.active || PROJ.done) return 1; let f = GM.nearK === k && (C.M.sites || []).includes(k) ? 1.6 : 1;
+  if ((CLK.t >= 1110 || CLK.t < 420) && !PROJ.buy.light) f *= .5;   // after the evening roll call it is dark: slow work without the floodlights
+  if (k === "atis" && PROJ.buy.tanker) f *= 1.2; return f; }
 function gmNearK(M) { const v = vehicles[cur]; if (!FOOT.on && !FOOT.seq && v && v.P.seated === PLAYER && (M.mach ? M.mach() : []).includes(v)) return siteOfV(v) || M.site;
   const p = mePos(); let best = null, bd = 40; for (const k of M.sites || []) { const s = SITES[k].spot(), d = Math.hypot(p.x - s.x, p.z - s.z); if (d < bd) { bd = d; best = k; } } return best; }
 function gmNear(M) { if (M.sites && M.sites.length) return !!gmNearK(M); const sp = M.spot ? M.spot() : null; if (!sp) return false; const p = mePos(); return Math.hypot(p.x - sp.x, p.z - sp.z) < 40; }
@@ -7648,13 +7686,14 @@ function gmPanel(M) {
     h += `<div class="gmrow mc${me ? " me" : ""}"><span><b>${v.name}</b><i>${st}</i></span><button type="button" class="gmb${me ? " alt" : ""}" data-take="${vehicles.indexOf(v)}">${me ? "İN" : "SÜR"}</button></div>`; }
   if (M.info) for (const [n, t] of M.info()) h += `<div class="gmrow mc info"><span><b>${n}</b><i>${t}</i></span></div>`;   // what works without a driver of ours (the crane truck)
   if (GM.go) { const t = GM.go.target(), dd = t ? Math.round(distTo(t)) : null; h += `<div class="gmrow go"><span>▶ ${GM.go.t}${dd != null ? ` · ${dd} m` : ""}</span>${t && dd > (t.r || 4) + 2 && FOOT.on && !FOOT.seq ? `<button type="button" class="gmb" data-gm="errand">GİT</button>` : ""}</div>`; }
-  h += `<div class="gmrow tea"><button type="button" class="gmb alt" data-gm="tea">${SEAT.on ? "KALK" : "☕ ÇAY OCAĞI"}</button></div>`;
+  h += `<div class="gmrow tea"><button type="button" class="gmb alt" data-gm="tea">${SEAT.on ? "KALK" : "☕ ÇAY OCAĞI"}</button><button type="button" class="gmb alt" data-gm="shop">🛒 TEDARİK</button></div>`;
   return h; }
 tasksEl.addEventListener("pointerdown", e => { const b = e.target.closest(".gmb"); if (!b || !GM.on) return; e.preventDefault(); e.stopPropagation(); tasksEl.__h = null;
   if (b.dataset.take != null) { gmTake(vehicles[+b.dataset.take]); return; }
   const k = b.dataset.gm, M = GM.cur && GM.cur.M;
   if (k === "go") { if (AUTO.on && AUTO.go) { AUTO.on = false; AUTO.go = false; FOOT.spd = 0; updCtx(); return; } const s = b.dataset.k && SITES[b.dataset.k] ? SITES[b.dataset.k].spot() : M && M.spot && M.spot(); if (s) { autoGo({x: s.x, z: s.z, r: 4}); if (AUTO.on) { AUTO.v = 5.6; AUTO.k = b.dataset.k || null; } } }
   else if (k === "errand") { const t = GM.go && GM.go.target(); if (t) { autoGo(t); if (AUTO.on) AUTO.v = 5.6; } }
+  else if (k === "shop") shopOpen();
   else if (k === "tea") { if (SEAT.on) standUp(); else { autoGo(tableT()); if (AUTO.on) { AUTO.v = 5.6; toast("Çay ocağına gidiyorsun · Paşa gelirse yakalanırsın!", 2.4); } } } });
 function gmHold() { const R = GM.raid; return (!!R && R.mis === GM.cur && !R.judged && R.mode !== "pass") || (!!GM.insp && !GM.insp.fin); }   // the job is done when the paşa has had his say
 
@@ -7662,7 +7701,7 @@ function gmHold() { const R = GM.raid; return (!!R && R.mis === GM.cur && !R.jud
 const CLK = {day: 1, t: 8 * 60, sv: 0, hold: false};
 try { const s = JSON.parse(localStorage.getItem("hs-gmclock") || "null"); if (s && s.t >= 0) { CLK.day = Math.max(1, s.day | 0); CLK.t = (+s.t) % 1440; } } catch (e) {}
 const clkSave = () => { try { localStorage.setItem("hs-gmclock", JSON.stringify({day: CLK.day, t: Math.round(CLK.t)})); } catch (e) {} };
-const clkRate = t => t >= 390 && t < 1050 ? 9.4 : t >= 1050 && t < 1230 ? 6 : t >= 300 && t < 390 ? 7.5 : 45;   // game minutes per real second
+const clkRate = t => t >= 390 && t < 1110 ? 1.2 : t >= 1110 && t < 1230 ? 4 : t >= 300 && t < 390 ? 7.5 : 45;   // game minutes per real second: a working day is about nine real minutes, one job
 const SKYK = [[0, 2], [300, 2], [350, 1], [400, 0], [990, 0], [1080, 1], [1200, 2], [1440, 2]];   // the light: night, dawn, day, dusk, night (blended between the keys)
 const SKC = new THREE.Color(), SUNP = [0, 0, 0];
 const mixHex = (out, h1, h2, u) => out.setHex(h1).lerp(SKC.setHex(h2), u);
@@ -7820,7 +7859,7 @@ function raidVerdict(R) {
   const seq = [[L, l1, 3.4]]; if (res !== "iyi") seq.push([L, pick(RAGE_MID), 2.8]);
   const G = GM.giver; if (G && G.S && !isPlayer(G) && G.S.root.visible && Math.hypot(G.x - L.x, G.z - L.z) < 30) seq.push([G, res === "iyi" ? "Sağ olun komutanım!" : "Emredersiniz komutanım, hemen toparlıyoruz!", 2]);
   seq.push([null, "", 0, () => raidJudged(R)]); return seq; }
-function raidJudged(R) { if (R.judged) return; R.judged = true; PROJ.money += R.money; GM.lastRaid = R.res; GM.lastRes = {mis: R.mis, res: R.res};
+function raidJudged(R) { if (R.judged) return; R.judged = true; PROJ.money += R.money; GM.lastRaid = R.res; GM.lastRaidM = R.mis ? R.mis.m : null; GM.lastRes = {mis: R.mis, res: R.res};
   toast(R.res === "iyi" ? "PAŞA MEMNUN · +₺5.000" : R.res === "orta" ? "PAŞA SORUMLUYU ARADI · -₺2.000" : "PAŞA KIZDI · -₺5.000", 2.8); raidPlan(false); }
 // at the tea house: the whole raid as it always was — the car up the ramp, the line by rank, the salute and the scolding (the ones at work stay at work)
 function bossTea(R) {
@@ -7986,6 +8025,26 @@ const DIALOGS_GM = [
     ["azizhan", "Teftişten önce bitsin, Paşam ilk oraya bakar."], ["orhan", () => bnkCover() >= .999 ? "Dronla yukarıdan baktım, komuta yeri hiç görünmüyor. Sadece bir tepe var." : "Bitince dronla yukarıdan bakarım, bir yeri görünüyorsa söylerim."], ["kaan", "Yansın Hisar, bitecek komutanım!"]]),
   DLG("any", [["ali", () => `Atış alanı yüzde ${Math.round(RNG.p * 100)} oldu, çerçeveler dikiliyor.`], ["orhan", () => `Parkurda ${Math.floor(DRC.p * DGATES.length)} kapı dikildi, dron her birinden geçiyor.`], ["ali", "Teftişte ikimiz de çakı gibi olacağız."]])];
 
+// ---- the battalion's budget: what it buys (the second truck, the cutter teeth, the water tanker, the floodlights) ----
+const SHOP = [
+  {k: "truck2", n: "İkinci kamyon", p: 60000, ic: "🚛", d: "Stok sahasında iki kamyon sırayla dolar, döküm sahasına taşır"},
+  {k: "teeth", n: "Kempar'a yeni kesici dişler", p: 25000, ic: "⚙️", d: "Sığınakta ve yarmada üçte bir daha hızlı keser"},
+  {k: "tanker", n: "Su tankeri", p: 15000, ic: "💧", d: "Atış alanında su hiç bitmez, asker beşte bir daha hızlı çalışır"},
+  {k: "light", n: "Seyyar projektör", p: 20000, ic: "💡", d: "18.30'dan sonra karanlıkta iş yarıya düşmez"}];
+function shopBuy(k) { const I = SHOP.find(q => q.k === k); if (!I || PROJ.buy[k]) return; if (PROJ.money < I.p) { toast("Bütçe yetmiyor · " + fmtTL(I.p - PROJ.money) + " eksik", 2.2); return; }
+  PROJ.money -= I.p; PROJ.buy[k] = true; saveProj(); toast(I.ic + " " + I.n + " alındı · " + fmtTL(PROJ.money) + " kaldı", 2.6);
+  if (k === "truck2") { truck2Make(); const C = GM.cur; if (TRX2 && TRX2.job) { TRX2.job.on = !!(C && PROJ.active && !PROJ.done && (C.M.insp || C.M.mach().includes(TRX2))); if (OPS.started && !TRX2.ai) opsGive(TRX2); } }
+  shopRefresh(); if (typeof updProjBtn === "function" && !document.getElementById("menu").hidden) updProjBtn(); }
+function shopRows() { return SHOP.map(I => `<div class="shoprow${PROJ.buy[I.k] ? " got" : ""}"><span class="ic">${I.ic}</span><span class="tx"><b>${I.n}</b><small>${I.d}</small></span>${PROJ.buy[I.k] ? `<span class="got">ALINDI ✓</span>` : `<button type="button" class="big${PROJ.money < I.p ? " alt" : ""}" data-buy="${I.k}">${fmtTL(I.p)}</button>`}</div>`).join(""); }
+const shopEl = (() => { const d = document.createElement("div"); d.id = "shop"; d.hidden = true; d.style.cssText = "position:fixed;inset:0;z-index:21;display:grid;place-items:center;background:rgba(10,12,14,.74)";
+  d.innerHTML = '<div style="width:min(94vw,560px);max-height:86vh;overflow:auto;background:#1d2023;color:#eef0f2;border-radius:16px;padding:16px 16px 12px;box-shadow:0 12px 40px rgba(0,0,0,.5);font:14px/1.35 system-ui,sans-serif">' +
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><b style="font-size:18px;letter-spacing:.04em">TEDARİK</b><span id="shopMoney" style="opacity:.8;font-size:13px"></span><span style="flex:1"></span><button type="button" class="big alt" id="shopClose">KAPAT</button></div><div id="shopList"></div></div>';
+  document.body.appendChild(d); d.addEventListener("click", e => { if (e.target === d) shopClose(); const b = e.target.closest("[data-buy]"); if (b) shopBuy(b.dataset.buy); }); d.querySelector("#shopClose").addEventListener("click", shopClose); return d; })();
+function shopRefresh() { shopEl.querySelector("#shopMoney").textContent = "Tabur bütçesi " + fmtTL(PROJ.money); shopEl.querySelector("#shopList").innerHTML = shopRows(); }
+function shopOpen() { shopRefresh(); shopEl.hidden = false; }
+function shopClose() { shopEl.hidden = true; }
+function shopMenu() { const d = document.createElement("div"); d.className = "shopmenu"; d.innerHTML = `<div class="pj-k">TEDARİK · bütçeyle alınır</div>` + shopRows(); d.addEventListener("click", e => { const b = e.target.closest("[data-buy]"); if (b) shopBuy(b.dataset.buy); }); return d; }
+
 // ---- per frame ----
 function gmProg(M) { let f = 1; M.obj.forEach((o, i) => { const v = objVal(o), fr = o.le ? (objOk(o, v) ? 1 : clamp((PROJ.f0[i] - v) / Math.max(.01, PROJ.f0[i] - o.goal), 0, 1)) : clamp(v / o.goal, 0, 1); f = Math.min(f, fr); }); return f; }
 const gmProgAvg = M => M.obj.reduce((a, o) => a + clamp(objVal(o) / o.goal, 0, 1), 0) / M.obj.length;   // (the cards come in as the job as a whole goes on)
@@ -8000,11 +8059,11 @@ function gmFrame(dt) {
   if (M.crane && BNK.trench >= 1 && BNK.mods < BNKN && CR.st === "away") craneCall();   // the cut is through: the crane truck comes
   const g = C.g; if (g && !g.alt && !GM.said.mid && GM.t > 8 && gmProgAvg(M) >= .5) { GM.said.mid = true; gmRadio(g.o, fillT(g.G.mid, g.o)); }
   if (GM.card === true || !M.cards || GM.t < 12 || GM.t - GM.cardT < 40 || DUR.open || FOOT.seq || RECV.on || GM.raid || SAL.on) return;
-  const pr = gmProgAvg(M); for (let i = 0; i < M.cards.length; i++) { const c = M.cards[i]; if (GM.cshown[i]) continue; if (c.cond ? c.cond() : pr >= c.at) { GM.cshown[i] = true; GM.cardT = GM.t; durShow(Object.assign({k: "gm" + C.m + "_" + i}, c.mk())); break; } }
+  const pr = gmProgAvg(M); for (let i = 0; i < M.cards.length; i++) { const c = M.cards[i]; if (GM.cshown[i] || (c.skip && c.skip())) continue; if (c.cond ? c.cond() : pr >= c.at) { GM.cshown[i] = true; GM.cardT = GM.t; durShow(Object.assign({k: "gm" + C.m + "_" + i}, c.mk())); break; } }
 }
 UPD.push(gmFrame);
 window.__hs.gm = GM; window.__hs.clk = CLK; window.__hs.gmTea = () => gmTea(); window.__hs.gmTake = i => gmTake(vehicles[i]); window.__hs.gmSky = gmSky; window.__hs.sal = SAL;
-window.__hs.gmRaidNow = () => { GM.rp = {at: GM.t, done: false}; };
+window.__hs.shopBuy = shopBuy; window.__hs.trx2 = () => TRX2; window.__hs.gmRaidNow = () => { GM.rp = {at: GM.t, done: false}; };
 
 ;(window.__INIT || (window.__INIT = [])).push(["gorev", performance.now()]);
 

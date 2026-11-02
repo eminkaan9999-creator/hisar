@@ -159,6 +159,11 @@ body.cab #mini{display:none}
 .mchip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:#24211d;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:6px 10px;font:700 13px/1.2 system-ui,sans-serif;cursor:pointer;text-align:left;touch-action:manipulation}
 .mchip b{color:var(--cat);margin-right:4px}.mchip small{font:600 10.5px system-ui,sans-serif;opacity:.7;letter-spacing:.02em}
 .mchip.ok{border-color:#6cc24a66}.mchip.ok b::after{content:" ✓";color:#7ac943}.mchip.nx{border-color:var(--cat);box-shadow:0 0 0 2px rgba(242,183,5,.25)}
+/* talking to someone: the card above the sticks, the portrait, his line, your answers */
+#konus{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + var(--joy,150px) + 44px);transform:translateX(-50%);width:min(92vw,520px);z-index:8;background:rgba(20,22,25,.93);border:1px solid #ffffff2a;border-radius:14px;padding:10px 12px;color:#eef0f2;font:14px/1.35 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#konus .kh{display:flex;align-items:center;gap:10px}#konus .kh i{width:44px;height:44px;border-radius:50%;background:#333 center/cover;flex:none;border:2px solid #ffd27a}#konus .kh span{flex:1;min-width:0}#konus .kh b{display:block;font-size:15px}#konus .kh small{opacity:.7;font-size:12px}
+#konus .kx{background:none;border:0;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px}#konus .kt{margin:8px 0 8px;font-size:14px}#konus .ko{display:flex;flex-wrap:wrap;gap:6px}#konus .ko .big{height:38px;min-width:0;font-size:14px;padding:0 12px;flex:1 1 auto;text-align:left}
+@media (max-height:500px){#konus{bottom:calc(env(safe-area-inset-bottom,0px) + 8px);left:calc(max(18px,env(safe-area-inset-left,0px)) + var(--joy,150px) + 16px);transform:none;width:min(52vw,460px);padding:6px 10px}#konus .kt{margin:4px 0;font-size:12.5px}#konus .ko .big{height:32px;font-size:12.5px}#konus .kh i{width:34px;height:34px}}
 /* the shop: a row an item, the price on the button; the stars on the job chips */
 .shoprow{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid #ffffff14}.shoprow .ic{font-size:22px;width:30px;text-align:center}.shoprow .tx{flex:1;min-width:0}.shoprow .tx b{display:block;font:700 14px system-ui,sans-serif}.shoprow .tx small{display:block;font:12px system-ui,sans-serif;opacity:.7;line-height:1.25}
 .shoprow .got{font:800 12px system-ui,sans-serif;color:#7ac943;letter-spacing:.05em}.shoprow .big{min-width:0;height:38px;font-size:15px;padding:0 12px}.shoprow.got{opacity:.75}
@@ -5495,7 +5500,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261102-1941";
+const PORTKEY = "hs-portraits-20261102-1959";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5509,7 +5514,7 @@ function portraitOf(o) {
 }
 const PLAYABLE = () => OFFS.filter(o => !o.d.visitor && o.S);
 function openPicker() {
-  if (!running || PICK.cine || AUTO.on || MEET.boss || GM.on) return; if (PICK.open) { closePicker(null); return; }
+  if (!running || PICK.cine || AUTO.on || MEET.boss || (GM.on && (RECV.on || SAL.on || GM.insp || PILOT.mode))) return; if (PICK.open) { closePicker(null); return; }
   const el = document.createElement("div"); el.style.cssText = "position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(10,12,14,.74)";
   const ring = document.createElement("div"); const R0 = Math.min(innerWidth, innerHeight) * .34; ring.style.cssText = `position:relative;width:${R0 * 2 + 120}px;height:${R0 * 2 + 120}px`; el.appendChild(ring);
   const mid = document.createElement("div"); mid.style.cssText = "position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#fff;font:600 14px/1.35 system-ui,sans-serif;width:200px;text-shadow:0 1px 3px #000"; mid.innerHTML = "KARAKTER SEÇ<br><span style='font-weight:400;font-size:12px;opacity:.8'>tıkla · B: kapat</span>"; ring.appendChild(mid);
@@ -5522,7 +5527,7 @@ function openPicker() {
   el.onclick = e => { if (e.target === el) closePicker(null); }; document.body.appendChild(el); PICK.el = el; PICK.open = true;
 }
 UICOVER.push(() => PICK.open);
-function closePicker(o) { if (PICK.el) PICK.el.remove(); PICK.el = null; PICK.open = false; if (o && o !== CUR) switchOfficer(o); }
+function closePicker(o) { if (PICK.el) PICK.el.remove(); PICK.el = null; PICK.open = false; if (o && o !== CUR) { if (GM.on && typeof gmPick === "function") gmPick(o); else switchOfficer(o); } }   // (in the missions: the one you switch to is the one over the work)
 const titleEl = document.createElement("div"); titleEl.style.cssText = "position:fixed;left:6vw;bottom:22vh;z-index:7;color:#fff;font:800 clamp(28px,6vw,54px)/1 system-ui,sans-serif;letter-spacing:.02em;text-shadow:0 3px 18px rgba(0,0,0,.7);pointer-events:none;opacity:0;transition:opacity .25s";
 document.body.appendChild(titleEl);
 function switchOfficer(n, quiet) {
@@ -6284,7 +6289,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261102-1941";
+const BUILD = "20261102-1959";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -7881,7 +7886,8 @@ function raidVerdict(R) {
   const G = GM.giver; if (G && G.S && !isPlayer(G) && G.S.root.visible && Math.hypot(G.x - L.x, G.z - L.z) < 30) seq.push([G, res === "iyi" ? "Sağ olun komutanım!" : "Emredersiniz komutanım, hemen toparlıyoruz!", 2]);
   seq.push([null, "", 0, () => raidJudged(R)]); return seq; }
 function raidJudged(R) { if (R.judged) return; R.judged = true; PROJ.money += R.money; GM.lastRaid = R.res; GM.lastRaidM = R.mis ? R.mis.m : null; GM.lastRes = {mis: R.mis, res: R.res};
-  toast(R.res === "iyi" ? "PAŞA MEMNUN · +₺5.000" : R.res === "orta" ? "PAŞA SORUMLUYU ARADI · -₺2.000" : "PAŞA KIZDI · -₺5.000", 2.8); raidPlan(false); }
+  toast(R.res === "iyi" ? "PAŞA MEMNUN · +₺5.000" : R.res === "orta" ? "PAŞA SORUMLUYU ARADI · -₺2.000" : "PAŞA KIZDI · -₺5.000", 2.8); raidPlan(false);
+  const g = GM.giver; if (g && !isPlayer(g)) gTimeout(() => { if (GM.raid !== R) return; radioK(g.d.key, R.res === "iyi" ? pick(["Paşam memnun gitti {h}, nefes alın.", "Bu sefer yırttık {h}. Aynen devam."]) : R.res === "orta" ? pick(["Paşam seni aradı {h}, işin başında olsaydın…", "Bir dahakine işin başında dur {h}, Paşam fark ediyor."]) : pick(["Paşam çok kızdı {h}. Makineler çalışsın, bir daha böyle yakalanmayalım.", "Kötü oldu {h}. Herkes işinin başına."])); }, 9000); }
 // at the tea house: the whole raid as it always was — the car up the ramp, the line by rank, the salute and the scolding (the ones at work stay at work)
 function bossTea(R) {
   const L = R.L, car = CARS.levent, U = OFFM.ufuk; R.st = 2;
@@ -8031,7 +8037,9 @@ function gmTeaEnd() { teaBar.hidden = true; GM.tea = false; MEET.called = false;
 // ---- the menu: who you are, which job ----
 function gmPick(o) { GM.pick = o; document.querySelectorAll("#cards .card").forEach(b => b.classList.toggle("sel", b.dataset.k === o.d.key));
   toast(oName(o) + " seçildi", 1.6);
-  if (GM.started && PROJ.active && !PROJ.done) { switchOfficer(o, true); GM.pick = null; const M = missionsOf()[PROJ.m]; GM.giver = (giverOf(projOf(), PROJ.m) || {}).o || null; gmPlace(M); } }
+  if (GM.started && PROJ.active && !PROJ.done) { if (PILOT.mode) pilotEnd(); if (KON.open) konEnd(); switchOfficer(o, true); GM.pick = null; const M = missionsOf()[PROJ.m]; GM.giver = (giverOf(projOf(), PROJ.m) || {}).o || null; GM.cur.g = giverOf(projOf(), PROJ.m);
+    const old = CUR; for (const q of OFFS) { if (!q.S || isPlayer(q) || q.d.visitor) continue; if (q === GM.giver && q.st !== "work" && q.st !== "walk") { leaveChair(q); sendToSite(q.d.key, M.site, false, 1e9); } } toast(`Artık ${oName(o)} sensin · ${o.d.role.split("·")[0].trim()}`, 2.6); }
+  else if (GM.started) { switchOfficer(o, true); GM.pick = null; } }
 (() => {
   const menu = document.getElementById("menu"); if (!menu) return;
   const p = menu.querySelector(".brand p"); if (p) p.textContent = "Subay sensin: makineleri askerler sürer, sen işin başında durur, çıkan sorunları çözersin; istediğin makineye geçip kendin de sürersin. Her görevde birkaç iş aynı anda yürür, hangisinin başında durursan o hızlanır. Hepsi tek bir hedefe bağlı: Levent Paşa'nın büyük teftişi. Paşa her görevde habersiz gelir, bütün sahaları gezer; seni çay ocağında yakalamasın.";
@@ -8040,7 +8048,7 @@ function gmPick(o) { GM.pick = o; document.querySelectorAll("#cards .card").forE
   const cards = document.getElementById("cards"), projs = menu.querySelector(".projs"), ch = cards && cards.previousElementSibling;
   if (ch && ch.tagName === "H3") { ch.textContent = "1 · Karakterini seç"; if (projs) { projs.parentNode.insertBefore(ch, projs); projs.parentNode.insertBefore(cards, projs); } }
 })();
-if (GM.on) { bChar.hidden = true; bJobs.hidden = true; bClock.textContent = `${clkIcon(CLK.t)} ${hhmm(CLK.t)}`; }
+if (GM.on) { bChar.hidden = false; bJobs.hidden = true; bClock.textContent = `${clkIcon(CLK.t)} ${hhmm(CLK.t)}`; }
 CAMS[1] = "KABİN";
 { const k = document.querySelector(".keys"); if (k && GM.on) k.textContent = "WASD / oklar: yürü, sür · E: makineye bin / in (asker iner, geri biner) · ENTER: çay ocağında otur / kalk · I/K J/L Z/X U/O: makine kolları · C: kamera · M: harita · ESC: menü"; }
 // at the tea table in the missions: the campaign, not the day's numbers
@@ -8150,7 +8158,8 @@ function rainWork(dt) { WET = RAIN.k;
 function rainPlan() { RAIN.from = -1; RAIN.to = -1; RAIN.told = false; if (Math.random() < .36) { RAIN.from = 470 + Math.random() * 480; RAIN.to = RAIN.from + 90 + Math.random() * 130; } }
 function rainFrame(dt) {
   if (GM.on && GM.started) { RAIN.want = RAIN.from >= 0 && CLK.t >= RAIN.from && CLK.t < RAIN.to ? 1 : 0;
-    if (RAIN.want && !RAIN.told) { RAIN.told = true; toast("☔ YAĞMUR BAŞLADI · yol dışı çamur, kamyonlar yavaş" + ((GM.cur && (GM.cur.M.sites || []).includes("yol")) ? ", yol bozuluyor" : ""), 3.2); }
+    if (RAIN.want && !RAIN.told) { RAIN.told = true; toast("☔ YAĞMUR BAŞLADI · yol dışı çamur, kamyonlar yavaş" + ((GM.cur && (GM.cur.M.sites || []).includes("yol")) ? ", yol bozuluyor" : ""), 3.2);
+      gTimeout(() => radioK(pick(["ahmet", "furkan", "ali"]), pick(["Yağmur başladı {h}, yol çamur oldu, kamyonlar yavaşlıyor.", "{H}, yağıyor; greyder bozulan yeri yeniden geçsin.", "Yağmur {h}, asker ıslandı ama iş durmaz."])), 2500); }
     if (!RAIN.want && RAIN.told && RAIN.k < .05) { RAIN.told = false; toast("🌤 Yağmur dindi", 2); } }
   else RAIN.want = 0;
   RAIN.k += (RAIN.want - RAIN.k) * Math.min(1, dt * .25); if (RAIN.k < .002 && !RAIN.want) RAIN.k = 0;
@@ -8494,6 +8503,77 @@ PROJECTS.push(GARAJ); if (PROJ.prog.garaj == null) PROJ.prog.garaj = 0;
 window.__hs.gj = GJ; window.__hs.GPLAN = GPLAN; window.__hs.garaj = GARAJ;
 
 ;(window.__INIT || (window.__INIT = [])).push(["garaj", performance.now()]);
+
+// ======================= KONUŞ: walk up to anyone and talk. An officer turns to you and says what is on his mind (his job, the paşa, the weather,
+// the money), you answer from two or three lines; some answers hand you an errand that pays, some are just banter. A soldier salutes and reports.
+// On foot within a few metres: the KONUŞ button (or F) =======================
+const KON = {o: null, open: false, g: null, did: {}, t: 0, soldier: null};
+const konEl = (() => { const d = document.createElement("div"); d.id = "konus"; d.hidden = true; d.innerHTML = `<div class="kh"><i></i><span><b></b><small></small></span><button type="button" class="kx">✕</button></div><p class="kt"></p><div class="ko"></div>`; document.body.appendChild(d);
+  d.querySelector(".kx").addEventListener("click", () => konEnd()); d.addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) konPick(+b.dataset.k); }); return d; })();
+const bTalk = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "bTalk"; b.hidden = true; const c = document.querySelector(".ctxL"); if (c) c.prepend(b); b.addEventListener("click", () => konStart()); return b; })();
+const konFree = () => running && FOOT.on && !FOOT.seq && !SEAT.on && !AUTO.on && !PICK.cine && !GM.cine && !RECV.on && !SAL.on && !DUR.open && !PILOT.mode && !KON.open;
+// who is in reach: an officer standing or working near you (not the paşa on his rounds), else a soldier
+function konNear() { let best = null, bd = 3.4;
+  for (const o of OFFS) { if (!o.S || isPlayer(o) || !o.S.root.visible || o.st === "car" || o.st === "away" || o.st === "line") continue; const d = Math.hypot(o.x - FOOT.x, o.z - FOOT.z); if (d < bd) { bd = d; best = o; } }
+  if (best) return {o: best};
+  if (typeof CROWD !== "undefined" && CROWD.list) { let g = null, gd = 2.8; for (const q of CROWD.list) { if (q.hidden || q.mode === "sit") continue; const d = Math.hypot(q.x - FOOT.x, q.z - FOOT.z); if (d < gd) { gd = d; g = q; } } if (g) return {g}; }
+  for (const w of CREW) { const d = Math.hypot(w.x - FOOT.x, w.z - FOOT.z); if (d < 2.8) return {w}; }
+  return null; }
+const meTxt = t => subShow(`<span style="color:#7fd1ff">${CUR.d.name}:</span> ${t}`, Math.max(2.2, t.length * .06));
+// ---------------- what each officer has to say: an opener by what is going on, then your answers ----------------
+const mis = () => GM.cur && PROJ.active && !PROJ.done ? GM.cur.M : null;
+const jobSt = k => { const j = JOBS.find(q => q.sup === k && q.on); return j ? (j.v.broken ? `${j.v.name.toLowerCase()} arızalı` : j.v.hold > 0 ? `${j.v.name.toLowerCase()} duruyor` : `${j.v.name.toLowerCase()} ${j.v.st || "çalışıyor"}`) : null; };
+const errandDone = (k, id) => !!(KON.did[k] && KON.did[k][id] === PROJ.m && KON.did[k].p === PROJ.p);
+function errandMark(k, id) { KON.did[k] = KON.did[k] || {}; KON.did[k][id] = PROJ.m; KON.did[k].p = PROJ.p; }
+// an errand: where to go and what happens there (paid; once per job)
+function errand(k, id, text, target, pay, then) { return {t: text, go: () => { errandMark(k, id); gmGo(text, () => target(), () => { PROJ.money += pay; toast(`+${fmtTL(pay)} · ${text.toLowerCase()}`, 2.4); if (then) then(); }); } }; }
+const OPEN = {
+  ahmet: () => { const M = mis(), r = RAIN.k > .5; return r ? "Yağmur yolu yine çamur etti, greyder yetişemiyor. Sen kralsın, bir el at." : M && M.sites && M.sites.includes("yol") ? `Yol yüzde ${Math.round(roadPct())}. Paşam'ın arabası sarsılırsa beni yakar, haberin olsun.` : M && M.sites && M.sites.includes("stok") ? "Kepçe kamyonu dolduruyor, kamyon dökümde. Stok sahası dağ gibiydi, eriyor." : pick(["Her yerde ben varım, biliyorsun. Nereye gitsem Paşam da orada.", "Dün akşam kantinde lahmacun vardı, haberin oldu mu?", "Greyderin bıçağını değiştirttim, halı gibi serer artık."]); },
+  kaan: () => { const M = mis(); return bnkCover() >= .999 ? "Komuta yeri toprağın altında. Orhan dronla baktı, yukarıdan bir tepe var sadece." : BNK.trench < 1 && M && M.crane === true ? `Yarma yüzde ${Math.round(BNK.trench * 100)}. Kempar çamura girerse pompa lazım, tablette takip ediyorum.` : BNK.mods < BNKN && BNK.trench >= 1 ? `${BNK.mods} korugan yerinde. Vinç sıradakini bekliyor; istersen kumandayı sen al.` : typeof GJ !== "undefined" && GJ.slab > 0 && GJ.slab < 1 ? `Beton yüzde ${Math.round(GJ.slab * 100)}. Mikser kıvamı bozuk gelirse geri göndereceğim.` : pick(["Projeyi tablete işledim, ölçüler şaşmaz. Yansın Hisar!", "Bu işin yazılımını yaparız, makineler kendi raporunu atar.", "Resmen enkaz devraldım ama bitecek."]); },
+  furkan: () => { const M = mis(); return M && M.sites && M.sites.includes("siginak") ? `Galeri ${Math.round(kemM())} metre. Kempar aynada, ben de aşağıda kürekteyim.` : typeof GJ !== "undefined" && GJ.parts > 0 && GJ.parts < 9 ? `${GJ.parts} parça dikildi. Halat bende, vinç sende olsun.` : pick(["Ver küreği, ben de gireyim. Makine makinedir ama kürek şaşmaz.", "Askerle aşağıda çalışınca iş daha hızlı gidiyor.", "Kempar'ın dişleri yine aşınmasın da…"]); },
+  boran: () => { const M = mis(); return M && M.sites && M.sites.includes("garaj") ? "Tanklar garaja girecek, sürücüleri hazırladım. Koordinasyon bende, arz ederim." : M && M.sites && M.sites.includes("siginak") ? `Kamyon ${Math.max(1, Math.round((stats.dumped || 0) / 8))} sefer yaptı, bant altı temiz. Arz ederim.` : pick(["Koordinasyon bende komutanım, arz ederim.", "Kamyon boş gitmesin, dolu dönmesin; arz ederim.", "Furkan yine kürekte, ben de telsizdeyim. Arz ederim."]); },
+  ali: () => `Atış alanı yüzde ${Math.round(RNG.p * 100)}. ${RAIN.k > .5 ? "Yağmurda çerçeve dikilmez, asker bekliyor." : PROJ.buy.tanker ? "Tanker geldi, asker çakı gibi." : "Sıcakta askerin suyu bitiyor, tanker olsa."} Kapım her daim açık.`,
+  orhan: () => `Parkurda ${Math.floor(DRC.p * DGATES.length)} kapı dikildi. ${GM.droneShow ? "Senin uçuşunu izledim, bütün kapılardan geçtin." : "Dronu uçurmak istersen panelde düğmesi var."} Barkan 4'ler de bu ay geliyor.`,
+  azizhan: () => { const left = TEFTIS.missions.filter((M, i) => !isDone(TEFTIS, i) && !M.insp).length; return GM.raid ? "La Paşam içeride, ne dolaşıyorsun? İşinin başına!" : left ? `Teftişe ${left} iş kaldı. La bana çok güvenme, makineler boş durmasın.` : "Teftiş geçti ama rahat yok, garaj var. Bütçeyi boşa harcama."; },
+  ufuk: () => pick(["Naber mankiler? Paşam her an gelir, herkes işinin başında olsun.", "Bu akşam çaylar benden, ama önce iş.", "Aynen devam. Paşam geçen sefer memnundu, bu sefer de olsun."]),
+  levent: () => pick(["Ne bakıyorsun, işinin başına! Makineler boşta mı?", "Proje yapan çocuklar… Sahada göreceğim.", "Bu arada Barkan 4'ler hazır mı?"])};
+const REPLY = {
+  ahmet: () => [errand("ahmet", "gr", "Greyderin bıçağına bak", () => GRD ? {x: GRD.x, z: GRD.z, n: "GREYDER", r: 7} : null, 1500, () => radioK("ahmet", "Baktın mı {h}? Sen kralsın, devam.")), {t: "Stok sahası ne zaman biter?", a: () => `${Math.max(0, Math.round(16 - ((stats.dumped || 0) - (PROJ.base.dumped || 0))))} metreküp kaldı. Kamyon boş gitmesin.`}, {t: "Lahmacun var mıydı?", a: () => "Seferberlik ilan ettim, kimse gelmedi. Hepsini ben yedim."}],
+  kaan: () => [errand("kaan", "tab", "Komuta yerinde tableti imzala", () => ({x: XR0 - 6, z: BCZ + 6.2, n: "KOMUTA YERİ", r: 6}), 1500, () => radioK("kaan", "İmza tamam {h}, rapor Paşam'a gidiyor.")), {t: "Koruganlar sağlam mı?", a: () => BNK.crack ? "Birinin köşesi çatlaktı, harçla kapattık… Paşam görmesin." : "Hepsi sağlam, teker teker kontrol ettim."}, {t: "Yansın Hisar!", a: () => "Yansın Hisar komutanım!"}],
+  furkan: () => [errand("furkan", "kurek", "Sığınağa yedek kürek götür", () => { const s = KSPOT(); return {x: s.x, z: s.z, n: "SIĞINAK", r: 7}; }, 1500, () => radioK("furkan", "Kürek geldi {h}, asker coştu.")), {t: "Asker nasıl?", a: () => "Asker coşkulu, ben başlarındayım. Bir tek Boran koordinasyonda."}, {t: "Kürek senin olsun", a: () => "Kürek benim zaten. Sen makineye geç."}],
+  boran: () => [errand("boran", "liste", "Nakliye listesini kamyonda imzala", () => TRB ? {x: TRB.x, z: TRB.z, n: "KAMYON", r: 8} : null, 1500, () => radioK("boran", "Liste imzalandı {h}, arz ederim.")), {t: "Koordinasyon nasıl gidiyor?", a: () => "Mükemmel komutanım. Herkes yerinde, telsiz bende."}, {t: "Bir kürek de sen al", a: () => "Emredersiniz komutanım… koordinasyondan sonra."}],
+  ali: () => [errand("ali", "su", "Atış alanına su götür", () => { const f = rangeFront(); return {x: f.x - 3, z: f.z + 1.5, n: "ATIŞ ALANI", r: 7}; }, 1500, () => radioK("ali", "Su geldi {h}, sağ ol. Kapım her daim açık.")), {t: "Sabah koşusu kaç kilometre?", a: () => "Altı. Çakı gibi. Yarın sen de gel."}, {t: "Çerçeveler düz mü?", a: () => "Düz. Paşam şakulle gelse geçer."}],
+  orhan: () => [{t: "Dronu ben uçurayım", a: () => "Al, pil dolu. Kapılardan geç, yukarıdan bakınca her şey belli.", go: () => { konEnd(); gTimeout(() => droneStart(), 300); }}, errand("orhan", "pil", "Pilot çadırından yedek pil getir", () => ({x: -74, z: -31.5, n: "PİLOT ÇADIRI", r: 5}), 1500, () => radioK("orhan", "Pil geldi {h}, dron akşama kadar uçar.")), {t: "Barkan 4 ne zaman?", a: () => "Fabrikadan çıkmak üzere. Paşam her gelişinde soruyor."}],
+  azizhan: () => [{t: "Sıradaki iş ne?", a: () => { const nx = TEFTIS.missions.find((M, i) => !isDone(TEFTIS, i)); return nx ? `“${nx.title}”. ${OFFM[nx.g] ? oName(OFFM[nx.g]) : "Ben"} veriyor. La bana çok güvenme, git bitir.` : "Bütün işler bitti, teftişe hazırız."; }}, {t: "Paşa ne zaman gelir?", a: () => GM.rp && !GM.rp.done && GM.cur ? `Belli olmaz ama bugün gelir. ${GM.rp.at - GM.t < 60 ? "Yakında. Makineler çalışsın." : "Daha vakit var."}` : "Bugün geldi gitti, yarın yine gelir."}, {t: "Çaya gelir misin?", a: () => "La bana çok güvenme, iş bitince.", go: () => { const o = OFFM.azizhan; if (o && o.S) { const c = chairOf(o); if (c && !c.occ) walkTo(o, c.x - Math.cos(c.a) * .45, c.z - Math.sin(c.a) * .45, () => seatAt(o, c)); } }}],
+  ufuk: () => [{t: "Paşa'dan haber var mı?", a: () => "Her an gelir mankiler. Çay ocağında kimse kalmasın."}, {t: "Bütçe yetiyor mu?", a: () => PROJ.money > 50000 ? "Yetiyor, tedarikten bir şeyler al, boş durmasın." : "Az. Görevleri yıldızla bitirin, prim gelir."}],
+  levent: () => [{t: "Emredersiniz komutanım!", a: () => "Rahat. Devam."}, {t: "Barkan 4'ler fabrikadan çıkmak üzere komutanım.", a: () => "Hı. Görmek istiyorum."}]};
+const SOLDLINES = ["Emredersiniz komutanım!", "Nöbette sorun yok komutanım.", "Komutanım, çay ocağında çay var, buyurun.", "Sıcak çok komutanım, su gelse…", "Kürek işi bitmez komutanım.", "Paşam bugün geldi mi komutanım?", "Memlekete izin ne zaman komutanım?"];
+function konStart() { if (!konFree()) return; const n = konNear(); if (!n) { toast("Yakında konuşacak kimse yok", 1.4); return; }
+  if (n.g || n.w) { const q = n.g || n.w; if (n.g) { n.g.sal = true; n.g.mode = "salute"; n.g.v = 0; n.g.a = Math.atan2(FOOT.z - q.z, FOOT.x - q.x); gTimeout(() => { n.g.sal = false; }, 2200); } else { q.pose = "salute"; q.a = Math.atan2(FOOT.z - q.z, FOOT.x - q.x); gTimeout(() => { q.pose = ""; }, 2200); }
+    subShow(`<span style="color:#ffd27a">Asker:</span> ${pick(SOLDLINES)}`, 2.6); meTxt(pick(["Rahat. Kolay gelsin.", "Aferin, devam.", "Kolay gelsin asker."])); return; }
+  const o = n.o; KON.o = o; KON.open = true; KON.t = 0; KON.g = null;
+  if (o.st === "work" || o.st === "stand" || o.st === "seat" || o.st === "standby") { KON.was = o.st; if (o.st !== "seat") { o.st = "stand"; o.t = 1e9; } o.a = Math.atan2(FOOT.z - o.z, FOOT.x - o.x); headingQ(o.a, o.S.root.quaternion); }
+  const op = fillT((OPEN[o.d.key] || (() => "Buyur."))(), o); say(o, op, Math.max(3, op.length * .07));
+  const R = (REPLY[o.d.key] || (() => []))().filter(r => !(r.go && r.t && errandDone(o.d.key, r.t))).map(r => ({...r, t: fillT(r.t, o)}));
+  R.push({t: "Kolay gelsin", a: () => pick(["Sağ ol.", "Sen de.", "Görüşürüz."]), bye: true});
+  KON.r = R; konEl.querySelector(".kh i").style.backgroundImage = `url('${portraitOf(o)}')`; konEl.querySelector(".kh b").textContent = oName(o); konEl.querySelector(".kh small").textContent = o.d.role.split("·")[0].trim();
+  konEl.querySelector(".kt").textContent = op; konEl.querySelector(".ko").innerHTML = R.map((r, i) => `<button type="button" class="big${r.bye ? " alt" : ""}" data-k="${i}">${r.t}</button>`).join(""); konEl.hidden = false; bTalk.hidden = true; }
+function konPick(i) { const r = KON.r[i], o = KON.o; if (!r || !o) return; meTxt(r.t);
+  if (r.go && !r.a) { r.go(); konEnd(); return; }
+  const a = typeof r.a === "function" ? fillT(r.a(), o) : r.a || ""; if (a) gTimeout(() => { if (KON.o === o || r.bye) say(o, a, Math.max(2.4, a.length * .07)); }, 900);
+  if (r.go) r.go(); if (r.bye || r.go) { gTimeout(() => konEnd(), 1200); return; }
+  KON.r = KON.r.filter(q => q !== r); konEl.querySelector(".kt").textContent = a; konEl.querySelector(".ko").innerHTML = KON.r.map((q, k) => `<button type="button" class="big${q.bye ? " alt" : ""}" data-k="${k}">${q.t}</button>`).join(""); }
+function konEnd() { if (!KON.open) return; const o = KON.o; KON.open = false; KON.o = null; konEl.hidden = true; if (o && o.st === "stand" && KON.was === "work") { o.st = "work"; o.t = 1e9; } }
+function konFrame(dt) { if (!GM.on) { bTalk.hidden = true; return; }
+  if (KON.open) { KON.t += dt; const o = KON.o; if (!o || !konFree() && !KON.open || Math.hypot(o.x - FOOT.x, o.z - FOOT.z) > 6 || !running || !FOOT.on || SAL.on || RECV.on || DUR.open) { konEnd(); return; }
+    o.a += wrapA(Math.atan2(FOOT.z - o.z, FOOT.x - o.x) - o.a) * Math.min(1, dt * 5); headingQ(o.a, o.S.root.quaternion); if (KON.t > 40) konEnd(); return; }
+  KON.nt = (KON.nt || 0) - dt; if (KON.nt > 0) return; KON.nt = .25; const n = konFree() ? konNear() : null;
+  const t = n ? (n.o ? "KONUŞ · " + n.o.d.short : "KONUŞ · asker") : ""; if (bTalk.textContent !== t && t) bTalk.textContent = t; bTalk.hidden = !t; }
+UPD.push(konFrame);
+addEventListener("keydown", e => { if (e.code === "KeyF" && !e.repeat && GM.on) { if (KON.open) konEnd(); else konStart(); } });
+window.__hs.kon = KON; window.__hs.konStart = konStart; window.__hs.konPick = konPick;
+
+;(window.__INIT || (window.__INIT = [])).push(["konus", performance.now()]);
 
 // ======================= KABİN: the excavator from the operator's seat — the boom out front, two joysticks at the bottom of the screen
 // with gloved hands on them that move with what you press (drawn over the scene after it, so the cab never cuts into them) =======================

@@ -163,6 +163,7 @@ body.cab #mini{display:none}
 .shoprow{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid #ffffff14}.shoprow .ic{font-size:22px;width:30px;text-align:center}.shoprow .tx{flex:1;min-width:0}.shoprow .tx b{display:block;font:700 14px system-ui,sans-serif}.shoprow .tx small{display:block;font:12px system-ui,sans-serif;opacity:.7;line-height:1.25}
 .shoprow .got{font:800 12px system-ui,sans-serif;color:#7ac943;letter-spacing:.05em}.shoprow .big{min-width:0;height:38px;font-size:15px;padding:0 12px}.shoprow.got{opacity:.75}
 .shopmenu{margin:10px 0 4px;padding:4px 10px 6px;background:#17191c;border:1px solid var(--line);border-radius:10px;color:var(--ink)}.shopmenu .pj-k{display:block;margin:6px 0 2px}
+.proj.lock{opacity:.55}.proj.lock b{color:#9a9488}
 .mchip .stars{display:block;font-style:normal;color:#ffd24a;font-size:11px;letter-spacing:.1em;margin-top:1px}
 /* the job panel in the missions: where you are, each machine with its soldier (SÜR / İN), the errand, the tea house */
 .tasks .gmrow{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px;font:600 12px/1.2 system-ui,sans-serif;color:var(--ink)}
@@ -2592,6 +2593,7 @@ function updProjBtn() {
   projList.innerHTML = "";
   PROJECTS.forEach((P, k) => { const live = PROJ.active && PROJ.p === k && !PROJ.done, m = live ? PROJ.m : (PROJ.prog[P.id] || 0), done = m >= P.missions.length;
     const d = document.createElement("div"); d.className = "proj" + (done ? " done" : "");
+    if (P.locked && P.locked()) { d.className += " lock"; d.innerHTML = `<div class="pj-l"><span class="pj-k">PROJE ${k + 1}</span><b>${P.name}</b><span class="pj-s">🔒 ${P.lockTxt || "Kilitli"} · ${P.sub}</span></div>`; projList.appendChild(d); return; }   // (the second project waits for the inspection)
     d.innerHTML = `<div class="pj-l"><span class="pj-k">PROJE ${k + 1}</span><b>${P.name}</b><span class="pj-s">${done ? "Tamamlandı ✓ · " + P.missions.length + " görev" : m > 0 || live ? `Görev ${m + 1}/${P.missions.length} · ${P.missions[m].title}` : P.sub}</span></div>` +
       (done ? `<span class="pj-ok">TAMAM ✓</span>` : `<div class="pj-b"><button class="big" type="button">${live ? "DEVAM ET" : m > 0 ? `DEVAM · GÖREV ${m + 1}` : "BAŞLA"}</button></div>`);
     if (GM.on && !done) { const g = gmGiverName(P, m); if (g) d.querySelector(".pj-s").textContent += " · görevi " + g + " veriyor"; }
@@ -2620,7 +2622,7 @@ function openProject(k) {
 let newArm = 0;
 bNew.addEventListener("click", () => {
   if (Date.now() - newArm > 3500) { newArm = Date.now(); bNew.textContent = "EMİN MİSİN? TEKRAR BAS"; setTimeout(() => { bNew.textContent = "YENİ OYUN"; }, 3500); return; }
-  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker", "hs-bunker2", "hs-bunker3", "hs-teftis-v", "hs-gmclock"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
+  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker", "hs-bunker2", "hs-bunker3", "hs-teftis-v", "hs-gmclock", "hs-garaj"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
 });
 document.getElementById("cards").addEventListener("click", () => { if (GM.on) return; if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
 const _openMenu = openMenu;
@@ -5068,7 +5070,8 @@ const TLINES = {azizhan: ["Çaylar tazelensin.", "La bana çok güvenme.", "Herk
   boran: ["Hisar taburunda şenlik havası hakim.", "Arz ederim komutanım.", "Ekip sağlam.", "Bir şey diyeceğim ama…"], ufuk: ["Naber mankiler!", "Kolay gelsin arkadaşlar.", "İyi gidiyorsunuz, aynen devam."], levent: ["Hı."]};
 const dlgText = t => typeof t === "function" ? t() : t;
 const dlgAll = () => DIALOGS.concat(DIALOGS_DYN);
-function dlgCtx() { if (typeof DAY === "undefined" || !DAY.on || !DAY.block) return "is"; const k = DAY.block.k;
+function dlgCtx() { if (GM.on && typeof CLK !== "undefined") { const t = CLK.t; return t < 540 ? "sabah" : t >= 690 && t < 800 ? "ogle" : t >= 1050 ? "aksam" : "is"; }   // (the missions' clock)
+  if (typeof DAY === "undefined" || !DAY.on || !DAY.block) return "is"; const k = DAY.block.k;
   return k === "sabah" || k === "ictima" ? "sabah" : k === "ogle" || (k === "is" && DAY.t > 690 && DAY.t < 720) ? "ogle" : k === "cay" || k === "aksam" || k === "sohbet" || k === "gece" ? "aksam" : "is"; }
 // what each commander calls out while watching over his job
 const SUPL = {siginak: ["Kesiciyi yavaş sür, aynaya dikkat!", "Kamyon dolunca hemen gönder!", "Sığınağın ekseninden sapma!", "Bant temiz mi? Kontrol et!", "Ver küreği, ben de gireyim!"],
@@ -5092,7 +5095,7 @@ function startDialog() {
   const bk = MEET.barkan ? pool.filter(d => d.some(([, t]) => typeof t === "string" && /Barkan 4/.test(t))) : [];
   const uf = pool.filter(d => d.some(([k]) => k === "ufuk")), P = bk.length ? bk : MEET.visit && uf.length ? uf : pool.filter(d => !d.some(([k]) => k === "ufuk"));   // just after the raid the paşa's "Barkan 4"; the commander at the table: his topics first
   if (bk.length) MEET.barkan = false;
-  if (!P.length) return false; const d = pick(P); MEET.dlg = {d, k: 0, t: .3}; MEET.last.push(d); if (MEET.last.length > 14) MEET.last.shift(); return true;
+  if (!P.length) return false; const d = pick(P); MEET.dlg = {d, k: 0, t: .3}; MEET.last.push(d); if (MEET.last.length > 26) MEET.last.shift(); return true;
 }
 function dialogFrame(dt) {
   const D = MEET.dlg; D.t -= dt; if (D.t > 0) return; const L0 = D.d;
@@ -5492,7 +5495,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261102-1851";
+const PORTKEY = "hs-portraits-20261102-1941";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -5841,6 +5844,7 @@ function feedTruck(o) {
 
 // ---- the dozer: pushes the scattered heaps together into one stockpile for the loader ----
 function aiDoz(o, dt) {
+  if (o.pad === "garaj") return aiPadG(o, dt);   // (the garage's pad: garaj.js)
   const T = o.t, SPP = OPS.sp; let th = 0, st = 0, tD = .3; o.aiBrake = false; o.aiT += dt;
   switch (o.aiState) {
     default: o.aiState = "seek"; break;
@@ -5926,8 +5930,9 @@ function aiDrive(o, dt) {
     case "tr": aiTruck(o, dt); o.st = trSt(o); break;
     case "ex": (o.cover === false ? aiEx : aiCover)(o, dt * wx("bunker")); break;
     case "ld": case "bh": aiLoad(o, dt * (o.type === "ld" ? wx("stok") : 1)); break;
-    case "dz": aiDoz(o, dt * wx("stok")); break;
+    case "dz": aiDoz(o, dt * wx(o.pad === "garaj" ? "garaj" : "stok")); break;
     case "gr": aiGrade(o, dt * wx("yol")); break;
+    case "tk": aiTank(o, dt * wx("garaj")); break;
     case "gt": { const tm = GM.on && PROJ.buy.teeth ? 1.3 : 1; if (o.trench) aiTrench(o, dt * wx("bunker") * tm); else aiKempar(o, dt * wx("siginak") * tm); break; }   // (new cutter teeth: a third faster)
     default: drive(o, dt, 0, 0);
   }
@@ -6279,7 +6284,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261102-1851";
+const BUILD = "20261102-1941";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -6527,6 +6532,8 @@ const CROWD = (() => {
     add("siginak", "dig", () => { const z = gz() + 4.3; return {x: edgeX(z) - 1.9, z}; }, () => ({x: edgeX(gz()), z: gz() + 3.2}));
     add("siginak", "dig", () => { const z = gz() - 4.3; return {x: edgeX(z) - 1.9, z}; }, () => ({x: edgeX(gz()), z: gz() - 3.2}));
     add("siginak", "sig", () => { const z = gz(); return {x: Math.min(KEMPAR ? KEMPAR.x : 120, edgeX(z)) - 17, z: z + 5.8}; }, () => TRB || {x: 110, z: gz()});
+    // the garage: two at the pad's edge, a rigger by the steel
+    add("garaj", "dig", P(70.5, 48.5), P(76, 42)); add("garaj", "dig", P(98.5, 47.5), P(94, 42)); add("garaj", "rig", P(101.5, 45.5), P(99, 38));
     // the site gate: a sentry each side of the barrier, one up in the watchtower
     add("gate", "sentry", P(3.1, 47.3), P(3.1, 60), {first: true}); add("gate", "sentry", P(3.1, 58.7), P(3.1, 40));
     if (SCN.tower) add("gate", "tower", () => ({x: SCN.tower[0] - .4, z: SCN.tower[2] + .2, y: SCN.tower[1] + .1}), P(-20, 55)); }
@@ -6736,66 +6743,76 @@ const CRB = (() => {
   const cable = new THREE.Mesh(cg, M(0x1e1f20)), hook = new THREE.Mesh(new THREE.BoxGeometry(.26, .32, .26), M(0xd8251d)), slings = [0, 1, 2, 3].map(() => new THREE.Mesh(sg, M(0x2a2b2c)));
   for (const m of [boom, boom2, cable, hook].concat(slings)) { m.castShadow = true; m.visible = false; scene.add(m); }
   return {col, legs, boom, boom2, cable, hook, slings}; })();
-const CR = {st: "away", t: 0, k: -1, hold: 0, until: 0, onTimeout: null, bye: false, toldT: 0, tp: null, park: {x: 66.5, z: 106.6}};
-const CRIN = [[-200, 60], [-130, 60], [-60, 60], [-30, 60], [-14, 59], [-5, 55.4], [2.5, 53], [10, 55.2], [20, 55.6], [24, 66], [26, 82], [27, 97], [31, 107], [38, 112.6], [46, 109.5], [55, 107], [CR.park.x, CR.park.z]];
-const CROUT = [[CR.park.x, CR.park.z], [76, 107], [85, 109], [92, 113], [100, 114.7], [110, 113], [116, 106], [116, 95], [110, 86], [98, 82], [84, 81], [70, 81], [56, 80], [42, 77], [31, 69], [24, 61], [19, 55], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-290, 60]];
-function craneCall() { if (CR.st !== "away" || BNK.mods >= BNKN) return; CR.st = "coming"; CR.bye = false; CR.k = -1; carGo(CRN, CRIN, 13, () => { CR.st = "ready"; CR.hold = Math.max(CR.hold, 2); toast("VİNÇ KAMYONU · yarmanın yanında, ayaklarını açtı", 2.4); }); }
-function craneLeave() { if (CR.st !== "ready") return; CR.st = "going"; CR.k = -1; CR.tp = null; propOff("crane"); carGo(CRN, CROUT, 13, () => { CRN.g.visible = false; CR.st = "away"; CR.bye = false; craneDraw(null); }); }
-const craneMay = () => (GM.on ? !!(GM.cur && GM.cur.M.crane && PROJ.active && !PROJ.done) : true) && BNK.trench >= 1;   // it lowers them once the trench is cut, while its job is on
+const CR = {st: "away", t: 0, k: -1, hold: 0, until: 0, onTimeout: null, bye: false, toldT: 0, tp: null, park: {x: 66.5, z: 106.6}, plan: null};
+const CRIN = [[-200, 60], [-130, 60], [-60, 60], [-30, 60], [-14, 59], [-5, 55.4], [2.5, 53], [10, 55.2], [20, 55.6], [24, 66], [26, 82], [27, 97], [31, 107], [38, 112.6], [46, 109.5], [55, 107], [66.5, 106.6]];
+const CROUT = [[66.5, 106.6], [76, 107], [85, 109], [92, 113], [100, 114.7], [110, 113], [116, 106], [116, 95], [110, 86], [98, 82], [84, 81], [70, 81], [56, 80], [42, 77], [31, 69], [24, 61], [19, 55], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-290, 60]];
+// what the crane lifts is a plan: the korugans into the cut (here), the garage's steel (garaj.js). n parts; placed(): how many are down; from(k) / to(k): where part k
+// lies and where it goes ({x, z, y} the base, to.rot its final turn); hang(k, x, y, z, rot, u): draw the carried part there; drop(k): hide it; take(k): the part off the
+// stack; settle(k): it is in its place; clear(k): nobody where it comes down; may(): the job allows lifting; park, routeIn, routeOut; name(k); floor(x, z) for your own hand
+const KPLAN = {id: "korugan", n: BNKN, placed: () => BNK.mods, park: {x: 66.5, z: 106.6}, routeIn: CRIN, routeOut: CROUT, carry: BMH + .7, name: k => `korugan ${k + 1}/${BNKN}`,
+  from: k => ({x: BSTK[k].x, z: BSTK[k].z, y: heightAt(BSTK[k].x, BSTK[k].z) + .14}), to: k => ({x: slotX(k), z: BCZ, y: BFLOOR, rot: KROT}), top: () => BG0,
+  hang: (k, x, y, z, rot) => { const m = BPART["c" + bKind(k)]; m.visible = true; m.position.set(x, y, z); m.rotation.y = rot; }, drop: k => { const m = BPART["c" + bKind(k)]; if (m) m.visible = false; },
+  take: k => { const sk = BPART["s" + k]; if (sk) sk.visible = false; propOff("s" + k); }, untake: k => { const sk = BPART["s" + k]; if (sk) sk.visible = true; bnkVisuals(); },
+  settle: k => { if (BNK.mods <= k) { BNK.mods = k + 1; bnkSync(); bnkVisuals(); bnkSave(); toast(`KORUGAN ${k + 1}/${BNKN} · yerine oturdu`, 1.6); } },
+  clear: k => padClear(k), may: () => (GM.on ? !!(GM.cur && GM.cur.M.crane === true && PROJ.active && !PROJ.done) : true) && BNK.trench >= 1, waitWhy: () => BNK.trench < 1 ? "yarmanın bitmesini bekliyor" : "hazır",
+  floor: (x, z) => { let f = heightAt(x, z) + .02; if (Math.abs(z - BCZ) < TW / 2 + .3 && x > XR0 - .5 && x < XE + .5) { f = Math.min(f, BFLOOR); if (x >= XR0 && x <= XE && secOf(x) < BNK.mods && x < XE - .3) f = BFLOOR + BMH + .15; } return f; },
+  turnZone: (x, z) => x < XE + 3 && Math.abs(z - BCZ) < 6, arrive: "VİNÇ KAMYONU · yarmanın yanında, ayaklarını açtı", under: "VİNÇ · korugan inecek, yarmadaki yeri boşaltın"};
+CR.plan = KPLAN;
+function craneCall(plan) { const P = plan || CR.plan || KPLAN; if (CR.st !== "away" || P.placed() >= P.n) return; CR.plan = P; CR.park = P.park; CR.st = "coming"; CR.bye = false; CR.k = -1; carGo(CRN, P.routeIn, 13, () => { CR.st = "ready"; CR.hold = Math.max(CR.hold, 2); toast(P.arrive, 2.4); }); }
+function craneLeave() { if (CR.st !== "ready") return; CR.st = "going"; CR.k = -1; CR.tp = null; propOff("crane"); carGo(CRN, CR.plan.routeOut, 13, () => { CRN.g.visible = false; CR.st = "away"; CR.bye = false; craneDraw(null); }); }
+const craneMay = () => CR.plan.may();
 function padClear(k) { const x = slotX(k); for (const v of vehicles) if (Math.abs(v.x - x) < BML / 2 + (v.L || 5) / 2 + .5 && Math.abs(v.z - BCZ) < BMW / 2 + (v.Wd || 3) / 2 + .4) return false;
   return !(FOOT.on && Math.abs(FOOT.x - x) < BML / 2 + .7 && Math.abs(FOOT.z - BCZ) < BMW / 2 + .7); }
-const craneSt = () => typeof PILOT !== "undefined" && PILOT.mode === "crane" ? "kumanda sende" : CR.st === "away" ? (BNK.mods >= BNKN ? "işini bitirdi" : "çağrılmadı") : CR.st === "coming" ? "yolda, geliyor" : CR.st === "going" ? "işini bitirdi, dönüyor" : CR.st === "lift" ? `korugan ${CR.k + 1}/${BNKN} iniyor` : CR.hold >= 1e8 ? "çatlak korugan · kontrol bekliyor" : CR.hold > 2.5 ? "bekliyor" : BNK.trench < 1 ? "yarmanın bitmesini bekliyor" : "hazır";
+const craneSt = () => { const P = CR.plan; return typeof PILOT !== "undefined" && PILOT.mode === "crane" ? "kumanda sende" : CR.st === "away" ? (P.placed() >= P.n ? "işini bitirdi" : "çağrılmadı") : CR.st === "coming" ? "yolda, geliyor" : CR.st === "going" ? "işini bitirdi, dönüyor" : CR.st === "lift" ? `${P.name(CR.k)} iniyor` : CR.hold >= 1e8 ? "kontrol bekliyor" : CR.hold > 2.5 ? "bekliyor" : P.waitWhy(); };
 const CRV = new THREE.Vector3(), CRV2 = new THREE.Vector3(), CRV3 = new THREE.Vector3(), CRV4 = new THREE.Vector3();
 function stretch(m, a, b) { m.position.addVectors(a, b).multiplyScalar(.5); m.scale.set(1, 1, Math.max(.01, a.distanceTo(b))); m.lookAt(b); m.visible = true; }
-// the boom from the top of the column to over the load, the cable down to the hook, four slings to the korugan's loops (load: where the korugan is and how it is turned, or null: folded)
+// the boom from the top of the column to over the load, the cable down to the hook, four slings to the load's loops (load: where it is and how it is turned, or null: folded)
 function craneDraw(load) { const B = CRB, all = [B.boom, B.boom2, B.cable, B.hook].concat(B.slings);
   if (!CRN.g.visible) { for (const m of all) if (m.visible) m.visible = false; return; }
-  CRN.g.updateMatrixWorld(true); const P0 = CRN.g.localToWorld(CRV.set(1.45, 3.35, 0));
-  const tip = load ? CRV2.set(load.x, Math.max(load.y + BMH + 2.4, P0.y + 2.2), load.z) : CRN.g.localToWorld(CRV2.set(-2.9, 2.9, 0));
+  CRN.g.updateMatrixWorld(true); const P0 = CRN.g.localToWorld(CRV.set(1.45, 3.35, 0)), H = load && load.h != null ? load.h : BMH;
+  const tip = load ? CRV2.set(load.x, Math.max(load.y + H + 2.4, P0.y + 2.2), load.z) : CRN.g.localToWorld(CRV2.set(-2.9, 2.9, 0));
   const lc = CRN.g.worldToLocal(CRV3.copy(tip)); B.col.rotation.y = -Math.atan2(lc.z, lc.x - 1.45);
   CRV4.copy(P0).lerp(tip, .55); stretch(B.boom, P0, CRV4); stretch(B.boom2, CRV4, tip);
   if (!load) { B.cable.visible = B.hook.visible = false; for (const m of B.slings) m.visible = false; return; }
-  const hy = load.y + BMH + .95; CRV3.set(tip.x, hy, tip.z); stretch(B.cable, tip, CRV3); B.hook.position.set(tip.x, hy - .1, tip.z); B.hook.visible = true;
-  const c = Math.cos(load.rot || 0), s = Math.sin(load.rot || 0);
-  B.slings.forEach((m, i) => { if (!load.hang) { m.visible = false; return; } const lx = i % 2 ? .3 : -.3, lz = i < 2 ? -.55 : .55; CRV4.set(load.x + lx * c + lz * s, load.y + BMH + .17, load.z - lx * s + lz * c); stretch(m, CRV3, CRV4); }); }
-const CRT = 13, CRUP = BMH + .7;   // seconds from the stack into the trench; how high it carries them (clear over the ones already down)
+  const hy = load.y + H + .95; CRV3.set(tip.x, hy, tip.z); stretch(B.cable, tip, CRV3); B.hook.position.set(tip.x, hy - .1, tip.z); B.hook.visible = true;
+  const c = Math.cos(load.rot || 0), s = Math.sin(load.rot || 0), sw = load.sw || .3, sl = load.sl || .55;
+  B.slings.forEach((m, i) => { if (!load.hang) { m.visible = false; return; } const lx = i % 2 ? sw : -sw, lz = i < 2 ? -sl : sl; CRV4.set(load.x + lx * c + lz * s, load.y + H + .17, load.z - lx * s + lz * c); stretch(m, CRV3, CRV4); }); }
+const CRT = 13;   // seconds from the stack into place
 function craneLift(dt) {
-  CR.t += dt * (GM.on ? wx("bunker") : 1);
-  if (CR.t / CRT > .72 && CR.t / CRT < .9 && !padClear(CR.k)) { CR.t = Math.max(CR.t - dt * 2, .72 * CRT); if (!(CR.toldT > TT)) { CR.toldT = TT + 6; toast("VİNÇ · yük havada, altından çekilin!", 2); } }   // nobody under a load coming down
-  const u = Math.min(1, CR.t / CRT), k = CR.k, a = BSTK[k], b = {x: slotX(k), z: BCZ}, ya = heightAt(a.x, a.z) + .14, yb = BFLOOR;
+  const P = CR.plan; CR.t += dt * (GM.on ? wx(P.id === "korugan" ? "bunker" : "garaj") : 1);
+  if (CR.t / CRT > .72 && CR.t / CRT < .9 && !P.clear(CR.k)) { CR.t = Math.max(CR.t - dt * 2, .72 * CRT); if (!(CR.toldT > TT)) { CR.toldT = TT + 6; toast("VİNÇ · yük havada, altından çekilin!", 2); } }   // nobody under a load coming down
+  const u = Math.min(1, CR.t / CRT), k = CR.k, a = P.from(k), b = P.to(k), ya = a.y, yb = b.y, H = P.h ? P.h(k) : BMH;
   CRN.g.updateMatrixWorld(true); const C = CRN.g.localToWorld(CRV.set(1.45, 0, 0)), ra = Math.hypot(a.x - C.x, a.z - C.z), rb = Math.hypot(b.x - C.x, b.z - C.z);
-  const th0 = Math.atan2(a.z - C.z, a.x - C.x), th1 = th0 + wrapA(Math.atan2(b.z - C.z, b.x - C.x) - th0), e = q => q * q * (3 - 2 * q), top = Math.max(ya, BG0) + CRUP;
+  const th0 = Math.atan2(a.z - C.z, a.x - C.x), th1 = th0 + wrapA(Math.atan2(b.z - C.z, b.x - C.x) - th0), e = q => q * q * (3 - 2 * q), top = Math.max(ya, yb, P.top()) + P.carry;
   let x = a.x, z = a.z, y = ya, rot = 0, hang = true, show = true, hy = null;
   if (u < .2) { show = false; hang = u > .17; hy = ya + 1.8 * (1 - e(u / .2)); }                                                 // the hook comes down onto it, the slings go on
-  else if (u < .34) y = ya + (top - ya) * e((u - .2) / .14);                                                                      // up off the sleepers
-  else if (u < .72) { const q = e((u - .34) / .38), th = th0 + (th1 - th0) * q, r = ra + (rb - ra) * q; x = C.x + Math.cos(th) * r; z = C.z + Math.sin(th) * r; y = top; rot = KROT * q; }   // slewed round, turned on its tag lines
-  else if (u < .9) { x = b.x; z = b.z; y = yb + (top - yb) * (1 - e((u - .72) / .18)); rot = KROT; }                              // down into the trench
-  else { x = b.x; z = b.z; y = yb; rot = KROT; show = false; hang = u < .95;                                                       // down: unhooked
-    if (BNK.mods <= k) { BNK.mods = k + 1; bnkSync(); bnkVisuals(); bnkSave(); toast(`KORUGAN ${k + 1}/${BNKN} · yerine oturdu`, 1.6); } }
-  if (show) { const m = BPART["c" + bKind(k)]; m.visible = true; m.position.set(x, y, z); m.rotation.y = rot; }
-  const sk = BPART["s" + k]; if (sk && sk.visible !== (u < .2)) { sk.visible = u < .2; if (u >= .2) propOff("s" + k); }
-  CR.tp = {x, y: hy != null ? hy : y, z, rot, hang}; craneDraw(CR.tp);
-  if (u >= 1) { CR.st = "ready"; CR.k = -1; CR.hold = Math.max(CR.hold, 1.4); bnkVisuals(); } }
+  else if (u < .34) y = ya + (top - ya) * e((u - .2) / .14);                                                                      // up off the ground
+  else if (u < .72) { const q = e((u - .34) / .38), th = th0 + (th1 - th0) * q, r = ra + (rb - ra) * q; x = C.x + Math.cos(th) * r; z = C.z + Math.sin(th) * r; y = top; rot = b.rot * q; }   // slewed round, turned on its tag lines
+  else if (u < .9) { x = b.x; z = b.z; y = yb + (top - yb) * (1 - e((u - .72) / .18)); rot = b.rot; }                              // down into place
+  else { x = b.x; z = b.z; y = yb; rot = b.rot; show = false; hang = u < .95; P.settle(k); }                                        // down: unhooked
+  if (show) P.hang(k, x, y, z, rot, u); else P.drop(k);
+  if (u >= .2 && !CR.took) { CR.took = true; P.take(k); }
+  CR.tp = {x, y: hy != null ? hy : y, z, rot, hang, h: H, sw: P.sw, sl: P.sl}; craneDraw(CR.tp);
+  if (u >= 1) { CR.st = "ready"; CR.k = -1; CR.took = false; CR.hold = Math.max(CR.hold, 1.4); } }
 function craneFrame(dt) {
-  carFrame(CRN, dt);
+  carFrame(CRN, dt); const P = CR.plan;
   const parked = CR.st === "ready" || CR.st === "lift"; if (CRB.legs.visible !== parked) CRB.legs.visible = parked;
-  if (parked) propOn("crane", [CR.park.x - 3.8, CR.park.x + 3.8, CR.park.z - 1.3, CR.park.z + 1.3]);
+  if (parked) propOn("crane", [CR.park.x - 3.8, CR.park.x + 3.8, CR.park.z - 1.3, CR.park.z + 1.3]); else propOff("crane");
   if (typeof PILOT !== "undefined" && PILOT.mode === "crane") { craneDraw(CR.tp); return; }   // (the remote in your hands: pilot.js moves the hook)
-  for (const kind of ["end", "mid", "door"]) { const m = BPART["c" + kind]; if (m && m.visible) m.visible = false; }
   const hush = GM.on && SAL.on && Math.hypot(CR.park.x - SAL.x, CR.park.z - SAL.z) < SAL.r + 10;   // the paşa is here: the load waits where it is
   if (CR.st === "lift") { if (hush) craneDraw(CR.tp); else craneLift(dt); return; }
   if (CR.st !== "ready") { craneDraw(null); return; }
-  const k = BNK.mods;
-  if (k >= BNKN) { craneDraw(null); if (!CR.bye) { CR.bye = true; gTimeout(craneLeave, 2500); } return; }
-  // waiting: the hook swings over to the next one on the stack
-  const a = BSTK[k], want = {x: a.x, y: heightAt(a.x, a.z) + .14 + 1.8, z: a.z, rot: 0, hang: false};
-  if (!CR.tp) CR.tp = Object.assign({}, want); else { const dx = want.x - CR.tp.x, dz = want.z - CR.tp.z, d = Math.hypot(dx, dz), st = Math.min(1, 5 * dt / Math.max(d, 1e-3)); CR.tp.x += dx * st; CR.tp.z += dz * st; CR.tp.y += (want.y - CR.tp.y) * Math.min(1, dt * 3); CR.tp.rot = 0; CR.tp.hang = false; }
+  const k = P.placed();
+  if (k >= P.n) { craneDraw(null); if (!CR.bye) { CR.bye = true; gTimeout(craneLeave, 2500); } return; }
+  // waiting: the hook swings over to the next part on the stack
+  const a = P.from(k), want = {x: a.x, y: a.y + 1.8, z: a.z, rot: 0, hang: false, h: P.h ? P.h(k) : BMH};
+  if (!CR.tp) CR.tp = Object.assign({}, want); else { const dx = want.x - CR.tp.x, dz = want.z - CR.tp.z, d = Math.hypot(dx, dz), st = Math.min(1, 5 * dt / Math.max(d, 1e-3)); CR.tp.x += dx * st; CR.tp.z += dz * st; CR.tp.y += (want.y - CR.tp.y) * Math.min(1, dt * 3); CR.tp.rot = 0; CR.tp.hang = false; CR.tp.h = want.h; }
   craneDraw(CR.tp);
-  if (CR.hold > 0 && CR.hold < 1e8) CR.hold = Math.max(0, CR.hold - dt * (GM.on ? wx("bunker") : 1));
+  if (CR.hold > 0 && CR.hold < 1e8) CR.hold = Math.max(0, CR.hold - dt * (GM.on ? wx(P.id === "korugan" ? "bunker" : "garaj") : 1));
   if (CR.hold >= 1e8 && TT > CR.until) { CR.hold = 0; const f = CR.onTimeout; CR.onTimeout = null; if (f) f(); }
   if (CR.hold > 0 || hush || !craneMay() || Math.hypot(want.x - CR.tp.x, want.z - CR.tp.z) > .3) return;
-  if (!padClear(k)) { if (!(CR.toldT > TT)) { CR.toldT = TT + 8; toast("VİNÇ · korugan inecek, yarmadaki yeri boşaltın", 2); } return; }
-  CR.st = "lift"; CR.t = 0; CR.k = k; }
+  if (!P.clear(k)) { if (!(CR.toldT > TT)) { CR.toldT = TT + 8; toast(P.under, 2); } return; }
+  CR.st = "lift"; CR.t = 0; CR.k = k; CR.took = false; }
 
 // ---------------- the concrete mixer (from when the bunker was to be cast: kept for the old day mode) ----------------
 const MIXER = mkVehicle("mixer");
@@ -7507,7 +7524,7 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
       tip: "Kempar'ı, kamyonu ya da ekskavatörü SÜR ile alabilirsin. Vinç kamyonu koruganları kendisi dizer; yük havadayken yarmanın içinde kimse durmasın.",
       obj: [{t: "Yarma kazısı", f: () => BNK.trench * 100, goal: 100, u: " %"}, {t: "Dizilen korugan", f: () => BNK.mods, goal: BNKN, u: ""}, {t: "Toprak örtü", f: () => bnkCover() * 100, goal: 100, u: " %"}],
       info: () => [["VİNÇ KAMYONU", craneSt()]],
-      spawn: () => { kempTrench(); excReady(); clearTrench(); clearArea(26, 88, 80, 112, [KEMPAR, TRB, EXC]); if (BNK.trench >= 1) craneCall(); },
+      spawn: () => { kempTrench(); excReady(); clearTrench(); clearArea(26, 88, 80, 112, [KEMPAR, TRB, EXC]); if (BNK.trench >= 1) craneCall(KPLAN); },
       G: {brief: "{H}, gömülü komuta yerine başlıyoruz! Kempar korugan hattı boyunca yarmayı açacak, kamyon toprağı şeve yığacak. Yarma bitince vinç koruganları içine dizecek, ekskavatör de üstünü hemen örtecek. Ölçüleri tablete işledim, sıra şaşmasın. Yansın Hisar!",
         go: "Kempar yarmaya giriyor {h}, kamyon bant altında!", mid: "Yarı yoldayız {h}, tablette her şey yerinde!", ok: "Yansın Hisar! Komuta yeri toprağın altında {h}. Orhan dronla baktı: yukarıdan sadece çimenli bir tepe görünüyor."},
       cards: [{cond: () => BNK.trench > .36 && BNK.trench < .8 && !(KEMPAR.hold > 0), mk: C_WATER}, {cond: () => BNK.mods >= 1 && (CR.st === "lift" ? BNK.mods + 1 : BNK.mods) < BNKN && (CR.st === "ready" || CR.st === "lift") && CR.hold < 1e8, mk: C_CRACK}, {cond: () => bnkCover() > .2 && bnkCover() < .72, mk: C_SHIFT}]},
@@ -7801,7 +7818,7 @@ function raidFork(R) {
   if (GM.raid !== R) { CARS.levent.g.visible = false; return; }
   if (atTea()) { R.mode = "tea"; bossTea(R); return; }
   R.mode = R.mis ? "site" : "pass"; R.st = 1.5;
-  const M = R.mis && R.mis.M, ms = M && M.sites || [], inG = (FOOT.on ? FOOT.x : mePos().x) < -8, ks = ["stok", "bunker", "siginak"];
+  const M = R.mis && R.mis.M, ms = M && M.sites || [], inG = (FOOT.on ? FOOT.x : mePos().x) < -8, ks = R.mis && R.mis.P.id === "garaj" ? ["garaj", "bunker", "siginak"] : ["stok", "bunker", "siginak"];
   if (ms.some(k => TSTOP[k] && TSTOP[k].garrison) || inG) ks.push("parkur", "atis");
   R.stops = ks; R.vk = ks.find(k => ms.includes(k)) || null;
   raidNext(R, SITEIN.slice());
@@ -7942,8 +7959,8 @@ function gmInspStart(M) {
   if (GM.raid) gmRaidCancel(); GM.rp = {at: 1e9, done: true};
   if (BNK.trench >= 1 || !KEMPAR.trench) kempReady();   // the shelter's Kempar at its own gallery for the visit
   if (CLK.t < 480 || CLK.t > 900) CLK.t = 570; CLK.hold = true;   // the inspection morning; the clock waits for the paşa
-  GM.insp = {k: 0, st: "wait"}; GM.inspRes = null; for (const j of JOBS) j.on = true;
-  const L = OFFM.levent, car = CARS.levent; if (!L || !L.S || isPlayer(L)) { GM.insp.k = INSPSTOPS.length; GM.insp.fin = true; CLK.hold = false; return; }
+  GM.insp = {k: 0, st: "wait"}; GM.inspRes = null; for (const j of JOBS) j.on = j.v.type !== "tk";
+  const STOPS = projOf().stops || INSPSTOPS; const L = OFFM.levent, car = CARS.levent; if (!L || !L.S || isPlayer(L)) { GM.insp.k = STOPS.length; GM.insp.fin = true; CLK.hold = false; return; }
   L.st = "car"; L.S.root.visible = false; L.path = null; car.gateNote = true;
   gTimeout(() => phoneNote("Nizamiye", "NİZAMİYE NÖBETÇİSİ", "Levent Paşa teftiş için nizamiyeye geldi!"), 1200);
   if (GM.giver) gTimeout(() => gmRadio(GM.giver, fillT(M.G.go, GM.giver)), 2600);
@@ -7970,15 +7987,16 @@ function inspPlace(S) { const L = OFFM.levent, U = GM.giver, car = CARS.levent, 
   const clear = (x, z) => footFree(x, z) && cellAt(x, z) !== 1 && !vehicles.some(v => Math.hypot(v.x - x, v.z - z) < (v.L || 6) / 2 + 2.5) && !(car.g.visible && Math.hypot(car.x - x, car.z - z) < 4);
   const C = [[-3, 7.5], [-3, -7.5], [-8.5, 2.5], [-8.5, -2.5], [3.5, 8], [3.5, -8]].map(([u, w]) => [G[0] + c * u - s * w, G[1] + s * u + c * w]).find(([x, z]) => clear(x, z)) || [G[0] - c * 8, G[1] - s * 8];
   camAt(C[0], C[1], 2.8, G[0] + c * 1.6, G[1] + s * 1.6, 1.35, 0, 0); }
-function inspTour(M) { const I = GM.insp; if (!I) return; I.st = "tour"; const steps = [];
-  INSPSTOPS.forEach(S => { steps.push({f: () => fadeSkip(S.n, () => inspPlace(S)), d: 3.4}); steps.push({f: () => { salEnd(); say(OFFM.levent, "Rahat.", 1.2); }, d: 1.3});
+function inspTour(M) { const I = GM.insp; if (!I) return; I.st = "tour"; const steps = [], STOPS = projOf().stops || INSPSTOPS;
+  STOPS.forEach(S => { steps.push({f: () => fadeSkip(S.n, () => inspPlace(S)), d: 3.4}); steps.push({f: () => { salEnd(); say(OFFM.levent, "Rahat.", 1.2); }, d: 1.3});
     steps.push({f: () => { for (const [k, t, d, cf] of S.lines()) I.q.push([k, t, d, cf]); }, d: 0}); steps.push({lines: true}); steps.push({f: () => { I.k++; }, d: .2}); });
   I.q = []; const run = (i) => { if (!GM.insp) return; const s = steps[i]; if (!s) { inspVerdict(M); return; }
     if (s.lines) { const q = I.q.splice(0); let j = 0; const nx = () => { if (!GM.insp) return; const l = q[j++]; if (!l) { run(i + 1); return; } const [k, t, d, cf] = l; if (cf) cf(); inspSay(k, t, d); gTimeout(nx, (d + .25) * 1000); }; nx(); return; }
     try { if (s.f) s.f(); } catch (e) { console.error(e); } gTimeout(() => run(i + 1), (s.d || 0) * 1000); };
   run(0); }
 function inspVerdict(M) { const I = GM.insp; if (!I) return; I.st = "end"; const L = OFFM.levent, U = GM.giver;
-  let n = 0; for (let i = 0; i < 4; i++) if (dn(i)) n++; if (BNK.crack && BNK.crackK >= 0 && BNK.crackK < BNK.mods) n -= .5; const res = n >= 3.5 ? "iyi" : n >= 2 ? "orta" : "kotu";   // (the patched korugan costs him half a job)
+  const P = projOf(), N = P.missions.filter(q => !q.insp).length; let n = 0; P.missions.forEach((q, i) => { if (!q.insp && isDone(P, i)) n++; }); if (P.id === "teftis" ? BNK.crack && BNK.crackK >= 0 && BNK.crackK < BNK.mods : typeof GJ !== "undefined" && GJ.crack) n -= .5;
+  const res = n >= N - .5 ? "iyi" : n >= N / 2 ? "orta" : "kotu";   // (the patched korugan, the cracked slab: half a job off)
   const lines = res === "iyi" ? [["levent", "Ufuk, taburun iyi çalışmış. Bu şantiye tugayın en düzgün şantiyesi.", 3.4], ["ufuk", "Sağ olun komutanım, arkadaşlar gece gündüz çalıştı.", 2.8], ["levent", "Hepinize aferin. Ama bir daha çay ocağında görürsem…", 3]]
     : res === "orta" ? [["levent", "Fena değil ama eksikler var. Bir ay sonra yine geleceğim, hepsi bitmiş olacak!", 3.4], ["ufuk", "Emredersiniz komutanım.", 2]]
     : [["levent", "Bu ne rezalet! Teftişe bu hâlde mi çıktınız?!", 3], ["levent", pick(RAGE_END), 2.8], ["ufuk", "Komutanım, arkadaşlar…", 2], ["levent", "Ufuk, sen karışma!", 2]];
@@ -7987,7 +8005,7 @@ function inspVerdict(M) { const I = GM.insp; if (!I) return; I.st = "end"; const
     camSnap = true; CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .25; CAM.dist = 4.6; }), d: 1.6}];
   for (const [k, t, d] of lines) steps.push({f: () => { const o = OFFM[k]; if (o && o.S && o.S.root.visible) say(o, t, d); else inspSay(k, t, d); }, d: d + .25});
   seqRun(steps, () => { GM.inspRes = res; const bonus = res === "iyi" ? 40000 : res === "orta" ? 10000 : -10000; PROJ.money += bonus; toast(res === "iyi" ? "TEFTİŞ: PAŞA MEMNUN · +₺40.000" : res === "orta" ? "TEFTİŞ: EKSİKLER VAR · +₺10.000" : "TEFTİŞ: PAŞA KIZDI · -₺10.000", 3);
-    AUTO.on = false; AUTO.insp = false; updCtx(); CLK.hold = false; I.k = INSPSTOPS.length; I.fin = true;
+    AUTO.on = false; AUTO.insp = false; updCtx(); CLK.hold = false; I.k = (projOf().stops || INSPSTOPS).length; I.fin = true;
     gTimeout(() => inCar(L, CARS.levent, () => carGo(CARS.levent, [[7.5, 55.2], [2.5, 53]].concat(SITEOUT.slice(3)).concat(GATEOUT.slice(1)), 18, () => { CARS.levent.g.visible = false; })), 1200); }); }
 
 // ---- tea between jobs: everybody at the table, a conversation, then back to work ----
@@ -7997,8 +8015,13 @@ function gmTea() {
   document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; if (ac) { master.gain.value = soundOn ? VOL.v : 0; }
   for (const v of vehicles) if (v.P.seated === PLAYER) { unseat(v); doorTo(v, 0, 0); scene.add(PLAYER.root); v.eng = false; if (v.job) gTimeout(() => { if (!v.P.seated) opsGive(v); }, 1200); }
   toastT = 0; toastEl.classList.remove("on"); FOOT.on = true; FOOT.seq = null; FOOT.rise = null; FOOT.vx = FOOT.vz = 0; GM.tea = true; GM.teaT = 0; GM.teaRaid = false; MEET.called = true; MEET.hush = false; MEET.dlg = null; MEET.t = 1.5; AUTO.on = false;
+  // not the whole battalion every time: the coordinator, the next job's officer and two or three more come to the table; the rest stay over their work
+  const nx = missionsOf()[PROJ.m], want = new Set([OFFM.azizhan, nx && OFFM[nx.g], GM.giver].filter(Boolean)), rest = OFFS.filter(o => o.S && !isPlayer(o) && !o.d.visitor && !want.has(o)).sort(() => Math.random() - .5);
+  for (const o of rest.slice(0, 2 + Math.floor(Math.random() * 2))) want.add(o);
   for (const o of OFFS) { if (!o.S || isPlayer(o)) continue; o.rise = null; o.trans = null; o.next = null;
-    if (o.d.visitor) { if (o.st !== "car") { leaveChair(o); o.st = "away"; o.S.root.visible = false; } continue; } const c = chairOf(o); if (c && (!c.occ || c.occ === o)) { leaveChair(o); seatAt(o, c); o.supT = 1e9; } }
+    if (o.d.visitor) { if (o.st !== "car") { leaveChair(o); o.st = "away"; o.S.root.visible = false; } continue; }
+    if (!want.has(o)) { if (o.st === "seat" || o.st === "standby") { leaveChair(o); sendToSite(o.d.key, null, false, 1e9); } continue; }
+    const c = chairOf(o); if (c && (!c.occ || c.occ === o)) { leaveChair(o); seatAt(o, c); o.supT = 1e9; } }
   let c = chairOf(CUR); if (!c || (c.occ && c.occ !== CUR) || (c.i === 0 && CUR.d.rank < 3)) c = CHAIRS.find(q => !q.occ && q.i !== 0);
   if (c) { FOOT.x = c.x; FOOT.z = c.z; FOOT.a = c.a; FOOT.y = footGround(c.x, c.z); sitDown(c, true); }
   camMode = 0; CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .3; CAM.dist = 4.6; CAM.cyaw = 0; CAM.cpitch = -.1; camSnap = true; document.getElementById("bCam").textContent = "KAMERA: " + camName(camMode);
@@ -8027,7 +8050,24 @@ const DIALOGS_GM = [
   DLG("any", [["orhan", () => `Dronla baktım, sığınağın galerisi ${Math.round(kemM())} metre olmuş.`], ["kaan", "Görüntüleri bana at, kazı hacmini tablette hesaplarım."], ["orhan", "Yukarıdan bakınca her şey belli."]], () => kemM() > 1),
   DLG("any", [["kaan", () => bnkCover() >= .999 ? "Komuta yeri bitti, koruganlar toprağın altında, kamuflaj ağı da gerildi." : BNK.mods > 0 ? `${BNK.mods} korugan yarmaya dizildi, üstüne toprak örtüyoruz, yüzde ${Math.round(bnkCover() * 100)} oldu.` : BNK.trench > .02 ? `Kempar yarmayı açıyor, yüzde ${Math.round(BNK.trench * 100)} oldu. Bitince vinç koruganları içine dizecek.` : "Koruganlar istifte duruyor. Önce Kempar yarmayı açacak."],
     ["azizhan", "Teftişten önce bitsin, Paşam ilk oraya bakar."], ["orhan", () => bnkCover() >= .999 ? "Dronla yukarıdan baktım, komuta yeri hiç görünmüyor. Sadece bir tepe var." : "Bitince dronla yukarıdan bakarım, bir yeri görünüyorsa söylerim."], ["kaan", "Yansın Hisar, bitecek komutanım!"]]),
-  DLG("any", [["ali", () => `Atış alanı yüzde ${Math.round(RNG.p * 100)} oldu, çerçeveler dikiliyor.`], ["orhan", () => `Parkurda ${Math.floor(DRC.p * DGATES.length)} kapı dikildi, dron her birinden geçiyor.`], ["ali", "Teftişte ikimiz de çakı gibi olacağız."]])];
+  DLG("any", [["ali", () => `Atış alanı yüzde ${Math.round(RNG.p * 100)} oldu, çerçeveler dikiliyor.`], ["orhan", () => `Parkurda ${Math.floor(DRC.p * DGATES.length)} kapı dikildi, dron her birinden geçiyor.`], ["ali", "Teftişte ikimiz de çakı gibi olacağız."]]),
+  DLG("sabah", [["azizhan", "Günaydın. Bugün kim nerede?"], ["kaan", "Ben komuta yerindeyim komutanım, tablette plan hazır."], ["azizhan", "La tabletle olmaz, sahada göreceğim."], ["kaan", "Yansın Hisar komutanım, sahadayım."]]),
+  DLG("sabah", [["ahmet", "Sabah koşusunda Ali yine birinci."], ["ali", "Altı kilometre, çakı gibi. Kapım her daim açık, gelin koşalım."], ["ahmet", "Sen kralsın kardeşim ama ben greyderle koşarım."]]),
+  DLG("sabah", [["furkan", "Dün gece sığınakta kürekle iki saat çalıştım."], ["boran", "Koordinasyon bendeydi, arz ederim."], ["furkan", "Koordinasyon dediğin çay içmekse evet."], ["boran", "Çay da koordinasyondur."]]),
+  DLG("is", [["ahmet", () => `Yol yüzde ${Math.round(roadPct())}, greyder dönüp duruyor.`], ["azizhan", "La Paşam'ın arabası sarsılmasın, teftişte ilk oradan geçer."], ["ahmet", "Sarsılmaz komutanım, halı gibi olacak."]], () => roadPct() < 95),
+  DLG("is", [["orhan", "Dronla komuta yerine baktım, yukarıdan hâlâ bir köşesi görünüyor."], ["kaan", "Son korugan gömülünce kapanır, tablette hesapladım."], ["orhan", "Yukarıdan bakınca her şey belli, kapanmazsa söylerim."]], () => bnkCover() > .3 && bnkCover() < .999),
+  DLG("is", [["boran", () => `Kamyon bugün ${Math.max(1, Math.round((stats.dumped || 0) / 8))} sefer yaptı komutanım, arz ederim.`], ["ahmet", "Boş gitmesin, dolu dönmesin."], ["boran", "Nakliye koordinasyonu bende."]]),
+  DLG("is", [["ali", "Atış alanında asker su istiyor, tanker gelmedi."], ["azizhan", "La bana çok güvenme, kantinden aldırın."], ["ali", "Aldırdım komutanım, çakı gibi devam."]], () => !PROJ.buy.tanker),
+  DLG("is", [["kaan", "Vincin kumandasını ben de denedim, korugan tam oturdu."], ["furkan", "Kürek varken vinç mi? Asker ne yapsın?"], ["kaan", "Asker halat tutsun, vinç kaldırsın."]], () => BNK.mods > 0),
+  DLG("ogle", [["ahmet", "Öğlen yemeğinde ne vardı?"], ["boran", "Kuru fasulye, pilav. Arz ederim."], ["ahmet", "Sen kralsın kardeşim, bir daha arz etme de yiyelim."]]),
+  DLG("ogle", [["azizhan", "Öğleden sonra Paşam gelebilir, kimse çay ocağında kalmasın."], ["orhan", "Dronla nizamiyeyi izlerim komutanım, araç girince haber veririm."], ["azizhan", "La bana çok güvenme, kendin de bak."]]),
+  DLG("aksam", [["furkan", "Akşam oldu, iş bitmedi, gece vardiyasına kalıyor muyuz?"], ["azizhan", () => PROJ.buy.light ? "Projektörler var, kalırız." : "Projektör yok, karanlıkta ne göreceksin? Sabah devam."], ["furkan", "Kürek karanlıkta da çalışır komutanım."]]),
+  DLG("aksam", [["ali", "Akşam çayı çakı gibi."], ["kaan", "Yarın komuta yerinde devam, Yansın Hisar."], ["ali", "Kapım her daim açık Kaan, gel çay iç."]]),
+  DLG("any", [["orhan", "Barkan 4'ler bu ay gelecek dediler."], ["boran", "Paşam her gelişinde soruyor, arz ederim."], ["orhan", "Gelince parkurda uçururuz."]]),
+  DLG("any", [["ahmet", () => PROJ.buy.truck2 ? "İkinci kamyon iyi oldu, stok sahası uçuyor." : "Bir kamyon daha olsa stok sahası uçar."], ["azizhan", () => PROJ.buy.truck2 ? "Bütçeyi iyi kullandın." : "La bütçe var, tedarikten al."], ["ahmet", "Sen kralsın komutanım."]]),
+  DLG("any", [["kaan", () => `Tabur bütçesi ${fmtTL(PROJ.money)}, tabletten takip ediyorum.`], ["boran", "Kalan görevleri de bitirince prim var, arz ederim."], ["kaan", "Yansın Hisar!"]]),
+  DLG("any", [["furkan", "Kempar'ın dişleri yine aşındı mı?"], ["boran", () => PROJ.buy.teeth ? "Yeni dişler takıldı, üçte bir hızlı kesiyor, arz ederim." : "Bakım ekibi baktı, idare ediyor, arz ederim."], ["furkan", "Kürek aşınmaz, haberin olsun."]]),
+  DLG("any", [["ali", "Tanklar garaja girecek mi bu ay?"], ["boran", () => typeof GJ !== "undefined" && GJ.tanks >= 2 ? "Girdi komutanım, ikisi de içeride, arz ederim." : "Garaj bitince girecek komutanım, arz ederim."], ["ali", "Çakı gibi park edilsin."]])];
 
 // ---- the evening: the job not done at the roll call. The night shift (the floodlights on, if bought; overtime paid) or the morning ----
 const C_NIGHT = () => ({app: "Telsiz · Tabur", who: cardName("azizhan", true), ic: "🌙", col: "#1e293b", title: "Akşam oldu, iş bitmedi",
@@ -8066,7 +8106,7 @@ function gmFrame(dt) {
   const M = C.M; GM.t += dt; GM.nt = (GM.nt || 0) - dt; if (GM.nt <= 0) { GM.nt = .25; GM.nearK = M.sites && M.sites.length ? gmNearK(M) : null; GM.near = M.sites && M.sites.length ? !!GM.nearK : gmNear(M); }
   goFrame();
   if (M.insp) return;
-  if (M.crane && BNK.trench >= 1 && BNK.mods < BNKN && CR.st === "away") craneCall();   // the cut is through: the crane truck comes
+  if (M.crane === true && BNK.trench >= 1 && BNK.mods < BNKN && CR.st === "away") craneCall(KPLAN);   // the cut is through: the crane truck comes
   const g = C.g; if (g && !g.alt && !GM.said.mid && GM.t > 8 && gmProgAvg(M) >= .5) { GM.said.mid = true; gmRadio(g.o, fillT(g.G.mid, g.o)); }
   if (!GM.night && !GM.nightAsked && CLK.t >= 1110 && CLK.t < 1300 && !DUR.open && !FOOT.seq && !RECV.on && !GM.raid && !SAL.on && !PILOT.mode) { GM.nightAsked = true; GM.cardT = GM.t; durShow(Object.assign({k: "night" + C.m}, C_NIGHT())); return; }
   if (GM.card === true || !M.cards || GM.t < 12 || GM.t - GM.cardT < 40 || DUR.open || FOOT.seq || RECV.on || GM.raid || SAL.on) return;
@@ -8142,44 +8182,41 @@ const pilotFree = () => running && FOOT.on && !FOOT.seq && !SEAT.on && !AUTO.on 
 // ---------------- the crane ----------------
 const craneCol = () => { CRN.g.updateMatrixWorld(true); return CRN.g.localToWorld(new THREE.Vector3(1.45, 0, 0)); };
 const craneYours = () => PILOT.mode === "crane";
-function craneStart() {
-  if (CR.st !== "ready" || CR.hold >= 1e8) { toast(CR.st === "ready" ? "Vinç çatlak koruganı bekliyor" : "Vinç kamyonu hazır değil", 2); return; }
-  if (BNK.mods >= BNKN) { toast("Dizilecek korugan kalmadı", 1.8); return; }
+function craneStart() { const P = CR.plan;
+  if (CR.st !== "ready" || CR.hold >= 1e8) { toast(CR.st === "ready" ? "Vinç kontrol bekliyor" : "Vinç kamyonu hazır değil", 2); return; }
+  if (P.placed() >= P.n) { toast("Kaldırılacak parça kalmadı", 1.8); return; }
   if (!pilotFree()) return; const C = craneCol(), d = Math.hypot(FOOT.x - C.x, FOOT.z - C.z);
   if (d > 16) { toast("Vincin yanına git · kumanda orada", 2.2); autoGo({x: CR.park.x - 4.5, z: CR.park.z + 2.2, r: 3}); if (AUTO.on) AUTO.v = 5.6; return; }
-  PILOT.mode = "crane"; PILOT.t = 0; const k = BNK.mods, a = BSTK[k]; PC.k = -1; PC.rot = 0; PC.hx = CR.tp ? CR.tp.x : a.x; PC.hz = CR.tp ? CR.tp.z : a.z; PC.hy = heightAt(a.x, a.z) + .14 + 1.6; PC.told = 0;
-  FOOT.vx = FOOT.vz = 0; FOOT.spd = 0; FOOT.a = Math.atan2(BCZ - FOOT.z, BCX - FOOT.x); camSnap = true; pilotBtns();
+  PILOT.mode = "crane"; PILOT.t = 0; const k = P.placed(), a = P.from(k); PC.k = -1; PC.rot = 0; PC.hx = CR.tp ? CR.tp.x : a.x; PC.hz = CR.tp ? CR.tp.z : a.z; PC.hy = a.y + 1.6; PC.told = 0;
+  FOOT.vx = FOOT.vz = 0; FOOT.spd = 0; FOOT.a = Math.atan2(C.z - FOOT.z, C.x - FOOT.x); camSnap = true; pilotBtns();
   toast("VİNÇ SENDE · sol: kancayı yürüt · sağ: indir, kaldır · KANCA: tak / bırak", 3.4); }
-const stackTop = k => heightAt(BSTK[k].x, BSTK[k].z) + .14;
-// where the load may go down to: the ground, the floor of the cut, the top of a korugan already in it
-function craneFloor(x, z) { let f = heightAt(x, z) + .02; if (Math.abs(z - BCZ) < TW / 2 + .3 && x > XR0 - .5 && x < XE + .5) { f = Math.min(f, BFLOOR); if (x >= XR0 && x <= XE && secOf(x) < BNK.mods && x < XE - .3) f = BFLOOR + BMH + .15; } return f; }
+const partH = k => CR.plan.h ? CR.plan.h(k) : BMH;
 function craneFrame2(dt) {
-  const I = pilotInput(), C = craneCol(), S = PLAYER; locoSoldier(S, 0, dt);
-  // the hook: on the sticks, within the boom's reach, never faster than a crane swings; the load turns on its own as it comes over the cut
+  const I = pilotInput(), C = craneCol(), S = PLAYER, P = CR.plan; locoSoldier(S, 0, dt);
+  // the hook: on the sticks, within the boom's reach, never faster than a crane swings; the load turns on its own as it comes over its place
   const sp = 2.6, cy = Math.cos(CAM.yaw), sy = Math.sin(CAM.yaw); let tx = -cy * I.mz + sy * I.mx, tz = -sy * I.mz - cy * I.mx;
   let nx = PC.hx + tx * sp * dt, nz = PC.hz + tz * sp * dt; const r = Math.hypot(nx - C.x, nz - C.z); if (r > 15.5) { nx = C.x + (nx - C.x) * 15.5 / r; nz = C.z + (nz - C.z) * 15.5 / r; } if (r < 3) { nx = PC.hx; nz = PC.hz; }
-  const fl = craneFloor(nx, nz), onFl = PC.hy <= fl + .05; if (!(onFl && PC.k >= 0 && (I.mx || I.mz))) { PC.hx = nx; PC.hz = nz; }   // (a load set on the ground does not slide)
-  PC.hy = clamp(PC.hy - I.ry * 1.6 * dt, craneFloor(PC.hx, PC.hz), BG0 + 7.5);
-  const want = PC.k >= 0 && PC.hx < XE + 3 && Math.abs(PC.hz - BCZ) < 6 ? KROT : 0; PC.rot += (want - PC.rot) * Math.min(1, dt * 1.2);
-  const hang = PC.k >= 0; CR.tp = {x: PC.hx, y: PC.hy, z: PC.hz, rot: PC.rot, hang};
-  if (hang) { const m = BPART["c" + bKind(PC.k)]; m.visible = true; m.position.set(PC.hx, PC.hy, PC.hz); m.rotation.y = PC.rot;
-    const sl = slotX(PC.k), near = Math.abs(PC.hx - sl) < .9 && Math.abs(PC.hz - BCZ) < .8, ok = near && PC.hy <= BFLOOR + .2 && Math.abs(wrapA(PC.rot - KROT)) < .25;
+  const fl = P.floor(nx, nz), onFl = PC.hy <= fl + .05; if (!(onFl && PC.k >= 0 && (I.mx || I.mz))) { PC.hx = nx; PC.hz = nz; }   // (a load set on the ground does not slide)
+  PC.hy = clamp(PC.hy - I.ry * 1.6 * dt, P.floor(PC.hx, PC.hz), P.top() + 8.5);
+  const want = PC.k >= 0 && P.turnZone(PC.hx, PC.hz) ? P.to(PC.k).rot : 0; PC.rot += (want - PC.rot) * Math.min(1, dt * 1.2);
+  const hang = PC.k >= 0, k = hang ? PC.k : P.placed(); CR.tp = {x: PC.hx, y: PC.hy, z: PC.hz, rot: PC.rot, hang, h: partH(k), sw: P.sw, sl: P.sl};
+  if (hang) { P.hang(PC.k, PC.hx, PC.hy, PC.hz, PC.rot, null); const t = P.to(PC.k), near = Math.abs(PC.hx - t.x) < .9 && Math.abs(PC.hz - t.z) < .8, ok = near && PC.hy <= t.y + .2 && Math.abs(wrapA(PC.rot - t.rot)) < .25;
     bPilA.textContent = ok ? "YERİNE BIRAK" : "BIRAK"; bPilA.classList.toggle("alt", !ok);
-    if (TT > PC.told && near && PC.hy > BFLOOR + .3) { PC.told = TT + 5; toast(`Yerinin üstünde · ${(PC.hy - BFLOOR).toFixed(1)} m indir`, 1.6); } }
-  else { const k = BNK.mods, a = BSTK[k], near = Math.abs(PC.hx - a.x) < 1.1 && Math.abs(PC.hz - a.z) < 1.1 && Math.abs(PC.hy - stackTop(k)) < .5; bPilA.textContent = near ? "KANCAYI TAK" : "KANCA"; bPilA.classList.toggle("alt", !near); }
+    if (TT > PC.told && near && PC.hy > t.y + .3) { PC.told = TT + 5; toast(`Yerinin üstünde · ${(PC.hy - t.y).toFixed(1)} m indir`, 1.6); } }
+  else { const a = P.from(k), near = Math.abs(PC.hx - a.x) < 1.1 && Math.abs(PC.hz - a.z) < 1.1 && Math.abs(PC.hy - a.y) < .5; bPilA.textContent = near ? "KANCAYI TAK" : "KANCA"; bPilA.classList.toggle("alt", !near); }
   PILOT.t += dt; }
-function craneAct() {
-  if (PC.k < 0) { const k = BNK.mods, a = BSTK[k]; if (!a) return; if (Math.abs(PC.hx - a.x) > 1.1 || Math.abs(PC.hz - a.z) > 1.1 || Math.abs(PC.hy - stackTop(k)) > .5) { toast("Kancayı koruganın üstüne indir", 1.8); return; }
-    PC.k = k; PC.hx = a.x; PC.hz = a.z; PC.hy = stackTop(k); const sk = BPART["s" + k]; if (sk) sk.visible = false; propOff("s" + k); CR.k = k; toast(`KORUGAN ${k + 1}/${BNKN} kancada · yarmadaki yerine götür`, 2.4); sfx("clink", a.x, a.z); }
-  else { const k = PC.k, sl = slotX(k), near = Math.abs(PC.hx - sl) < .9 && Math.abs(PC.hz - BCZ) < .8;
-    if (!near || PC.hy > BFLOOR + .2 || Math.abs(wrapA(PC.rot - KROT)) > .25) { toast(near ? "Tabana kadar indir" : `Yerine götür: ${ORDN[k]} koruganın yeri işaretli`, 2); return; }
-    BPART["c" + bKind(k)].visible = false; PC.k = -1; CR.k = -1; BNK.mods = k + 1; bnkSync(); bnkVisuals(); bnkSave(); toast(`KORUGAN ${k + 1}/${BNKN} · yerine oturdu, sen koydun`, 2.2); satAdd(1, "koruganı kendin indirdin");
-    PC.hy = BFLOOR + BMH + 1.5; if (BNK.mods >= BNKN) { toast("Altı korugan da yerinde · vinç işini bitirdi", 2.6); pilotEnd(); } }
+function craneAct() { const P = CR.plan;
+  if (PC.k < 0) { const k = P.placed(); if (k >= P.n) return; const a = P.from(k); if (Math.abs(PC.hx - a.x) > 1.1 || Math.abs(PC.hz - a.z) > 1.1 || Math.abs(PC.hy - a.y) > .5) { toast("Kancayı parçanın üstüne indir", 1.8); return; }
+    PC.k = k; PC.hx = a.x; PC.hz = a.z; PC.hy = a.y; P.take(k); CR.k = k; toast(`${P.name(k).toUpperCase()} kancada · yerine götür`, 2.4); sfx("clink", a.x, a.z); }
+  else { const k = PC.k, t = P.to(k), near = Math.abs(PC.hx - t.x) < .9 && Math.abs(PC.hz - t.z) < .8;
+    if (!near || PC.hy > t.y + .2 || Math.abs(wrapA(PC.rot - t.rot)) > .25) { toast(near ? "Tabana kadar indir" : `Yerine götür: ${P.name(k)} için yer işaretli`, 2); return; }
+    P.drop(k); PC.k = -1; CR.k = -1; P.settle(k); satAdd(1, "parçayı kendin indirdin");
+    PC.hy = t.y + partH(k) + 1.5; if (P.placed() >= P.n) { toast("Bütün parçalar yerinde · vinç işini bitirdi", 2.6); pilotEnd(); } }
   pilotBtns(); }
 // the camera: from the south bank, following the hook
 const PCV = new THREE.Vector3(), PCL = new THREE.Vector3();
-function craneCam(dt) { const C = craneCol(), hx = PC.hx, hz = PC.hz, hy = PC.hy + BMH;
-  const ax = C.x - 1, az = C.z + 10; PCV.set(ax + (hx - ax) * .25, Math.max(BG0 + 6.5, hy + 4), az + (hz - az) * .2); cam.position.lerp(PCV, camSnap ? 1 : Math.min(1, dt * 3)); PCL.set(hx, hy - .6, hz);
+function craneCam(dt) { const C = craneCol(), hx = PC.hx, hz = PC.hz, hy = PC.hy + partH(PC.k >= 0 ? PC.k : CR.plan.placed());
+  const ax = C.x - 1, az = C.z + 10; PCV.set(ax + (hx - ax) * .25, Math.max(CR.plan.top() + 6.5, hy + 4), az + (hz - az) * .2); cam.position.lerp(PCV, camSnap ? 1 : Math.min(1, dt * 3)); PCL.set(hx, hy - .6, hz);
   if (!cam.userData.pl) cam.userData.pl = new THREE.Vector3().copy(PCL); const l = cam.userData.pl; l.lerp(PCL, camSnap ? 1 : Math.min(1, dt * 4)); cam.lookAt(l); camSnap = false;
   if (cam.fov !== 55) { cam.fov = 55; cam.near = .1; cam.updateProjectionMatrix(); } }
 
@@ -8214,7 +8251,7 @@ function droneCam(dt) { const c = Math.cos(PD.yaw), s = Math.sin(PD.yaw);
 // ---------------- both ----------------
 function pilotAct() { if (PILOT.mode === "crane") craneAct(); }
 function pilotEnd() { const m = PILOT.mode; if (!m) return; PILOT.mode = null; cam.userData.pl = null;
-  if (m === "crane") { if (PC.k >= 0) { const k = PC.k; BPART["c" + bKind(k)].visible = false; const sk = BPART["s" + k]; if (sk) sk.visible = true; PC.k = -1; CR.k = -1; bnkVisuals(); toast("Korugan istife geri kondu", 1.8); } CR.tp = null; CR.hold = Math.max(CR.hold, 2); }
+  if (m === "crane") { if (PC.k >= 0) { const k = PC.k; CR.plan.drop(k); CR.plan.untake(k); PC.k = -1; CR.k = -1; toast("Parça istife geri kondu", 1.8); } CR.tp = null; CR.hold = Math.max(CR.hold, 2); }
   else { DRONE.pilot = false; DRONE.hideT = Math.max(DRONE.hideT, 1); }
   camSnap = true; CAM.pitch = .3; CAM.dist = 4.6; pilotBtns(); updCtx(); }
 function pilotFrame(dt) { if (!running) return; if (!pilotFree() && PILOT.mode) { pilotEnd(); return; } if (PILOT.mode === "crane") craneFrame2(dt); else if (PILOT.mode === "drone") droneFrame(dt); }
@@ -8226,6 +8263,237 @@ const _updCtx2 = updCtx; updCtx = function () { _updCtx2(); if (PILOT.mode) pilo
 window.__hs.pilot = PILOT; window.__hs.pc = PC; window.__hs.pd = PD; window.__hs.craneStart = craneStart; window.__hs.droneStart = droneStart; window.__hs.pilotEnd = pilotEnd; window.__hs.pilotAct = pilotAct;
 
 ;(window.__INIT || (window.__INIT = [])).push(["pilot", performance.now()]);
+
+// ======================= GARAJ: the second project, after the big inspection — a closed steel garage for the tank company on the open ground east of
+// the stock yard. The dozer levels the pad, the mixers pour the slab, the crane stands the steel (six columns, three trusses; the cladding crew closes it),
+// the tanks drive in, Levent Paşa takes it over =======================
+const GRJ = {x0: 72, x1: 96, z0: 28, z1: 46};                                     // the hall's footprint
+const GRH = (baseH(GRJ.x0, GRJ.z0) + baseH(GRJ.x1, GRJ.z0) + baseH(GRJ.x0, GRJ.z1) + baseH(GRJ.x1, GRJ.z1)) / 4;   // the pad's level
+const GCX = (GRJ.x0 + GRJ.x1) / 2, GCZ = (GRJ.z0 + GRJ.z1) / 2, GSLAB = GRH + .3, GCOLH = 5.5, GTRH = 1.2;
+const GCOLS = [[73.5, 29.5], [84, 29.5], [94.5, 29.5], [73.5, 44.5], [84, 44.5], [94.5, 44.5]];                    // the columns
+const GTRX = [73.5, 84, 94.5];                                                                                      // the trusses (spanning z on each pair)
+const GBAYS = [{x: 79, z: 36}, {x: 89, z: 36}];                                                                     // where the tanks park
+const GJ = {lvl: 0, slab: 0, parts: 0, clad: 0, crack: false, tanks: 0, mix: "away", pours: 0, mixAsk: false, seen: -1, lk: ""};
+try { const s = JSON.parse(localStorage.getItem("hs-garaj") || "null"); if (s) { GJ.lvl = clamp(+s.lvl || 0, 0, 1); GJ.slab = clamp(+s.slab || 0, 0, 1); GJ.parts = clamp(s.parts | 0, 0, 9); GJ.clad = clamp(+s.clad || 0, 0, 1); GJ.crack = !!s.crack; } } catch (e) {}
+function garSave() { try { localStorage.setItem("hs-garaj", JSON.stringify({lvl: +GJ.lvl.toFixed(3), slab: +GJ.slab.toFixed(3), parts: GJ.parts, clad: +GJ.clad.toFixed(3), crack: GJ.crack})); } catch (e) {} }
+const inGar = (x, z, m) => x > GRJ.x0 - (m || 0) && x < GRJ.x1 + (m || 0) && z > GRJ.z0 - (m || 0) && z < GRJ.z1 + (m || 0);
+const garDone = () => GJ.lvl >= .999 && GJ.slab >= .999 && GJ.parts >= 9 && GJ.clad >= .999;
+
+// ---------------- the ground: the pad levelled to one height (the dozer's passes), coloured as it goes ----------------
+const GLV = {x0: GRJ.x0 - 3, x1: GRJ.x1 + 3, z0: GRJ.z0 - 3, z1: GRJ.z1 + 3};
+function garLevel() { const p = groundGeo.attributes.position, col = groundGeo.attributes.color; let any = false;
+  for (let iz = GLV.z0; iz <= GLV.z1; iz++) for (let ix = GLV.x0; ix <= GLV.x1; ix++) { const i = iz * (WX + 1) + ix, base = baseH(ix, iz);
+    const f = 1 - sstep(0, 3, Math.max(GRJ.x0 - ix, ix - GRJ.x1, GRJ.z0 - iz, iz - GRJ.z1, 0)), s = base + (GRH - base) * GJ.lvl * f, v = base - s;
+    if (Math.abs(DV[i] - v) < 1e-3 && !GJ.recol) continue; DV[i] = v; p.setY(i, heightAt(ix, iz));
+    const g = GJ.lvl * f, r = 1 - .12 * g, gg = 1 - .14 * g, b = 1 - .18 * g; col.setXYZ(i, r, gg, b); any = true; }
+  GJ.recol = false; if (!any) return;
+  GDR.x0 = Math.min(GDR.x0, GLV.x0); GDR.x1 = Math.max(GDR.x1, GLV.x1); GDR.z0 = Math.min(GDR.z0, GLV.z0); GDR.z1 = Math.max(GDR.z1, GLV.z1);
+  groundRows(p, GLV.z0, GLV.z1); groundRows(col, GLV.z0, GLV.z1); groundDirty = true;
+  for (const q of piles) if (q.x > GLV.x0 - 3 && q.x < GLV.x1 + 3 && q.z > GLV.z0 - 3 && q.z < GLV.z1 + 3) syncPile(q); }
+
+// ---------------- the parts: the slab, the columns, the trusses, the cladding, the sign ----------------
+const GPART = {};
+function gPart(k, s, y0) { const g = new THREE.Group(); if (y0 != null) g.position.y = y0; putP(g, s, true, .03); g.visible = false; scene.add(g); GPART[k] = g; return g; }
+const GSTEEL = 0x5f6a74, GSTEEL2 = 0x4a535c, GCLAD = 0x8d9aa5, GROOF = 0x6b7680;
+{ const s = SP(); s.box(GRJ.x1 - GRJ.x0, .3, GRJ.z1 - GRJ.z0, 0, .15, 0, 0x9a9890); for (let k = 1; k < 4; k++) s.box(.03, .31, GRJ.z1 - GRJ.z0, -(GRJ.x1 - GRJ.x0) / 2 + k * (GRJ.x1 - GRJ.x0) / 4, .15, 0, 0x7f7d76);   // the slab with its joints
+  const g = gPart("slab", s, GRH); g.position.x = GRJ.x0; g.position.z = GCZ; }
+const colGeo = () => { const s = SP(); s.box(.42, GCOLH, .42, 0, GCOLH / 2, 0, GSTEEL); s.box(.7, .06, .7, 0, .03, 0, GSTEEL2); s.box(.6, .12, .6, 0, GCOLH - .06, 0, GSTEEL2); for (const y of [1.5, 3.2]) s.box(.5, .08, .5, 0, y, 0, GSTEEL2); return s; };
+const trussGeo = () => { const s = SP(), L = GRJ.z1 - GRJ.z0 + 1; s.box(L, .16, .16, 0, GTRH, 0, GSTEEL); s.box(L, .16, .16, 0, 0, 0, GSTEEL); for (let x = -L / 2; x <= L / 2 + .01; x += L / 10) { s.box(.1, GTRH, .1, x, GTRH / 2, 0, GSTEEL2); } for (let i = 0; i < 10; i++) { const x = -L / 2 + L / 10 * i; s.rod([x, 0, 0], [x + L / 10, GTRH, 0], .04, GSTEEL2, 5); } return s; };
+GCOLS.forEach(([x, z], k) => { const g = gPart("col" + k, colGeo(), GSLAB); g.position.x = x; g.position.z = z; });
+GTRX.forEach((x, k) => { const g = gPart("tr" + k, trussGeo(), GSLAB + GCOLH); g.position.x = x; g.position.z = GCZ; g.rotation.y = Math.PI / 2; });
+{ const c = gPart("ccol", colGeo(), 0), t = gPart("ctr", trussGeo(), 0); }   // the ones hanging on the crane
+// the stack: the columns lying east of the hall, the trusses lying south of it
+const GSTK = [0, 1, 2, 3, 4, 5].map(k => ({x: 99, z: 31.5 + k * 2.2})).concat([0, 1, 2].map(k => ({x: 83, z: 48.8 + k * 1.7})));
+GCOLS.forEach((_, k) => { const g = gPart("scol" + k, colGeo(), 0); g.position.set(GSTK[k].x, heightAt(GSTK[k].x, GSTK[k].z) + .25, GSTK[k].z); g.rotation.z = Math.PI / 2; g.rotation.y = Math.PI / 2; });
+GTRX.forEach((_, k) => { const p = GSTK[6 + k], g = gPart("str" + k, trussGeo(), 0); g.position.set(p.x, heightAt(p.x, p.z) + .05, p.z); g.rotation.x = Math.PI / 2; });
+// the cladding: three walls, the roof, the open south side with the door frame; the sign
+{ const s = SP(), W = GRJ.x1 - GRJ.x0, D = GRJ.z1 - GRJ.z0, H = GCOLH + GTRH;
+  s.box(W + .4, H, .12, 0, H / 2, -D / 2, GCLAD); for (let x = -W / 2; x <= W / 2; x += 2) s.box(.05, H - .2, .14, x, H / 2, -D / 2 - .02, 0x7c8893);
+  for (const sd of [-1, 1]) { s.box(.12, H, D + .2, sd * W / 2, H / 2, 0, GCLAD); for (let z = -D / 2; z <= D / 2; z += 2) s.box(.14, H - .2, .05, sd * W / 2 + sd * .02, H / 2, z, 0x7c8893); }
+  s.box(.5, H + .3, .5, -W / 2, (H + .3) / 2, D / 2, GSTEEL2); s.box(.5, H + .3, .5, W / 2, (H + .3) / 2, D / 2, GSTEEL2); s.box(W + .6, .5, .5, 0, H + .1, D / 2, GSTEEL2);
+  gPart("walls", s, GSLAB).position.set(GCX, 0, GCZ);
+  const r = SP(); r.box(W + 1.2, .14, D + 1.2, 0, H + .25, 0, GROOF); for (let x = -W / 2; x <= W / 2; x += 1.5) r.box(.08, .06, D + 1.2, x, H + .35, 0, 0x5a6670); r.box(W + 1.4, .3, .3, 0, H + .45, -D / 2 - .5, 0x5a6670);
+  gPart("roof", r, GSLAB).position.set(GCX, 0, GCZ);
+  const sg = new THREE.Group(); const p = SP(); p.box(.08, 2.6, .08, -1.5, 1.3, 0, 0x4d5238); p.box(.08, 2.6, .08, 1.5, 1.3, 0, 0x4d5238); putP(sg, p, true, 0);
+  decal(sg, "KAPALI TANK GARAJI · 1. TANK BÖLÜĞÜ", 3.6, .55, 0, 2.3, 0, 0, "#2d311f", "#f2b705"); decal(sg, "Sorumlu: Kaan Teğmen · Furkan Teğmen", 3.6, .4, 0, 1.75, 0, 0, "#1b3a5a", "#ffffff");
+  sg.position.set(GCX - 8, GSLAB, GRJ.z1 + 2.2); sg.rotation.y = Math.PI; sg.visible = false; scene.add(sg); GPART.sign = sg; }
+const GPROPS = {};
+function gPropOn(k, r) { if (GPROPS[k]) return; GPROPS[k] = r; PROPS.push(r); }
+function gPropOff(k) { const r = GPROPS[k]; if (!r) return; const i = PROPS.indexOf(r); if (i >= 0) PROPS.splice(i, 1); delete GPROPS[k]; }
+function garVisuals() {
+  const on = (k, v) => { const g = GPART[k]; if (g && g.visible !== v) g.visible = v; }, stk = GJ.steel || GJ.parts > 0;   // (the steel is delivered for its own job)
+  on("slab", GJ.slab > .005); if (GJ.slab > .005) { const g = GPART.slab; g.scale.x = Math.max(.01, GJ.slab); g.position.x = GRJ.x0 + (GRJ.x1 - GRJ.x0) / 2 * GJ.slab; }
+  for (let k = 0; k < 6; k++) { const st = stk && GJ.parts <= k && CR.k !== k; on("col" + k, GJ.parts > k); on("scol" + k, st); if (GJ.parts > k) gPropOn("col" + k, [GCOLS[k][0] - .4, GCOLS[k][0] + .4, GCOLS[k][1] - .4, GCOLS[k][1] + .4]); if (st) gPropOn("scol" + k, [GSTK[k].x - 2.9, GSTK[k].x + 2.9, GSTK[k].z - .4, GSTK[k].z + .4]); else gPropOff("scol" + k); }
+  for (let k = 0; k < 3; k++) { const st = stk && GJ.parts <= 6 + k && CR.k !== 6 + k; on("tr" + k, GJ.parts > 6 + k); on("str" + k, st); if (st) gPropOn("str" + k, [GSTK[6 + k].x - 9.6, GSTK[6 + k].x + 9.6, GSTK[6 + k].z - .3, GSTK[6 + k].z + .3]); else gPropOff("str" + k); }
+  on("walls", GJ.clad > .01); if (GJ.clad > .01) GPART.walls.scale.y = Math.max(.01, Math.min(1, GJ.clad * 1.25)); on("roof", GJ.clad > .8); on("sign", GJ.clad >= .999);
+  if (GJ.clad > .5) { gPropOn("wallN", [GRJ.x0 - .3, GRJ.x1 + .3, GRJ.z0 - .3, GRJ.z0 + .3]); gPropOn("wallW", [GRJ.x0 - .3, GRJ.x0 + .3, GRJ.z0, GRJ.z1 + .3]); gPropOn("wallE", [GRJ.x1 - .3, GRJ.x1 + .3, GRJ.z0, GRJ.z1 + .3]); }
+  if (GJ.lvl > .2) gPropOn("sign", [GCX - 9.8, GCX - 6.2, GRJ.z1 + 1.9, GRJ.z1 + 2.5]); }
+
+// ---------------- the crane's plan for the steel ----------------
+const GPLAN = {id: "garaj", n: 9, placed: () => GJ.parts, park: {x: 86, z: 38}, carry: 1.3, sw: .22, sl: .22, top: () => GSLAB + GCOLH,
+  routeIn: [[-200, 60], [-130, 60], [-60, 60], [-30, 60], [-14, 59], [-5, 55.4], [2.5, 53], [10, 55.2], [20, 55.6], [34, 53], [56, 50.5], [74, 50.5], [86, 48], [87, 42], [86, 38]],
+  routeOut: [[86, 38], [88, 44], [92, 49], [100, 52], [110, 56], [116, 66], [110, 76], [98, 80], [84, 81], [70, 81], [56, 80], [42, 77], [31, 69], [24, 61], [19, 55], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-290, 60]],
+  name: k => k < 6 ? `kolon ${k + 1}/6` : `makas ${k - 5}/3`, h: k => k < 6 ? GCOLH : GTRH,
+  from: k => ({x: GSTK[k].x, z: GSTK[k].z, y: heightAt(GSTK[k].x, GSTK[k].z) + (k < 6 ? .25 : .05)}),
+  to: k => k < 6 ? {x: GCOLS[k][0], z: GCOLS[k][1], y: GSLAB, rot: 0} : {x: GTRX[k - 6], z: GCZ, y: GSLAB + GCOLH, rot: Math.PI / 2},
+  hang: (k, x, y, z, rot, u) => { const m = k < 6 ? GPART.ccol : GPART.ctr; m.visible = true; m.position.set(x, y, z);
+    if (k < 6) { const up = u == null ? 1 : clamp((u - .2) / .25, 0, 1); m.rotation.set(0, Math.PI / 2, Math.PI / 2 * (1 - up)); m.position.y = y + (1 - up) * .25; }   // (a column comes upright as it leaves the ground)
+    else m.rotation.set(0, rot, 0); },
+  drop: k => { const m = k < 6 ? GPART.ccol : GPART.ctr; if (m) m.visible = false; },
+  take: k => { const g = GPART[k < 6 ? "scol" + k : "str" + (k - 6)]; if (g) g.visible = false; gPropOff(k < 6 ? "scol" + k : "str" + (k - 6)); }, untake: k => { garVisuals(); },
+  settle: k => { if (GJ.parts <= k) { GJ.parts = k + 1; garVisuals(); garSave(); toast(`${k < 6 ? "KOLON" : "MAKAS"} ${k < 6 ? k + 1 + "/6" : k - 5 + "/3"} · yerine oturdu`, 1.6); } },
+  clear: k => { const t = GPLAN.to(k); for (const v of vehicles) if (Math.hypot(v.x - t.x, v.z - t.z) < (v.L || 5) / 2 + 2) return false; return !(FOOT.on && Math.hypot(FOOT.x - t.x, FOOT.z - t.z) < 2.2); },
+  may: () => !!(GM.cur && GM.cur.M.crane === "garaj" && PROJ.active && !PROJ.done) && GJ.slab >= .999, waitWhy: () => GJ.slab < .999 ? "betonun bitmesini bekliyor" : "hazır",
+  floor: (x, z, k) => { let f = inGar(x, z, .5) ? GSLAB + .02 : heightAt(x, z) + .02; if (k >= 6 && inGar(x, z, 1)) f = GSLAB + GCOLH - .2; else if (k != null && k < 6) for (let i = 0; i < GJ.parts && i < 6; i++) if (Math.hypot(x - GCOLS[i][0], z - GCOLS[i][1]) < 1) f = GSLAB + GCOLH + .1; return f; },
+  turnZone: (x, z) => inGar(x, z, 4), arrive: "VİNÇ KAMYONU · garajın ortasında, ayaklarını açtı", under: "VİNÇ · parça inecek, altını boşaltın"};
+
+// ---------------- the dozer on the pad: lane by lane with the blade down; any dozer with its blade down in there levels ----------------
+const GLANES = [30, 34, 38, 42, 45], GLX0 = GRJ.x0 - 1.5, GLX1 = GRJ.x1 + 1.5;
+function aiPadG(o, dt) {
+  const T = o.t; let th = 0, st = 0, tD = .3; o.aiBrake = false; o.aiT += dt; if (o.gl == null) { o.gl = 0; o.gdir = 1; }
+  const z = GLANES[o.gl], tx = o.gdir > 0 ? GLX1 : GLX0;
+  const onLane = Math.abs(o.z - z) < 1.6 && Math.abs(wrapA(o.a - (o.gdir > 0 ? 0 : Math.PI))) < .3, inside = o.x > GRJ.x0 - 1 && o.x < GRJ.x1 + 1;
+  const [a, b] = steerTo(o, tx, z, onLane ? .6 : .45, 1.5); th = a; st = b; tD = onLane && inside && GJ.lvl < .999 ? -.05 : .3;
+  if ((o.gdir > 0 && o.x >= tx - 1) || (o.gdir < 0 && o.x <= tx + 1) || o.aiT > 50) { o.gdir = -o.gdir; o.gl = (o.gl + 1) % GLANES.length; o.aiT = 0; }   // (the end of the lane, or stuck too long: the next one)
+  o.st = GJ.lvl >= .999 ? "tesviye tamam" : tD < 0 ? "pedi tesviye ediyor" : "şeride giriyor";
+  if (GJ.lvl >= .999) { th = clamp(-o.v * 2, -1, 1); o.aiBrake = true; }
+  const ry = toward(T.dz, tD, 5); aiMove(o, th, st, dt); work(o, dt, {rx: 0, ry, L: {x: 0, y: 0}}); }
+// ---------------- the tanks into their bays ----------------
+function aiTank(o, dt) { const B = GBAYS[o.bay || 0]; o.aiT += dt; if (!o.gpath) o.gpath = o.bay ? [[o.x, 24], [104, 28], [104, 50], [B.x, 50], [B.x, B.z]] : [[o.x, 24], [107, 28], [107, 56], [B.x, 56], [B.x, B.z]]; o.gpi = o.gpi || 0;
+  if (o.bay && o.gpi === 0 && !(tankIn(TK1) || (TK1 && TK1.P.seated === PLAYER) || o.aiT > 70)) { drive(o, dt, 0, 0); o.aiBrake = true; o.st = "birincinin girmesini bekliyor"; return; }   // (the second after the first)
+  const p = o.gpath[o.gpi]; if (!p) { drive(o, dt, 0, 0); o.aiBrake = true; o.st = "garajda park etti"; return; }
+  const last = o.gpi === o.gpath.length - 1, [a, b, d] = steerTo(o, p[0], p[1], last ? .35 : .55, last ? 1 : null); let th = a;
+  if (d < (last ? 1.2 : 3)) { if (last) { th = clamp(-o.v * 2, -1, 1); o.aiBrake = true; if (Math.abs(o.v) < .2) { o.gpi++; return; } } else o.gpi++; }
+  aiMove(o, th, b, dt); o.st = last ? "garaja giriyor" : "garaja gidiyor"; }
+const tankIn = v => inGar(v.x, v.z, -.5) && Math.abs(v.v) < .25;
+
+// ---------------- the mixers: from the gate to the pad's south edge, the chute out, the slab grows ----------------
+const ROUTE_G_SITE = [[20, 55.6], [30, 52.5], [46, 50.5], [64, 50], [78, 49.6], [84.5, 49.4]];
+const ROUTE_G_OUT = [[84.5, 49.4], [92, 50], [100, 52.5], [110, 56], [116, 66], [110, 76], [98, 80], [84, 81], [70, 81], [56, 80], [42, 77], [31, 69], [24, 61], [19, 55], [12, 52.8], [5, 53], [-3, 54.5], [-14, 59], [-30, 60], [-60, 60], [-130, 60], [-200, 60], [-270, 60], [-290, 60], [-310, 60], [-360, 60], [-420, 60]];
+function gMixCall() { if (GJ.mix !== "away") return; GJ.mix = "gate"; MIXER.atGate = false; GJ.mixT = 0; carGo(MIXER, ROUTE_T_GATE.slice(2), 15, () => { if (GJ.mix === "gate") MIXER.atGate = true; }); }
+function gMixIn() { if (GJ.mix !== "gate") return; GJ.mix = "in"; MIXER.atGate = false; carGo(MIXER, ROUTE_T_IN, 15, () => { GJ.mix = "wait"; GJ.mixT = 0; if (GJ.mixAsk) gMixSite(); }); }   // (the first one waits at the site gate to be met)
+function gMixSite() { if (GJ.mix !== "wait") return; GJ.mix = "site"; carGo(MIXER, ROUTE_G_SITE, 11, () => { GJ.mix = "pour"; GJ.mixT = 0; mixerPour(true); toast("MİKSER · beton dökülüyor", 2); }); }
+function gMixOut() { GJ.mix = "out"; mixerPour(false); GJ.pours++; carGo(MIXER, ROUTE_G_OUT.slice(0, 20), 14, () => { MIXER.g.visible = false; GJ.mix = "away"; GJ.mixT = 6; }); }   // (out of sight past the main road: the next one is already on its way)
+function garMixFrame(dt) { const M = GM.cur && GM.cur.M, on = !!(M && M.beton && PROJ.active && !PROJ.done); GJ.mixT = (GJ.mixT || 0) + dt;
+  if (!on) { if (GJ.mix === "pour") gMixOut(); return; }
+  if (GJ.mix === "away" && GJ.slab < .999 && GJ.mixT > 10) gMixCall();
+  else if (GJ.mix === "gate" && MIXER.atGate) gMixIn();
+  else if (GJ.mix === "wait" && (GJ.mixAsk || GJ.mixT > 45)) { GJ.mixAsk = true; gMixSite(); }
+  else if (GJ.mix === "pour") { const bad = GJ.badPour; GJ.slab = Math.min(1, GJ.slab + dt * wx("garaj") / 14 * .25); if (GJ.mixT > (bad ? 6 : 14) / Math.max(.5, wx("garaj")) || GJ.slab >= .999) { gMixOut(); } } }
+
+// ---------------- the site's frame: the pad under the blades, the slab, the cladding crew, the tanks counted ----------------
+let GVT = 0;
+function garajFrame(dt) {
+  if (GJ.seen < 0) { GJ.seen = 0; GJ.recol = true; garLevel(); garVisuals(); }
+  if (!GM.on || !GM.started) return;
+  carFrame(MIXER, dt); if (GJ.mix === "pour") mixerPour(true);
+  const M = GM.cur && GM.cur.M, live = !!(M && PROJ.active && !PROJ.done);
+  if (live && M.pad && GJ.lvl < .999) for (const v of vehicles) if (v.type === "dz" && inGar(v.x, v.z, 1) && v.t.dz < .12 && Math.abs(v.v) > .3) GJ.lvl = Math.min(1, GJ.lvl + Math.abs(v.v) * dt * .0038 * wx("garaj"));
+  if (live && M.beton) garMixFrame(dt); else if (GJ.mix !== "away" && GJ.mix !== "out") { GJ.mix = "away"; MIXER.g.visible = false; MIXER.curve = null; mixerPour(false); }
+  if (live && M.crane === "garaj") { if (GJ.slab >= .999 && GJ.parts < 9 && CR.st === "away") craneCall(GPLAN); if (GJ.parts >= 9 && GJ.clad < .999) GJ.clad = Math.min(1, GJ.clad + dt / 55 * wx("garaj")); }
+  if (GJ.lvl >= .999) GJ.lvl = 1; if (GJ.slab >= .999) GJ.slab = 1; if (GJ.clad >= .999) GJ.clad = 1;
+  GJ.tanks = vehicles.filter(v => v.type === "tk" && tankIn(v)).length;
+  GVT -= dt; const key = GJ.lvl.toFixed(3) + "|" + GJ.slab.toFixed(3) + "|" + GJ.parts + "|" + GJ.clad.toFixed(2);
+  if (GVT <= 0 && key !== GJ.lk) { GVT = .4; GJ.lk = key; garLevel(); garVisuals(); garSave(); } }
+UPD.push(garajFrame);
+
+// ---------------- the missions of the second project ----------------
+const TK1 = vehicles.filter(v => v.type === "tk")[0], TK2 = vehicles.filter(v => v.type === "tk")[1];
+if (TK1) { TK1.bay = 0; mkJob(TK1, "garaj", "Garaj · 1. tank park", "boran", () => ({x: GCX, z: GRJ.z1 + 6})); } if (TK2) { TK2.bay = 1; mkJob(TK2, "garaj", "Garaj · 2. tank park", "boran", () => ({x: GCX, z: GRJ.z1 + 6})); }
+for (const T of [TK1, TK2]) if (T) T.job.on = false;
+SITES.garaj = {n: "KAPALI TANK GARAJI", spot: () => ({x: GRJ.x0 - 4.5, z: GRJ.z1 + 4.5, lx: GCX, lz: GCZ}), beam: () => [GCX, GCZ]}; MSITE.garaj = SITES.garaj.n; JOBNAME.garaj = "Kapalı tank garajı";
+TSTOP.garaj = {off: ["kaan", "furkan", "boran", "ahmet"], car: () => ({x: 66, z: 52}), from: {gate: [[34, 53], [52, 52]], stok: [[46, 60], [58, 55]], bunker: [[27.5, 106.8], [20, 98], [22.5, 84], [30, 66], [46, 56], [58, 53]]}};
+TSTOP.bunker.from.garaj = [[52, 56], [30, 66], [22.5, 84], [20, 98], [27.5, 106.8]]; TSTOP.siginak.from.garaj = () => { const c = TSTOP.siginak.car(); return [[80, 54], [98, 56], [c.x - 13, c.z + 7]]; };
+TBACK.garaj = [[52, 52], [34, 53], [20, 55.6]];
+TREP.garaj = () => garDone() ? [["kaan", "Komutanım, kapalı tank garajı hazır: zemin, beton, çelik ve kaplama bitti.", 3], ["levent", "Hı. Tanklar yağmurda ıslanmayacak demek. Aferin.", 2.8]]
+  : GJ.parts >= 9 ? [["furkan", "Komutanım, çelik dikildi, kaplama ekibi çalışıyor.", 2.8], ["levent", "Kaplama bitmeden tank girmesin. Çabuk.", 2.4]]
+  : GJ.slab >= .999 ? [["furkan", "Komutanım, beton bitti, vinç kolonları dikiyor.", 2.8], ["levent", "Kolonlar şakul olsun, raporda eğri görürsem…", 2.6]]
+  : GJ.lvl >= .999 ? [["kaan", `Komutanım, zemin hazır, beton yüzde ${Math.round(GJ.slab * 100)}.`, 2.8], ["levent", "Proje yapan çocuk! Beton teftişe kadar donsun.", 2.6]]
+  : [["ahmet", "Komutanım, dozer garaj sahasını tesviye ediyor.", 2.6], ["levent", "Ahmet, burada da mı sen? Düz olsun, tank kaymasın.", 2.8]];
+const C_DOZTR = () => ({app: "Telsiz · Garaj sahası", who: "Dozer operatörü", ic: "🚜", col: "#475569", title: "Dozerin paleti gevşedi",
+  text: "Komutanım, dozerin sol paleti gevşedi, bu hâlde tesviye yapamam.",
+  opts: [{t: "Tamir ekibini çağır", d: "Palet gerilir · biraz sürer", go: () => { breakJ(DOZ, "Palet geriliyor, tamir ekibi geliyor."); }},
+    {t: "Dozeri ben sürerim", d: "Dozere bin, bıçağı indir, pedi sen düzelt · Ahmet çok sevinir", go: () => { holdFor(DOZ, 1e9, "rest"); gmGo("Dozere bin, pedi düzelt", () => mine(DOZ) ? null : {x: DOZ.x, z: DOZ.z, n: "DOZER", r: 6}, null, {done: () => mine(DOZ)}); }}]});
+const C_MIXER = () => ({app: "Telsiz · Şantiye kapısı", who: "Nizamiye nöbetçisi", ic: "🚚", col: "#c2410c", title: "Beton mikseri kapıda",
+  text: "Komutanım, santralden ilk mikser geldi, şantiye kapısında bekliyor. Kim karşılayacak?",
+  opts: [{t: "Ben karşılarım", d: "Şantiye kapısına git, mikseri sen al · Kaan memnun olur", go: () => { gmGo("Mikseri kapıda karşıla", () => GJ.mix === "wait" ? {x: 24, z: 53, n: "ŞANTİYE KAPISI", r: 7} : null, () => { GJ.mixAsk = true; gMixSite(); radioK("kaan", "Mikseri siz aldınız {h}, dökümü başlatıyoruz."); satAdd(1, "mikseri kapıda karşıladın"); }, {done: () => GJ.mix !== "wait"}); }},
+    {t: "Nöbetçi içeri alsın", d: "Mikser biraz bekler, sonra girer", go: () => { gTimeout(() => { GJ.mixAsk = true; gMixSite(); }, 14000); radioK("kaan", "Nöbetçi alıyor {h}, biraz gecikir."); }}]});
+const C_SLUMP = () => ({app: "Telsiz · Garaj betonu", who: cardName("kaan", true), ic: "🧪", col: "#1d4ed8", title: "Betonun kıvamı kötü",
+  text: fillK("kaan", "{H}, bu mikserin betonu çok sulu geldi, slump tutmuyor. Dökelim mi, geri mi gönderelim?"),
+  opts: [{t: "Geri gönderin", d: "Bu mikser boş döner, yenisi gelir · zaman kaybı", go: () => { GJ.badPour = true; gTimeout(() => { GJ.badPour = false; }, 7000); radioK("kaan", "Geri gönderdim {h}, santral yenisini yolluyor."); }},
+    {t: "Dökün, vibratörle idare edin", d: "İş durmaz · Paşa teftişte çatlağı görebilir", go: () => { GJ.crack = true; garSave(); radioK("kaan", "Peki {h}, döküyoruz… umarım çatlamaz."); }}]});
+const C_BENT = () => ({app: "Telsiz · Garaj çeliği", who: "Vinç operatörü", ic: "🏗️", col: "#b45309", title: "Kolon eğri gelmiş",
+  text: `Komutanım, istifteki ${ORDN[Math.min(5, GJ.parts)]} kolon nakliyede eğilmiş, dikmeden önce ne yapalım?`,
+  opts: [{t: "Gidip kendim bakarım", d: "İstifin yanına git · hafifse dikeriz", go: () => { CR.hold = 1e9; CR.until = TT + 60; CR.onTimeout = () => { CR.hold = 20; radioK("furkan", "Ben baktım {h}, eğriyi presle düzelttik, dikiyoruz."); };
+      gmGo("Eğri kolonu kontrol et", () => CR.hold >= 1e8 ? {x: GSTK[Math.min(5, GJ.parts)].x - 3, z: GSTK[Math.min(5, GJ.parts)].z, n: "KOLON", r: 4.5} : null, () => { CR.hold = Math.random() < .6 ? 2 : 18; CR.onTimeout = null; radioK("furkan", CR.hold < 5 ? "Gördünüz {h}, toleransta, dikiyoruz." : "Haklısınız {h}, presle düzeltip dikeceğiz."); satAdd(1, "kolonu bizzat kontrol ettin"); }, {done: () => !(CR.hold >= 1e8)}); }},
+    {t: "Fabrikaya geri gönderin", d: "Yenisi gelir · vinç bekler", go: () => { CR.hold = 32; radioK("furkan", "Fabrikayı aradım {h}, yenisi yolda."); }},
+    {t: "Dikin, kimse anlamaz", d: "Vinç durmaz · Paşa teftişte görebilir", go: () => { GJ.crack = true; garSave(); radioK("furkan", "Peki {h}, dikiyoruz… Paşam şakulle gelmesin de."); }}]});
+const C_WIND = () => ({app: "Telsiz · Garaj çeliği", who: "Vinç operatörü", ic: "🌬️", col: "#0f766e", title: "Rüzgâr çıktı",
+  text: "Komutanım, rüzgâr sertleşti, makas havada sallanıyor. Vinci durdurayım mı?",
+  opts: [{t: "Durdurun, rüzgâr dinsin", d: "Vinç bir süre bekler · güvenli", go: () => { CR.hold = Math.max(CR.hold, 28); radioK("furkan", "Vinç bekliyor {h}, rüzgâr dinince devam."); }},
+    {t: "Halatla tutun, devam", d: "İş durmaz · İSG riski", go: () => { if (Math.random() < .4) { stats.isg++; toast("İSG İHLALİ · rüzgârda yük sallandı, asker kaçtı", 2.6); } radioK("furkan", "Tag line'la tutuyoruz {h}, devam."); }}]});
+const C_TANK = () => ({app: "Telsiz · Tank parkı", who: cardName("boran", true), ic: "🛡️", col: "#334155", title: "İkinci tankın motoru çalışmıyor",
+  text: fillK("boran", "{H}, ikinci tankın marşı basmıyor, akü bitmiş. Arz ederim."),
+  opts: [{t: "Takviye kablosu getirin", d: "Tank bir süre bekler", go: () => { holdFor(TK2, 30, null); TK2.holdWhy = "akü takviyesi"; radioK("boran", "Kablo geliyor {h}, arz ederim."); }},
+    {t: "Tankı ben sürerim", d: "Tanka bin, garaja sen sok · Boran rahatlar", go: () => { holdFor(TK2, 1e9, "rest"); gmGo("Tanka bin, garaja sür", () => mine(TK2) ? null : {x: TK2.x, z: TK2.z, n: "TANK", r: 7}, null, {done: () => mine(TK2)}); }}]});
+const GARAJ = {id: "garaj", name: "Kapalı Tank Garajı", sub: "5 görev · teftişten sonra: tank bölüğüne çelik garaj", locked: () => !TEFTIS.missions.every((M, i) => isDone(TEFTIS, i)), lockTxt: "Önce büyük teftiş",
+  get end() { const r = GM.inspRes; return r === "iyi" ? "Levent Paşa garajı teslim aldı: tank bölüğünün M60'ları artık kapalı garajda. Tugayın en düzgün şantiyesi bu sefer de Hisar." : r === "orta" ? "Garaj teslim edildi ama Paşa eksikleri not aldı. Kalan işleri menüden bitirip teslimi yeniden oynayabilirsin." : "Teslim kötü geçti, Paşa çok kızdı. Görevleri menüden tamamla, sonra teslimi yeniden oyna."; },
+  missions: [
+    {title: "Garaj Sahası", g: "ahmet", sites: ["garaj"], veh: ["dz"], mach: () => [DOZ], pay: 30000, par: 300, pad: true,
+      get zone() { return siteZone(["garaj"], {x: GRJ.x0, y: GRJ.z0, w: GRJ.x1 - GRJ.x0, h: GRJ.z1 - GRJ.z0}); },
+      brief: "Tank bölüğüne kapalı çelik garaj yapılıyor: stok sahasının doğusundaki boş alan. Önce dozer pedi tek kota tesviye edecek; bıçak inik, şerit şerit. Dozeri SÜR ile alırsan bıçağı indirip sahada ileri geri gidersin, her geçiş sayılır.",
+      tip: "Dozeri SÜR ile al, bıçağı yere indir (sağ kol ↓), sarı çerçevenin içinde ileri geri git. İşin başında durursan asker hızlanır.",
+      obj: [{t: "Zemin tesviyesi", f: () => GJ.lvl * 100, goal: 100, u: " %"}],
+      spawn: () => { if (DOZ && !mineV(DOZ)) { if (!inGar(DOZ.x, DOZ.z, 8)) placeV(DOZ, GRJ.x0 - 6, GLANES[0], 0); DOZ.pad = "garaj"; DOZ.gl = 0; DOZ.gdir = 1; DOZ.aiState = null; } clearArea(66, 104, 24, 54, [DOZ]); movePiles(q => inGar(q.x, q.z, 4)); },
+      done: () => { if (DOZ) DOZ.pad = null; },
+      G: {brief: "{H}, teftiş bitti, rahat yok! Tank bölüğüne kapalı garaj yapıyoruz, stok sahasının doğusuna. Dozer pedi tesviye edecek, şerit şerit. Sen başında dur, Paşam yine gelir, haberin olsun.", go: "Dozer pede girdi {h}, bıçak inik!", mid: "Pedin yarısı düz {h}, aynen devam!", ok: "Sen kralsın {h}! Ped masa gibi oldu, beton gelebilir."},
+      cards: [{at: .3, mk: C_DOZTR}]},
+    {title: "Temel Betonu", g: "kaan", sites: ["garaj"], veh: [], mach: () => [], pay: 35000, par: 360, beton: true,
+      get zone() { return siteZone(["garaj"]); }, info: () => [["MİKSER", GJ.mix === "away" ? "santralden çıkmak üzere" : GJ.mix === "gate" ? "nizamiyeye geliyor" : GJ.mix === "in" ? "şantiyeye giriyor" : GJ.mix === "wait" ? "şantiye kapısında bekliyor" : GJ.mix === "site" ? "pede yanaşıyor" : GJ.mix === "pour" ? "beton döküyor" : "boşaldı, dönüyor"]],
+      brief: "Pedin üstüne 30 cm temel betonu dökülüyor. Santralden mikserler sırayla gelecek, her mikser plakanın bir çeyreğini döker. İlk mikseri şantiye kapısında karşıla, dökümün başında dur.",
+      tip: "Mikserler kendisi gelir, kapıda nöbetçi ya da sen karşılarsın. Beton dökülürken pedin üstünde kimse durmasın.",
+      obj: [{t: "Temel betonu", f: () => GJ.slab * 100, goal: 100, u: " %"}],
+      spawn: () => { if (GJ.lvl < .999) { GJ.lvl = 1; GJ.recol = true; garLevel(); garVisuals(); garSave(); } GJ.mix = "away"; GJ.mixT = 8; GJ.mixAsk = false; GJ.pours = 0; clearArea(66, 104, 24, 54, []); movePiles(q => inGar(q.x, q.z, 4)); },
+      G: {brief: "{H}, ped hazır, beton zamanı! Santralden dört mikser gelecek, her biri plakanın bir çeyreği. İlkini kapıda karşılayalım, kalıbı tablette kontrol ettim. Yansın Hisar!", go: "İlk mikser santralden çıktı {h}!", mid: "Plakanın yarısı döküldü {h}, güzel akıyor!", ok: "Yansın Hisar! Temel betonu bitti {h}, iki gün sonra çelik dikilir."},
+      cards: [{cond: () => GJ.mix === "wait" && GJ.pours === 0, mk: C_MIXER}, {cond: () => GJ.mix === "site" && GJ.pours === 1, mk: C_SLUMP}]},
+    {title: "Çelik Konstrüksiyon", g: "furkan", sites: ["garaj"], veh: [], mach: () => [], pay: 45000, par: 420, crane: "garaj",
+      get zone() { return siteZone(["garaj"]); }, info: () => [["VİNÇ KAMYONU", craneSt()], ["KAPLAMA", GJ.parts < 9 ? "çeliği bekliyor" : GJ.clad >= .999 ? "tamam" : `ekip çalışıyor · %${Math.round(GJ.clad * 100)}`]],
+      brief: "Çelik geldi: altı kolon istifte, üç makas pedin güneyinde. Vinç kamyonu plakanın ortasına kurulur, önce kolonları diker, sonra makasları üstüne oturtur. Vinci sen de kullanabilirsin. Çelik bitince kaplama ekibi duvarları ve çatıyı kapatır.",
+      tip: "Vinç hazır olunca panelde KULLAN ile kumandayı al: kancayı kolonun üstüne indir, tak, yerine götür, tabana indir, bırak. Yük havadayken altında durma.",
+      obj: [{t: "Dikilen çelik", f: () => GJ.parts, goal: 9, u: ""}, {t: "Kaplama", f: () => GJ.clad * 100, goal: 100, u: " %"}],
+      spawn: () => { if (GJ.slab < .999) { GJ.slab = 1; GJ.lvl = 1; GJ.recol = true; garLevel(); garVisuals(); garSave(); } GJ.steel = true; clearArea(66, 110, 24, 56, []); movePiles(q => inGar(q.x, q.z, 6)); garVisuals(); craneCall(GPLAN); },
+      G: {brief: "{H}, çelik geldi! Vinç plakanın ortasına kuruluyor, kolonları dikip makasları oturtacağız. İstersen kumandayı sen al, ben askerle halat tutarım. Kürek bende, bu sefer halat!", go: "Vinç ayaklarını açtı {h}, ilk kolon kancada!", mid: "Kolonlar dikildi {h}, makaslara geçiyoruz!", ok: "Çatı kapandı {h}! Cansınız. Tanklar girebilir."},
+      cards: [{cond: () => GJ.parts >= 1 && GJ.parts < 5 && CR.st !== "away" && CR.hold < 1e8, mk: C_BENT}, {cond: () => GJ.parts >= 6 && GJ.parts < 9 && CR.st === "lift", mk: C_WIND}]},
+    {title: "Tanklar Garaja", g: "boran", sites: ["garaj"], veh: ["tk"], mach: () => [TK1, TK2].filter(Boolean), pay: 30000, par: 240,
+      get zone() { return siteZone(["garaj"]); },
+      brief: "Garaj hazır. Tank parkındaki iki M60A3 garajdaki yerlerine sürülecek: doğudan dolanıp güneydeki kapıdan girecekler. Sürücüler tankları kendileri sokar; istersen SÜR ile tankı sen de sürersin.",
+      tip: "Tankı SÜR ile al, garajın güney kapısından gir, çerçevenin içinde dur. Paletlerle yerinde dönebilirsin.",
+      obj: [{t: "Garajdaki tank", f: () => GJ.tanks, goal: 2, u: ""}],
+      spawn: () => { if (!garDone()) { GJ.lvl = GJ.slab = GJ.clad = 1; GJ.parts = 9; GJ.recol = true; garLevel(); garVisuals(); garSave(); } for (const T of [TK1, TK2]) if (T && !mineV(T)) { if (inGar(T.x, T.z, 3)) placeV(T, PARK.x + 4 + 7 * T.bay, PARK.y + 7.5, Math.PI / 2); T.gpath = null; T.gpi = 0; T.job.on = true; } clearArea(66, 110, 24, 56, [TK1, TK2]); },
+      done: () => { for (const T of [TK1, TK2]) if (T && T.job) T.job.on = false; },
+      G: {brief: "{H}, garaj hazır, tanklar giriyor! Sürücüler doğudan dolanıp güney kapıdan sokacak. Koordinasyon bende, arz ederim. İstersen birini sen sür, ben kenardan işaret veririm.", go: "Tanklar parktan çıktı {h}, arz ederim!", mid: "Birincisi girdi {h}, ikincisi yolda!", ok: "İki tank da garajda {h}! Hisar taburunda şenlik havası hâkim, arz ederim!"},
+      cards: [{at: .1, mk: C_TANK}]},
+    {title: "Garaj Teslimi", g: "ufuk", sites: [], veh: [], mach: () => [], pay: 30000, par: 300, insp: true,
+      zone: {beam: [9.5, 55.3]}, spot: () => ({x: 21, z: 53.5, lx: 9.5, lz: 55.3}),
+      brief: "Levent Paşa garajı teslim almaya geliyor. Paşa'yı şantiye kapısında karşıla; garajı ve komuta yerini gezeceksiniz.",
+      tip: "Paşa'yı karşıla, gerisini o gezer. Bitirdiğin her görev teslimde puan.",
+      obj: [{t: "Teslim", f: () => GM.insp ? GM.insp.k : 0, goal: 2, u: ""}],
+      G: {brief: "Naber mankiler? Paşam garajı teslim almaya geliyor! Tanklar içeride, kaplama tamam olsun. Paşam'ı kapıda benimle karşıla.", go: "Paşam nizamiyeden girdi, kapıdayız. Toparlanın mankiler!", mid: "Aynen devam, Paşam memnun görünüyor.",
+        get ok() { const r = GM.inspRes; return r === "iyi" ? "Aferin mankiler! Paşam garajı beğendi, teslim aldı." : r === "orta" ? "Fena değil mankiler ama eksikler var. Paşam yine gelecek." : "Mankiler… Paşam çok kızdı. Eksikleri bitirin."; }}}
+  ],
+  stops: [
+    {n: "KAPALI TANK GARAJI", k: "garaj", lines: () => { const d = i => isDone(GARAJ, i);
+      if (d(0) && d(1) && d(2) && d(3)) return [["kaan", "Komutanım, kapalı tank garajı hazır: zemin tesviye edildi, temel betonu döküldü, çelik dikildi, kaplama kapandı.", 3.6], ["boran", "İki tank da içeride komutanım, arz ederim.", 2.4], ["levent", "Proje yapan çocuk, bu da kâğıtta kalmamış. Boran, sen de bu sefer koordinasyondan fazlasını yapmışsın.", 3.4]]
+        .concat(GJ.crack ? [["levent", "Ama betonda çatlak var, kolonun biri de şakulde değil! Raporda gördüm. Bir daha olmasın.", 3.4], ["kaan", "Emredersiniz komutanım.", 1.8]] : [["kaan", "Yansın Hisar komutanım!", 1.8]]);
+      if (d(2)) return [["kaan", "Komutanım, garaj kapandı, tanklar henüz girmedi…", 2.8], ["levent", "Garaj boş mu duracak?! Tankları sokun!", 2.6]];
+      if (d(1)) return [["furkan", "Komutanım, beton bitti, çelik daha dikiliyor…", 2.8], ["levent", "Çatısız garaj mı olur?! Bitirin şunu!", 2.6]];
+      return [["ahmet", "Komutanım, garaj sahası daha hazırlanıyor…", 2.6], ["levent", "Ahmet! Yine sen! Tanklar kışı açıkta mı geçirecek?!", 2.8]]; }},
+    {n: "GÖMÜLÜ KOMUTA YERİ", k: "bunker", lines: () => bnkCover() >= .999 ? [["kaan", "Komutanım, komuta yeri toprağın altında, geçen teftişten beri hiç görünmedi.", 3], ["levent", "Hı. Bunu beğenmiştim. Devam.", 2.2]] : [["kaan", "Komutanım, komuta yeri hâlâ bitmedi…", 2.4], ["levent", "Proje yapan çocuk! Hâlâ mı?!", 2.4]]}]};
+for (const M of GARAJ.missions) { if (M.sites && M.sites.length) { M.site = M.sites[0]; if (!M.spot) M.spot = () => SITES[M.sites[0]].spot(); } else M.site = null; }
+PROJECTS.push(GARAJ); if (PROJ.prog.garaj == null) PROJ.prog.garaj = 0;
+window.__hs.gj = GJ; window.__hs.GPLAN = GPLAN; window.__hs.garaj = GARAJ;
+
+;(window.__INIT || (window.__INIT = [])).push(["garaj", performance.now()]);
 
 // ======================= KABİN: the excavator from the operator's seat — the boom out front, two joysticks at the bottom of the screen
 // with gloved hands on them that move with what you press (drawn over the scene after it, so the cab never cuts into them) =======================

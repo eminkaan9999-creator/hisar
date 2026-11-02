@@ -2089,7 +2089,7 @@ function pour(v, tip, amt) {
 const GEARS = {tr: [2.6, 5, 8, 11.5, 16, 22], bh: [3.2, 6.5, 10, 14], ld: [3, 6, 9, 12], gr: [3, 6, 9.5, 14]};
 function drive(v, dt, th, st) {
   const pv = v.v;
-  const vmax = v.type === "gt" && v.cutting ? .42 : v.maxV; if (v.v > vmax + .05) v.v = Math.max(vmax, v.v - v.brk * dt);
+  const vmax = (v.type === "gt" && v.cutting ? .42 : v.maxV) * (WET > .05 && !v.tracked && !onRoad(v) ? 1 - WET * .4 : 1); if (v.v > vmax + .05) v.v = Math.max(vmax, v.v - v.brk * dt);   // (mud off the road in the rain)
   const mass = 1 + (v.cap ? v.load / v.cap * .75 : 0), G = GEARS[v.type];
   if (G) { v.gi = v.gi || 0; const r = Math.max(0, v.v) / G[v.gi]; if (r > .94 && v.gi < G.length - 1 && th > .05) { v.gi++; v.shiftT = .35; } else if (r < .38 && v.gi > 0) v.gi--; }
   if (th > .05) { if (v.v < -.3) v.v = Math.min(0, v.v + v.brk / Math.sqrt(mass) * th * dt); else { let a = v.acc * th / mass * Math.max(0, 1 - v.v / vmax);
@@ -5433,7 +5433,7 @@ function offFrame(dt, T) {
         if (!tick) {} else if (gph < 2.4) { const keep = poseKeep(S, PB_ARMS, o.pk || (o.pk = {})); gesture(S, gs, T * 3); poseMix(S, PB_ARMS, keep, ease(Math.min(1, Math.sin(Math.PI * gph / 2.4) * 1.7))); } else if (lp) { MCH.set(lp.x, lp.y != null ? lp.y : footGround(lp.x, lp.z) + 1.2, lp.z); lookAtHead(S, MCH, .6); } }
       o.sayT = (o.sayT || 5) - dt;
       if (o.sayT <= 0) { o.sayT = 13 + Math.random() * 13; const L0 = v && v.type === "tr" ? SUPL.nakliye : SUPL[o.site] || SUPL.cukur; if (FOOT.on && Math.hypot(FOOT.x - o.x, FOOT.z - o.z) < 30) say(o, pick(L0), 2.4); }
-      if (o.d.key === "orhan") { droneOn = true;
+      if (o.d.key === "orhan" && !DRONE.pilot) { droneOn = true;
         if (o.site === "parkur" && typeof DGATES !== "undefined") { const u = ((T * .035) % 1 + 1) % 1, p = DRONEPATH.getPointAt(u), q = DRONEPATH.getTangentAt(u); DRONE.position.copy(p); DRONE.rotation.y = -Math.atan2(q.z, q.x); }   // round the course, through the gates
         else { DRONE.position.set(o.x + Math.sin(T * .4) * 6 + 3, footGround(o.x, o.z) + 9 + Math.sin(T * 1.3) * .4, o.z + Math.cos(T * .33) * 5); DRONE.rotation.y = T * .5; } }
       if (o.t <= 0 && !MEET.boss && !(typeof CATCH !== "undefined" && CATCH.on && o.d.key === "ahmet")) { const w = typeof isWork !== "function" || isWork();
@@ -5450,7 +5450,7 @@ function offFrame(dt, T) {
       if (tick && o.salW > 0) { const keep = poseKeep(S, PB_ARMS, o.pk || (o.pk = {})); salutePose(S); poseMix(S, PB_ARMS, keep, ease(o.salW)); }
       if (!o.d.visitor && o.t <= 0) goBack(o); continue; }
   }
-  DRONE.visible = droneOn && !(DRONE.hideT > 0);
+  DRONE.visible = (droneOn || !!DRONE.pilot) && !(DRONE.hideT > 0);
   carFrame(CARS.ufuk, dt); carFrame(CARS.levent, dt);
 }
 function goBack(o) { // back to my chair at the table (or the foot of the table if mine is taken)
@@ -5492,7 +5492,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261102-1842";
+const PORTKEY = "hs-portraits-20261102-1851";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -6279,7 +6279,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261102-1842";
+const BUILD = "20261102-1851";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -6744,7 +6744,7 @@ function craneLeave() { if (CR.st !== "ready") return; CR.st = "going"; CR.k = -
 const craneMay = () => (GM.on ? !!(GM.cur && GM.cur.M.crane && PROJ.active && !PROJ.done) : true) && BNK.trench >= 1;   // it lowers them once the trench is cut, while its job is on
 function padClear(k) { const x = slotX(k); for (const v of vehicles) if (Math.abs(v.x - x) < BML / 2 + (v.L || 5) / 2 + .5 && Math.abs(v.z - BCZ) < BMW / 2 + (v.Wd || 3) / 2 + .4) return false;
   return !(FOOT.on && Math.abs(FOOT.x - x) < BML / 2 + .7 && Math.abs(FOOT.z - BCZ) < BMW / 2 + .7); }
-const craneSt = () => CR.st === "away" ? (BNK.mods >= BNKN ? "işini bitirdi" : "çağrılmadı") : CR.st === "coming" ? "yolda, geliyor" : CR.st === "going" ? "işini bitirdi, dönüyor" : CR.st === "lift" ? `korugan ${CR.k + 1}/${BNKN} iniyor` : CR.hold >= 1e8 ? "çatlak korugan · kontrol bekliyor" : CR.hold > 2.5 ? "bekliyor" : BNK.trench < 1 ? "yarmanın bitmesini bekliyor" : "hazır";
+const craneSt = () => typeof PILOT !== "undefined" && PILOT.mode === "crane" ? "kumanda sende" : CR.st === "away" ? (BNK.mods >= BNKN ? "işini bitirdi" : "çağrılmadı") : CR.st === "coming" ? "yolda, geliyor" : CR.st === "going" ? "işini bitirdi, dönüyor" : CR.st === "lift" ? `korugan ${CR.k + 1}/${BNKN} iniyor` : CR.hold >= 1e8 ? "çatlak korugan · kontrol bekliyor" : CR.hold > 2.5 ? "bekliyor" : BNK.trench < 1 ? "yarmanın bitmesini bekliyor" : "hazır";
 const CRV = new THREE.Vector3(), CRV2 = new THREE.Vector3(), CRV3 = new THREE.Vector3(), CRV4 = new THREE.Vector3();
 function stretch(m, a, b) { m.position.addVectors(a, b).multiplyScalar(.5); m.scale.set(1, 1, Math.max(.01, a.distanceTo(b))); m.lookAt(b); m.visible = true; }
 // the boom from the top of the column to over the load, the cable down to the hook, four slings to the korugan's loops (load: where the korugan is and how it is turned, or null: folded)
@@ -6780,6 +6780,7 @@ function craneFrame(dt) {
   carFrame(CRN, dt);
   const parked = CR.st === "ready" || CR.st === "lift"; if (CRB.legs.visible !== parked) CRB.legs.visible = parked;
   if (parked) propOn("crane", [CR.park.x - 3.8, CR.park.x + 3.8, CR.park.z - 1.3, CR.park.z + 1.3]);
+  if (typeof PILOT !== "undefined" && PILOT.mode === "crane") { craneDraw(CR.tp); return; }   // (the remote in your hands: pilot.js moves the hook)
   for (const kind of ["end", "mid", "door"]) { const m = BPART["c" + kind]; if (m && m.visible) m.visible = false; }
   const hush = GM.on && SAL.on && Math.hypot(CR.park.x - SAL.x, CR.park.z - SAL.z) < SAL.r + 10;   // the paşa is here: the load waits where it is
   if (CR.st === "lift") { if (hush) craneDraw(CR.tp); else craneLift(dt); return; }
@@ -7635,7 +7636,7 @@ function gmStart(M) {
   document.getElementById("bCam").textContent = "KAMERA: " + camName(camMode);
   if (!M.insp && GM.insp) { GM.insp = null; GM.cine = null; CLK.hold = false; }
   GM.cur = {P, m, M, g}; GM.giver = g ? g.o : null; GM.said = {}; GM.t = 0; GM.started = true; GM.go = null; GM.card = false; GM.cshown = {}; GM.cardT = -99; GM.near = true; GM.nearK = M.site; if (WP.src === "gm") wpClear();
-  raidPlan(true); if (!M.insp) { if (GM.dayM != null) CLK.day++; CLK.t = 450; clkSave(); GM.dayM = m; }   // every job starts a new morning at 07.30
+  raidPlan(true); GM.night = false; GM.nightAsked = false; GM.droneShow = false; if (PILOT.mode) pilotEnd(); if (!M.insp) { if (GM.dayM != null) CLK.day++; CLK.t = 450; clkSave(); GM.dayM = m; rainPlan(); } else { RAIN.from = -1; }   // every job starts a new morning at 07.30
   gmPlace(M);
   if (M.insp) gmInspStart(M);
   else if (g) gTimeout(() => gmRadio(g.o, fillT(g.alt ? "Hadi {n}, bekliyorum." : g.G.go, g.o)), 900);
@@ -7684,9 +7685,9 @@ function gmPanel(M) {
     h += here ? `<div class="gmrow ok site"><span>📍 ${SITES[k].n} · başındasın, iş hızlı</span></div>` : `<div class="gmrow site"><span>📍 ${SITES[k].n} · ${d} m</span><button type="button" class="gmb" data-gm="go" data-k="${k}">${AUTO.on && AUTO.go && AUTO.k === k ? "DUR" : "GİT"}</button></div>`; }
   for (const v of (M.mach ? M.mach() : [])) { const me = v.P.seated === PLAYER && !FOOT.on, st = me ? "sen sürüyorsun" : v.broken ? "arızalı" : v.hold > 0 ? (v.holdWhy || (v.holdMode ? "operatör yok" : "başka işte")) : (v.st || "çalışıyor");
     h += `<div class="gmrow mc${me ? " me" : ""}"><span><b>${v.name}</b><i>${st}</i></span><button type="button" class="gmb${me ? " alt" : ""}" data-take="${vehicles.indexOf(v)}">${me ? "İN" : "SÜR"}</button></div>`; }
-  if (M.info) for (const [n, t] of M.info()) h += `<div class="gmrow mc info"><span><b>${n}</b><i>${t}</i></span></div>`;   // what works without a driver of ours (the crane truck)
+  if (M.info) for (const [n, t] of M.info()) h += `<div class="gmrow mc info"><span><b>${n}</b><i>${t}</i></span>${n === "VİNÇ KAMYONU" && CR.st === "ready" && CR.hold < 1e8 && BNK.mods < BNKN && !PILOT.mode ? `<button type="button" class="gmb" data-gm="crane">KULLAN</button>` : ""}</div>`;   // what works without a driver of ours (the crane truck)
   if (GM.go) { const t = GM.go.target(), dd = t ? Math.round(distTo(t)) : null; h += `<div class="gmrow go"><span>▶ ${GM.go.t}${dd != null ? ` · ${dd} m` : ""}</span>${t && dd > (t.r || 4) + 2 && FOOT.on && !FOOT.seq ? `<button type="button" class="gmb" data-gm="errand">GİT</button>` : ""}</div>`; }
-  h += `<div class="gmrow tea"><button type="button" class="gmb alt" data-gm="tea">${SEAT.on ? "KALK" : "☕ ÇAY OCAĞI"}</button><button type="button" class="gmb alt" data-gm="shop">🛒 TEDARİK</button></div>`;
+  h += `<div class="gmrow tea"><button type="button" class="gmb alt" data-gm="tea">${SEAT.on ? "KALK" : "☕ ÇAY OCAĞI"}</button><button type="button" class="gmb alt" data-gm="shop">🛒 TEDARİK</button>${OFFM.orhan && !PILOT.mode ? `<button type="button" class="gmb alt" data-gm="drone">🛸 DRON</button>` : ""}</div>`;
   return h; }
 tasksEl.addEventListener("pointerdown", e => { const b = e.target.closest(".gmb"); if (!b || !GM.on) return; e.preventDefault(); e.stopPropagation(); tasksEl.__h = null;
   if (b.dataset.take != null) { gmTake(vehicles[+b.dataset.take]); return; }
@@ -7694,6 +7695,8 @@ tasksEl.addEventListener("pointerdown", e => { const b = e.target.closest(".gmb"
   if (k === "go") { if (AUTO.on && AUTO.go) { AUTO.on = false; AUTO.go = false; FOOT.spd = 0; updCtx(); return; } const s = b.dataset.k && SITES[b.dataset.k] ? SITES[b.dataset.k].spot() : M && M.spot && M.spot(); if (s) { autoGo({x: s.x, z: s.z, r: 4}); if (AUTO.on) { AUTO.v = 5.6; AUTO.k = b.dataset.k || null; } } }
   else if (k === "errand") { const t = GM.go && GM.go.target(); if (t) { autoGo(t); if (AUTO.on) AUTO.v = 5.6; } }
   else if (k === "shop") shopOpen();
+  else if (k === "crane") craneStart();
+  else if (k === "drone") droneStart();
   else if (k === "tea") { if (SEAT.on) standUp(); else { autoGo(tableT()); if (AUTO.on) { AUTO.v = 5.6; toast("Çay ocağına gidiyorsun · Paşa gelirse yakalanırsın!", 2.4); } } } });
 function gmHold() { const R = GM.raid; return (!!R && R.mis === GM.cur && !R.judged && R.mode !== "pass") || (!!GM.insp && !GM.insp.fin); }   // the job is done when the paşa has had his say
 
@@ -7701,7 +7704,7 @@ function gmHold() { const R = GM.raid; return (!!R && R.mis === GM.cur && !R.jud
 const CLK = {day: 1, t: 8 * 60, sv: 0, hold: false};
 try { const s = JSON.parse(localStorage.getItem("hs-gmclock") || "null"); if (s && s.t >= 0) { CLK.day = Math.max(1, s.day | 0); CLK.t = (+s.t) % 1440; } } catch (e) {}
 const clkSave = () => { try { localStorage.setItem("hs-gmclock", JSON.stringify({day: CLK.day, t: Math.round(CLK.t)})); } catch (e) {} };
-const clkRate = t => t >= 390 && t < 1110 ? 1.2 : t >= 1110 && t < 1230 ? 4 : t >= 300 && t < 390 ? 7.5 : 45;   // game minutes per real second: a working day is about nine real minutes, one job
+const clkRate = t => (GM.night && PROJ.active && !PROJ.done) || (t >= 390 && t < 1110) ? 1.2 : t >= 1110 && t < 1230 ? 4 : t >= 300 && t < 390 ? 7.5 : 45;   // game minutes per real second: a working day is about nine real minutes, one job
 const SKYK = [[0, 2], [300, 2], [350, 1], [400, 0], [990, 0], [1080, 1], [1200, 2], [1440, 2]];   // the light: night, dawn, day, dusk, night (blended between the keys)
 const SKC = new THREE.Color(), SUNP = [0, 0, 0];
 const mixHex = (out, h1, h2, u) => out.setHex(h1).lerp(SKC.setHex(h2), u);
@@ -7717,14 +7720,15 @@ function gmSky(t) {
   const U = SKYM.u; mixHex(U.uZen.value, A.zen, B.zen, u).convertSRGBToLinear(); mixHex(U.uHor.value, A.fog, B.fog, u).convertSRGBToLinear(); mixHex(U.uGlow.value, A.glow, B.glow, u).convertSRGBToLinear(); mixHex(U.uCloudCol.value, A.cc, B.cc, u).convertSRGBToLinear();
   U.uCloud.value = L(A.cl, B.cl); U.uNight.value = L(A.night, B.night); U.uSun.value.set(SUNOFF[0], SUNOFF[1], SUNOFF[2]).normalize();
   const e = ENVS[u < .5 ? A.env : B.env] || ENVS[0]; if (scene.environment !== e) scene.environment = e; R.toneMappingExposure = L(A.ex, B.ex);
-  const m = u < .5 ? a : b; if (m !== tod) { tod = m; lightsByTod(m); } }
+  const m = u < .5 ? a : b; if (m !== tod) { tod = m; lightsByTod(m); }
+  rainSky(RAIN.k); }
 const clkIcon = t => t >= 400 && t < 990 ? "☀" : (t >= 300 && t < 400) || (t >= 990 && t < 1200) ? "🌇" : "🌙";
 let clkTxt2 = "";
 function clkFrame(dt) {
   if (!CLK.hold) { CLK.t += clkRate(CLK.t) * dt; if (CLK.t >= 1440) { CLK.t -= 1440; CLK.day++; clkSave(); toast("GÜN " + CLK.day + " · yeni gün", 1.8); } }
   CLK.sv += dt; if (CLK.sv > 15) { CLK.sv = 0; clkSave(); }
   gmSky(CLK.t);
-  const tx = `${clkIcon(CLK.t)} ${hhmm(CLK.t)}`; if (tx !== clkTxt2) { clkTxt2 = tx; bClock.textContent = tx; } }
+  const tx = `${RAIN.k > .5 ? "🌧" : clkIcon(CLK.t)} ${hhmm(CLK.t)}${GM.night && PROJ.active && !PROJ.done ? " · vardiya" : ""}`; if (tx !== clkTxt2) { clkTxt2 = tx; bClock.textContent = tx; } }
 // the clock button: what day it is (the time itself runs on its own)
 bClock.addEventListener("click", e => { if (!GM.on) return; e.stopImmediatePropagation(); if (!running) return; toast(`GÜN ${CLK.day} · ${hhmm(CLK.t)} · Paşa her görevde gelir, ne zaman geleceği belli olmaz`, 2.4); }, true);
 
@@ -8025,6 +8029,12 @@ const DIALOGS_GM = [
     ["azizhan", "Teftişten önce bitsin, Paşam ilk oraya bakar."], ["orhan", () => bnkCover() >= .999 ? "Dronla yukarıdan baktım, komuta yeri hiç görünmüyor. Sadece bir tepe var." : "Bitince dronla yukarıdan bakarım, bir yeri görünüyorsa söylerim."], ["kaan", "Yansın Hisar, bitecek komutanım!"]]),
   DLG("any", [["ali", () => `Atış alanı yüzde ${Math.round(RNG.p * 100)} oldu, çerçeveler dikiliyor.`], ["orhan", () => `Parkurda ${Math.floor(DRC.p * DGATES.length)} kapı dikildi, dron her birinden geçiyor.`], ["ali", "Teftişte ikimiz de çakı gibi olacağız."]])];
 
+// ---- the evening: the job not done at the roll call. The night shift (the floodlights on, if bought; overtime paid) or the morning ----
+const C_NIGHT = () => ({app: "Telsiz · Tabur", who: cardName("azizhan", true), ic: "🌙", col: "#1e293b", title: "Akşam oldu, iş bitmedi",
+  text: fillK("azizhan", "{H}, akşam içtiması bitti, iş hâlâ sürüyor. Gece vardiyasına mı kalalım, sabah mı devam edelim?"),
+  opts: [{t: "Gece vardiyası", d: PROJ.buy.light ? "Projektörler yanar, iş tam hızda sürer · mesai ₺5.000" : "Karanlıkta iş yarı hızda sürer · mesai ₺5.000 · projektör olsaydı tam hız", go: () => { GM.night = true; PROJ.money -= 5000; radioK("azizhan", PROJ.buy.light ? "Projektörleri yakın, vardiya devam!" : "Lambaları yakın, el yordamıyla devam!"); toast("GECE VARDİYASI · -₺5.000", 2.2); }},
+    {t: "Sabah devam", d: "Herkes dinlenir, 07.30'da kaldığı yerden · bir gün gider", go: () => { fadeSkip("ERTESİ SABAH · 07.30", () => { CLK.day++; CLK.t = 450; clkSave(); rainPlan(); raidPlan(false); for (const v of vehicles) v.aiT = 0; }); radioK("azizhan", "Herkes dinlensin, sabah erken başlıyoruz."); }}]});
+
 // ---- the battalion's budget: what it buys (the second truck, the cutter teeth, the water tanker, the floodlights) ----
 const SHOP = [
   {k: "truck2", n: "İkinci kamyon", p: 60000, ic: "🚛", d: "Stok sahasında iki kamyon sırayla dolar, döküm sahasına taşır"},
@@ -8058,6 +8068,7 @@ function gmFrame(dt) {
   if (M.insp) return;
   if (M.crane && BNK.trench >= 1 && BNK.mods < BNKN && CR.st === "away") craneCall();   // the cut is through: the crane truck comes
   const g = C.g; if (g && !g.alt && !GM.said.mid && GM.t > 8 && gmProgAvg(M) >= .5) { GM.said.mid = true; gmRadio(g.o, fillT(g.G.mid, g.o)); }
+  if (!GM.night && !GM.nightAsked && CLK.t >= 1110 && CLK.t < 1300 && !DUR.open && !FOOT.seq && !RECV.on && !GM.raid && !SAL.on && !PILOT.mode) { GM.nightAsked = true; GM.cardT = GM.t; durShow(Object.assign({k: "night" + C.m}, C_NIGHT())); return; }
   if (GM.card === true || !M.cards || GM.t < 12 || GM.t - GM.cardT < 40 || DUR.open || FOOT.seq || RECV.on || GM.raid || SAL.on) return;
   const pr = gmProgAvg(M); for (let i = 0; i < M.cards.length; i++) { const c = M.cards[i]; if (GM.cshown[i] || (c.skip && c.skip())) continue; if (c.cond ? c.cond() : pr >= c.at) { GM.cshown[i] = true; GM.cardT = GM.t; durShow(Object.assign({k: "gm" + C.m + "_" + i}, c.mk())); break; } }
 }
@@ -8066,6 +8077,155 @@ window.__hs.gm = GM; window.__hs.clk = CLK; window.__hs.gmTea = () => gmTea(); w
 window.__hs.shopBuy = shopBuy; window.__hs.trx2 = () => TRX2; window.__hs.gmRaidNow = () => { GM.rp = {at: GM.t, done: false}; };
 
 ;(window.__INIT || (window.__INIT = [])).push(["gorev", performance.now()]);
+
+// ======================= HAVA: the weather over the site. Rain comes some days: the sky greys, the streaks fall round the camera, the ground off
+// the road turns to mud (the wheeled machines slow down) and the site road gets rough again while it lasts; the evening and the night shift =======================
+const RAIN = {k: 0, want: 0, from: -1, to: -1, told: false};
+// the streaks: a cloud of short lines round the camera, falling and wrapping
+const RAINM = (() => { const N = 1700, g = new THREE.BufferGeometry(), pos = new Float32Array(N * 6), seed = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) { seed[i * 3] = Math.random() * 36 - 18; seed[i * 3 + 1] = Math.random() * 22; seed[i * 3 + 2] = Math.random() * 36 - 18; }
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({color: 0xcfd8e0, transparent: true, opacity: 0, depthWrite: false}));
+  m.frustumCulled = false; m.visible = false; m.userData.noAO = true; scene.add(m); return {m, N, pos, seed, t: 0}; })();
+function rainStreaks(dt) { const R = RAINM, on = RAIN.k > .02; if (R.m.visible !== on) R.m.visible = on; if (!on) return;
+  R.t += dt * 14; const cx = cam.position.x, cy = cam.position.y, cz = cam.position.z, dir = new THREE.Vector3(); cam.getWorldDirection(dir);
+  const ox = cx + dir.x * 9, oz = cz + dir.z * 9, P = R.pos, S = R.seed, wx = .9 * RAIN.k, h = .7 + .35 * RAIN.k;
+  for (let i = 0; i < R.N; i++) { const y0 = cy - 6 + ((S[i * 3 + 1] - R.t * (1 + (i % 7) * .04)) % 22 + 22) % 22, x = ox + S[i * 3] + (y0 - cy) * .08 * wx, z = oz + S[i * 3 + 2];
+    P[i * 6] = x; P[i * 6 + 1] = y0; P[i * 6 + 2] = z; P[i * 6 + 3] = x - .05 * wx; P[i * 6 + 4] = y0 - h; P[i * 6 + 5] = z; }
+  R.m.geometry.attributes.position.needsUpdate = true; R.m.material.opacity = .34 + .34 * RAIN.k; }
+// the sky under the rain (after the time of day has set it)
+const RC = new THREE.Color(), RGREY = 0x8a9299, RFOG = 0x9aa3aa;
+function rainSky(k) { if (k <= .001) return;
+  sun.intensity *= 1 - .62 * k; hemi.intensity *= 1 - .25 * k; R.toneMappingExposure *= 1 - .12 * k;
+  scene.fog.color.lerp(RC.setHex(RFOG), k * .7); scene.fog.near *= 1 - .45 * k; scene.fog.far *= 1 - .5 * k;
+  const U = SKYM.u; U.uZen.value.lerp(RC.setHex(RGREY).convertSRGBToLinear(), k * .85); U.uHor.value.lerp(RC.setHex(RFOG).convertSRGBToLinear(), k * .7); U.uGlow.value.lerp(RC.setHex(RGREY).convertSRGBToLinear(), k * .8);
+  U.uCloudCol.value.lerp(RC.setHex(0x6b7378).convertSRGBToLinear(), k * .8); U.uCloud.value = Math.max(U.uCloud.value, k * .98); }
+// what the rain does to the work: mud off the road, the road itself going rough again while the road's job is on
+var WET = 0; let rainRoughT = 0;   // (var: the machines' driving reads it from the first frame)
+function onRoad(v) { return inRect(v, ROAD) || v.x < 0 || v.z < 0; }   // (the garrison's roads are asphalt: no mud there)
+function rainWork(dt) { WET = RAIN.k;
+  if (RAIN.k < .4 || !GM.on || !GM.cur || !PROJ.active || PROJ.done || !(GM.cur.M.sites || []).includes("yol")) return;
+  rainRoughT += dt; if (rainRoughT < 7) return; rainRoughT = 0;
+  const L = roadCells.map((c, i) => i).filter(i => !roadCells[i].rough); if (!L.length) return; const i = L[Math.floor(Math.random() * L.length)]; roadCells[i].rough = true; setRoad(roadCells[i], i); }
+// the day's weather: decided when a job starts (a third of the days it rains a while), the rain comes and goes with the clock
+function rainPlan() { RAIN.from = -1; RAIN.to = -1; RAIN.told = false; if (Math.random() < .36) { RAIN.from = 470 + Math.random() * 480; RAIN.to = RAIN.from + 90 + Math.random() * 130; } }
+function rainFrame(dt) {
+  if (GM.on && GM.started) { RAIN.want = RAIN.from >= 0 && CLK.t >= RAIN.from && CLK.t < RAIN.to ? 1 : 0;
+    if (RAIN.want && !RAIN.told) { RAIN.told = true; toast("☔ YAĞMUR BAŞLADI · yol dışı çamur, kamyonlar yavaş" + ((GM.cur && (GM.cur.M.sites || []).includes("yol")) ? ", yol bozuluyor" : ""), 3.2); }
+    if (!RAIN.want && RAIN.told && RAIN.k < .05) { RAIN.told = false; toast("🌤 Yağmur dindi", 2); } }
+  else RAIN.want = 0;
+  RAIN.k += (RAIN.want - RAIN.k) * Math.min(1, dt * .25); if (RAIN.k < .002 && !RAIN.want) RAIN.k = 0;
+  rainStreaks(dt); rainWork(dt); }
+UPD.push(rainFrame);
+window.__hs.rain = RAIN; window.__hs.rainNow = (m) => { RAIN.from = CLK.t - 1; RAIN.to = CLK.t + (m || 120); };
+
+;(window.__INIT || (window.__INIT = [])).push(["hava", performance.now()]);
+
+// ======================= PİLOT: the crane and the drone in your own hands. The crane: you take the remote beside the crane truck, the hook
+// moves on the left stick (or WASD), rises and falls on the right stick (or I/K), KANCA hooks the next korugan on the stack and sets it down in its
+// place in the cut. The drone: Orhan's drone from where you stand, flown through the course's gates, until its battery runs down =======================
+const PILOT = {mode: null, t: 0};
+const PC = {hx: 0, hz: 0, hy: 0, k: -1, rot: 0, told: 0};                         // the crane: the hook (as the base of the korugan it would carry), what hangs on it
+const PD = {x: 0, y: 0, z: 0, yaw: 0, vx: 0, vz: 0, vy: 0, bat: 0, gates: [], home: null, fpv: false, done: false};   // the drone
+const bPilA = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "bPilA"; b.hidden = true; const c = document.querySelector(".ctx"); if (c) c.appendChild(b); b.addEventListener("click", () => pilotAct()); return b; })();
+const bPilB = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.id = "bPilB"; b.hidden = true; const c = document.querySelector(".ctx"); if (c) c.appendChild(b); b.addEventListener("click", () => pilotEnd()); return b; })();
+function pilotBtns() { const m = PILOT.mode; bPilA.hidden = m !== "crane"; bPilB.hidden = !m; if (m === "crane") bPilA.textContent = PC.k >= 0 ? "BIRAK" : "KANCA"; if (m) bPilB.textContent = m === "crane" ? "VİNÇTEN İN" : "DRONU İNDİR";
+  if (m) { bBoard.hidden = true; bCtx.hidden = true; bCtx2.hidden = true; padLlbl.textContent = m === "crane" ? "KANCA ↔" : "UÇUŞ"; padRlbl.textContent = m === "crane" ? "KANCA ↕" : "DÖN · YÜKSEL"; } }
+// the sticks and the keys, read the same way for both
+function pilotInput() { let mx = 0, mz = 0, rx = 0, ry = 0;
+  if (keys.KeyW || keys.ArrowUp) mz += 1; if (keys.KeyS || keys.ArrowDown) mz -= 1; if (keys.KeyA || keys.ArrowLeft) mx -= 1; if (keys.KeyD || keys.ArrowRight) mx += 1;
+  if (keys.KeyI) ry -= 1; if (keys.KeyK) ry += 1; if (keys.KeyJ) rx -= 1; if (keys.KeyL) rx += 1;
+  if (L.on) { mx = dz(L.x); mz = -dz(L.y); } if (Rj.on) { rx = dz(Rj.x); ry = dz(Rj.y); }
+  const G = typeof padInput === "function" ? padInput() : null; if (G) { if (G.lx || G.ly) { mx = G.lx; mz = -G.ly; } if (G.rx || G.ry) { rx = G.rx; ry = G.ry; } }
+  return {mx: clamp(mx, -1, 1), mz: clamp(mz, -1, 1), rx: clamp(rx, -1, 1), ry: clamp(ry, -1, 1)}; }
+const pilotFree = () => running && FOOT.on && !FOOT.seq && !SEAT.on && !AUTO.on && !PICK.cine && !GM.cine && !RECV.on && !SAL.on && !DUR.open;
+
+// ---------------- the crane ----------------
+const craneCol = () => { CRN.g.updateMatrixWorld(true); return CRN.g.localToWorld(new THREE.Vector3(1.45, 0, 0)); };
+const craneYours = () => PILOT.mode === "crane";
+function craneStart() {
+  if (CR.st !== "ready" || CR.hold >= 1e8) { toast(CR.st === "ready" ? "Vinç çatlak koruganı bekliyor" : "Vinç kamyonu hazır değil", 2); return; }
+  if (BNK.mods >= BNKN) { toast("Dizilecek korugan kalmadı", 1.8); return; }
+  if (!pilotFree()) return; const C = craneCol(), d = Math.hypot(FOOT.x - C.x, FOOT.z - C.z);
+  if (d > 16) { toast("Vincin yanına git · kumanda orada", 2.2); autoGo({x: CR.park.x - 4.5, z: CR.park.z + 2.2, r: 3}); if (AUTO.on) AUTO.v = 5.6; return; }
+  PILOT.mode = "crane"; PILOT.t = 0; const k = BNK.mods, a = BSTK[k]; PC.k = -1; PC.rot = 0; PC.hx = CR.tp ? CR.tp.x : a.x; PC.hz = CR.tp ? CR.tp.z : a.z; PC.hy = heightAt(a.x, a.z) + .14 + 1.6; PC.told = 0;
+  FOOT.vx = FOOT.vz = 0; FOOT.spd = 0; FOOT.a = Math.atan2(BCZ - FOOT.z, BCX - FOOT.x); camSnap = true; pilotBtns();
+  toast("VİNÇ SENDE · sol: kancayı yürüt · sağ: indir, kaldır · KANCA: tak / bırak", 3.4); }
+const stackTop = k => heightAt(BSTK[k].x, BSTK[k].z) + .14;
+// where the load may go down to: the ground, the floor of the cut, the top of a korugan already in it
+function craneFloor(x, z) { let f = heightAt(x, z) + .02; if (Math.abs(z - BCZ) < TW / 2 + .3 && x > XR0 - .5 && x < XE + .5) { f = Math.min(f, BFLOOR); if (x >= XR0 && x <= XE && secOf(x) < BNK.mods && x < XE - .3) f = BFLOOR + BMH + .15; } return f; }
+function craneFrame2(dt) {
+  const I = pilotInput(), C = craneCol(), S = PLAYER; locoSoldier(S, 0, dt);
+  // the hook: on the sticks, within the boom's reach, never faster than a crane swings; the load turns on its own as it comes over the cut
+  const sp = 2.6, cy = Math.cos(CAM.yaw), sy = Math.sin(CAM.yaw); let tx = -cy * I.mz + sy * I.mx, tz = -sy * I.mz - cy * I.mx;
+  let nx = PC.hx + tx * sp * dt, nz = PC.hz + tz * sp * dt; const r = Math.hypot(nx - C.x, nz - C.z); if (r > 15.5) { nx = C.x + (nx - C.x) * 15.5 / r; nz = C.z + (nz - C.z) * 15.5 / r; } if (r < 3) { nx = PC.hx; nz = PC.hz; }
+  const fl = craneFloor(nx, nz), onFl = PC.hy <= fl + .05; if (!(onFl && PC.k >= 0 && (I.mx || I.mz))) { PC.hx = nx; PC.hz = nz; }   // (a load set on the ground does not slide)
+  PC.hy = clamp(PC.hy - I.ry * 1.6 * dt, craneFloor(PC.hx, PC.hz), BG0 + 7.5);
+  const want = PC.k >= 0 && PC.hx < XE + 3 && Math.abs(PC.hz - BCZ) < 6 ? KROT : 0; PC.rot += (want - PC.rot) * Math.min(1, dt * 1.2);
+  const hang = PC.k >= 0; CR.tp = {x: PC.hx, y: PC.hy, z: PC.hz, rot: PC.rot, hang};
+  if (hang) { const m = BPART["c" + bKind(PC.k)]; m.visible = true; m.position.set(PC.hx, PC.hy, PC.hz); m.rotation.y = PC.rot;
+    const sl = slotX(PC.k), near = Math.abs(PC.hx - sl) < .9 && Math.abs(PC.hz - BCZ) < .8, ok = near && PC.hy <= BFLOOR + .2 && Math.abs(wrapA(PC.rot - KROT)) < .25;
+    bPilA.textContent = ok ? "YERİNE BIRAK" : "BIRAK"; bPilA.classList.toggle("alt", !ok);
+    if (TT > PC.told && near && PC.hy > BFLOOR + .3) { PC.told = TT + 5; toast(`Yerinin üstünde · ${(PC.hy - BFLOOR).toFixed(1)} m indir`, 1.6); } }
+  else { const k = BNK.mods, a = BSTK[k], near = Math.abs(PC.hx - a.x) < 1.1 && Math.abs(PC.hz - a.z) < 1.1 && Math.abs(PC.hy - stackTop(k)) < .5; bPilA.textContent = near ? "KANCAYI TAK" : "KANCA"; bPilA.classList.toggle("alt", !near); }
+  PILOT.t += dt; }
+function craneAct() {
+  if (PC.k < 0) { const k = BNK.mods, a = BSTK[k]; if (!a) return; if (Math.abs(PC.hx - a.x) > 1.1 || Math.abs(PC.hz - a.z) > 1.1 || Math.abs(PC.hy - stackTop(k)) > .5) { toast("Kancayı koruganın üstüne indir", 1.8); return; }
+    PC.k = k; PC.hx = a.x; PC.hz = a.z; PC.hy = stackTop(k); const sk = BPART["s" + k]; if (sk) sk.visible = false; propOff("s" + k); CR.k = k; toast(`KORUGAN ${k + 1}/${BNKN} kancada · yarmadaki yerine götür`, 2.4); sfx("clink", a.x, a.z); }
+  else { const k = PC.k, sl = slotX(k), near = Math.abs(PC.hx - sl) < .9 && Math.abs(PC.hz - BCZ) < .8;
+    if (!near || PC.hy > BFLOOR + .2 || Math.abs(wrapA(PC.rot - KROT)) > .25) { toast(near ? "Tabana kadar indir" : `Yerine götür: ${ORDN[k]} koruganın yeri işaretli`, 2); return; }
+    BPART["c" + bKind(k)].visible = false; PC.k = -1; CR.k = -1; BNK.mods = k + 1; bnkSync(); bnkVisuals(); bnkSave(); toast(`KORUGAN ${k + 1}/${BNKN} · yerine oturdu, sen koydun`, 2.2); satAdd(1, "koruganı kendin indirdin");
+    PC.hy = BFLOOR + BMH + 1.5; if (BNK.mods >= BNKN) { toast("Altı korugan da yerinde · vinç işini bitirdi", 2.6); pilotEnd(); } }
+  pilotBtns(); }
+// the camera: from the south bank, following the hook
+const PCV = new THREE.Vector3(), PCL = new THREE.Vector3();
+function craneCam(dt) { const C = craneCol(), hx = PC.hx, hz = PC.hz, hy = PC.hy + BMH;
+  const ax = C.x - 1, az = C.z + 10; PCV.set(ax + (hx - ax) * .25, Math.max(BG0 + 6.5, hy + 4), az + (hz - az) * .2); cam.position.lerp(PCV, camSnap ? 1 : Math.min(1, dt * 3)); PCL.set(hx, hy - .6, hz);
+  if (!cam.userData.pl) cam.userData.pl = new THREE.Vector3().copy(PCL); const l = cam.userData.pl; l.lerp(PCL, camSnap ? 1 : Math.min(1, dt * 4)); cam.lookAt(l); camSnap = false;
+  if (cam.fov !== 55) { cam.fov = 55; cam.near = .1; cam.updateProjectionMatrix(); } }
+
+// ---------------- the drone ----------------
+function droneStart() {
+  if (!pilotFree()) return; if (DRONE.hideT > 0) { toast("Dron şu an uçamıyor", 1.8); return; }
+  PILOT.mode = "drone"; PILOT.t = 0; const g = footGround(FOOT.x, FOOT.z); Object.assign(PD, {x: FOOT.x + Math.cos(FOOT.a) * 2, y: g + 1.2, z: FOOT.z + Math.sin(FOOT.a) * 2, yaw: FOOT.a, vx: 0, vz: 0, vy: 2, bat: 150, gates: [], done: false, home: {x: FOOT.x, z: FOOT.z}});
+  DRONE.pilot = true; DRONE.visible = true; FOOT.vx = FOOT.vz = 0; FOOT.spd = 0; camSnap = true; pilotBtns();
+  toast("DRON SENDE · sol: uç · sağ: dön, yüksel · parkurun kapılarından geç", 3.4); }
+const gateN = () => Math.floor(DRC.p * DGATES.length + 1e-6);
+function droneFrame(dt) {
+  const I = pilotInput(), S = PLAYER; locoSoldier(S, 0, dt); PD.bat -= dt;
+  PD.yaw -= I.rx * dt * 1.9; const c = Math.cos(PD.yaw), s = Math.sin(PD.yaw), vmax = 11, k = Math.min(1, dt * 2.2);
+  const tx = (c * I.mz - s * I.mx) * vmax, tz = (s * I.mz + c * I.mx) * vmax; PD.vx += (tx - PD.vx) * k; PD.vz += (tz - PD.vz) * k; PD.vy += (-I.ry * 4.5 - PD.vy) * Math.min(1, dt * 3);
+  PD.x += PD.vx * dt; PD.z += PD.vz * dt; PD.y += PD.vy * dt;
+  const g = heightAt(PD.x, PD.z) + 1.2, top = Math.max(heightAt(PD.x, PD.z), BG0) + 70; if (PD.y < g) { PD.y = g; PD.vy = Math.max(0, PD.vy); } if (PD.y > top) { PD.y = top; PD.vy = Math.min(0, PD.vy); }
+  if (PD.x < -420 || PD.x > 260 || PD.z < -150 || PD.z > 200) { toast("Menzil sınırı", 1.2); PD.x = clamp(PD.x, -420, 260); PD.z = clamp(PD.z, -150, 200); }
+  DRONE.position.set(PD.x, PD.y, PD.z); DRONE.rotation.set(clamp(-(PD.vx * c + PD.vz * s) * .025, -.35, .35), -PD.yaw, clamp((-PD.vx * s + PD.vz * c) * .025, -.35, .35), "YXZ"); DRONE.visible = true;
+  // the gates: through the ones that stand (the frame's middle, close and low)
+  const n = gateN(); for (let i = 0; i < n; i++) { if (PD.gates.includes(i)) continue; const [gx, gz] = DGATES[i]; if (Math.hypot(PD.x - gx, PD.z - gz) < 2.4 && PD.y < heightAt(gx, gz) + 4.2) { PD.gates.push(i); toast(`KAPI ${i + 1} ✓ · ${PD.gates.length}/${n}`, 1.4); shot("beep", .3, 1.4);
+      if (PD.gates.length >= n && n >= 3 && !PD.done) { PD.done = true; GM.droneShow = true; satAdd(2, "dronla bütün kapılardan geçtin"); toast("🛸 DRONE GÖSTERİSİ · bütün kapılar geçildi!", 3); } } }
+  if (PD.bat <= 0) { toast("Dronun pili bitti · iniyor", 2.4); pilotEnd(); return; }
+  if (PD.bat < 20 && PD.bat + dt >= 20) toast("Dron pili %15 · 20 saniye", 2);
+  PILOT.t += dt; }
+const PDV = new THREE.Vector3(), PDL = new THREE.Vector3();
+function droneCam(dt) { const c = Math.cos(PD.yaw), s = Math.sin(PD.yaw);
+  PDV.set(PD.x - c * 4.2, PD.y + 1.6, PD.z - s * 4.2); const gy = heightAt(PDV.x, PDV.z) + .6; if (PDV.y < gy) PDV.y = gy;
+  cam.position.lerp(PDV, camSnap ? 1 : Math.min(1, dt * 4)); PDL.set(PD.x + c * 4, PD.y - .3, PD.z + s * 4);
+  if (!cam.userData.pl) cam.userData.pl = new THREE.Vector3().copy(PDL); const l = cam.userData.pl; l.lerp(PDL, camSnap ? 1 : Math.min(1, dt * 5)); cam.lookAt(l); camSnap = false;
+  if (cam.fov !== 62) { cam.fov = 62; cam.near = .1; cam.updateProjectionMatrix(); } }
+
+// ---------------- both ----------------
+function pilotAct() { if (PILOT.mode === "crane") craneAct(); }
+function pilotEnd() { const m = PILOT.mode; if (!m) return; PILOT.mode = null; cam.userData.pl = null;
+  if (m === "crane") { if (PC.k >= 0) { const k = PC.k; BPART["c" + bKind(k)].visible = false; const sk = BPART["s" + k]; if (sk) sk.visible = true; PC.k = -1; CR.k = -1; bnkVisuals(); toast("Korugan istife geri kondu", 1.8); } CR.tp = null; CR.hold = Math.max(CR.hold, 2); }
+  else { DRONE.pilot = false; DRONE.hideT = Math.max(DRONE.hideT, 1); }
+  camSnap = true; CAM.pitch = .3; CAM.dist = 4.6; pilotBtns(); updCtx(); }
+function pilotFrame(dt) { if (!running) return; if (!pilotFree() && PILOT.mode) { pilotEnd(); return; } if (PILOT.mode === "crane") craneFrame2(dt); else if (PILOT.mode === "drone") droneFrame(dt); }
+// into the game's loops: the walking (frozen while you fly or lift), the camera, E as the hook
+const _autoFrame2 = autoFrame; autoFrame = function (dt) { if (PILOT.mode) { pilotFrame(dt); return true; } return _autoFrame2(dt); };
+const _cineFrame2 = cineFrame; cineFrame = function (dt) { if (PILOT.mode === "crane") { craneCam(dt); marker.visible = false; return true; } if (PILOT.mode === "drone") { droneCam(dt); marker.visible = false; return true; } return _cineFrame2(dt); };
+const _keyE2 = keyE; keyE = function () { if (PILOT.mode === "crane") { craneAct(); return; } if (PILOT.mode === "drone") { pilotEnd(); return; } _keyE2(); };
+const _updCtx2 = updCtx; updCtx = function () { _updCtx2(); if (PILOT.mode) pilotBtns(); };
+window.__hs.pilot = PILOT; window.__hs.pc = PC; window.__hs.pd = PD; window.__hs.craneStart = craneStart; window.__hs.droneStart = droneStart; window.__hs.pilotEnd = pilotEnd; window.__hs.pilotAct = pilotAct;
+
+;(window.__INIT || (window.__INIT = [])).push(["pilot", performance.now()]);
 
 // ======================= KABİN: the excavator from the operator's seat — the boom out front, two joysticks at the bottom of the screen
 // with gloved hands on them that move with what you press (drawn over the scene after it, so the cab never cuts into them) =======================

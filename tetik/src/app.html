@@ -46,6 +46,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 #v-oturum .ph .bk{justify-self:start;width:52px}
 #v-oturum .ph .rt .bk{width:40px}
 #sessConn{white-space:nowrap;font-size:12px;cursor:pointer}
+@media (max-width:380px){#v-oturum .ph .logo{font-size:16px;gap:5px}#v-oturum .ph .logo svg{width:20px;height:20px}.mx-seg.mode button svg{display:none}.mx-seg.mode button{font-size:12px}}
 #sessConn .dot{margin-right:5px}
 .logo{display:flex;align-items:center;justify-content:center;gap:7px;font-family:var(--logo);font-weight:700;letter-spacing:.12em;font-size:19px}
 .logo svg{width:24px;height:24px;color:var(--red2)}
@@ -309,7 +310,7 @@ td.m{font-family:var(--mono)}
 .splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 38%,#3a3a3a 0%,#1e1e1e 70%);transition:opacity .4s ease;padding:24px}
 .splash.out{opacity:0;pointer-events:none}
 .splash .sp-logo{width:150px;height:150px;color:var(--red2)}
-.splash .sp-name{font-family:var(--logo);font-weight:700;font-size:40px;letter-spacing:.12em;padding-left:.12em;line-height:1;margin-top:-6px}
+.splash .sp-name{font-family:var(--logo);font-weight:700;font-size:min(40px,9.6vw);letter-spacing:.12em;padding-left:.12em;line-height:1;margin-top:-6px;white-space:nowrap}
 .splash .sp-sub{font-size:13px;color:var(--muted);letter-spacing:.04em;margin-bottom:28px}
 .splash .sp-go{min-width:200px;height:48px;background:var(--red);border:0;border-radius:2px;color:#fff;font-size:18px;text-transform:uppercase;letter-spacing:.02em}
 .splash .sp-go:disabled{opacity:.7}
@@ -1089,7 +1090,7 @@ function connState(){
   return {k:"bad",t:"BAĞLI DEĞİL"};
 }
 function refreshChip(){
-  const c=$("sessConn"); if(c){ const s=connState(); const h=`<span class="dot ${s.k}"></span>${esc(s.t)}`; if(c._h!==h){c._h=h;c.innerHTML=h;} }
+  const c=$("sessConn"); if(c){ const s=connState(); const h=`<span class="dot ${s.k}"></span>${s.k==="ok"||source==="demo"?esc(s.t):`<span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">${esc(s.t)}</span>`}`; if(c._h!==h){c._h=h;c.innerHTML=h;} }
   updateSrcCard();
 }
 function sensorPaired(){ return !!S.lastSensor; }
@@ -2800,7 +2801,7 @@ function hideSplash(){ const sp=$("splash"); if(!sp||sp.hidden||sp.classList.con
 /* --- adres işareti (#...) ile doğrudan sayfa açma: kısayollar ve Android testleri */
 function openFromHash(){
   const h=(location.hash||"").replace(/^#/,""); if(!h) return;
-  hideSplash();
+  hideSplash(); closeSheet();
   const p=h.split("/");
   try{
     if(p[0]==="ayarlar") openSettings(SET_T[p[1]]?p[1]:null);

@@ -149,6 +149,7 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     const { ctx, page, errs } = await newPage(browser);
     await connect(page); await sleep(1500);
     await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(600);
+    await page.click('#sbDevBox summary'); await sleep(200);                 // "Sensör cihazı" bölümünü aç
     const has = await page.evaluate(() => !!document.getElementById('dvBri'));
     check(has, 'Sensör cihazı ayarları görünüyor (yazılım 2)');
     await page.evaluate(() => { const r = document.getElementById('dvBri'); r.value = '80'; r.dispatchEvent(new Event('input', { bubbles: true })); });

@@ -181,7 +181,7 @@ const WEAK = { spike: 0.3 };                             // eşik 0,5 g; 0,45 ×
     await page.evaluate(() => window.__hisar.openSettings('algilama')); await sleep(600);
     const ui = await page.evaluate(() => ({ seg: Array.from(document.querySelectorAll('#sMic button')).map(b => b.textContent + ':' + b.getAttribute('aria-pressed')),
       note: document.getElementById('micNote').textContent, val: document.getElementById('sVal').textContent, thr: !document.getElementById('sThr').hidden,
-      desc: document.getElementById('v-ayarlar').textContent.includes('Mikrofon desteği') }));
+      desc: !!document.querySelector('#v-ayarlar [data-info="mik"]') && /Mikrofon/.test(document.getElementById('v-ayarlar').textContent) }));
     check(ui.desc && JSON.stringify(ui.seg) === JSON.stringify(['Kapalı:false', 'Yardımcı:true', 'Sıkı:false']), 'Mikrofon kartı: Kapalı / Yardımcı (seçili) / Sıkı', ui.seg);
     check(/çalışıyor/.test(ui.note) && /^\d+ dB$/.test(ui.val) && ui.thr, 'Durum "Mikrofon çalışıyor", ses göstergesi dB gösteriyor, tık çizgisi var', ui);
     const h = await head(page);

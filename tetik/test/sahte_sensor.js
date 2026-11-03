@@ -124,10 +124,13 @@
   F.shots = [];
   F.addShot = (seq, o) => { F.shots.push(Object.assign({ seq, dx: 0, dy: 0, spike: 3, live: false, tilt: 0, click: 72, clickAt: 0 }, o)); };
   F.sounds = [];                                   // shotsuz sesler: { seq, db }
+  F.moves = [];                                    // jiroskop hareketi: { seq, n, om } (çekiş, yön testi)
+  F.addMove = (seq, n, om) => { F.moves.push({ seq, n, om }); };
   F.motion = seq => {
     let acc = [0, 0, 1], om = [0.4, -0.3, 0.2], jerk = 0.02;
     let snd = F.noiseDb + (((seq * 2654435761) >>> 0) % 7) * 0.5 - 1.5;          // oda gürültüsü (belirlenebilir)
     for (const x of F.sounds) if (seq === x.seq) snd = x.db;
+    for (const m of F.moves) if (seq >= m.seq && seq < m.seq + m.n) om = m.om;
     for (const s of F.shots) {
       const d = seq - s.seq;
       if (s.tilt && d >= -500 && d <= 150) { const a = s.tilt * Math.PI / 180; acc = [Math.sin(a), 0, Math.cos(a)]; }

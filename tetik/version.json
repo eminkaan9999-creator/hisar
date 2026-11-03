@@ -1,1 +1,1 @@
-{"v": 10, "not": "iPhone'da Safari'den açınca sensöre bağlanmak için Bluefy rehberi eklendi.", "apk": true}
+{"v": 11, "not": "Nişan hatası teşhisi iyileştirildi: tetik anındaki hareket nişan titremesi düzeyindeyse artık rastgele tetik hatası değil, dengesiz tutuş söyleniyor.", "apk": true}

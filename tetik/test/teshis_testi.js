@@ -59,6 +59,13 @@ const mirror = h => (12 - h) % 12 || 12;
     out.misc.gezRifle = k({ sc: 90, ho: 0.12, tr: 0.05 }, { weapon: 'rifle' }); out.misc.gezSmall = k({ sc: 90, ho: 0.12, tr: 0.05 });
     out.misc.takip = k({ sc: 90, po: 0.5, tr: 0.1 }); out.misc.takipLive = k({ sc: 90, po: 0.5, tr: 0.1 }, { mode: 'gercek' }); out.misc.takipSmall = k({ sc: 90, po: 0.3, tr: 0.1 });
     out.misc.max3 = k({ sc: 40, h: 7, ca: 4, ho: 0.5, tr: 0.2, po: 1 });
+    // tetik penceresindeki hareket titreme düzeyinde mi (wv: tutuşta 150 ms'lik tipik hareket)
+    out.misc.titr = k({ sc: 60, h: 7, dx: -0.05, dy: -0.05, wv: 0.08 });          // 0,07° hareket, titreme 0,08° → tetik hatası değil
+    out.misc.net = k({ sc: 60, h: 7, dx: -0.15, dy: -0.15, wv: 0.08 });           // 0,21° hareket, titreme 0,08° → tetik hatası
+    out.misc.sinir = [k({ sc: 60, h: 7, dx: -0.1, dy: -0.1, wv: 0.0808 }), k({ sc: 60, h: 7, dx: -0.1, dy: -0.1, wv: 0.0809 })];   // eşik 1,75×
+    out.misc.taban = k({ sc: 80, h: 7, dx: -0.015, dy: -0.015, wv: 0.001 });      // titreme yok ama hareket önemsiz (<0,1×ölçek)
+    out.misc.titrSpeed = k({ sc: 60, h: 7, dx: -0.05, dy: -0.05, wv: 0.08 }, { drill: 'zamanlayici' });
+    out.misc.eskiKayit = k({ sc: 60, h: 7, dx: -0.05, dy: -0.05 });               // eski kayıt: wv yok → saat yönü kullanılır
     for (const v of Object.values(out.misc)) v.forEach(x => out.seen.add(x));
     out.seen = [...out.seen];
     out.allIds = Object.keys(H.CAUSES);
@@ -84,6 +91,11 @@ const mirror = h => (12 - h) % 12 || 12;
   check(R.misc.gezRifle.includes('gezinme') && !R.misc.gezSmall.includes('gezinme'), 'Gezinme eşiği tüfekte daha sıkı (0,12° tüfekte hata, tabancada değil)');
   check(R.misc.takip.includes('takip') && !R.misc.takipLive.includes('takip') && !R.misc.takipSmall.includes('takip'), 'Takibi bırakma: sadece kuru tetikte ve belirgin olduğunda');
   check(R.misc.max3.length === 3, 'Bir atışta en çok 3 neden gösterilir', R.misc.max3);
+  check(R.misc.titr[0] === 'gezinme' && !R.misc.titr.includes('tokatlama'), 'Tetik anındaki hareket titreme düzeyindeyse tetik hatası değil, dengesiz tutuş söylenir', R.misc.titr);
+  check(JSON.stringify(R.misc.net) === JSON.stringify(['tokatlama', 'bilek_asagi']), 'Hareket titremenin belirgin üstündeyse saat yönüne göre tetik hatası söylenir', R.misc.net);
+  check(R.misc.sinir[0][0] === 'tokatlama' && R.misc.sinir[1][0] === 'gezinme', 'Ayırma eşiği: hareket titremenin 1,75 katı', R.misc.sinir);
+  check(R.misc.taban[0] === 'gezinme', 'Önemsiz küçüklükteki hareketten yön çıkarılmaz', R.misc.taban);
+  check(R.misc.titrSpeed[0] === 'tokatlama' && R.misc.eskiKayit[0] === 'tokatlama', 'Hızlı alıştırmalarda ve titreme ölçüsü olmayan eski kayıtlarda saat yönü kullanılır', [R.misc.titrSpeed, R.misc.eskiKayit]);
 
   section('Kapsam ve içerik');
   const missing = R.allIds.filter(id => !R.seen.includes(id));

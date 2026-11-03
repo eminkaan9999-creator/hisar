@@ -22,6 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Uygulama içi güncelleme testi (masaüstü)
+        run: bash tetik/android/test/pagestore_test.sh
+
       - name: APK derle
         run: |
           set -o pipefail

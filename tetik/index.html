@@ -476,7 +476,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=11;
+const VER=12;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -484,6 +484,8 @@ const HOSTED_URL="https://eminkaan9999-creator.github.io/hisar/tetik/";
 const HOSTED=/github\.io$/.test(location.hostname)||/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const APK=!!window.HisarNative;                       // telefon uygulaması (yerel Bluetooth köprüsü): Android ya da iPhone
 const IOS_APP=APK&&(()=>{ try{ return JSON.parse(window.HisarNative.info()).platform==="ios"; }catch(e){ return false; } })();   // iPhone uygulaması (Sideloadly ile kurulan)
+// uygulama yeni sayfa sürümünü internetten kendisi indirir (iPhone; Android 12 ve sonrası): APK yeniden kurulmaz
+const SELF_UPD=APK&&(IOS_APP||(()=>{ try{ return JSON.parse(window.HisarNative.info()).selfUpdate===true; }catch(e){ return false; } })());
 const UA=navigator.userAgent||"";
 const IS_IOS=/iPad|iPhone|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 const IS_ANDROID=/Android/i.test(UA);
@@ -2706,14 +2708,14 @@ function bindVeri(){
 function pgUygulama(){
   const ni=nativeInfo();
   const inst=IOS_APP?`<p>iPhone uygulaması olarak yüklü${ni&&ni.versionName?" (sürüm "+esc(ni.versionName)+")":""}. Sensöre telefonun kendi Bluetooth'uyla bağlanır, internetsiz çalışır. Apple'ın ücretsiz hesap izni 7 günde bir laptoptaki Sideloadly ile yenilenir.</p>`
-    :APK?`<p>Android uygulaması olarak yüklü${ni&&ni.versionName?" (sürüm "+esc(ni.versionName)+")":""}. Sensöre telefonun kendi Bluetooth'uyla bağlanır, internetsiz çalışır.</p>`
+    :APK?`<p>Android uygulaması olarak yüklü${ni&&ni.versionName?" (sürüm "+esc(ni.versionName)+")":""}. Sensöre telefonun kendi Bluetooth'uyla bağlanır, internetsiz çalışır.${SELF_UPD?" Yeni sürümler uygulamanın içinden internetle iner; APK'yı yeniden kurman gerekmez.":""}</p>`
     :IS_IOS?`<p>Ana ekrana eklemek için Safari'de <b>Paylaş</b> → <b>Ana Ekrana Ekle</b>. Bluetooth sensörü için uygulamayı <b>Bluefy</b> tarayıcısında aç; Apple, Safari'de Bluetooth'a izin vermiyor.</p>`
     :IS_ANDROID&&!apkReady?`<p>Chrome'da bu sayfayı aç, sağ üstteki ⋮ menüsünden <b>Uygulamayı yükle</b>'ye bas. Ana ekranda simgesi olur, internetsiz de açılır.</p>`
     :IS_ANDROID?`<p>Önerilen: <b>Android uygulaması</b>. Sensöre en kararlı bağlantıyı o kurar ve internetsiz çalışır.</p><a class="btn primary" href="${APK_URL}" target="_blank" rel="noopener">Android uygulamasını indir (APK)</a><p class="note">İndirince dosyayı aç ve <b>Yükle</b>'ye bas. Telefon izin isterse "Bu kaynaktan yüklemeye izin ver"i aç. Alternatif: Chrome menüsünden <b>Uygulamayı yükle</b>.</p>`
     :`<p>Bilgisayarda Chrome ya da Edge adres çubuğundaki <b>yükle</b> simgesiyle uygulama olarak kurabilirsin.${apkReady?` Android telefon için: <a href="${APK_URL}" target="_blank" rel="noopener">Android uygulaması (APK)</a>.`:""}</p>`;
   return `<div class="card"><h2>HİSAR TETİK</h2><p>Sürüm ${VER}</p>
       <button class="btn primary" id="apUpd" ${updAvail?"":"hidden"}>Yeni sürümü yükle</button>
-      <p class="note" id="apUpdN">${updAvail?"Yeni sürüm var. "+esc(updNote):(HOSTED||APK)?(APK&&!IOS_APP?"Güncel. Yeni sürüm çıkınca indirmen istenir.":"Güncel. Yeni sürüm çıkınca uygulama kendini yeniler."):"Güncelleme denetimi uygulamanın kendi adresinde çalışır."}</p></div>
+      <p class="note" id="apUpdN">${updAvail?"Yeni sürüm var. "+esc(updNote):(HOSTED||APK)?(apkPrompt()?"Güncel. Yeni sürüm çıkınca indirmen istenir.":"Güncel. Yeni sürüm çıkınca uygulama kendini yeniler."):"Güncelleme denetimi uygulamanın kendi adresinde çalışır."}</p></div>
     <div class="card"><h2>Telefona yükle</h2>${inst}</div>
     <div class="card"><h2>Sensör yazılımı</h2><p>M5StickC Plus2'ye HİSAR sensör yazılımını yükler: bilgisayarda Chrome ya da Edge ve USB-C kablo gerekir.</p><a class="btn" href="${YUKLE_URL}" target="_blank" rel="noopener">Sensör yazılımını yükle</a></div>
     <div class="card"><h2>Hakkında</h2><p>HİSAR TETİK · sürüm ${VER}. Geliştirici: <b style="color:var(--fg)">Emin Kaan Boyacı</b>.</p><p>Sensör: M5StickC Plus2 (HISAR-SENSOR yazılımı) ya da WitMotion WT901BLE.</p>
@@ -2805,10 +2807,14 @@ function makeSample(){
 
 /* --- güncelleme ve çevrimdışı: yeni sürüm çıkınca uygulama kendini yeniler (Android uygulamasında indirme önerilir) */
 let updAvail=false, updNote="", pendingReload=false, updAsked=false;
+let apkNeeded=false;     // Android: yerel kod değişti (version.json "apkMin"), sayfa güncellemesi yetmez, yeni APK kurulmalı
+let updInstalled=false;  // yeni sayfa indirildi, yenilenince açılacak
+const apkPrompt=()=>APK&&!IOS_APP&&(!SELF_UPD||apkNeeded);   // güncelleme = APK indirip kurmak
 function nativeInfo(){ try{ return APK?JSON.parse(window.HisarNative.info()):null; }catch(e){ return null; } }
 function openExternal(u){ try{ if(APK&&window.HisarNative.openUrl){ window.HisarNative.openUrl(u); return; } }catch(e){} window.open(u,"_blank","noopener"); }
 function doUpdate(){
-  if(IOS_APP){ if(cur.run&&cur.run.active){ pendingReload=true; return; } pendingReload=false; toast("Yeni sürüm indiriliyor…");
+  if(updInstalled){ if(cur.run&&cur.run.active){ pendingReload=true; return; } pendingReload=false; location.reload(); return; }
+  if(SELF_UPD&&!apkNeeded){ if(cur.run&&cur.run.active){ pendingReload=true; return; } pendingReload=false; toast("Yeni sürüm indiriliyor…");
     try{ window.HisarNative.update(); }catch(e){ toast("Güncelleme başlatılamadı."); } return; }
   if(APK){ openExternal(APK_URL); toast("İndirilen dosyayı aç ve Güncelle'ye bas. Verilerin silinmez."); return; }
   if(cur.run&&cur.run.active){ pendingReload=true; return; }
@@ -2819,7 +2825,7 @@ function doUpdate(){
 }
 function askUpdate(){
   if(updAsked||(cur.run&&cur.run.active)||!$("sheet").hidden) return; updAsked=true;
-  openSheet("Yeni sürüm",`<p>${esc(updNote||"HİSAR TETİK'in yeni sürümü hazır.")}</p>${APK&&!IOS_APP?`<p class="note">İndirince dosyayı aç ve <b>Güncelle</b>'ye bas. Verilerin silinmez.</p>`:""}<button class="btn primary" id="uGo">${APK&&!IOS_APP?"Yeni sürümü indir":"Şimdi yenile"}</button><button class="btn" data-close>Sonra</button>`,
+  openSheet("Yeni sürüm",`<p>${esc(updNote||"HİSAR TETİK'in yeni sürümü hazır.")}</p>${apkPrompt()?`<p class="note">${apkNeeded?"Bu sürüm uygulamanın kendisini de yeniliyor; bir kez APK kurulması gerekiyor. ":""}İndirince dosyayı aç ve <b>Güncelle</b>'ye bas. Verilerin silinmez.</p>`:""}<button class="btn primary" id="uGo">${apkPrompt()?"Yeni sürümü indir":"Şimdi yenile"}</button><button class="btn" data-close>Sonra</button>`,
     b=>{ b.querySelector("#uGo").onclick=()=>{ closeSheet(); doUpdate(); }; });
 }
 function initPlatform(){
@@ -2829,8 +2835,10 @@ function initPlatform(){
   // auto: açılışta ve uygulamaya geri dönülünce yeni sürüm varsa kendiliğinden yenile (aynı sürüm için bir kez)
   const check=async(auto)=>{try{const r=await fetch(base+"version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();
     if(!!j.apk!==apkReady){apkReady=!!j.apk;if(setPage==="uygulama")renderSettings();}
-    if(+j.v>VER){ updAvail=true; updNote=j.not||"";
-      if(APK&&!IOS_APP){ askUpdate(); return; }
+    // Android uygulaması: yerel kısmı version.json'daki "apkMin"den eskiyse sayfa güncellemesi yetmez, yeni APK gerekir
+    if(APK&&!IOS_APP&&SELF_UPD){ const ni=nativeInfo(); apkNeeded=(+j.apkMin||0)>(ni&&+ni.versionCode||0); }
+    if(+j.v>VER||apkNeeded){ updAvail=true; updNote=j.not||"";
+      if(apkPrompt()){ askUpdate(); return; }
       const k="tetikYenile"+j.v; let tried=false; try{tried=sessionStorage.getItem(k)==="1";}catch(e){}
       if(auto&&!tried){ try{sessionStorage.setItem(k,"1");}catch(e){} doUpdate(); } else askUpdate(); } }catch(e){}};
   check(true); setInterval(()=>check(false),(APK?60:10)*60*1000); document.addEventListener("visibilitychange",()=>{if(!document.hidden)check(true);});
@@ -2841,6 +2849,8 @@ window.__hisarBack=()=>{ if(!$("sheet").hidden){closeSheet();return true;} if(sp
   if(curView==="oturum"){ $("sessBack").click(); return true; }
   if(curView!=="alistirma"){showView("alistirma");return true;} return false; };
 window.__hisarSaved=(ok,name)=>toast(ok?(name||"Dosya")+" kaydedildi.":"Dosya kaydedilmedi.");
+// yerel kod yeni sayfayı kurdu (Android): süren oturum yoksa hemen, varsa oturum bitince yenilenir
+window.__hisarUpdateReady=v=>{ updInstalled=true; updAvail=true; if(cur.run&&cur.run.active){ pendingReload=true; return; } pendingReload=false; location.reload(); };
 window.__hisarUpdateFailed=msg=>toast("Yeni sürüm indirilemedi"+(msg?" ("+String(msg).slice(0,80)+")":"")+". İnternet bağlantısını kontrol et.");
 document.addEventListener("visibilitychange",()=>{const r=cur.run;if(!document.hidden&&r&&r.active){try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>{r.wake=w;}).catch(()=>{});}catch(e){}}});
 

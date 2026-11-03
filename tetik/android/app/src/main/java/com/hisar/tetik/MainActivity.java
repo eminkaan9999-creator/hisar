@@ -47,7 +47,8 @@ import java.util.Map;
 /**
  * HİSAR TETİK Android uygulaması.
  * Uygulamanın kendisi (HTML) APK içindedir ve internetsiz çalışır; "https://appassets.androidplatform.net"
- * adresinden sunulur (güvenli bağlam). Sensör, telefonun kendi Bluetooth'uyla bağlanır (Ble.java),
+ * adresinden sunulur (güvenli bağlam). Yeni sayfa sürümleri uygulamanın içinden internetle iner (PageStore.java),
+ * APK'yı yeniden kurmak gerekmez. Sensör, telefonun kendi Bluetooth'uyla bağlanır (Ble.java),
  * sayfadaki Web Bluetooth çağrıları bridge.js üzerinden buraya gelir.
  */
 public class MainActivity extends Activity {
@@ -60,6 +61,7 @@ public class MainActivity extends Activity {
     WebView web;
     FrameLayout root;
     Ble ble;
+    PageStore pages;
     final Handler ui = new Handler(Looper.getMainLooper());
     ValueCallback<Uri[]> fileCb;
     String pendingName, pendingText;
@@ -90,6 +92,7 @@ public class MainActivity extends Activity {
         s.setTextZoom(100);
         s.setUserAgentString(s.getUserAgentString() + " HisarTetikAndroid/" + versionName());
 
+        pages = new PageStore(this);
         ble = new Ble(this, this::js);
         web.addJavascriptInterface(new Native(), "HisarNative");
         web.setWebViewClient(new Client());
@@ -100,6 +103,7 @@ public class MainActivity extends Activity {
         } else {
             web.loadUrl(startUrl(getIntent()));
         }
+        if (getIntent() != null && getIntent().getBooleanExtra("guncelle", false)) runUpdate(true);
         if (Build.VERSION.SDK_INT >= 33) {
             backCb = this::onBack;
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, backCb);
@@ -117,6 +121,20 @@ public class MainActivity extends Activity {
         super.onNewIntent(i);
         String p = i.getStringExtra("sayfa");
         if (p != null && p.matches("[a-z0-9/_-]{1,60}")) js("location.hash=" + JSONObject.quote(p));
+        if (i.getBooleanExtra("guncelle", false)) runUpdate(true);
+    }
+
+    /** HisarNative.update() (ve emülatör testi için "guncelle" ekstrası): sayfanın yeni sürümü indirilip kurulur,
+     *  sonra sayfa aynı adresten yenilenir (süren oturum varsa sayfa oturum bitince yenilenir). */
+    void runUpdate(boolean force) {
+        pages.update(force, new PageStore.Done() {
+            @Override public void ok(int newVer, int oldVer) {
+                js("window.__hisarUpdateReady?window.__hisarUpdateReady(" + newVer + "):location.reload()");
+            }
+            @Override public void fail(String msg) {
+                js("window.__hisarUpdateFailed&&window.__hisarUpdateFailed(" + JSONObject.quote(msg) + ")");
+            }
+        });
     }
 
     /** Sistem çubukları sayfanın üstüne binmesin: kenar boşlukları yerel olarak ayrılır. */
@@ -259,7 +277,7 @@ public class MainActivity extends Activity {
             Map<String, String> h = new HashMap<>();
             h.put("Cache-Control", "no-cache");
             try {
-                InputStream in = getAssets().open("www" + path);
+                InputStream in = path.equals("/index.html") ? pages.open() : getAssets().open("www" + path);
                 String m = mime(path);
                 WebResourceResponse res = new WebResourceResponse(m, m.startsWith("text/") || m.endsWith("javascript") || m.endsWith("json") ? "utf-8" : null, in);
                 res.setResponseHeaders(h);
@@ -314,8 +332,12 @@ public class MainActivity extends Activity {
         public String info() {
             JSONObject o = new JSONObject();
             try {
+                o.put("platform", "android");
                 o.put("versionName", versionName());
                 o.put("versionCode", versionCode());
+                o.put("selfUpdate", true);                 // sayfa uygulama içinden güncellenir (HisarNative.update)
+                o.put("page", pages.pageVer());
+                o.put("pageBundled", pages.bundledVer);
                 o.put("sdk", Build.VERSION.SDK_INT);
                 o.put("model", Build.MANUFACTURER + " " + Build.MODEL);
             } catch (Exception ignored) { }
@@ -324,6 +346,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void openUrl(String url) { ui.post(() -> openExternal(url)); }
+
+        /** Sayfanın yeni sürümünü GitHub Pages'ten indirir ve kurar (APK yeniden kurulmaz). */
+        @JavascriptInterface
+        public void update() { ui.post(() -> runUpdate(false)); }
 
         @JavascriptInterface
         public void exitApp() { ui.post(() -> moveTaskToBack(true)); }

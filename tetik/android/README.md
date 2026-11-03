@@ -1,7 +1,8 @@
 # HİSAR TETİK – Android uygulaması
 
 Telefona kurulan uygulama. Sayfanın kendisi APK'nın içindedir (internetsiz çalışır);
-sensöre telefonun kendi Bluetooth'uyla bağlanır.
+sensöre telefonun kendi Bluetooth'uyla bağlanır. Yeni sürümler (sürüm 12'den itibaren) uygulamanın içinden
+internetle iner, APK'yı yeniden kurmak gerekmez.
 
 **İndir:** https://github.com/eminkaan9999-creator/hisar/releases/download/tetik-android/HisarTetik.apk
 (İndirince dosyayı aç, "Yükle"ye bas. Telefon sorarsa "Bu kaynaktan yüklemeye izin ver"i aç.)
@@ -9,6 +10,12 @@ sensöre telefonun kendi Bluetooth'uyla bağlanır.
 ## Nasıl çalışır
 - `MainActivity.java`: Sayfayı `https://appassets.androidplatform.net/` adresinden sunar (güvenli bağlam),
   sistem çubuklarına göre kenar boşluğu bırakır, geri tuşunu sayfaya sorar, dosya kaydetme ve rapor paylaşma.
+- `PageStore.java`: Uygulama içi güncelleme. Sayfa `version.json`'da daha yeni bir sürüm görünce `HisarNative.update()`
+  çağırır; Android sayfası (`tetik/apk/index.html`, build.py yazar) GitHub Pages'ten indirilir, denetlenir
+  (`const VER=`, `bridge.js`, tam dosya, sürüm yüklüden eski olamaz) ve `files/www/index.html`'ye atomik yazılır.
+  Adres değişmediği için localStorage'daki geçmiş korunur. Yerel kod değiştiğinde `version.json`'daki `apkMin`
+  (sürüm kodu, ör. 1200) artırılır: daha eski uygulamalar sayfa yerine yeni APK'yı indirmeyi önerir.
+  Masaüstü testi: `bash tetik/android/test/pagestore_test.sh` (JDK yeter).
 - `Ble.java`: Sensör seçici (tarama), bağlanma (MTU 185, yüksek öncelikli bağlantı, Android'in 133 hatasında
   yeniden deneme), sıralı GATT işlemleri, bildirimleri toplu olarak sayfaya iletme, son sensörü hatırlama.
 - `assets/www/bridge.js`: Sayfanın kullandığı Web Bluetooth arayüzünü `HisarNative` üzerinden `Ble.java`'ya

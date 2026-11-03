@@ -1,0 +1,106 @@
+# HİSAR TETİK iPhone uygulaması: derle (imzasız IPA), simülatörde dene, GitHub Releases'e yükle.
+# İndirme adresi: https://github.com/eminkaan9999-creator/hisar/releases/download/tetik-ios/HisarTetik.ipa
+# Kurulum (Windows'ta Sideloadly ile): tetik/ios/README.md
+name: Tetik iOS
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, tetik-ios]
+    paths:
+      - 'tetik/src/**'
+      - 'tetik/index.html'
+      - 'tetik/ios/**'
+      - 'tetik/android/app/src/main/assets/www/**'
+      - 'tetik/android/yazitipi.py'
+      - 'tetik/build.py'
+      - '.github/workflows/tetik-ios.yml'
+permissions:
+  contents: write
+concurrency:
+  group: tetik-ios
+  cancel-in-progress: true
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Araçlar
+        run: |
+          xcodebuild -version
+          HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install xcodegen
+          xcodegen --version
+
+      - name: Sayfa dosyaları ve Xcode projesi
+        run: |
+          set -e
+          bash tetik/ios/hazirla.sh
+          cd tetik/ios && xcodegen generate
+          V=$(grep -o 'const VER=[0-9]*' ../index.html | head -1 | grep -o '[0-9]*$')
+          echo "V=$V" >> "$GITHUB_ENV"
+
+      - name: IPA derle (imzasız)
+        run: |
+          set -eo pipefail
+          cd tetik/ios
+          mkdir -p build
+          xcodebuild -quiet -project HisarTetik.xcodeproj -scheme HisarTetik -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/dd \
+            MARKETING_VERSION="$V.0" CURRENT_PROJECT_VERSION="$((V * 100))" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build/ipa.log
+          APP=build/dd/Build/Products/Release-iphoneos/HisarTetik.app
+          test -x "$APP/HisarTetik"
+          rm -rf build/Payload build/HisarTetik.ipa
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          (cd build && zip -qry HisarTetik.ipa Payload)
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' -c 'Print :CFBundleDisplayName' \
+            -c 'Print :CFBundleShortVersionString' -c 'Print :CFBundleVersion' -c 'Print :MinimumOSVersion' "$APP/Info.plist"
+          ls "$APP" "$APP/www" "$APP/www/fonts" | head -60
+          echo "::notice title=ipa::$(stat -f %z build/HisarTetik.ipa) bayt, sürüm $V.0"
+
+      - name: Simülatör için derle
+        run: |
+          set -eo pipefail
+          cd tetik/ios
+          xcodebuild -quiet -project HisarTetik.xcodeproj -scheme HisarTetik -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/dd \
+            MARKETING_VERSION="$V.0" CURRENT_PROJECT_VERSION="$((V * 100))" \
+            build 2>&1 | tee build/sim.log
+
+      - name: Derleme hatasını göster
+        if: failure()
+        run: |
+          grep -h -E "error:|warning: .*\.swift" tetik/ios/build/*.log 2>/dev/null | head -40 | sed 's/^/::error::/' || true
+
+      - name: Simülatörde dene
+        run: bash tetik/ios/sim_test.sh tetik/ios/build/dd/Build/Products/Release-iphonesimulator/HisarTetik.app
+
+      - name: Yayınla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          README="https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/tetik/ios/README.md"
+          NOTES="HİSAR TETİK iPhone uygulaması, sürüm $V. İmzasız IPA: Windows'ta Sideloadly ve ücretsiz Apple kimliğiyle iPhone'a yükleyin; imza 7 günde bir yenilenmeli. Kurulum adımları: $README · Kaynak: ${GITHUB_SHA::7}"
+          if gh release view tetik-ios >/dev/null 2>&1; then
+            gh release edit tetik-ios --title "HİSAR TETİK iPhone (sürüm $V)" --notes "$NOTES" --latest=false
+          else
+            gh release create tetik-ios --target "$GITHUB_SHA" --title "HİSAR TETİK iPhone (sürüm $V)" --notes "$NOTES" --latest=false
+          fi
+          gh release upload tetik-ios tetik/ios/build/HisarTetik.ipa --clobber
+          echo "::notice title=yayın::https://github.com/${GITHUB_REPOSITORY}/releases/download/tetik-ios/HisarTetik.ipa"
+
+      - name: Test çıktılarını kaydet (tetik-ios-ci dalı)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/ci && cp -r sim_out/* /tmp/ci/ 2>/dev/null || true
+          cp tetik/ios/build/*.log /tmp/ci/ 2>/dev/null || true
+          cd /tmp/ci && git init -q && git checkout -q -b tetik-ios-ci
+          git config user.name "hisar-ci"; git config user.email "hisar-ci@users.noreply.github.com"
+          git add -A && git commit -qm "iPhone test çıktıları ${GITHUB_SHA::7}" || exit 0
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" tetik-ios-ci

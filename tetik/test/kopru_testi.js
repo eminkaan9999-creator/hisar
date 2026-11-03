@@ -34,15 +34,16 @@ async function open(browser, opts = {}) {
     const { ctx, page, errs } = await open(browser);
     const env = await page.evaluate(() => ({ apk: !!window.HisarNative, bt: !!navigator.bluetooth && typeof navigator.bluetooth.requestDevice, wl: !!navigator.wakeLock, hn: !!window.__hn }));
     check(env.apk && env.bt === 'function' && env.wl && env.hn, 'Köprü yüklendi: navigator.bluetooth ve wakeLock yerel katmana bağlı', env);
-    await page.click('#srcSensor');
+    await page.evaluate(() => window.__hisar.selectSource('sensor', true));
     const ok = await waitFor(page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.ble.recv > 100, 8000);
     check(ok, 'Yerel seçiciyle bağlandı, ölçümler köprüden akıyor');
     const req = await nlog(page, 'bleRequest');
     check(req.length === 1 && /HISAR/.test(req[0][1]) && /0000ffe5/.test(req[0][1]), 'Seçiciye HİSAR filtreleri gitti');
     const w = await nlog(page, 'bleWrite'); const ev = await page.evaluate(() => window.__fake.events.filter(e => e[0] === 'yaz' || e[0] === 'abone').map(e => e[0]));
     check(w.length && w[0][1][0] === 7 && w[0][2] === true && ev.indexOf('yaz') < ev.indexOf('abone'), 'Akış başlangıç komutu (yanıtlı yazma) bildirimlerden önce gitti', { w: w.slice(0, 2), ev: ev.slice(0, 3) });
-    await sleep(2100);
-    const s = await page.evaluate(() => { const b = window.__hisar.ble; return { fw: b.fw, bat: b.bat, drops: b.drops, dup: b.dup, recv: b.recv, rate: +document.getElementById('rateNote').textContent.replace(/\D/g, '') }; });
+    await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(2100);
+    const s = await page.evaluate(() => { const b = window.__hisar.ble; return { fw: b.fw, bat: b.bat, drops: b.drops, dup: b.dup, recv: b.recv, rate: +document.getElementById('sbLossN').textContent.replace(/\D/g, '') }; });
+    await page.evaluate(() => window.__hisar.showView('alistirma'));
     check(s.fw === 2 && s.bat === 80 && s.drops === 0 && s.dup === 0 && s.rate >= 180 && s.rate <= 220, 'Durum ve ~200 ölçüm/sn, kayıp yok', s);
 
     section('Kopma ve kayıpsız devam (köprü üzerinden)');
@@ -112,10 +113,13 @@ async function open(browser, opts = {}) {
     const b1 = await page.evaluate(() => window.__hisarBack());
     const pg = await page.evaluate(() => window.__hisar.setPage);
     const b2 = await page.evaluate(() => window.__hisarBack());
+    const pg2 = await page.evaluate(() => window.__hisar.setPage);
     const b3 = await page.evaluate(() => window.__hisarBack());
-    check(b1 === true && pg === null && b2 === true && b3 === false, 'Geri tuşu: ayar sayfası → menü → ana sayfa → uygulamadan çık', { b1, pg, b2, b3 });
+    const v3 = await page.evaluate(() => window.__hisar.curView);
+    const b4 = await page.evaluate(() => window.__hisarBack());
+    check(b1 === true && pg === 'gelismis' && b2 === true && pg2 === null && b3 === true && v3 === 'alistirma' && b4 === false, 'Geri tuşu: Kalibrasyon → Gelişmiş Ayarlar → Ayarlar → Alıştırma → uygulamadan çık', { b1, pg, b2, pg2, b3, v3, b4 });
     await page.evaluate(() => window.__hisar.openSettings('uygulama')); await sleep(300);
-    const ap = await page.evaluate(() => document.getElementById('v-ayarlar').textContent);
+    const ap = await page.evaluate(() => document.getElementById('pgBody').textContent);
     check(/Android uygulaması olarak yüklü/.test(ap), 'Uygulama sayfası Android uygulamasını tanıyor');
     check(errs.length === 0, 'Sayfa hatası yok', errs);
     await ctx.close();
@@ -135,11 +139,11 @@ async function open(browser, opts = {}) {
   section('Seçiciden vazgeçme ve izin reddi');
   {
     const { ctx, page, errs } = await open(browser, { init: [FAKE, 'window.__fake.cancelChooser=true;', NATIVE] });
-    await page.click('#srcSensor'); await sleep(600);
+    await page.evaluate(() => window.__hisar.selectSource('sensor', true)); await sleep(600);
     const st = await page.evaluate(() => ({ st: window.__hisar.ble.st, msg: document.getElementById('srcStatus').textContent }));
     check(st.st === 'off' && /Sensör seçilmedi/.test(st.msg), 'Vazgeçince "Sensör seçilmedi" (NotFoundError köprüden geldi)', st);
     await page.evaluate(() => { window.HisarNative.bleRequest = (id) => setTimeout(() => window.__hn.err(id, 'NotAllowedError', 'Bluetooth izni verilmedi.'), 5); });
-    await page.click('#srcDemo'); await sleep(200); await page.click('#srcSensor'); await sleep(500);
+    await page.evaluate(() => window.__hisar.selectSource('demo', true)); await sleep(200); await page.evaluate(() => window.__hisar.selectSource('sensor', true)); await sleep(500);
     const msg = await page.evaluate(() => document.getElementById('srcStatus').textContent);
     check(/Yakındaki cihazlar/.test(msg), 'İzin reddinde Android için doğru yönlendirme', msg);
     check(errs.length === 0, 'Sayfa hatası yok', errs);

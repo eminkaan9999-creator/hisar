@@ -12,7 +12,7 @@ async function setup(browser, { info = Object.assign({}, realInfo, { fw: 3 }), c
   const r = await openApp(browser, { port: PORT, init: [FAKE, 'window.__fake.fw=2;'] });      // eski yazılımlı sensör
   await r.page.route('**/firmware/ota.json*', rt => rt.fulfill({ contentType: 'application/json', body: JSON.stringify(info) }));
   if (corrupt) await r.page.route('**/firmware/' + realInfo.file + '*', async rt => { const b = fs.readFileSync(path.join(BIN, realInfo.file)); b[1000] ^= 0xFF; rt.fulfill({ contentType: 'application/octet-stream', body: b }); });
-  await r.page.click('#srcSensor');
+  await r.page.evaluate(() => window.__hisar.selectSource('sensor', true));
   await waitFor(r.page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.ble.fw === 2, 8000);
   await r.page.evaluate(() => window.__hisar.openSettings('baglanti'));
   await waitFor(r.page, () => !!document.getElementById('otaGo'), 5000);

@@ -32,7 +32,7 @@ function finish(name) {
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function openApp(browser, { port, url = '/tetik/', viewport = { width: 390, height: 844 }, init = [], storage = null, dsf = 1 } = {}) {
+async function openApp(browser, { port, url = '/tetik/', viewport = { width: 390, height: 844 }, init = [], storage = null, dsf = 1, keepSplash = false } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: dsf, serviceWorkers: 'block' });
   for (const s of init) await ctx.addInitScript(s);
   if (storage) await ctx.addInitScript(st => { try { for (const [k, v] of Object.entries(st)) localStorage.setItem(k, v); } catch (e) {} }, storage);
@@ -42,6 +42,8 @@ async function openApp(browser, { port, url = '/tetik/', viewport = { width: 390
   page.on('console', m => { if (m.type() === 'error' && !/fonts\.googleapis|ERR_|net::|Failed to load resource/.test(m.text())) errs.push('console: ' + m.text()); });
   await page.goto(`http://localhost:${port}${url}`);
   await page.waitForFunction(() => !!window.__hisar, null, { timeout: 15000 });
+  // açılış ekranı (BAĞLAN / BAĞLANTIYI ATLA): testler gerekmedikçe atlar
+  if (!keepSplash) await page.evaluate(() => { try { window.__hisar.hideSplash(); } catch (e) {} });
   return { ctx, page, errs };
 }
 

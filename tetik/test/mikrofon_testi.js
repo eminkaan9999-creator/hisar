@@ -13,7 +13,7 @@ const FAKE = fs.readFileSync(path.join(__dirname, 'sahte_sensor.js'), 'utf8');
 async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(fn, arg)) return true; await sleep(100); } return false; }
 async function connected(browser, init = []) {
   const r = await openApp(browser, { port: PORT, init: [FAKE, ...init] });
-  await r.page.click('#srcSensor');
+  await r.page.evaluate(() => window.__hisar.selectSource('sensor', true));
   await waitFor(r.page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.ble.recv > 200, 8000);
   await sleep(1800);                                     // hareketsiz: jiroskop kalibrasyonu, gürültü tabanı
   return r;
@@ -181,7 +181,7 @@ const WEAK = { spike: 0.3 };                             // eşik 0,5 g; 0,45 ×
     await page.evaluate(() => window.__hisar.openSettings('algilama')); await sleep(600);
     const ui = await page.evaluate(() => ({ seg: Array.from(document.querySelectorAll('#sMic button')).map(b => b.textContent + ':' + b.getAttribute('aria-pressed')),
       note: document.getElementById('micNote').textContent, val: document.getElementById('sVal').textContent, thr: !document.getElementById('sThr').hidden,
-      desc: !!document.querySelector('#v-ayarlar [data-info="mik"]') && /Mikrofon/.test(document.getElementById('v-ayarlar').textContent) }));
+      desc: !!document.querySelector('#pgBody [data-info="mik"]') && /Mikrofon/.test(document.getElementById('pgBody').textContent) }));
     check(ui.desc && JSON.stringify(ui.seg) === JSON.stringify(['Kapalı:false', 'Yardımcı:true', 'Sıkı:false']), 'Mikrofon kartı: Kapalı / Yardımcı (seçili) / Sıkı', ui.seg);
     check(/çalışıyor/.test(ui.note) && /^\d+ dB$/.test(ui.val) && ui.thr, 'Durum "Mikrofon çalışıyor", ses göstergesi dB gösteriyor, tık çizgisi var', ui);
     const h = await head(page);
@@ -209,14 +209,14 @@ const WEAK = { spike: 0.3 };                             // eşik 0,5 g; 0,45 ×
     check(await page.evaluate(() => window.__hisar.S.rawRec === true), 'Ayarlar › Veriler: ham kayıt açıldı');
     await page.evaluate(() => window.__hisar.showView('alistirma'));
     await run(page);
-    const tag = await page.evaluate(() => document.getElementById('sessSub').textContent);
+    const tag = await page.evaluate(() => document.getElementById('sessTags').textContent);
     check(/Ham kayıt/.test(tag), 'Oturum başlığında "● Ham kayıt" işareti', tag);
     const h = await head(page);
     await page.evaluate(h => { const F = window.__fake; F.addShot(h + 200, { spike: 3, dx: 0.1 }); F.addShot(h + 450, { spike: 0.3 }); F.addShot(h + 700, { spike: 3, dy: 0.2 }); }, h);
     await sleep(700 * 5 + 1400);
     await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1300);
     const sum = await page.evaluate(() => ({ btn: !!document.getElementById('sumRaw'), n: window.__hisar.cur.sess.shots.length, rn: window.__hisar.raw.n, on: window.__hisar.raw.on }));
-    check(sum.btn && sum.n === 3 && !sum.on && sum.rn > 900, 'Sonuç ekranında "Ham veri" düğmesi; kayıt durdu', sum);
+    check(sum.btn && sum.n === 3 && !sum.on && sum.rn > 900, 'Oturum özetinde "Ham veriyi paylaş" düğmesi; kayıt durdu', sum);
     await page.click('#sumRaw'); await sleep(300);
     const def = await page.evaluate(() => document.getElementById('rawReal').value);
     check(def === '3', 'Gerçek atış sayısı sorusu algılanan sayıyla dolu geliyor', def);

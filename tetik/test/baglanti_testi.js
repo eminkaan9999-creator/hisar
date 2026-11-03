@@ -11,9 +11,13 @@ const st = (page) => page.evaluate(() => { const b = window.__hisar.ble; return 
 const fake = (page, fn, arg) => page.evaluate(fn, arg);
 async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(fn, arg)) return true; await sleep(100); } return false; }
 async function connect(page) {
-  await page.click('#srcSensor');
+  // açılış ekranı açıksa BAĞLAN düğmesi, değilse (Ayarlar › Gelişmiş › Sensör'deki gibi) sensör seçimi
+  if (await page.evaluate(() => window.__hisar.splashOpen())) await page.click('#spConnect');
+  else await page.evaluate(() => window.__hisar.selectSource('sensor', true));
   return waitFor(page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.ble.recv > 50, 8000);
 }
+const sensorPage = async page => { await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(1300);
+  return page.evaluate(() => ({ bat: document.getElementById('sbBat').textContent, sig: document.getElementById('sbSig').textContent, rate: +document.getElementById('sbLossN').textContent.replace(/\D/g, ''), loss: document.getElementById('sbLoss').textContent })); };
 async function newPage(browser, opts = {}) { return openApp(browser, Object.assign({ port: PORT, init: [FAKE] }, opts)); }
 const statusText = page => page.evaluate(() => document.getElementById('srcStatus').textContent);
 
@@ -22,9 +26,13 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
 
   section('Bağlanma');
   {
-    const { ctx, page, errs } = await newPage(browser);
+    const { ctx, page, errs } = await newPage(browser, { keepSplash: true });
+    const sp0 = await page.evaluate(() => ({ open: window.__hisar.splashOpen(), btn: document.getElementById('spConnect').textContent, src: window.__hisar.source, sim: !!window.__hisar.sim }));
+    check(sp0.open && sp0.btn === 'Bağlan' && sp0.src === 'sensor' && !sp0.sim, 'Açılışta MantisX gibi BAĞLAN ekranı; kaynak sensör, sanal atıcı çalışmıyor', sp0);
     const ok = await connect(page);
-    check(ok, 'Sensör seçilip bağlanıyor, veri akıyor');
+    check(ok, 'BAĞLAN ile sensör seçilip bağlanıyor, veri akıyor');
+    await sleep(600);
+    check(!(await page.evaluate(() => window.__hisar.splashOpen())), 'Bağlanınca açılış ekranı kendiliğinden kapandı');
     const ev = await fake(page, () => window.__fake.events.filter(e => e[0] === 'yaz' || e[0] === 'abone').map(e => [e[0], e[2] || null]));
     const iw = ev.findIndex(e => e[0] === 'yaz' && e[1][0] === 7), is = ev.findIndex(e => e[0] === 'abone');
     check(iw >= 0 && is > iw && JSON.stringify(ev[iw][1]) === JSON.stringify([7, 0, 0, 0, 0, 0, 1]), 'Akış başlangıç komutu (canlı, ses verisi iste) bildirimler açılmadan önce yazılıyor', ev.slice(0, 4));
@@ -32,19 +40,19 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     check(JSON.stringify(f.filters.map(x => x.namePrefix || 'svc')) === JSON.stringify(['svc', 'HISAR', 'WT']), 'Sensör listesi HİSAR ve WitMotion sensörlerini gösterecek şekilde süzülüyor');
     await sleep(2200);
     const s = await st(page);
-    const chip = await page.evaluate(() => document.getElementById('srcChip').textContent);
-    const rate = await page.evaluate(() => +document.getElementById('rateNote').textContent.replace(/\D/g, ''));
+    await page.evaluate(() => window.__hisar.openDrill('serbest')); await sleep(1300);
+    const chip = await page.evaluate(() => document.getElementById('sessConn').textContent);
+    const sp = await sensorPage(page); const rate = sp.rate;
     check(s.v2 && s.fw === 3 && s.bat === 80 && s.rssi === -58, 'Durum okundu: yazılım 3, pil %80, sinyal −58 dBm', s);
     const mic = await page.evaluate(() => ({ mic: window.__hisar.ble.mic, snd: window.__hisar.ble.snd, db: window.__hisar.proc.sDb, on: window.__hisar.proc.micOn }));
     check(mic.mic && mic.snd && mic.db > 24 && mic.db < 32 && mic.on, 'Mikrofon biti okundu, sesli paketler geliyor, oda gürültüsü ~28 dB', mic);
-    check(/SENSÖR %80/.test(chip), 'Üst çubukta "SENSÖR %80"', chip);
+    check(/%80/.test(chip), 'Alıştırma ekranının başlığında pil "%80"', chip);
     check(rate >= 180 && rate <= 220, 'Saniyede ~200 ölçüm', rate);
     check(s.drops === 0 && s.dup === 0, 'Kayıp ve yineleme yok', s);
-    const link = await page.evaluate(() => document.getElementById('srcLinkTxt').textContent);
-    check(/−?-?58 dBm/.test(link) && /pil %80/.test(link), 'Ana ekranda sinyal ve pil satırı', link);
-    // sensör eşlendi: ana ekranda üçlü seçim yerine sensör kartı; bağlıyken Bağlan düğmesi yok
-    const card = await page.evaluate(() => ({ seg: document.getElementById('srcSeg').hidden, act: document.getElementById('srcAct').hidden, title: document.getElementById('srcTitle').textContent, last: window.__hisar.S.lastSensor }));
-    check(card.seg && card.act && card.title === 'Sensör' && card.last === 'HISAR-SENSOR', 'Eşlendikten sonra ana ekranda üçlü seçim gizli, başlık "Sensör", bağlıyken düğme yok', card);
+    check(/-58/.test(sp.sig) && /%80/.test(sp.bat) && /%0/.test(sp.loss), 'Gelişmiş Ayarlar › Sensör: sinyal −58, pil %80, kayıp %0', sp);
+    await page.evaluate(() => window.__hisar.showView('ayarlar')); await sleep(200);
+    const card = await page.evaluate(() => ({ md: document.getElementById('md-baglanti').textContent, last: window.__hisar.S.lastSensor }));
+    check(/Bağlı/.test(card.md) && /pil %80/.test(card.md) && /yazılım 3/.test(card.md) && card.last === 'HISAR-SENSOR', 'Ayarlar ana sayfasında "Gelişmiş ayarlar" satırı bağlantıyı gösteriyor; sensör eşlendi', card);
     // bağlıyken tekrar bağlanma isteği listeyi açmamalı, bağlantıyı bozmamalı
     await page.evaluate(() => window.__hisar.returnToSensor()); await sleep(300);
     check((await st(page)).st === 'bagli' && (await fake(page, () => window.__fake.requests)) === 1, 'Bağlıyken tekrar bağlan istemek listeyi açmıyor, bağlantı sürüyor');
@@ -67,9 +75,9 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     await fake(page, h => { window.__fake.addShot(h + 250, { dx: -0.3, dy: 0.1 }); }, h1);   // kopukken atış
     await sleep(600);
     const banner = await page.evaluate(() => { const b = document.getElementById('linkBanner'); return b.hidden ? '' : b.textContent; });
-    const chip = await page.evaluate(() => document.getElementById('srcChip').textContent);
+    const chip = await page.evaluate(() => document.getElementById('sessConn').textContent);
     check(/koptu/.test(banner) && /kaybolmayacak/.test(banner), 'Oturum ekranında kopma uyarısı: "ölçümler kaybolmayacak"', banner);
-    check(/BAĞLANIYOR/.test(chip), 'Üst çubuk "BAĞLANIYOR"', chip);
+    check(/BAĞLANIYOR/.test(chip), 'Oturum başlığında "BAĞLANIYOR"', chip);
     await sleep(1700);
     await fake(page, () => { window.__fake.inRange = true; });
     const back = await waitFor(page, () => window.__hisar.ble.st === 'bagli', 8000);
@@ -192,7 +200,7 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
   }
   {
     const { ctx, page, errs } = await newPage(browser, { init: [FAKE, 'window.__fake.inRange=false;'] });
-    await page.click('#srcSensor'); await sleep(2500);
+    await page.evaluate(() => window.__hisar.selectSource('sensor', true)); await sleep(2500);
     const txt = await statusText(page);
     check(/Sensör bekleniyor/.test(txt) && /açılınca bağlanır/.test(txt) && /deneme/.test(txt), 'Sensör kapalıyken: "Sensör bekleniyor; açılınca bağlanır … deneme"', txt);
     await fake(page, () => { window.__fake.inRange = true; });
@@ -203,9 +211,9 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
   }
   {
     const { ctx, page, errs } = await newPage(browser, { init: [FAKE, 'window.__fake.mtu=23;'] });
-    await connect(page); await sleep(4000);
+    await connect(page); await sleep(2800);
     const s = await st(page);
-    const rate = await page.evaluate(() => +document.getElementById('rateNote').textContent.replace(/\D/g, ''));
+    const rate = (await sensorPage(page)).rate;
     check(s.drops === 0 && rate >= 180, 'Küçük paket (MTU 23, paket başına 1 ölçüm): kayıpsız, ~200 ölçüm/sn', { drops: s.drops, rate });
     await ctx.close();
   }
@@ -232,10 +240,9 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     const meta = JSON.stringify({ v: 2, settings: { lastSource: 'demo', lastSensor: 'HISAR-SENSOR', autoConnect: true }, ids: [] });
     const { ctx, page, errs } = await newPage(browser, { init: [FAKE, 'window.__fake.allowGetDevices=true; window.__fake.inRange=false;'], storage: { 'hisarTetik.v2.meta': meta } });
     await sleep(1500);
-    const a = await page.evaluate(() => ({ src: window.__hisar.source, sim: !!window.__hisar.sim, chip: document.getElementById('srcChip').textContent, seg: document.getElementById('srcSeg').hidden,
-      title: document.getElementById('srcTitle').textContent, status: document.getElementById('srcStatus').textContent }));
-    check(a.src === 'sensor' && !a.sim && !/DENEME/.test(a.chip), 'Son kaynak Deneme olsa bile eşlenmiş sensör varken açılış sensörle (sanal atıcı çalışmıyor)', a);
-    check(a.seg && a.title === 'Sensör' && /HISAR-SENSOR/.test(a.status), 'Ana ekran: üçlü seçim yok, "Sensör" başlığı, durum sensör adını söylüyor', a);
+    const a = await page.evaluate(() => ({ src: window.__hisar.source, sim: !!window.__hisar.sim, btn: document.getElementById('spConnect').textContent, status: document.getElementById('srcStatus').textContent }));
+    check(a.src === 'sensor' && !a.sim, 'Son kaynak Deneme olsa bile açılış sensörle (sanal atıcı çalışmıyor)', a);
+    check(/HISAR-SENSOR/.test(a.status), 'Açılış ekranındaki durum sensör adını söylüyor', a);
     await page.evaluate(() => { window.__hisar.openDrill('serbest'); window.__hisar.startRun(); }); await sleep(200);
     const run = await page.evaluate(() => !!(window.__hisar.cur.run && window.__hisar.cur.run.active));
     check(!run, 'Sensör bağlı değilken alıştırma başlamıyor (sanal atış üretilmiyor)');
@@ -249,40 +256,42 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
   {
     // tarayıcı izinli cihaz vermiyor: "Bağlan" düğmesi, dokununca liste ve bağlantı
     const meta = JSON.stringify({ v: 2, settings: { lastSource: 'sensor', lastSensor: 'HISAR-SENSOR', autoConnect: true }, ids: [] });
-    const { ctx, page, errs } = await newPage(browser, { storage: { 'hisarTetik.v2.meta': meta } });
+    const { ctx, page, errs } = await newPage(browser, { storage: { 'hisarTetik.v2.meta': meta }, keepSplash: true });
     await sleep(1200);
-    const a = await page.evaluate(() => ({ src: window.__hisar.source, act: document.getElementById('srcAct').hidden, btn: document.getElementById('srcGo').textContent, status: document.getElementById('srcStatus').textContent }));
-    check(a.src === 'sensor' && !a.act && a.btn === 'Bağlan' && /Sensör bekleniyor/.test(a.status) && /Bağlan/.test(a.status), 'Otomatik bağlanma yoksa: "Sensör bekleniyor … Bağlan\'a dokun" ve Bağlan düğmesi', a);
-    await page.click('#srcGo');
+    const a = await page.evaluate(() => ({ src: window.__hisar.source, open: window.__hisar.splashOpen(), btn: document.getElementById('spConnect').textContent, status: document.getElementById('srcStatus').textContent }));
+    check(a.src === 'sensor' && a.open && a.btn === 'Bağlan' && /Sensör bekleniyor/.test(a.status) && /Bağlan/.test(a.status), 'Otomatik bağlanma yoksa açılış ekranı: "Sensör bekleniyor … Bağlan\'a dokun" ve BAĞLAN düğmesi', a);
+    await page.click('#spConnect');
     check(await waitFor(page, () => window.__hisar.ble.st === 'bagli', 6000), 'Bağlan\'a dokununca sensör seçilip bağlandı');
-    check(await page.evaluate(() => document.getElementById('srcAct').hidden), 'Bağlanınca düğme gizlendi');
+    await sleep(600);
+    check(!(await page.evaluate(() => window.__hisar.splashOpen())), 'Bağlanınca açılış ekranı kapandı');
     // Deneme modu Ayarlar'dan; deneme oturumu kaydedilmez; Sensöre dön listeyi açmadan bağlanır
     await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(300);
     await page.click('#altDemo'); await sleep(400);
-    const d = await page.evaluate(() => ({ src: window.__hisar.source, title: document.getElementById('srcTitle').textContent, btn: document.getElementById('srcGo').textContent, act: document.getElementById('srcAct').hidden, view: !document.getElementById('v-alistirma').hidden }));
-    check(d.src === 'demo' && d.title === 'Deneme modu' && !d.act && d.btn === 'Sensöre dön' && d.view, 'Ayarlar › Deneme modu: ana ekranda "Deneme modu" ve "Sensöre dön"', d);
+    const d = await page.evaluate(() => ({ src: window.__hisar.source, view: !document.getElementById('v-alistirma').hidden }));
+    check(d.src === 'demo' && d.view, 'Gelişmiş Ayarlar › Sensör › Deneme modu: kaynak deneme, Alıştırma sekmesine dönüldü', d);
     const n0 = await page.evaluate(() => window.__hisar.sessions.filter(x => !x.sample).length);
     await page.evaluate(() => { window.__hisar.openDrill('serbest'); window.__hisar.startRun(); });
     await sleep(500);
-    const tag = await page.evaluate(() => document.getElementById('sessSub').textContent);
+    const tag = await page.evaluate(() => document.getElementById('sessTags').textContent);
     await page.evaluate(() => { for (let i = 0; i < 3; i++) setTimeout(() => window.__hisar.sim.fire(performance.now()), 200 + i * 700); });
     await sleep(3200);
     await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1200);
     const r = await page.evaluate(() => ({ shots: window.__hisar.cur.sess.shots.length, saved: window.__hisar.sessions.includes(window.__hisar.cur.sess), n: window.__hisar.sessions.filter(x => !x.sample).length,
-      ls: Object.keys(localStorage).filter(k => k.startsWith('hisarTetik.v2.s.')).length, sheet: document.getElementById('sheetBody').textContent }));
+      ls: Object.keys(localStorage).filter(k => k.startsWith('hisarTetik.v2.s.')).length, sheet: document.getElementById('toast').textContent }));
     check(/kaydedilmez/i.test(tag), 'Deneme oturumunda "Deneme · kaydedilmez" etiketi', tag);
     check(r.shots >= 2 && !r.saved && r.n === n0 && r.ls === 0, 'Deneme oturumu atış sayıyor ama geçmişe ve depoya girmiyor', r);
-    check(/kaydedilmedi/.test(r.sheet), 'Sonuç ekranında "geçmişe kaydedilmedi" notu', r.sheet.slice(0, 120));
+    check(/kaydedilmedi/.test(r.sheet), 'Oturum bitince "geçmişe kaydedilmedi" bildirimi', r.sheet.slice(0, 120));
     await page.evaluate(() => { const c = document.querySelector('#sheet [data-close]'); if (c) c.click(); window.__hisar.showView('alistirma'); });
     const req0 = await fake(page, () => window.__fake.requests);
-    await page.click('#srcGo');
-    check(await waitFor(page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.source === 'sensor', 6000), '"Sensöre dön" ile tekrar sensöre bağlandı');
-    check((await fake(page, () => window.__fake.requests)) === req0, '"Sensöre dön" listeyi açmadı (bilinen sensör)');
+    await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(300);
+    await page.click('#sbConnect');
+    check(await waitFor(page, () => window.__hisar.ble.st === 'bagli' && window.__hisar.source === 'sensor', 6000), 'Sensör sayfasındaki Bağlan ile tekrar sensöre bağlandı');
+    check((await fake(page, () => window.__fake.requests)) === req0, 'Bağlan listeyi açmadı (bilinen sensör)');
     // Sensörü unut: ilk kullanım görünümüne döner
     await page.evaluate(() => window.__hisar.openSettings('baglanti')); await sleep(300);
     await page.click('#sbForget'); await page.click('#sbFgYes'); await sleep(300);
-    const f = await page.evaluate(() => ({ last: window.__hisar.S.lastSensor, src: window.__hisar.source, seg: document.getElementById('srcSeg').hidden }));
-    check(f.last === '' && f.src === 'demo' && f.seg === false, '"Sensörü unut": kayıtlı sensör silindi, üçlü seçim geri geldi', f);
+    const f = await page.evaluate(() => ({ last: window.__hisar.S.lastSensor, src: window.__hisar.source, st: window.__hisar.ble.st }));
+    check(f.last === '' && f.src === 'sensor' && f.st === 'off', '"Sensörü unut": kayıtlı sensör silindi, bağlantı kapandı', f);
     check(errs.length === 0, 'Sayfa hatası yok', errs);
     await ctx.close();
   }

@@ -2627,7 +2627,7 @@ function openProject(k) {
 let newArm = 0;
 bNew.addEventListener("click", () => {
   if (Date.now() - newArm > 3500) { newArm = Date.now(); bNew.textContent = "EMİN MİSİN? TEKRAR BAS"; setTimeout(() => { bNew.textContent = "YENİ OYUN"; }, 3500); return; }
-  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker", "hs-bunker2", "hs-bunker3", "hs-teftis-v", "hs-gmclock", "hs-garaj"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
+  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker", "hs-bunker2", "hs-bunker3", "hs-teftis-v", "hs-gmclock", "hs-garaj", "hs-story"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
 });
 document.getElementById("cards").addEventListener("click", () => { if (GM.on) return; if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
 const _openMenu = openMenu;
@@ -5421,7 +5421,7 @@ function offFrame(dt, T) {
         if (o.trans && sitBlend(S, o.trans, dt)) o.trans = null; }
       if (o === MEET.visit) { o.t -= dt; if (o.t <= 0) endVisit(); continue; }
       // now and then a commander gets up to look in on his job (never everybody at once, never in the middle of his own conversation)
-      if (!o.d.visitor && !MEET.visit && !MEET.boss && !MEET.called && (typeof isWork !== "function" || isWork())) { o.supT = Math.min(o.supT == null ? 12 : o.supT, o.d.chief ? 160 : 25) - dt;   // working hours: everyone's place is at his job (the coordinator's is the table with the plan)
+      if (!o.d.visitor && !MEET.visit && !MEET.boss && !MEET.called && !(typeof STO !== "undefined" && STO.on) && (typeof isWork !== "function" || isWork())) { o.supT = Math.min(o.supT == null ? 12 : o.supT, o.d.chief ? 160 : 25) - dt;   // working hours: everyone's place is at his job (the coordinator's is the table with the plan)
         if (o.supT <= 0 && o.talk <= 0 && !(MEET.dlg && MEET.dlg.d.some(([k]) => k === o.d.key))) {
           o.supT = 30 + Math.random() * 30; const j = siteOf(o.d.key, null);
           if (j && j.on) { say(o, pick(["Ben bir sahaya bakıp geleyim.", "Şuna bir göz atayım, geliyorum.", "Arkadaşlar, ben işin başına geçiyorum."]), 2.2); const oo = o, k = j.k; gTimeout(() => { if (oo.st === "seat") sendToSite(oo.d.key, k, false); }, 1500); } } }
@@ -5500,7 +5500,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261102-1959";
+const PORTKEY = "hs-portraits-20261103-1403";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -6289,7 +6289,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261102-1959";
+const BUILD = "20261103-1403";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -7661,7 +7661,7 @@ function gmStart(M) {
   raidPlan(true); GM.night = false; GM.nightAsked = false; GM.droneShow = false; if (PILOT.mode) pilotEnd(); if (!M.insp) { if (GM.dayM != null) CLK.day++; CLK.t = 450; clkSave(); GM.dayM = m; rainPlan(); } else { RAIN.from = -1; }   // every job starts a new morning at 07.30
   gmPlace(M);
   if (M.insp) gmInspStart(M);
-  else if (g) gTimeout(() => gmRadio(g.o, fillT(g.alt ? "Hadi {n}, bekliyorum." : g.G.go, g.o)), 900);
+  else if (g) { const go = () => { if (typeof STO !== "undefined" && STO.on) { gTimeout(go, 800); return; } gmRadio(g.o, fillT(g.alt ? "Hadi {n}, bekliyorum." : g.G.go, g.o)); }; gTimeout(go, 900); }
   updCtx();
 }
 // everybody where he belongs: the giver at the job, the coordinator at the table, the others at their own sites
@@ -8574,6 +8574,92 @@ addEventListener("keydown", e => { if (e.code === "KeyF" && !e.repeat && GM.on) 
 window.__hs.kon = KON; window.__hs.konStart = konStart; window.__hs.konPick = konPick;
 
 ;(window.__INIT || (window.__INIT = [])).push(["konus", performance.now()]);
+
+// ======================= SENARYO: the campaign as a story. The morning the news comes (the whole battalion at the tea table, Ufuk Binbaşı hands out the
+// projects), and the evening after the inspection (everybody's running joke pays off). Between them the jobs; after them the garage =======================
+const STO = {prolog: false, epi: {}, on: false};
+try { const s = JSON.parse(localStorage.getItem("hs-story") || "null"); if (s) { STO.prolog = !!s.prolog; STO.epi = s.epi || {}; } } catch (e) {}
+function stoSave() { try { localStorage.setItem("hs-story", JSON.stringify({prolog: STO.prolog, epi: STO.epi})); } catch (e) {} }
+// everybody at the table: the officers in their chairs, Ufuk standing at the head, you in yours
+function tableAll(headUp) {
+  for (const o of OFFS) { if (!o.S || isPlayer(o)) continue; o.rise = null; o.trans = null; o.next = null; o.path = null; leaveChair(o);
+    if (o.d.boss) { o.st = "away"; o.S.root.visible = false; continue; }
+    if (o.d.visitor && headUp) { const c = CHAIRS[0]; o.x = c.x - .9; o.z = c.z; o.a = 0; o.st = "stand"; o.t = 1e9; o.S.root.visible = true; o.S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, o.S.root.quaternion); continue; }
+    const c = chairOf(o) || CHAIRS.find(q => !q.occ && q.i !== 0); if (c && (!c.occ || c.occ === o)) { seatAt(o, c); o.supT = 1e9; o.S.root.visible = true; } }
+  let c = chairOf(CUR); if (!c || (c.occ && c.occ !== CUR) || c.i === 0) c = CHAIRS.find(q => !q.occ && q.i !== 0);
+  if (c) { FOOT.x = c.x; FOOT.z = c.z; FOOT.a = c.a; FOOT.y = footGround(c.x, c.z); sitDown(c, true); } }
+// a scene: the lines one after the other (you speak through the subtitle), the camera on the speaker
+function playScene(lines, done) { let i = 0; STO.on = true; OPS.pause = true; MEET.hush = true; MEET.dlg = null;
+  const nx = () => { const L = lines[i++]; if (!L) { STO.on = false; OPS.pause = false; MEET.hush = false; if (done) done(); return; }
+    const [k, t, d, cam] = L, o = k === "me" ? CUR : OFFM[k]; if (!o) return nx(); const text = typeof t === "function" ? t() : t;
+    if (cam) cam(o); else if (o.S && o.S.root.visible && !isPlayer(o)) { const a = Math.atan2(o.z - TH.z, o.x - TH.x); camAt(o.x + Math.cos(a) * 2.6 + Math.cos(a + 1.3) * 1.2, o.z + Math.sin(a) * 2.6 + Math.sin(a + 1.3) * 1.2, 1.55, o.x, o.z, 1.45, 0, 0); }
+    else camAt(TH.x + 5.5, TH.z + 4.5, 2.4, TH.x, TH.z, 1.1, -.15, -.1);
+    if (isPlayer(o)) subShow(`<span style="color:#7fd1ff">${o.d.name}:</span> ${text}`, d); else say(o, text, d);
+    gTimeout(nx, (d + .3) * 1000); }; nx(); }
+const PRO_LINES = () => { const me = CUR.d.short, is = k => CUR.d.key === k, who = k => is(k) ? "me" : k; return [
+  ["ufuk", "Naber mankiler? Haber geldi: Levent Paşa bir hafta sonra büyük teftişe geliyor. Tugayın bütün şantiyelerini gezecek, en düzgününü seçecek.", 5.2, o => camAt(TH.x + 6, TH.z + 3.5, 2.2, TH.x - 1, TH.z, 1.2, -.2, 0)],
+  ["azizhan", "La bir hafta mı? Yol perişan, stok sahası dağ gibi, komuta yerinin koruganları daha istifte.", 4.2],
+  ["ufuk", "O yüzden toplandık. Ahmet: şantiye yolu ve stok sahası senden. Paşam'ın arabası sarsılmayacak.", 4.2],
+  [who("ahmet"), "Sen kralsın komutanım, greyder sabah yolda.", 2.6],
+  ["ufuk", "Furkan, Boran: kapalı drone sığınağı. Galeri teftişe kadar ilerleyecek.", 3.6],
+  [who("furkan"), "Kürek bende komutanım, askerle aşağıdayım.", 2.6], [who("boran"), "Koordinasyon bende komutanım, arz ederim.", 2.4],
+  ["ufuk", "Kaan: gömülü komuta yeri. Koruganlar geldi, yarmayı Kempar açacak, üstü toprakla kapanacak.", 4.2],
+  [who("kaan"), "Projeyi tablete işledim komutanım. Yukarıdan hiçbir şey görünmeyecek. Yansın Hisar!", 3.4],
+  ["ufuk", "Ali, Orhan: atış alanı ve drone parkuru. Paşam'a uçuş gösterisi istiyorum.", 3.6],
+  [who("ali"), "Çakı gibi olacak komutanım.", 2], [who("orhan"), "Barkan 4'ler de o güne yetişirse Paşam'ı uçururuz komutanım.", 3],
+  ["ufuk", `${me}, sen işlerin başında dur. Makineleri askerler sürer, sen yönetirsin; çıkan sorunu sen çözersin. Kimse çay ocağında yakalanmasın.`, 5, o => camAt(TH.x + 6, TH.z + 3.5, 2.2, TH.x - 1, TH.z, 1.2, -.2, 0)],
+  ["me", "Emredersiniz komutanım.", 1.8],
+  ["azizhan", "La bana çok güvenme ama bu sefer bitecek.", 2.6],
+  ["ufuk", "Aynen devam. Dağılın!", 2, o => camAt(TH.x + 7, TH.z + 5.5, 3, TH.x, TH.z, 1, -.3, -.2)]]; };
+const EPI_LINES = P => { const r = GM.inspRes, is = k => CUR.d.key === k, who = k => is(k) ? "me" : k;
+  if (P.id === "garaj") return r === "iyi" ? [
+    ["ufuk", "Mankiler, garaj teslim. Tanklar kışı kapalıda geçirecek, Paşam da memnun gitti.", 4],
+    [who("boran"), "İki tank da yerinde komutanım. Koordinasyon bendeydi… bu sefer bir de sürdüm, arz ederim.", 3.6],
+    [who("kaan"), "Beton, çelik, kaplama: hepsi tablette işaretli. Yansın Hisar!", 3],
+    [who("furkan"), "Kolonları halatla ben tuttum, haberiniz olsun.", 2.6],
+    [who("ahmet"), "Her yerde ben vardım yine. Sen kralsın komutanım.", 2.6],
+    ["ufuk", "Hepinize aferin. Çaylar benden, bu sefer gerçekten.", 3]]
+  : [["ufuk", r === "orta" ? "Garaj teslim ama Paşam eksikleri not aldı. Kalanı bitirin, yine gelecek." : "Mankiler… Paşam garajı beğenmedi. Eksikleri bitirin, teslimi yeniden yapacağız.", 4], [who("kaan"), "Kalanı tablette komutanım, bitecek.", 2.4], ["azizhan", "La bana çok güvenme, kendiniz bitirin.", 2.4]];
+  return r === "iyi" ? [
+    ["ufuk", "Mankiler, Paşam memnun gitti. Tugayın en düzgün şantiyesi: Hisar.", 4, o => camAt(TH.x + 6, TH.z + 3.5, 2.2, TH.x - 1, TH.z, 1.2, -.2, 0)],
+    [who("ahmet"), "Sen kralsın komutanım. Bu akşam lahmacun benden, seferberlik ilan ediyorum.", 3.4],
+    [who("boran"), "Koordinasyon bendeydi… bu sefer kürek de bendeydi, arz ederim.", 3.2],
+    [who("furkan"), "Gördüm, iki kürek attı. Üçüncüde yoruldu.", 2.8],
+    [who("kaan"), "Komuta yeri yukarıdan görünmüyor, Paşam bile bulamadı. Yansın Hisar!", 3.2],
+    [who("orhan"), "Komutanım, Barkan 4'ler sabah geliyor. Paşam'a uçuş gösterisi sırada.", 3.2],
+    [who("ali"), "Yarın sabah koşuya hepiniz. Altı kilometre, çakı gibi. Kapım her daim açık.", 3.4],
+    ["azizhan", "La size güvendim, bu sefer boşa çıkmadı.", 2.6],
+    ["ufuk", "Çaylar benden. Ama rahat yok: yarın tank bölüğüne garaj başlıyor.", 3.4, o => camAt(TH.x + 7, TH.z + 5.5, 3, TH.x, TH.z, 1, -.3, -.2)]]
+  : r === "orta" ? [
+    ["ufuk", "Fena değil mankiler ama Paşam eksikleri not aldı. Bir ay sonra yine gelecek.", 3.8],
+    [who("ahmet"), "Nereye gitsek Paşam orada komutanım.", 2.4],
+    ["azizhan", "La bana çok güvenmeyin, kalanı kendiniz bitirin. Menüden açın, bitirin, teftişi yeniden yaparız.", 4],
+    ["ufuk", "Aynen devam. Garaj da bekliyor.", 2.4]]
+  : [
+    ["ufuk", "Mankiler… Paşam çok kızdı. Bu şantiye böyle kalamaz.", 3.4],
+    [who("boran"), "Koordinasyon bendeydi komutanım… arz ederim.", 2.4],
+    ["ufuk", "Boran, sen sus. Eksik işleri bitirin, teftişe yeniden hazırlanacağız.", 3.2],
+    ["azizhan", "La bana çok güvenme, ben de kürek alıyorum.", 2.4]]; };
+// the scenes in the flow: the morning before the first job, the evening after the inspection
+function prologue(M, then) { STO.prolog = true; stoSave(); const sp = M.spot ? M.spot() : chiefSpot(M);
+  tableAll(true); CLK.t = 455; camSnap = true; toast("HİSAR ŞANTİYE · sabah çayı · haber geldi", 3);
+  playScene(PRO_LINES(), () => fadeSkip("İŞ BAŞI · 07.45", () => { if (SEAT.on) standUp(true); FOOT.rise = null; GM.cine = null; camSnap = true;
+    for (const o of OFFS) if (o.S && !isPlayer(o) && o.d.visitor && !o.d.boss) { leaveChair(o); o.st = "away"; o.S.root.visible = false; }
+    gmPlace(M); let px = sp.x - 1.3, pz = sp.z - 1.5; if (!footFree(px, pz)) { px = sp.x; pz = sp.z; } footInstant(px, pz, Math.atan2(sp.lz - pz, sp.lx - px)); CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .3; CAM.dist = 4.6;
+    if (then) then(); })); }
+function epilogue(P, then) { STO.epi[P.id] = true; stoSave(); if (GM.raid) gmRaidCancel(); salEnd(); if (PILOT.mode) pilotEnd();
+  for (const v of vehicles) if (v.P.seated === PLAYER) { unseat(v); doorTo(v, 0, 0); scene.add(PLAYER.root); v.eng = false; }
+  FOOT.on = true; FOOT.seq = null; FOOT.rise = null; AUTO.on = false; CLK.t = 1075; CLK.hold = true; tableAll(true); camSnap = true; toast("AKŞAM ÇAYI", 2.4);
+  playScene(EPI_LINES(P), () => fadeSkip(P.id === "garaj" ? "GARAJ TESLİM" : "TEFTİŞ BİTTİ", () => { GM.cine = null; camSnap = true; CLK.hold = false; if (then) then(); })); }
+// into the flow
+const _gmStart2 = gmStart; gmStart = function (M) { _gmStart2(M); if (!STO.prolog && !M.insp) gTimeout(() => prologue(M, null), 400); };
+const _brief2 = briefMission; briefMission = function () { const P = projOf();
+  if (GM.on && GM.started && PROJ.m >= P.missions.length && !STO.epi[P.id] && GM.inspRes) { document.getElementById("menu").hidden = true; document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; if (ac) master.gain.value = soundOn ? VOL.v : 0;
+    epilogue(P, () => _brief2()); return; }
+  _brief2(); };
+window.__hs.sto = STO; window.__hs.prologue = prologue; window.__hs.epilogue = epilogue;
+
+;(window.__INIT || (window.__INIT = [])).push(["story2", performance.now()]);
 
 // ======================= KABİN: the excavator from the operator's seat — the boom out front, two joysticks at the bottom of the screen
 // with gloved hands on them that move with what you press (drawn over the scene after it, so the cab never cuts into them) =======================

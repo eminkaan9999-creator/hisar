@@ -66,6 +66,8 @@ const mirror = h => (12 - h) % 12 || 12;
     out.misc.taban = k({ sc: 80, h: 7, dx: -0.015, dy: -0.015, wv: 0.001 });      // titreme yok ama hareket önemsiz (<0,1×ölçek)
     out.misc.titrSpeed = k({ sc: 60, h: 7, dx: -0.05, dy: -0.05, wv: 0.08 }, { drill: 'zamanlayici' });
     out.misc.eskiKayit = k({ sc: 60, h: 7, dx: -0.05, dy: -0.05 });               // eski kayıt: wv yok → saat yönü kullanılır
+    // kanting: yön testi yapılmadıysa (s.yt false) bant yatıklığı yüzünden eşik 6°; 25°'den büyüğü montaj değişikliğidir
+    out.misc.kantYt = [k({ sc: 90, ca: 4.6 }, { yt: false }), k({ sc: 90, ca: 6.5 }, { yt: false }), k({ sc: 90, ca: 3 }, { yt: true }), k({ sc: 90, ca: 180 }), k({ sc: 90, ca: -30 })];
     for (const v of Object.values(out.misc)) v.forEach(x => out.seen.add(x));
     out.seen = [...out.seen];
     out.allIds = Object.keys(H.CAUSES);
@@ -95,6 +97,8 @@ const mirror = h => (12 - h) % 12 || 12;
   check(JSON.stringify(R.misc.net) === JSON.stringify(['tokatlama', 'bilek_asagi']), 'Hareket titremenin belirgin üstündeyse saat yönüne göre tetik hatası söylenir', R.misc.net);
   check(R.misc.sinir[0][0] === 'tokatlama' && R.misc.sinir[1][0] === 'gezinme', 'Ayırma eşiği: hareket titremenin 1,75 katı', R.misc.sinir);
   check(R.misc.taban[0] === 'gezinme', 'Önemsiz küçüklükteki hareketten yön çıkarılmaz', R.misc.taban);
+  check(!R.misc.kantYt[0].includes('kanting') && R.misc.kantYt[1].includes('kanting') && R.misc.kantYt[2].includes('kanting') && !R.misc.kantYt[3].includes('kanting') && !R.misc.kantYt[4].includes('kanting'),
+    'Kanting: yön testi yoksa 6° (bant yatıklığı), varsa 2,5°; 25° üstü kanting sayılmaz (montaj değişmiş)', R.misc.kantYt);
   check(R.misc.titrSpeed[0] === 'tokatlama' && R.misc.eskiKayit[0] === 'tokatlama', 'Hızlı alıştırmalarda ve titreme ölçüsü olmayan eski kayıtlarda saat yönü kullanılır', [R.misc.titrSpeed, R.misc.eskiKayit]);
 
   section('Kapsam ve içerik');

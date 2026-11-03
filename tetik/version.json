@@ -1,1 +1,1 @@
-{"v": 12, "not": "Android uygulaması artık yeni sürümleri kendi içinden internetle indiriyor; APK'yı yeniden kurmak gerekmiyor. Bu son APK kurulumu.", "apk": true, "apkMin": 1200}
+{"v": 13, "not": "Sensör testi eklendi (Ayarlar › Sensör). Başla'ya basınca sensörün nasıl takılı olduğu soruluyor; ters takılmış sensör ve bant yatıklığı artık yanlış teşhise yol açmıyor.", "apk": true, "apkMin": 1200}

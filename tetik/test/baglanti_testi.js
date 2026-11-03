@@ -337,13 +337,13 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
       'Sol el: 3:00 → fazla parmak, 9:00 → başparmak (aynalanmış şema)', left);
     await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1200);
     await page.evaluate(() => { const c = document.querySelector('#sheet [data-close]'); if (c) c.click(); window.__hisar.S.hand = 'R'; });
-    // kanting
-    await page.evaluate(() => { window.__hisar.openDrill('serbest'); window.__hisar.startRun(); });
+    // kanting (yön testi yapılmış, sensör düz takılı: sıfır = U)
+    await page.evaluate(() => { const m = window.__hisar.S.mount.sensor; m.B = [0, 1, 0]; m.U = [0, 0, 1]; m.at = Date.now(); window.__hisar.openDrill('serbest'); window.__hisar.startRun(); });
     h0 = await fake(page, () => window.__fake.head);
     await fake(page, (h0) => { window.__fake.addShot(h0 + 700, { dx: 0, dy: -0.05, tilt: 4 }); }, h0);
     await sleep(700 * 5 + 1500);
     const k = await page.evaluate(() => window.__hisar.cur.sess.shots.map(q => ({ ca: q.ca, c: q.c })));
-    check(k.length === 1 && Math.abs(Math.abs(k[0].ca) - 4) < 0.6 && k[0].c.includes('kanting'), 'Silah 4° yatırılınca kanting ölçüldü ve teşhis edildi', k);
+    check(k.length === 1 && Math.abs(Math.abs(k[0].ca) - 4) < 0.6 && k[0].c.includes('kanting'), 'Yön testi yapılmışken silah 4° yatırılınca kanting ölçüldü ve teşhis edildi', k);
     await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1200);
     await page.evaluate(() => { const c = document.querySelector('#sheet [data-close]'); if (c) c.click(); });
     // gerçek atış: ivme ve jiroskop sınırı

@@ -2627,7 +2627,7 @@ function openProject(k) {
 let newArm = 0;
 bNew.addEventListener("click", () => {
   if (Date.now() - newArm > 3500) { newArm = Date.now(); bNew.textContent = "EMİN MİSİN? TEKRAR BAS"; setTimeout(() => { bNew.textContent = "YENİ OYUN"; }, 3500); return; }
-  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker", "hs-bunker2", "hs-bunker3", "hs-teftis-v", "hs-gmclock", "hs-garaj", "hs-story"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
+  worldReady = false; try { ["hs-proj", "hs-save-v2", "hs-save-trk", "hs-tabur", "hs-garproj", "hs-camp", "hs-bunker", "hs-bunker2", "hs-bunker3", "hs-teftis-v", "hs-gmclock", "hs-garaj", "hs-story", "hs-hayat"].forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload();
 });
 document.getElementById("cards").addEventListener("click", () => { if (GM.on) return; if (PROJ.active) { PROJ.prog[projOf().id] = PROJ.m; PROJ.active = false; setZone(null); crewMission(null); } }, true);
 const _openMenu = openMenu;
@@ -4978,7 +4978,7 @@ function legPath(ax, az, bx, bz) {
 }
 function walkRoute(x0, z0, x1, z1) { const out = []; let ax = x0, az = z0; for (const [bx, bz] of legsFor(x0, z0, x1, z1).concat([[x1, z1]])) { out.push(...legPath(ax, az, bx, bz)); ax = bx; az = bz; } return out.length ? out : [[x1, z1]]; }
 const pathLen = (x, z, P) => { let L = 0; for (const [px, pz] of P) { L += Math.hypot(px - x, pz - z); x = px; z = pz; } return L; };
-function walkTo(o, x, z, then, run) {
+function walkTo(o, x, z, then, run) { o.att = false;
   const S = o.S; if (o.st === "seat" && S.root.visible) { const c = CHAIRS.find(q => q.occ === o) || chairOf(o); if (c) { o.x = c.x - Math.cos(c.a) * .42; o.z = c.z - Math.sin(c.a) * .42; } o.rise = riseOf(S); o.trans = null; }
   leaveChair(o); o.st = "walk"; o.next = then || null; o.run = run === "run"; o.hurry = !!run && !o.run; /* an order makes them walk briskly; only "run" runs */ o.tx = x; o.tz = z; if (o.tool) o.tool.visible = false;
   o.path = walkRoute(o.x, o.z, x, z); o.pi = 0; o.far = pathLen(o.x, o.z, o.path) > 60; S.root.visible = true;
@@ -5421,7 +5421,7 @@ function offFrame(dt, T) {
         if (o.trans && sitBlend(S, o.trans, dt)) o.trans = null; }
       if (o === MEET.visit) { o.t -= dt; if (o.t <= 0) endVisit(); continue; }
       // now and then a commander gets up to look in on his job (never everybody at once, never in the middle of his own conversation)
-      if (!o.d.visitor && !MEET.visit && !MEET.boss && !MEET.called && !(typeof STO !== "undefined" && STO.on) && (typeof isWork !== "function" || isWork())) { o.supT = Math.min(o.supT == null ? 12 : o.supT, o.d.chief ? 160 : 25) - dt;   // working hours: everyone's place is at his job (the coordinator's is the table with the plan)
+      if (!o.d.visitor && !MEET.visit && !MEET.boss && !MEET.called && !(typeof STO !== "undefined" && STO.on) && !(typeof HAY !== "undefined" && HAY.on && HAY.slot !== "is" && HAY.slot !== "olay") && (typeof isWork !== "function" || isWork())) { o.supT = Math.min(o.supT == null ? 12 : o.supT, o.d.chief ? 160 : 25) - dt;   // working hours: everyone's place is at his job (the coordinator's is the table with the plan)
         if (o.supT <= 0 && o.talk <= 0 && !(MEET.dlg && MEET.dlg.d.some(([k]) => k === o.d.key))) {
           o.supT = 30 + Math.random() * 30; const j = siteOf(o.d.key, null);
           if (j && j.on) { say(o, pick(["Ben bir sahaya bakıp geleyim.", "Şuna bir göz atayım, geliyorum.", "Arkadaşlar, ben işin başına geçiyorum."]), 2.2); const oo = o, k = j.k; gTimeout(() => { if (oo.st === "seat") sendToSite(oo.d.key, k, false); }, 1500); } } }
@@ -5454,7 +5454,8 @@ function offFrame(dt, T) {
       o.salW = clamp((o.salW || 0) + (RECV.salute ? dt * 3.2 : -dt * 2.6), 0, 1);
       if (!tick) {} else if (o.salW > 0) { const keep = poseKeep(S, PB_ARMS, o.pk || (o.pk = {})); salutePose(S); poseMix(S, PB_ARMS, keep, ease(o.salW)); } else if (MEET.boss && MEET.boss.S.root.visible) { MEET.boss.S.bones.Head.getWorldPosition(LKV); lookAtHead(S, LKV, .7); }
       if (!RECV.on) { o.st = "stand"; o.t = 1; } continue; }
-    if (o.st === "stand") { const tick = animTick(o, dt); if (tick) locoSoldier(S, 0, o.adt); o.t -= dt; if (o.saluteT > 0) o.saluteT -= dt; o.salW = clamp((o.salW || 0) + (o.saluteT > 0 ? dt * 3.2 : -dt * 2.6), 0, 1);
+    if (o.st === "stand") { if (o.rise) { locoSoldier(S, 0, dt); if (riseBlend(S, o.rise, dt)) o.rise = null; S.root.position.set(o.x, footGround(o.x, o.z), o.z); headingQ(o.a, S.root.quaternion); continue; }   // (up from the chair: the seated pose blends out)
+      const tick = animTick(o, dt); if (tick) { locoSoldier(S, 0, o.adt); if (o.att && typeof hayAttn === "function") hayAttn(S); } o.t -= dt; if (o.saluteT > 0) o.saluteT -= dt; o.salW = clamp((o.salW || 0) + (o.saluteT > 0 ? dt * 3.2 : -dt * 2.6), 0, 1);
       if (tick && o.salW > 0) { const keep = poseKeep(S, PB_ARMS, o.pk || (o.pk = {})); salutePose(S); poseMix(S, PB_ARMS, keep, ease(o.salW)); }
       if (!o.d.visitor && o.t <= 0) goBack(o); continue; }
   }
@@ -5500,7 +5501,7 @@ function playerArrival() {}
 
 // ---------------- switching who you play (B): the commanders who come by car are not yours to play ----------------
 const PICK = {open: false, el: null, sel: -1, cine: null};
-const PORTKEY = "hs-portraits-20261103-1403";
+const PORTKEY = "hs-portraits-20261103-1921";
 const portraits = (() => { try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("hs-portraits-") && k !== PORTKEY) localStorage.removeItem(k); } return JSON.parse(localStorage.getItem(PORTKEY) || "{}") || {}; } catch (e) { return {}; } })();
 function savePortraits() { try { localStorage.setItem(PORTKEY, JSON.stringify(portraits)); } catch (e) {} }
 function portraitOf(o) {
@@ -6289,7 +6290,7 @@ UPD.push(dt => {
   evFrame(dt);
 });
 // ---------------- the web site: a new version brings a banner to reload; the game's own folder keeps the site's other app out of its way ----------------
-const BUILD = "20261103-1403";
+const BUILD = "20261103-1921";
 function checkVersion() { if (!/^https?:/.test(location.protocol) || /claude\.ai|claudeusercontent/.test(location.hostname)) return;
   fetch("version.json?" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (!j || !j.v || j.v === BUILD || document.getElementById("updBan")) return;
     const d = document.createElement("div"); d.id = "updBan"; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:40;background:#f2b705;color:#1b1500;font:700 14px/1.3 system-ui,sans-serif;padding:9px 12px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;max-width:92vw";
@@ -6475,7 +6476,7 @@ const CROWD = (() => {
       const dx = gx - g.x, dz = gz - g.z, d = Math.hypot(dx, dz), v = d > 6 ? 4 : d > 1.5 ? 1.8 : 0; if (d > .3) { const s = Math.min(d, v * dt); g.x += dx / d * s; g.z += dz / d * s; }
       g.a += wrapA(Math.atan2(B.z - g.z, B.x - g.x) - g.a) * Math.min(1, dt * 5); g.mode = v > 2.5 ? "run" : v > 0 ? "walk" : "idle"; g.v = v; }
     // the platoon marching: working hours
-    const marchOn = work(k) && k !== "sabah" && (inW(480, 600) || inW(810, 900));
+    const marchOn = work(k) && k !== "sabah" && (inW(480, 600) || inW(810, 900)) && !(typeof HAY !== "undefined" && HAY.on && HAY.pause);
     for (const g of GG.march) { setActive(g, marchOn); if (!g.act || g.leaving) continue;
       const per = 2 * (36 + 22), u = ((T * 1.4) % per), lead = u - g.row * 1.6, P = rectPath(-141, -109, 28, 48, lead), sx = P[2], sz = P[3], x = P[0] + (-sz) * (g.col - 1) * 1.1, z = P[1] + sx * (g.col - 1) * 1.1;
       if (g.coming) { if (!g.path) go(g, x, z); if (step(g, dt)) g.coming = false; continue; }
@@ -8660,6 +8661,308 @@ const _brief2 = briefMission; briefMission = function () { const P = projOf();
 window.__hs.sto = STO; window.__hs.prologue = prologue; window.__hs.epilogue = epilogue;
 
 ;(window.__INIT || (window.__INIT = [])).push(["story2", performance.now()]);
+
+// ======================= HAYAT: a week in the battalion as a life. Every day has its hours (roll call, the job, lunch, something that comes up,
+// the evening tea, the night) and every hour a decision of yours; the decisions move five things (the commander's trust, your friends, the soldiers'
+// morale, your fatigue, your pocket) and set flags that come back later as consequences. On the seventh day Levent Paşa and your record =======================
+const HAY = {on: false, day: 1, slot: "", st: {guven: 55, moral: 55, yorgun: 25, cep: 6000}, rel: {}, flags: {}, work: {}, log: [], used: {}, done: false, pause: false, t: 0, drove: false, free: false};
+for (const k of ["azizhan", "ahmet", "furkan", "boran", "kaan", "ali", "orhan"]) HAY.rel[k] = 0;
+function haySave() { try { localStorage.setItem("hs-hayat", JSON.stringify({day: HAY.day, slot: HAY.slot, st: HAY.st, rel: HAY.rel, flags: HAY.flags, work: HAY.work, log: HAY.log.slice(-40), used: HAY.used, done: HAY.done, me: CUR ? CUR.d.key : null})); } catch (e) {} }
+function hayLoad() { try { const s = JSON.parse(localStorage.getItem("hs-hayat") || "null"); if (!s) return null; Object.assign(HAY.st, s.st || {}); Object.assign(HAY.rel, s.rel || {}); HAY.flags = s.flags || {}; HAY.work = s.work || {}; HAY.log = s.log || []; HAY.used = s.used || {}; HAY.day = s.day || 1; HAY.slot = s.slot || ""; HAY.done = !!s.done; return s; } catch (e) { return null; } }
+const HSAVED = hayLoad();
+const hayArk = () => { let s = 0, n = 0; for (const k in HAY.rel) { if (CUR && k === CUR.d.key) continue; s += HAY.rel[k]; n++; } return clamp(Math.round(50 + s / n * 16), 0, 100); };
+const relOf = k => HAY.rel[k] || 0;
+const meK = () => CUR.d.key, meS = () => CUR.d.short;
+const F = (k, s) => typeof fillK === "function" ? fillK(k, s) : s;   // {h}: how that officer addresses you, {n}: your name
+const hName = k => OFFM[k] ? OFFM[k].d.short : k;
+// ---- the five numbers ----
+const HLAB = {guven: ["👔", "Komutanın güveni"], ark: ["🤝", "Arkadaşlar"], moral: ["🪖", "Asker morali"], yorgun: ["😴", "Yorgunluk"], cep: ["💰", "Cep"]};
+function hayFx(fx, quiet) { if (!fx) return; const parts = [];
+  for (const k of ["guven", "moral", "yorgun"]) if (fx[k]) { const b = HAY.st[k]; HAY.st[k] = clamp(b + fx[k], 0, 100); const d = HAY.st[k] - b; if (d) parts.push(`${HLAB[k][0]} ${HLAB[k][1].split(" ").pop()} ${d > 0 ? "+" : ""}${d}`); }
+  if (fx.cep) { HAY.st.cep += fx.cep; parts.push(`💰 ${fx.cep > 0 ? "+" : "−"}${fmtTL(Math.abs(fx.cep)).slice(1)}`); }
+  if (fx.rel) for (const k in fx.rel) { const b = relOf(k); HAY.rel[k] = clamp(b + fx.rel[k], -3, 3); const d = HAY.rel[k] - b; if (d) parts.push(`🤝 ${hName(k)} ${d > 0 ? "+" : ""}${d}`); }
+  if (fx.flag) (Array.isArray(fx.flag) ? fx.flag : [fx.flag]).forEach(f => { HAY.flags[f] = HAY.day; });
+  if (parts.length && !quiet) hayToast(parts.join(" · ")); }
+const hayToastEl = (() => { const d = document.createElement("div"); d.id = "hayFx"; d.hidden = true; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 110px);transform:translateX(-50%);z-index:9;background:rgba(20,24,28,.9);color:#ffe9b8;border:1px solid #ffffff22;border-radius:12px;padding:8px 14px;font:700 14px/1.3 system-ui,sans-serif;max-width:92vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.45);pointer-events:none"; document.body.appendChild(d); return d; })();
+let hayToastT = 0; function hayToast(t) { hayToastEl.textContent = t; hayToastEl.hidden = false; hayToastT = 4.2; }
+// ---- the decision cards (the phone-card look of the situations) ----
+function hayCard(ev) { const o = OFFM[ev.who]; const c = {k: "hay_" + ev.k + "_" + HAY.day, app: ev.app || (o ? "🪖 " + (ev.where || "Tabur") : "📱 Telefon"), who: o ? oName(o) : (ev.whoTxt || "Nizamiye"), ic: ev.ic || "🪖", col: ev.col || "#334155", title: ev.title, text: typeof ev.text === "function" ? ev.text() : F(ev.who, ev.text),
+    opts: ev.opts.map(op => ({t: typeof op.t === "function" ? op.t() : op.t, d: op.d, go: () => { HAY.used[ev.k] = HAY.day; HAY.log.push({d: HAY.day, s: HAY.slot, k: ev.k, t: op.t}); const fx = typeof op.fx === "function" ? op.fx() : op.fx; hayFx(fx); if (op.say && o && o.S && o.S.root.visible) gTimeout(() => say(o, F(ev.who, typeof op.say === "function" ? op.say() : op.say), 3), 300); if (op.go) op.go(); gTimeout(() => hayAfterCard(ev), 600); }}))};
+  if (ev.who && o && o.S && o.S.root.visible) say(o, c.text.length > 90 ? c.text.slice(0, 88) + "…" : c.text, 4);
+  durShow(c); }
+// ======================= THE EVENTS: what comes up at each hour, and what came up because of what you did =======================
+const dayOf = f => HAY.flags[f] || 0;
+const has = f => !!HAY.flags[f];
+const ago = (f, n) => has(f) && HAY.day - dayOf(f) >= n;
+const notUsed = e => !HAY.used[e.k] || (e.again && HAY.used[e.k] < HAY.day) || ((e.pri || 1) < 2 && HAY.day - HAY.used[e.k] >= 3);
+const EVS = [
+  // ---- roll call: consequences first ----
+  {k: "hediye_duyuldu", slot: "ictima", pri: 3, cond: () => ago("hediye", 1) && !has("hediye_geri"), who: "ufuk", ic: "😠", col: "#7f1d1d", title: "Müteahhit meselesi",
+    text: "{n}, dün nizamiyeye gelen müteahhit sana hediye bırakmış. Bütün garnizon konuşuyor. Ne diyeceksin?",
+    opts: [{t: "Geri veririm komutanım, hatam", d: "Cep −₺5.000 · güven biraz toparlanır", fx: {cep: -5000, guven: 6, flag: "hediye_geri"}, say: "Bir daha olmasın. Teftişte Paşam duymasın."},
+      {t: "Hediye değildi, numune bıraktı", d: "Ufuk inanmaz", fx: {guven: -12, flag: "hediye_geri"}, say: "Numune mi… Peki. Bu konuyu kapatıyorum ama unutmuyorum."}]},
+  {k: "yalan_cikti", slot: "ictima", pri: 3, cond: () => ago("yalan", 1), who: "ufuk", ic: "😠", col: "#7f1d1d", title: "Makineler bozuk muymuş?",
+    text: "Dün makineler bozuk demiştin. Ahmet'e sordum, bütün makineler sağlammış. Bana yalan mı söyledin {n}?",
+    opts: [{t: "Evet komutanım, iş yetişmedi, korktum", d: "Dürüstlük: güven düşer ama az", fx: {guven: -6, flag: "yalan_itiraf"}, say: "Korkma, yetişmedi de. Yalan söyleme, o kadar."},
+      {t: "Ahmet yanlış biliyor", d: "Ahmet'i de karşına alırsın", fx: {guven: -12, rel: {ahmet: -2}}, say: "Ahmet yanlış bilmez. Dağıl."}]},
+  {k: "ihmal_duyuldu", slot: "ictima", pri: 3, cond: () => ago("ihmal", 1), who: "ufuk", ic: "🏥", col: "#7f1d1d", title: "Yaralı asker",
+    text: "Dün yaralanan er revire iş bitince gitmiş. Çavuş bana geldi. Asker senin askerin {n}.", opts: [{t: "Haklısınız komutanım", d: "Güven düşer, ders alınır", fx: {guven: -8, moral: -4}, say: "Askerin canı işten önce gelir. Dağıl."}]},
+  {k: "yakinma", slot: "ictima", pri: 2, again: true, cond: () => Object.keys(HAY.rel).some(k => k !== meK() && relOf(k) <= -2 && !HAY.used["yakinma_" + k]), who: "ufuk", ic: "🗣️", col: "#4a2a0a", title: "Bir yakınma",
+    text: () => { const k = Object.keys(HAY.rel).find(k => k !== meK() && relOf(k) <= -2 && !HAY.used["yakinma_" + k]); HAY.used["yakinma_" + k] = HAY.day; HAY.tmpK = k; return `${hName(k)} dün akşam bana geldi, senden yakındı. Aranızda ne var?`; },
+    opts: [{t: "Konuşurum komutanım, hallederiz", d: "Arayı düzeltme sözü", fx: () => ({guven: -3, rel: {[HAY.tmpK]: 1}}), say: "Subay subayı kırmaz. Hallet."}, {t: "O haksız komutanım", d: "Ufuk taraf tutmaz", fx: () => ({guven: -6, rel: {[HAY.tmpK]: -1}}), say: "İkiniz de benim subayımsınız. Hallet."}]},
+  {k: "eksik", slot: "ictima", pri: 2, again: true, cond: () => HAY.day > 1 && HAY.work[HAY.day - 1] != null && HAY.work[HAY.day - 1] < .6, who: "ufuk", ic: "📋", col: "#4a2a0a", title: "Dün iş yarım kaldı",
+    text: "{n}, dünkü iş yarım kaldı. Teftişe kaç gün var, biliyorsun. Neden?",
+    opts: [{t: "Benim hatam komutanım, bugün toparlarım", d: "Söz verirsin", fx: {guven: 2, flag: "soz"}, say: "Sözünü tutarsan unuturum."},
+      {t: "Makineler arıza yaptı komutanım", d: "Doğru değil · ortaya çıkabilir", fx: {flag: "yalan"}, say: "Ahmet'e sorarım. Dağıl."},
+      {t: "Askerler yavaş çalıştı", d: "Asker duyar", fx: {guven: -2, moral: -8}, say: "Asker senin askerin. Sen yavaşsan o yavaş."}]},
+  {k: "yorgun", slot: "ictima", pri: 2, again: true, cond: () => HAY.st.yorgun >= 75, who: "azizhan", ic: "😴", col: "#1e293b", title: "Gözlerin kapanıyor",
+    text: "La {n}, suratın kireç gibi. Gece uyumadın mı? Bugün makineye binme bence.",
+    opts: [{t: "Revire gidip iki saat uyurum", d: "Yorgunluk −35 · sabah işi kaçırırsın", fx: {yorgun: -35, guven: -4, flag: "revir"}, say: "Git uyu la, sahaya ben bakarım."},
+      {t: "Dayanırım, iş var", d: "Kaza riski", fx: {flag: "dayandi"}, say: "La bana çok güvenme, ama ben dedim."}]},
+  {k: "er_yok", slot: "ictima", cond: () => true, who: "ufuk", ic: "🪖", col: "#334155", title: "İçtimada bir er eksik",
+    text: "Senin bölükten bir er içtimada yok; koğuşta uyuyormuş. Ne yapacaksın {n}?",
+    opts: [{t: "Kendim gidip kaldırırım", d: "Askerin gözünde büyürsün · yorulursun", fx: {yorgun: 5, moral: 6, flag: "kaldirdi"}, say: "Git. İçtima seni bekler."},
+      {t: "Çavuş kaldırsın, ceza yazılsın", d: "Disiplin · asker soğur", fx: {guven: 3, moral: -6}, say: "Disiplin iyidir. Ama askerin gönlünü de kolla."},
+      {t: "Görmezden gel, uyansın gelir", d: "Ufuk fark edebilir", fx: () => Math.random() < .5 ? {guven: -6, moral: 2, flag: "gormezden"} : {moral: 2}, say: "…"}]},
+  {k: "kamyon_iste", slot: "ictima", cond: () => HAY.day >= 2, who: "ahmet", ic: "🚛", col: "#475569", title: "Kamyon lazım",
+    text: "{H}, bugün kamyonu bana ver, stok sahası yine doldu. Sana yarın iki kamyon veririm, seferberlik ilan ediyorum.",
+    opts: [{t: "Al Ahmet, bugün senin", d: "Senin işin yavaşlar · Ahmet borçlanır", fx: {rel: {ahmet: 2}, flag: "kamyon_verdi"}, say: "Sen kralsın {h}!", go: () => { HAY.workMod = .8; }},
+      {t: "Olmaz, benim işim de yarım", d: "Ahmet kırılır", fx: {rel: {ahmet: -1}}, say: "Peki {h}, ben hallederim."}]},
+  {k: "kamyon_geri", slot: "ictima", pri: 2, cond: () => ago("kamyon_verdi", 1) && relOf("ahmet") >= 1, who: "ahmet", ic: "🚛", col: "#475569", title: "Ahmet sözünü tuttu",
+    text: "{H}, dün kamyonu verdin ya, bugün ikinci kamyon da senin. Sen kralsın!", opts: [{t: "Sağ ol Ahmet", d: "Bugün iş hızlı", fx: {moral: 2}, go: () => { HAY.workMod = 1.25; }}]},
+  {k: "kosu", slot: "ictima", cond: () => has("kosu_soz") && dayOf("kosu_soz") === HAY.day - 1, who: "ali", ic: "🏃", col: "#0f766e", title: "Sabah koşusu",
+    text: "Altı kilometre bitti, çakı gibisin {h}. Kapım her daim açık.", opts: [{t: "Sağ ol Ali", d: "Moral iyi, biraz yorgun", fx: {moral: 4, yorgun: 8, rel: {ali: 1}}}]},
+  // ---- lunch: the officers and you ----
+  {k: "borc", slot: "yemek", cond: () => true, who: "kaan", ic: "💸", col: "#1d4ed8", title: "Kaan borç istiyor",
+    text: "{H}, maaşa kadar iki bin lira lazım, tabletin ekranı kırıldı. Yansın Hisar ama ekransız olmuyor.",
+    opts: [{t: "Al Kaan, maaşta verirsin", d: "Cep −₺2.000 · Kaan unutmaz", fx: {cep: -2000, rel: {kaan: 2}, flag: "borc"}, say: "Sen varsın ya {h}!"},
+      {t: "Bende de yok Kaan", d: "Kaan kırılmaz ama hatırlar", fx: {rel: {kaan: -1}}, say: "Olsun {h}, Ahmet'e sorarım."}]},
+  {k: "borc_geri", slot: "yemek", pri: 2, cond: () => ago("borc", 2) && !has("borc_geri"), who: "kaan", ic: "💸", col: "#1d4ed8", title: "Kaan borcunu getirdi",
+    text: () => relOf("kaan") >= 1 ? F("kaan", "{H}, iki bin liran. Sağ ol, ekran geldi. Yansın Hisar!") : F("kaan", "{H}, borcu unutmadım, maaş gelince… Biraz daha bekle."),
+    opts: [{t: () => relOf("kaan") >= 1 ? "Sağ ol Kaan" : "Peki, bekliyorum", d: "", fx: () => relOf("kaan") >= 1 ? {cep: 2000, flag: "borc_geri"} : {rel: {kaan: -1}, flag: "borc_geri"}}]},
+  {k: "boran_saha", slot: "yemek", cond: () => HAY.day >= 2, who: "boran", ic: "📋", col: "#334155", title: "Boran'ın ricası",
+    text: "{H}, öğleden sonra karargâha rapor yazmam lazım; sığınağa bir sen bakar mısın? Koordinasyon bende, arz ederim.",
+    opts: [{t: "Bakarım Boran, git", d: "Yorgunluk +10 · Boran borçlu", fx: {yorgun: 10, rel: {boran: 2}, flag: "boran_yardim"}, say: "Sen bir tanesin {h}."},
+      {t: "Benim işim de var Boran", d: "Boran kırılır", fx: {rel: {boran: -1}}, say: "Peki… Furkan'a sorarım."}]},
+  {k: "kosu_davet", slot: "yemek", cond: () => true, who: "ali", ic: "🏃", col: "#0f766e", title: "Ali'nin daveti",
+    text: "Yarın sabah altıda koşu var {h}, altı kilometre. Geliyor musun? Çakı gibi olursun.",
+    opts: [{t: "Varım Ali", d: "Yarın sabah: yorgunluk +, moral +", fx: {rel: {ali: 2}, flag: "kosu_soz"}, say: "Altıda nizamiyede!"},
+      {t: "Bu hafta olmaz", d: "", fx: {rel: {ali: -1}}, say: "Kapım her daim açık {h}."}]},
+  {k: "izin", slot: "yemek", cond: () => HAY.day >= 2, who: "furkan", ic: "🪖", col: "#334155", title: "Askere izin",
+    text: "{H}, sığınaktaki asker üç gündür aynada, perişan. Akşam erken paydos verelim mi?",
+    opts: [{t: "Ver Furkan, dinlensinler", d: "Moral +8 · iş yarın biraz yavaş", fx: {moral: 8, rel: {furkan: 1}, flag: "izin"}, say: "Asker seni çok sevecek {h}."},
+      {t: "Teftişe kadar izin yok", d: "Güven +2 · moral −", fx: {guven: 2, moral: -6}, say: "Emredersin {h}."}]},
+  {k: "azizhan_dedikodu", slot: "yemek", cond: () => HAY.day >= 3, who: "azizhan", ic: "🫖", col: "#4a2a0a", title: "Azizhan'ın kulağı",
+    text: "La {n}, Ufuk bu sabah tugaydan telefon almış, sinirli. Teftişte bir eksik çıkarsa faturayı birimize kesecek. Hazır mısın?",
+    opts: [{t: "Açık konuşayım: eksiklerim var", d: "Azizhan yanında durur", fx: {rel: {azizhan: 2}, flag: "acik"}, say: "La bana çok güvenme ama arkandayım."},
+      {t: "Bende eksik yok", d: "", fx: () => (Object.values(HAY.work).some(w => w < .6) ? {rel: {azizhan: -1}, flag: "abartti"} : {rel: {azizhan: 1}}), say: "Hadi bakalım."}]},
+  {k: "orhan_drone", slot: "yemek", cond: () => HAY.day >= 3, who: "orhan", ic: "🛸", col: "#0f766e", title: "Orhan'ın fikri",
+    text: "{H}, teftişte Paşam'ın konvoyunu dronla çekelim, gösteri yapalım. Barkan 4'ler de geldi gelecek.",
+    opts: [{t: "Harika fikir, hazırla", d: "Teftişte artı", fx: {rel: {orhan: 2}, flag: "drone_show"}, say: "Paşam'ı uçururuz {h}!"},
+      {t: "Riskli, konvoya yaklaşma", d: "", fx: {rel: {orhan: -1}}, say: "Peki… yerden çekeriz."}]},
+  // ---- the afternoon: something comes up ----
+  {k: "hediye", slot: "olay", cond: () => HAY.day >= 2, who: null, whoTxt: "Nizamiye nöbetçisi", app: "📱 Telefon · Nizamiye", ic: "🎁", col: "#7c2d12", title: "Müteahhit kapıda",
+    text: () => `Komutanım, şantiyeye malzeme veren müteahhit geldi, size bir paket bırakmış: "Teşekkür" diyor. İçinde zarf var gibi.`,
+    opts: [{t: "Geri gönder, kabul etmiyorum", d: "Temiz kalırsın", fx: {flag: "temiz", guven: 2}},
+      {t: "Paketi al", d: "Cep +₺5.000 · duyulursa…", fx: {cep: 5000, flag: "hediye"}}]},
+  {k: "yarali", slot: "olay", cond: () => true, who: null, whoTxt: "Şantiye çavuşu", app: "📻 Telsiz · saha", ic: "🏥", col: "#7f1d1d", title: "Bir er yaralandı",
+    text: () => "Komutanım, bir erin eli bant makarasına sıkıştı, kanıyor. Hafif ama revire gitmeli.",
+    opts: [{t: "Kendim götürürüm", d: "Yorgunluk +8 · asker sevinir", fx: {yorgun: 8, moral: 8, flag: "yarali_goturdu"}},
+      {t: "Çavuş götürsün, iş devam", d: "", fx: {moral: 1}},
+      {t: "İş bitsin, sonra gider", d: "Asker kırılır · duyulur", fx: {moral: -10, flag: "ihmal"}}]},
+  {k: "mazot", slot: "olay", cond: () => HAY.day >= 2, who: "ahmet", ic: "⛽", col: "#475569", title: "Mazot bitti",
+    text: "{H}, tanker yarın geliyor, makineler akşama kadar dayanmaz. Ne yapalım?",
+    opts: [{t: "Tank bölüğünden ödünç al", d: "Azizhan'a borçlanırsın", fx: {rel: {azizhan: -1}, flag: "mazot_borc"}, say: "Azizhan'a ben söylerim {h}."},
+      {t: "Cepten mazot alalım", d: "Cep −₺3.000 · Ufuk duyar", fx: {cep: -3000, guven: 5}, say: "Sen kralsın {h}!"},
+      {t: "Durursa dursun", d: "Bugün iş yavaş", fx: {guven: -2}, go: () => { HAY.workMod = (HAY.workMod || 1) * .7; }}]},
+  {k: "yaver", slot: "olay", cond: () => HAY.day >= 3, who: "ufuk", app: "📱 Telefon · Tabur", ic: "🍽️", col: "#334155", title: "Paşa'nın yaveri akşam geliyor",
+    text: "{n}, akşam Paşam'ın yaveri teftiş öncesi bakmaya gelecek. Gazinoda yemek düzenlenmesi lazım. Sen düzenler misin?",
+    opts: [{t: "Ben düzenlerim komutanım", d: "Yorgunluk +12 · güven +8", fx: {yorgun: 12, guven: 8, flag: "yemek_duzen"}, say: "Bildim seni."},
+      {t: "Boran'a devredeyim", d: "Boran'ın hatırına bağlı", fx: () => relOf("boran") >= 1 ? {guven: 3, rel: {boran: 1}} : {guven: 1, rel: {boran: -1}}, say: "Boran halletsin, sen işin başında kal."},
+      {t: "Vaktim yok komutanım", d: "Güven −8", fx: {guven: -8}, say: "Vakti ben yaratırım o zaman."}]},
+  {k: "kantin", slot: "olay", cond: () => HAY.day >= 2, who: null, whoTxt: "Kantinci", app: "📱 Mesaj · Kantin", ic: "🧾", col: "#4a2a0a", title: "Kantin defteri",
+    text: () => "Komutanım, bu ayki çay-kahve-tost hesabı bin beş yüz lira. Ay sonuna kalmasın.",
+    opts: [{t: "Öde", d: "Cep −₺1.500", fx: {cep: -1500}}, {t: "Maaşta öderim", d: "Kantinci herkese söyler", fx: {flag: "kantin_borc"}}]},
+  {k: "kantin_duyuldu", slot: "cay", pri: 2, cond: () => ago("kantin_borc", 1) && !has("kantin_odendi"), who: "azizhan", ic: "🧾", col: "#4a2a0a", title: "Kantinci konuşuyor",
+    text: "La {n}, kantinci masa masa geziyor, 'teğmen borcunu ödemiyor' diyor. Ayıp oldu.",
+    opts: [{t: "Hemen öderim", d: "Cep −₺1.500", fx: {cep: -1500, flag: "kantin_odendi"}}, {t: "Maaşta dedim, bekleyecek", d: "Arkadaşlar soğur", fx: {rel: {azizhan: -1, ahmet: -1}, flag: "kantin_odendi"}}]},
+  {k: "tesekkur", slot: "olay", pri: 2, cond: () => ago("kaldirdi", 1) || ago("yarali_goturdu", 1), who: null, whoTxt: "Şantiye çavuşu", app: "📻 Telsiz · saha", ic: "🫡", col: "#0f766e", title: "Askerin selamı",
+    text: () => "Komutanım, askerler size teşekkür ediyor. 'Bizim teğmen bizi bırakmaz' diyorlar; bugün iş uçuyor.",
+    opts: [{t: "Sağ olsunlar", d: "Bugün iş hızlı", fx: {moral: 5}, go: () => { HAY.workMod = (HAY.workMod || 1) * 1.2; }}]},
+  // ---- the evening tea ----
+  {k: "lahmacun", slot: "cay", cond: () => true, who: "ahmet", ic: "🥙", col: "#7c2d12", title: "Lahmacun seferberliği",
+    text: "Bu akşam lahmacun var, seferberlik ilan ediyorum. Kim ısmarlıyor {h}? Sen kralsın.",
+    opts: [{t: "Benden olsun", d: "Cep −₺2.500 · herkes sever", fx: {cep: -2500, rel: {ahmet: 1, furkan: 1, kaan: 1, boran: 1}}, say: "Sen kralsın {h}!"},
+      {t: "Bütçe Ahmet'te", d: "", fx: {rel: {ahmet: -1}}, say: "Nereye gitsem borç orada."}]},
+  {k: "hazir_mi", slot: "cay", cond: () => HAY.day >= 3 && HAY.day <= 6, who: "ufuk", ic: "📋", col: "#334155", title: "Ufuk masada",
+    text: "Mankiler, teftişe az kaldı. {n}, senin sahalar hazır mı?",
+    opts: [{t: "Hazırız komutanım", d: "Eksik varsa teftişte ortaya çıkar", fx: () => (Object.values(HAY.work).some(w => w < .6) ? {guven: 3, flag: "hazir_dedi"} : {guven: 5}), say: "Güveniyorum."},
+      {t: "Eksikler var, açık söyleyeyim", d: "Güven +6", fx: {guven: 6, flag: "acik"}, say: "Açık söyleyeni severim. Bitir."}]},
+  {k: "boran_gelmedi", slot: "cay", cond: () => HAY.day >= 2, who: "furkan", ic: "🫖", col: "#334155", title: "Furkan'ın şikâyeti",
+    text: "{H}, Boran bugün sığınağa hiç uğramadı; 'koordinasyon bende' deyip karargâhta oturdu. Ufuk'a söylesek mi?",
+    opts: [{t: "Ufuk'a söyleriz", d: "Güven +2 · Boran kırılır", fx: {guven: 2, rel: {boran: -2, furkan: 1}}},
+      {t: "Aramızda kalsın", d: "", fx: {rel: {boran: 1}}},
+      {t: "Boran'la ben konuşurum", d: "Arabulucu", fx: {rel: {boran: 1, furkan: 1}, flag: "boran_konus"}}]},
+  {k: "gun_nasil", slot: "cay", cond: () => true, who: "azizhan", ic: "🫖", col: "#4a2a0a", title: "Azizhan soruyor",
+    text: "La {n}, bugün iş nasıldı? Anlat bakalım.",
+    opts: [{t: "Olduğu gibi anlatırım", d: "", fx: {rel: {azizhan: 1}}, say: "La bana çok güvenme ama seni sevdim."},
+      {t: "Biraz abartırım", d: "Ortaya çıkarsa güven düşer", fx: () => (HAY.work[HAY.day] != null && HAY.work[HAY.day] < .6 ? {flag: "abartti", rel: {azizhan: -1}} : {rel: {azizhan: 1}})},
+      {t: "Yorgunum, sonra", d: "", fx: {yorgun: -3}}]},
+  {k: "abartti_cikti", slot: "cay", pri: 2, cond: () => ago("abartti", 1), who: "azizhan", ic: "🫖", col: "#4a2a0a", title: "Azizhan sahaya bakmış",
+    text: "La {n}, dün 'uçtu iş' dedin; bugün sahaya baktım, yarısı duruyor. Bana anlatma, Ufuk'a anlat.",
+    opts: [{t: "Haklısın Azizhan", d: "", fx: {rel: {azizhan: -1}, guven: -4}}]},
+  {k: "barkan", slot: "cay", cond: () => HAY.day >= 4, who: "orhan", ic: "🛸", col: "#0f766e", title: "Barkan 4 haberi",
+    text: "{H}, Barkan 4'ler teftiş günü geliyor! Paşam'a uçuş gösterisi yapacağız.", opts: [{t: "Harika Orhan", d: "", fx: {moral: 2, rel: {orhan: 1}}}]},
+  // ---- the night ----
+  {k: "gece", slot: "gece", cond: () => true, who: null, whoTxt: "Gece", app: "🌙 Tabur · 21.00", ic: "🌙", col: "#1e293b", title: "Gece nasıl geçecek?",
+    text: () => `Gün ${HAY.day} bitti. Yorgunluk ${HAY.st.yorgun}/100.`,
+    opts: [{t: "Yat, uyu", d: "Yorgunluk −45", fx: {yorgun: -45}},
+      {t: "Nöbetçi subaylığa gönüllü ol", d: "Güven +6 · yorgunluk +20", fx: {guven: 6, yorgun: 20, flag: "nobet"}},
+      {t: "Kantinde arkadaşlarla otur", d: "Arkadaşlık + · cep −₺600 · yorgunluk +8", fx: () => { const ks = Object.keys(HAY.rel).filter(k => k !== meK()).sort(() => Math.random() - .5).slice(0, 2), rel = {}; ks.forEach(k => rel[k] = 1); return {cep: -600, yorgun: 8, rel}; }},
+      {t: "Erken yat, sabah koşu", d: "Yorgunluk −30", fx: {yorgun: -30}}]}
+];
+function hayPickEv(slot) { const L = EVS.filter(e => e.slot === slot && notUsed(e) && !(e.who && OFFM[e.who] && isPlayer(OFFM[e.who])) && e.cond()); if (!L.length) return null; const top = Math.max(...L.map(e => e.pri || 1)); const C = L.filter(e => (e.pri || 1) === top); return pick(C); }
+// ======================= THE DAY =======================
+const HSLOTS = [["ictima", 420], ["is", 480], ["yemek", 780], ["olay", 870], ["serbest", 900], ["cay", 1080], ["gece", 1260]];
+const HJOBS = [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0]];   // day → [project, mission]; day 6: the worst day's job again, day 7: the inspection
+function hayJobOf(day) { if (day <= 5) return HJOBS[day - 1]; if (day === 6) { let w = null, wi = -1; for (let d = 1; d <= 5; d++) if (HAY.work[d] != null && HAY.work[d] < 1 && (w == null || HAY.work[d] < w)) { w = HAY.work[d]; wi = d; } return wi > 0 ? HJOBS[wi - 1] : null; } return null; }
+const PARADE = {x: -125, z: 38};
+function hayLineUp(withLevent) { const L = OFFS.filter(o => o.S && !isPlayer(o) && !o.d.visitor); let i = 0;
+  for (const o of OFFS) { if (!o.S || isPlayer(o)) continue; o.rise = null; o.trans = null; o.next = null; o.path = null; o.talk = 0; leaveChair(o);
+    if (o.d.boss) { if (withLevent) hayStandAt(o, PARADE.x + 1.6, PARADE.z - 3.4, Math.PI / 2); else { o.st = "away"; o.S.root.visible = false; } continue; }
+    if (o.d.visitor) { hayStandAt(o, PARADE.x - .4, PARADE.z - 3.2, Math.PI / 2); continue; }
+    hayStandAt(o, PARADE.x - 7 + i * 2.2, PARADE.z + 1.6, -Math.PI / 2); i++; }
+  if (SEAT.on) standUp(true); footInstant(PARADE.x - 7 + i * 2.2, PARADE.z + 1.6, -Math.PI / 2); CAM.yaw = Math.PI / 2; camSnap = true; }
+function hayToTea() { if (PILOT.mode) pilotEnd(); for (const v of vehicles) if (v.P.seated === PLAYER) { unseat(v); doorTo(v, 0, 0); scene.add(PLAYER.root); v.eng = false; if (v.job) gTimeout(() => { if (!v.P.seated) opsGive(v); }, 1200); }
+  FOOT.on = true; FOOT.seq = null; FOOT.rise = null; AUTO.on = false; let c = chairOf(CUR); if (!c || (c.occ && c.occ !== CUR) || c.i === 0) c = CHAIRS.find(q => !q.occ && q.i !== 0); if (!c) return;
+  FOOT.x = c.x; FOOT.z = c.z; FOOT.a = c.a; FOOT.y = footGround(c.x, c.z); sitDown(c, true); camMode = 0; CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .3; CAM.dist = 4.6; camSnap = true; }
+// standing to attention (the roll call, the paşa): straight, the arms at the sides
+function hayAttn(S) { restBones(S, SBONES); S.bones.Hips.position.copy(S.hips0); armDirs(S, "Left", [.09, -1, 0], [.02, -1, .04]); armDirs(S, "Right", [-.09, -1, 0], [-.02, -1, .04]); }
+function hayStandAt(o, x, z, a) { o.att = true; const seated = o.st === "seat" || o.st === "standby" || o.trans; o.x = x; o.z = z; o.a = a; o.st = "stand"; o.t = 1e9; o.site = null; o.S.root.visible = true; o.S.root.position.set(x, footGround(x, z), z); headingQ(a, o.S.root.quaternion); o.rise = seated ? riseOf(o.S) : null; if (o.rise) { o.rise.p0.copy(o.S.root.position); o.rise.q0.copy(o.S.root.quaternion); } }
+function hayGather(withUfuk) { tableAll(withUfuk); GM.cine = null; camMode = 0; CAM.yaw = FOOT.a + Math.PI; CAM.pitch = .3; CAM.dist = 4.6; CAM.cyaw = 0; CAM.cpitch = -.1; camSnap = true; if (!withUfuk) { const u = OFFM.ufuk; if (u && u.S) { leaveChair(u); u.st = "away"; u.S.root.visible = false; } } }
+const camUfuk = () => camAt(PARADE.x + 4.2, PARADE.z - 5.6, 1.9, PARADE.x - .4, PARADE.z - 3.2, 1.5, -.1, 0);
+const camLine = () => camAt(PARADE.x - 10.5, PARADE.z - 2.8, 2.1, PARADE.x - 1, PARADE.z + 1.6, 1.3, .15, 0);
+function hayOff() { HAY.pause = false; hayChip.hidden = true; }
+// the roll call: Ufuk in front of the line, the day's news, then the first decision
+function hayIctima() { HAY.slot = "ictima"; HAY.drove = false; HAY.workMod = 1; haySave(); CLK.day = HAY.day; CLK.t = 420; HAY.pause = true;
+  hayLineUp(HAY.day === 7); camSnap = true; toast(`GÜN ${HAY.day} · 07.00 · İÇTİMA`, 2.6);
+  if (HAY.day === 7) { hayTeftis(); return; }
+  const J = hayJobOf(HAY.day), M = J ? PROJECTS[J[0]].missions[J[1]] : null, g = M ? OFFM[M.g] : null;
+  const lines = [["ufuk", HAY.day === 1 ? "Naber mankiler? Levent Paşa bir hafta sonra büyük teftişe geliyor. Bu hafta her gün bir iş, her işin başında biriniz. Kimse çay ocağında yakalanmasın." : `Gün ${HAY.day} mankiler. Teftişe ${7 - HAY.day} gün. ${HAY.day > 1 && HAY.work[HAY.day - 1] >= 1 ? "Dünkü iş tamam, aferin." : HAY.day > 1 && HAY.work[HAY.day - 1] != null && HAY.work[HAY.day - 1] < .6 ? "Dünkü iş yarım kaldı, bugün konuşacağız." : "Aynen devam."}`, 4.6, camUfuk]];
+  if (M && g && !isPlayer(g)) lines.push([M.g, F(M.g, M.G.brief).replace(/\s+/g, " ").slice(0, 150), 4.4]);
+  else if (M) lines.push(["ufuk", `${meS()}, bugün "${M.title}" senin işin.`, 2.8, camUfuk]);
+  if (J == null) lines.push(["ufuk", "Bugün sahalar tamam. Serbest gün: spor, atış, bakım. Teftişe dinlenmiş girin.", 3.4, camUfuk]);
+  lines.push(["ufuk", `${meS()}, bugün ${J ? "iş senin başında. " : ""}Askerin de işin de sorumlusu sensin.`, 3, camUfuk], ["me", "Emredersiniz komutanım.", 1.6, camLine]);
+  playScene(lines, () => { const ev = hayPickEv("ictima"); if (ev) hayCard(ev); else hayAfterCard({slot: "ictima"}); }); }
+function hayAfterCard(ev) { const s = HAY.slot;
+  if (s === "ictima") { if (HAY.flags.revir === HAY.day) { fadeSkip("REVİR · iki saat uyku", () => { HAY.pause = false; hayWorkStart(true); }); } else hayWorkAsk(); }
+  else if (s === "yemek" || s === "olay") { HAY.pause = false; }
+  else if (s === "cay") { HAY.pause = false; }
+  else if (s === "gece") hayNight(); }
+// the job: how you will run it is the first decision of the morning
+function hayWorkAsk() { const J = hayJobOf(HAY.day); if (!J) { HAY.free = true; fadeSkip("SERBEST GÜN", () => { HAY.pause = false; hayFreeDay(); }); return; }
+  const M = PROJECTS[J[0]].missions[J[1]];
+  durShow({k: "hay_is_" + HAY.day, app: "🪖 Sabah · " + M.title, who: "Nasıl yürüteceksin?", ic: "🚜", col: "#334155", title: M.title, text: "İş 13.00'e kadar. Makineleri askerler sürebilir; sen de binebilirsin. Ne yapıyorsun?",
+    opts: [{t: "Makineye ben binerim", d: "İş hızlı · asker sever · yorgunluk +18", go: () => { HAY.drove = true; hayFx({yorgun: 18, moral: 5}); hayWorkStart(false, "bin"); }},
+      {t: "Başında dururum, askerler sürer", d: "Dengeli · yorgunluk +8", go: () => { hayFx({yorgun: 8}); hayWorkStart(false, "bas"); }},
+      {t: "Askere bırakırım, ben çay ocağına", d: "Dinlenirsin · iş yavaş · Paşa gelirse…", go: () => { hayFx({yorgun: -10, moral: -5, flag: "kaytardi"}); hayWorkStart(false, "cay"); }}]}); }
+function hayWorkStart(late, how) { const J = hayJobOf(HAY.day), M = PROJECTS[J[0]].missions[J[1]];
+  PROJ.p = J[0]; PROJ.m = J[1]; PROJ.active = false; PROJ.done = false; HAY.slot = "is"; haySave();
+  GM.cine = null; startMission(); CLK.day = HAY.day; CLK.t = late ? 600 : 480; GM.nightAsked = true; HAY.pause = false;
+  // the pace of the day: the soldiers' morale, what the morning brought, how tired you are
+  let f = (.75 + HAY.st.moral / 100 * .5) * (HAY.workMod || 1); if (HAY.st.yorgun >= 75 && HAY.flags.dayandi === HAY.day) f *= .8; if (HAY.flags.izin && HAY.flags.izin === HAY.day - 1) f *= .9;
+  for (const k of (M.sites || [])) wmod(k, f, 9999);
+  if (how === "cay") { gTimeout(() => { for (const k of (M.sites || [])) wmod(k, .65, 9999); hayToTea(); toast("Çay ocağındasın · iş askerde", 2.4); }, 1500); }
+  if (how === "bin" && M.mach) { const ms = M.mach().filter(Boolean); if (ms.length) gTimeout(() => { if (typeof gmTake === "function" && !FOOT.seq) gmTake(ms[0]); }, 1400); }
+  if (HAY.flags.dayandi === HAY.day && HAY.drove) gTimeout(() => hayKaza(), 90000 + Math.random() * 60000);
+  hayChipSet(`GÜN ${HAY.day} · İŞ · 13.00'e kadar`, null); }
+function hayKaza() { if (!PROJ.active || PROJ.done || HAY.slot !== "is") return; const v = vehicles[cur]; if (!v || v.P.seated !== PLAYER) return; shot("boom", .5, 1.6); rumble(.8, 1, 300); v.v = 0;
+  durShow({k: "hay_kaza_" + HAY.day, app: "⚠ Kaza", who: "Gözün kapandı", ic: "💥", col: "#7f1d1d", title: "Makine bariyere çarptı", text: "Bir an gözün kapandı, makine beton bariyere çarptı. Kimseye bir şey olmadı ama bariyer ve çamurluk gitti.",
+    opts: [{t: "Hasarı cebimden öderim", d: "Cep −₺4.000", go: () => { hayFx({cep: -4000, guven: -3, moral: -2}); }}, {t: "Tutanak tutulsun", d: "Güven −8", go: () => { hayFx({guven: -8, moral: -3}); }}]}); }
+function hayWorkEnd(done) { const J = hayJobOf(HAY.day); if (J) { const M = PROJECTS[J[0]].missions[J[1]], fr = done ? 1 : clamp(gmProgAvg(M), 0, .99); HAY.work[HAY.day] = Math.max(HAY.work[HAY.day] || 0, fr);
+    if (!done) { if (GM.raid) gmRaidCancel(); salEnd(); if (PILOT.mode) pilotEnd(); if (KON.open) konEnd(); PROJ.active = false; setZone(null); GM.go = null; WMOD.length = 0; for (const j of JOBS) j.on = false; for (const v of vehicles) { v.hold = 0; v.holdMode = null; v.holdWhy = null; } GM.cur = null; }
+    const fx = fr >= 1 ? {guven: 10, moral: 4} : fr >= .6 ? {guven: 4} : {guven: -6, moral: -2}; hayFx(fx, true);
+    hayLog(`${M.title}: %${Math.round(fr * 100)}${fr >= 1 ? " · tamam" : " · yarım"}`); }
+  HAY.drove = HAY.drove && true; hayYemek(); }
+function hayLog(t) { HAY.log.push({d: HAY.day, s: HAY.slot, k: "not", t}); }
+// lunch, the afternoon, the evening tea, the night
+function hayYemek() { HAY.slot = "yemek"; haySave(); CLK.t = 780; HAY.pause = true;
+  for (const v of vehicles) if (v.P.seated === PLAYER) { unseat(v); doorTo(v, 0, 0); scene.add(PLAYER.root); v.eng = false; }
+  FOOT.on = true; FOOT.seq = null; FOOT.rise = null; AUTO.on = false; if (SEAT.on) standUp(true);
+  fadeSkip("ÖĞLE · 13.00", () => { hayGather(false); camSnap = true; toast("Öğle yemeği · subaylar masada", 2.4); HAY.pause = false; const ev = hayPickEv("yemek");
+    gTimeout(() => { if (ev) hayCard(ev); }, 1800); hayChipSet("ÖĞLE · 13.00", "SAHAYA DÖN", () => hayOlay()); }); }
+function hayOlay() { HAY.slot = "olay"; haySave(); CLK.t = 870; hayChipSet("ÖĞLEDEN SONRA · serbest", "AKŞAM ÇAYINA GEÇ", () => hayCay());
+  if (SEAT.on) standUp(false); for (const o of OFFS) { if (!o.S || isPlayer(o) || o.d.visitor) continue; if (o.st === "seat" || o.st === "standby" || o.st === "stand") { leaveChair(o); o.supT = 30; sendToSite(o.d.key, null, false, 1e9); } } const ev = hayPickEv("olay"); gTimeout(() => { if (ev && HAY.slot === "olay") hayCard(ev); }, 9000 + Math.random() * 15000); HAY.slot = "olay"; }
+function hayFreeDay() { HAY.slot = "olay"; haySave(); CLK.t = 540; GM.cine = null; camSnap = true; hayChipSet("SERBEST GÜN", "AKŞAM ÇAYINA GEÇ", () => hayCay()); const ev = hayPickEv("olay"); gTimeout(() => { if (ev && HAY.slot === "olay") hayCard(ev); }, 12000); }
+function hayCay() { HAY.slot = "cay"; haySave(); CLK.t = 1080; HAY.pause = true; if (KON.open) konEnd();
+  for (const v of vehicles) if (v.P.seated === PLAYER) { unseat(v); doorTo(v, 0, 0); scene.add(PLAYER.root); v.eng = false; }
+  FOOT.on = true; FOOT.seq = null; AUTO.on = false; if (PILOT.mode) pilotEnd();
+  fadeSkip("AKŞAM ÇAYI · 18.00", () => { const withU = HAY.day >= 3 && Math.random() < .6; hayGather(withU); camSnap = true; HAY.pause = false; toast("Akşam çayı", 2);
+    let ev = hayPickEv("cay"); if (ev && ev.who === "ufuk" && !withU) ev = EVS.find(e => e.k === "gun_nasil" && notUsed(e)) || null;
+    gTimeout(() => { if (ev) hayCard(ev); }, 2200); hayChipSet("AKŞAM ÇAYI", "GECEYE GEÇ", () => hayGece()); }); }
+function hayGece() { HAY.slot = "gece"; haySave(); CLK.t = 1260; hayChip.hidden = true; hayCard(EVS.find(e => e.k === "gece")); }
+function hayNight() { fadeSkip("GECE", () => { hayReport(); }); }
+function hayReport() { const d = HAY.day, L = HAY.log.filter(l => l.d === d); const rows = L.map(l => [l.s === "not" || l.k === "not" ? "📋" : {ictima: "07.00", is: "08.00", yemek: "13.00", olay: "15.00", cay: "18.00", gece: "21.00"}[l.s] || "", l.t]);
+  rows.push(["👔 Komutanın güveni", HAY.st.guven + "/100"], ["🤝 Arkadaşlar", hayArk() + "/100"], ["🪖 Asker morali", HAY.st.moral + "/100"], ["😴 Yorgunluk", HAY.st.yorgun + "/100"], ["💰 Cep", fmtTL(HAY.st.cep)]);
+  const hint = HAY.st.yorgun >= 70 ? "Yarın çok yorgunsun; makineye binersen kaza riski var." : HAY.st.guven < 35 ? "Ufuk Binbaşı'nın güveni azaldı; teftişte sicil kötü olabilir." : HAY.st.moral < 35 ? "Asker morali düşük; yarın iş yavaş yürür." : Object.keys(HAY.rel).some(k => k !== meK() && relOf(k) <= -2) ? "Bir arkadaşın sana kırgın; Ufuk'a gidebilir." : "Yarın teftişe " + (6 - d) + " gün.";
+  showModal(`GÜN ${d} BİTTİ`, d === 6 ? "Yarın: Levent Paşa'nın teftişi" : `Yarın: Gün ${d + 1}`, hint, rows, [], d >= 6 ? "TEFTİŞ GÜNÜ" : "YENİ GÜN", () => { HAY.day = d + 1; haySave(); document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; if (ac) master.gain.value = soundOn ? VOL.v : 0; FADE.style.opacity = 0; hayIctima(); }); }
+// the seventh day: the paşa in front of the line, the verdict from what you did all week, your record
+function hayTeftis() { HAY.slot = "teftis"; haySave(); const ws = Object.values(HAY.work), W = ws.length ? ws.reduce((a, b) => a + b, 0) / 5 : 0, A = hayArk(), S = HAY.st;
+  const score = Math.round(S.guven * .45 + Math.min(1, W) * 100 * .35 + S.moral * .1 + A * .1), res = score >= 70 ? "iyi" : score >= 48 ? "orta" : "kotu"; HAY.res = res; HAY.score = score;
+  const lines = [["ufuk", "Mankiler, Levent Paşa'yı karşılıyoruz. Dikkat!", 2.6, camUfuk],
+    ["levent", `Rahat. Bir haftadır bu şantiyeyi izliyorum. ${W >= .9 ? "Bütün sahalar bitmiş, konvoyum yolda sarsılmadı." : W >= .6 ? "Sahaların çoğu bitmiş, bazı yerler yarım." : "Sahaların yarısı yarım kalmış. Yol sarstı."}`, 4.6, () => camAt(PARADE.x + 5, PARADE.z - 6.4, 1.9, PARADE.x + 1.6, PARADE.z - 3.4, 1.5, -.1, 0)],
+    ["levent", `${meS()} ${CUR.d.rank >= 2 ? "Üsteğmen" : "Teğmen"}, öne çık.`, 2, camLine],
+    ["ufuk", S.guven >= 70 ? `Paşam, ${meS()} bu hafta her sabah işin başındaydı, askerini de bıraktırmadı. Güvenirim.` : S.guven >= 45 ? `Paşam, ${meS()} işini yaptı; birkaç gün aksadı.` : `Paşam, ${meS()}'ı bu hafta birkaç kez uyardım.`, 4.2, camUfuk]];
+  if (has("hediye") && !has("hediye_geri")) lines.push(["levent", "Müteahhit hediyesi meselesini de duydum. Bu ordu bunu affetmez.", 3.4]);
+  if (has("drone_show") && relOf("orhan") >= 1) lines.push(["orhan", "Paşam, Barkan 4'ler havada: konvoyunuzu çektik, uçuş gösterisi hazır.", 3], ["levent", "Güzel. Orhan Üsteğmen, aferin.", 2]);
+  if (S.moral >= 70) lines.push(["levent", "Askerin yüzü gülüyor; bu bir subay için en iyi sicil.", 3]); else if (S.moral < 35) lines.push(["levent", "Askerin yüzü asık. Asker asıksa subayı sorumludur.", 3]);
+  lines.push(["levent", res === "iyi" ? `${meS()}, takdir ediyorum. Ufuk, bu subayı kursa gönder; sicile takdir yazılsın.` : res === "orta" ? `${meS()}, idare eder. Eksikleri kapatın, bir ay sonra yine geleceğim.` : `${meS()}, bu hafta subaylık değildi. Ufuk, uyarı yaz, teftişi yenileyeceğiz.`, 4.6, () => camAt(PARADE.x + 5, PARADE.z - 6.4, 1.9, PARADE.x + 1.6, PARADE.z - 3.4, 1.5, -.1, 0)],
+    ["me", "Emredersiniz Paşam.", 1.6, camLine], ["ufuk", res === "iyi" ? "Aferin mankiler. Çaylar benden." : res === "orta" ? "Fena değil mankiler. Aynen devam." : "Dağılın. Akşam konuşacağız.", 2.6, camUfuk]);
+  playScene(lines, () => hayEnd(res, score, W)); }
+function hayEnd(res, score, W) { HAY.done = true; haySave(); const S = HAY.st, A = hayArk();
+  const title = res === "iyi" ? "SİCİL: TAKDİR" : res === "orta" ? "SİCİL: ORTA" : "SİCİL: UYARI";
+  const text = res === "iyi" ? "Levent Paşa takdir belgesi verdi; Ufuk Binbaşı seni kursa gönderiyor. Askerin anlatıyor: 'Bizim teğmen bizi bırakmadı.'" : res === "orta" ? "Sıradan bir sicil. Paşa bir ay sonra yine gelecek; bazı kararların izini bıraktı." : "Uyarı sicile yazıldı. Bu hafta verdiğin kararlar seni buraya getirdi; başka kararlarla başka bir hafta mümkün.";
+  const rows = [["Puan", score + "/100"], ["Sahalar", "%" + Math.round(W * 100)], ["👔 Komutanın güveni", S.guven + ""], ["🤝 Arkadaşlar", A + ""], ["🪖 Asker morali", S.moral + ""], ["💰 Cep", fmtTL(S.cep)]];
+  const marks = []; if (has("temiz")) marks.push("Müteahhidin paketini geri çevirdin."); if (has("hediye") && !has("hediye_geri")) marks.push("Müteahhidin parasını aldın; Paşa duydu."); if (has("yarali_goturdu")) marks.push("Yaralı eri kendin revire götürdün."); if (has("ihmal")) marks.push("Yaralı eri beklettin."); if (has("yalan")) marks.push("Ufuk'a yalan söyledin."); if (has("acik")) marks.push("Eksiklerini açık söyledin."); if (has("kaytardi")) marks.push("En az bir gün işi askere bırakıp çaya gittin.");
+  if (marks.length) rows.push(["Bu haftadan kalanlar", marks.join(" ")]);
+  gTimeout(() => showModal("BİR HAFTA BİTTİ", title, text, rows, [], "MENÜYE DÖN", () => { hayStop(); openMenu(); }), 600); }
+// ======================= running: the clock, the chip, the panel, the hooks =======================
+const hayChip = (() => { const d = document.createElement("div"); d.id = "hayChip"; d.hidden = true; d.style.cssText = "position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:10px;background:rgba(24,22,19,.86);border:1px solid #ffffff22;border-radius:14px;padding:6px 8px 6px 14px;color:#ffd27a;font:800 14px system-ui,sans-serif;white-space:nowrap"; d.innerHTML = `<span id="hayChipT"></span><button type="button" class="big alt" id="hayChipB" style="height:38px;font-size:14px;padding:0 12px">—</button>`; document.body.appendChild(d);
+  d.querySelector("#hayChipB").addEventListener("click", () => { if (hayChip._go && running) hayChip._go(); }); return d; })();
+function hayChipSet(t, bt, go) { hayChip.hidden = false; hayChip.querySelector("#hayChipT").textContent = t; const b = hayChip.querySelector("#hayChipB"); b.hidden = !bt; b.textContent = bt || ""; hayChip._go = go || null; }
+const hayBarOf = (v, bad) => `<div class="pb" style="margin:2px 0 6px"><i style="width:${v}%;${bad ? "background:#e0533d" : ""}"></i></div>`;
+function hayPanel() { const S = HAY.st, A = hayArk(), sl = {ictima: "İÇTİMA", is: "İŞ", yemek: "ÖĞLE", olay: "ÖĞLEDEN SONRA", serbest: "SERBEST", cay: "AKŞAM ÇAYI", gece: "GECE", teftis: "TEFTİŞ"}[HAY.slot] || "";
+  return `<h4>GÜN ${HAY.day}/7 · ${sl}</h4><div class="ob"><span class="r"><span>👔 Komutanın güveni</span><span>${S.guven}</span></span>${hayBarOf(S.guven, S.guven < 35)}</div><div class="ob"><span class="r"><span>🤝 Arkadaşlar</span><span>${A}</span></span>${hayBarOf(A, A < 35)}</div><div class="ob"><span class="r"><span>🪖 Asker morali</span><span>${S.moral}</span></span>${hayBarOf(S.moral, S.moral < 35)}</div><div class="ob"><span class="r"><span>😴 Yorgunluk</span><span>${S.yorgun}</span></span>${hayBarOf(S.yorgun, S.yorgun >= 70)}</div><div class="ob"><span class="r"><span>💰 Cep</span><span>${fmtTL(S.cep)}</span></span></div><div class="mt">${HAY.slot === "olay" || HAY.slot === "serbest" ? "Dolaş, KONUŞ ile konuş, istersen makine sür" : HAY.slot === "yemek" || HAY.slot === "cay" ? "Masadasın · ENTER: kalk" : ""}</div>`; }
+const _missionHud3 = missionHud; missionHud = function () { if (HAY.on && !(PROJ.active && !PROJ.done)) { const h = hayPanel(); if (tasksEl.__h !== h) { tasksEl.innerHTML = h; tasksEl.__h = h; } return; } _missionHud3(); };
+function hayFrame(dt) { if (hayToastT > 0) { hayToastT -= dt; if (hayToastT <= 0) hayToastEl.hidden = true; } if (!HAY.on || !running || HAY.done) return;
+  if ((HAY.slot === "ictima" || HAY.slot === "teftis") && FOOT.on && !FOOT.seq && FOOT.spd < .2 && !SEAT.on) hayAttn(PLAYER);
+  CLK.hold = true; const s = HAY.slot;
+  if (!HAY.pause && !DUR.open) { const rate = s === "is" ? 1.0 : s === "olay" || s === "serbest" ? 2.6 : s === "yemek" || s === "cay" ? 1.0 : .35; CLK.t += rate * dt; }
+  if (s === "is" && PROJ.active && !PROJ.done && CLK.t >= 780 && !DUR.open && !FOOT.seq && !SAL.on && !(GM.raid && !GM.raid.judged)) hayWorkEnd(false);
+  else if (s === "olay" && CLK.t >= 1050 && !DUR.open) hayCay();
+  else if ((s === "yemek") && CLK.t >= 860 && !DUR.open) hayOlay();
+  else if (s === "cay" && CLK.t >= 1200 && !DUR.open) hayGece(); }
+UPD.push(hayFrame);
+// after a job that finished on its own: no next-job brief, the day goes on
+const _brief3 = briefMission; briefMission = function () { if (HAY.on) { document.getElementById("menu").hidden = true; document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; if (ac) master.gain.value = soundOn ? VOL.v : 0; hayWorkEnd(true); return; } _brief3(); };
+// the paşa's surprise visit counts in the week (a friend may speak up for you)
+const _raidJudged3 = raidJudged; raidJudged = function (R) { const was = R.judged; _raidJudged3(R); if (!HAY.on || was) return;
+  if (R.res === "iyi") hayFx({guven: 6, moral: 2}); else { const fr = Object.keys(HAY.rel).find(k => relOf(k) >= 2 && OFFM[k] && !isPlayer(OFFM[k])); if (fr && Math.random() < .6) { hayFx({guven: -4}); gTimeout(() => radioK(fr, "{H}, Paşa'ya 'bütün sabah sahadaydı' dedim, idare ettim. Bir daha olmasın."), 2500); hayLog(`${hName(fr)} seni Paşa'ya karşı savundu`); } else hayFx({guven: -10}); } };
+// the tea-house catch: Ufuk drops by the table while you should be on site
+function hayStart(fresh) { if (fresh) { HAY.day = 1; HAY.slot = ""; HAY.st = {guven: 55, moral: 55, yorgun: 25, cep: 6000}; for (const k in HAY.rel) HAY.rel[k] = 0; HAY.flags = {}; HAY.work = {}; HAY.log = []; HAY.used = {}; HAY.done = false; }
+  HAY.on = true; STO.prolog = true; GM.started = true; GM.pick && GM.pick !== CUR && switchOfficer(GM.pick, true); GM.pick = null;
+  document.getElementById("menu").hidden = true; document.getElementById("hud").hidden = false; document.getElementById("ctl").hidden = false; running = true; audioStart(); if (ac) { master.gain.value = soundOn ? VOL.v : 0; if (ac.state === "suspended") ac.resume(); }
+  if (PROJ.active && !PROJ.done) { PROJ.active = false; setZone(null); }
+  camMode = 0; CAM.pitch = .3; CAM.dist = 4.6; CAM.cyaw = 0; CAM.cpitch = -.1; updCtx(); hayIctima(); }
+function hayStop() { HAY.on = false; hayChip.hidden = true; CLK.hold = false; HAY.pause = false; }
+// the menu: the week on top of the jobs
+const _updProj3 = updProjBtn; updProjBtn = function () { _updProj3(); const d = document.createElement("div"); d.className = "proj"; const cont = !HAY.done && HAY.day > 1 || (HAY.slot && !HAY.done);
+  d.innerHTML = `<div class="pj-l"><span class="pj-k">HAYAT</span><b>Bir Hafta: Teftişe Kadar</b><span class="pj-s">${HAY.done ? "Hafta bitti · " + (HAY.res === "iyi" ? "takdir" : HAY.res === "orta" ? "orta sicil" : "uyarı") + " · yeniden oyna" : cont ? `Gün ${HAY.day}/7 · 👔 ${HAY.st.guven} 🤝 ${hayArk()} 🪖 ${HAY.st.moral} 😴 ${HAY.st.yorgun}` : "7 gün · her saat bir karar · her kararın sonucu · sonunda Levent Paşa ve sicilin"}</span></div><div class="pj-b"><button class="big" type="button">${HAY.done ? "YENİDEN" : cont ? "DEVAM · GÜN " + HAY.day : "BAŞLA"}</button></div>`;
+  d.querySelector("button").addEventListener("click", () => hayStart(HAY.done || !cont)); projList.insertBefore(d, projList.firstChild); };
+(() => { const p = document.querySelector("#menu .brand p"); if (p) p.textContent = "Subay sensin. Bir hafta boyunca her sabah içtima, her gün bir iş, öğle yemeği, akşam çayı, gece; her saatte bir karar: işi kendin mi yaparsın, askere mi bırakırsın; yaralı eri sen mi götürürsün; müteahhidin paketini alır mısın; Ufuk Binbaşı'ya doğruyu mu söylersin? Her kararın bir bedeli var ve ertesi gün karşına çıkar. Haftanın sonunda Levent Paşa gelir, sicilin yazılır."; })();
+window.__hs.hay = HAY; window.__hs.hayStart = hayStart; window.__hs.hayEv = k => hayCard(EVS.find(e => e.k === k)); window.__hs.hayTo = f => ({ictima: hayIctima, yemek: hayYemek, olay: hayOlay, cay: hayCay, gece: hayGece, teftis: hayTeftis}[f]());
+
+;(window.__INIT || (window.__INIT = [])).push(["hayat", performance.now()]);
 
 // ======================= KABİN: the excavator from the operator's seat — the boom out front, two joysticks at the bottom of the screen
 // with gloved hands on them that move with what you press (drawn over the scene after it, so the cab never cuts into them) =======================

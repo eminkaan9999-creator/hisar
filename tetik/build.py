@@ -3,8 +3,10 @@
 Kullanim:
   python3 build.py                 -> src/app.html'den tetik/index.html (web + PWA)
   python3 build.py /yol/app.html   -> once src/app.html'e kopyalar, sonra ayni sekilde uretir
-  python3 build.py --apk           -> ayrica Android uygulamasinin sayfasini da uretir
+  python3 build.py --apk           -> ayrica Android uygulamasinin sayfasini APK icine de yazar
                                       (android/app/src/main/assets/www/index.html)
+Her calismada Android sayfasi apk/index.html'ye de yazilir: GitHub Pages'ten yayinlanir, Android uygulamasi
+yeni surumu buradan kendi icinden indirir (PageStore.java; yazi tiplerini APK'dakilere kendisi baglar).
 """
 import sys, pathlib, shutil
 
@@ -41,10 +43,9 @@ dst = here / 'index.html'
 dst.write_text(out, encoding='utf-8')
 print('yazildi:', dst, len(out), 'bayt')
 
-if want_apk:
-    # Android: sistem cubuklari yerel kodda bosluk olarak ayrilir, bu yuzden safe-area dolgusu yok.
-    # bridge.js, Web Bluetooth'u telefonun yerel Bluetooth'una baglar; uygulama kodundan once yuklenmeli.
-    apk_head = '''<!doctype html>
+# Android: sistem cubuklari yerel kodda bosluk olarak ayrilir, bu yuzden safe-area dolgusu yok.
+# bridge.js, Web Bluetooth'u telefonun yerel Bluetooth'una baglar; uygulama kodundan once yuklenmeli.
+apk_head = '''<!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8">
@@ -56,6 +57,12 @@ if want_apk:
 </head>
 <body>
 '''
+pages_apk = here / 'apk' / 'index.html'
+pages_apk.parent.mkdir(parents=True, exist_ok=True)
+pages_apk.write_text(apk_head + src + '\n</body>\n</html>\n', encoding='utf-8')
+print('yazildi:', pages_apk)
+
+if want_apk:
     www = here / 'android' / 'app' / 'src' / 'main' / 'assets' / 'www'
     www.mkdir(parents=True, exist_ok=True)
     apk_src = src

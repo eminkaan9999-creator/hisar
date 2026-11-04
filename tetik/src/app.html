@@ -493,7 +493,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=15;
+const VER=16;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -2209,7 +2209,7 @@ function anFaults(ss,cmp){
   if(!all.length) txt="Bu dönemde atış yok.";
   else if(!bad) txt="Hatalı atış yok: bütün atışların skoru 85 ve üzeri.";
   else{ txt=`Atışlarının ${pctT(bad/all.length*100)} 85'in altında.`;
-    if(top.length) txt+=` En sık hata: <b>${esc(CAUSES[top[0].k].ad)}</b> (atışların ${pctT(top[0].sh*100,true)}).`;
+    if(top.length) txt+=` En sık hata: <b>${esc(CAUSES[top[0].k].ad.replace(/\s*\(.*\)\s*$/,""))}</b> (atışların ${pctT(top[0].sh*100,true)}).`;
     const mx=Math.max(...cnt), h=cnt.indexOf(mx); if(dirN>=4&&mx/dirN>=0.3) txt+=` Hatalı atışlar en çok <b>saat ${h}</b> yönüne kayıyor.`; }
   const trend=t=>{ if(t.b==null) return ""; const d=(t.a-t.b)*100; return Math.abs(d)<3?"aynı":d<0?"▼ azalıyor":"▲ artıyor"; };
   const list=top.length?`<div class="an-top">${top.map((t,i)=>`<button data-cause="${t.k}"><span class="rk">${i+1}</span><span>${esc(CAUSES[t.k].ad)}<small>atışların ${pctT(t.sh*100,true)}</small></span><span class="tr">${trend(t)} ›</span></button>`).join("")}</div>`:"";
@@ -2220,7 +2220,7 @@ function ringSvg(cnt,bad,n){
   const P=(rad,a)=>`${(C+rad*Math.cos(a)).toFixed(2)},${(C+rad*Math.sin(a)).toFixed(2)}`;
   let g=`<svg viewBox="0 0 250 250" role="img" aria-label="Hata haritası: hatalı atışların saat yönüne göre dağılımı">`;
   for(let h=1;h<=12;h++){ const a=(h*30-90)*RAD, a0=a-Math.PI/12+0.012, a1=a+Math.PI/12-0.012, c=cnt[h];
-    const fill=c?`rgba(229,72,77,${(0.3+0.7*c/mx).toFixed(3)})`:"#3a3a3a";
+    const fill=c?`rgba(229,72,77,${(0.14+0.86*c/mx).toFixed(3)})`:"#3a3a3a";
     g+=`<path data-h="${h}" d="M${P(R,a0)} A${R},${R} 0 0 1 ${P(R,a1)} L${P(r,a1)} A${r},${r} 0 0 0 ${P(r,a0)} Z" fill="${fill}"/>`; }
   for(const [h,t] of [[12,"12"],[3,"3"],[6,"6"],[9,"9"]]){ const a=(h*30-90)*RAD; g+=`<text x="${(C+(R+13)*Math.cos(a)).toFixed(1)}" y="${(C+(R+13)*Math.sin(a)+4).toFixed(1)}" fill="${AN_COL.txt}" font-size="11" text-anchor="middle">${t}</text>`; }
   g+=`<text x="${C}" y="${C+2}" fill="${AN_COL.fg}" font-size="26" font-weight="600" text-anchor="middle">%${Math.round(bad/Math.max(1,n)*100)}</text><text x="${C}" y="${C+20}" fill="${AN_COL.txt}" font-size="11" text-anchor="middle">85 altı</text>`;
@@ -2228,7 +2228,8 @@ function ringSvg(cnt,bad,n){
 }
 function anGroup(ss,cmp){
   const all=shotsOf(ss).slice(-250).map(x=>x.q).filter(q=>q.dx!=null&&q.dy!=null);
-  const stat=v=>{ if(v.length<5) return null; const mx=v.reduce((a,q)=>a+q.dx,0)/v.length, my=v.reduce((a,q)=>a+q.dy,0)/v.length;
+  const med=a=>{ const o=a.slice().sort((x,y)=>x-y), m=o.length>>1; return o.length%2?o[m]:(o[m-1]+o[m])/2; };
+  const stat=v=>{ if(v.length<5) return null; const mx=med(v.map(q=>q.dx)), my=med(v.map(q=>q.dy));
     const ds=v.map(q=>Math.hypot(q.dx-mx,q.dy-my)).sort((a,b)=>a-b); return {mx,my,r50:ds[Math.floor((ds.length-1)/2)]}; };
   const G=stat(all); AN.group={pts:all,G};
   if(!G) return anCard("anGroup","Atış grubu","an_grup",all.length?`Atış grubu için en az 5 atış gerekiyor (şu an ${all.length}).`:"Bu dönemde atış yok.","");

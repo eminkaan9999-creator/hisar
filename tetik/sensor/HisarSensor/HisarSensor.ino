@@ -1,6 +1,18 @@
 // =====================================================================
-//  HISAR TETIK - M5StickC Plus2 sensor yazilimi (surum 3)
+//  HISAR TETIK - M5StickC Plus2 sensor yazilimi (surum 4)
 // ---------------------------------------------------------------------
+//  Surum 4 (M5StickC Plus2 ile tam uyum):
+//   * Zil (G2, pasif) artik dogrudan LEDC ile %50 doluluklu kare dalgayla
+//     surulur: kartin verebilecegi en yuksek ses. Ses seviyesi doluluk oranini
+//     ayarlar. Eski kisik ayar ilk acilista bir kez %100'e cekilir.
+//   * Notalar zilin en gur caldigi 2-4,2 kHz bandinda. Acilis, baglanti,
+//     kopma, kapanma ve "Sensoru bul" icin kisa ezgiler.
+//   * Plus2'de sarj durumunu bildiren bir uc yok: sarj, pil geriliminin
+//     yukselisinden anlasilir. Sarjdayken kendiliginden kapanmaz.
+//   * Pil yuzdesi 8 okumanin ortalamasindan, titremeden gosterilir.
+//   * Guc dugmesi (sol yan, C): kisa basis ekrani acar, 2 sn basili tutmak
+//     cihazi kapatir (B dugmesi de 2 sn ile kapatmaya devam eder).
+//
 //  Ne yapar:
 //   * MPU6886 hareket sensorunu (ivme + jiroskop) saniyede 1000 kez okur.
 //   * 5 olcumun ortalamasini alip saniyede 200 olcum uretir.
@@ -35,8 +47,8 @@
 //  (iki bolumlu OTA; dogrulanmayan yazilim secilmez, eski yazilim calisir).
 //
 //  Dugmeler:
-//   * On dugme (A): ekrani aydinlatir.
-//   * Yan dugme (B) 2 saniye basili: cihazi kapatir.
+//   * On dugme (A) ya da guc dugmesi (C) kisa: ekrani aydinlatir.
+//   * Yan dugme (B) ya da guc dugmesi (C) 2 saniye basili: cihazi kapatir.
 //
 //  Paket bicimleri ve komutlar: HisarProtocol.h
 // =====================================================================
@@ -49,6 +61,12 @@
 #include <driver/i2s.h>
 #include "HisarProtocol.h"
 
+// Kuyruk iletileri (islevlerden once tanimli olmali: Arduino kendi on bildirimlerini ilk islevin onune koyar)
+struct CmdMsg { uint8_t n; uint8_t d[8]; };
+struct OtaMsg { uint16_t n; uint8_t d[5 + hisar::OTA_MAX_CHUNK + 3]; };
+struct Note   { uint16_t f; uint16_t ms; uint16_t gap; };   // frekans (Hz, 0 = sessiz), sure, ardindan sessizlik
+struct Tune   { uint8_t n; Note v[6]; };
+
 // Telefondan guncellemede geri donus: yeni yazilim saglikli calistigi anlasilinca gecerli sayilir
 // (60 sn calisma ya da 10 sn kesintisiz veri akisi; bilerek yeniden baslatma/kapatma da). O ana kadar
 // cokup yeniden baslarsa onyukleyici eski yazilima doner; sensor USB'siz kurtulur.
@@ -56,7 +74,7 @@ extern "C" bool verifyRollbackLater() { return true; }
 static bool appValid = false;
 static void markValid() { if (!appValid) { esp_ota_mark_app_valid_cancel_rollback(); appValid = true; } }
 
-#define FW_VERSION 3
+#define FW_VERSION 4
 #define SVC_UUID    "0000ffe5-0000-1000-8000-00805f9a34fb"
 #define NOTIFY_UUID "0000ffe4-0000-1000-8000-00805f9a34fb"
 #define WRITE_UUID  "0000ffe9-0000-1000-8000-00805f9a34fb"
@@ -85,7 +103,65 @@ static uint32_t           micPeak = 0;
 // Sensorun kendi bibi mikrofonu bastirir: calarken (+60 ms) ses bayti 0 gider, uygulama o an
 // atisi yalniz darbeyle algilar.
 static volatile uint32_t  beepAt = 0, beepLen = 0;
-static void beep(float f, uint32_t ms) { beepLen = 0; beepAt = millis(); beepLen = ms + 60; M5.Speaker.tone(f, ms); }
+
+// ---------------------------------------------------------------- zil
+// M5StickC Plus2: pasif zil G2'de. M5Unified'in zil surucusu dusuk guclu (I2S ile yogunluk
+// modulasyonu) oldugu icin ses cok kisik cikiyordu. Burada LEDC ile kare dalga uretilir:
+// %50 doluluk = en yuksek ses. Ses seviyesi dolulugu ayarlar (temel frekansin genligi
+// sin(pi x doluluk) ile orantili, bu yuzden doluluk = asin(seviye) / pi).
+// LEDC kanal 0 (zamanlayici 0) kullanilir; kanal 6-7 (zamanlayici 3) ekran isigi ve LED'indir.
+static constexpr uint8_t BUZ_PIN = 2;
+static constexpr uint8_t BUZ_CH  = 0;
+static QueueHandle_t     buzQ = nullptr;     // tek elemanli: yeni ezgi calani keser
+
+static uint32_t buzDuty(uint8_t vol) {     // 10 bit doluluk (512 = %50)
+  if (vol == 0) return 0;
+  float a = vol >= 100 ? 1.0f : vol / 100.0f;
+  uint32_t d = (uint32_t)(1024.0f * asinf(a) / (float)M_PI + 0.5f);
+  return d < 1 ? 1 : d > 512 ? 512 : d;
+}
+static void buzOn(uint16_t f) {
+  uint32_t d = buzDuty(cfg.vol);
+  if (!d || f < 100) { ledcWrite(BUZ_CH, 0); return; }
+  ledcWriteTone(BUZ_CH, f);   // frekans + %50
+  ledcWrite(BUZ_CH, d);       // ses seviyesi
+}
+static void buzTask(void*) {
+  ledcSetup(BUZ_CH, 2000, 10);
+  ledcAttachPin(BUZ_PIN, BUZ_CH);
+  ledcWrite(BUZ_CH, 0);
+  Tune cur, nt;
+  for (;;) {
+    xQueueReceive(buzQ, &cur, portMAX_DELAY);
+    int i = 0;
+    while (i < cur.n) {
+      const Note n = cur.v[i];
+      buzOn(n.f);
+      if (xQueueReceive(buzQ, &nt, pdMS_TO_TICKS(n.ms ? n.ms : 1)) == pdTRUE) { cur = nt; i = 0; continue; }
+      ledcWrite(BUZ_CH, 0);
+      if (n.gap && xQueueReceive(buzQ, &nt, pdMS_TO_TICKS(n.gap)) == pdTRUE) { cur = nt; i = 0; continue; }
+      i++;
+    }
+    ledcWrite(BUZ_CH, 0);
+  }
+}
+static void playTune(const Note* v, int n) {
+  if (!buzQ || n <= 0) return;
+  Tune t;
+  t.n = (uint8_t)(n > 6 ? 6 : n);
+  uint32_t total = 0;
+  for (int i = 0; i < t.n; i++) { t.v[i] = v[i]; total += v[i].ms + v[i].gap; }
+  beepLen = 0; beepAt = millis(); beepLen = total + 60;
+  xQueueOverwrite(buzQ, &t);
+}
+static void beep(uint16_t f, uint16_t ms) { Note n = {f, ms, 0}; playTune(&n, 1); }
+// Ezgiler (C7 2093, E7 2637, G7 3136, C8 4186 Hz: zilin gur caldigi bant)
+static const Note TUNE_BOOT[]  = {{2093, 70, 25}, {2637, 70, 25}, {3136, 70, 25}, {4186, 140, 0}};
+static const Note TUNE_CONN[]  = {{3136, 60, 25}, {4186, 100, 0}};
+static const Note TUNE_DISC[]  = {{3136, 60, 25}, {2093, 140, 0}};
+static const Note TUNE_OFF[]   = {{4186, 80, 20}, {3136, 80, 20}, {2637, 80, 20}, {2093, 200, 0}};
+static const Note TUNE_FIND[]  = {{3136, 90, 40}, {4186, 90, 0}};
+#define PLAY(t) playTune(t, (int)(sizeof(t) / sizeof(t[0])))
 
 static NimBLEServer*         server = nullptr;
 static NimBLECharacteristic* notifyChr = nullptr;
@@ -96,8 +172,6 @@ static volatile uint16_t peerMtu = 23;
 static QueueHandle_t     cmdQ = nullptr;        // uygulamadan gelen komutlar (dongude islenir)
 static uint16_t          bootId = 0;
 
-struct CmdMsg { uint8_t n; uint8_t d[8]; };
-struct OtaMsg { uint16_t n; uint8_t d[5 + hisar::OTA_MAX_CHUNK + 3]; };
 static QueueHandle_t     otaQ = nullptr;        // yazilim guncelleme parcalari (ayri gorevde islenir)
 static hisar::OtaRx      ota;
 static volatile bool     otaActive = false;
@@ -112,11 +186,21 @@ static void loadSettings() {
   prefs.begin("hisar", true);
   hisar::applySetting(cfg, 1, prefs.getUChar("bri", 40));
   hisar::applySetting(cfg, 2, prefs.getUChar("scr", 20));
-  hisar::applySetting(cfg, 3, prefs.getUChar("vol", 60));
+  hisar::applySetting(cfg, 3, prefs.getUChar("vol", 100));
   hisar::applySetting(cfg, 4, prefs.getUChar("off", 10));
   uint8_t no = prefs.getUChar("no", 1);
   cfg.no = (no >= 1 && no <= 9) ? no : 1;
+  bool snd4 = prefs.getBool("snd4", false);
   prefs.end();
+  // Surum 4: zil artik tam guclu suruluyor. Eski yazilimin kisik zili icin kaydedilmis ses ayari
+  // bir kez %100'e cekilir; sonra uygulamadan istenildigi gibi degistirilebilir.
+  if (!snd4) {
+    cfg.vol = 100;
+    prefs.begin("hisar", false);
+    prefs.putUChar("vol", cfg.vol);
+    prefs.putBool("snd4", true);
+    prefs.end();
+  }
 }
 static void saveSettings() {
   prefs.begin("hisar", false);
@@ -128,7 +212,6 @@ static void saveSettings() {
   prefs.end();
 }
 static uint8_t briValue(uint8_t pct) { return (uint8_t)(10 + (uint16_t)pct * 245 / 100); }
-static uint8_t volValue(uint8_t pct) { return (uint8_t)((uint16_t)pct * 255 / 100); }
 
 // ---------------------------------------------------------------- BLE
 class ServerCB : public NimBLEServerCallbacks {
@@ -408,6 +491,46 @@ static uint16_t connIntervalUnits() {
 static int    lastBattery = 0;
 static bool   lastCharging = false;
 static int8_t lastRssi = -128;
+static int    lastMv = 0;
+
+// ---------------------------------------------------------------- pil ve sarj
+// Plus2'de sarj durumunu bildiren bir uc yok (M5.Power.isCharging "bilinmiyor" doner). Sarj kablosu
+// takilinca sarj akimi pil gerilimini birkac saniyede belirgin yukseltir, cekilince gerilim duser.
+// Gerilim saniyede bir 8 okumanin ortalamasiyla olculur: hizli ortalama (~2 sn) yavas ortalamadan
+// (~30 sn) 60 mV'tan fazla yukselirse "sarjda", 60 mV'tan fazla duserse "sarjda degil" sayilir.
+// Sarj sirasinda gerilim hic dusmez: en yuksek degerin 40 mV altina inerse de sarj bitmis sayilir
+// (dolu pilde kablo cekilince sicrama kucuk kalabilir). Kartin gercek bir sarj bilgisi varsa o kullanilir.
+static float mvSlow = 0, mvFast = 0, mvPeak = 0;
+static bool  chgInfer = false;
+
+static void updatePower() {
+  int32_t sum = 0; int n = 0;
+  for (int i = 0; i < 8; i++) {
+    int v = M5.Power.getBatteryVoltage();
+    if (v > 2500 && v < 5000) { sum += v; n++; }
+  }
+  if (n) {
+    float mv = (float)sum / n;
+    if (mvSlow == 0) { mvSlow = mvFast = mvPeak = mv; }
+    mvFast += (mv - mvFast) * 0.4f;
+    mvSlow += (mv - mvSlow) * 0.035f;
+    float d = mvFast - mvSlow;
+    if (!chgInfer && d > 60) { chgInfer = true; mvSlow = mvPeak = mvFast; }
+    else if (chgInfer && (d < -60 || mvFast < mvPeak - 40)) { chgInfer = false; mvSlow = mvFast; }
+    if (chgInfer && mvSlow > mvPeak) mvPeak = mvSlow;
+    lastMv = (int)(mvSlow + 0.5f);
+    // M5Unified ile ayni olcek (3,30 V = %0, 4,10 V ve ustu = %100), yavas ortalamadan: yuzde titremez
+    int lv = (int)((mvSlow - 3300.0f) * 100.0f / 800.0f);
+    lastBattery = lv < 0 ? 0 : lv > 100 ? 100 : lv;
+  } else {
+    lastBattery = M5.Power.getBatteryLevel();
+    lastMv = 0;
+  }
+  auto cs = M5.Power.isCharging();
+  lastCharging = cs == m5::Power_Class::is_charging ? true
+               : cs == m5::Power_Class::is_discharging ? false
+               : chgInfer;
+}
 
 static void sendStatus() {
   hisar::StatusInfo s;
@@ -420,8 +543,7 @@ static void sendStatus() {
   s.fw = FW_VERSION;
   s.rssi = lastRssi;
   s.tempC = hisar::tempFromRaw(imuTempRaw);
-  int mv = M5.Power.getBatteryVoltage();
-  s.mv = (uint16_t)(mv < 0 ? 0 : mv);
+  s.mv = (uint16_t)(lastMv < 0 ? 0 : lastMv);
   s.bri = cfg.bri; s.scr = cfg.scr; s.vol = cfg.vol; s.off = cfg.off; s.no = cfg.no;
   uint32_t e = imuErrors;
   s.imuErr = (uint8_t)(e > 255 ? 255 : e);
@@ -550,8 +672,10 @@ static void showMessage(const char* msg) {
 static void powerOffNow() {
   markValid();
   showMessage("KAPANIYOR");
-  beep(900, 200);
-  delay(600);
+  PLAY(TUNE_OFF);
+  delay(650);
+  ledcWrite(BUZ_CH, 0);
+  M5.Power.setLed(0);
   M5.Power.powerOff();
 }
 
@@ -568,7 +692,6 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
       bool rename = hisar::applySetting(cfg, c.key, c.val);
       M5.Display.setBrightness(briValue(cfg.bri));
       screenDim = false;
-      M5.Speaker.setVolume(volValue(cfg.vol));
       wakeScreen(now);
       lastActivity = now;
       saveSettings();
@@ -609,16 +732,17 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
 void setup() {
   auto mc = M5.config();
   mc.internal_imu = true;
-  mc.internal_spk = true;
+  mc.internal_spk = false;          // zil dogrudan LEDC ile surulur (bkz. "zil"); I2S0 mikrofonun
   mc.internal_mic = false;          // mikrofon dogrudan I2S0 ile okunur
   M5.begin(mc);
-  { auto sc = M5.Speaker.config(); sc.i2s_port = I2S_NUM_1; M5.Speaker.config(sc); }   // bip I2S1'de: I2S0 mikrofonun
   loadSettings();
+  buzQ = xQueueCreate(1, sizeof(Tune));
+  xTaskCreatePinnedToCore(buzTask, "buz", 3072, nullptr, 4, nullptr, 1);
+  PLAY(TUNE_BOOT);                  // acilis ezgisi: guc dugmesine basildigi hemen duyulur
   M5.Display.setRotation(1);
   M5.Display.setBrightness(briValue(cfg.bri));
   canvas.setColorDepth(16);
   canvas.createSprite(M5.Display.width(), M5.Display.height());
-  M5.Speaker.setVolume(volValue(cfg.vol));
   bootId = (uint16_t)(esp_random() & 0xFFFF);
   cmdQ = xQueueCreate(16, sizeof(CmdMsg));
   otaQ = xQueueCreate(48, sizeof(OtaMsg));
@@ -652,12 +776,13 @@ void setup() {
   uint32_t now = millis();
   wakeScreen(now);
   lastActivity = now;
-  beep(2200, 80);
+  updatePower();
 }
 
 // ---------------------------------------------------------------- Dongu
 static uint32_t lastRateT = 0, lastDrawT = 0, lastStatusT = 0, lastPowerT = 0, lastLedT = 0;
-static uint32_t btnBDown = 0;
+static uint32_t btnBDown = 0, btnPDown = 0;
+static bool     pwrReleased = false;   // acarken basili tutulan guc dugmesi birakilmadan kapatma sayilmaz
 static uint32_t lastSent = 0;
 static bool     wasConnected = false;
 static uint32_t streamSince = 0;
@@ -681,8 +806,9 @@ void loop() {
 
   if (now - lastPowerT >= 1000 || lastPowerT == 0) {
     lastPowerT = now;
-    lastBattery = M5.Power.getBatteryLevel();
-    lastCharging = M5.Power.isCharging() == m5::Power_Class::is_charging;
+    bool wasCharging = lastCharging;
+    updatePower();
+    if (lastCharging != wasCharging) { lastActivity = now; wakeScreen(now); wantStatus = true; }
     lastRssi = readRssi();
   }
 
@@ -690,7 +816,7 @@ void loop() {
     wasConnected = bleConnected;
     lastActivity = now;
     wakeScreen(now);
-    beep(bleConnected ? 2600 : 1200, 90);
+    if (bleConnected) PLAY(TUNE_CONN); else PLAY(TUNE_DISC);
     if (!bleConnected) stream.onDisconnect();
     if (!bleConnected && otaActive && ota.state == hisar::OtaRx::READY) { OtaMsg a; a.n = 1; a.d[0] = 0x13; xQueueSend(otaQ, &a, 0); }
   }
@@ -715,7 +841,7 @@ void loop() {
         lastLedT = now;
         bool on = ((now / 250) % 2) == 0;
         M5.Power.setLed(on ? 255 : 0);
-        if (on && ((now / 500) % 2) == 0) beep(2800, 90);
+        if (on && ((now / 500) % 2) == 0) PLAY(TUNE_FIND);
       }
     } else {
       identifyUntil = 0;
@@ -723,14 +849,24 @@ void loop() {
     }
   }
 
-  // On dugme: ekrani aydinlat
-  if (M5.BtnA.wasPressed()) { wakeScreen(now); lastActivity = now; }
-  // Yan dugme 2 sn: kapat
+  // On dugme ya da guc dugmesi kisa: ekrani aydinlat
+  if (M5.BtnA.wasPressed() || M5.BtnPWR.wasPressed()) { wakeScreen(now); lastActivity = now; }
+  // Yan dugme (B) 2 sn: kapat
   if (M5.BtnB.isPressed()) {
     if (!btnBDown) btnBDown = now;
     if (now - btnBDown > 2000) powerOffNow();
   } else {
     btnBDown = 0;
+  }
+  // Guc dugmesi (C) 2 sn: kapat. Acarken basili tutuldugu icin once birakilmasi beklenir.
+  if (M5.BtnPWR.isPressed()) {
+    if (pwrReleased) {
+      if (!btnPDown) btnPDown = now;
+      if (now - btnPDown > 2000) powerOffNow();
+    }
+  } else {
+    pwrReleased = true;
+    btnPDown = 0;
   }
 
   // Otomatik kapanma: bagli degil, sarjda degil ve sure doldu

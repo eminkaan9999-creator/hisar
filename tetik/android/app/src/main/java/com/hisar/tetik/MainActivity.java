@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -42,6 +43,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -66,6 +68,10 @@ public class MainActivity extends Activity {
     ValueCallback<Uri[]> fileCb;
     String pendingName, pendingText;
     OnBackInvokedCallback backCb;
+    // Sesli okuma (karşılama sözü, skoru söyleme): WebView'da konuşma yok, telefonun kendi seslendirmesi kullanılır
+    TextToSpeech tts;
+    boolean ttsReady;
+    String ttsPending;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -212,6 +218,7 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         if (Build.VERSION.SDK_INT >= 33 && backCb != null) getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backCb);
         if (ble != null) ble.close();
+        if (tts != null) { try { tts.shutdown(); } catch (Exception ignored) { } tts = null; }
         if (web != null) { root.removeView(web); web.destroy(); web = null; }
         super.onDestroy();
     }
@@ -327,6 +334,26 @@ public class MainActivity extends Activity {
     }
 
     // ------------------------------------------------------------------ sayfadan çağrılan yerel işlevler
+    void say(String text) {
+        if (text == null || text.trim().isEmpty()) return;
+        if (tts == null) {
+            ttsPending = text;
+            try {
+                tts = new TextToSpeech(this, st -> {
+                    if (st != TextToSpeech.SUCCESS || tts == null) { Log.w(TAG, "seslendirme açılamadı: " + st); return; }
+                    int r = tts.setLanguage(new Locale("tr", "TR"));
+                    if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) Log.w(TAG, "Türkçe ses yok; varsayılan dil kullanılıyor");
+                    ttsReady = true;
+                    String p = ttsPending; ttsPending = null;
+                    if (p != null) tts.speak(p, TextToSpeech.QUEUE_FLUSH, null, "hisar");
+                });
+            } catch (Exception e) { Log.w(TAG, "seslendirme: " + e); tts = null; }
+            return;
+        }
+        if (!ttsReady) { ttsPending = text; return; }
+        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "hisar");
+    }
+
     class Native {
         @JavascriptInterface
         public String info() {
@@ -350,6 +377,10 @@ public class MainActivity extends Activity {
         /** Sayfanın yeni sürümünü GitHub Pages'ten indirir ve kurar (APK yeniden kurulmaz). */
         @JavascriptInterface
         public void update() { ui.post(() -> runUpdate(false)); }
+
+        /** Metni telefonun seslendirmesiyle söyler (Türkçe ses varsa Türkçe). */
+        @JavascriptInterface
+        public void speak(String text) { ui.post(() -> say(text)); }
 
         @JavascriptInterface
         public void exitApp() { ui.post(() -> moveTaskToBack(true)); }

@@ -1,1 +1,1 @@
-{"fw": 3, "file": "hisar-sensor-v3-app.bin", "size": 809504, "crc32": 1164395317, "not": "Mikrofonla tetik doğrulama: kuru tetikte tetiğin tık sesi de dinlenir, hafif tetiklerde kaçan atış azalır."}
+{"fw": 4, "file": "hisar-sensor-v4-app.bin", "size": 803104, "crc32": 431056561, "not": "Ses çok daha yüksek: zil tam güçle çalıyor. Açılış, bağlantı ve “Sensörü bul” ezgileri; şarj kablosu takılınca ekranda “şarj” yazar ve sensör kendiliğinden kapanmaz; sol yandaki güç düğmesine 2 sn basınca kapanır."}

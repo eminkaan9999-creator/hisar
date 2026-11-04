@@ -129,8 +129,8 @@ const DRILLS = [
     const m = await page.evaluate(() => window.__hisar.S.mount.sensor);
     check(ax && m.B && Math.abs(Math.abs(m.B[1]) - 1) < 0.05, 'Yön testi: namlu ekseni bulundu ve kaydedildi (Y ekseni)', m);
     await sleep(1600);
-    const md = await page.evaluate(() => { window.__hisar.openSettings('gelismis'); return document.getElementById('md-montaj').textContent; });
-    check(/yön testi yapıldı/i.test(md), 'Gelişmiş Ayarlar listesinde "Yön testi yapıldı"', md);
+    const md = await page.evaluate(() => { window.__hisar.showView('sensor'); return document.getElementById('snAxisTag').textContent; });
+    check(/^✓/.test(md), 'Sensör sekmesinde Yön testi satırı "✓ … önce"', md);
     // Montaj yönü ARKA: ölçülen namlu ekseni ters çevrilir, İLERİ'de geri gelir
     const flip = await page.evaluate(() => { const H = window.__hisar, b0 = H.S.mount.sensor.B.slice(); H.setYon('arka'); const b1 = H.S.mount.sensor.B.slice(), pc = H.proc.cfg.B.slice(); H.setYon('ileri'); return { b0, b1, pc, b2: H.S.mount.sensor.B.slice(), yon: H.S.mount.sensor.yon }; });
     check(Math.abs(flip.b1[1] + flip.b0[1]) < 1e-3 && Math.abs(flip.pc[1] - flip.b1[1]) < 1e-3 && Math.abs(flip.b2[1] - flip.b0[1]) < 1e-3 && flip.yon === 'ileri', 'Montaj yönü ARKA namlu eksenini ters çeviriyor, İLERİ geri alıyor', flip);
@@ -144,22 +144,28 @@ const DRILLS = [
     await ctx.close();
   }
 
-  section('MantisX düzeni: Alıştırma listesi, düzenleme, günlük meydan okuma, dersler, neden sayfası');
+  section('Sade düzen: Günün Görevi, ana antrenmanlar + Diğer antrenmanlar, düzenleme, dersler, neden sayfası');
   {
     const { ctx, page, errs } = await connected(browser);
     const L = await page.evaluate(() => ({ secs: Array.from(document.querySelectorAll('#drillList .sec')).map(e => e.firstChild.textContent.trim()),
       drills: Array.from(document.querySelectorAll('#drillList [data-drill]')).map(e => e.querySelector('.ln').textContent),
       lessons: Array.from(document.querySelectorAll('#drillList [data-lesson]')).map(e => e.querySelector('.ln').textContent), ch: document.getElementById('chRow').textContent,
       nav: Array.from(document.querySelectorAll('.nav button')).map(b => b.textContent.trim()) }));
-    check(JSON.stringify(L.secs) === JSON.stringify(['Elit', 'Günlük Meydan Okuma', 'Antrenmanlar', 'Dersler']), 'Bölümler MantisX sırasıyla: ELİT, GÜNLÜK MEYDAN OKUMA, ANTREMANLAR, DERSLER', L.secs);
-    check(JSON.stringify(L.drills) === JSON.stringify(['Kılıf Çekiş Analizi', 'Geri Tepme Ölçer', 'Serbest Antrenman', 'Safe Space', 'Atış Zamanlayıcısı (Shot Timer)', 'Par Ölçer', 'Değerlendirme Testi', '20 Saniyelik Kıyaslama', 'Zaman Kıyaslaması', 'Dayanıklılık', 'Silahı Beklenmedik Anda Ateşleme', 'Sadece Atış Eli', 'Sadece Destek Eli', 'Karar Tatbikatları', 'Şarjör Değiştirme Antrenmanları', 'Ritmik Antrenman', 'Rehine Kurtarma Antrenmanları']),
-      'Alıştırmalar MantisX listesiyle aynı sırada (17)', L.drills);
-    check(JSON.stringify(L.lessons) === JSON.stringify(['HİSAR TETİK Tanıtımı', 'Temel Nişancılık', 'İleri Nişancılık']) && JSON.stringify(L.nav) === JSON.stringify(['Alıştırma', 'Geçmiş', 'Gruplar', 'Ayarlar']), 'Dersler (3) ve alt sekmeler: Alıştırma, Geçmiş, Gruplar, Ayarlar', { l: L.lessons, nav: L.nav });
-    const ch = await page.evaluate(() => window.__hisar.todayChallenge());
-    check(L.ch.includes(ch.ad) && L.ch.includes(ch.goal), 'Günlük meydan okuma satırında bugünün görevi ve hedefi', L.ch);
+    check(JSON.stringify(L.secs) === JSON.stringify(['Günün Görevi', 'Antrenmanlar', 'Dersler']), 'Bölümler: GÜNÜN GÖREVİ, ANTRENMANLAR, DERSLER', L.secs);
+    check(JSON.stringify(L.drills) === JSON.stringify(['Serbest Antrenman', 'Değerlendirme Testi', 'Atış Zamanlayıcısı (Shot Timer)', 'Par Ölçer', 'Ritmik Antrenman', 'Kılıf Çekiş Analizi']),
+      'Ana listede sık kullanılan 6 antrenman; diğerleri kapalı "Diğer antrenmanlar" satırında', L.drills);
+    await page.click('#drMore'); await sleep(150);
+    const all = await page.evaluate(() => ({ n: document.querySelectorAll('#drillList [data-drill]').length, more: document.getElementById('drMore').textContent }));
+    await page.click('#drMore'); await sleep(100);
+    check(all.n === 17 && /11 alıştırma/.test(all.more), '"Diğer antrenmanlar" açılınca 17 alıştırmanın hepsi görünüyor (hiçbiri silinmedi)', all);
+    check(JSON.stringify(L.lessons) === JSON.stringify(['HİSAR TETİK Tanıtımı', 'Temel Nişancılık', 'İleri Nişancılık']) && JSON.stringify(L.nav) === JSON.stringify(['Alıştırma', 'Analiz', 'Sensör', 'Ayarlar']), 'Dersler (3) ve alt sekmeler: Alıştırma, Analiz, Sensör, Ayarlar', { l: L.lessons, nav: L.nav });
+    const ch = await page.evaluate(() => { const c = window.__hisar.todayChallenge(); return { drill: c.drill, goal: c.goal, ad: c.ad, name: window.__hisar.DR.find(d => d.id === c.drill).ad }; });
+    check(L.ch.includes(ch.name) && L.ch.includes(ch.goal) && ch.ad === undefined, 'Günün Görevi satırında alıştırmanın adı ve hedefi (özel ad yok)', { row: L.ch, ch });
+    const names = await page.evaluate(() => { const t = document.documentElement.innerHTML + JSON.stringify(window.__hisar.CHALLENGES.map(c => Object.keys(c))); return ['Çanakkale', 'Sakarya', 'Dumlupınar', 'Malazgirt', 'Kocatepe', 'İnönü', 'Preveze', 'Amare', 'Sarıkamış', 'Kurtuluş', 'Meydan Okuma', 'meydan okuma'].filter(w => t.includes(w)); });
+    check(names.length === 0, 'Uygulamada savaş adları ve "meydan okuma" yazısı kalmadı', names);
     await page.click('#chRow'); await sleep(3400);
     const chd = await page.evaluate(() => ({ d: window.__hisar.cur.sess.drill, pre: document.getElementById('preStart').textContent }));
-    check(chd.d === ch.drill && /Günlük meydan okuma/.test(chd.pre), 'Meydan okumaya dokununca o alıştırma, hedefiyle birlikte açılıyor', chd);
+    check(chd.d === ch.drill && /Günün görevi/.test(chd.pre), 'Günün Görevi\'ne dokununca o alıştırma, hedefiyle birlikte açılıyor', chd);
     // DRILL ve atış tipi düğmeleri
     await page.click('#preDrill'); await sleep(200);
     const dt = await page.evaluate(() => ({ t: document.getElementById('pgTitle').textContent, b: document.getElementById('pgBody').textContent.length }));
@@ -181,13 +187,13 @@ const DRILLS = [
     const cp = await page.evaluate(() => ({ tabs: document.querySelectorAll('#pgBody .c-tabs button').length, art: document.querySelectorAll('#pgBody .c-art svg').length, h: document.querySelector('#pgBody h2').textContent, nav: document.getElementById('nav').hidden, drill: !!document.getElementById('cDrill') }));
     check(pc.length >= 1 && pc[0] === 'bilek_asagi' && cp.tabs === pc.length && cp.art === 2 && /Bileği aşağı/i.test(cp.h) && cp.nav && cp.drill, 'Olası nedenler: dokununca MantisX gibi sekmeli neden sayfası (doğru/hatalı çizim, düzeltme, önerilen alıştırma)', { pc, cp });
     await page.evaluate(() => { window.__hisar.popPage(); window.__hisar.stopRun(false); }); await sleep(1300);
-    // listeyi düzenle: Safe Space gizle / göster
-    await page.evaluate(() => window.__hisar.showView('alistirma'));
+    // listeyi düzenle: Safe Space ana listeye eklenir, sonra Diğer'e geri döner
+    await page.evaluate(() => { window.__hisar.cur.moreDrills = false; window.__hisar.showView('alistirma'); });
     await page.click('#drEdit'); await page.click('[data-drill="safespace"]'); await page.click('#drEdit'); await sleep(100);
-    const hid = await page.evaluate(() => ({ shown: !!document.querySelector('#drillList [data-drill="safespace"]'), saved: JSON.parse(localStorage.getItem('hisarTetik.v2.meta')).settings.hiddenDrills }));
+    const add = await page.evaluate(() => ({ shown: !!document.querySelector('#drillList [data-drill="safespace"]'), saved: JSON.parse(localStorage.getItem('hisarTetik.v2.meta')).settings.mainDrills }));
     await page.click('#drEdit'); await page.click('[data-drill="safespace"]'); await page.click('#drEdit');
-    const back = await page.evaluate(() => !!document.querySelector('#drillList [data-drill="safespace"]'));
-    check(!hid.shown && JSON.stringify(hid.saved) === '["safespace"]' && back, 'Kalemle liste düzenleniyor: Safe Space gizlendi (kalıcı) ve geri açıldı', hid);
+    const back = await page.evaluate(() => ({ shown: !!document.querySelector('#drillList [data-drill="safespace"]'), saved: JSON.parse(localStorage.getItem('hisarTetik.v2.meta')).settings.mainDrills }));
+    check(add.shown && add.saved[add.saved.length - 1] === 'safespace' && !back.shown && !back.saved.includes('safespace') && back.saved.length === 6, 'Kalemle liste düzenleniyor: Safe Space ana listeye eklendi (kalıcı), sonra Diğer antrenmanlar\'a döndü', { add, back });
     // dersler
     for (let i = 0; i < 3; i++) { await page.click(`[data-lesson="${i}"]`); await sleep(150); if (i < 2) await page.evaluate(() => window.__hisar.popPage()); }
     const ds = await page.evaluate(() => ({ n: window.__hisar.pages.length, t: document.getElementById('pgTitle').textContent, causes: document.querySelectorAll('#pgBody [data-cause]').length }));
@@ -196,17 +202,23 @@ const DRILLS = [
     await ctx.close();
   }
 
-  section('Ayarlar ana sayfası (MantisX): silah, el, atış tipi, montaj, profil, program, ses, gelişmiş');
+  section('Ayarlar ana sayfası: silah, el, atış tipi, profil, ses, program, gelişmiş (montaj Sensör › Kalibrasyon ve yön\'de)');
   {
     const { ctx, page, errs } = await connected(browser);
     await page.evaluate(() => window.__hisar.openSettings(null)); await sleep(300);
-    const ui = await page.evaluate(() => ({ segs: ['sWeapon', 'sHand', 'sMode', 'sYon', 'sYer'].every(id => !!document.getElementById(id)),
+    const ui = await page.evaluate(() => ({ segs: ['sWeapon', 'sHand', 'sMode'].every(id => !!document.getElementById(id)) && !document.getElementById('sYon') && !document.getElementById('sYer'),
       btns: ['sPick', 'profPick', 'profEdit', 'rtProgram', 'rtSes', 'rtAdv'].every(id => !!document.getElementById(id)),
-      modes: Array.from(document.querySelectorAll('#sMode button')).map(b => b.textContent), yer: Array.from(document.querySelectorAll('#sYer button')).map(b => b.textContent),
+      modes: Array.from(document.querySelectorAll('#sMode button')).map(b => b.textContent),
       infos: Array.from(document.querySelectorAll('#v-ayarlar [data-info]')).map(b => b.dataset.info) }));
-    check(ui.segs && ui.btns && JSON.stringify(ui.modes) === JSON.stringify(['Gerçek atış', 'Kuru tetik', 'Daha fazla']) && JSON.stringify(ui.yer) === JSON.stringify(['Alt', 'Üst', 'Sağ', 'Sol']) && JSON.stringify(ui.infos) === JSON.stringify(['tip', 'myon', 'myer']),
-      'Silah, Silahını seç, el, atış tipi (Gerçek/Kuru/Daha fazla), montaj yönü ve yeri, profil, Eğitim programı, Sesli geri bildirim, Gelişmiş ayarlar', ui);
-    await page.click('#sHand [data-v="L"]'); await page.click('#sMode [data-v="gercek"]'); await page.click('#sYer [data-v="sag"]'); await page.click('#sYon [data-v="arka"]');
+    check(ui.segs && ui.btns && JSON.stringify(ui.modes) === JSON.stringify(['Gerçek atış', 'Kuru tetik', 'Daha fazla']) && JSON.stringify(ui.infos) === JSON.stringify(['tip']),
+      'Silah, Silahını seç, el, atış tipi (Gerçek/Kuru/Daha fazla), profil, Sesli geri bildirim, Eğitim programı, Gelişmiş ayarlar', ui);
+    await page.click('#sHand [data-v="L"]'); await page.click('#sMode [data-v="gercek"]');
+    // montaj yönü ve yeri: Sensör › Kalibrasyon ve yön › Elle ayarla
+    await page.evaluate(() => window.__hisar.openSettings('montaj')); await sleep(200);
+    const mj = await page.evaluate(() => { document.querySelector('#pgBody details.sub').open = true; return { yer: Array.from(document.querySelectorAll('#sYer button')).map(b => b.textContent), yon: Array.from(document.querySelectorAll('#sYon button')).map(b => b.textContent), t: document.getElementById('pgTitle').textContent, v: window.__hisar.curView }; });
+    check(JSON.stringify(mj.yer) === JSON.stringify(['Alt', 'Üst', 'Sağ', 'Sol']) && JSON.stringify(mj.yon) === JSON.stringify(['İleri', 'Arka']) && mj.t === 'Kalibrasyon ve yön' && mj.v === 'sensor', 'Montaj yönü ve yeri Sensör › Kalibrasyon ve yön › Elle ayarla\'da', mj);
+    await page.click('#sYer [data-v="sag"]'); await page.click('#sYon [data-v="arka"]'); await sleep(100);
+    await page.evaluate(() => window.__hisar.openSettings(null)); await sleep(200);
     await page.click('#sPick'); await sleep(200); await page.click('[data-w="MPT-76"]'); await sleep(200);
     await page.click('#sMode [data-v="more"]'); await sleep(200); await page.click('#pgBody [data-mode="co2"]'); await sleep(200);
     await page.click('#rtSes'); await sleep(200); await page.click('#sSound [data-v="kapali"]'); await page.evaluate(() => window.__hisar.popPage());
@@ -221,9 +233,9 @@ const DRILLS = [
     const pre = await page.evaluate(() => { window.__hisar.openDrill('serbest'); return document.getElementById('preStart').textContent; });
     check(/MPT-76/.test(pre) && /CO2/.test(pre) && /Sol/.test(pre), 'Alıştırma ekranındaki düğmeler seçimi gösteriyor', pre.slice(0, 200));
     await page.evaluate(() => window.__hisar.openSettings(null)); await sleep(200);
-    await page.click('#v-ayarlar [data-info="myon"]'); await sleep(200);
+    await page.click('#v-ayarlar [data-info="tip"]'); await sleep(200);
     const info = await page.evaluate(() => ({ t: document.getElementById('sheetTitle').textContent, b: document.getElementById('sheetBody').textContent }));
-    check(info.t === 'Montaj yönü' && /İLERİ/.test(info.b) && /ARKA/.test(info.b), 'ⓘ açıklaması pencerede açılıyor', info);
+    check(info.t === 'Atış tipi' && /Kuru tetik/.test(info.b) && /CO2/.test(info.b), 'ⓘ açıklaması pencerede açılıyor', info);
     await closeSheet(page);
     // profil: yeni atıcı, seçim, ad değiştirme
     await page.click('#profPick'); await sleep(150); await page.fill('#ppNew', 'Ali Çavuş'); await page.click('#ppAdd'); await sleep(200);
@@ -231,29 +243,34 @@ const DRILLS = [
     await page.click('#profEdit'); await sleep(150); await page.fill('#prName', 'Ali Uzman Çavuş'); await page.evaluate(() => window.__hisar.popPage());
     const pr2 = await page.evaluate(() => document.getElementById('profName').textContent);
     check(pr.n === 2 && pr.cur === 'Ali Çavuş' && pr2 === 'Ali Uzman Çavuş', 'Profil: ▼ ile yeni atıcı eklendi ve seçildi, Profilini düzenle ile adı değişti', { pr, pr2 });
-    // bütün alt sayfalar açılıyor, ⓘ'ler dolu
-    const pages = ['gelismis', 'baglanti', 'montaj', 'algilama', 'gorunum', 'veri', 'uygulama', 'program', 'ses', 'silah', 'profil'];
+    // bütün alt sayfalar açılıyor, ⓘ'ler dolu (Sensör artık alt sekme: ayrıca denetlenir)
+    const pages = ['gelismis', 'montaj', 'algilama', 'gorunum', 'veri', 'uygulama', 'program', 'ses', 'silah', 'profil'];
     const bad = [];
-    for (const p of pages) { const r = await page.evaluate(p => { window.__hisar.openSettings(p); return { t: document.getElementById('pgTitle').textContent, infos: Array.from(document.querySelectorAll('#pgBody [data-info]')).map(b => b.dataset.info), body: document.getElementById('pgBody').textContent.length }; }, p);
+    for (const p of pages) { const r = await page.evaluate(p => { window.__hisar.openSettings(p); document.querySelectorAll('#pgBody details').forEach(d => { d.open = true; }); return { t: document.getElementById('pgTitle').textContent, infos: Array.from(document.querySelectorAll('#pgBody [data-info]')).map(b => b.dataset.info), body: document.getElementById('pgBody').textContent.length }; }, p);
       if (!r.t || r.body < 30) bad.push(p + ':boş');
       for (const k of r.infos) { await page.click(`#pgBody [data-info="${k}"]`); await sleep(80); const t = await page.evaluate(() => document.getElementById('sheetBody').textContent.length);
         if (t < 40) bad.push(p + ':' + k); await closeSheet(page); } }
-    check(bad.length === 0, 'Bütün alt sayfalar (11) açılıyor, içlerindeki ⓘ açıklamaları dolu', bad);
+    check(bad.length === 0, 'Bütün alt sayfalar (10) açılıyor, içlerindeki ⓘ açıklamaları dolu', bad);
+    const sv = await page.evaluate(() => { window.__hisar.openSettings('baglanti'); return { v: window.__hisar.curView, pages: window.__hisar.pages.length, ids: ['sbConnect', 'sbTest', 'snAxis', 'snThr', 'snMontaj', 'snAlg', 'sShotBeep', 'sSBeep', 'snSound', 'sbFw', 'sbDev'].filter(id => !document.getElementById(id)), infos: Array.from(document.querySelectorAll('#v-sensor [data-info]')).map(b => b.dataset.info) }; });
+    for (const k of sv.infos) { await page.click(`#v-sensor [data-info="${k}"]`); await sleep(80); const t = await page.evaluate(() => document.getElementById('sheetBody').textContent.length); if (t < 40) bad.push('sensor:' + k); await closeSheet(page); }
+    check(sv.v === 'sensor' && sv.pages === 0 && !sv.ids.length && ['hazirlik', 'sses', 'tercih', 'diger'].every(k => sv.infos.includes(k)) && bad.length === 0, 'Eski "Ayarlar › Sensör" bağlantısı Sensör sekmesini açıyor: bağlantı, hazırlık (test, yön, eşik), sesler, yazılım, cihaz; ⓘ\'ler dolu', sv);
     const old = await page.evaluate(() => { window.__hisar.openSettings('atici'); return { p: window.__hisar.setPage, has: !!document.getElementById('sWeapon') }; });
     check(old.p == null && old.has, 'Eski bağlantılar (Atıcı, Alıştırma süreleri) Ayarlar ana sayfasını açıyor', old);
     check(errs.length === 0, 'Sayfa hatası yok', errs);
     await ctx.close();
   }
 
-  section('Geçmiş, süzme, Safe Space, inceleme, silme; Gruplar; yeniden açılınca kalıcılık');
+  section('Analiz, süzme, Safe Space, inceleme, silme; Gruplar (Analiz içinde); yeniden açılınca kalıcılık');
   {
     const { ctx, page, errs } = await connected(browser);
     for (const id of ['serbest', 'degerlendirme', 'safespace']) await page.evaluate(DRIVE, { id, set: {}, maxMs: 6000, stopAfter: 3 });
     await page.evaluate(() => window.__hisar.showView('gecmis')); await sleep(500);
     const h = await page.evaluate(() => ({ n: document.querySelectorAll('#sessList [data-id]').length, shots: +document.getElementById('hsShots').textContent, sess: +document.getElementById('hsSess').textContent, safeTag: /Safe Space/.test(document.getElementById('sessList').textContent),
-      title: document.getElementById('hTitle').textContent, streak: document.getElementById('hStreak').textContent, charts: document.querySelectorAll('#charts > div').length }));
-    check(h.n === 3 && h.sess === 2 && h.shots >= 6 && h.safeTag, 'Geçmişte 3 oturum; Safe Space listede etiketli ama istatistiğe girmiyor (2 oturum)', h);
-    check(/Atıcı: Son 6 ay/.test(h.title) && /Akım 1/.test(h.streak) && h.charts === 4, 'Başlık "Atıcı: Son 6 ay", antrenman serisi 1, 4 grafik', h);
+      title: document.getElementById('hTitle').textContent, streak: document.getElementById('hStreak').textContent, charts: Array.from(document.querySelectorAll('#anCards > .card h2')).map(e => e.textContent),
+      sent: Array.from(document.querySelectorAll('#anCards .an-s')).map(e => e.textContent) }));
+    check(h.n === 3 && h.sess === 2 && h.shots >= 6 && h.safeTag, 'Analiz\'de 3 oturum; Safe Space listede etiketli ama istatistiğe girmiyor (2 oturum)', h);
+    check(/Atıcı: Son 6 ay/.test(h.title) && /Akım 1/.test(h.streak) && JSON.stringify(h.charts) === JSON.stringify(['Gelişim', 'Hata haritası', 'Atış grubu']) && h.sent.every(t => t.length > 20 && !/undefined|NaN|null/.test(t)),
+      'Başlık "Atıcı: Son 6 ay", antrenman serisi 1, üç grafik (Gelişim, Hata haritası, Atış grubu), her birinin üstünde açıklama cümlesi', h);
     await page.click('#hFilter'); await sleep(200); await page.selectOption('#fDrill', 'serbest'); await page.click('#fOk'); await sleep(300);
     const f = await page.evaluate(() => ({ n: document.querySelectorAll('#sessList [data-id]').length, btn: document.getElementById('hFilter').textContent }));
     check(f.n === 1 && /^1/.test(f.btn), 'Filtreler: alıştırmaya göre süzme, düğmede "1 Filtreler"', f);
@@ -263,8 +280,10 @@ const DRILLS = [
     await page.click('#sessInfo'); await page.click('#iDel'); await page.click('#iYes'); await sleep(300);
     const after = await page.evaluate(() => ({ n: window.__hisar.sessions.filter(s => !s.sample).length, ls: Object.keys(localStorage).filter(k => k.startsWith('hisarTetik.v2.s.')).length }));
     check(after.n === 2 && after.ls === 2, 'Oturum silindi (geçmişten ve depodan)', after);
-    // Gruplar: grup oluştur, yeni atıcı ekle, sıralama
-    await page.evaluate(() => window.__hisar.showView('gruplar')); await sleep(200);
+    // Gruplar (Analiz › Gruplar): grup oluştur, yeni atıcı ekle, sıralama
+    await page.evaluate(() => window.__hisar.showView('gecmis')); await sleep(200); await page.click('#hGroups'); await sleep(200);
+    const gp = await page.evaluate(() => ({ t: document.getElementById('pgTitle').textContent, v: window.__hisar.curView, tab: document.querySelector('.nav [aria-selected="true"]').dataset.view }));
+    check(gp.t === 'Gruplar' && gp.v === 'gecmis' && gp.tab === 'gecmis', 'Gruplar Analiz sekmesinin içinden açılıyor', gp);
     await page.click('#grAdd2'); await sleep(150); await page.fill('#gNew', '1. Tim'); await page.click('#gOk'); await sleep(250);
     await page.fill('#gAddNew', 'Mehmet'); await page.click('#gAdd'); await sleep(200);
     await page.selectOption('#gDrill', 'degerlendirme'); await sleep(200);
@@ -291,7 +310,7 @@ const DRILLS = [
       document.querySelectorAll('body *').forEach(e => { const r = e.getBoundingClientRect(); if (r.width && r.right > W && getComputedStyle(e).position !== 'fixed' && !clipped(e)) o.push(e.id || String(e.className && e.className.baseVal !== undefined ? e.className.baseVal : e.className) || e.tagName); });
       return o.slice(0, 4); });
     const bad = {};
-    for (const v of ['alistirma', 'gecmis', 'gruplar', 'ayarlar']) { await page.evaluate(v => window.__hisar.showView(v), v); await sleep(300); const o = await over(); if (o.length) bad[v] = o; }
+    for (const v of ['alistirma', 'gecmis', 'gruplar', 'sensor', 'ayarlar']) { await page.evaluate(v => window.__hisar.showView(v), v); await sleep(300); const o = await over(); if (o.length) bad[v] = o; }
     for (const sub of ['ozet', 'skor', 'grafik', 'iz']) { await page.evaluate(s => { window.__hisar.showView('oturum'); window.__hisar.setSub(s); }, sub); await sleep(300); const o = await over(); if (o.length) bad['oturum/' + sub] = o; }
     await page.evaluate(() => { window.__hisar.openDrill('rehine'); }); await sleep(300); { const o = await over(); if (o.length) bad['oturum/baslangic'] = o; }
     for (const p of ['gelismis', 'baglanti', 'montaj', 'algilama', 'gorunum', 'veri', 'uygulama', 'program', 'ses', 'silah', 'profil']) { await page.evaluate(p => window.__hisar.openSettings(p), p); await sleep(300); const o = await over(); if (o.length) bad['ayarlar/' + p] = o; }

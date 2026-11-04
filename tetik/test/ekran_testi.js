@@ -41,7 +41,8 @@ async function crawl(browser, vp) {
   const selfOk = probe.words.includes('NaN') && (probe.over.length > 0 || probe.docW > probe.W + 1);
   await audit('açılış ekranı');
   await H(() => { window.__hisar.hideSplash(); window.__hisar.selectSource('demo', true); }); await sleep(800);
-  for (const v of ['alistirma', 'gecmis', 'gruplar', 'ayarlar']) { await H(v => window.__hisar.showView(v), v); await audit('görünüm ' + v); await infoAll('görünüm ' + v); }
+  for (const v of ['alistirma', 'gecmis', 'sensor', 'ayarlar', 'gruplar']) { await H(v => window.__hisar.showView(v), v); await audit('görünüm ' + v); await infoAll('görünüm ' + v); }
+  await H(() => { window.__hisar.showView('alistirma'); window.__hisar.cur.moreDrills = true; window.__hisar.showView('alistirma'); }); await audit('Diğer antrenmanlar açık'); await H(() => { window.__hisar.cur.moreDrills = false; });
   const keys = ['gelismis', 'baglanti', 'montaj', 'algilama', 'gorunum', 'veri', 'uygulama', 'program', 'ses', 'silah', 'profil'];
   for (const k of keys) { await H(k => window.__hisar.openSettings(k), k); await sleep(250); await audit('ayar ' + k); await infoAll('ayar ' + k); }
   await H(() => window.__hisar.showView('alistirma'));
@@ -66,7 +67,7 @@ async function crawl(browser, vp) {
     const r = await crawl(browser, vp);
     console.log(`  ${r.screens} ekran · ${r.drills} alıştırma · ${r.causes} hata sayfası · ${r.lessons} ders · ${r.infos} ⓘ açıklaması`);
     check(r.selfOk, 'Denetim çalışıyor: bilerek eklenen taşan öge ve "NaN" yazısı yakalandı');
-    check(r.screens === 9 + r.drills + r.causes + r.lessons + 11 && r.drills >= 15 && r.causes === 15 && r.lessons >= 3, `Bütün ekranlar açıldı (${r.screens})`, { screens: r.screens, drills: r.drills, causes: r.causes, lessons: r.lessons });
+    check(r.screens === 11 + r.drills + r.causes + r.lessons + 11 && r.drills >= 15 && r.causes === 15 && r.lessons >= 3, `Bütün ekranlar açıldı (${r.screens})`, { screens: r.screens, drills: r.drills, causes: r.causes, lessons: r.lessons });
     check(!r.fails.some(f => f.words.length), 'Hiçbir ekranda "undefined / NaN / null" yazısı yok', r.fails.filter(f => f.words.length).slice(0, 5));
     check(!r.fails.some(f => f.over.length || f.docW > f.W + 1), 'Hiçbir öge ekrandan taşmıyor', r.fails.filter(f => f.over.length || f.docW > f.W + 1).slice(0, 5));
     check(r.infos >= 15 && !r.emptyInfo.length, `Her ⓘ açıklaması açılıyor ve dolu (${r.infos})`, r.emptyInfo);

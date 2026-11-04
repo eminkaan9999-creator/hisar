@@ -49,10 +49,9 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     check(/%80/.test(chip), 'Alıştırma ekranının başlığında pil "%80"', chip);
     check(rate >= 180 && rate <= 220, 'Saniyede ~200 ölçüm', rate);
     check(s.drops === 0 && s.dup === 0, 'Kayıp ve yineleme yok', s);
-    check(/-58/.test(sp.sig) && /%80/.test(sp.bat) && /%0/.test(sp.loss), 'Gelişmiş Ayarlar › Sensör: sinyal −58, pil %80, kayıp %0', sp);
-    await page.evaluate(() => window.__hisar.showView('ayarlar')); await sleep(200);
-    const card = await page.evaluate(() => ({ md: document.getElementById('md-baglanti').textContent, last: window.__hisar.S.lastSensor }));
-    check(/Bağlı/.test(card.md) && /pil %80/.test(card.md) && /yazılım 3/.test(card.md) && card.last === 'HISAR-SENSOR', 'Ayarlar ana sayfasında "Gelişmiş ayarlar" satırı bağlantıyı gösteriyor; sensör eşlendi', card);
+    check(/-58/.test(sp.sig) && /%80/.test(sp.bat) && /%0/.test(sp.loss), 'Sensör sekmesi: sinyal −58, pil %80, kayıp %0', sp);
+    const card = await page.evaluate(() => ({ st: document.getElementById('sbState').textContent, last: window.__hisar.S.lastSensor, tab: document.querySelector('.nav [aria-selected="true"]').dataset.view }));
+    check(/Bağlı/.test(card.st) && /yazılımı 3/.test(card.st) && card.last === 'HISAR-SENSOR' && card.tab === 'sensor', 'Sensör sekmesinde "Bağlı · HİSAR sensör yazılımı 3"; sensör eşlendi', card);
     // bağlıyken tekrar bağlanma isteği listeyi açmamalı, bağlantıyı bozmamalı
     await page.evaluate(() => window.__hisar.returnToSensor()); await sleep(300);
     check((await st(page)).st === 'bagli' && (await fake(page, () => window.__fake.requests)) === 1, 'Bağlıyken tekrar bağlan istemek listeyi açmıyor, bağlantı sürüyor');

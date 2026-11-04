@@ -13,10 +13,10 @@ adb logcat -c
 adb shell am start -W -n "$A" | tail -3
 shot 01_acilis 12
 go "alistirma/serbest/basla"; shot 02_oturum 12
-go "gecmis"; shot 03_gecmis 4
+go "gecmis"; shot 03_analiz 4
 go "ayarlar"; shot 04_ayarlar 3
-go "ayarlar/baglanti"; shot 05_baglanti 3
-go "ayarlar/montaj"; shot 06_montaj 3
+go "sensor"; shot 05_sensor 3
+go "sensor/montaj"; shot 06_montaj 3
 go "ayarlar/uygulama"; shot 07_uygulama 3
 go "kaynak/sensor"; shot 08_sensor_ara 6
 adb shell input keyevent 4; sleep 1; shot 09_geri 2

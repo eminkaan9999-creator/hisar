@@ -117,7 +117,7 @@ async function open(browser, opts = {}) {
     const b3 = await page.evaluate(() => window.__hisarBack());
     const v3 = await page.evaluate(() => window.__hisar.curView);
     const b4 = await page.evaluate(() => window.__hisarBack());
-    check(b1 === true && pg === 'gelismis' && b2 === true && pg2 === null && b3 === true && v3 === 'alistirma' && b4 === false, 'Geri tuşu: Kalibrasyon → Gelişmiş Ayarlar → Ayarlar → Alıştırma → uygulamadan çık', { b1, pg, b2, pg2, b3, v3, b4 });
+    check(b1 === true && pg === null && b2 === true && pg2 === null && b3 === false && v3 === 'alistirma' && b4 === false, 'Geri tuşu: Kalibrasyon ve yön → Sensör sekmesi → Alıştırma → uygulamadan çık', { b1, pg, b2, pg2, b3, v3, b4 });
     await page.evaluate(() => window.__hisar.openSettings('uygulama')); await sleep(300);
     const ap = await page.evaluate(() => document.getElementById('pgBody').textContent);
     check(/Android uygulaması olarak yüklü/.test(ap), 'Uygulama sayfası Android uygulamasını tanıyor');

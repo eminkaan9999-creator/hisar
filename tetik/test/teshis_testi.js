@@ -89,7 +89,7 @@ const mirror = h => (12 - h) % 12 || 12;
 
   section('Özel hatalar');
   check(R.misc.kant26.includes('kanting') && R.misc.kantNeg.includes('kanting') && !R.misc.kant24.includes('kanting'), 'Kanting: 2,5° ve üstünde (iki yöne de), altında değil');
-  check(R.misc.gez.includes('gezinme') && !R.misc.gezSpeed.includes('gezinme'), 'Nişan gezinmesi: serbest antremanda var, hızlı alıştırmada aranmaz');
+  check(R.misc.gez.includes('gezinme') && !R.misc.gezSpeed.includes('gezinme'), 'Nişan gezinmesi: serbest antrenmanda var, hızlı alıştırmada aranmaz');
   check(R.misc.gezRifle.includes('gezinme') && !R.misc.gezSmall.includes('gezinme'), 'Gezinme eşiği tüfekte daha sıkı (0,12° tüfekte hata, tabancada değil)');
   check(R.misc.takip.includes('takip') && !R.misc.takipLive.includes('takip') && !R.misc.takipSmall.includes('takip'), 'Takibi bırakma: sadece kuru tetikte ve belirgin olduğunda');
   check(R.misc.max3.length === 3, 'Bir atışta en çok 3 neden gösterilir', R.misc.max3);

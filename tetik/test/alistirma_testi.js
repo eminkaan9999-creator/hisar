@@ -151,8 +151,8 @@ const DRILLS = [
       drills: Array.from(document.querySelectorAll('#drillList [data-drill]')).map(e => e.querySelector('.ln').textContent),
       lessons: Array.from(document.querySelectorAll('#drillList [data-lesson]')).map(e => e.querySelector('.ln').textContent), ch: document.getElementById('chRow').textContent,
       nav: Array.from(document.querySelectorAll('.nav button')).map(b => b.textContent.trim()) }));
-    check(JSON.stringify(L.secs) === JSON.stringify(['Elit', 'Günlük Meydan Okuma', 'Antremanlar', 'Dersler']), 'Bölümler MantisX sırasıyla: ELİT, GÜNLÜK MEYDAN OKUMA, ANTREMANLAR, DERSLER', L.secs);
-    check(JSON.stringify(L.drills) === JSON.stringify(['Kılıf Çekiş Analizi', 'Geri Tepme Ölçer', 'Serbest Antreman', 'Safe Space', 'Atış Zamanlayıcısı (Shot Timer)', 'Par Ölçer', 'Değerlendirme Testi', '20 Saniyelik Kıyaslama', 'Zaman Kıyaslaması', 'Dayanıklılık', 'Silahı Beklenmedik Anda Ateşleme', 'Sadece Atış Eli', 'Sadece Destek Eli', 'Karar Tatbikatları', 'Şarjör Değiştirme Antremanları', 'Ritmik Antreman', 'Rehine Kurtarma Antremanları']),
+    check(JSON.stringify(L.secs) === JSON.stringify(['Elit', 'Günlük Meydan Okuma', 'Antrenmanlar', 'Dersler']), 'Bölümler MantisX sırasıyla: ELİT, GÜNLÜK MEYDAN OKUMA, ANTREMANLAR, DERSLER', L.secs);
+    check(JSON.stringify(L.drills) === JSON.stringify(['Kılıf Çekiş Analizi', 'Geri Tepme Ölçer', 'Serbest Antrenman', 'Safe Space', 'Atış Zamanlayıcısı (Shot Timer)', 'Par Ölçer', 'Değerlendirme Testi', '20 Saniyelik Kıyaslama', 'Zaman Kıyaslaması', 'Dayanıklılık', 'Silahı Beklenmedik Anda Ateşleme', 'Sadece Atış Eli', 'Sadece Destek Eli', 'Karar Tatbikatları', 'Şarjör Değiştirme Antrenmanları', 'Ritmik Antrenman', 'Rehine Kurtarma Antrenmanları']),
       'Alıştırmalar MantisX listesiyle aynı sırada (17)', L.drills);
     check(JSON.stringify(L.lessons) === JSON.stringify(['HİSAR TETİK Tanıtımı', 'Temel Nişancılık', 'İleri Nişancılık']) && JSON.stringify(L.nav) === JSON.stringify(['Alıştırma', 'Geçmiş', 'Gruplar', 'Ayarlar']), 'Dersler (3) ve alt sekmeler: Alıştırma, Geçmiş, Gruplar, Ayarlar', { l: L.lessons, nav: L.nav });
     const ch = await page.evaluate(() => window.__hisar.todayChallenge());
@@ -167,7 +167,7 @@ const DRILLS = [
     await page.evaluate(() => window.__hisar.popPage());
     await page.click('#preMode'); await sleep(200);
     const ml = await page.evaluate(() => ({ t: document.getElementById('pgTitle').textContent, rows: Array.from(document.querySelectorAll('#pgBody [data-mode]')).map(b => b.dataset.mode), gears: document.querySelectorAll('#pgBody [data-gear]').length }));
-    check(/Antremanı/.test(ml.t) && JSON.stringify(ml.rows) === JSON.stringify(['gercek', 'kuru', 'co2']) && ml.gears === 3, 'Atış tipi düğmesi MantisX gibi tam listeyi açıyor (her biri ⚙ ile)', ml);
+    check(/Antrenmanı/.test(ml.t) && JSON.stringify(ml.rows) === JSON.stringify(['gercek', 'kuru', 'co2']) && ml.gears === 3, 'Atış tipi düğmesi MantisX gibi tam listeyi açıyor (her biri ⚙ ile)', ml);
     await page.click('#pgBody [data-gear="co2"]'); await sleep(300);
     const g = await page.evaluate(() => ({ m: window.__hisar.S.mode, set: window.__hisar.setPage, t: document.getElementById('pgTitle').textContent, thr: !!document.getElementById('thr') }));
     check(g.m === 'co2' && g.set === 'algilama' && /CO2/.test(g.t) && g.thr, '⚙: o atış tipi seçilip algılama ayarları (eşik, eşiği öğren, mikrofon, gecikme) açılıyor', g);
@@ -217,7 +217,7 @@ const DRILLS = [
       && JSON.stringify(st.plan.days.sort()) === '[1,3]' && st.plan.goal === 20 && st.saved.weaponName === 'MPT-76' && st.saved.mode === 'co2' && st.saved.mount.sensor.yon === 'arka',
       'Seçimler uygulandı ve kaydedildi (silah listeden, CO2 Daha fazla\'dan, montaj ARKA/SAĞ, program, zorluk, ses)', st);
     const lbl = await page.evaluate(() => Array.from(document.querySelectorAll('#v-ayarlar .mx-l span:first-child')).map(e => e.textContent));
-    check(lbl[0] === 'MPT-76' && lbl[1] === 'Sol El' && lbl[2] === 'CO2 Antremanı', 'Başlıklar seçimi gösteriyor (MPT-76, Sol El, CO2 Antremanı)', lbl);
+    check(lbl[0] === 'MPT-76' && lbl[1] === 'Sol El' && lbl[2] === 'CO2 Antrenmanı', 'Başlıklar seçimi gösteriyor (MPT-76, Sol El, CO2 Antrenmanı)', lbl);
     const pre = await page.evaluate(() => { window.__hisar.openDrill('serbest'); return document.getElementById('preStart').textContent; });
     check(/MPT-76/.test(pre) && /CO2/.test(pre) && /Sol/.test(pre), 'Alıştırma ekranındaki düğmeler seçimi gösteriyor', pre.slice(0, 200));
     await page.evaluate(() => window.__hisar.openSettings(null)); await sleep(200);

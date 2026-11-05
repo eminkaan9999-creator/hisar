@@ -1,0 +1,59 @@
+# HİSAR TETİK sensör güncelleyici (Windows programı): derle, dene, GitHub Releases'e yükle.
+# İndirme adresi: https://github.com/eminkaan9999-creator/hisar/releases/download/tetik-pc/HISAR-Sensor-Guncelle.exe
+name: Tetik PC
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tetik/pc/**'
+      - 'tetik/firmware/ota.json'
+      - '.github/workflows/tetik-pc.yml'
+permissions:
+  contents: write
+concurrency:
+  group: tetik-pc
+  cancel-in-progress: true
+jobs:
+  exe:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Paketler
+        run: python -m pip install --upgrade pip && python -m pip install esptool==4.7.0 pyserial==3.5 pyinstaller==6.10.0
+      - name: Derle (tek dosya)
+        run: |
+          set -e
+          FW=$(python -c "import json;print(json.load(open('tetik/firmware/ota.json'))['fw'])")
+          BIN="tetik/firmware/hisar-sensor-v${FW}.bin"
+          test -f "$BIN"
+          echo "yazılım: $BIN"
+          python -m PyInstaller --noconfirm --onefile --console --name HISAR-Sensor-Guncelle \
+            --collect-data esptool --hidden-import esptool --add-data "${BIN};." tetik/pc/hisar_sensor_guncelle.py
+          ls -la dist
+      - name: Dene
+        run: |
+          set -e
+          ./dist/HISAR-Sensor-Guncelle.exe --test | tee deneme.txt
+          grep -q "Deneme tamam" deneme.txt
+      - name: Yayınla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          FW=$(python -c "import json;print(json.load(open('tetik/firmware/ota.json'))['fw'])")
+          NOTES="HİSAR TETİK sensör güncelleyici (Windows). Sensörü USB-C kabloyla tak, programı çalıştır: sensörü kendisi bulur, sürücü eksikse kurar, sensör yazılımı $FW'ü yükler. Windows 'bilgisayarınızı korudu' derse: Ek bilgi › Yine de çalıştır. Kaynak: ${GITHUB_SHA::7}"
+          if gh release view tetik-pc >/dev/null 2>&1; then
+            gh release edit tetik-pc --title "HİSAR TETİK Sensör Güncelleyici (Windows, yazılım $FW)" --notes "$NOTES" --latest=false
+          else
+            gh release create tetik-pc --title "HİSAR TETİK Sensör Güncelleyici (Windows, yazılım $FW)" --notes "$NOTES" --latest=false
+          fi
+          gh release upload tetik-pc dist/HISAR-Sensor-Guncelle.exe --clobber
+          echo "::notice title=exe::$(stat -c %s dist/HISAR-Sensor-Guncelle.exe) bayt yüklendi"

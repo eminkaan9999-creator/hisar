@@ -543,7 +543,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=19;
+const VER=20;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -582,7 +582,7 @@ const DEF={hand:"R",weapon:"pistol",weaponName:"",mode:"kuru",diff:"normal",unit
   bias:{},
   // MantisX düzeni: atıcı profilleri, gruplar, silahlar, eğitim programı, alıştırma ayarları
   profiles:[{id:"p1",ad:"Atıcı"}],prof:"p1",groups:[],weapons:[],hiddenDrills:[],mainDrills:null,
-  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,yerKaydet:true,sonYer:null,saat:false,saatAtis:true,saatOzet:true,saatKomut:true,
+  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,sarsintiSuz:true,yerKaydet:true,sonYer:null,saat:false,saatAtis:true,saatOzet:true,saatKomut:true,
   plan:{days:[],goal:50},dset:{},sesEsik:85,chDone:{}};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let S=clone(DEF);
@@ -1593,19 +1593,21 @@ proc.onSample=(t,gm,j)=>{ const r=cur.run; if(r&&r.active&&r.eng.onSample) r.eng
 // toparlanırken (0,8 sn) bakılmaz.
 // Kuru tetikte tetik düştükten sonra atıcı nişanda kalır; sarsıntının hemen ardından silah çok dönüyorsa (şarjör çıkarma,
 // sürgü çekme, silahı indirme) bu atış değildir. Gerçek atışta tepme yüzünden bu kontrol yapılmaz.
-// Yön testi yapılmışsa namlunun açısı da bilinir: yere (55°'den dik) ya da göğe (65°) dönükken atış sayılmaz.
-const NISAN_YOK_T={hareket:"Silah nişana getirilirken oluşan sarsıntı atış sayılmadı.",sonra:"Sarsıntının hemen ardından silah çok hareket etti (şarjör, sürgü ya da indirme): atış sayılmadı.",yon:"Namlu yere ya da yukarı dönükken oluşan sarsıntı atış sayılmadı."};
+// Sınırlar bilerek geniş: nişan alırken namlu saniyede birkaç derece oynar; burada saniyede 90°, yarım saniyede 12°,
+// atıştan sonra 20° aranır. Üst üste 3 sarsıntı atılırsa o seride süzgeç kapanır (hiç atış sayılmaması olmasın).
+// Ayarlar › Gelişmiş › Atış algılama'dan tamamen kapatılabilir.
+const NISAN_YOK_T={hareket:"Silah nişana getirilirken oluşan sarsıntı atış sayılmadı.",sonra:"Sarsıntının hemen ardından silah çok hareket etti (şarjör, sürgü ya da indirme): atış sayılmadı."};
 function nisanYok(m,s,prevT){
+  if(S.sarsintiSuz===false) return "";
   const xy=m.xy; if(!xy||xy.length<TRN*2) return "";
   if(prevT!=null&&m.st-prevT<800) return "";
   const g=t=>Math.round((t-TR0)/TRS);
   const hiz=(t0,t1)=>{ let mx=0; for(let i=g(t0)+3;i<=g(t1);i++){ const v=Math.hypot(xy[i*2]-xy[(i-3)*2],xy[i*2+1]-xy[(i-3)*2+1])/(3*TRS/1000); if(v>mx) mx=v; } return mx; };
-  if(SPEED.has(s.drill)) return hiz(-150,-40)>120?"hareket":"";
+  if(SPEED.has(s.drill)) return hiz(-150,-40)>150?"hareket":"";
   const a=g(-500), b=g(-60), yer=Math.hypot(xy[b*2]-xy[a*2],xy[b*2+1]-xy[a*2+1]);
-  if(hiz(-400,-60)>60||yer>8) return "hareket";
+  if(hiz(-400,-60)>90||yer>12) return "hareket";
   if(s.mode==="kuru"){ const z=g(-10); let mx=0; for(let i=g(60);i<=g(350);i++){ const d=Math.hypot(xy[i*2]-xy[z*2],xy[i*2+1]-xy[z*2+1]); if(d>mx) mx=d; }
-    if(mx>8||hiz(60,350)>150) return "sonra"; }
-  if(s.yt&&m.elev!=null&&(m.elev<-55||m.elev>65)) return "yon";
+    if(mx>20) return "sonra"; }
   return "";
 }
 proc.onShot=m=>{
@@ -1613,9 +1615,11 @@ proc.onShot=m=>{
   const s=r.sess; const scale=scaleFor(s.weapon,s.diff);
   const score=clamp(100*Math.exp(-(m.trig+holdW(s)*m.hold)/scale),0,100);
   const prevT=r.shotT[r.shotT.length-1];
-  const yok=nisanYok(m,s,prevT);
-  if(yok){ r.st.nisanYok=(r.st.nisanYok||0)+1; r.st.yokNe=yok;
-    if(now()-(nisanYok.t||0)>12000){ nisanYok.t=now(); toast(NISAN_YOK_T[yok],5000); } return; }
+  const yok=r.st.suzKapali?"":nisanYok(m,s,prevT);
+  if(yok){ r.st.nisanYok=(r.st.nisanYok||0)+1; r.st.yokNe=yok; r.st.yokArka=(r.st.yokArka||0)+1;
+    if(r.st.yokArka<3){ if(now()-(nisanYok.t||0)>8000){ nisanYok.t=now(); toast(NISAN_YOK_T[yok],5000); } return; }
+    r.st.suzKapali=true; toast("Üst üste 3 sarsıntı atış sayılmadığı için bu seride hepsi sayılıyor. Gerekirse Ayarlar › Gelişmiş › Atış algılama'dan süzgeci kapat.",8000); }
+  r.st.yokArka=0;
   const q={n:s.shots.length+1,at:Math.round(m.st-r.t0),sc:Math.round(score*10)/10,tr:+m.trig.toFixed(4),ho:+m.hold.toFixed(4),hx:+m.hx.toFixed(4),hy:+m.hy.toFixed(4),
     dx:+m.dx.toFixed(4),dy:+m.dy.toFixed(4),wv:m.wv==null?null:+m.wv.toFixed(4),h:hourOf(m.dx,m.dy),ca:+m.cant.toFixed(2),po:+m.post.toFixed(3),ri:+m.rise.toFixed(3),pg:+m.pg.toFixed(2),rc:m.rec==null?null:Math.round(m.rec),c:[],x:{},tz:encTrace(m.xy)};
   if(prevT!=null) q.x.split=Math.round(m.st-prevT);
@@ -3234,7 +3238,8 @@ function updateMontajLive(){
 function lockFor(){return (S.lockout&&S.lockout[S.mode])||(S.mode==="kuru"?450:150);}
 function pgAlgilama(){
   const thr=curThr();
-  return `<div class="card"><div class="ch"><h2>Algılama eşiği</h2>${infoBtn("esik")}</div>
+  return `<div class="card"><label class="toggle">Nişan dışı sarsıntıları sayma<input type="checkbox" id="sSuz" ${S.sarsintiSuz!==false?"checked":""}></label><p class="note">Silahı yerden nişana kaldırırken, şarjör ya da sürgü sırasında oluşan sarsıntılar atış sayılmaz. Gerçek atışların sayılmadığını görürsen kapat.</p></div>
+    <div class="card"><div class="ch"><h2>Algılama eşiği</h2>${infoBtn("esik")}</div>
     ${source==="demo"?`<p class="note warnt">Deneme modu açık: gerçek ayar için sensöre bağlan.</p>`:""}
     <div class="field"><label for="thr">Eşik: <b id="thrVal" style="font-family:var(--mono)">${fx(thr,2)} g</b> <span class="note">(düşük = daha hassas)</span></label><input type="range" id="thr" min="0.1" max="${S.mode==="kuru"?3:15}" step="0.05" value="${thr}"></div>
     <div class="meter"><span>Sarsıntı</span><div class="bar"><div class="fill" id="mFill2"></div><div class="thr" id="mThr2"></div></div><span class="val" id="mVal2">0,00 g</span></div>
@@ -3253,6 +3258,7 @@ function pgAlgilama(){
     ${segHtml("sLock",[["150","0,15 sn"],["300","0,30 sn"],["450","0,45 sn"],["600","0,60 sn"]],String(lockFor()))}</div>`;
 }
 function bindAlgilama(root){
+  const sz=root.querySelector("#sSuz"); if(sz) sz.onchange=e=>{ S.sarsintiSuz=e.target.checked; saveMeta(); toast(S.sarsintiSuz?"Nişan dışı sarsıntılar sayılmayacak.":"Bütün sarsıntılar atış sayılacak."); };
   $("thr").oninput=e=>{(S.thr[source]||S.thr.demo)[S.mode]=+e.target.value;$("thrVal").textContent=fx(+e.target.value,2)+" g";applyCfg();saveMeta();};
   $("wThr").onclick=wizardThr;
   bindSeg(root,"sLock",v=>{S.lockout=Object.assign({},DEF.lockout,S.lockout||{});S.lockout[S.mode]=+v;applyCfg();saveMeta();});

@@ -37,17 +37,19 @@ async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.n
   check(await n() === 3, 'Atıştan sonra küçük takip hareketi olan atış sayıldı', await n());
   await H(() => window.__hisar.stopRun(false)); await sleep(1300);
 
-  section('Namlu yere dönük (yön testi yapılmış)');
-  await H(() => { const h = window.__hisar; h.S.mount.sensor.B = [0, 1, 0]; h.applyCfg(); h.openDrill('serbest'); h.startRun(); }); await sleep(1500);
-  await H(() => { const F = window.__fake; F.addShot(F.head + 800, { click: null, elev: -70 }); }); await sleep(5200);
-  const t6 = await H(() => window.__hisar.cur.run.st.yokNe);
-  check(await n() === 0 && t6 === 'yon', 'Namlu yere dönükken (−70°) sarsıntı atış sayılmadı', { n: await n(), t6 });
-  await H(() => { const F = window.__fake; F.addShot(F.head + 800, { dx: 0.005, dy: 0.004, click: null, elev: -20 }); }); await sleep(5200);
-  check(await n() === 1, 'Aşağıdaki hedefe (−20°) yapılan atış sayıldı', await n());
+  section('Güvenlik: üst üste 3 sarsıntı atılırsa o seride süzgeç kapanır');
+  await H(() => { const h = window.__hisar; h.openDrill('serbest'); h.startRun(); }); await sleep(1500);
+  for (let k = 0; k < 3; k++) { await H(() => { const F = window.__fake; F.addMove(F.head + 10, 100, [120, 0, 0]); F.addShot(F.head + 106, { click: null }); }); await sleep(1900); }
+  const gv = await H(() => ({ n: window.__hisar.cur.sess.shots.length, kapali: !!window.__hisar.cur.run.st.suzKapali, yok: window.__hisar.cur.run.st.nisanYok }));
+  check(gv.n === 1 && gv.kapali && gv.yok === 3, 'İlk iki sarsıntı atıldı, üçüncüsü sayıldı ve bu seride süzgeç kapandı (hiç atış sayılmaması olmaz)', gv);
   await H(() => window.__hisar.stopRun(false)); await sleep(1300);
+  await H(() => { const h = window.__hisar; h.S.sarsintiSuz = false; h.openDrill('serbest'); h.startRun(); }); await sleep(1500);
+  await H(() => { const F = window.__fake; F.addMove(F.head + 10, 100, [120, 0, 0]); F.addShot(F.head + 106, { click: null }); }); await sleep(1900);
+  check(await n() === 1, 'Ayarlardan süzgeç kapatılınca her sarsıntı atış sayılıyor', await n());
+  await H(() => { window.__hisar.stopRun(false); window.__hisar.S.sarsintiSuz = true; }); await sleep(1300);
 
   section('Hızlı alıştırma ve gerçek atış');
-  await H(() => { const h = window.__hisar; h.S.mount.sensor.B = null; h.applyCfg(); h.openDrill('serbest'); h.S.mode = 'gercek'; h.applyCfg(); h.startRun(); }); await sleep(1500);
+  await H(() => { const h = window.__hisar; h.openDrill('serbest'); h.S.mode = 'gercek'; h.applyCfg(); h.startRun(); }); await sleep(1500);
   await H(() => { const F = window.__fake; F.addShot(F.head + 40, { live: true, click: null }); }); await sleep(1500);
   await H(() => { const F = window.__fake; F.addShot(F.head + 40, { live: true, click: null }); }); await sleep(1500);
   check(await n() === 2, 'Gerçek atışta tepme hareketi atışı engellemiyor (2 atış sayıldı)', await n());

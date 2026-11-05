@@ -510,7 +510,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=17;
+const VER=18;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -549,7 +549,7 @@ const DEF={hand:"R",weapon:"pistol",weaponName:"",mode:"kuru",diff:"normal",unit
   bias:{},
   // MantisX düzeni: atıcı profilleri, gruplar, silahlar, eğitim programı, alıştırma ayarları
   profiles:[{id:"p1",ad:"Atıcı"}],prof:"p1",groups:[],weapons:[],hiddenDrills:[],mainDrills:null,
-  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,yerKaydet:true,sonYer:null,
+  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,yerKaydet:true,sonYer:null,saat:false,saatAtis:true,saatOzet:true,saatKomut:true,
   plan:{days:[],goal:50},dset:{},sesEsik:85,chDone:{}};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let S=clone(DEF);
@@ -611,51 +611,51 @@ const atDist=deg=>fx(Math.tan(Math.abs(deg)*RAD)*S.dist*100,1)+" cm";
 
 /* ---------------------------------------------------------------- hata kütüphanesi */
 const CAUSES={
- bilek_yukari:{ad:"Bileği yukarı bükme",ozet:"Atış anında bilek yukarı kalkıyor, namlu ağzı yükseliyor.",
-   neden:"Geri tepmeyi karşılamaya hazırlanmak ya da bileğin kilitli olmaması.",
-   duzelt:["Bileği düz ve kilitli tut; kol ile silah tek parça gibi olsun.","Kuru tetikte arpacığın tetik kırılırken yükselmediğini izle.","Tetik kırılana kadar gözünü nişan resminden ayırma."],al:"serbest"},
- geri_tepme:{ad:"Geri tepmeyi öngörme",ozet:"Atıştan hemen önce silahı tepmeye karşı itiyor ya da kaldırıyorsun.",
-   neden:"Patlamayı ve tepmeyi beklemek; vücudun önceden kasılması (irkilme).",
-   duzelt:["Tetiğe yavaş ve sürekli bas; tetiğin ne zaman kırılacağını bilmemeye çalış (sürpriz kırılma).","Kuru tetik sayısını artır; kuru tetikte bile namlu kıpırdıyorsa sorun zihinsel öngörmedir.","Gerçek atışta arada boş fişekle karışık çalış (ball and dummy)."],al:"karar"},
- avucla_itme:{ad:"Avuçla itme",ozet:"Avucun kökü kabzanın arkasını öne itiyor; namlu yukarı ve atış eli tarafına kalkıyor.",
-   neden:"Tepmeyi öngörüp silahı avuçla ileri itmek.",
-   duzelt:["Tutuş basıncını atıştan önce ayarla ve atış boyunca değiştirme.","Avucu kabzaya yasla ama itme yapma.","Sürpriz kırılma çalış: tetik kırılınca şaşırmalısın."],al:"ritim"},
- basparmak:{ad:"Başparmakla itme",ozet:"Başparmak silahın yanına bastırıyor; namlu atış eli tarafına kayıyor.",
-   neden:"Başparmak ile kabza yan yüzüne fazla baskı; destek elin itmesi.",
-   duzelt:["Başparmağı gevşek ve hedefe doğru uzanmış tut.","Destek elin başparmağıyla paralel ve baskısız olsun.","Tutuşu iki elle dengeli kur: sağ ve sol el baskısı eşit."],al:"serbest"},
- az_parmak:{ad:"Tetik parmağının yetersiz kullanımı",ozet:"Tetiğe yalnız parmak ucuyla basılıyor; tetik yana itiliyor.",
-   neden:"Parmak tetiğe yeterince girmiyor; baskı tam geriye değil, çapraz.",
-   duzelt:["Tetiğe parmağın ilk boğumunun ortasıyla (yastığıyla) bas.","Tetiği namlu eksenine paralel, düz geriye çek.","Yavaş kuru tetikle hareketi hisset; arpacık yana kaymamalı."],al:"ritim"},
- fazla_parmak:{ad:"Tetik parmağının fazla kullanımı",ozet:"Parmak tetiğe boğumdan girmiş; tetik çapraz çekiliyor, namlu karşı tarafa kayıyor.",
-   neden:"Parmağın çok derin yerleşmesi ya da kabzaya sürtünmesi.",
-   duzelt:["Parmağı geri çek, yastıkla bas.","Parmak ile kabza arasında küçük bir boşluk bırak.","Tetiği düz geriye çektiğini yavaş kuru tetikle kontrol et."],al:"ritim"},
- siki_tutus:{ad:"Çok sıkı tutuş",ozet:"Tetik çekilirken bütün el sıkılıyor; namlu aşağı ve atış eli tarafına kayıyor.",
-   neden:"Tetik parmağıyla birlikte diğer parmakların da kasılması.",
-   duzelt:["Tutuş basıncını önce ayarla, sonra sadece tetik parmağını oynat.","Parmak bağımsızlığı çalışması: tetiği yavaşça çekerken diğer parmakları sabit tut.","Tutuşu %100 değil, sabit ve rahat bir güçte tut."],al:"serbest"},
- bilek_asagi:{ad:"Bileği aşağı bükme",ozet:"Atış anında bilek aşağı bükülüyor, namlu ağzı düşüyor.",
-   neden:"Bileğin serbest kalması; tepmeye karşı silahı aşağı bastırmak.",
-   duzelt:["Bileği kilitle ve atış boyunca aynı açıyı koru.","Tetik kırıldıktan sonra da nişanı bir saniye tut (takip).","Arpacığın düşmediğini kuru tetikte izle."],al:"degerlendirme"},
- ileri_itme:{ad:"İleri itme",ozet:"Tepmeye karşı silah ya da omuz öne itiliyor; namlu aşağı düşüyor.",
-   neden:"Patlamayı öngörüp vücudu öne yüklemek.",
-   duzelt:["Omuzları rahat bırak; duruşu atıştan önce kur, atış anında değiştirme.","Sürpriz kırılma: tetiği yavaş ve sürekli bas.","Boş fişekle karışık çalış; itme varsa hemen görürsün."],al:"karar"},
- tokatlama:{ad:"Tetiği tokatlama",ozet:"Tetiğe ani ve hızlı basılıyor; namlu aşağı ve karşı tarafa kayıyor.",
-   neden:"Acele etmek; nişan resmi iyi görününce tetiği bir anda çekmek.",
-   duzelt:["Tetiğe sürekli ve düzgün artan bir baskı uygula.","Tetik boşluğunu al, sonra kırılana kadar baskıyı yavaşça artır.","Ritmik antrenmanda acele etmeden çalış."],al:"ritim"},
- tum_el:{ad:"Tüm elle sıkma",ozet:"Tetik parmağıyla birlikte diğer parmaklar da kapanıyor.",
-   neden:"Parmakların birbirinden bağımsız çalışamaması.",
-   duzelt:["Tetik parmağı izolasyonu: elini masaya koy, sadece işaret parmağını kıvır.","Kuru tetikte yavaş çek, diğer parmaklar sabit kalsın."],al:"serbest"},
- yanak:{ad:"Yanağı dipçikten kaldırma",ozet:"Atış anında baş kalkıyor; namlu yukarı kayıyor.",
-   neden:"Sonucu görmek için başı erken kaldırmak.",
-   duzelt:["Yanak teması (yanak kaynağı) atış boyunca sabit kalsın.","Tetik kırıldıktan sonra bir saniye nişanda kal."],al:"serbest"},
- kanting:{ad:"Silahı yana yatırma (kanting)",ozet:"Atış anında silah yana yatık. Mesafe arttıkça atış yana ve aşağı kayar.",
-   neden:"Tutuş ya da dipçiğin omuza yanlış yerleşmesi; göz hizası.",
-   duzelt:["Gez ve arpacığın yatay hizasını her atışta kontrol et.","Tüfekte dipçiği omzunda aynı yere yerleştir.","Ayarlar'daki Montaj Yeri doğru seçili olsun; kanting buna göre ölçülür."],al:"serbest"},
- gezinme:{ad:"Dengesiz tutuş (nişan hattı gezinmesi)",ozet:"Atıştan önceki saniyede ve tetik çekilirken nişan fazla dolaşıyor.",
-   neden:"Zayıf duruş, nefes kontrolü, yorgunluk ya da kas gerginliği.",
-   duzelt:["Duruşu sağlamlaştır, doğal nişan noktanı bul.","Nefes verip doğal duraklamada (1–2 sn) tetiği kır.","Kısa ve sık antrenman yap; dayanıklılık alıştırmasını kullan."],al:"dayaniklilik"},
- takip:{ad:"Takibi bırakma",ozet:"Tetik kırıldıktan hemen sonra nişan bırakılıyor.",
-   neden:"Atış biter bitmez gevşemek ya da sonucu görmek için hareket etmek.",
-   duzelt:["Tetik kırıldıktan sonra nişanı ve tetiği bir saniye tut.","Sonra tetiği sadece kurtulma (reset) noktasına kadar bırak."],al:"serbest"}
+ bilek_yukari:{ad:"Bileği yukarı kaldırma",ozet:"Tetik düşerken bileğin yukarı bükülüyor, namlunun ucu kalkıyor. Atış yukarı gider.",
+   neden:"Tepmeye önceden hazırlanıyorsun ya da bileğini sıkı tutmuyorsun.",
+   duzelt:["Bileğini düz ve sıkı tut; kolun ile silah tek parça gibi olsun.","Kuru tetikte arpacığa bak: tetik düşerken yukarı kalkmamalı.","Tetik düşene kadar gözünü arpacıktan ayırma."],al:"serbest"},
+ geri_tepme:{ad:"Tepmeyi bekleyip irkilme",ozet:"Atıştan hemen önce silahı tepmeye karşı itiyor ya da kaldırıyorsun.",
+   neden:"Vücudun patlamayı ve tepmeyi bekleyip önceden kasılıyor. Çok yaygındır, çalışarak geçer.",
+   duzelt:["Tetiğe yavaş ve sürekli bas; tetiğin ne zaman düşeceğini bilmemeye çalış, düşünce şaşır.","Daha çok kuru tetik yap: kuru tetikte bile namlu oynuyorsa sorun alışkanlıkta, silahta değil.","Gerçek atışta arkadaşın şarjöre arada tatbikat fişeği koysun; o atışta namlu oynuyorsa irkiliyorsun."],al:"karar"},
+ avucla_itme:{ad:"Avuçla öne itme",ozet:"Avucunun alt kısmı kabzayı öne itiyor; namlu yukarı ve elinin olduğu tarafa kalkıyor.",
+   neden:"Tepmeyi bekleyip silahı avuçla ileri itiyorsun.",
+   duzelt:["Tutuşunu atıştan önce ayarla, atış boyunca sıkılığını değiştirme.","Avucunu kabzaya yasla ama itme.","Tetiğin ne zaman düşeceğini bilmemeye çalış; düşünce şaşır."],al:"ritim"},
+ basparmak:{ad:"Başparmakla yana itme",ozet:"Başparmağın silahın yanına bastırıyor; namlu elinin olduğu tarafa kayıyor.",
+   neden:"Başparmakla kabzanın yanına fazla bastırıyorsun ya da destek elin silahı itiyor.",
+   duzelt:["Başparmağını gevşek bırak, hedefe doğru uzansın.","Destek elinin başparmağı onunla yan yana ve baskısız dursun.","İki elinin baskısı eşit olsun."],al:"serbest"},
+ az_parmak:{ad:"Tetiğe parmak ucuyla basma",ozet:"Tetiğe yalnız parmağının ucuyla basıyorsun; tetik düz değil, yana doğru çekiliyor.",
+   neden:"Parmağın tetiğe yeterince girmiyor; baskı tam geriye değil, çapraz gidiyor.",
+   duzelt:["Tetiğe parmağının ilk boğumunun ortasıyla (yumuşak kısmıyla) bas.","Tetiği namluya paralel, dümdüz geriye çek.","Yavaş kuru tetikle dene: arpacık yana kaymamalı."],al:"ritim"},
+ fazla_parmak:{ad:"Parmağı tetiğe çok sokma",ozet:"Parmağın tetiğe boğumundan girmiş; tetik çapraz çekiliyor, namlu öbür tarafa kayıyor.",
+   neden:"Parmağın tetiğe çok derin giriyor ya da kabzaya sürtünüyor.",
+   duzelt:["Parmağını biraz geri al, ilk boğumunun ortasıyla bas.","Parmağınla kabza arasında küçük bir boşluk bırak.","Yavaş kuru tetikle tetiği dümdüz geri çektiğini kontrol et."],al:"ritim"},
+ siki_tutus:{ad:"Tetik çekerken eli sıkma",ozet:"Tetiği çekerken bütün elin sıkılıyor; namlu aşağı ve elinin olduğu tarafa kayıyor.",
+   neden:"Tetik parmağınla birlikte öbür parmakların da kasılıyor.",
+   duzelt:["Tutuşunu önce ayarla, sonra yalnız tetik parmağını oynat.","Tetiği yavaşça çekerken öbür parmaklarını kıpırdatmamayı çalış.","Silahı var gücünle değil, sabit ve rahat bir güçle tut."],al:"serbest"},
+ bilek_asagi:{ad:"Bileği aşağı düşürme",ozet:"Tetik düşerken bileğin aşağı bükülüyor, namlunun ucu düşüyor. Atış aşağı gider.",
+   neden:"Bileğin gevşek kalıyor ya da tepmeye karşı silahı aşağı bastırıyorsun.",
+   duzelt:["Bileğini sıkı tut, atış boyunca aynı açıda kalsın.","Tetik düştükten sonra da nişanı bir saniye tut.","Kuru tetikte arpacığın düşmediğine bak."],al:"degerlendirme"},
+ ileri_itme:{ad:"Silahı öne itme",ozet:"Tepmeye karşı silahı ya da omzunu öne itiyorsun; namlu aşağı düşüyor.",
+   neden:"Patlamayı bekleyip vücudunu öne yüklüyorsun.",
+   duzelt:["Omuzlarını rahat bırak; duruşunu atıştan önce kur, atış anında değiştirme.","Tetiğe yavaş ve sürekli bas; ne zaman düşeceğini bilmemeye çalış.","Arada tatbikat fişeğiyle çalış; öne itiyorsan o atışta hemen görürsün."],al:"karar"},
+ tokatlama:{ad:"Tetiğe ani basma",ozet:"Tetiğe bir anda, hızla basıyorsun; namlu aşağı ve öbür tarafa kayıyor.",
+   neden:"Acele ediyorsun: nişan iyi görününce tetiği bir anda çekiyorsun (tetiği tokatlamak).",
+   duzelt:["Tetiğe sürekli ve yavaş yavaş artan bir baskı uygula.","Önce tetiğin boşluğunu al, sonra düşene kadar baskıyı yavaşça artır.","Ritmik Antrenman'da acele etmeden çalış."],al:"ritim"},
+ tum_el:{ad:"Bütün parmakları kapatma",ozet:"Tetik parmağınla birlikte öbür parmakların da kapanıyor.",
+   neden:"Parmakların birbirinden bağımsız oynayamıyor.",
+   duzelt:["Elini masaya koy, yalnız işaret parmağını kıvır; öbür parmaklar kıpırdamasın.","Kuru tetikte yavaş çek, öbür parmakların sabit kalsın."],al:"serbest"},
+ yanak:{ad:"Başı erken kaldırma",ozet:"Atış anında başını kaldırıyorsun; namlu yukarı kayıyor.",
+   neden:"Sonucu görmek için başını erken kaldırıyorsun.",
+   duzelt:["Yanağın atış boyunca dipçikte aynı yerde kalsın.","Tetik düştükten sonra bir saniye nişanda kal."],al:"serbest"},
+ kanting:{ad:"Silahı yana yatırma",ozet:"Atış anında silah yana yatık. Mesafe arttıkça atış yana ve aşağı kayar.",
+   neden:"Tutuşun ya da dipçiğin omzuna oturuşu yanlış, ya da başın eğik.",
+   duzelt:["Gez ve arpacığın düz durduğunu her atışta kontrol et.","Tüfekte dipçiği omzunda hep aynı yere yerleştir.","Sensör sekmesindeki yön testini yap; yatıklık ona göre ölçülür."],al:"serbest"},
+ gezinme:{ad:"Nişanın sallanması",ozet:"Atıştan önceki saniyede ve tetiği çekerken nişan fazla dolaşıyor; silah sabit durmuyor.",
+   neden:"Duruşun sağlam değil, nefesini tutmuyorsun, kolların yorgun ya da kasların gergin.",
+   duzelt:["Duruşunu sağlamlaştır: gözünü kapatıp açtığında silah hâlâ hedefteyse duruşun doğru.","Nefesini ver, 1–2 saniyelik doğal duraklamada tetiği düşür.","Kısa ve sık çalış; Dayanıklılık alıştırmasını kullan."],al:"dayaniklilik"},
+ takip:{ad:"Atıştan sonra hemen gevşeme",ozet:"Tetik düşer düşmez nişanı bırakıyorsun.",
+   neden:"Atış biter bitmez gevşiyorsun ya da sonucu görmek için kıpırdıyorsun.",
+   duzelt:["Tetik düştükten sonra nişanı ve tetiği bir saniye daha tut.","Sonra tetiği yalnız tık sesini duyacağın yere kadar bırak."],al:"serbest"}
 };
 // sağ elli atıcı için saat yönüne göre olası nedenler (NRA ve 4-H atış eğitimi şemalarından)
 const MAP_PISTOL={12:["bilek_yukari","geri_tepme"],1:["avucla_itme","geri_tepme"],2:["avucla_itme","basparmak"],3:["basparmak","az_parmak"],4:["siki_tutus","az_parmak"],5:["siki_tutus","bilek_asagi"],6:["bilek_asagi","ileri_itme"],7:["tokatlama","bilek_asagi"],8:["tokatlama","tum_el"],9:["fazla_parmak","tokatlama"],10:["geri_tepme","fazla_parmak"],11:["geri_tepme","bilek_yukari"]};
@@ -1318,7 +1318,7 @@ function newSession(drillId){
 function openDrill(id){
   if(cur.run&&cur.run.active){toast("Önce süren oturumu durdur.");return;}
   cur.sess=newSession(id); cur.review=false; cur.sel=-1; cur.run=null; cur.from=curView==="oturum"?"alistirma":curView;
-  closePages(); showView("oturum"); setSub("skor"); renderSession();
+  closePages(); showView("oturum"); setSub("skor"); renderSession(); saatHazir(id);
   if(S.mode==="kuru") warnBox("Silahının ve bütün şarjörlerinin boş olduğundan, güvenli bir ortamda kuru tetik yaptığından emin ol.");
 }
 function openReview(s){
@@ -1510,6 +1510,7 @@ function startRun(){
   if(d.demo==="periodic"&&source==="demo"&&S.autoShot) demoPeriodic(r);
   r.eng.demoCue=eng.demoCue; r.drill.demoCue=eng.demoCue?((rr,type,t)=>eng.demoCue.call(eng,rr,type,t)):null;
   try{ if(navigator.wakeLock) navigator.wakeLock.request("screen").then(w=>{r.wake=w;}).catch(()=>{}); }catch(e){}
+  saatGonder({t:"temizle"});
   setSub("skor"); renderSession();
 }
 function stopRun(auto){
@@ -1527,7 +1528,7 @@ function finishRun(r,auto){
   s.extra=summarizeExtra(r);
   if(s.shots.length&&!isDemoSess(s)){ if(!sessions.includes(s)) sessions.unshift(s); saveSession(s); }
   cur.run=null; cur.review=s.shots.length>0; $("btnStop").disabled=false;
-  if(s.shots.length){ checkChallenge(s); setSub("ozet"); if(isDemoSess(s)) toast("Deneme oturumu: sanal atıcıyla yapıldı, geçmişe kaydedilmedi."); }
+  if(s.shots.length){ checkChallenge(s); saatOzet(s); setSub("ozet"); if(isDemoSess(s)) toast("Deneme oturumu: sanal atıcıyla yapıldı, geçmişe kaydedilmedi."); }
   else toast("Atış algılanmadı, oturum kaydedilmedi.");
   renderSession(); renderHome();
   if(pendingReload) setTimeout(doUpdate,1500);
@@ -1567,7 +1568,7 @@ proc.onShot=m=>{
   if(r.eng.onShot) r.eng.onShot(r,q,m.st);
   s.shots.push(q); cur.sel=s.shots.length-1;
   const [vt,vc]=verdict(q.sc); setFeedback(q.c.length&&q.sc<85?CAUSES[q.c[0]].ad:vt,vc);
-  shotSound(q); sensorShotBeep(r,q,m); lastFlash=now();
+  shotSound(q); sensorShotBeep(r,q,m); saatAtis(r,q); lastFlash=now();
   if(s.shots.length===1&&!sessions.includes(s)&&!isDemoSess(s)) sessions.unshift(s);
   saveSession(s);
   renderSession();
@@ -1673,10 +1674,10 @@ function openCause(id,list){
   pushPage({back:"Geri",noNav:curView==="oturum",render:()=>{ const k=ids[i], c=CAUSES[k], d=DRM[c.al], see=SEE[k]&&CAUSES[SEE[k]]?SEE[k]:null;
       return `<div class="c-tabs" role="tablist">${ids.map((x,j)=>`<button data-ct="${j}" aria-pressed="${j===i}">${esc(CAUSES[x].ad)}</button>`).join("")}</div>
         <div class="c-art">${causeArt(k,true)}${causeArt(k,false)}</div>
-        <div class="c-body"><h2>${esc(c.ad)}</h2><p>${esc(c.ozet)} ${esc(c.neden)}</p><h3>Nasıl düzeltilir</h3><ul>${c.duzelt.map(x=>"<li>"+esc(x)+"</li>").join("")}</ul>
+        <div class="c-body"><h2>${esc(c.ad)}</h2><p><b>Ne oluyor:</b> ${esc(c.ozet)}</p><p><b>Neden:</b> ${esc(c.neden)}</p><h3>Nasıl düzeltilir</h3><ul>${c.duzelt.map(x=>"<li>"+esc(x)+"</li>").join("")}</ul>
         ${see?`<p class="note">Ayrıca bakınız:</p><button class="see" data-see="${see}">${esc(CAUSES[see].ad)}</button>`:""}
         ${d?`<h3>Önerilen alıştırma</h3><button class="btn primary" id="cDrill">${esc(d.ad)}</button>`:""}
-        <p class="note">Teşhis, tetik anındaki kayma yönüne göre yapılan bir tahmindir. Eğitmen gözlemiyle birlikte değerlendir.</p></div>`; },
+        <p class="note">Bu bir tahmindir: tetik düşerken namlunun kaydığı yöne bakılarak bulunur. Emin olmak için bir eğitmene de göster.</p></div>`; },
     bind:b=>{ b.querySelectorAll("[data-ct]").forEach(x=>x.onclick=()=>{i=+x.dataset.ct;refreshPage();});
       b.querySelectorAll("[data-see]").forEach(x=>x.onclick=()=>{ const k=x.dataset.see, j=ids.indexOf(k); if(j>=0){i=j;refreshPage();} else openCause(k); });
       const d=b.querySelector("#cDrill"); if(d) d.onclick=()=>{ if(cur.run&&cur.run.active){toast("Önce süren oturumu durdur.");return;} openDrill(CAUSES[ids[i]].al); }; }});
@@ -2313,7 +2314,7 @@ const LESSONS=[
   <h3>Sensörü takma</h3><ul><li><b>Kızakla:</b> sensörü kızağa VHB bantla bir kez yapıştır (ekran dışa baksın, USB-C arkada). Tabanca, G3, HK33: şarjör tabanındaki plakaya kızağı "tık" sesine kadar sür. MPT-76, MPT-55: ray adaptörünü raya önden sür, kızağı adaptöre tak.</li><li><b>Bantla:</b> sensörü silahın altına, uzun kenarı namluya paralel gelecek şekilde koy; ince ve sert bantla (elektrik bandı) sıkıca sar. Köpüklü bant darbeyi yutar, atış kaçabilir. Ekranın aşağı ya da yukarı bakması fark etmez.</li><li>Sensörü her taktığında <b>yön testi</b> yap. Başla'ya basınca uygulama hatırlatır.</li></ul>
   <h3>İlk ayar</h3><ol><li><b>Ayarlar:</b> silahını (tabanca ya da tüfek), atış elini ve atış tipini (kuru tetik ya da gerçek atış) seç.</li><li><b>Sensör testi:</b> Sensör sekmesi › Sensör testi. Sensörü masaya koy, 5 saniye dokunma. Bütün satırlar ✓ olmalı; test kalibrasyonu da yapar.</li><li><b>Yön testi:</b> sensörü taktıktan sonra (Başla'ya basınca sorulur ya da Sensör sekmesi › Yön testi). Silahı düz tut, namluyu 10–20° kaldırıp indir, sonra sağa çevir. Böylece sağ = sağ, yukarı = yukarı olur.</li><li><b>Atış eşiği:</b> Sensör sekmesi › Eşiği öğren. 3 kez kuru tetik yap; uygulama tetiğin sarsıntısına göre eşiği ayarlar.</li><li><b>Kontrol:</b> tetiği çekerken namluyu bilerek aşağı bastır; uygulama saat 6 civarını göstermeli.</li></ol>
   <h3>Oturum ekranı</h3><ul><li><b>Skor halkası:</b> ortadaki sayı son atışın skoru, oturum bitince ortalaması. Kırmızı dilimler hatalı atışların kaymasının saat yönünde nereye toplandığını gösterir (12 yukarı, 3 sağ).</li><li><b>Grafik:</b> üstte her atışın skoru. Altta sarı çubuk tetik çekme hareketi, mavi çubuk atıştan önceki nişan gezinmesi.</li><li><b>İz:</b> namlunun hareket izi. Mavi: atıştan önceki 1 saniye, sarı: tetik anı (son 0,15 saniye), kırmızı: atıştan sonrası, ✕: tetiğin kırıldığı an. Oynat düğmesi izi yavaşça gösterir.</li><li><b>Özet:</b> her atışın skoru ve zamanı, ortalama skor ve toplam süre.</li><li><b>Olası nedenler:</b> dokununca hatanın açıklaması, nasıl düzeltileceği ve önerilen alıştırma açılır.</li></ul>
-  <h3>Skoru okuma</h3><ul><li><b>Skor (0–100):</b> tetik çekilirken namlunun ne kadar oynadığına ve atıştan önceki saniyede nişanın ne kadar dolaştığına göre. 85 ve üstü harika, 70–85 iyi, 50–70 geliştirilmeli, 50 altı zayıf.</li><li><b>Dengesiz tutuş:</b> tetik anındaki hareket el titremesi kadar küçükse uygulama tetik hatası uydurmaz; sorun tutuştadır.</li><li><b>Kanting:</b> silahın atış anında yana yatıklığı; 2,5°'nin üstü uyarı verir.</li><li><b>Gerçek atışta:</b> namlu kalkışı (tepme) ve toparlanma süresi de ölçülür.</li></ul>
+  <h3>Skoru okuma</h3><ul><li><b>Skor (0–100):</b> tetik çekilirken namlunun ne kadar oynadığına ve atıştan önceki saniyede nişanın ne kadar dolaştığına göre. 85 ve üstü harika, 70–85 iyi, 50–70 geliştirilmeli, 50 altı zayıf.</li><li><b>Nişanın sallanması:</b> tetik düşerken namlunun oynaması elin doğal titremesi kadar küçükse uygulama tetik hatası uydurmaz; puan, nişan sabit durmadığı için düşmüştür.</li><li><b>Yana yatırma (kanting):</b> silahın atış anında yana yatık olması; 2,5 dereceden fazlası hata sayılır.</li><li><b>Gerçek atışta:</b> namlu kalkışı (tepme) ve toparlanma süresi de ölçülür.</li></ul>
   <h3>Sesler</h3><ul><li><b>Sensör:</b> açılınca kısa bir ezgi, bağlanınca iki ince bip çalar. Her atıştan sonra iyi atışta iki ince, kötü atışta kalın bip çalar (Sensör sekmesi › Sensör sesleri; hızlı alıştırmalarda çalmaz).</li><li><b>Telefon:</b> sensör bağlanınca karşılama sözünü söyler; atış sonrası sesi ve sözü Ayarlar › Sesli geri bildirim'den seçilir.</li><li><b>Sensörü kapatma:</b> sol yandaki güç düğmesine ya da sağ yandaki düğmeye 2 saniye bas.</li></ul>
   <h3>Analiz, Gruplar, Uygulama</h3><ul><li><b>Analiz:</b> üç grafik. Gelişim: skor, tetik hareketi ve nişan gezinmesi gün gün. Hata haritası: hatalı atışların kaydığı yönler ve en sık 3 hata. Atış grubu: atışların ne kadar toplu olduğu. Her grafiğin üstünde sonucu anlatan bir cümle var. Dönemi üstten, silahı ve alıştırmayı Filtreler'den seç.</li><li><b>Gruplar:</b> Analiz › Gruplar; birlikte çalıştığın atıcıları ekle, sıralamayı gör.</li><li><b>Güncelleme:</b> yeni sürüm internet varken kendiliğinden iner; Android ve iPhone uygulamasında da.</li><li><b>Veriler:</b> atışların yalnız bu telefonda saklanır. Telefon değiştirirken Ayarlar › Gelişmiş Ayarlar › Veriler'den dışa aktar.</li></ul>`},
  {ad:"Temel Nişancılık",th:thumb("TEMEL"),html:`<h3>Duruş</h3><p>Ayaklar omuz genişliğinde, ağırlık hafif öne. Duruşu, gözünü kapatıp açtığında nişan hedefte kalacak şekilde kur (doğal nişan noktası).</p><h3>Tutuş</h3><p>Kabzayı yüksekten kavra; atış eli ve destek eli boşluk bırakmadan birleşsin. Tutuş basıncı atış boyunca değişmesin.</p><h3>Nişan alma</h3><p>Gözün arpacığa odaklansın; gez ve hedef hafif bulanık görünür. Arpacığın üst kenarı gezin üst kenarıyla aynı hizada ve ortada olmalı.</p><h3>Nefes</h3><p>Nefesini rahatça ver ve doğal duraklamada (1–2 saniye) tetiği kır.</p><h3>Tetik kontrolü</h3><ul><li><b>Boşluğu al:</b> tetiğin serbest hareketini al, dirence gel.</li><li><b>Baskıyı artır:</b> kırılana kadar baskıyı yavaş ve sürekli artır; arpacık kıpırdamamalı.</li><li><b>Sürpriz kırılma:</b> tetiğin ne zaman kırılacağını bilmezsen vücudun tepmeyi öngöremez.</li><li><b>Takip ve kurtulma:</b> kırıldıktan sonra nişanı bir saniye tut, tetiği sadece "tık" sesine kadar bırak.</li></ul>`},
@@ -2345,6 +2346,7 @@ const IC_MBACK=`<svg viewBox="0 0 34 26" fill="none" stroke="currentColor" strok
 const IC_GRP=SV('<circle cx="8" cy="8.5" r="3"/><circle cx="16.5" cy="8.5" r="3"/><path d="M2.5 19.5c.6-3.4 2.8-5 5.5-5s4.9 1.6 5.5 5M12.6 14.9c1.1-.3 2.4-.4 3.9-.4 2.7 0 4.9 1.6 5.5 5"/>');
 const IC_CMP=SV('<path d="M4 8h15l-3.5-3.5M20 16H5l3.5 3.5"/>');
 const IC_BELL=SV('<path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path d="M10 21a2 2 0 0 0 4 0"/>');
+const IC_SAAT=SV('<rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9.5 6l.8-3h3.4l.8 3M9.5 18l.8 3h3.4l.8-3M12 9.5V12l1.6 1.2"/>');
 const IC_SPK=SV('<path d="M4 9.5v5h3.5L12.5 19V5L7.5 9.5z"/><path d="M16 9a4.5 4.5 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>');
 const IC_SLD=SV('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>');
 // ⓘ açıklamaları
@@ -2374,6 +2376,7 @@ const INFO={
   an_gelisim:["Gelişim","Seçili dönemde gün gün (uzun dönemlerde hafta hafta) ortalamalar. Skor yükselmeli; tetik hareketi (tetik çekilirken namlunun kayması) ve nişan gezinmesi (atıştan önceki saniyede nişanın dolaşması) düşmeli. Grafiğe dokununca o günün değerleri görünür. Cümle, seçili dönemi bir önceki aynı uzunluktaki dönemle karşılaştırır."],
   an_hata:["Hata haritası","Halka, 85'in altındaki atışlarda tetik anında namlunun hangi yöne kaydığını saat yönüyle gösterir (12 yukarı, 3 sağ); koyu dilim daha çok atış demektir. Tutuş titremesinden gelen kaymalar sayılmaz. Altındaki liste en sık 3 hatayı ve önceki döneme göre artıp azaldığını gösterir; dokununca nedeni ve nasıl düzeltileceği açılır."],
   an_grup:["Atış grubu","Her nokta bir atışta tetik anındaki kaymadır: mermi o yöne gider. Turkuaz daire atışların yarısını içine alır; daire küçüldükçe atışların tutarlı demektir. Dairenin merkezi ortadan kaymışsa tetik hep aynı yöne çekiliyordur. Son 250 atış gösterilir."],
+  saat:["Akıllı saat","Android uygulamasında atış sonuçları telefon bildirimi olarak saate gider: skor ve hatanın adı, iyi atışta kısa, kötü atışta iki uzun titreşim (saat destekliyorsa; bazı saatler hep aynı titreşimi kullanır). Seri bitince ortalama, iyi atış sayısı ve en sık hata gelir. Başla ve Dur düğmeleri bildirimde çıkar; Wear OS ve Galaxy Watch'ta saatte de görünür. Zamanlayıcı sinyali bildirimle 1–3 saniye geç gideceği için saate gönderilmez. Hızlı alıştırmalarda (zamanlayıcı, par, ritim…) atış başına bildirim gitmez, yalnız özet gider."],
   ses:["Sesli geri bildirim","Her atıştan sonra: Bip (sınırın üstünde iki notalı tatlı ses, altında kalın vızıltı), skorun sesli okunması ya da skor ve hatanın nedeni. Gözün nişandan ayrılmadan sonucu duyarsın."]
 };
 const infoBtn=k=>`<button class="i-red" data-info="${k}" aria-label="${esc(INFO[k][0])}: açıklama">i</button>`;
@@ -2382,7 +2385,7 @@ const SOUND_T={kapali:"Kapalı",bip:"Bip",skor:"Skoru söyle",tam:"Skor ve neden
 const DAYS=[[1,"Pzt"],[2,"Sal"],[3,"Çar"],[4,"Per"],[5,"Cum"],[6,"Cmt"],[0,"Paz"]];
 function planDesc(){ const d=S.plan.days||[]; return (d.length?d.length+" gün":"Her gün")+" · "+(S.plan.goal||50)+" atış"; }
 const SET_T={gelismis:"Gelişmiş Ayarlar",baglanti:"Sensör",montaj:"Kalibrasyon ve yön",algilama:"Atış algılama",gorunum:"Görünüm",veri:"Veriler",uygulama:"Uygulama",
-  program:"Eğitim Programı",ses:"Sesli Geri Bildirim",silah:"Silahını Seç",profil:"Profil"};
+  program:"Eğitim Programı",ses:"Sesli Geri Bildirim",saat:"Akıllı Saat",silah:"Silahını Seç",profil:"Profil"};
 const SET_PARENT={algilama:"gelismis",gorunum:"gelismis",veri:"gelismis",uygulama:"gelismis"};   // Sensör ve Kalibrasyon: Sensör sekmesinde
 const WRAP=new Set(["baglanti","montaj","algilama","gorunum","veri","uygulama"]);
 function openSetPage(p){ if(p==="baglanti"||p==="sensor"){ closePages(); showView("sensor"); return; } pushPage({set:p,back:"",title:p==="algilama"?MODE_A[S.mode]:SET_T[p],render:()=>WRAP.has(p)?`<div class="pg">${PAGES[p][0]()}</div>`:PAGES[p][0](),bind:root=>PAGES[p][1](root)}); }
@@ -2412,7 +2415,7 @@ function renderSettings(){
   root.innerHTML=pgRoot(); bindRoot(root); bindInfo(root);
 }
 const PAGES={gelismis:[pgGelismis,bindGelismis],baglanti:[pgBaglanti,bindBaglanti],montaj:[pgMontaj,bindMontaj],algilama:[pgAlgilama,bindAlgilama],
-  gorunum:[pgGorunum,bindGorunum],veri:[pgVeri,bindVeri],uygulama:[pgUygulama,bindUygulama],program:[pgProgram,bindProgram],ses:[pgSes,bindSes],silah:[pgSilah,bindSilah],profil:[pgProfil,bindProfil]};
+  gorunum:[pgGorunum,bindGorunum],veri:[pgVeri,bindVeri],uygulama:[pgUygulama,bindUygulama],program:[pgProgram,bindProgram],ses:[pgSes,bindSes],saat:[pgSaat,bindSaat],silah:[pgSilah,bindSilah],profil:[pgProfil,bindProfil]};
 /* --- Ayarlar ana sayfası: MantisX'teki gibi tek sayfa */
 function pgRoot(){
   const wl=S.weaponName?S.weaponName:(S.weapon==="pistol"?"Tabanca":"Tüfek");
@@ -2428,6 +2431,7 @@ function pgRoot(){
   <div class="prof"><span class="pl">${LOGO_SVG}</span><div style="min-width:0"><div class="pn" id="profName">${esc(curProf().ad)}</div><button class="pe" id="profEdit">Profilini düzenle</button></div><button class="pd" id="profPick" aria-label="Atıcı değiştir"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 8h14l-7 9z"/></svg></button></div>
   <div class="sl">
     <button id="rtSes">${IC_SPK}Sesli geri bildirim<small>${esc(SOUND_T[S.sound]||"")}${S.greet?" · karşılama":""}</small></button>
+    <button id="rtSaat">${IC_SAAT}Akıllı saat<small>${esc(saatDesc())}</small></button>
     <button id="rtProgram">${IC_BELL}Eğitim programı<small>${esc(planDesc())}</small></button>
     <button id="rtAdv">${IC_SLD}Gelişmiş ayarlar<small>Algılama, görünüm, veriler</small></button>
   </div>`;
@@ -2441,6 +2445,7 @@ function bindRoot(root){
   $("profPick").onclick=()=>openProfPick();
   $("rtProgram").onclick=()=>openSetPage("program");
   $("rtSes").onclick=()=>openSetPage("ses");
+  $("rtSaat").onclick=()=>openSetPage("saat");
   $("rtAdv").onclick=()=>openSetPage("gelismis");
 }
 function setMode(v){ S.mode=v; applyCfg(); saveMeta(); if(v!=="kuru"&&source==="phone") toast("Telefonu gerçek atışta silaha takma; tepme telefona zarar verir."); }
@@ -2718,6 +2723,79 @@ function renderSensorDev(){
   if($("dvRestart")) $("dvRestart").onclick=()=>askSheet("Yeniden başlat","Sensör yeniden başlayacak; uygulama birkaç saniye içinde kendiliğinden yeniden bağlanır.","Yeniden başlat",()=>bleCmd([0x04]));
   if($("dvOffNow")) $("dvOffNow").onclick=()=>askSheet("Sensörü kapat","Sensör kapanacak. Açmak için sol yandaki güç düğmesine 2 saniye bas.","Kapat",()=>{ if(bleCmd([0x05])){ setTimeout(()=>sensorDisconnect(),400); } });
 }
+/* ---------------------------------------------------------------- Akıllı saat
+   Android uygulaması: atış sonucu, seri özeti ve Başla/Dur düğmeleri telefon bildirimi olarak gider; saat telefonun
+   bildirimlerini gösteriyorsa (Wear OS, Galaxy Watch, Huawei, Xiaomi, Amazfit, Garmin…) titrer ve yazar.
+   iPhone'da bildirimler Apple Watch'a yalnız telefon kilitliyken düşer: Apple Watch için ayrı saat uygulaması gerekir. */
+function saatVar(){ return APK&&!IOS_APP&&typeof window.HisarNative.saat==="function"; }
+function saatDesc(){ return !saatVar()?(IOS_APP?"Apple Watch için saat uygulaması gerekir":"Android uygulamasında"):S.saat?"Açık · bildirimle":"Kapalı"; }
+function saatGonder(o,force){ if(!(force||S.saat)||!saatVar()) return false; try{ window.HisarNative.saat(JSON.stringify(o)); return true; }catch(e){ return false; } }
+const saatIyi=sc=>sc>=(S.sesEsik||85);
+function saatAtis(r,q){
+  if(!S.saat||!S.saatAtis||source==="phone"||!r||!r.active) return;     // telefon silahtaysa titreşim ölçümü bozar
+  const d=r.sess.drill; if(SPEED.has(d)||d==="par"||d==="surpriz") return;  // hızlı alıştırmada atış başına bildirim yok
+  const iyi=saatIyi(q.sc), ne=!iyi&&q.c&&q.c.length&&CAUSES[q.c[0]]?CAUSES[q.c[0]].ad:"";
+  saatGonder({t:"atis",iyi,baslik:`${Math.round(q.sc)} · ${iyi?"İyi atış":ne||"Kötü atış"}`,metin:`${DRM[d]?DRM[d].ad:""} · ${q.n}. atış`,komut:S.saatKomut?"dur":""});
+}
+function saatOzet(s){
+  if(!S.saat||!S.saatOzet||isDemoSess(s)) return;
+  const v=validShots(s); if(!v.length) return;
+  const ort=Math.round(v.reduce((a,q)=>a+q.sc,0)/v.length), iyi=v.filter(q=>saatIyi(q.sc)).length, say={};
+  v.forEach(q=>{ if(q.sc<85&&q.c&&q.c[0]&&CAUSES[q.c[0]]) say[q.c[0]]=(say[q.c[0]]||0)+1; });
+  const en=Object.entries(say).sort((a,b)=>b[1]-a[1])[0];
+  saatGonder({t:"ozet",iyi:saatIyi(ort),baslik:`Seri bitti · ortalama ${ort}`,metin:`${v.length} atış · ${iyi} iyi${en?" · en sık: "+CAUSES[en[0]].ad.toLocaleLowerCase("tr"):""}`,komut:S.saatKomut?"basla":""});
+}
+function saatHazir(id){ if(!S.saat||!S.saatKomut||!DRM[id]) return; saatGonder({t:"hazir",baslik:`Hazır · ${DRM[id].ad}`,metin:"Saatten Başla'ya basınca seri başlar.",komut:"basla"}); }
+// saatteki Başla / Dur (bildirim düğmesi) → yerel katman → burası
+window.__hisarSaat=cmd=>{
+  if(!S.saat||!S.saatKomut) return;
+  if(cmd==="dur"){ if(cur.run&&cur.run.active) stopRun(false); return; }
+  if(cmd!=="basla"||(cur.run&&cur.run.active)) return;
+  if(curView==="oturum"&&cur.sess&&!pages.length) startRun();
+  else { openDrill(cur.sess?cur.sess.drill:"serbest"); setTimeout(()=>{ if(!(cur.run&&cur.run.active)) startRun(); },1200); }
+};
+// Android 13+: bildirim izni (saate gönderme açılınca bir kez sorulur)
+function saatIzinIste(cb){
+  if(!saatVar()){ cb(false); return; }
+  if(typeof window.HisarNative.saatIzin!=="function"){ cb(true); return; }
+  window.__hisarSaatIzin=ok=>{ window.__hisarSaatIzin=null; cb(!!ok); };
+  try{ window.HisarNative.saatIzin(); }catch(e){ cb(false); }
+}
+function saatDene(){
+  if(!saatVar()){ toast(IOS_APP?"Apple Watch için ayrı saat uygulaması gerekiyor.":"Saate gönderme Android uygulamasında çalışır."); return; }
+  saatIzinIste(ok=>{
+    if(!ok){ toast("Bildirim izni verilmedi. Telefon ayarlarından HİSAR TETİK için bildirimlere izin ver.",5000); return; }
+    saatGonder({t:"atis",iyi:true,baslik:"92 · İyi atış",metin:"Deneme · 1. atış",komut:""},true);
+    setTimeout(()=>saatGonder({t:"atis",iyi:false,baslik:"61 · Tetiğe ani basma",metin:"Deneme · 2. atış",komut:""},true),3000);
+    setTimeout(()=>saatGonder({t:"ozet",iyi:true,baslik:"Seri bitti · ortalama 86",metin:"10 atış · 8 iyi · en sık: tetiğe ani basma",komut:""},true),6000);
+    toast("Saatine 3 deneme bildirimi gidiyor: iyi atış, kötü atış, seri özeti. Gelmezse saatin telefon uygulamasında HİSAR TETİK bildirimlerini aç.",7000);
+  });
+}
+function pgSaat(){
+  const v=saatVar();
+  const durum=v?`<p class="note">Saatin telefonun bildirimlerini gösteriyorsa çalışır: Wear OS, Galaxy Watch, Huawei, Xiaomi, Amazfit, Garmin… Atıştan sonra saat titrer, skoru ve hatayı yazar; seri bitince özet gelir.</p>`
+    :IOS_APP?`<p class="note">iPhone bildirimleri Apple Watch'a yalnız telefon kilitliyken düşer; atış sırasında uygulama açık olduğu için bu yol çalışmaz. Apple Watch için ayrı saat uygulaması gerekiyor (Mac'te Xcode ile ya da Apple Developer hesabıyla TestFlight'tan kurulur).</p>`
+    :`<p class="note">Saate gönderme Android uygulamasında çalışır (telefon bildirimleriyle). Tarayıcıdan gönderilemez.</p>`;
+  return `<div class="pg"><div class="ch"><span>Akıllı saat</span>${infoBtn("saat")}</div>${durum}
+    <label class="toggle">Saate gönder<input type="checkbox" id="wOn" ${S.saat&&v?"checked":""} ${v?"":"disabled"}></label>
+    <div class="ch" style="margin-top:8px"><span>Saate ne gitsin?</span></div>
+    <label class="toggle">Her atış: skor, hata, titreşim<input type="checkbox" id="wAtis" ${S.saatAtis?"checked":""}></label>
+    <label class="toggle">Seri bitince özet<input type="checkbox" id="wOzet" ${S.saatOzet?"checked":""}></label>
+    <label class="toggle">Saatten Başla / Dur<input type="checkbox" id="wKomut" ${S.saatKomut?"checked":""}></label>
+    <button class="btn" id="wTest" ${v?"":"disabled"}>Saati dene</button>
+    <div class="card"><h2>Saatinde bir kez aç</h2><p class="note">Saatin telefon uygulamasında (Galaxy Wearable, Huawei Sağlık, Mi Fitness, Zepp, Garmin Connect…) bildirimlerde HİSAR TETİK'e izin ver. Atış sırasında telefonun ekranı açık olduğu için “telefon kullanılırken de bildir” gibi bir ayar varsa onu da aç; yoksa bildirim yalnız telefonda kalır.</p></div>
+    <p class="note">Zamanlayıcı sinyali bildirimle 1–3 saniye geç gideceği için saate gönderilmez; süre sensörün bipiyle ölçülür. Telefon sensör olarak kullanılıyorsa (telefon silahtaysa) atış başına bildirim gitmez: titreşim ölçümü bozar.</p></div>`;
+}
+function bindSaat(root){
+  $("wOn").onchange=e=>{
+    if(e.target.checked) saatIzinIste(ok=>{ S.saat=ok; saveMeta(); if(ok) toast("Saate gönderme açık."); else toast("Bildirim izni verilmedi. Telefon ayarlarından HİSAR TETİK için bildirimlere izin ver.",5000); refreshPage(); });
+    else { S.saat=false; saveMeta(); saatGonder({t:"temizle"},true); refreshPage(); } };
+  $("wAtis").onchange=e=>{S.saatAtis=e.target.checked;saveMeta();};
+  $("wOzet").onchange=e=>{S.saatOzet=e.target.checked;saveMeta();};
+  $("wKomut").onchange=e=>{S.saatKomut=e.target.checked;saveMeta();};
+  $("wTest").onclick=()=>saatDene();
+}
+
 /* ---------------------------------------------------------------- Sensörü bul (AirPods'taki gibi)
    Sensörde GPS yok. Bağlıyken ve bağlantı koptuğu an telefonun konumu "son görüldüğü yer" olarak kaydedilir (yalnız bu
    telefonda). Yakındayken (Bluetooth menzili) sinyal gücüyle sıcak-soğuk gösterilir; sensör istenirse bulunana kadar öter. */
@@ -3308,6 +3386,7 @@ function openFromHash(){
     else if(p[0]==="kaynak"&&["demo","phone","sensor"].includes(p[1])) { showView("alistirma"); selectSource(p[1],true); }
     else if(p[0]==="alistirma"&&DRM[p[1]]){ openDrill(p[1]); if(p[2]==="basla") setTimeout(()=>{ if(!(cur.run&&cur.run.active)) startRun(); },1500); }
     else if(p[0]==="sensor") { showView("sensor"); if(p[1]==="montaj") openSetPage("montaj"); }
+    else if(p[0]==="saat"&&p[1]==="dene") saatDene();
     else if(["alistirma","oturum","gecmis","analiz","dersler","gruplar"].includes(p[0])) showView(p[0]);
   }catch(e){}
   try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
@@ -3321,7 +3400,7 @@ window.__hisar={trigClear,wizardAxis,applyCfg,wizardSensor,startGuard,mountPromp
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),
   hideSplash, splashOpen, get pages(){return pages;}, popPage, openCause, openModeList, openDrillSettings, openGroup, openGroups, todayChallenge, CHALLENGES, streakInfo, setYon, manualShot, get curView(){return curView;},
   sensorTune, sensorShotBeep, sensorSoundTest, SCUE, SHOT_GOOD, SHOT_BAD, greetOnConnect, speak, renderSensorView, mainSet, get AN(){return AN;},
-  openBul, sonYerAl, konumAl, uzaklik, rssiYon, haritaUrl, get BUL(){return BUL;}};
+  openBul, sonYerAl, konumAl, uzaklik, rssiYon, haritaUrl, get BUL(){return BUL;}, saatVar, saatDene, saatAtis, saatOzet, openSetPage};
 
 /* --- başlat */
 loadAll();

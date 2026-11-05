@@ -23,6 +23,9 @@ adb shell input keyevent 4; sleep 1; shot 09_geri 2
 adb shell input keyevent 4; sleep 1; adb shell input keyevent 4; sleep 2
 shot 10_arka_plan 1
 adb shell am start -n "$A" >/dev/null; shot 11_geri_donus 4
+# Akıllı saat: deneme bildirimleri (iyi atış, kötü atış, seri özeti) bildirim alanına düşmeli (saat bunları gösterir)
+go "saat/dene"; sleep 8; shot 11b_saat 1
+adb shell dumpsys notification --noredact > "$OUT/bildirim.txt" 2>/dev/null || true
 # Uygulama içi güncelleme: GitHub Pages'teki Android sayfası (tetik/apk/index.html) indirilip kurulur, sayfa yenilenir.
 # Pages yayını bu derlemeyle aynı anda yapılıyor: bu sürümün sayfası Pages'te görünene kadar (en çok ~7 dk) beklenir.
 V=$(grep -o 'const VER=[0-9]*' tetik/src/app.html | head -1 | grep -o '[0-9]*$')
@@ -38,6 +41,8 @@ adb shell dumpsys window | grep -E "mCurrentFocus" | head -2 > "$OUT/odak.txt" |
 adb logcat -d > "$OUT/logcat_tam.txt"
 grep -E "HisarTetik|HisarBle|AndroidRuntime|chromium" "$OUT/logcat_tam.txt" > "$OUT/logcat.txt" || true
 rc=0
+if grep -q "Seri bitti" "$OUT/bildirim.txt" && grep -q "Tetiğe ani basma" "$OUT/bildirim.txt"; then echo "saat bildirimleri: tamam"
+else echo "::error::Saat bildirimleri görünmedi"; grep -n "com.hisar.tetik" "$OUT/bildirim.txt" | head -5; rc=1; fi
 if grep -q "FATAL EXCEPTION" "$OUT/logcat_tam.txt"; then echo "::error::Uygulama çöktü"; grep -A 25 "FATAL EXCEPTION" "$OUT/logcat_tam.txt" | head -40; rc=1; fi
 if grep -E "HisarTetik.*js ERROR|Uncaught" "$OUT/logcat.txt" | grep -v "fonts.googleapis" | head -5 | grep -q .; then
   echo "::error::Sayfada hata"; grep -E "js ERROR|Uncaught" "$OUT/logcat.txt" | head -10; rc=1; fi

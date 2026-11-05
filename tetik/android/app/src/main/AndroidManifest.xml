@@ -11,6 +11,8 @@
          Android 12+ Bluetooth taraması konum kullanmaz (neverForLocation); konum izni yalnız Sensörü bul'da istenir. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Akıllı saat: atış sonucu bildirimi (Android 13+ izin ister) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Android 12 ve sonrası: "Yakındaki cihazlar" (konum kullanılmaz) -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
@@ -44,6 +46,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".SaatAlici" android:exported="false" />
 
         <provider
             android:name=".ShareProvider"

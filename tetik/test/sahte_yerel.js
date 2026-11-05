@@ -15,6 +15,8 @@
   window.HisarNative = {
     info: () => JSON.stringify({ versionName: '3.0', versionCode: 300, sdk: 34, model: 'Test Telefon' }),
     openUrl: u => log.push(['openUrl', u]),
+    saat: j => log.push(['saat', JSON.parse(j)]),
+    saatIzin: () => { log.push(['saatIzin']); later(() => window.__hisarSaatIzin && window.__hisarSaatIzin(window.__saatIzinYok ? false : true)); },
     exitApp: () => log.push(['exitApp']),
     keepScreenOn: on => log.push(['keepScreenOn', !!on]),
     saveFile: (n, m, t) => { log.push(['saveFile', n, m, t.length]); later(() => window.__hisarSaved && window.__hisarSaved(true, n)); },

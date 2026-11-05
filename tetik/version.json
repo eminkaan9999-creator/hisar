@@ -1,1 +1,1 @@
-{"v": 17, "not": "Eğimli atış düzeltmesi: hedef aşağıda ya da yukarıdayken sağ-sol hareket artık tam ölçülüyor. Sensörü bul (Sensör sekmesi): son görüldüğü yer haritada, yakındayken sıcak-soğuk göstergesi, bulana kadar öttür.", "apk": true, "apkMin": 1700}
+{"v": 18, "not": "Akıllı saat (Android): her atıştan sonra saat titrer, skoru ve hatayı yazar; seri bitince özet; saatten Başla/Dur. Ayarlar › Akıllı saat. Sürüm 17'den: eğimli atış düzeltmesi ve Sensörü bul.", "apk": true, "apkMin": 1800}

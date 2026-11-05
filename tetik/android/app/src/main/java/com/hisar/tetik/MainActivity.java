@@ -1,6 +1,11 @@
 package com.hisar.tetik;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.graphics.drawable.Icon;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.Manifest;
@@ -62,7 +67,9 @@ public class MainActivity extends Activity {
     static final String TAG = "HisarTetik";
     static final String HOST = "appassets.androidplatform.net";
     static final String START = "https://" + HOST + "/index.html";
-    static final int REQ_FILE = 11, REQ_SAVE = 12, REQ_LOC = 13;
+    static final int REQ_FILE = 11, REQ_SAVE = 12, REQ_LOC = 13, REQ_BILDIRIM = 14;
+    /** Açık olan ekran (saatteki Başla/Dur düğmesi SaatAlici üzerinden buraya gelir). */
+    static java.lang.ref.WeakReference<MainActivity> son = new java.lang.ref.WeakReference<>(null);
     static final int BG = Color.rgb(10, 14, 15);
 
     WebView web;
@@ -81,6 +88,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        son = new java.lang.ref.WeakReference<>(this);
         Window w = getWindow();
         w.setStatusBarColor(BG);
         w.setNavigationBarColor(BG);
@@ -231,6 +239,11 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int req, String[] perms, int[] res) {
         super.onRequestPermissionsResult(req, perms, res);
+        if (req == REQ_BILDIRIM) {
+            boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED;
+            js("window.__hisarSaatIzin&&window.__hisarSaatIzin(" + ok + ")");
+            return;
+        }
         if (req == REQ_LOC) {
             boolean ok = false;
             for (int r : res) ok |= r == PackageManager.PERMISSION_GRANTED;
@@ -279,6 +292,89 @@ public class MainActivity extends Activity {
             Log.w(TAG, "konum", e);
             konumBitti(null, "konum");
         }
+    }
+
+    // ------------------------------------------------------------------ akıllı saat
+    // Atış sonucu, seri özeti ve Başla/Dur telefon bildirimi olarak gider; saat (Wear OS, Galaxy, Huawei, Xiaomi, Amazfit,
+    // Garmin…) telefonun bildirimlerini gösteriyorsa titrer ve yazar. Sesi yok; titreşim deseni kanala göre (iyi / kötü / özet).
+    static final String K_IYI = "saat_iyi", K_KOTU = "saat_kotu", K_OZET = "saat_ozet", K_HAZIR = "saat_hazir";
+    static final int N_ATIS = 4101, N_OZET = 4102;
+    static final long[] V_IYI = {0, 120}, V_KOTU = {0, 350, 150, 350}, V_OZET = {0, 200, 100, 200, 100, 200};
+
+    boolean bildirimIzni() {
+        return Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    void saatIzinIste() {
+        if (bildirimIzni()) { js("window.__hisarSaatIzin&&window.__hisarSaatIzin(true)"); return; }
+        requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_BILDIRIM);
+    }
+
+    void saatKanallari(NotificationManager nm) {
+        if (Build.VERSION.SDK_INT < 26 || nm.getNotificationChannel(K_HAZIR) != null) return;
+        java.util.List<NotificationChannel> l = new java.util.ArrayList<>();
+        String[][] k = {{K_IYI, "Saat: iyi atış"}, {K_KOTU, "Saat: kötü atış"}, {K_OZET, "Saat: seri özeti"}, {K_HAZIR, "Saat: hazır (Başla düğmesi)"}};
+        long[][] v = {V_IYI, V_KOTU, V_OZET, null};
+        for (int i = 0; i < k.length; i++) {
+            NotificationChannel c = new NotificationChannel(k[i][0], k[i][1], v[i] == null ? NotificationManager.IMPORTANCE_LOW : NotificationManager.IMPORTANCE_DEFAULT);
+            c.setSound(null, null);
+            c.enableVibration(v[i] != null);
+            if (v[i] != null) c.setVibrationPattern(v[i]);
+            c.setShowBadge(false);
+            l.add(c);
+        }
+        nm.createNotificationChannels(l);
+    }
+
+    PendingIntent komutIntent(String k) {
+        Intent i = new Intent(this, SaatAlici.class).setAction(SaatAlici.EYLEM).putExtra("komut", k);
+        return PendingIntent.getBroadcast(this, "basla".equals(k) ? 41 : 42, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** HisarNative.saat(json): {t:"atis"|"ozet"|"hazir"|"temizle", iyi, baslik, metin, komut:"basla"|"dur"|""} */
+    void saatBildir(String json) {
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm == null) return;
+            org.json.JSONObject o = new org.json.JSONObject(json);
+            String t = o.optString("t");
+            if ("temizle".equals(t)) { nm.cancel(N_ATIS); nm.cancel(N_OZET); return; }
+            if (!bildirimIzni()) return;
+            saatKanallari(nm);
+            boolean ozet = "ozet".equals(t), hazir = "hazir".equals(t), iyi = o.optBoolean("iyi", true);
+            String kanal = hazir ? K_HAZIR : ozet ? K_OZET : iyi ? K_IYI : K_KOTU;
+            Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, kanal) : new Notification.Builder(this);
+            int ic = getResources().getIdentifier("ic_bildirim", "drawable", getPackageName());   // R sınıfı üretilmiyor (Gradle'sız derleme)
+            if (ic == 0) ic = android.R.drawable.stat_notify_more;
+            Intent ac = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            b.setSmallIcon(ic)
+                .setContentTitle(o.optString("baslik", "HİSAR TETİK"))
+                .setContentText(o.optString("metin", ""))
+                .setShowWhen(true)
+                .setWhen(System.currentTimeMillis())
+                .setOnlyAlertOnce(false)
+                .setAutoCancel(true)
+                .setColor(Color.rgb(34, 211, 197))
+                .setCategory(Notification.CATEGORY_STATUS)
+                .setContentIntent(PendingIntent.getActivity(this, 40, ac, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+            if (Build.VERSION.SDK_INT < 26) {
+                if (!hazir) b.setVibrate(ozet ? V_OZET : iyi ? V_IYI : V_KOTU);
+                b.setPriority(hazir ? Notification.PRIORITY_LOW : Notification.PRIORITY_DEFAULT);
+            } else {
+                b.setTimeoutAfter(ozet || hazir ? 30 * 60000L : 5 * 60000L);
+            }
+            String k = o.optString("komut", "");
+            if ("basla".equals(k) || "dur".equals(k))
+                b.addAction(new Notification.Action.Builder(Icon.createWithResource(this, ic), "basla".equals(k) ? "Başla" : "Dur", komutIntent(k)).build());
+            nm.notify(ozet || hazir ? N_OZET : N_ATIS, b.build());
+        } catch (Exception e) {
+            Log.w(TAG, "saat bildirimi", e);
+        }
+    }
+
+    /** Saatteki (bildirimdeki) Başla / Dur düğmesi. */
+    void saatKomut(String k) {
+        ui.post(() -> js("window.__hisarSaat&&window.__hisarSaat('" + ("basla".equals(k) ? "basla" : "dur") + "')"));
     }
 
     void konumBitti(Location l, String hata) {
@@ -438,6 +534,14 @@ public class MainActivity extends Activity {
         /** Telefonun konumu (Sensörü bul › son görüldüğü yer); sonuç window.__hisarKonum ile döner. */
         @JavascriptInterface
         public void konum() { ui.post(() -> konumIste()); }
+
+        /** Akıllı saat: bildirim gönder (ayrıntı: saatBildir). */
+        @JavascriptInterface
+        public void saat(String json) { ui.post(() -> saatBildir(json)); }
+
+        /** Akıllı saat: bildirim izni (Android 13+); sonuç window.__hisarSaatIzin(true|false). */
+        @JavascriptInterface
+        public void saatIzin() { ui.post(() -> saatIzinIste()); }
 
         /** Metni telefonun seslendirmesiyle söyler (Türkçe ses varsa Türkçe). */
         @JavascriptInterface

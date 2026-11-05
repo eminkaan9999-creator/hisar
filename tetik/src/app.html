@@ -1855,7 +1855,7 @@ let lastFlash=0;
 const HD={sid:null,n:0,t0:-1e9,cache:null,cacheKey:""}, HD_ANIM=720, HDC=new WeakMap();
 const hdRing=s=>scaleFor(s.weapon,s.diff)/4;                       // bir halka genişliği (derece)
 const HALKA_EK={10:"10'luk",9:"9'luk",8:"8'lik",7:"7'lik",6:"6'lık",5:"5'lik",4:"4'lük",3:"3'lük",2:"2'lik",1:"1'lik"};
-const HD_YON=["üstüne","sağ üstüne","sağına","sağ altına","altına","sol altına","soluna","sol üstüne"];
+const HD_YON=["üstüne","sağ üstüne","sağına","sağ altına","altına","sol altına","soluna","sol üstüne"], HD_YER=["üstünde","sağ üstünde","sağında","sağ altında","altında","sol altında","solunda","sol üstünde"];
 function hdShot(q){ let v=HDC.get(q); if(v) return v;
   const xy=q.tz?decTrace(q.tz):null, g=t=>Math.round((t-TR0)/TRS);
   if(xy&&xy.length>=TRN*2){ const at=i=>[xy[i*2],xy[i*2+1]], g0=g(-10), g1=g(-150), g2=g(-600), iz=[];
@@ -1935,7 +1935,8 @@ function hedefMetin(s,v,q,run,rev,yeni){
   if(!q) return `<p class="note" style="text-align:center">Nişan al ve tetiğe bas. Atışın hedefte delik olarak görünecek.</p>`;
   const rw=hdRing(s), kart=(id,ids,iki,say)=>`<button class="hd-kart${iki?" iki":""}" data-cause="${id}" data-list="${ids.join(",")}"><span class="hd-k">${iki?"Ya da":"Neden"}${say?` · ${say} atışta`:""}</span><b>${esc(CAUSES[id].ad)}</b>${iki?"":`<span>${esc(CAUSES[id].ozet)}</span>`}<i>Nasıl düzeltilir ›</i></button>`;
   if(rev){ const avg=avgOf(v), [vt,vc]=verdict(avg), iyi=v.filter(x=>x.sc>=(S.sesEsik||85)).length, cc=causeCounts(v).filter(x=>CAUSES[x[0]]).slice(0,2), ids=cc.map(x=>x[0]);
-    let grup=""; if(v.length>=2){ const dm=s.dist||S.dist||25, cm=hdGrup(v).d*RAD*dm*100; grup=` Grup çapı ≈ ${cm<10?fx(cm,1):Math.round(cm)} cm (${fx(dm,dm%1?1:0)} m'de).`; }
+    let grup=""; if(v.length>=2){ const dm=s.dist||S.dist||25, g=hdGrup(v), cm=g.d*RAD*dm*100, k=x=>x<10?fx(x,1):Math.round(x); grup=` Grup çapı ≈ ${k(cm)} cm (${fx(dm,dm%1?1:0)} m'de).`;
+      if(v.length>=3){ const r=Math.hypot(g.m[0],g.m[1]); grup+=r/rw<0.35?" Grup merkezi tam ortada.":` Grup merkezi merkezin ${HD_YER[Math.round(((Math.atan2(g.m[0],g.m[1])*DEG+360)%360)/45)%8]}, ≈ ${k(r*RAD*dm*100)} cm.`; } }
     return `<div class="hd"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(Math.floor(avg),0)}</b><small>Ortalama</small></div><div class="hd-ne"><b>${esc(vt.replace("ATIŞ","OTURUM"))}</b><span>${v.length} atış, ${iyi} tanesi ${S.sesEsik||85} ve üzeri.${grup}</span></div></div>
       ${ids.map((id,i)=>kart(id,ids,i>0,cc[i][1])).join("")}</div>`; }
   const [vt,vc]=verdict(q.sc), yon=hdYon(hdShot(q).p,rw), ids=(q.c||[]).filter(k=>CAUSES[k]), sw=silahBul(s.weaponName);
@@ -3406,7 +3407,12 @@ function bindGorunum(root){
   $("sVis").onchange=e=>{S.visualCue=e.target.checked;saveMeta();if(S.visualCue)flash("ATEŞ","go",500);};
 }
 /* --- Veriler */
-function pgVeri(){ return `<div class="card"><div class="ch"><h2>Yedek</h2>${infoBtn("veri")}</div>
+// localStorage ~5 milyon karakter alır (tarayıcıda aynı adresteki diğer sayfalarla ortak); dolarsa yeni oturum kaydedilemez
+function depoDurum(){ let n=0; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); n+=k.length+(localStorage.getItem(k)||"").length; } }catch(e){} return {n,pct:Math.min(100,Math.round(n/5e6*100))}; }
+function yedekNotu(){ const d=depoDurum(), sy=S.sonYedek||0, kac=sessions.filter(x=>!x.sample).length;
+  const y=sy?`Son yedek ${ago(Date.now()-sy)}.`:kac?"Henüz yedek alınmadı.":"";
+  return `<p class="note">${kac} oturum kayıtlı · depolama %${d.pct} dolu (≈ ${fx(d.n/1e6,1)} / 5 milyon karakter). ${y}${d.pct>=80?` <span class="badt">Depolama dolmak üzere: dışa aktar, sonra eski oturumları sil. Dolarsa eski oturumların ayrıntılı izleri silinir, yine sığmazsa yeni oturum kaydedilemez.</span>`:kac>=10&&(!sy||Date.now()-sy>30*864e5)?` <span class="warnt">Telefon kaybolursa ya da değişirse verilerin gider: ayda bir dışa aktar.</span>`:""}</p>`; }
+function pgVeri(){ return `<div class="card"><div class="ch"><h2>Yedek</h2>${infoBtn("veri")}</div>${yedekNotu()}
     <div class="btn-row"><button class="btn" id="dExp">Dışa aktar (JSON)</button><button class="btn" id="dCsv">Atışları indir (CSV)</button><label class="btn" for="dImp" style="cursor:pointer">İçe aktar</label><input type="file" id="dImp" accept=".json,application/json" hidden></div>
     <div class="btn-row" id="delBox"><button class="btn danger" id="dDel">Tüm geçmişi sil</button></div>
   </div>
@@ -3415,7 +3421,7 @@ function pgVeri(){ return `<div class="card"><div class="ch"><h2>Yedek</h2>${inf
     <p class="note">Oturum bitince oturum ekranının sağ üstündeki paylaş düğmesinden <b>Ham veri</b> ile paylaşılır.</p>
   </div>`; }
 function bindVeri(){
-  $("dExp").onclick=exportJson; $("dCsv").onclick=exportCsv; $("dImp").onchange=importJson;
+  $("dExp").onclick=()=>{ exportJson(); setTimeout(renderSettings,300); }; $("dCsv").onclick=exportCsv; $("dImp").onchange=importJson;
   $("sRaw").onchange=e=>{ S.rawRec=e.target.checked; saveMeta(); toast(S.rawRec?"Ham kayıt açık: sonraki oturumdan itibaren kaydedilir.":"Ham kayıt kapalı."); };
   $("dDel").onclick=()=>{const box=$("delBox");box.innerHTML=`<span style="align-self:center">Tüm oturumlar silinsin mi?</span><button class="btn danger" id="dYes">Evet, sil</button><button class="btn" id="dNo">Vazgeç</button>`;
     $("dYes").onclick=()=>{for(const x of sessions)lsDel(KEY+".s."+x.id);sessions=[];cur.sess=null;cur.review=false;saveMeta();renderSettings();toast("Geçmiş silindi.");};$("dNo").onclick=renderSettings;};
@@ -3431,13 +3437,15 @@ function pgUygulama(){
     :`<p>Bilgisayarda Chrome ya da Edge adres çubuğundaki <b>yükle</b> simgesiyle uygulama olarak kurabilirsin.${apkReady?` Android telefon için: <a href="${APK_URL}" target="_blank" rel="noopener">Android uygulaması (APK)</a>.`:""}</p>`;
   return `<div class="card"><h2>HİSAR TETİK</h2><p>Sürüm ${VER}</p>
       <button class="btn primary" id="apUpd" ${updAvail?"":"hidden"}>Yeni sürümü yükle</button>
-      <p class="note" id="apUpdN">${updAvail?"Yeni sürüm var. "+esc(updNote):(HOSTED||APK)?(apkPrompt()?"Güncel. Yeni sürüm çıkınca indirmen istenir.":"Güncel. Yeni sürüm çıkınca uygulama kendini yeniler."):"Güncelleme denetimi uygulamanın kendi adresinde çalışır."}</p></div>
+      <p class="note" id="apUpdN">${updAvail?"Yeni sürüm var. "+esc(updNote):!(HOSTED||APK)?"Güncelleme denetimi uygulamanın kendi adresinde çalışır.":updHata&&!updT?"Yeni sürüm denetlenemedi (internet yok olabilir).":(apkPrompt()?"Güncel. Yeni sürüm çıkınca indirmen istenir.":"Güncel. Yeni sürüm çıkınca uygulama kendini yeniler.")+(updT?` Son denetim ${ago(Date.now()-updT)}${updHata?"; son deneme olmadı (internet yok olabilir)":""}.`:"")}</p>
+      ${(HOSTED||APK)&&!updAvail?`<button class="btn" id="apChk">Şimdi denetle</button>`:""}</div>
     <div class="card"><h2>Telefona yükle</h2>${inst}</div>
     <div class="card"><h2>Sensör yazılımı</h2><p>M5StickC Plus2'ye HİSAR sensör yazılımını yükler: bilgisayarda Chrome ya da Edge ve USB-C kablo gerekir.</p><a class="btn" href="${YUKLE_URL}" target="_blank" rel="noopener">Sensör yazılımını yükle</a></div>
     <div class="card"><h2>Hakkında</h2><p>HİSAR TETİK · sürüm ${VER}. Geliştirici: <b style="color:var(--fg)">Emin Kaan Boyacı</b>.</p><p>Sensör: M5StickC Plus2 (HISAR-SENSOR yazılımı) ya da WitMotion WT901BLE.</p>
       <p class="note">Sensör hedefi görmez: tetik anında namlunun ne kadar ve hangi yöne kaydığını ölçer, atışın o yöne gideceğini hesaplar. Teşhisler NRA ve 4-H atış eğitimi hata şemalarına dayanır; tüfek teşhisleri tabanca şemasından uyarlanmıştır.</p></div>`;
 }
-function bindUygulama(){ const b=$("apUpd"); if(b) b.onclick=doUpdate; }
+function bindUygulama(){ const b=$("apUpd"); if(b) b.onclick=doUpdate;
+  const c=$("apChk"); if(c) c.onclick=async()=>{ if(!updCheck) return; c.disabled=true; c.textContent="Denetleniyor…"; await updCheck(false); if(setPage==="uygulama") renderSettings(); if(!updAvail) toast(updHata?"Denetlenemedi: internet bağlantısını kontrol et.":"Uygulama güncel (sürüm "+VER+")."); }; }
 
 /* --- Başla: sensörle oturumdan önce montaj sorusu. Yön testi hiç yapılmadıysa ya da son testin/onayın üstünden 8 saatten
    çok geçtiyse (sensör çıkarılıp yeniden takılmış olabilir) sorulur: yanlış yönle yukarı-aşağı ters, kanting yanlış çıkar. */
@@ -3549,7 +3557,7 @@ function wizardThr(){
 function download(name,text,type){
   if(APK&&window.HisarNative&&window.HisarNative.saveFile){ try{ window.HisarNative.saveFile(name,type,text); return; }catch(e){} }
   try{const b=new Blob([text],{type});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},800);}catch(e){toast("İndirme yapılamadı.");}}
-function exportJson(){download("hisar-tetik-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({app:"hisar-tetik",v:2,exported:Date.now(),settings:Object.assign({},S,{sonYer:null}),sessions:sessions.filter(s=>!s.sample)}),"application/json");}
+function exportJson(){S.sonYedek=Date.now();saveMeta();download("hisar-tetik-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({app:"hisar-tetik",v:2,exported:Date.now(),settings:Object.assign({},S,{sonYer:null}),sessions:sessions.filter(s=>!s.sample)}),"application/json");}
 function exportCsv(){const rows=[["tarih","alistirma","silah","atis_tipi","atis_no","zaman_sn","skor","tetik_derece","gezinme_derece","yon_saat","kanting_derece","tepki_sn","ara_sn","neden1","neden2"]];
   for(const s of sessions.filter(x=>!x.sample).slice().reverse())for(const q of s.shots)rows.push([new Date(s.date).toLocaleString("sv-SE"),DRM[s.drill]?DRM[s.drill].ad:s.drill,s.weaponName||s.weapon,s.mode,q.n,(q.at/1000).toFixed(2),q.sc,q.tr,q.ho,q.h,q.ca,q.x.react!=null?(q.x.react/1000).toFixed(3):"",q.x.split!=null?(q.x.split/1000).toFixed(3):"",(q.c&&q.c[0]&&CAUSES[q.c[0]])?CAUSES[q.c[0]].ad:"",(q.c&&q.c[1]&&CAUSES[q.c[1]])?CAUSES[q.c[1]].ad:""]);
   download("hisar-tetik-atislar.csv","﻿"+rows.map(r=>r.map(v=>{const t=typeof v==="number"||/^-?\d+\.\d+$/.test(String(v))?String(v).replace(".",","):String(v);return /[",;\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}).join(";")).join("\n"),"text/csv");}
@@ -3578,7 +3586,7 @@ function makeSample(){
 }
 
 /* --- güncelleme ve çevrimdışı: yeni sürüm çıkınca uygulama kendini yeniler (Android uygulamasında indirme önerilir) */
-let updAvail=false, updNote="", pendingReload=false, updAsked=false;
+let updAvail=false, updNote="", pendingReload=false, updAsked=false, updT=0, updHata=false, updCheck=null;
 let apkNeeded=false;     // Android: yerel kod değişti (version.json "apkMin"), sayfa güncellemesi yetmez, yeni APK kurulmalı
 let updInstalled=false;  // yeni sayfa indirildi, yenilenince açılacak
 const apkPrompt=()=>APK&&!IOS_APP&&(!SELF_UPD||apkNeeded);   // güncelleme = APK indirip kurmak
@@ -3610,17 +3618,18 @@ function askUpdate(){
 function initPlatform(){
   if(!HOSTED&&!APK) return;
   if(HOSTED){ try{if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){} }
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persisted().then(p=>{ if(!p) navigator.storage.persist().catch(()=>{}); }).catch(()=>{}); }catch(e){}
   const base=APK?HOSTED_URL:"";
   // auto: açılışta ve uygulamaya geri dönülünce yeni sürüm varsa kendiliğinden yenile (aynı sürüm için bir kez)
-  const check=async(auto)=>{try{const r=await fetch(base+"version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const j=await r.json();
+  const check=async(auto)=>{try{const r=await fetch(base+"version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok){updHata=true;return;}const j=await r.json(); updT=Date.now(); updHata=false;
     if(!!j.apk!==apkReady){apkReady=!!j.apk;if(setPage==="uygulama")renderSettings();}
     // Android uygulaması: yerel kısmı version.json'daki "apkMin"den eskiyse sayfa güncellemesi yetmez, yeni APK gerekir
     if(APK&&!IOS_APP&&SELF_UPD){ const ni=nativeInfo(); apkNeeded=(+j.apkMin||0)>(ni&&+ni.versionCode||0); }
     if(+j.v>VER||apkNeeded){ updAvail=true; updNote=j.not||"";
       if(apkPrompt()){ askUpdate(); return; }
       const k="tetikYenile"+j.v; let son=0; try{son=+sessionStorage.getItem(k)||0;}catch(e){}
-      if(Date.now()-son>30*60000){ try{sessionStorage.setItem(k,String(Date.now()));}catch(e){} try{localStorage.setItem("tetikGuncellendi",String(j.v));}catch(e){} sessizGuncelle(); } } }catch(e){}};
-  check(true); setInterval(()=>check(false),(APK?60:10)*60*1000); document.addEventListener("visibilitychange",()=>{if(!document.hidden)check(true);});
+      if(Date.now()-son>30*60000){ try{sessionStorage.setItem(k,String(Date.now()));}catch(e){} try{localStorage.setItem("tetikGuncellendi",String(j.v));}catch(e){} sessizGuncelle(); } } }catch(e){ updHata=true; }};
+  updCheck=check; check(true); setInterval(()=>check(false),(APK?60:10)*60*1000); document.addEventListener("visibilitychange",()=>{if(!document.hidden)check(true);});
 }
 // Android geri tuşu: önce açık pencere, sonra açılan sayfa, sonra oturum, sonra ana ekran
 window.__hisarBack=()=>{ if(!$("sheet").hidden){closeSheet();return true;} if(splashOpen()){hideSplash();return true;}

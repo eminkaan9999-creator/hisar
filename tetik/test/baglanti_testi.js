@@ -171,7 +171,9 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
     const echo = (await st(page)).cfg;
     check(echo && echo.bri === 80 && echo.vol === 30, 'Sensörün durum paketi yeni ayarları geri bildiriyor', echo);
     await page.click('#sbFind'); await sleep(200);
-    check((await fake(page, () => window.__fake.identified)) === 1, '"Sensörü bul" komutu gitti');
+    const bp = await page.evaluate(() => ({ t: document.getElementById('pgTitle').textContent, set: window.__hisar.setPage }));
+    check((await fake(page, () => window.__fake.identified)) === 1 && bp.t === 'Sensörü bul' && bp.set === 'bul', '"Sensörü bul": sensör bir kez öttü, bulma sayfası açıldı', bp);
+    await page.evaluate(() => window.__hisar.popPage()); await sleep(200);
     await page.selectOption('#dvNo', '2'); await sleep(200);
     await page.click('#askOk');
     check(await waitFor(page, () => window.__fake.cfg.no === 2, 2000), 'Sensör numarası onaydan sonra yazıldı');

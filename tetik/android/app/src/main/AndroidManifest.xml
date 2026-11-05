@@ -7,7 +7,10 @@
     <!-- Android 11 ve öncesi: Bluetooth taraması için konum izni -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+    <!-- Konum: Android 11 ve öncesinde Bluetooth taraması için; her sürümde "Sensörü bul" (sensörün son görüldüğü yer) için.
+         Android 12+ Bluetooth taraması konum kullanmaz (neverForLocation); konum izni yalnız Sensörü bul'da istenir. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Android 12 ve sonrası: "Yakındaki cihazlar" (konum kullanılmaz) -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />

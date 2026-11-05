@@ -3,7 +3,12 @@ package com.hisar.tetik;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
 import android.net.Uri;
@@ -57,7 +62,7 @@ public class MainActivity extends Activity {
     static final String TAG = "HisarTetik";
     static final String HOST = "appassets.androidplatform.net";
     static final String START = "https://" + HOST + "/index.html";
-    static final int REQ_FILE = 11, REQ_SAVE = 12;
+    static final int REQ_FILE = 11, REQ_SAVE = 12, REQ_LOC = 13;
     static final int BG = Color.rgb(10, 14, 15);
 
     WebView web;
@@ -226,7 +231,59 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int req, String[] perms, int[] res) {
         super.onRequestPermissionsResult(req, perms, res);
+        if (req == REQ_LOC) {
+            boolean ok = false;
+            for (int r : res) ok |= r == PackageManager.PERMISSION_GRANTED;
+            if (ok) konumAl(); else konumBitti(null, "izin");
+            return;
+        }
         if (ble != null) ble.onPermissionsResult(req, perms, res);
+    }
+
+    // Sensörü bul: telefonun konumu (sensörün son görüldüğü yer). Sonuç window.__hisarKonum({lat,lon,acc} | {hata}).
+    boolean konumIzni() {
+        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    void konumIste() {
+        if (konumIzni()) { konumAl(); return; }
+        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, REQ_LOC);
+    }
+
+    void konumAl() {
+        try {
+            LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+            if (lm == null) { konumBitti(null, "yok"); return; }
+            String prov = lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ? LocationManager.GPS_PROVIDER
+                : lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ? LocationManager.NETWORK_PROVIDER : null;
+            if (prov == null) { konumBitti(null, "kapali"); return; }
+            Location son = lm.getLastKnownLocation(prov);
+            final boolean[] bitti = {false};
+            final Location yedek = son != null && System.currentTimeMillis() - son.getTime() < 120000 ? son : null;
+            // en çok 20 sn bekle; yeni konum gelmezse son bilinen (2 dakikadan yeni) konum
+            ui.postDelayed(() -> { if (!bitti[0]) { bitti[0] = true; konumBitti(yedek, yedek == null ? "zaman" : null); } }, 20000);
+            if (Build.VERSION.SDK_INT >= 30) {
+                lm.getCurrentLocation(prov, null, getMainExecutor(), l -> { if (!bitti[0]) { bitti[0] = true; konumBitti(l != null ? l : yedek, l == null && yedek == null ? "konum" : null); } });
+            } else {
+                lm.requestSingleUpdate(prov, new LocationListener() {
+                    @Override public void onLocationChanged(Location l) { if (!bitti[0]) { bitti[0] = true; konumBitti(l, null); } }
+                    @Override public void onStatusChanged(String p, int st, Bundle b) { }
+                    @Override public void onProviderEnabled(String p) { }
+                    @Override public void onProviderDisabled(String p) { }
+                }, Looper.getMainLooper());
+            }
+        } catch (SecurityException e) {
+            konumBitti(null, "izin");
+        } catch (Exception e) {
+            Log.w(TAG, "konum", e);
+            konumBitti(null, "konum");
+        }
+    }
+
+    void konumBitti(Location l, String hata) {
+        if (l != null) js(String.format(java.util.Locale.US, "window.__hisarKonum&&window.__hisarKonum({lat:%.6f,lon:%.6f,acc:%.0f})", l.getLatitude(), l.getLongitude(), l.hasAccuracy() ? l.getAccuracy() : 0f));
+        else js("window.__hisarKonum&&window.__hisarKonum({hata:'" + (hata == null ? "konum" : hata) + "'})");
     }
 
     @Override
@@ -377,6 +434,10 @@ public class MainActivity extends Activity {
         /** Sayfanın yeni sürümünü GitHub Pages'ten indirir ve kurar (APK yeniden kurulmaz). */
         @JavascriptInterface
         public void update() { ui.post(() -> runUpdate(false)); }
+
+        /** Telefonun konumu (Sensörü bul › son görüldüğü yer); sonuç window.__hisarKonum ile döner. */
+        @JavascriptInterface
+        public void konum() { ui.post(() -> konumIste()); }
 
         /** Metni telefonun seslendirmesiyle söyler (Türkçe ses varsa Türkçe). */
         @JavascriptInterface

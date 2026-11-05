@@ -316,6 +316,23 @@ td.m{font-family:var(--mono)}
 .act .act-t.warn{color:var(--warn)}
 .act:disabled{opacity:.45;cursor:default}
 .li.more .ln{color:var(--fg2)}
+/* Sensörü bul */
+.bul-sin{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;padding:4px 0}
+.bul-sin .bars{display:flex;align-items:flex-end;gap:4px;height:40px}
+.bul-sin .bars i{display:block;width:9px;height:14px;border-radius:2px;background:var(--line2)}
+.bul-sin .bars i.on{background:var(--acc)}
+.bul-sin b{display:block;font-size:17px;font-weight:600}
+.bul-sin small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.harita{position:relative;height:250px;overflow:hidden;border-radius:4px;background:#3a3a3a;touch-action:pan-y}
+.harita .hk img{position:absolute;width:256px;height:256px;max-width:none;user-select:none;-webkit-user-select:none;filter:saturate(.75) brightness(.92)}
+.harita i{position:absolute;display:block;border-radius:50%;transform:translate(-50%,-50%)}
+.harita .hsn{left:50%;top:50%;width:18px;height:18px;background:var(--acc);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.harita .hdo{left:50%;top:50%;background:rgba(34,211,197,.18);border:1.5px solid rgba(34,211,197,.8)}
+.harita .hme{width:14px;height:14px;background:#3b8ff0;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.harita .hz{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.harita .hz button{width:36px;height:36px;border:0;border-radius:4px;background:rgba(32,32,32,.85);color:#fff;font-size:20px;line-height:1}
+.harita .hn{position:absolute;left:0;right:0;top:40%;margin:0;text-align:center;color:var(--fg2);font-size:13px;padding:0 20px}
+.harita .hcp{position:absolute;right:4px;bottom:3px;font-size:10px;color:#222;background:rgba(255,255,255,.75);padding:1px 4px;border-radius:2px;text-decoration:none}
 .empty{padding:28px 20px;text-align:center;color:var(--muted);font-size:14.5px;display:flex;flex-direction:column;gap:14px;align-items:center}
 /* neden sayfası */
 .c-tabs{display:flex;overflow-x:auto;background:#242424;scrollbar-width:none}
@@ -493,7 +510,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=16;
+const VER=17;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -532,7 +549,7 @@ const DEF={hand:"R",weapon:"pistol",weaponName:"",mode:"kuru",diff:"normal",unit
   bias:{},
   // MantisX düzeni: atıcı profilleri, gruplar, silahlar, eğitim programı, alıştırma ayarları
   profiles:[{id:"p1",ad:"Atıcı"}],prof:"p1",groups:[],weapons:[],hiddenDrills:[],mainDrills:null,
-  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,
+  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,yerKaydet:true,sonYer:null,
   plan:{days:[],goal:50},dset:{},sesEsik:85,chDone:{}};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let S=clone(DEF);
@@ -676,7 +693,12 @@ Proc.prototype.reset=function(){
   this.lastShot=-1e9;this.pending=[];this.armed=false;this.samples=0;this.lastData=-1e9;this.rawOm=[0,0,0];this.up=[0,0,1];
   this.gaps=[];
 };
-Proc.prototype.frame=function(up){const Bv=this.cfg.B||[0,1,0];const bu=dot(Bv,up);let B=[Bv[0]-bu*up[0],Bv[1]-bu*up[1],Bv[2]-bu*up[2]];if(vlen(B)<0.2)B=[up[1],up[2],up[0]];B=norm(B);return{B,R:cross(B,up)};};
+// B: namlunun yataydaki izdüşümü, R: yatay sağ eksen, U: namluya dik "yukarı" (namlu ile düşey düzlemde).
+// Hedef aşağıda ya da yukarıdayken (namlu eğik) sağ-sol kayma U çevresindeki dönmedir; dünyanın düşeyi çevresindeki
+// dönme kullanılsaydı sağ-sol hata eğimin kosinüsü kadar küçük ölçülürdü (30°'de %13, 45°'de %29). Namlu düzken U = yukarı.
+Proc.prototype.frame=function(up){const Bv=this.cfg.B||[0,1,0];const bu=dot(Bv,up);let B=[Bv[0]-bu*up[0],Bv[1]-bu*up[1],Bv[2]-bu*up[2]];if(vlen(B)<0.2)B=[up[1],up[2],up[0]];B=norm(B);
+  const Bt=norm(Bv), ub=dot(up,Bt); let U=[up[0]-ub*Bt[0],up[1]-ub*Bt[1],up[2]-ub*Bt[2]]; U=vlen(U)<0.2?up:norm(U);
+  return{B,R:cross(B,up),U};};
 Proc.prototype.zero=function(){if(this.aSlow){this.zeroUp=norm(this.aSlow);this.zeroR=this.frame(this.zeroUp).R;}this.base=[this.yaw,this.pitch];};
 // Oturum başı: kanting sıfırı yön testinden (cfg.U) ya da ilk atışta montaj yerine göre "dik" eksenden alınır (Sıfırla gerekmez)
 Proc.prototype.startRef=function(){ this.base=[this.yaw,this.pitch]; this.mountWarn=false;
@@ -708,7 +730,7 @@ Proc.prototype.feed=function(t,acc,om,devJerk,snd){
   const wm=vlen(w);
   if(wm<3&&dt>0){const kb=dt/10;for(let i=0;i<3;i++)this.bias[i]+=kb*w[i];}
   const f=this.frame(up);
-  let pr=dot(w,f.R), yr=-dot(w,up);
+  let pr=dot(w,f.R), yr=-dot(w,f.U);
   if(this.cfg.invY)pr=-pr; if(this.cfg.invX)yr=-yr;
   this.yaw+=yr*dt; this.pitch+=pr*dt; this.gmag=wm;
   this.w=w;
@@ -981,6 +1003,7 @@ function scheduleReconnect(err){
 function onBleDisconnect(){
   const was=ble.st==="bagli"; ble.chr=null;
   if(was) ble.downAt=now();
+  if(was&&!ble.manual) sonYerAl("koptu");                 // bağlantı koptuğu an telefon sensörün yakınında: son görüldüğü yer
   if(source!=="sensor"||ble.manual||!ble.dev){ ble.st="off"; refreshChip(); updateLinkUi(); return; }
   if(ble.busy) return;               // bağlanma denemesi sürüyor; sonucu o halleder
   ble.st="yeniden"; refreshChip(); updateLinkUi(); scheduleReconnect();
@@ -1019,6 +1042,7 @@ async function bleConnect(){
   else setStatus(`Bağlı: <b>${esc(dev.name||"Sensör")}</b>.`);
   if(!ble.everConnected) greetOnConnect();
   ble.everConnected=true; ble.downAt=0;
+  sonYerAl("baglandi");
   refreshChip(); updateLinkUi();
 }
 function onBleValue(ev){ parseBle(ev.target.value); }
@@ -1210,7 +1234,7 @@ async function returnToSensor(){
   if(await autoConnect(true)) return;
   startSensor();
 }
-setInterval(()=>{rateShown=rateCnt;rateCnt=0; bleWatch(); refreshChip(); updateLinkUi();},1000);
+setInterval(()=>{rateShown=rateCnt;rateCnt=0; bleWatch(); refreshChip(); updateLinkUi(); bulTik();},1000);
 $("spConnect").onclick=()=>{ audioUnlock(); returnToSensor(); };
 $("spSkip").onclick=()=>hideSplash();
 function sourceReady(){ return now()-proc.lastData<1200; }
@@ -2343,6 +2367,7 @@ const INFO={
   ham:["Ham kayıt","Atış algılamayı silahına göre ayarlamak için. Açıkken her oturumda ivme, jiroskop, darbe ve ses ölçümleri bellekte tutulur; oturum bitince oturum ekranının sağ üstündeki paylaş düğmesinden Ham veri ile CSV dosyası olarak paylaşılır. Sadece son oturumun kaydı tutulur, en çok 30 dakika."],
   veri:["Veriler","Atışların sadece bu telefonda saklanır. Telefon değiştirirken dışa aktar (JSON), yeni telefonda içe aktar. CSV dosyası atışları tablo olarak verir (Excel)."],
   program:["Eğitim programı","Antrenman günlerini ve günlük atış hedefini seç. Analiz'deki Antrenman Serisi yalnız bu günleri sayar; günlük atış hedefi de buradan gelir."],
+  bul:["Sensörü bul","Yakında mı: Bluetooth sinyal gücü sensöre ne kadar yakın olduğunu gösterir; yürüdükçe çubuklar artıyorsa yaklaşıyorsun. Bulana kadar öttür: sensör sen durdurana kadar (en çok 3 dakika) öter, ışığı yanıp söner ve ekranında BURADAYIM yazar. Son görüldüğü yer: sensörde GPS yoktur; bağlıyken ve bağlantı koptuğu an telefonun konumu kaydedilir, haritada gösterilir. Konum yalnız bu telefonda saklanır."],
   hazirlik:["Hazırlık","Sensörü ilk kez kullanırken ve her taktığında sırayla: 1) Sensör testi: masada 5 saniye; bağlantıyı, pili ve ölçerleri denetler, kalibrasyonu da yapar. 2) Yön testi: sensörü silaha taktıktan sonra; böylece sağ = sağ, yukarı = yukarı olur. 3) Eşiği öğren: 3 kuru tetik; atış algılama silahına göre ayarlanır. Kalibrasyon ve yön ayrıntıları ile atış algılama ayarları alttaki satırlarda."],
   sses:["Sensör sesleri","Atıştan sonra: iyi atışta (sınırın üstü) iki ince bip, altında kalın bip. Hızlı alıştırmalarda (zamanlayıcı, par, ritim, kıyaslama…) atış sonrası bip çalmaz. Alıştırma komutları: başla, par, ritim, ateş ve dur bipleri sensörde de çalar; kulaklıkla atışta işe yarar. Ses seviyesi Sensör cihazı bölümünde. Sesin gür çıkması için sensör yazılımı 4 gerekir."],
   selam:["Karşılama","Sensör bağlanınca telefon bu sözü sesli söyler (uygulama açıkken ilk bağlantıda bir kez). Sensörde hoparlör değil zil var: zil konuşamaz, bu yüzden söz telefondan gelir. Sensör açılırken kendi kısa ezgisini çalar."],
@@ -2618,7 +2643,8 @@ let lastSensorTest=null;
 function renderSensorView(){
   if(curView!=="sensor"||pages.length) return;
   const root=$("v-sensor"); detTest=null;
-  root.innerHTML=`<div class="pg">${pgBaglanti()}</div>`; bindBaglanti(root); bindInfo(root);
+  const acik=[...root.querySelectorAll("details[id][open]")].map(d=>d.id);   // açık bölümler (ör. Sensör cihazı) açık kalsın
+  root.innerHTML=`<div class="pg">${pgBaglanti()}</div>`; acik.forEach(id=>{ const d=$(id); if(d) d.open=true; }); bindBaglanti(root); bindInfo(root);
 }
 function bindBaglanti(){
   $("sbConnect").onclick=()=>returnToSensor();
@@ -2627,7 +2653,7 @@ function bindBaglanti(){
   $("sShotBeep").onchange=e=>{S.sensorShotBeep=e.target.checked;saveMeta();};
   $("sbOther").onclick=()=>{ if(source!=="sensor"){ selectSource("sensor",true); return; } startSensor(); };
   $("sbTest").onclick=wizardSensor;
-  $("sbFind").onclick=()=>{ if(bleCmd([0x03])) toast("Sensör 3 saniye boyunca ötecek ve yanıp sönecek."); };
+  $("sbFind").onclick=()=>{ if(sensorCanBeep()) bleCmd([0x03]); openBul(); };
   $("sbDisc").onclick=()=>{ sensorDisconnect(); updateSensorPage(); };
   $("altDemo").onclick=()=>{ if(cur.run&&cur.run.active){toast("Önce süren oturumu durdur.");return;} selectSource("demo",true); showView("alistirma"); };
   $("altPhone").onclick=()=>{ if(cur.run&&cur.run.active){toast("Önce süren oturumu durdur.");return;} selectSource("phone",true); showView("alistirma"); };
@@ -2651,7 +2677,7 @@ function updateSensorPage(){
   $("sbName").textContent=ble.dev&&isS?(ble.dev.name||"Sensör"):"Sensör";
   $("sbState").textContent=!isS?`Veri kaynağı şu an ${srcName(source)}. Sensörü kullanmak için Bağlan'a dokun.`:on?`Bağlı · ${ble.kind==="wit"?"WitMotion":"HİSAR sensör yazılımı "+(ble.fw||"…")}`:st==="yeniden"?`Yeniden bağlanıyor… (${ble.retry}. deneme)`:st==="baglaniyor"?"Bağlanıyor…":st==="secim"?"Sensör seçiliyor…":"Bağlı değil";
   const cb=$("sbConnect"); cb.hidden=on||wait; cb.textContent=isS&&ble.dev?"Yeniden bağlan":"Bağlan";
-  $("sbFind").disabled=!(on&&ble.kind==="hisar"); $("sbTest").disabled=!(isS?on:source==="phone"&&sourceReady());
+  $("sbFind").disabled=false; $("sbTest").disabled=!(isS?on:source==="phone"&&sourceReady());
   { const mt=S.mount[montajSrc()], tg=(id,t,c)=>{ const e=$(id); if(e){ if(e.textContent!==t) e.textContent=t; if(c!=null) e.className="act-t"+(c?" "+c:""); } };
     tg("sbTestTag",lastSensorTest?(lastSensorTest.st==="ok"?"✓ ":lastSensorTest.st==="warn"?"⚠ ":"✗ ")+ago(Date.now()-lastSensorTest.at):"",lastSensorTest?(lastSensorTest.st==="ok"?"ok":"warn"):"");
     tg("snAxisTag",mt&&mt.B?"✓ "+(mt.at?ago(Date.now()-mt.at):"yapıldı"):"yapılmadı",mt&&mt.B?"ok":"warn");
@@ -2692,6 +2718,134 @@ function renderSensorDev(){
   if($("dvRestart")) $("dvRestart").onclick=()=>askSheet("Yeniden başlat","Sensör yeniden başlayacak; uygulama birkaç saniye içinde kendiliğinden yeniden bağlanır.","Yeniden başlat",()=>bleCmd([0x04]));
   if($("dvOffNow")) $("dvOffNow").onclick=()=>askSheet("Sensörü kapat","Sensör kapanacak. Açmak için sol yandaki güç düğmesine 2 saniye bas.","Kapat",()=>{ if(bleCmd([0x05])){ setTimeout(()=>sensorDisconnect(),400); } });
 }
+/* ---------------------------------------------------------------- Sensörü bul (AirPods'taki gibi)
+   Sensörde GPS yok. Bağlıyken ve bağlantı koptuğu an telefonun konumu "son görüldüğü yer" olarak kaydedilir (yalnız bu
+   telefonda). Yakındayken (Bluetooth menzili) sinyal gücüyle sıcak-soğuk gösterilir; sensör istenirse bulunana kadar öter. */
+let konumBekle=null;
+window.__hisarKonum=r=>{ const f=konumBekle; konumBekle=null; if(f) f(r||{hata:"konum"}); };
+// telefonun konumu: uygulamada yerel (HisarNative.konum), tarayıcıda Geolocation. Sonuç {lat,lon,acc} ya da {hata}
+function konumAl(cb){
+  const done=r=>{ try{ cb(r); }catch(e){} };
+  if(APK&&typeof window.HisarNative.konum!=="function"){ done({hata:"surum"}); return; }   // eski uygulama: konum köprüsü yok
+  if(APK&&window.HisarNative&&typeof window.HisarNative.konum==="function"){
+    if(konumBekle){ const prev=konumBekle; konumBekle=r=>{ prev(r); done(r); }; return; }
+    const mine=r=>done(r); konumBekle=mine;
+    setTimeout(()=>{ if(konumBekle===mine){ konumBekle=null; done({hata:"zaman"}); } },25000);
+    try{ window.HisarNative.konum(); }catch(e){ konumBekle=null; done({hata:"yok"}); }
+    return; }
+  if(!navigator.geolocation){ done({hata:"yok"}); return; }
+  try{ navigator.geolocation.getCurrentPosition(p=>done({lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy}),
+    e=>done({hata:e&&e.code===1?"izin":"konum"}),{enableHighAccuracy:true,timeout:20000,maximumAge:15000}); }catch(e){ done({hata:"yok"}); }
+}
+// son görüldüğü yeri kaydet: bağlanınca, bağlıyken 2 dakikada bir, bağlantı koptuğu an
+function sonYerAl(ev){
+  if(!S.yerKaydet||source!=="sensor") return;
+  const t=now(); if(sonYerAl.busy&&t-sonYerAl.busy<25000) return;
+  if(ev!=="elle"&&t<(sonYerAl.dur||0)) return;            // olmadıysa ara ver (izin verilmediyse yalnız kullanıcı isteyince yeniden sorulur)
+  sonYerAl.busy=t;
+  konumAl(r=>{ sonYerAl.busy=0;
+    if(r&&isFinite(r.lat)&&isFinite(r.lon)){ sonYerAl.dur=0; sonYerAl.hata="";
+      S.sonYer={lat:+(+r.lat).toFixed(6),lon:+(+r.lon).toFixed(6),acc:Math.max(0,Math.round(+r.acc||0)),t:Date.now(),ev}; saveMeta(); }
+    else { const h=sonYerAl.hata=r&&r.hata||"konum"; sonYerAl.dur=now()+(h==="izin"?1e12:["kapali","yok","surum"].includes(h)?300000:120000); }
+    if(setPage==="bul") bulYer(); });
+}
+const BUL={rs:[],sound:0,until:0,me:null,meT:0,z:17,zUser:false};
+function rssiTxt(r){ return r==null?"–":r>-55?"çok yakın (1–2 m)":r>-65?"yakın (yaklaşık 2–5 m)":r>-75?"orta (yaklaşık 5–10 m)":r>-85?"uzak (yaklaşık 10–20 m)":"çok uzak (20 m ve ötesi)"; }
+function rssiLv(r){ return r==null?0:r>-55?5:r>-65?4:r>-75?3:r>-85?2:1; }
+// yaklaşıyor mu: son 2 saniyenin ortalaması ile önceki 4 saniyenin ortalaması (3 dB'den küçük fark "aynı")
+function rssiYon(){ const a=BUL.rs, t=now(), av=x=>x.reduce((s,v)=>s+v[1],0)/x.length;
+  const s2=a.filter(v=>t-v[0]<=2200), s1=a.filter(v=>t-v[0]>2200&&t-v[0]<=6500); if(s2.length<2||s1.length<2) return 0;
+  const d=av(s2)-av(s1); return d>=3?1:d<=-3?-1:0; }
+const YON8=["kuzeyde","kuzeydoğuda","doğuda","güneydoğuda","güneyde","güneybatıda","batıda","kuzeybatıda"];
+function uzaklik(a,b){ const R=6371000, f1=a.lat*RAD, f2=b.lat*RAD, df=(b.lat-a.lat)*RAD, dl=(b.lon-a.lon)*RAD;
+  const h=Math.sin(df/2)**2+Math.cos(f1)*Math.cos(f2)*Math.sin(dl/2)**2, d=2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+  const y=Math.sin(dl)*Math.cos(f2), x=Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl); let br=Math.atan2(y,x)*DEG; if(br<0) br+=360;
+  return {d,br,yon:YON8[Math.round(br/45)%8]}; }
+const mTxt=m=>m<1000?Math.round(m)+" m":fx(m/1000,1)+" km";
+function haritaUrl(y){ const q=encodeURIComponent("HİSAR sensörü");
+  return IS_IOS?`https://maps.apple.com/?ll=${y.lat},${y.lon}&q=${q}`:`https://www.google.com/maps/search/?api=1&query=${y.lat},${y.lon}`; }
+// OpenStreetMap karoları: noktayı ortaya alan 3×3 karo, üstünde sensör (turkuaz) ve telefon (mavi). İnternet yoksa yalnız yazı.
+const mercKaro=(a,n)=>[(a.lon+180)/360*n,(1-Math.log(Math.tan(a.lat*RAD)+1/Math.cos(a.lat*RAD))/Math.PI)/2*n];   // karo birimi
+const HMX=150, HMY=105;                                  // haritada görünen alan: ortadan ± piksel (250 px yükseklik)
+// sensör ve telefon birlikte görünsün diye yakınlık (kullanıcı kendisi yakınlaştırmadıysa)
+function fitZoom(y,me){ for(let z=18;z>13;z--){ const n=2**z, p=mercKaro(y,n), q=mercKaro(me,n);
+  if(Math.abs(q[0]-p[0])*256<HMX&&Math.abs(q[1]-p[1])*256<HMY) return z; } return 13; }
+function haritaHtml(y,me){
+  const z=BUL.z, n=2**z, lat=y.lat*RAD, [xf,yf]=mercKaro(y,n);
+  const tx=Math.floor(xf), ty=Math.floor(yf), mpp=156543.03*Math.cos(lat)/n;
+  let h=`<div class="harita" id="bulHarita" role="img" aria-label="Son görüldüğü yerin haritası"><div class="hk">`;
+  for(let j=-1;j<=1;j++) for(let i=-1;i<=1;i++){ const X=((tx+i)%n+n)%n, Y=ty+j; if(Y<0||Y>=n) continue;
+    h+=`<img alt="" draggable="false" loading="lazy" src="https://tile.openstreetmap.org/${z}/${X}/${Y}.png" style="left:calc(50% + ${((tx+i-xf)*256).toFixed(1)}px);top:calc(50% + ${((ty+j-yf)*256).toFixed(1)}px)">`; }
+  h+=`</div>`;
+  const ar=y.acc?Math.min(140,y.acc/mpp):0; if(ar>6) h+=`<i class="hdo" style="width:${(2*ar).toFixed(0)}px;height:${(2*ar).toFixed(0)}px"></i>`;
+  h+=`<i class="hsn" title="Sensörün son görüldüğü yer"></i>`;
+  if(me){ const q=mercKaro(me,n), mx=(q[0]-xf)*256, my=(q[1]-yf)*256;
+    if(Math.abs(mx)<HMX&&Math.abs(my)<HMY) h+=`<i class="hme" style="left:calc(50% + ${mx.toFixed(1)}px);top:calc(50% + ${my.toFixed(1)}px)" title="Sen buradasın"></i>`; }
+  h+=`<div class="hz"><button data-z="1" aria-label="Yakınlaştır">+</button><button data-z="-1" aria-label="Uzaklaştır">−</button></div>`;
+  h+=`<p class="hn" hidden>Harita için internet gerekir. Konum aşağıda yazıyor.</p><a class="hcp" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></div>`;
+  return h;
+}
+const EV_T={baglandi:"bağlandığında",bagli:"bağlıyken",koptu:"bağlantı koptuğunda",elle:"elle kaydedildi"};
+function bulYerHtml(){
+  const y=S.sonYer;
+  if(!S.yerKaydet) return `<p class="note">Son görüldüğü yer kaydı kapalı.</p>`;
+  if(!y){ const e=sonYerAl.hata; return `<p class="note">${e==="izin"?"Konum izni verilmedi. Telefonun ayarlarından HİSAR TETİK için konum iznini aç, sonra aşağıdan yeniden dene.":e==="kapali"?"Telefonun konum servisi kapalı. Ayarlar'dan konumu aç, sonra aşağıdan yeniden dene.":e==="zaman"||e==="konum"?"Konum şu an alınamadı (kapalı yerde GPS zayıf olabilir). Açık havada aşağıdan yeniden dene.":e==="yok"?"Bu telefonda konum alınamıyor.":e==="surum"?(IOS_APP?"Konum için uygulamanın yeni sürümü gerekiyor: yeni IPA'yı Sideloadly ile kur.":"Konum için uygulamanın yeni sürümü gerekiyor: Ayarlar'daki güncellemeden yeni APK'yı kur."):"Henüz kayıtlı yer yok. Sensör bağlıyken telefonun konumu kaydedilir."}</p>`; }
+  const me=BUL.me, u=me?uzaklik(me,y):null;
+  return `<p class="an-s">Son görülme: <b>${esc(ago(Date.now()-y.t))}</b> · ${esc(EV_T[y.ev]||"")}${y.acc?` · ±${y.acc} m`:""}</p>
+    ${u?`<p class="an-s" id="bulUzak">Buradan <b>≈ ${esc(mTxt(u.d))}</b>${u.d>=15?`, <b>${esc(u.yon)}</b>`:", çok yakınında"}.</p>`:""}
+    ${haritaHtml(y,me)}
+    <div class="btn-row"><button class="btn primary" id="bulAc">Haritalar'da aç</button></div>
+    <p class="note">${esc(fx(y.lat,5))}, ${esc(fx(y.lon,5))}</p>`;
+}
+function bulCanliHtml(){
+  const on=source==="sensor"&&ble.st==="bagli", r=on?ble.rssi:null, lv=rssiLv(r), yon=rssiYon();
+  if(source!=="sensor") return `<p class="note">Veri kaynağı şu an ${esc(srcName(source))}. Sensörü bulmak için önce Sensör sekmesinden sensöre geç.</p>`;
+  if(!on) return `<div class="bul-sin" aria-live="polite"><div class="bars">${[1,2,3,4,5].map(i=>`<i></i>`).join("")}</div><div><b>Menzil dışında ya da kapalı</b><small>Sensör yakına gelince (10–30 m) uygulama kendiliğinden bağlanır.</small></div></div>`;
+  return `<div class="bul-sin" aria-live="polite"><div class="bars">${[1,2,3,4,5].map(i=>`<i class="${i<=lv?"on":""}" style="height:${8+i*6}px"></i>`).join("")}</div>
+    <div><b>${esc(rssiTxt(r))}</b><small>${r==null?"sinyal ölçülüyor…":r+" dBm"}${yon>0?" · ▲ yaklaşıyorsun":yon<0?" · ▼ uzaklaşıyorsun":""}</small></div></div>`;
+}
+function bulBody(){
+  const on=sensorCanBeep(), sure=BUL.until>now();
+  return `<div class="pg"><div class="card"><div class="ch"><h2>Yakında mı?</h2>${infoBtn("bul")}</div><div id="bulCanli">${bulCanliHtml()}</div>
+      <button class="btn ${sure?"danger":"primary"}" id="bulCal" ${on||sure?"":"disabled"}>${sure?"Buldum, sustur":"Bulana kadar öttür"}</button>
+      <p class="note" id="bulCalN">${sure?"Sensör ötüyor ve ışığı yanıp sönüyor.":on?"Sensör sen durdurana kadar (en çok 3 dakika) öter ve ışığı yanıp söner.":"Öttürmek için sensör bağlı olmalı."}</p></div>
+    <div class="card"><div class="ch"><h2>Son görüldüğü yer</h2></div><div id="bulYer">${bulYerHtml()}</div>
+      <label class="toggle">Son yeri kaydet<input type="checkbox" id="bulKayit" ${S.yerKaydet?"checked":""}></label>
+      <p class="note">Sensörde GPS yok: bağlıyken ve bağlantı koptuğu an telefonun konumu kaydedilir. Konum yalnız bu telefonda saklanır, hiçbir yere gönderilmez.</p>
+      <button class="btn" id="bulSimdi" ${S.yerKaydet?"":"disabled"}>Şimdiki yerimi kaydet</button></div></div>`;
+}
+function bindBul(root){
+  const cal=root.querySelector("#bulCal"); if(cal) cal.onclick=()=>{ if(BUL.until>now()) bulDur(true); else bulBasla(); };
+  root.querySelector("#bulKayit").onchange=e=>{ S.yerKaydet=e.target.checked; saveMeta(); if(S.yerKaydet) sonYerAl("elle"); refreshPage(); };
+  root.querySelector("#bulSimdi").onclick=()=>{ sonYerAl.busy=0; sonYerAl("elle"); toast("Konum alınıyor…"); };
+  bindBulYer(root);
+}
+function bindBulYer(root){
+  const ac=root.querySelector("#bulAc"); if(ac) ac.onclick=()=>{ if(S.sonYer) openExternal(haritaUrl(S.sonYer)); };
+  root.querySelectorAll("#bulHarita [data-z]").forEach(b=>b.onclick=()=>{ BUL.z=clamp(BUL.z+(+b.dataset.z),13,19); BUL.zUser=true; bulYer(); });
+  const imgs=root.querySelectorAll("#bulHarita img"); let bad=0;
+  imgs.forEach(im=>im.onerror=()=>{ im.remove(); if(++bad>=imgs.length){ const n=root.querySelector("#bulHarita .hn"); if(n) n.hidden=false; } });
+}
+function bulYer(){ const el=$("bulYer"); if(!el) return; el.innerHTML=bulYerHtml(); bindBulYer(el); }
+function openBul(){
+  BUL.rs=[]; BUL.me=null; BUL.z=17; BUL.zUser=false;
+  pushPage({set:"bul",back:"",title:"Sensörü bul",render:bulBody,bind:bindBul,onPop:()=>{ bulDur(false); }});
+  if(S.sonYer) konumAl(r=>{ if(r&&isFinite(r.lat)){ BUL.me={lat:+r.lat,lon:+r.lon}; BUL.meT=now(); if(!BUL.zUser&&S.sonYer) BUL.z=fitZoom(S.sonYer,BUL.me); if(setPage==="bul") bulYer(); } });
+}
+function bulBasla(){ if(!sensorCanBeep()){ toast("Sensör bağlı değil."); return; } BUL.until=now()+180000; BUL.sound=0; bulTik(); if(setPage==="bul") refreshPage(); }
+function bulDur(ui){ const was=BUL.until>now(); BUL.until=0; if(ui&&was) toast("Tamam, sensör sustu."); if(ui&&setPage==="bul") refreshPage(); }
+// her saniye: bulma sayfası açıksa sinyal; öttürme açıksa 3 saniyede bir "Sensörü bul" komutu; bağlıyken 2 dakikada bir konum
+function bulTik(){
+  const t=now();
+  if(source==="sensor"&&ble.st==="bagli"&&S.yerKaydet&&(!S.sonYer||Date.now()-S.sonYer.t>120000)) sonYerAl("bagli");
+  if(BUL.until){ if(t>BUL.until){ BUL.until=0; if(setPage==="bul"){ toast("Sensör 3 dakika öttü, durduruldu."); refreshPage(); } }
+    else if(sensorCanBeep()&&t-BUL.sound>=2900){ BUL.sound=t; bleCmd([0x03]); } }
+  if(setPage!=="bul") return;
+  if(source==="sensor"&&ble.st==="bagli"&&ble.rssi!=null){ BUL.rs.push([t,ble.rssi]); while(BUL.rs.length&&t-BUL.rs[0][0]>8000) BUL.rs.shift(); }
+  const c=$("bulCanli"); if(c){ const h=bulCanliHtml(); if(c._h!==h){ c._h=h; c.innerHTML=h; } }
+  const b=$("bulCal"); if(b){ const on=sensorCanBeep()||BUL.until>t; if(b.disabled===on) b.disabled=!on; }
+}
+
 /* ---------------------------------------------------------------- sensör yazılımı: telefondan güncelleme (Bluetooth) */
 // Sensör yazılımı 2 ve sonrası, yeni sürümü Bluetooth ile alır (iki bölümlü OTA, CRC ve resim doğrulamalı).
 const ota={on:false,st:"",size:0,sent:0,acked:0,t0:0,err:"",waiters:[],rewind:null,fail:null,abort:false,info:null,infoT:0};
@@ -3166,7 +3320,8 @@ window.__hisar={trigClear,wizardAxis,applyCfg,wizardSensor,startGuard,mountPromp
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),
   hideSplash, splashOpen, get pages(){return pages;}, popPage, openCause, openModeList, openDrillSettings, openGroup, openGroups, todayChallenge, CHALLENGES, streakInfo, setYon, manualShot, get curView(){return curView;},
-  sensorTune, sensorShotBeep, sensorSoundTest, SCUE, SHOT_GOOD, SHOT_BAD, greetOnConnect, speak, renderSensorView, mainSet, get AN(){return AN;}};
+  sensorTune, sensorShotBeep, sensorSoundTest, SCUE, SHOT_GOOD, SHOT_BAD, greetOnConnect, speak, renderSensorView, mainSet, get AN(){return AN;},
+  openBul, sonYerAl, konumAl, uzaklik, rssiYon, haritaUrl, get BUL(){return BUL;}};
 
 /* --- başlat */
 loadAll();

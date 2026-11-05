@@ -32,7 +32,9 @@
     bleNotify: function (id, svc, chr, on) { post("bleNotify", [+id, str(svc), str(chr), !!on]); },
     bleWrite: function (id, svc, chr, b64, resp) { post("bleWrite", [+id, str(svc), str(chr), str(b64), !!resp]); },
     // sayfanın yeni sürümünü GitHub Pages'ten indirip kurar; olmazsa window.__hisarUpdateFailed(mesaj)
-    update: function () { post("update", []); }
+    update: function () { post("update", []); },
+    // telefonun konumu (Sensörü bul › son görüldüğü yer); sonuç window.__hisarKonum({lat,lon,acc} | {hata})
+    konum: function () { post("konum", []); }
   };
 
   // günlük: console ve yakalanmamış hatalar yerel günlüğe (Xcode, CI) de yazılır

@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Atış sensörüne (HISAR-SENSOR) bağlanmak için Bluetooth gerekir.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sensörü bul: sensörün son görüldüğü yeri haritada göstermek için telefonun konumu kaydedilir. Konum yalnız bu telefonda saklanır.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

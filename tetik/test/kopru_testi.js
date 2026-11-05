@@ -63,6 +63,7 @@ async function open(browser, opts = {}) {
     await page.click('#sbFind'); await sleep(300);
     const cfg = await page.evaluate(() => ({ bri: window.__fake.cfg.bri, id: window.__fake.identified || 0 }));
     check(cfg.bri === 80 && cfg.id === 1, 'Parlaklık %80 ve "sensörü bul" sensöre ulaştı', cfg);
+    await page.evaluate(() => window.__hisar.popPage()); await sleep(200);
 
     section('Sensör yazılımını telefondan güncelleme (köprü üzerinden)');
     await waitFor(page, () => !!document.getElementById('otaGo'), 5000);

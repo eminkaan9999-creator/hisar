@@ -8,6 +8,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
     private let ucc = WKUserContentController()
     private var web: WKWebView!
     private var ble: Ble!
+    private lazy var konum = Konum()      // Sensörü bul: telefonun konumu
     private var testHooksDone = false
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
@@ -140,6 +141,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case "saveFile": saveFile(name: s(0), mime: s(1), text: s(2))
         case "shareFile": shareFile(name: s(0), mime: s(1), b64: s(2))
         case "update": runUpdate()
+        case "konum": konum.iste { [weak self] j in self?.js("window.__hisarKonum&&window.__hisarKonum(\(j))") }
         case "exitApp": Log.i("exitApp: iPhone'da uygulama kendini kapatmaz")
         default: Log.i("bilinmeyen çağrı: \(fn)")
         }

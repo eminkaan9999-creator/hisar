@@ -1,1 +1,1 @@
-{"v": 16, "not": "Yeni düzen: 4 sekme (Alıştırma · Analiz · Sensör · Ayarlar). Analiz'de gelişim, hata haritası ve atış grubu grafikleri; her birinde sonucu anlatan bir cümle. Sensör sesi gür (sensör yazılımı 4), her atıştan sonra iyi/kötü bip, bağlanınca karşılama sözü. Günün Görevi.", "apk": true, "apkMin": 1200}
+{"v": 17, "not": "Eğimli atış düzeltmesi: hedef aşağıda ya da yukarıdayken sağ-sol hareket artık tam ölçülüyor. Sensörü bul (Sensör sekmesi): son görüldüğü yer haritada, yakındayken sıcak-soğuk göstergesi, bulana kadar öttür.", "apk": true, "apkMin": 1700}

@@ -50,8 +50,10 @@ function pageSide() {
         X = A.x + W.x + E.x; Y = A.y + W.y + E.y;
         if ((t % 5) === 4) {
           const yawRate = lx == null ? 0 : (X - lx) / 0.005, pitchRate = ly == null ? 0 : (Y - ly) / 0.005; lx = X; ly = Y;
-          const w = V.add(V.mul(U, -yawRate), V.mul(RT, pitchRate));
-          const ca = cant * Math.PI / 180, ax = [rot(xs, F, ca), rot(ys, F, ca), rot(zs, F, ca)];
+          // eğim (o.incl): silah sağ eksen çevresinde kalkık/eğik; sağ-sol kayma silahın kendi "yukarı" ekseni çevresinde
+          const ia = (o.incl || 0) * Math.PI / 180, Ug = rot(U, RT, ia);
+          const w = V.add(V.mul(Ug, -yawRate), V.mul(RT, pitchRate));
+          const ca = cant * Math.PI / 180, ax = [rot(xs, F, ca), rot(ys, F, ca), rot(zs, F, ca)].map(a => rot(a, RT, ia));
           const om = ax.map((a, k) => V.dot(w, a) + bias[k] + gauss() * gn);
           const acc = ax.map(a => V.dot(U, a) + gauss() * 0.003);
           const jerk = jerkNext || 0.02; jerkNext = 0;
@@ -128,6 +130,13 @@ function pageSide() {
   for (const [yer, yon] of [['alt', 'ileri'], ['sag', 'ileri'], ['ust', 'arka']]) R.kant[yer + '/' + yon] = run(yer, yon, [0, 0, 1.5, 3, -3, 5].map(c => ({ fx: 0.01, fy: 0.01, cant: c })), { hold: 0.01 });
   // 6) Takibi bırakma (kuru)
   R.takip = run('alt', 'ileri', [{ fx: 0.02, fy: 0, posty: -0.6 }, { fx: 0.02, fy: 0 }, { fx: -0.1, fy: -0.1, postx: 0.5 }, { fx: 0.3, fy: 0 }], { hold: 0.01 });
+  // 7) Eğimli atış: hedef aşağıda ya da yukarıda (namlu −40…+40°); sağ-sol ve yukarı-aşağı kayma nişan hattına göre ölçülmeli
+  R.egim = {};
+  for (const incl of [0, 15, -15, 30, -30, 40, -40]) {
+    const { got, truth } = session('alt', 'ileri', dirShots(0.3, 12), { hold: 0.004, incl });
+    R.egim[incl] = got.length === truth.length ? got.map((m, i) => ({ dx: m.dx, dy: m.dy, tx: truth[i].s.fx + truth[i].wx, ty: truth[i].s.fy + truth[i].wy, ca: m.cant }))
+      : { hata: `atış sayısı ${got.length}/${truth.length}` };
+  }
   R.MAPP = MAPP; R.scale = scale;
   return R;
 }
@@ -231,6 +240,17 @@ function evaluate(R) {
   section('Takibi bırakma (kuru tetik)');
   const t = E.takip;
   check(t[0].yeni.includes('takip') && t[2].yeni.includes('takip') && !t[1].yeni.includes('takip') && !t[3].yeni.includes('takip'), 'Atış sonrası 0,5–0,6° düşme/kayma → takip; sabit kalınca yok', t);
+  section('Eğimli atış: hedef aşağıda ya da yukarıda (namlu −40…+40°)');
+  const med = a => { const o = a.slice().sort((x, y) => x - y); return o.length ? o[Math.floor((o.length - 1) / 2)] : NaN; };
+  for (const [incl, arr] of Object.entries(R.egim)) {
+    if (!Array.isArray(arr)) { check(false, `Namlu ${incl}°: ölçüm`, arr); continue; }
+    const rx = med(arr.filter(a => Math.abs(a.tx) > 0.1).map(a => a.dx / a.tx)), ry = med(arr.filter(a => Math.abs(a.ty) > 0.1).map(a => a.dy / a.ty));
+    const dir = arr.filter(a => angDiff(Math.atan2(a.dx, a.dy) * 180 / Math.PI, Math.atan2(a.tx, a.ty) * 180 / Math.PI) <= 12).length / arr.length;
+    const caMax = Math.max(...arr.map(a => Math.abs(a.ca)));
+    check(Math.abs(rx - 1) <= 0.05 && Math.abs(ry - 1) <= 0.05 && dir >= 0.95 && caMax < 1,
+      `Namlu ${incl > 0 ? '+' : ''}${incl}°: sağ-sol ×${rx.toFixed(3)}, yukarı-aşağı ×${ry.toFixed(3)} (gerçeğe oran, ±%5), yön doğru %${Math.round(dir * 100)}, sahte kanting yok (en çok ${caMax.toFixed(2)}°)`,
+      { rx, ry, dir, caMax });
+  }
   check(errs.length === 0, 'Sayfa hatası yok', errs);
   await browser.close(); srv.close();
   process.exit(finish('Nişan doğruluk testi') ? 1 : 0);

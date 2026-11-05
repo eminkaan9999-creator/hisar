@@ -172,6 +172,9 @@ static void testCommands() {
   { uint8_t d[] = {0x04}; CHECK(parseCommand(d, 1).type == Command::RESTART, "yeniden baslat"); }
   { uint8_t d[] = {0x05}; CHECK(parseCommand(d, 1).type == Command::POWEROFF, "kapat"); }
   { uint8_t d[] = {0x06}; CHECK(parseCommand(d, 1).type == Command::STATUS, "durum"); }
+  { uint8_t d[] = {0x0A, 87, 1}; Command c = parseCommand(d, 3); CHECK(c.type == Command::RESULT && c.val == 87 && c.flags == 1, "atis sonucu iyi"); }
+  { uint8_t d[] = {0x0A, 250, 0}; Command c = parseCommand(d, 3); CHECK(c.type == Command::RESULT && c.val == 100 && c.flags == 0, "atis sonucu kotu, skor 100'e sinirli"); }
+  { uint8_t d[] = {0x0A, 50}; CHECK(parseCommand(d, 2).type == Command::NONE, "kisa sonuc reddedilmeli"); }
   { uint8_t d[] = {0x07, 1, 0x78, 0x56, 0x34, 0x12}; Command c = parseCommand(d, 6); CHECK(c.type == Command::START && c.mode == 1 && c.seq == 0x12345678u, "devam"); }
   { uint8_t d[] = {0x07, 0}; Command c = parseCommand(d, 2); CHECK(c.type == Command::START && c.mode == 0 && c.flags == 0, "canli"); }
   { uint8_t d[] = {0x07, 1, 0x78, 0x56, 0x34, 0x12, 1}; Command c = parseCommand(d, 7); CHECK(c.type == Command::START && c.mode == 1 && c.seq == 0x12345678u && c.flags == 1, "devam + ses istegi"); }

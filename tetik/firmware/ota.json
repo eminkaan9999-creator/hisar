@@ -1,1 +1,1 @@
-{"fw": 4, "file": "hisar-sensor-v4-app.bin", "size": 803104, "crc32": 431056561, "not": "Ses çok daha yüksek: zil tam güçle çalıyor. Açılış, bağlantı ve “Sensörü bul” ezgileri; şarj kablosu takılınca ekranda “şarj” yazar ve sensör kendiliğinden kapanmaz; sol yandaki güç düğmesine 2 sn basınca kapanır."}
+{"fw": 5, "file": "hisar-sensor-v5-app.bin", "size": 813680, "crc32": 2495019972, "not": "Ekranda atış sonucu: iyi atışta yeşil, kötü atışta kırmızı ekran ve büyük skor; kötü atışta kırmızı lamba yanar. Açılışta ve ekranda HİSAR TETİK logosu."}

@@ -31,7 +31,7 @@ jobs:
       - name: Derle (tek dosya)
         run: |
           set -e
-          FW=$(python -c "import json;print(json.load(open('tetik/firmware/ota.json'))['fw'])")
+          FW=$(python -c "import json;print(json.load(open('tetik/firmware/ota.json',encoding='utf-8'))['fw'])")
           BIN="tetik/firmware/hisar-sensor-v${FW}.bin"
           test -f "$BIN"
           echo "yazılım: $BIN"
@@ -41,14 +41,14 @@ jobs:
       - name: Dene
         run: |
           set -e
-          ./dist/HISAR-Sensor-Guncelle.exe --test | tee deneme.txt
+          PYTHONIOENCODING=utf-8 ./dist/HISAR-Sensor-Guncelle.exe --test | tee deneme.txt
           grep -q "Deneme tamam" deneme.txt
       - name: Yayınla
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
-          FW=$(python -c "import json;print(json.load(open('tetik/firmware/ota.json'))['fw'])")
+          FW=$(python -c "import json;print(json.load(open('tetik/firmware/ota.json',encoding='utf-8'))['fw'])")
           NOTES="HİSAR TETİK sensör güncelleyici (Windows). Sensörü USB-C kabloyla tak, programı çalıştır: sensörü kendisi bulur, sürücü eksikse kurar, sensör yazılımı $FW'ü yükler. Windows 'bilgisayarınızı korudu' derse: Ek bilgi › Yine de çalıştır. Kaynak: ${GITHUB_SHA::7}"
           if gh release view tetik-pc >/dev/null 2>&1; then
             gh release edit tetik-pc --title "HİSAR TETİK Sensör Güncelleyici (Windows, yazılım $FW)" --notes "$NOTES" --latest=false

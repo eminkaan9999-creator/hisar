@@ -74,7 +74,7 @@ extern "C" bool verifyRollbackLater() { return true; }
 static bool appValid = false;
 static void markValid() { if (!appValid) { esp_ota_mark_app_valid_cancel_rollback(); appValid = true; } }
 
-#define FW_VERSION 4
+#define FW_VERSION 5
 #define SVC_UUID    "0000ffe5-0000-1000-8000-00805f9a34fb"
 #define NOTIFY_UUID "0000ffe4-0000-1000-8000-00805f9a34fb"
 #define WRITE_UUID  "0000ffe9-0000-1000-8000-00805f9a34fb"
@@ -563,6 +563,9 @@ static uint32_t rateShown = 0;
 static uint32_t screenOnUntil = 0;
 static bool     screenDim = false;
 static uint32_t identifyUntil = 0;
+static uint32_t resultUntil = 0, ledOffAt = 0;   // atis sonucu ekrani (yazilim 5) ve kirmizi lamba
+static uint8_t  resultScore = 0;
+static bool     resultGood = false;
 static uint32_t lastActivity = 0;
 
 static void wakeScreen(uint32_t now) {
@@ -576,6 +579,18 @@ static void drawBars(int x, int y, int8_t rssi) {
     uint16_t c = i < lv ? 0x3FE8 : 0x4208;
     canvas.fillRect(x + i * 6, y + 16 - h, 4, h, c);
   }
+}
+
+// HISAR TETIK logosu: hedef halkasi ve dort cizgi (uygulamadaki simge)
+static void drawLogo(int cx, int cy, int r, uint16_t c) {
+  canvas.drawCircle(cx, cy, r, c);
+  canvas.drawCircle(cx, cy, r - 1, c);
+  canvas.fillCircle(cx, cy, r / 4 > 1 ? r / 4 : 1, c);
+  int t = r / 2 + 1;
+  canvas.fillRect(cx - 1, cy - r - t + 1, 2, t, c);
+  canvas.fillRect(cx - 1, cy + r, 2, t, c);
+  canvas.fillRect(cx - r - t + 1, cy - 1, t, 2, c);
+  canvas.fillRect(cx + r, cy - 1, t, 2, c);
 }
 
 static void drawScreen(uint32_t now) {
@@ -609,10 +624,25 @@ static void drawScreen(uint32_t now) {
     canvas.setTextDatum(top_left);
     return;
   }
+  // atis sonucu: iyi atista yesil, kotude kirmizi ekran ve buyuk skor
+  if (resultUntil && (int32_t)(resultUntil - now) > 0) {
+    uint16_t bg = resultGood ? 0x4E0D : 0xE249;
+    canvas.fillSprite(bg);
+    canvas.setTextColor(0xFFFF);
+    canvas.setTextDatum(middle_center);
+    canvas.setFont(&fonts::FreeSansBold24pt7b);
+    canvas.drawString(String((int)resultScore), canvas.width() / 2, canvas.height() / 2 - 14);
+    canvas.setFont(&fonts::FreeSansBold12pt7b);
+    canvas.drawString(resultGood ? "IYI ATIS" : "KOTU ATIS", canvas.width() / 2, canvas.height() / 2 + 34);
+    canvas.pushSprite(0, 0);
+    canvas.setTextDatum(top_left);
+    return;
+  }
   canvas.setTextDatum(top_left);
+  drawLogo(16, 15, 7, 0x2EB9);
   canvas.setFont(&fonts::FreeSansBold9pt7b);
   canvas.setTextColor(0x2EB9);  // turkuaz
-  canvas.drawString("HISAR TETIK", 8, 6);
+  canvas.drawString("HISAR TETIK", 32, 6);
   canvas.setFont(&fonts::Font0);
   canvas.setTextColor(0x8C71);
   canvas.setTextDatum(top_right);
@@ -723,6 +753,14 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
     case hisar::Command::START:
       stream.request(c.mode, c.seq, now, c.flags);
       break;
+    case hisar::Command::RESULT:
+      resultScore = c.val;
+      resultGood = c.flags & 1;
+      resultUntil = now + 1500;
+      wakeScreen(now);
+      if (!resultGood && !identifyUntil) { M5.Power.setLed(255); ledOffAt = now + 700; }
+      drawScreen(now);
+      break;
     default:
       break;
   }
@@ -743,6 +781,14 @@ void setup() {
   M5.Display.setBrightness(briValue(cfg.bri));
   canvas.setColorDepth(16);
   canvas.createSprite(M5.Display.width(), M5.Display.height());
+  canvas.fillSprite(0x0000);                       // acilis: logo ve ad
+  drawLogo(canvas.width() / 2, canvas.height() / 2 - 22, 22, 0x2EB9);
+  canvas.setTextDatum(middle_center);
+  canvas.setFont(&fonts::FreeSansBold12pt7b);
+  canvas.setTextColor(0x2EB9);
+  canvas.drawString("HISAR TETIK", canvas.width() / 2, canvas.height() / 2 + 30);
+  canvas.setTextDatum(top_left);
+  canvas.pushSprite(0, 0);
   bootId = (uint16_t)(esp_random() & 0xFFFF);
   cmdQ = xQueueCreate(16, sizeof(CmdMsg));
   otaQ = xQueueCreate(48, sizeof(OtaMsg));
@@ -833,6 +879,10 @@ void loop() {
     lastStatusT = now;
     sendStatus();
   }
+
+  // kotu atis lambasi ve sonuc ekraninin bitisi
+  if (ledOffAt && (int32_t)(now - ledOffAt) >= 0) { ledOffAt = 0; if (!identifyUntil) M5.Power.setLed(0); }
+  if (resultUntil && (int32_t)(now - resultUntil) >= 0) { resultUntil = 0; lastDrawT = 0; }
 
   // Sensoru bul: ses + isik + yanip sonen ekran
   if (identifyUntil) {

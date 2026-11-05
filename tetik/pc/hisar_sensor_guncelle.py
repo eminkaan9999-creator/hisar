@@ -100,6 +100,11 @@ def sor(metin):
 
 
 def main():
+    for akim in (sys.stdout, sys.stderr):          # Türkçe harfler: konsolda da, yönlendirilmiş çıktıda da
+        try:
+            akim.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     test = "--test" in sys.argv
     print(CIZGI)
     print("  HİSAR TETİK · SENSÖR GÜNCELLEYİCİ")

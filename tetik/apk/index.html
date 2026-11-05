@@ -543,7 +543,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=20;
+const VER=21;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -582,7 +582,7 @@ const DEF={hand:"R",weapon:"pistol",weaponName:"",mode:"kuru",diff:"normal",unit
   bias:{},
   // MantisX düzeni: atıcı profilleri, gruplar, silahlar, eğitim programı, alıştırma ayarları
   profiles:[{id:"p1",ad:"Atıcı"}],prof:"p1",groups:[],weapons:[],hiddenDrills:[],mainDrills:null,
-  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,sarsintiSuz:true,yerKaydet:true,sonYer:null,saat:false,saatAtis:true,saatOzet:true,saatKomut:true,
+  sensorShotBeep:true,greet:true,greetText:"Merhaba komutanım",volFix:false,sarsintiSuz:true,sesTon:"kalin",sesHiz:"normal",sesAdi:"",sensorEkran:true,yerKaydet:true,sonYer:null,saat:false,saatAtis:true,saatOzet:true,saatKomut:true,
   plan:{days:[],goal:50},dset:{},sesEsik:85,chDone:{}};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let S=clone(DEF);
@@ -885,8 +885,12 @@ function audioUnlock(){try{if(!actx){const AC=window.AudioContext||window.webkit
   try{if(window.speechSynthesis&&!audioUnlock.sp){const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u);audioUnlock.sp=true;}}catch(e){}}
 function tone(freq,ms,vol,type,when){try{if(!actx)return;const t0=actx.currentTime+(when||0);const o=actx.createOscillator(),g=actx.createGain();o.type=type||"square";o.frequency.value=freq;g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(vol||0.08,t0+0.005);g.gain.setValueAtTime(vol||0.08,t0+ms/1000-0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+ms/1000);o.connect(g);g.connect(actx.destination);o.start(t0);o.stop(t0+ms/1000+0.02);}catch(e){}}
 let trVoice=null;
+// telefonun Türkçe sesleri (iPhone'da çoğunlukla yalnız Yelda); "Kalın" perdeyi düşürür, sesi erkek sesine yaklaştırır
+function trSesler(){ try{ return (window.speechSynthesis&&speechSynthesis.getVoices()||[]).filter(v=>/^tr/i.test(v.lang)); }catch(e){ return []; } }
 function speak(txt){try{ if(window.HisarNative&&typeof window.HisarNative.speak==="function"){ window.HisarNative.speak(String(txt)); return; }   // Android uygulaması: telefonun kendi seslendirmesi (WebView konuşamaz)
-  if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang="tr-TR";if(!trVoice){trVoice=speechSynthesis.getVoices().find(v=>/^tr/i.test(v.lang))||null;}if(trVoice)u.voice=trVoice;u.rate=1.05;speechSynthesis.speak(u);}catch(e){}}
+  if(!window.speechSynthesis)return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(txt); u.lang="tr-TR";
+  const vs=trSesler(), v=vs.find(x=>x.name===S.sesAdi)||vs.find(x=>/enhanced|premium|geli/i.test(x.name+" "+(x.voiceURI||"")))||vs[0]||null; if(v) u.voice=v;
+  u.pitch=S.sesTon==="normal"?1:0.72; u.rate=S.sesHiz==="hizli"?1.12:1.0; speechSynthesis.speak(u);}catch(e){}}
 function cueSound(type){
   if(type==="go"){tone(2400,220,0.1);sensorTune(SCUE.go);}
   else if(type==="tick"){tone(900,80,0.07);sensorTune(SCUE.tick);}
@@ -900,8 +904,8 @@ function shotSound(q){
   // bip: geçme sınırının üstünde iki notalı tatlı ses, altında kalın vızıltı (MantisX gibi)
   if(S.sound==="bip"){ if(q.sc>=(S.sesEsik||85)){tone(1320,90,0.06,"sine");tone(1760,120,0.06,"sine",0.1);} else tone(330,220,0.05,"square"); return;}
   let t=String(Math.round(q.sc));
-  if(S.sound==="tam"&&q.c&&q.c[0]&&CAUSES[q.c[0]])t+=". "+CAUSES[q.c[0]].ad;
-  speak(t);
+  if(S.sound==="tam") t+=". "+(q.c&&q.c[0]&&CAUSES[q.c[0]]?CAUSES[q.c[0]].ad:q.sc>=(S.sesEsik||85)?"İyi atış":"");
+  speak(t+".");
 }
 
 /* ---------------------------------------------------------------- kaynaklar */
@@ -1103,6 +1107,9 @@ function sensorShotBeep(r,q,m){
   const dur=sensorTune(q.sc>=(S.sesEsik||85)?SHOT_GOOD:SHOT_BAD,true);
   if(dur) proc.quietUntil=Math.max(proc.quietUntil||0,(proc.lastT==null?m.st:proc.lastT)+dur+250);
 }
+function sensorSonuc(q){
+  if(S.sensorEkran===false||!sensorCanBeep()||(ble.fw||0)<5||!q) return;
+  bleCmd([0x0A,clamp(Math.round(q.sc),0,100),q.sc>=(S.sesEsik||85)?1:0]); }
 function sensorSoundTest(){
   if(!sensorCanBeep()){ toast("Önce sensöre bağlan."); return; }
   const a=sensorTune(SHOT_GOOD,true); setTimeout(()=>sensorTune(SHOT_BAD,true),a+700);
@@ -1631,7 +1638,7 @@ proc.onShot=m=>{
   if(r.eng.onShot) r.eng.onShot(r,q,m.st);
   s.shots.push(q); cur.sel=s.shots.length-1;
   const [vt,vc]=verdict(q.sc); setFeedback(q.c.length&&q.sc<85?CAUSES[q.c[0]].ad:vt,vc);
-  shotSound(q); sensorShotBeep(r,q,m); saatAtis(r,q); lastFlash=now();
+  shotSound(q); sensorShotBeep(r,q,m); sensorSonuc(q); saatAtis(r,q); lastFlash=now();
   if(s.shots.length===1&&!sessions.includes(s)&&!isDemoSess(s)) sessions.unshift(s);
   saveSession(s);
   renderSession();
@@ -2516,7 +2523,7 @@ const INFO={
 };
 const infoBtn=k=>`<button class="i-red" data-info="${k}" aria-label="${esc(INFO[k][0])}: açıklama">i</button>`;
 function bindInfo(root){ root.querySelectorAll("[data-info]").forEach(b=>b.onclick=e=>{ e.preventDefault(); e.stopPropagation(); const it=INFO[b.dataset.info]; if(it) openSheet(it[0],`<p>${esc(it[1])}</p><button class="btn" data-close>Tamam</button>`); }); }
-const SOUND_T={kapali:"Kapalı",bip:"Bip",skor:"Skoru söyle",tam:"Skor ve neden"};
+const SOUND_T={kapali:"Kapalı",bip:"Bip",skor:"Skoru söyle",tam:"Skor ve hata"};
 const DAYS=[[1,"Pzt"],[2,"Sal"],[3,"Çar"],[4,"Per"],[5,"Cum"],[6,"Cmt"],[0,"Paz"]];
 function planDesc(){ const d=S.plan.days||[]; return (d.length?d.length+" gün":"Her gün")+" · "+(S.plan.goal||50)+" atış"; }
 const SET_T={gelismis:"Gelişmiş Ayarlar",baglanti:"Sensör",montaj:"Kalibrasyon ve yön",algilama:"Atış algılama",gorunum:"Görünüm",veri:"Veriler",uygulama:"Uygulama",
@@ -2655,6 +2662,12 @@ function pgSes(){ return `<div class="pg"><div class="ch"><span>Atış sonrası 
     <div class="ch" style="margin-top:12px"><span>Sensör bağlanınca karşılama</span>${infoBtn("selam")}</div>
     <label class="toggle">Sesli karşıla<input type="checkbox" id="sGreet" ${S.greet?"checked":""}></label>
     <div class="row" style="flex-wrap:nowrap"><input type="text" id="sGreetT" maxlength="60" value="${esc(S.greetText||"")}" placeholder="${esc(DEF.greetText)}" aria-label="Karşılama sözü"><button class="btn" id="sGreetTry" style="flex:none">Dinle</button></div>
+    <div class="ch" style="margin-top:12px"><span>Konuşma sesi</span></div>
+    ${segHtml("sTon",[["kalin","Kalın (erkek)"],["normal","Normal"]],S.sesTon||"kalin")}
+    ${segHtml("sHiz",[["normal","Normal hız"],["hizli","Hızlı"]],S.sesHiz||"normal")}
+    ${trSesler().length>1?`<div class="field"><label for="sVoice">Ses</label><select id="sVoice">${trSesler().map(v=>`<option value="${esc(v.name)}" ${v.name===S.sesAdi?"selected":""}>${esc(v.name)}</option>`).join("")}</select></div>`:""}
+    <button class="btn" id="sVTry">Sesi dinle</button>
+    <p class="note">Telefonun Türkçe sesi kullanılır. iPhone'da Türkçe için genelde yalnız kadın sesi (Yelda) var; “Kalın” onu erkek sesine yaklaştırır. Daha akıcı konuşma için iPhone Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › Türkçe'den Yelda'nın gelişmiş sürümünü indir.</p>
     <p class="note">Sensörün kendi sesleri (atış sonrası bip, alıştırma komutları): Sensör sekmesi › Sensör sesleri.</p></div>`; }
 function bindSes(root){
   root.querySelectorAll("#sSound button").forEach(b=>b.onclick=()=>{ S.sound=b.dataset.v; saveMeta(); root.querySelectorAll("#sSound button").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); playSample(); });
@@ -2663,6 +2676,11 @@ function bindSes(root){
   $("sGreet").onchange=e=>{S.greet=e.target.checked;saveMeta();};
   $("sGreetT").oninput=e=>{S.greetText=e.target.value.slice(0,60);saveMeta();};
   $("sGreetTry").onclick=()=>{ audioUnlock(); speak(String(S.greetText||"").trim()||DEF.greetText); };
+  const ornek=()=>{ audioUnlock(); speak((String(S.greetText||"").trim()||DEF.greetText)+". Seksen yedi. İyi atış. Altmış bir. Tetiğe ani basma."); };
+  bindSeg(root,"sTon",v=>{S.sesTon=v;saveMeta();ornek();});
+  bindSeg(root,"sHiz",v=>{S.sesHiz=v;saveMeta();ornek();});
+  const sv=root.querySelector("#sVoice"); if(sv) sv.onchange=e=>{S.sesAdi=e.target.value;saveMeta();ornek();};
+  $("sVTry").onclick=ornek;
 }
 function playSample(){ audioUnlock(); const q={sc:92,c:[]}; if(S.sound==="kapali") return; if(S.sound==="bip"){ shotSound(q); setTimeout(()=>shotSound({sc:40,c:[]}),700); } else shotSound({sc:92,c:["bilek_asagi"]}); }
 /* --- Silahını seç (cephanelik) */
@@ -2763,6 +2781,8 @@ function pgBaglanti(){
   </div>
   <div class="card"><div class="ch"><h2>Sensör sesleri</h2>${infoBtn("sses")}</div>
     <label class="toggle">Atıştan sonra sensör ötsün<input type="checkbox" id="sShotBeep" ${S.sensorShotBeep?"checked":""}></label>
+    <label class="toggle">Sensör ekranında sonuç (iyi yeşil, kötü kırmızı)<input type="checkbox" id="sEkran" ${S.sensorEkran!==false?"checked":""}></label>
+    ${source==="sensor"&&ble.st==="bagli"&&(ble.fw||0)<5?`<p class="note">Ekranda sonuç için sensör yazılımı 5 gerekir: aşağıdaki Sensör yazılımı › Güncelle.</p>`:""}
     <label class="toggle">Alıştırma komutlarını sensörde de çal<input type="checkbox" id="sSBeep" ${S.sensorBeep?"checked":""}></label>
     <button class="btn" id="snSound">Ses testi</button>
   </div>
@@ -2791,6 +2811,7 @@ function bindBaglanti(){
   $("snAxis").onclick=wizardAxis; $("snThr").onclick=wizardThr; $("snSound").onclick=sensorSoundTest;
   $("snMontaj").onclick=()=>openSetPage("montaj"); $("snAlg").onclick=()=>openSetPage("algilama");
   $("sShotBeep").onchange=e=>{S.sensorShotBeep=e.target.checked;saveMeta();};
+  const se=$("sEkran"); if(se) se.onchange=e=>{S.sensorEkran=e.target.checked;saveMeta();};
   $("sbOther").onclick=()=>{ if(source!=="sensor"){ selectSource("sensor",true); return; } startSensor(); };
   $("sbTest").onclick=wizardSensor;
   $("sbFind").onclick=()=>{ if(sensorCanBeep()) bleCmd([0x03]); openBul(); };
@@ -3542,7 +3563,7 @@ window.__hisar={trigClear,wizardAxis,applyCfg,wizardSensor,startGuard,mountPromp
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),
   hideSplash, splashOpen, get pages(){return pages;}, popPage, openCause, openModeList, openDrillSettings, openGroup, openGroups, todayChallenge, CHALLENGES, streakInfo, setYon, manualShot, get curView(){return curView;},
-  sensorTune, sensorShotBeep, sensorSoundTest, SCUE, SHOT_GOOD, SHOT_BAD, hdShot, hdYon, hdGrup, hdRing, sessizGuncelle, greetOnConnect, speak, renderSensorView, mainSet, get AN(){return AN;},
+  sensorTune, sensorShotBeep, sensorSoundTest, sensorSonuc, trSesler, SCUE, SHOT_GOOD, SHOT_BAD, hdShot, hdYon, hdGrup, hdRing, sessizGuncelle, greetOnConnect, speak, renderSensorView, mainSet, get AN(){return AN;},
   openBul, sonYerAl, konumAl, uzaklik, rssiYon, haritaUrl, get BUL(){return BUL;}, saatVar, saatDene, saatAtis, saatOzet, openSetPage};
 
 /* --- başlat */

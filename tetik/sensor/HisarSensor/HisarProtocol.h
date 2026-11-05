@@ -206,7 +206,7 @@ inline int8_t tempFromRaw(int16_t raw) {
 }
 
 struct Command {
-  enum Type : uint8_t { NONE, TONE, SET, IDENTIFY, RESTART, POWEROFF, STATUS, START } type = NONE;
+  enum Type : uint8_t { NONE, TONE, SET, IDENTIFY, RESTART, POWEROFF, STATUS, START, RESULT } type = NONE;
   uint16_t freq = 0, ms = 0;
   uint8_t  key = 0, val = 0;
   uint8_t  mode = 0, flags = 0;
@@ -218,6 +218,7 @@ struct Command {
 //                         4 otomatik kapanma dk (0 = kapali), 5 sensor no 1-9
 //  0x03 sensoru bul   0x04 yeniden baslat   0x05 kapat   0x06 durumu hemen gonder
 //  0x07 kip seq32 [bayrak] akis baslangici (kip 0 canli, kip 1 seq32'den devam; bayrak bit0 ses verisi)
+//  0x0A skor bayrak     atis sonucu ekranda (yazilim 5): skor 0-100, bayrak bit0 iyi atis (yesil), degilse kirmizi
 inline Command parseCommand(const uint8_t* d, size_t n) {
   Command c;
   if (n < 1) return c;
@@ -234,6 +235,7 @@ inline Command parseCommand(const uint8_t* d, size_t n) {
       c.seq = n >= 6 ? ((uint32_t)d[2] | ((uint32_t)d[3] << 8) | ((uint32_t)d[4] << 16) | ((uint32_t)d[5] << 24)) : 0;
       c.flags = n >= 7 ? d[6] : 0;
       break;
+    case 0x0A: if (n >= 3) { c.type = Command::RESULT; c.val = d[1] > 100 ? 100 : d[1]; c.flags = d[2] & 1; } break;
   }
   return c;
 }

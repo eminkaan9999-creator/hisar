@@ -318,7 +318,7 @@ td.m{font-family:var(--mono)}
 .li.more .ln{color:var(--fg2)}
 /* Sensörü bul */
 .bul-sin{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;padding:4px 0}
-.bul-sin .bars{display:flex;align-items:flex-end;gap:4px;height:40px}
+.bul-sin .bars{display:flex;flex-direction:row;align-items:flex-end;gap:4px;height:40px;margin-top:0}
 .bul-sin .bars i{display:block;width:9px;height:14px;border-radius:2px;background:var(--line2)}
 .bul-sin .bars i.on{background:var(--acc)}
 .bul-sin b{display:block;font-size:17px;font-weight:600}
@@ -2795,12 +2795,12 @@ function bulYerHtml(){
     ${u?`<p class="an-s" id="bulUzak">Buradan <b>≈ ${esc(mTxt(u.d))}</b>${u.d>=15?`, <b>${esc(u.yon)}</b>`:", çok yakınında"}.</p>`:""}
     ${haritaHtml(y,me)}
     <div class="btn-row"><button class="btn primary" id="bulAc">Haritalar'da aç</button></div>
-    <p class="note">${esc(fx(y.lat,5))}, ${esc(fx(y.lon,5))}</p>`;
+    <p class="note">Konum: ${esc(fx(Math.abs(y.lat),5))}° ${y.lat>=0?"K":"G"} · ${esc(fx(Math.abs(y.lon),5))}° ${y.lon>=0?"D":"B"}</p>`;
 }
 function bulCanliHtml(){
   const on=source==="sensor"&&ble.st==="bagli", r=on?ble.rssi:null, lv=rssiLv(r), yon=rssiYon();
   if(source!=="sensor") return `<p class="note">Veri kaynağı şu an ${esc(srcName(source))}. Sensörü bulmak için önce Sensör sekmesinden sensöre geç.</p>`;
-  if(!on) return `<div class="bul-sin" aria-live="polite"><div class="bars">${[1,2,3,4,5].map(i=>`<i></i>`).join("")}</div><div><b>Menzil dışında ya da kapalı</b><small>Sensör yakına gelince (10–30 m) uygulama kendiliğinden bağlanır.</small></div></div>`;
+  if(!on) return `<div class="bul-sin" aria-live="polite"><div class="bars">${[1,2,3,4,5].map(i=>`<i style="height:${8+i*6}px"></i>`).join("")}</div><div><b>Menzil dışında ya da kapalı</b><small>Sensör yakına gelince (10–30 m) uygulama kendiliğinden bağlanır.</small></div></div>`;
   return `<div class="bul-sin" aria-live="polite"><div class="bars">${[1,2,3,4,5].map(i=>`<i class="${i<=lv?"on":""}" style="height:${8+i*6}px"></i>`).join("")}</div>
     <div><b>${esc(rssiTxt(r))}</b><small>${r==null?"sinyal ölçülüyor…":r+" dBm"}${yon>0?" · ▲ yaklaşıyorsun":yon<0?" · ▼ uzaklaşıyorsun":""}</small></div></div>`;
 }
@@ -2809,7 +2809,7 @@ function bulBody(){
   return `<div class="pg"><div class="card"><div class="ch"><h2>Yakında mı?</h2>${infoBtn("bul")}</div><div id="bulCanli">${bulCanliHtml()}</div>
       <button class="btn ${sure?"danger":"primary"}" id="bulCal" ${on||sure?"":"disabled"}>${sure?"Buldum, sustur":"Bulana kadar öttür"}</button>
       <p class="note" id="bulCalN">${sure?"Sensör ötüyor ve ışığı yanıp sönüyor.":on?"Sensör sen durdurana kadar (en çok 3 dakika) öter ve ışığı yanıp söner.":"Öttürmek için sensör bağlı olmalı."}</p></div>
-    <div class="card"><div class="ch"><h2>Son görüldüğü yer</h2></div><div id="bulYer">${bulYerHtml()}</div>
+    <div class="card"><div class="ch"><h2>Son görüldüğü yer</h2></div><div id="bulYer" class="view" style="gap:10px">${bulYerHtml()}</div>
       <label class="toggle">Son yeri kaydet<input type="checkbox" id="bulKayit" ${S.yerKaydet?"checked":""}></label>
       <p class="note">Sensörde GPS yok: bağlıyken ve bağlantı koptuğu an telefonun konumu kaydedilir. Konum yalnız bu telefonda saklanır, hiçbir yere gönderilmez.</p>
       <button class="btn" id="bulSimdi" ${S.yerKaydet?"":"disabled"}>Şimdiki yerimi kaydet</button></div></div>`;

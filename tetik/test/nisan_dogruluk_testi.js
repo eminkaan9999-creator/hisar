@@ -91,7 +91,7 @@ function pageSide() {
   const MAPP = { 12: ['bilek_yukari', 'geri_tepme'], 1: ['avucla_itme', 'geri_tepme'], 2: ['avucla_itme', 'basparmak'], 3: ['basparmak', 'az_parmak'], 4: ['siki_tutus', 'az_parmak'], 5: ['siki_tutus', 'bilek_asagi'], 6: ['bilek_asagi', 'ileri_itme'], 7: ['tokatlama', 'bilek_asagi'], 8: ['tokatlama', 'tum_el'], 9: ['fazla_parmak', 'tokatlama'], 10: ['geri_tepme', 'fazla_parmak'], 11: ['geri_tepme', 'bilek_yukari'] };
   const scale = H.scaleFor('pistol', 'normal');
   const sess = hand => ({ weapon: 'pistol', diff: 'normal', hand, handMode: 'normal', drill: 'serbest', mode: 'kuru' });
-  const toQ = m => ({ sc: Math.max(0, Math.min(100, 100 * Math.exp(-(m.trig + 0.3 * m.hold) / scale))), h: H.hourOf(m.dx, m.dy), ca: m.cant, po: m.post, tr: m.trig, ho: m.hold, dx: m.dx, dy: m.dy, wv: m.wv == null ? null : m.wv });
+  const toQ = m => ({ sc: Math.max(0, Math.min(100, 100 * Math.exp(-(m.trig + 0.15 * m.hold) / scale))), h: H.hourOf(m.dx, m.dy), ca: m.cant, po: m.post, tr: m.trig, ho: m.hold, dx: m.dx, dy: m.dy, wv: m.wv == null ? null : m.wv });
   // her atış için düz kayıt: ölçüm + gerçek + yeni/eski teşhis
   const rec = (m, tr, hand) => {
     const q = toQ(m), s = tr.s; const F = Math.hypot(s.fx || 0, s.fy || 0);

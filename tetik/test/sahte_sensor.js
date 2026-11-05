@@ -134,6 +134,8 @@
     for (const s of F.shots) {
       const d = seq - s.seq;
       if (s.tilt && d >= -500 && d <= 150) { const a = s.tilt * Math.PI / 180; acc = [Math.sin(a), 0, Math.cos(a)]; }
+      if (s.elev != null && d >= -700 && d <= 300) {                 // namlu açısı (y ekseni namlu): yavaşça iner, atıştan sonra yavaşça kalkar
+        const f = d < -500 ? (d + 700) / 200 : d > 100 ? (300 - d) / 200 : 1, e = s.elev * f * Math.PI / 180; acc = [0, Math.sin(e), Math.cos(e)]; }
       if (d >= -30 && d < 0) { om = [0.4 + s.dy / 0.15, -0.3, 0.2 - s.dx / 0.15]; }
       if (d === 0 || d === 1) { jerk = s.spike; if (s.live) { acc = [0, 16, 1]; jerk = 60; } }
       if (s.click != null && d === s.clickAt) snd = s.live ? 90 : s.click;

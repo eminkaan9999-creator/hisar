@@ -5,11 +5,12 @@
 const { serve, check, section, finish, openApp, chromium, fs, path, sleep } = require('./ortak');
 const PORT = 8817;
 const FAKE = fs.readFileSync(path.join(__dirname, 'sahte_sensor.js'), 'utf8');
+const MM = fs.readFileSync(path.join(__dirname, 'hareket_modelleri.js'), 'utf8');   // elde sallama, sarsma … (katı cisim benzetimi)
 async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await page.evaluate(fn, arg)) return true; await sleep(100); } return false; }
 
 (async () => {
   const srv = await serve(PORT); const browser = await chromium.launch();
-  const { page, errs, ctx } = await openApp(browser, { port: PORT, init: [FAKE] });
+  const { page, errs, ctx } = await openApp(browser, { port: PORT, init: [FAKE, MM] });
   const H = (fn, a) => page.evaluate(fn, a);
   const n = () => H(() => window.__hisar.cur.sess.shots.length);
   const toastTxt = () => H(() => { const t = document.getElementById('toast'); return t.hidden ? '' : t.textContent; });
@@ -37,11 +38,36 @@ async function waitFor(page, fn, ms, arg) { const t0 = Date.now(); while (Date.n
   check(await n() === 3, 'Atıştan sonra küçük takip hareketi olan atış sayıldı', await n());
   await H(() => window.__hisar.stopRun(false)); await sleep(1300);
 
-  section('Güvenlik: üst üste 3 sarsıntı atılırsa o seride süzgeç kapanır');
+  section('Güvenlik: kaldırıp indirme ve çarpma süzgeci gevşetmez ya da kapatmaz');
   await H(() => { const h = window.__hisar; h.openDrill('serbest'); h.startRun(); }); await sleep(1500);
-  for (let k = 0; k < 3; k++) { await H(() => { const F = window.__fake; F.addMove(F.head + 10, 100, [120, 0, 0]); F.addShot(F.head + 106, { click: null }); }); await sleep(1900); }
-  const gv = await H(() => ({ n: window.__hisar.cur.sess.shots.length, kapali: !!window.__hisar.cur.run.st.suzKapali, yok: window.__hisar.cur.run.st.nisanYok }));
-  check(gv.n === 1 && gv.kapali && gv.yok === 3, 'İlk iki sarsıntı atıldı, üçüncüsü sayıldı ve bu seride süzgeç kapandı (hiç atış sayılmaması olmaz)', gv);
+  for (let k = 0; k < 4; k++) { await H(() => { const F = window.__fake; F.addMove(F.head + 10, 100, [120, 0, 0]); F.addShot(F.head + 106, { click: null }); }); await sleep(1900); }
+  const gv = await H(() => ({ n: window.__hisar.cur.sess.shots.length, gevsek: !!window.__hisar.cur.run.st.gevsek, kapali: !!window.__hisar.cur.run.st.suzKapali, yok: window.__hisar.cur.run.st.nisanYok }));
+  check(gv.n === 0 && !gv.gevsek && !gv.kapali && gv.yok === 4, '4 kaldırma ve çarpmanın hiçbiri sayılmadı; süzgeç gevşemedi, kapanmadı', gv);
+  await H(() => { const F = window.__fake; F.addShot(F.head + 40, { dx: 0.004, dy: -0.003, click: null }); }); await sleep(1500);
+  check(await n() === 1, 'Ardından nişanda yapılan atış sayıldı', await n());
+  await H(() => window.__hisar.stopRun(false)); await sleep(1300);
+
+  section('Sensör elde sallanırsa, sarsılırsa, kaydırılırsa, çevrilirse atış sayılmaz (saha bildirimi)');
+  const elde = (model, mic, secs) => H(async ({ model, mic, secs }) => {
+    const h = window.__hisar, F = window.__fake, M = window.__mm;
+    h.S.mic = mic; h.S.mode = 'kuru'; h.S.sensorShotBeep = false; h.S.sarsintiSuz = true;
+    const m = h.S.mount.sensor; m.B = [0, 1, 0]; m.U = [0, 0, 1]; m.at = Date.now(); m.onay = Date.now(); h.applyCfg();
+    const t0 = (F.head + 400) * 0.005, t1 = t0 + secs, [ad, vur] = model.split('+'), P0 = M.models[ad](t0);
+    // hareketin sonunda sensör 0,6 sn'de yumuşakça dinlenme duruşuna döner (gerçekte silaha takılıp nişan alınır)
+    const P = t => { const e = t <= t1 ? 1 : Math.max(0, 1 - (t - t1) / 0.6), x = e * e * (3 - 2 * e), q = P0(Math.min(t, t1));
+      return { yaw: x * q.yaw, pitch: x * q.pitch, roll: x * q.roll, pos: q.pos.map(v => x * v) }; };
+    const asil = F.motion; F.motion = M.make(P, vur ? { extra: M.knocks(t0, t1, 1.0) } : {});   // sahte sensörün atış üreticisi sonra geri konur
+    h.openDrill('serbest'); h.startRun(); const r = h.cur.run;
+    await new Promise(res => setTimeout(res, (secs + 3) * 1000));
+    const o = { model, mic, sayilan: r.sess.shots.length, reddedilen: r.st.nisanYok || 0, gevsek: !!r.st.gevsek };
+    h.stopRun(false); F.motion = asil; await new Promise(res => setTimeout(res, 900)); return o; }, { model, mic, secs });
+  for (const [model, mic] of [['sallama', 'kapali'], ['sarsma', 'kapali'], ['kaydirma', 'kapali'], ['dondurme', 'kapali'], ['hizli', 'kapali'], ['sallama+vur', 'yardimci']]) {
+    const o = await elde(model, mic, 8);
+    check(o.sayilan === 0 && !o.gevsek, `${model.padEnd(12)} (mikrofon ${mic}): ${o.sayilan} atış sayıldı, ${o.reddedilen} darbe reddedildi, süzgeç gevşemedi`, o); }
+  await H(() => { const h = window.__hisar; h.S.mic = 'kapali'; h.applyCfg(); h.openDrill('serbest'); h.startRun(); }); await sleep(1500);
+  await H(() => { const F = window.__fake; F.addShot(F.head + 40, { dx: -0.004, dy: 0.002, click: null }); }); await sleep(1500);
+  await H(() => { const F = window.__fake; F.addShot(F.head + 40, { dx: 0.003, dy: 0.003, click: null }); }); await sleep(1500);
+  check(await n() === 2, 'Sallamadan sonra silah sabitken tetik düşünce atışlar yine sayılıyor (2/2)', await n());
   await H(() => window.__hisar.stopRun(false)); await sleep(1300);
   await H(() => { const h = window.__hisar; h.S.sarsintiSuz = false; h.openDrill('serbest'); h.startRun(); }); await sleep(1500);
   await H(() => { const F = window.__fake; F.addMove(F.head + 10, 100, [120, 0, 0]); F.addShot(F.head + 106, { click: null }); }); await sleep(1900);

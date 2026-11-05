@@ -536,7 +536,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=24;
+const VER=25;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -552,7 +552,7 @@ const IS_ANDROID=/Android/i.test(UA);
 const APK_URL="https://github.com/eminkaan9999-creator/hisar/releases/download/tetik-android/HisarTetik.apk";
 let apkReady=false;   // version.json "apk" alanı: Android uygulaması yayında mı
 const YUKLE_URL=HOSTED_URL+"yukle.html";
-const FW_LATEST=3;
+const FW_LATEST=6;
 const now=()=>performance.now();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rand=(a,b)=>a+Math.random()*(b-a);
@@ -627,7 +627,7 @@ const AX={"+x":[1,0,0],"-x":[-1,0,0],"+y":[0,1,0],"-y":[0,-1,0]};
 /* ---------------------------------------------------------------- skor ölçeği ve birimler */
 const DIFF={kolay:1.6,normal:1,zor:0.65};
 // hızlı alıştırmalarda atıştan önceki saniye hareketli geçer (çekiş, önceki atış); skor sadece tetik anından hesaplanır
-const SPEED=new Set(["zamanlayici","kiyas20","kilif","karar","sarjor","ritim","rehine","zamankiyas"]);
+const SPEED=new Set(["zamanlayici","kiyas20","kilif","karar","sarjor","ritim","rehine","zamankiyas","par"]);
 const holdW=s=>SPEED.has(s.drill)?0:0.15;   // 19. sürüme kadar 0,3: nişanın doğal titremesi skoru gereğinden çok düşürüyordu
 const scaleFor=(weapon,diff)=>(weapon==="pistol"?0.30:0.18)*(DIFF[diff]||1);
 function ang(deg,d){ // açı, seçili birimde
@@ -716,7 +716,7 @@ const MIC_WIN=25;
 Proc.prototype.reset=function(){
   this.cand=null;this.lastClick=null;this.sT=null;this.sBg=null;this.sDb=null;this.rejectRun=0;this.strictOff=false;this.clickN=0;this.rejected=0;
   this.buf=[];this.lastT=null;this.yaw=0;this.pitch=0;this.aFast=null;this.aSlow=null;
-  this.zeroUp=null;this.zeroR=null;this.bias=this.bias0?this.bias0.slice():[0,0,0];
+  this.zeroUp=null;this.zeroR=null;this.bias=this.bias0?this.bias0.slice():[0,0,0];this.gP=null;
   this.em=[0,0,0];this.ev=[1,1,1];this.stillSince=null;this.lastCal=-1e9;
   this.jerk=0;this.gmag=0;this.cant=0;this.base=[0,0];this.live=[0,0];
   this.lastShot=-1e9;this.pending=[];this.armed=false;this.samples=0;this.lastData=-1e9;this.rawOm=[0,0,0];this.up=[0,0,1];
@@ -745,7 +745,7 @@ Proc.prototype.feed=function(t,acc,om,devJerk,snd){
   const kF=dt>0?1-Math.exp(-dt/0.05):1;
   const j=Math.hypot(acc[0]-this.aFast[0],acc[1]-this.aFast[1],acc[2]-this.aFast[2]);
   for(let i=0;i<3;i++)this.aFast[i]+=kF*(acc[i]-this.aFast[i]);
-  this.jerk=Math.max(j,devJerk||0);
+  this.impCh=devJerk!=null; this.jerk=this.impCh?devJerk:j;   // darbe: HİSAR sensörünün 1 kHz darbe kanalı; j el hareketiyle de büyür
   const am=vlen(acc);
   if(Math.abs(am-1)<0.25){const kS=dt>0?1-Math.exp(-dt/0.5):1;for(let i=0;i<3;i++)this.aSlow[i]+=kS*(acc[i]-this.aSlow[i]);}
   const up=norm(this.aSlow); this.up=up; this.rawOm=om;
@@ -757,6 +757,9 @@ Proc.prototype.feed=function(t,acc,om,devJerk,snd){
   else this.stillSince=null;
   const w=[om[0]-this.bias[0],om[1]-this.bias[1],om[2]-this.bias[2]];
   const wm=vlen(w);
+  // doğrusal ivme (g): yerçekimi yönü jiroskopla döndürülür, 1 sn'de ivmeölçere çekilir; silahın dönmesinden bağımsızdır
+  if(!this.gP) this.gP=acc.slice(); else { const c=cross(w,this.gP), kg=dt>0?1-Math.exp(-dt):0; for(let i=0;i<3;i++) this.gP[i]+=-c[i]*RAD*dt+kg*(acc[i]-this.gP[i]); }
+  const lin=Math.hypot(acc[0]-this.gP[0],acc[1]-this.gP[1],acc[2]-this.gP[2]);
   if(wm<3&&dt>0){const kb=dt/10;for(let i=0;i<3;i++)this.bias[i]+=kb*w[i];}
   const f=this.frame(up);
   let pr=dot(w,f.R), yr=-dot(w,f.U);
@@ -769,7 +772,7 @@ Proc.prototype.feed=function(t,acc,om,devJerk,snd){
   this.live=[this.yaw-this.base[0],this.pitch-this.base[1]];
   // doyma: ivme ±16 g, jiroskop ±2000 °/sn sınırına dayandı mı (gerçek atış tepmesi)
   const sat=(Math.max(Math.abs(acc[0]),Math.abs(acc[1]),Math.abs(acc[2]))>=15.5?1:0)|(Math.max(Math.abs(om[0]),Math.abs(om[1]),Math.abs(om[2]))>=1950?2:0);
-  this.buf.push([t,this.yaw,this.pitch,this.cant,wm,this.jerk,sat]);
+  this.buf.push([t,this.yaw,this.pitch,this.cant,wm,this.jerk,sat,lin,acc[0],acc[1],acc[2]]);
   while(this.buf.length&&this.buf[0][0]<t-3000)this.buf.shift();
   if(this.onSample)this.onSample(t,wm,this.jerk,w,dt);
   this.detect(t,snd);
@@ -793,7 +796,7 @@ Proc.prototype.sound=function(t,snd){
 Proc.prototype.detect=function(t,snd){
   this.sound(t,snd);
   if(!this.armed&&!this.testArm){ this.cand=null; return; }
-  const thr=this.cfg.thr, j=this.jerk, free=t-this.lastShot>this.cfg.lockout&&!(this.quietUntil>t);   // quietUntil: sensör atış sonrası bip çalıyor
+  const thr=this.cfg.thr, j=this.jerk, free=t-this.lastShot>this.cfg.lockout&&!(this.quietUntil>t&&this.jerk<6*this.cfg.thr);   // bip çalarken zilin titreşimi yok sayılır; tepme gibi çok güçlü darbe (seri gerçek atış) yine sayılır
   // bu ölçümde ses yoksa (eski yazılım, mikrofon arızası, sensör bip çalıyor) yalnız darbe: bekleyen güçlü aday atıştır
   const mic=this.micOn&&snd!=null;
   if(!mic){ const c=this.cand; this.cand=null;
@@ -832,6 +835,11 @@ Proc.prototype.finalize=function(st){
   let rec=null; if(peakD>0.3){const lim=Math.max(0.25,peakD*0.2);for(const s of b){if(s[0]>peakT&&s[0]<=st+600&&Math.hypot(s[1]-p0[0],s[2]-p0[1])<lim){rec=s[0]-st;break;}}}
   let cs=0,cn=0,sat=0; for(const s of b){if(s[0]>=st-300&&s[0]<=st){cs+=s[3];cn++;} if(s[0]>=st-10&&s[0]<=st+300) sat|=s[6]||0;}
   const gap=this.gaps.some(g=>g[1]>st-1000&&g[0]<st+600);
+  // tetik düşmesi denetimi: tutuşta (-600..-180 ms, tetik hareketinden önce) ve son 150 ms'de en büyük doğrusal ivme (g),
+  // atıştan hemen önce silahın duruşu (yerçekiminin sensöre göre yönü)
+  let lHold=0,l150=0,lPost=0,ux=0,uy=0,uz=0;
+  for(const s of b){ const d=s[0]-st, l=s[7]||0; if(d>=-600&&d<=-180){ if(l>lHold) lHold=l; } else if(d>=-150&&d<=-30){ if(l>l150) l150=l; ux+=s[8]; uy+=s[9]; uz+=s[10]; } else if(d>=60&&d<=350&&l>lPost) lPost=l; }
+  const up=ux||uy||uz?norm([ux,uy,uz]):null;
   // titreme ölçüsü (wv): tetikten önceki tutuşta nişanın 150 ms'de tipik (RMS) yer değiştirmesi. Tetik penceresi de 150 ms;
   // oradaki hareket bunun belirgin üstünde değilse yönü titremeden gelir, tetik hatası sayılmaz (bkz. trigClear)
   let wv=0,wn=0; for(let i=Math.max(0,this.idxBefore(st-850));i<b.length&&b[i][0]<=st-250;i++){ if(b[i][0]<st-850) continue;
@@ -840,7 +848,7 @@ Proc.prototype.finalize=function(st){
   const xy=new Float32Array(TRN*2); let k=0;
   for(let g=0;g<TRN;g++){const tg=st+TR0+g*TRS;while(k<b.length-2&&b[k+1][0]<tg)k++;const s0=b[k],s1=b[Math.min(k+1,b.length-1)];const u=s1[0]>s0[0]?clamp((tg-s0[0])/(s1[0]-s0[0]),0,1):0;xy[g*2]=s0[1]+(s1[1]-s0[1])*u-aim[0];xy[g*2+1]=s0[2]+(s1[2]-s0[2])*u-aim[1];}
   let elev=null; if(this.aSlow&&this.cfg&&this.cfg.B){ elev=Math.asin(clamp(dot(norm(this.cfg.B),norm(this.aSlow)),-1,1))*DEG; }   // namlunun yatayla açısı
-  if(this.onShot)this.onShot({st,trig,hold:Math.hypot(hx,hy),hx,hy,dx:p0[0]-p150[0],dy:p0[1]-p150[1],wv,cant:cn?cs/cn:0,post,rise,fall,peakD,pg,rec,xy,sat,gap,elev});
+  if(this.onShot)this.onShot({st,trig,hold:Math.hypot(hx,hy),hx,hy,dx:p0[0]-p150[0],dy:p0[1]-p150[1],wv,cant:cn?cs/cn:0,post,rise,fall,peakD,pg,rec,xy,sat,gap,elev,lHold,l150,lPost,up,impCh:!!this.impCh});
 };
 
 /* ---------------------------------------------------------------- sanal atıcı (deneme modu) */
@@ -951,7 +959,7 @@ async function startPhone(){
   let got=false;
   phoneH=e=>{const a=e.accelerationIncludingGravity,r=e.rotationRate;if(!a||a.x==null||!r)return;
     if(!got){got=true;setStatus("Telefon sensörü çalışıyor. Telefonu bir tutucuyla silaha sabitle."+phoneLiveWarn(),S.mode!=="kuru");refreshChip();}
-    proc.feed(now(),[a.x/9.81,a.y/9.81,a.z/9.81],[r.beta||0,r.gamma||0,r.alpha||0],0);rateCnt++;};
+    proc.feed(now(),[a.x/9.81,a.y/9.81,a.z/9.81],[r.beta||0,r.gamma||0,r.alpha||0],null);rateCnt++;};
   window.addEventListener("devicemotion",phoneH);
   setStatus("Telefon sensörü bekleniyor…");
   phoneTO=setTimeout(()=>{if(!got)setStatus("Telefon sensöründen veri gelmiyor. Bu sayfa hareket sensörüne erişemiyor olabilir."+hostedLink(),true);},2500);
@@ -1139,7 +1147,7 @@ function parseBle(dv,tArg){
     else if(f===0x63&&i+6<=n){ble.bat=dv.getUint8(i+2);ble.chg=!!dv.getUint8(i+3);ble.fw=dv.getUint8(i+4);ble.imu=!!dv.getUint8(i+5);statusSeen();i+=6;}
     else if(f===0x61&&i+20<=n){const i16=o=>dv.getInt16(o,true);const t=ble.lastWit&&tn-ble.lastWit<100?Math.max(ble.lastWit+2,tn):tn;ble.lastWit=t;
       const acc=[i16(i+2)/32768*16,i16(i+4)/32768*16,i16(i+6)/32768*16];const om=[i16(i+8)/32768*2000,i16(i+10)/32768*2000,i16(i+12)/32768*2000];
-      proc.feed(t,acc,om,0);rateCnt++;ble.recv++;ble.lastData=tn;i+=20;}
+      proc.feed(t,acc,om,null);rateCnt++;ble.recv++;ble.lastData=tn;i+=20;}
     else i++;
   }
 }
@@ -1391,16 +1399,16 @@ const ENG={
   serbest:{},degerlendirme:{},dayaniklilik:{},atiseli:{},destekeli:{},geritepme:{},safespace:{},
   zamanlayici:{
     start(r){r.st={rounds:0,miss:0,first:[]};this.round(r,1200);},
-    round(r,extra){later(r,(extra||0)+rand(2000,4500),()=>{r.st.rounds++;r.st.got=false;r.st.goT=now();cue(r,"go");later(r,4000,()=>{if(!r.st.got){r.st.miss++;r.msg="Kaçırıldı: 4 saniyede atış yok.";}r.st.goT=null;renderPanel();this.round(r,0);});});},
-    onShot(r,q,t){ if(r.st.goT==null){q.x.erken=true;r.msg="Bipten önce atış (erken).";return;} const dt=t-r.st.goT; if(!r.st.got){r.st.got=true;q.x.react=Math.round(dt);r.st.first.push(dt);r.msg="İlk atış: "+sec(dt);} else {r.msg="Ara: "+sec(q.x.split||0);} },
+    round(r,extra){later(r,(extra||0)+rand(2000,4500),()=>{r.st.rounds++;r.st.got=false;r.st.goT=now();cue(r,"go");later(r,4700,()=>{if(!r.st.got){r.st.miss++;r.msg="Kaçırıldı: 4 saniyede atış yok.";}r.st.goT=null;renderPanel();this.round(r,0);});});},
+    onShot(r,q,t){ if(r.st.goT==null||t<r.st.goT||t>r.st.goT+4000){q.x.erken=true;r.msg="Bipten önce atış (erken).";return;} const dt=t-r.st.goT; if(!r.st.got){r.st.got=true;q.x.react=Math.round(dt);r.st.first.push(dt);r.msg="İlk atış: "+sec(dt);} else {r.msg="Ara: "+sec(q.x.split||0);} },
     demoCue(r,type,t){ if(type==="go"){ demoFire(rand(480,1300)); if(Math.random()<0.4) demoFire(rand(1900,2400)); } },
     panel(r){const f=r.st.first;const b=f.length?Math.min(...f):null;const a=f.length?f.reduce((x,y)=>x+y,0)/f.length:null;
       return panelHtml(r.st.goT!=null?"ATEŞ!":"Hazır ol…",r.msg||"Bip sesini bekle.",`Tur ${r.st.rounds} · En iyi ${b==null?"–":sec(b)} · Ort. ${a==null?"–":sec(a)} · Kaçan ${r.st.miss}`);}
   },
   par:{
     start(r){r.st={rounds:0,ok:0,late:0,times:[]};this.round(r,1200);},
-    round(r,extra){later(r,(extra||0)+rand(2000,4000),()=>{r.st.rounds++;r.st.got=false;r.st.goT=now();cue(r,"go");later(r,S.par*1000,()=>{cue(r,"par");later(r,2500,()=>{if(!r.st.got){r.st.late++;r.msg="Par süresinde atış yok.";}r.st.goT=null;renderPanel();this.round(r,0);});});});},
-    onShot(r,q,t){ if(r.st.goT==null){q.x.erken=true;r.msg="Bipten önce atış (erken).";return;} if(r.st.got)return; r.st.got=true; const dt=t-r.st.goT; q.x.react=Math.round(dt); q.x.parOk=dt<=S.par*1000; if(q.x.parOk)r.st.ok++;else r.st.late++; r.st.times.push(dt); r.msg=(q.x.parOk?"✓ Par içinde: ":"✗ Geç: ")+sec(dt); },
+    round(r,extra){later(r,(extra||0)+rand(2000,4000),()=>{r.st.rounds++;r.st.got=false;r.st.goT=now();cue(r,"go");later(r,S.par*1000,()=>{cue(r,"par");later(r,3200,()=>{if(!r.st.got){r.st.late++;r.msg="Par süresinde atış yok.";}r.st.goT=null;renderPanel();this.round(r,0);});});});},
+    onShot(r,q,t){ if(r.st.goT==null||t<r.st.goT||t>r.st.goT+S.par*1000+2500){q.x.erken=true;r.msg="Bipten önce atış (erken).";return;} if(r.st.got)return; r.st.got=true; const dt=t-r.st.goT; q.x.react=Math.round(dt); q.x.parOk=dt<=S.par*1000; if(q.x.parOk)r.st.ok++;else r.st.late++; r.st.times.push(dt); r.msg=(q.x.parOk?"✓ Par içinde: ":"✗ Geç: ")+sec(dt); },
     demoCue(r,type){ if(type==="go") demoFire(rand(700,S.par*1000+600)); },
     panel(r){const n=r.st.ok+r.st.late;return panelHtml(r.st.goT!=null?"ATEŞ!":"Hazır ol…",r.msg||`Par süresi ${fx(S.par,1)} sn. Bip sesini bekle.`,`Tur ${r.st.rounds} · Par içinde ${r.st.ok}/${n}`);}
   },
@@ -1408,7 +1416,7 @@ const ENG={
     start(r){r.st={phase:"count",goT:null};for(let i=0;i<3;i++)later(r,i*1000,()=>{cue(r,"tick");r.msg="Hazır ol: "+(3-i);renderPanel();});
       later(r,3000,()=>{r.st.phase="go";r.st.goT=now();cue(r,"go");r.msg="ATEŞ!";if(source==="demo"&&S.autoShot)this.demoBurst(r);later(r,20000,()=>{r.st.phase="end";cue(r,"end");stopRun(true);});});},
     demoBurst(r){later(r,rand(500,900),function f(){if(sim)sim.fire(now());later(r,rand(1100,1800),f);});},
-    onShot(r,q){ if(r.st.phase!=="go"){q.x.erken=true;r.msg="Süre dışında atış (sayılmaz).";} },
+    onShot(r,q,t){ if(r.st.goT==null||t<r.st.goT||t>r.st.goT+20000){q.x.erken=true;r.msg="Süre dışında atış (sayılmaz).";} },
     panel(r){const left=r.st.phase==="go"?Math.max(0,20000-(now()-r.st.goT)):r.st.phase==="end"?0:20000;const v=validShots(cur.sess);const eff=v.filter(q=>q.sc>=70).length;
       return panelHtml(fx(left/1000,1)+" sn",r.msg||"3-2-1 sayımını bekle.",`Atış ${v.length} · Etkili ${eff}`);}
   },
@@ -1421,17 +1429,17 @@ const ENG={
   },
   kilif:{
     start(r){r.st={rounds:0,miss:0,moves:[],firsts:[]};this.round(r,1500);},
-    round(r,extra){later(r,(extra||0)+rand(2500,5000),()=>{r.st.rounds++;r.st.got=false;r.st.moveT=null;r.st.goT=now();cue(r,"go");later(r,5000,()=>{if(!r.st.got){r.st.miss++;r.msg="5 saniyede atış yok.";}r.st.goT=null;renderPanel();this.round(r,1500);});});},
+    round(r,extra){later(r,(extra||0)+rand(2500,5000),()=>{r.st.rounds++;r.st.got=false;r.st.moveT=null;r.st.goT=now();cue(r,"go");later(r,5700,()=>{if(!r.st.got){r.st.miss++;r.msg="5 saniyede atış yok.";}r.st.goT=null;renderPanel();this.round(r,1500);});});},
     onSample(r,t,gm){ if(r.st.goT!=null&&r.st.moveT==null&&t>r.st.goT&&gm>40) r.st.moveT=t; },
-    onShot(r,q,t){ if(r.st.goT==null){q.x.erken=true;return;} if(r.st.got)return; r.st.got=true; const dt=t-r.st.goT; q.x.react=Math.round(dt); if(r.st.moveT){q.x.move=Math.round(r.st.moveT-r.st.goT);r.st.moves.push(r.st.moveT-r.st.goT);} r.st.firsts.push(dt); r.msg="Hareket "+(q.x.move!=null?sec(q.x.move):"–")+" · İlk atış "+sec(dt); },
+    onShot(r,q,t){ if(r.st.goT==null||t<r.st.goT||t>r.st.goT+5000){q.x.erken=true;return;} if(r.st.got)return; r.st.got=true; const dt=t-r.st.goT; q.x.react=Math.round(dt); if(r.st.moveT){q.x.move=Math.round(r.st.moveT-r.st.goT);r.st.moves.push(r.st.moveT-r.st.goT);} r.st.firsts.push(dt); r.msg="Hareket "+(q.x.move!=null?sec(q.x.move):"–")+" · İlk atış "+sec(dt); },
     demoCue(r,type,t){ if(type==="go"&&sim){ later(r,rand(150,300),()=>sim.drawAt(now())); demoFire(rand(1450,1900)); } },
     panel(r){const f=r.st.firsts;const a=f.length?f.reduce((x,y)=>x+y,0)/f.length:null;return panelHtml(r.st.goT!=null?"ÇEK!":"Hazır…",r.msg||"Silah kılıfta. Bipte çek ve ateş et.",`Tur ${r.st.rounds} · Ort. ilk atış ${a==null?"–":sec(a)}`);}
   },
   karar:{
     start(r){r.st={rounds:0,ok:0,bad:0,miss:0,reacts:[]};this.round(r,1500);},
     round(r,extra){later(r,(extra||0)+rand(2000,4500),()=>{r.st.rounds++;r.st.type=Math.random()<0.6?"ates":"dur";r.st.got=false;r.st.goT=now();cue(r,r.st.type);
-      later(r,2000,()=>{if(!r.st.got){if(r.st.type==="ates"){r.st.miss++;r.msg="Kaçırıldı: yeşilde atış yok.";}else{r.st.ok++;r.msg="✓ Doğru: kırmızıda durdun.";}}r.st.goT=null;renderPanel();if(r.st.rounds>=15)stopRun(true);else this.round(r,1200);});});},
-    onShot(r,q,t){ if(r.st.goT==null){q.x.karar="erken";r.st.bad++;r.msg="✗ Komutsuz atış.";return;} if(r.st.got)return; r.st.got=true;
+      later(r,2650,()=>{if(!r.st.got){if(r.st.type==="ates"){r.st.miss++;r.msg="Kaçırıldı: yeşilde atış yok.";}else{r.st.ok++;r.msg="✓ Doğru: kırmızıda durdun.";}}r.st.goT=null;renderPanel();if(r.st.rounds>=15)stopRun(true);else this.round(r,1200);});});},
+    onShot(r,q,t){ if(r.st.goT==null||t<r.st.goT||t>r.st.goT+2000){q.x.karar="erken";r.st.bad++;r.msg="✗ Komutsuz atış.";return;} if(r.st.got)return; r.st.got=true;
       if(r.st.type==="ates"){r.st.ok++;q.x.karar="dogru";q.x.react=Math.round(t-r.st.goT);r.st.reacts.push(t-r.st.goT);r.msg="✓ Doğru · "+sec(t-r.st.goT);} else {r.st.bad++;q.x.karar="hata";r.msg="✗ Hata: kırmızıda ateş ettin.";} },
     demoCue(r,type){ if(type==="ates"&&Math.random()<0.95) demoFire(rand(450,1100)); if(type==="dur"&&Math.random()<0.12) demoFire(rand(400,900)); },
     panel(r){const a=r.st.reacts.length?r.st.reacts.reduce((x,y)=>x+y,0)/r.st.reacts.length:null;return panelHtml(`${r.st.rounds}/15`,r.msg||"Yeşilde ateş, kırmızıda dur.",`Doğru ${r.st.ok} · Hata ${r.st.bad} · Kaçan ${r.st.miss} · Ort. tepki ${a==null?"–":sec(a)}`);}
@@ -1453,8 +1461,8 @@ const ENG={
     start(r){r.st={rounds:0,miss:0,reacts:[]};this.round(r,1500);},
     round(r,extra){const N=dsetOf("surpriz").rounds||10; if(r.st.rounds>=N){stopRun(true);return;}
       later(r,(extra||0)+rand(2000,6000),()=>{r.st.rounds++;r.st.got=false;r.st.goT=now();cue(r,"go");
-        later(r,3000,()=>{if(!r.st.got){r.st.miss++;r.msg="Kaçırıldı: 3 saniyede atış yok.";}r.st.goT=null;renderPanel();this.round(r,1200);});});},
-    onShot(r,q,t){ if(r.st.goT==null){q.x.erken=true;r.msg="Bipten önce atış (erken).";return;} if(r.st.got)return; r.st.got=true; const dt=t-r.st.goT; q.x.react=Math.round(dt); r.st.reacts.push(dt); r.msg="Tepki "+sec(dt)+" · skor "+fx(q.sc,1); },
+        later(r,3700,()=>{if(!r.st.got){r.st.miss++;r.msg="Kaçırıldı: 3 saniyede atış yok.";}r.st.goT=null;renderPanel();this.round(r,1200);});});},
+    onShot(r,q,t){ if(r.st.goT==null||t<r.st.goT||t>r.st.goT+3000){q.x.erken=true;r.msg="Bipten önce atış (erken).";return;} if(r.st.got)return; r.st.got=true; const dt=t-r.st.goT; q.x.react=Math.round(dt); r.st.reacts.push(dt); r.msg="Tepki "+sec(dt)+" · skor "+fx(q.sc,1); },
     demoCue(r,type){ if(type==="go") demoFire(rand(350,900)); },
     panel(r){const N=dsetOf("surpriz").rounds||10;const a=r.st.reacts.length?r.st.reacts.reduce((x,y)=>x+y,0)/r.st.reacts.length:null;
       return panelHtml(r.st.goT!=null?"ATEŞ!":`${r.st.rounds}/${N}`,r.msg||"Nişanda bekle; bipte hemen bas.",`Ort. tepki ${a==null?"–":sec(a)} · Kaçan ${r.st.miss}`);}
@@ -1546,7 +1554,7 @@ function startRun(){
   const d=DRM[s.drill]; const eng=ENG[s.drill]||{};
   const r={drill:d,eng,sess:s,t0:now(),timers:new Set(),active:true,cueT:null,cueType:null,st:{},msg:"",shotT:[]};
   cur.run=r;
-  applyCfg(); proc.startRef(); proc.armed=true; proc.pending=[]; proc.lastShot=-1e9; proc.quietUntil=0;
+  applyCfg(); proc.startRef(); proc.armed=true; proc.pending=[]; proc.lastShot=-1e9; proc.quietUntil=0; proc.strictOff=false; proc.rejectRun=0; proc.cand=null;
   if(S.rawRec) rawStart(r);
   if(eng.start) eng.start(r);
   if(d.demo==="periodic"&&source==="demo"&&S.autoShot) demoPeriodic(r);
@@ -1557,7 +1565,7 @@ function startRun(){
 }
 function stopRun(auto){
   const r=cur.run; if(!r||!r.active) return;
-  r.active=false; proc.armed=false;
+  r.active=false; r.accept=true; r.stopT=proc.lastT; proc.armed=false;   // durdurmadan önce atılıp ölçümü süren atışlar da sayılır
   r.timers.forEach(id=>clearTimeout(id)); r.timers.clear();
   try{ if(r.wake) r.wake.release(); }catch(e){}
   // son atışların ölçüm penceresi bitsin
@@ -1604,30 +1612,45 @@ proc.onSample=(t,gm,j)=>{ const r=cur.run; if(r&&r.active&&r.eng.onSample) r.eng
 // Sınırlar bilerek geniş: nişan alırken namlu saniyede birkaç derece oynar; burada saniyede 90°, yarım saniyede 12°,
 // atıştan sonra 20° aranır. Üst üste 3 sarsıntı atılırsa o seride süzgeç kapanır (hiç atış sayılmaması olmasın).
 // Ayarlar › Gelişmiş › Atış algılama'dan tamamen kapatılabilir.
-const NISAN_YOK_T={hareket:"Silah nişana getirilirken oluşan sarsıntı atış sayılmadı.",sonra:"Sarsıntının hemen ardından silah çok hareket etti (şarjör, sürgü ya da indirme): atış sayılmadı."};
-function nisanYok(m,s,prevT){
+const NISAN_YOK_T={hareket:"Silah nişana getirilirken oluşan sarsıntı atış sayılmadı.",sonra:"Sarsıntının hemen ardından silah çok hareket etti (şarjör, sürgü ya da indirme): atış sayılmadı.",sarsinti:"Silah sabit değilken (elde sallanırken, sarsılırken) oluşan darbe atış sayılmadı.",duz:"Silah nişan duruşunda değilken (aşağı ya da yana yatık: şarjör, sürgü, masaya koyma) oluşan darbe atış sayılmadı."};
+// Tetik ancak nişanda düşer: darbeden önce silah sabittir (dönme ve doğrusal ivme küçük), son atışlarla aynı duruştadır. Elde sallama,
+// sarsma, kaydırma, çevirme bu sınırları geçemez. gev: tetik düşmesine benzeyen 3 darbe üst üste atılınca sınırlar %60 genişler;
+// süzgeç kendiliğinden hiç kapanmaz. ref: son atışların nişan duruşu (nisanRef). Kuru tetikte önceki atıştan sonra da bakılır.
+function nisanYok(m,s,prevT,gev,ref){
   if(S.sarsintiSuz===false) return "";
   const xy=m.xy; if(!xy||xy.length<TRN*2) return "";
-  if(prevT!=null&&m.st-prevT<800) return "";
-  const g=t=>Math.round((t-TR0)/TRS);
+  const canli=s.mode!=="kuru";
+  if(canli&&prevT!=null&&m.st-prevT<800) return "";            // gerçek/CO2: önceki atışın tepmesinden toparlanırken bakılmaz
+  const g=t=>Math.round((t-TR0)/TRS), k=gev?1.6:1, pg=m.pg||0;
   const hiz=(t0,t1)=>{ let mx=0; for(let i=g(t0)+3;i<=g(t1);i++){ const v=Math.hypot(xy[i*2]-xy[(i-3)*2],xy[i*2+1]-xy[(i-3)*2+1])/(3*TRS/1000); if(v>mx) mx=v; } return mx; };
-  if(SPEED.has(s.drill)) return hiz(-150,-40)>150?"hareket":"";
+  // ipucu: hedefin 3 katı dışına düşen darbede duruş sınırı 35°'den 15°'ye iner (tek başına atış silmez)
+  const uzak=Math.hypot(xy[g(-10)*2],xy[g(-10)*2+1])>3*10.4*scaleFor(s.weapon,s.diff)/4, lh=m.lHold||0;
+  if(ref&&m.up&&dot(m.up,ref)<Math.cos((uzak?15:35)*k*RAD)) return "duz";
+  if(SPEED.has(s.drill)) return hiz(-150,-40)>150*k?"hareket":!m.impCh&&(m.l150||0)>1.5*k?"sarsinti":"";
   const a=g(-500), b=g(-60), yer=Math.hypot(xy[b*2]-xy[a*2],xy[b*2+1]-xy[a*2+1]);
-  if(hiz(-400,-60)>90||yer>12) return "hareket";
+  if(hiz(-400,-60)>90*k||yer>12*k) return "hareket";
+  // tutuş (-600..-180 ms, tetik hareketinden önce): doğrusal ivme + dönme hızı (RMS) birlikte. Nişanda ≤1,3; elde sallama ≥1,8
+  let s2=0,n=0; for(let i=g(-600)+3;i<=g(-180);i++){ const v=Math.hypot(xy[i*2]-xy[(i-3)*2],xy[i*2+1]-xy[(i-3)*2+1])/(3*TRS/1000); s2+=v*v; n++; }
+  const tut=lh/(canli?0.8:0.35)+Math.sqrt(s2/n)/(canli?80:40);
+  if(tut>1.55*(gev?1.1:1)||(!m.impCh&&pg<2*lh)) return "sarsinti";
   if(s.mode==="kuru"){ const z=g(-10); let mx=0; for(let i=g(60);i<=g(350);i++){ const d=Math.hypot(xy[i*2]-xy[z*2],xy[i*2+1]-xy[z*2+1]); if(d>mx) mx=d; }
-    if(mx>20) return "sonra"; }
+    if(mx>20*k||(!m.impCh&&(m.lPost||0)>0.5*k)) return "sonra"; }   // telefon/WitMotion: darbeden sonra sallanma sürüyor
   return "";
 }
+// nişan duruşu: kabul edilen son 6 atıştan en az ikisinin 15° içinde buluştuğu yerçekimi yönü; yoksa denetlenmez (yön testine bağlı değil)
+function nisanRef(r){ const u=r.ups||[]; let best=null,bn=1; for(const a of u){ const n=u.filter(b=>dot(a,b)>0.966).length; if(n>bn){bn=n;best=a;} } return best; }
 proc.onShot=m=>{
-  const r=cur.run; if(!r||(!r.active&&!r.accept)) return;
+  const r=cur.run; if(!r||(!r.active&&!(r.accept&&m.st<=r.stopT))) return;
+  if(!r.active&&r.drill.limit&&r.drill.limit()&&validShots(r.sess).length>=r.drill.limit()) return;   // atış sınırı dolduktan sonrakiler sayılmaz
   const s=r.sess; const scale=scaleFor(s.weapon,s.diff);
   const score=clamp(100*Math.exp(-(m.trig+holdW(s)*m.hold)/scale),0,100);
   const prevT=r.shotT[r.shotT.length-1];
-  const yok=r.st.suzKapali?"":nisanYok(m,s,prevT);
-  if(yok){ r.st.nisanYok=(r.st.nisanYok||0)+1; r.st.yokNe=yok; r.st.yokArka=(r.st.yokArka||0)+1;
-    if(r.st.yokArka<3){ if(now()-(nisanYok.t||0)>8000){ nisanYok.t=now(); toast(NISAN_YOK_T[yok],5000); } return; }
-    r.st.suzKapali=true; toast("Üst üste 3 sarsıntı atış sayılmadığı için bu seride hepsi sayılıyor. Gerekirse Ayarlar › Gelişmiş › Atış algılama'dan süzgeci kapat.",8000); }
-  r.st.yokArka=0;
+  const ref=nisanRef(r), yok=nisanYok(m,s,prevT,r.st.gevsek,ref);
+  if(yok){ r.st.nisanYok=(r.st.nisanYok||0)+1; r.st.yokNe=yok;
+    if(!r.st.gevsek&&!nisanYok(m,s,prevT,true,ref)) r.st.yokArka=(r.st.yokArka||0)+1;   // yalnız tetik düşmesine benzeyen darbe sayılır
+    if(!(r.st.yokArka>=3)){ if(now()-(nisanYok.t||0)>8000){ nisanYok.t=now(); toast(NISAN_YOK_T[yok],5000); } return; }
+    r.st.gevsek=true; r.ups=[]; toast("Tetik düşmesine benzeyen 3 darbe üst üste sayılmadı; bu seride süzgeç gevşetildi. Gerçek atışlar yine sayılmazsa Ayarlar › Gelişmiş › Atış algılama'dan kapat.",8000); }
+  r.st.yokArka=0; if(m.up){ (r.ups=r.ups||[]).push(m.up); if(r.ups.length>6) r.ups.shift(); }
   const q={n:s.shots.length+1,at:Math.round(m.st-r.t0),sc:Math.round(score*10)/10,tr:+m.trig.toFixed(4),ho:+m.hold.toFixed(4),hx:+m.hx.toFixed(4),hy:+m.hy.toFixed(4),
     dx:+m.dx.toFixed(4),dy:+m.dy.toFixed(4),wv:m.wv==null?null:+m.wv.toFixed(4),h:hourOf(m.dx,m.dy),ca:+m.cant.toFixed(2),po:+m.post.toFixed(3),ri:+m.rise.toFixed(3),pg:+m.pg.toFixed(2),rc:m.rec==null?null:Math.round(m.rec),c:[],x:{},tz:encTrace(m.xy)};
   if(prevT!=null) q.x.split=Math.round(m.st-prevT);

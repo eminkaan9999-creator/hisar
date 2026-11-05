@@ -548,7 +548,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=22;
+const VER=23;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -1207,7 +1207,7 @@ function bleWatch(){
   ble.hist.push([ble.recv,ble.drops]); if(ble.hist.length>11) ble.hist.shift();
   if(ble.st!=="bagli") return;
   const quiet=t-ble.lastPkt;
-  if(quiet>4000){
+  if(quiet>(ota.on?15000:4000)){
     ble.st="yeniden"; ble.chr=null; ble.downAt=t-quiet; refreshChip(); updateLinkUi();
     setStatus("Sensörden veri gelmiyor; bağlantı yenileniyor…",true);
     try{ble.dev.gatt.disconnect();}catch(e){}
@@ -3098,16 +3098,23 @@ async function otaInfo(force){
   const r=await fetch(fwBase()+"firmware/ota.json?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error("güncelleme bilgisi alınamadı");
   ota.info=await r.json(); ota.infoT=now(); return ota.info;
 }
-function otaWait(pred,ms,msg){ return new Promise((res,rej)=>{ const w={pred,res,rej}; w.t=setTimeout(()=>{ota.waiters=ota.waiters.filter(x=>x!==w);rej(new Error(msg));},ms); ota.waiters.push(w); if(pred()){clearTimeout(w.t);ota.waiters=ota.waiters.filter(x=>x!==w);res();} }); }
-function otaKick(){ for(const w of ota.waiters.slice()) if(w.pred()){clearTimeout(w.t);ota.waiters=ota.waiters.filter(x=>x!==w);w.res();} }
-function otaFailAll(e){ ota.fail=e; for(const w of ota.waiters.splice(0)){clearTimeout(w.t);w.rej(e);} }
+// Bekleme: koşul sağlanınca true; süre dolunca msg varsa hata, yoksa false. Bağlantı ve "Vazgeç" gibi çerçevesiz değişiklikler için 200 ms'de bir de bakılır.
+function otaWait(pred,ms,msg){ return new Promise((res,rej)=>{
+  if(pred()){ res(true); return; }
+  const w={pred,res}; w.end=()=>{ clearTimeout(w.t); clearInterval(w.i); ota.waiters=ota.waiters.filter(x=>x!==w); };
+  w.t=setTimeout(()=>{ w.end(); if(msg) rej(new Error(msg)); else res(false); },ms);
+  w.i=setInterval(()=>{ if(pred()){ w.end(); res(true); } },200);
+  ota.waiters.push(w); }); }
+function otaKick(){ for(const w of ota.waiters.slice()) if(w.pred()){ w.end(); w.res(true); } }
+function otaFailAll(e){ ota.fail=e; otaKick(); }
 function onOtaFrame(kind,code,val){
   ota.last={kind,code,val};
-  if(kind===1) ota.ready=true;
+  if(kind===1){ ota.ready=true; ota.acked=0; ota.rewind=null; }
   else if(kind===2) ota.acked=Math.max(ota.acked,val);
   else if(kind===3) ota.done=true;
-  else if(kind===4&&code===1) ota.rewind=val;
-  else if(kind===4) otaFailAll(new Error(OTA_ERR[code]||("sensör hatası "+code)));
+  // 1: sıra dışı parça geldi, 2: eksik var (yoklamaya yanıt). İkisinde de val sensörün beklediği yer; öncesi sensörde, onay sayılır.
+  else if(kind===4&&(code===1||code===2)){ ota.rewind=val; ota.acked=Math.max(ota.acked,val); }
+  else if(kind===4) otaFailAll(Object.assign(new Error(OTA_ERR[code]||("sensör hatası "+code)),{kod:code}));
   otaKick(); renderFwCard();
 }
 function otaSend(bytes,resp){
@@ -3115,45 +3122,85 @@ function otaSend(bytes,resp){
   const v=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
   return resp?(c.writeValueWithResponse?c.writeValueWithResponse(v):c.writeValue(v)):(c.writeValueWithoutResponse?c.writeValueWithoutResponse(v):c.writeValue(v));
 }
+// güncelleme sürerken uygulama kendini yenilemez, ekran kararmaz
+function mesgul(){ return !!(cur.run&&cur.run.active)||ota.on; }
+function otaUyanik(on){ try{
+  if(on){ if(navigator.wakeLock&&(!ota.wake||ota.wake.released)) navigator.wakeLock.request("screen").then(w=>{ if(ota.on&&(!ota.wake||ota.wake.released)) ota.wake=w; else w.release(); }).catch(()=>{}); }
+  else if(ota.wake){ const w=ota.wake; ota.wake=null; w.release(); }
+}catch(e){} }
+const OTA_DENEME=3;
+// Yeniden denenir: bağlantı ve zaman aşımı hataları (kodsuz), eksik veri (2), CRC (3), belleğe yazma (6), başlamadı (7).
+// Dosya sığmıyor (5) ve yazılım sensörde doğrulanamadı (4) kesin hatadır.
+function otaTekrar(e){ return !e||!e.kod||[2,3,6,7].includes(e.kod); }
+// Bir deneme: başlat, parçaları gönder, doğrulat. Onay gecikirse sensöre nerede kaldığı sorulur (0x12: eksikse kaldığı yeri
+// söyler, hepsi geldiyse doğrular); yanıt da gelmezse son onaylanan yerden yeniden gönderilir. Sensör yazılımı 2 ve sonrasıyla çalışır.
+async function otaAktar(img,info){
+  Object.assign(ota,{st:"hazirla",sent:0,acked:0,rewind:null,fail:null,ready:false,done:false,sonda:false}); renderFwCard();
+  const kes=()=>!!ota.fail||ota.abort||ble.st!=="bagli";
+  const bak=()=>{ if(ota.abort) throw new Error("vazgeçildi"); if(ota.fail) throw ota.fail; if(ble.st!=="bagli") throw new Error("bağlantı koptu"); };
+  await otaSend([0x10,...u32le(img.length),...u32le(info.crc32>>>0)],true);
+  await otaWait(()=>ota.ready||kes(),30000,"sensör güncellemeye hazırlanamadı"); bak();
+  ota.st="yukle"; ota.t0=now(); renderFwCard();
+  // yoldaki veri sensörün 48 parçalık sırasını taşırmasın; onay 2048 baytta bir geldiği için pencere en az 4 KB
+  const CH=Math.max(16,Math.min(240,(ble.mtu||23)-3-5)), WIN=Math.min(6144,Math.max(4096+CH,30*CH));
+  let off=0, n=0, seen=0, prog=now();
+  for(;;){
+    if(ota.done) return;
+    bak();
+    if(ota.acked>seen){ seen=ota.acked; prog=now(); }
+    if(ota.rewind!=null){ off=Math.min(ota.rewind,img.length); ota.rewind=null; if(ota.st!=="yukle"){ ota.st="yukle"; renderFwCard(); } }
+    if(off<ota.acked) off=ota.acked;
+    if(ota.acked>=img.length&&ota.st!=="dogrula"){   // hepsi sensörde: doğrulasın
+      ota.st="dogrula"; ota.sonda=true; renderFwCard(); await otaSend([0x12],true);
+      await otaWait(()=>ota.done||ota.rewind!=null||kes(),30000,"sensör yazılımı doğrulayamadı"); continue; }
+    if(off<img.length&&off-ota.acked<WIN){
+      const len=Math.min(CH,img.length-off), pkt=new Uint8Array(5+len); pkt[0]=0x11; pkt.set(u32le(off),1); pkt.set(img.subarray(off,off+len),5);
+      await otaSend(pkt,false); off+=len; ota.sent=Math.max(ota.sent,off); if(++n%16===0) renderFwCard(); continue; }
+    if(await otaWait(()=>ota.acked>seen||ota.rewind!=null||ota.done||kes(),1500,null)) continue;
+    // onay gelmedi: sensöre nerede kaldığını sor
+    if(now()-Math.max(prog,ota.uyan||0)>20000) throw new Error("sensör yanıt vermiyor");
+    ota.yokla=(ota.yokla||0)+1; if(off>=img.length) ota.sonda=true;
+    await otaSend([0x12],true);
+    if(!await otaWait(()=>ota.rewind!=null||ota.acked>seen||ota.done||kes(),off>=img.length?15000:5000,null)) off=ota.acked;   // yanıt da yok: son onaydan yeniden gönder
+  }
+}
 async function otaRun(){
   if(ota.on) return;
   if(!(source==="sensor"&&ble.st==="bagli"&&ble.kind==="hisar"&&ble.v2&&ble.fw>=2)){ toast("Önce sensöre bağlan (sensör yazılımı 2 ve sonrası)."); return; }
   if(cur.run&&cur.run.active){ toast("Önce süren oturumu bitir."); return; }
-  Object.assign(ota,{on:true,st:"indir",err:"",sent:0,acked:0,size:0,rewind:null,fail:null,abort:false,ready:false,done:false,t0:now()});
-  fwKey=""; renderFwCard();
+  Object.assign(ota,{on:true,st:"indir",err:"",sent:0,acked:0,size:0,rewind:null,fail:null,abort:false,ready:false,done:false,t0:now(),deneme:1,uyan:0,yokla:0,kopuk:false,sonda:false});
+  fwKey=""; otaUyanik(true); renderFwCard();
   try{
     const info=await otaInfo(true);
     const r=await fetch(fwBase()+"firmware/"+info.file+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) throw new Error("yazılım dosyası indirilemedi");
     const img=new Uint8Array(await r.arrayBuffer());
     if(img.length!==info.size||crc32(img)!==(info.crc32>>>0)) throw new Error("indirilen dosya bozuk, tekrar dene");
     if(img[0]!==0xE9) throw new Error("geçersiz yazılım dosyası");
-    ota.size=img.length; ota.st="hazirla"; renderFwCard();
-    await otaSend([0x10,...u32le(img.length),...u32le(info.crc32>>>0)],true);
-    await otaWait(()=>ota.ready||!!ota.fail,30000,"sensör güncellemeye hazırlanamadı");
-    if(ota.fail) throw ota.fail;
-    ota.st="yukle"; ota.t0=now(); renderFwCard();
-    const CH=Math.max(16,Math.min(240,(ble.mtu||23)-3-5)), WIN=6144;
-    let off=0, n=0;
-    while(off<img.length||ota.acked<img.length){
-      if(ota.abort) throw new Error("vazgeçildi");
-      if(ota.fail) throw ota.fail;
-      if(ota.rewind!=null){ off=ota.rewind; ota.rewind=null; }
-      if(off>=img.length){ await otaWait(()=>ota.acked>=img.length||ota.rewind!=null||!!ota.fail,15000,"sensör son parçayı onaylamadı"); continue; }
-      if(off-ota.acked>=WIN){ await otaWait(()=>off-ota.acked<WIN||ota.rewind!=null||!!ota.fail,10000,"sensör yanıt vermiyor"); continue; }
-      const len=Math.min(CH,img.length-off); const pkt=new Uint8Array(5+len); pkt[0]=0x11; pkt.set(u32le(off),1); pkt.set(img.subarray(off,off+len),5);
-      await otaSend(pkt,false); off+=len; ota.sent=off; if(++n%16===0) renderFwCard();
+    ota.size=img.length;
+    for(let k=1;;k++){
+      ota.deneme=k;
+      try{ await otaAktar(img,info); break; }
+      catch(e){
+        if(ota.abort) throw new Error("vazgeçildi");
+        const kopuk=ble.st!=="bagli", t=now();
+        if(!kopuk&&(!otaTekrar(e)||k>=OTA_DENEME)) throw e;
+        if(!kopuk){ try{ await otaSend([0x13],true); }catch(_){} }
+        ota.kopuk=kopuk; ota.err=e&&e.message||String(e);
+        ota.st=kopuk&&(ota.sonda||k>=OTA_DENEME||!otaTekrar(e))?"yeniden":"tekrar"; renderFwCard();
+        // koptuysa yeniden bağlanıp sürümünü bildirmesi beklenir: yeni sürümle açıldıysa güncelleme aslında tamamlanmıştır
+        await otaWait(()=>ota.abort||(source==="sensor"&&ble.st==="bagli"&&(!kopuk||(ble.connAt>=t-1000&&(ble.statT||0)>=ble.connAt))),45000,"sensör yeniden bağlanmadı");
+        if(ota.abort) throw new Error("vazgeçildi");
+        if(kopuk&&ble.fw>=info.fw) break;
+        if(k>=OTA_DENEME||!otaTekrar(e)) throw e;
+      }
     }
-    ota.st="dogrula"; renderFwCard();
-    await otaSend([0x12],true);
-    await otaWait(()=>ota.done||!!ota.fail,30000,"sensör yazılımı doğrulayamadı");
-    if(ota.fail) throw ota.fail;
-    ota.st="bitti"; renderFwCard(); toast("Sensör yazılımı güncellendi; sensör yeniden başlıyor.");
+    ota.st="bitti"; ota.sent=ota.size; renderFwCard(); toast("Sensör yazılımı güncellendi; sensör yeniden başlıyor.");
     otaInfo(true).then(()=>{fwKey="";renderFwCard();}).catch(()=>{});
   }catch(e){
     ota.st="hata"; ota.err=e&&e.message||String(e);
     try{ if(ble.wchr&&ble.st==="bagli") await otaSend([0x13],true); }catch(_){}
     renderFwCard();
-  }finally{ ota.on=false; ota.abort=false; fwKey=""; setTimeout(renderFwCard,50); }
+  }finally{ ota.on=false; ota.abort=false; fwKey=""; otaUyanik(false); setTimeout(renderFwCard,50); if(pendingReload&&!(cur.run&&cur.run.active)) setTimeout(doUpdate,4000); }
 }
 function renderFwCard(){
   const el=$("sbFw"); if(!el) return;
@@ -3162,17 +3209,22 @@ function renderFwCard(){
   if(ota.on||ota.st==="bitti"||ota.st==="hata"){
     const pct=ota.size?Math.floor(ota.sent/ota.size*100):0;
     const sp=ota.st==="yukle"&&ota.sent>4096?fx(ota.sent/1024/((now()-ota.t0)/1000),1)+" KB/sn":"";
-    const msg={indir:"Yeni yazılım indiriliyor…",hazirla:"Sensör hazırlanıyor…",yukle:`Yükleniyor: %${pct}${sp?" · "+sp:""}`,dogrula:"Sensör yazılımı doğruluyor…",bitti:"Tamam. Sensör yeni yazılımla yeniden başlıyor; uygulama kendiliğinden bağlanacak.",hata:"Güncelleme yapılamadı: "+esc(ota.err)+". Sensördeki eski yazılım çalışmaya devam ediyor; tekrar deneyebilirsin."}[ota.st]||"";
+    const ilk=x=>{ x=String(x||""); return x.charAt(0).toLocaleUpperCase("tr-TR")+x.slice(1); }, dn=ota.deneme>1?` · deneme ${ota.deneme}/${OTA_DENEME}`:"";
+    const msg={indir:"Yeni yazılım indiriliyor…",hazirla:"Sensör hazırlanıyor…"+dn,yukle:`Yükleniyor: %${pct}${sp?" · "+sp:""}${dn}`,dogrula:"Sensör yazılımı doğruluyor…",
+      tekrar:`${esc(ilk(ota.err))}. ${ota.kopuk?"Sensör yeniden bağlanınca baştan denenecek":"Baştan deneniyor"} (deneme ${Math.min(ota.deneme+1,OTA_DENEME)}/${OTA_DENEME})…`,
+      yeniden:"Sensör yeniden bağlanıyor; bağlanınca yazılım sürümüne bakılacak…",
+      bitti:"Tamam. Sensör yeni yazılımla yeniden başlıyor; uygulama kendiliğinden bağlanacak.",
+      hata:"Güncelleme yapılamadı: "+esc(ota.err)+". Sensördeki eski yazılım çalışmaya devam ediyor. Tekrar deneyebilir ya da sensörü USB-C kabloyla bilgisayara takıp yükleyebilirsin."}[ota.st]||"";
     const mode=ota.on?"run":"end";
     // Düğmeler bir kez çizilir; ilerlemede yalnız yazı ve çubuk güncellenir (dokunuş kaçmasın)
     if(el.dataset.mode!==mode){ el.dataset.mode=mode; fwKey="";
       el.innerHTML=`<h2>Sensör yazılımı</h2><p id="otaMsg"></p>`+(ota.on?`<div class="meter"><span>İlerleme</span><div class="bar"><div class="fill" id="otaFill"></div></div><span class="val" id="otaVal"></span></div>
-        <p class="note">Sensörü kapatma, uygulamadan çıkma. Kesilirse sensördeki eski yazılım çalışmaya devam eder.</p><button class="btn" id="otaStop">Vazgeç</button>`:`<button class="btn" id="otaOk">Tamam</button>`);
+        <p class="note">Ekran bu sırada kendiliğinden kapanmaz. Sensörü kapatma, uygulamadan çıkma. Bağlantı koparsa uygulama kendisi yeniden dener; sensördeki eski yazılım çalışmaya devam eder.</p><button class="btn" id="otaStop">Vazgeç</button>`:`<button class="btn" id="otaOk">Tamam</button>`);
       const b1=$("otaStop"); if(b1) b1.onclick=()=>{ota.abort=true;otaKick();b1.disabled=true;b1.textContent="Vazgeçiliyor…";};
       const b2=$("otaOk"); if(b2) b2.onclick=()=>{ota.st="";fwKey="";renderFwCard();}; }
     const m=$("otaMsg"); m.innerHTML=msg; m.className=ota.st==="hata"?"badt":ota.st==="bitti"?"okt":"";
-    const w=ota.st==="yukle"?pct:ota.st==="dogrula"?100:2;
-    if($("otaFill")){ $("otaFill").style.width=w+"%"; $("otaVal").textContent="%"+(ota.st==="dogrula"?100:pct); }
+    const tam=ota.st==="dogrula"||ota.st==="yeniden", w=ota.st==="yukle"||ota.st==="tekrar"?pct:tam?100:2;
+    if($("otaFill")){ $("otaFill").style.width=w+"%"; $("otaVal").textContent="%"+(tam?100:pct); }
     return;
   }
   if(el.dataset.mode!=="info"){ el.dataset.mode="info"; fwKey=""; }
@@ -3180,7 +3232,7 @@ function renderFwCard(){
   let body;
   if(on&&ble.v2&&ble.fw>=2&&latest!=null&&latest>ble.fw)
     body=`<p>Sensörde <b style="color:var(--fg)">sürüm ${ble.fw}</b> var, <b style="color:var(--fg)">sürüm ${latest}</b> hazır.${info&&info.not?" "+esc(info.not):""}</p>
-      <button class="btn primary" id="otaGo">Telefondan güncelle</button><p class="note">Yaklaşık 1 dakika sürer. Sensörün pili %30'un üstünde olsun ya da şarja tak.</p>`;
+      <button class="btn primary" id="otaGo">Telefondan güncelle</button><p class="note">Yaklaşık 1–2 dakika sürer. Sensörün pili %30'un üstünde olsun ya da şarja tak.</p>`;
   else if(on&&ble.v2&&ble.fw>=2)
     body=`<p>Sensörde sürüm ${ble.fw} var${latest!=null?` · <span class="okt">güncel</span>`:""}. Yeni sürüm çıkınca buradan telefonla yüklenir; bilgisayar gerekmez.</p>`;
   else if(on)
@@ -3189,7 +3241,7 @@ function renderFwCard(){
   const upToDate=on&&ble.v2&&ble.fw>=2&&!(latest!=null&&latest>ble.fw);
   el.innerHTML=`<h2>Sensör yazılımı</h2>${body}${upToDate?"":`
     <a class="btn ghost" href="${YUKLE_URL}" target="_blank" rel="noopener">Bilgisayardan yükle (USB-C)</a>`}`;
-  const g=$("otaGo"); if(g) g.onclick=()=>askSheet("Sensör yazılımını güncelle",`Sensöre sürüm ${latest} yüklenecek. Yaklaşık 1 dakika sürer; bu sırada sensörü kapatma ve uygulamadan çıkma. Bir sorun olursa sensördeki eski yazılım çalışmaya devam eder.`,"Güncelle",otaRun);
+  const g=$("otaGo"); if(g) g.onclick=()=>askSheet("Sensör yazılımını güncelle",`Sensöre sürüm ${latest} yüklenecek. Yaklaşık 1–2 dakika sürer; ekran açık kalır. Bu sırada sensörü kapatma ve uygulamadan çıkma. Bağlantı koparsa uygulama kendisi yeniden dener; olmazsa sensördeki eski yazılım çalışmaya devam eder.`,"Güncelle",otaRun);
 }
 function askSheet(title,html,okTxt,onOk,onCancel){
   let done=false;
@@ -3494,11 +3546,11 @@ const apkPrompt=()=>APK&&!IOS_APP&&(!SELF_UPD||apkNeeded);   // güncelleme = AP
 function nativeInfo(){ try{ return APK?JSON.parse(window.HisarNative.info()):null; }catch(e){ return null; } }
 function openExternal(u){ try{ if(APK&&window.HisarNative.openUrl){ window.HisarNative.openUrl(u); return; } }catch(e){} window.open(u,"_blank","noopener"); }
 function doUpdate(){
-  if(updInstalled){ if(cur.run&&cur.run.active){ pendingReload=true; return; } pendingReload=false; location.reload(); return; }
-  if(SELF_UPD&&!apkNeeded){ if(cur.run&&cur.run.active){ pendingReload=true; return; } pendingReload=false; toast("Yeni sürüm indiriliyor…");
+  if(updInstalled){ if(mesgul()){ pendingReload=true; return; } pendingReload=false; location.reload(); return; }
+  if(SELF_UPD&&!apkNeeded){ if(mesgul()){ pendingReload=true; return; } pendingReload=false; toast("Yeni sürüm indiriliyor…");
     try{ window.HisarNative.update(); }catch(e){ toast("Güncelleme başlatılamadı."); } return; }
   if(APK){ openExternal(APK_URL); toast("İndirilen dosyayı aç ve Güncelle'ye bas. Verilerin silinmez."); return; }
-  if(cur.run&&cur.run.active){ pendingReload=true; return; }
+  if(mesgul()){ pendingReload=true; return; }
   pendingReload=false; toast("Yeni sürüm yükleniyor…");
   (async()=>{ try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith("tetik-")).map(k=>caches.delete(k)));}catch(e){}
     try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}
@@ -3507,11 +3559,11 @@ function doUpdate(){
 // yeni sürüm sormadan kurulur: oturum sürüyorsa bitince, bir pencere ya da yazı alanı açıksa biraz sonra
 function sessizGuncelle(){
   clearTimeout(sessizGuncelle.t);
-  if(cur.run&&cur.run.active){ pendingReload=true; return; }
+  if(mesgul()){ pendingReload=true; return; }
   const ae=document.activeElement; if(!$("sheet").hidden||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))){ sessizGuncelle.t=setTimeout(sessizGuncelle,90000); return; }
   doUpdate(); }
 function askUpdate(){
-  if(updAsked||(cur.run&&cur.run.active)||!$("sheet").hidden) return; updAsked=true;
+  if(updAsked||mesgul()||!$("sheet").hidden) return; updAsked=true;
   openSheet("Yeni sürüm",`<p>${esc(updNote||"HİSAR TETİK'in yeni sürümü hazır.")}</p>${apkPrompt()?`<p class="note">${apkNeeded?"Bu sürüm uygulamanın kendisini de yeniliyor; bir kez APK kurulması gerekiyor. ":""}İndirince dosyayı aç ve <b>Güncelle</b>'ye bas. Verilerin silinmez.</p>`:""}<button class="btn primary" id="uGo">${apkPrompt()?"Yeni sürümü indir":"Şimdi yenile"}</button><button class="btn" data-close>Sonra</button>`,
     b=>{ b.querySelector("#uGo").onclick=()=>{ closeSheet(); doUpdate(); }; });
 }
@@ -3537,8 +3589,9 @@ window.__hisarBack=()=>{ if(!$("sheet").hidden){closeSheet();return true;} if(sp
   if(curView!=="alistirma"){showView("alistirma");return true;} return false; };
 window.__hisarSaved=(ok,name)=>toast(ok?(name||"Dosya")+" kaydedildi.":"Dosya kaydedilmedi.");
 // yerel kod yeni sayfayı kurdu (Android): süren oturum yoksa hemen, varsa oturum bitince yenilenir
-window.__hisarUpdateReady=v=>{ updInstalled=true; updAvail=true; if(cur.run&&cur.run.active){ pendingReload=true; return; } pendingReload=false; location.reload(); };
+window.__hisarUpdateReady=v=>{ updInstalled=true; updAvail=true; if(mesgul()){ pendingReload=true; return; } pendingReload=false; location.reload(); };
 window.__hisarUpdateFailed=msg=>toast("Yeni sürüm indirilemedi"+(msg?" ("+String(msg).slice(0,80)+")":"")+". İnternet bağlantısını kontrol et.");
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&ota.on){ ota.uyan=now(); otaUyanik(true); } });
 document.addEventListener("visibilitychange",()=>{const r=cur.run;if(!document.hidden&&r&&r.active){try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>{r.wake=w;}).catch(()=>{});}catch(e){}}});
 
 /* --- açılış ekranı */

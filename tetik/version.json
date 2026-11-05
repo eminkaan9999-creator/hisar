@@ -1,1 +1,1 @@
-{"v": 22, "not": "Sensörü takma anlatımı raya göre: tabancada namlunun altındaki fener/lazer rayı, tüfekte alt ya da üst ray. Yer değişince yön testi ve eşiği öğren hatırlatması. Sensör yükleme sayfasında Windows programı.", "apk": true, "apkMin": 1800}
+{"v": 23, "not": "Sensör yazılımı güncellemesi artık yarıda kalmıyor: kaybolan parçalarda sensöre nerede kaldığı sorulup oradan sürülüyor, bağlantı koparsa kendiliğinden yeniden deneniyor, güncelleme sırasında ekran açık kalıyor.", "apk": true, "apkMin": 1800}

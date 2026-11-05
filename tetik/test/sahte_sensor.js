@@ -58,7 +58,10 @@
     F.name = F.cfg.no <= 1 ? 'HISAR-SENSOR' : 'HISAR-SENSOR-' + F.cfg.no; };
   F.drop = () => drop('test');
   // Yazılım güncelleme (OTA) taklidi: HisarProtocol.h OtaRx ile aynı kurallar
-  F.ota = { st: 'idle', size: 0, crc: 0, off: 0, lastAck: 0, c: 0, nak: -1, eraseMs: 300, failCrc: false, dropOnce: null, newFw: null, chunks: 0 };
+  // Kayıp taklitleri: dropOnce (bir parça), dropTwice (bir parça ve yeniden gönderilen kopyası; sensör ikinci kez uyarmaz),
+  // ackDrop/ackDropFrom (art arda onay kaybı), dropLastAck (son onay), dropDone ("tamam" yanıtı), kopAt (o noktada bağlantı kopar; kopHep: her denemede)
+  F.ota = { st: 'idle', size: 0, crc: 0, off: 0, lastAck: 0, c: 0, nak: -1, eraseMs: 300, failCrc: false, dropOnce: null, newFw: null, chunks: 0,
+    dropTwice: null, dropAgain: null, ackDrop: 0, ackDropFrom: 0, dropLastAck: false, dropDone: false, kopAt: null, kopHep: false };
   function otaReply(kind, code, v) { const a = new Uint8Array(8); a[0] = 0x55; a[1] = 0x67; a[2] = kind; a[3] = code; a[4] = v & 255; a[5] = (v >> 8) & 255; a[6] = (v >> 16) & 255; a[7] = (v >>> 24) & 255; setTimeout(() => { if (F.connected) notify(a); }, 0); }
   const crcT = (() => { const t = new Uint32Array(256); for (let i = 0; i < 256; i++) { let c = i; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[i] = c >>> 0; } return t; })();
   function crcUpd(c, u8) { c = (c ^ 0xFFFFFFFF) >>> 0; for (let i = 0; i < u8.length; i++) c = crcT[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
@@ -70,15 +73,21 @@
       if (O.st !== 'ready') { otaReply(4, 7, O.off); return; }
       const off = u32(1), data = Uint8Array.from(b.slice(5));
       if (O.dropOnce != null && off >= O.dropOnce) { O.dropOnce = null; F.events.push(['ota-kayip', now(), off]); return; }
+      if (O.dropTwice != null && off >= O.dropTwice) { O.dropTwice = null; O.dropAgain = off; F.events.push(['ota-kayip', now(), off]); return; }
+      if (O.dropAgain != null && off === O.dropAgain && O.nak === O.off) { O.dropAgain = null; F.events.push(['ota-kayip2', now(), off]); return; }
       if (off !== O.off) { if (O.nak !== O.off) { O.nak = O.off; otaReply(4, 1, O.off); } return; }
       O.nak = -1; O.c = crcUpd(O.c, data); O.off += data.length; O.chunks++;
-      if (O.off - O.lastAck >= 2048 || O.off === O.size) { O.lastAck = O.off; otaReply(2, 0, O.off); }
+      if (O.off - O.lastAck >= 2048 || O.off === O.size) { O.lastAck = O.off;
+        if (O.ackDrop > 0 && O.off >= O.ackDropFrom) { O.ackDrop--; F.events.push(['onay-kayip', now(), O.off]); }
+        else if (O.dropLastAck && O.off === O.size) { O.dropLastAck = false; F.events.push(['onay-kayip', now(), O.off]); }
+        else otaReply(2, 0, O.off); }
+      if (O.kopAt != null && O.off >= O.kopAt) { F.events.push(['ota-kop', now(), O.off]); if (!O.kopHep) O.kopAt = null; setTimeout(() => drop('ota-kop'), 0); }
       return; }
     if (b[0] === 0x12) {
       if (O.st !== 'ready') { otaReply(4, 7, O.off); return; }
-      if (O.off !== O.size) { otaReply(4, 2, O.off); return; }
+      if (O.off !== O.size) { F.events.push(['ota-yokla', now(), O.off]); otaReply(4, 2, O.off); return; }
       if (O.c !== O.crc || O.failCrc) { O.st = 'failed'; otaReply(4, 3, O.c); return; }
-      O.st = 'done'; otaReply(3, 0, O.size); F.events.push(['ota-bitti', now()]);
+      O.st = 'done'; if (O.dropDone) { O.dropDone = false; F.events.push(['tamam-kayip', now()]); } else otaReply(3, 0, O.size); F.events.push(['ota-bitti', now()]);
       setTimeout(() => { F.fw = O.newFw || F.fw + 1; O.st = 'idle'; F.reboot('ota'); }, 300); return; }
     if (b[0] === 0x13) { if (O.st !== 'idle') F.events.push(['ota-vazgec', now()]); O.st = 'idle'; otaReply(5, 0, O.off); return; }
   }

@@ -4,7 +4,8 @@
 const C='tetik-v24';
 const STATIC=['./','./index.html','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon-32.png','./manifest.webmanifest'];
 // kurulumda HTTP onbellegi atlanir: yeni surum eski sayfayi onbellege almasin
-self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(STATIC.map(u=>new Request(u,{cache:'reload'})))).catch(()=>{}))});
+// önbelleğe alma bitmeden yeni sürüm devreye girmez (internetsiz açılış bozulmasın)
+self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(STATIC.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('tetik-')&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
  if(e.request.method!=='GET')return;

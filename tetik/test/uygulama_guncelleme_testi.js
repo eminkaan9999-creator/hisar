@@ -77,9 +77,11 @@ const IND = /Yeni sürümü indir|YENİ SÜRÜMÜ İNDİR/;
     await p.evaluate(() => { const H = window.__hisar; H.openDrill('serbest'); H.startRun(); }); await sleep(400);
     await p.evaluate(() => { window.__isaret = 2; window.__hisarUpdateReady(999); }); await sleep(1200);
     check(await p.evaluate(() => window.__isaret === 2 && window.__hisar.cur.run && window.__hisar.cur.run.active), 'Oturum sürerken yenilenmiyor (antrenman bölünmez)');
-    await p.evaluate(() => window.__hisar.stopRun(false));
-    await p.waitForFunction(() => window.__isaret === undefined && !!window.__hisar, null, { timeout: 8000 }).catch(() => {});
-    check(await p.evaluate(() => window.__isaret === undefined && !!window.__hisar), 'Oturum bitince sayfa yenileniyor');
+    await p.evaluate(() => window.__hisar.stopRun(false)); await sleep(6000);
+    check(await p.evaluate(() => window.__isaret === 2 && window.__hisar.curView === 'oturum'), 'Oturum bitince oturum ekranı açıkken yenilenmiyor (sonuç kaybolmaz)');
+    await p.evaluate(() => window.__hisar.showView('alistirma'));
+    await p.waitForFunction(() => window.__isaret === undefined && !!window.__hisar, null, { timeout: 9000 }).catch(() => {});
+    check(await p.evaluate(() => window.__isaret === undefined && !!window.__hisar), 'Oturum ekranından çıkınca sayfa yenileniyor');
     check(!r.errs.length, 'Sayfa hatası yok', r.errs); await r.ctx.close(); }
 
   await browser.close(); srv.close();

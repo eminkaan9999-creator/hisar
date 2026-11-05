@@ -300,6 +300,7 @@ struct OtaRx {
   State    state = IDLE;
   uint32_t size = 0, expectCrc = 0, offset = 0, crc = 0, lastAck = 0;
   uint32_t nakAt = 0xFFFFFFFFu;
+  uint16_t nakSkip = 0;   // ayni yer icin gelen sira disi parca sayisi (yeniden gonderilen de kaybolursa uyari tekrarlanir)
 
   static size_t reply(uint8_t* out, uint8_t kind, uint8_t code, uint32_t v) {
     out[0] = 0x55; out[1] = 0x67; out[2] = kind; out[3] = code; putU32(out + 4, v);
@@ -320,7 +321,7 @@ struct OtaRx {
         state = IDLE;
         if (sz == 0 || sz > fl.capacity()) { state = FAILED; send(out, reply(out, 4, 5, 0)); return; }
         if (!fl.begin(sz)) { state = FAILED; send(out, reply(out, 4, 6, 0)); return; }
-        size = sz; expectCrc = cr; offset = 0; crc = 0; lastAck = 0; nakAt = 0xFFFFFFFFu; state = READY;
+        size = sz; expectCrc = cr; offset = 0; crc = 0; lastAck = 0; nakAt = 0xFFFFFFFFu; nakSkip = 0; state = READY;
         send(out, reply(out, 1, 0, size));
         return;
       }
@@ -329,11 +330,11 @@ struct OtaRx {
         uint32_t off = getU32(d + 1);
         const uint8_t* p = d + 5;
         size_t len = n - 5;
-        if (off != offset) {                       // sira disi: bir kez bildir, gonderen geri sarar
-          if (nakAt != offset) { nakAt = offset; send(out, reply(out, 4, 1, offset)); }
+        if (off != offset) {                       // sira disi: bildir, gonderen geri sarar; ayni yer icin 16 parcada bir yinele
+          if (nakAt != offset || ++nakSkip >= 16) { nakAt = offset; nakSkip = 0; send(out, reply(out, 4, 1, offset)); }
           return;
         }
-        nakAt = 0xFFFFFFFFu;
+        nakAt = 0xFFFFFFFFu; nakSkip = 0;
         if (offset + len > size) { send(out, reply(out, 4, 2, offset)); return; }
         if (!fl.write(p, len)) { fl.abort(); state = FAILED; send(out, reply(out, 4, 6, offset)); return; }
         crc = crc32Update(crc, p, len);

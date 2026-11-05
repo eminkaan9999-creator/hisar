@@ -250,6 +250,7 @@ td.m{font-family:var(--mono)}
 .oz th{text-align:center;font-size:12.5px;color:var(--fg2);border-bottom:0}
 .oz th:first-child,.oz td:first-child{text-align:left}
 .oz td{text-align:center;border-bottom:0;padding:12px 6px 8px;position:relative}
+.oz td .note{white-space:normal}
 .oz tr{cursor:pointer}
 .oz tr.sel td{background:#3a3a3a}
 .oz .hb{display:flex;height:3px;margin:0 6px 2px}
@@ -587,10 +588,13 @@ function saveMeta(){lsSet(KEY+".meta",JSON.stringify({v:2,settings:S,ids:session
 // Deneme (sanal atıcı) oturumları gerçek ilerlemeyi bozmasın: geçmişe, istatistiğe, depoya girmez.
 const isDemoSess=s=>!!s&&s.src==="demo"&&!s.sample;
 function saveSession(s){
-  if(s.sample||isDemoSess(s)) return;
-  const txt=JSON.stringify(s);
-  if(!lsSet(KEY+".s."+s.id,txt)){ if(pruneTraces(s)) lsSet(KEY+".s."+s.id,JSON.stringify(s)); }
-  saveMeta();
+  if(s.sample||isDemoSess(s)) return true;
+  const put=()=>lsSet(KEY+".s."+s.id,JSON.stringify(s));
+  let ok=put();
+  while(!ok&&pruneTraces(s)) ok=put();
+  if(!ok&&s.shots.some(x=>x.tz)){ s.shots.forEach(x=>delete x.tz); ok=put(); }
+  if(!ok&&now()-(saveSession.uy||-1e9)>30000){ saveSession.uy=now(); toast("Depolama dolu: oturum kaydedilemiyor! Ayarlar › Gelişmiş Ayarlar › Veriler'den dışa aktar, sonra eski oturumları sil.",9000); }
+  saveMeta(); return ok;
 }
 function pruneTraces(keep){
   for(let i=sessions.length-1;i>=0;i--){const s=sessions[i]; if(s===keep||s.sample) continue;
@@ -965,7 +969,7 @@ async function startSensor(){
   let dev;
   try{ dev=await navigator.bluetooth.requestDevice({filters:[{services:[SVC]},{namePrefix:"HISAR"},{namePrefix:"WT"}],optionalServices:[SVC]}); }
   catch(e){
-    if(keep&&keep.gatt&&keep.gatt.connected&&ble.chr){ ble.st="bagli"; setStatus(`Bağlı: <b>${esc(keep.name||"Sensör")}</b>.`); refreshChip(); updateLinkUi(); return; }
+    if(ble.dev&&ble.dev.gatt.connected&&ble.chr){ ble.st="bagli"; setStatus(`Bağlı: <b>${esc(ble.dev.name||"Sensör")}</b>.`); refreshChip(); updateLinkUi(); return; }
     ble.st="off";
     if(e&&e.name==="NotFoundError")setStatus("Sensör seçilmedi. Sensörün açık olduğundan (ekranında BEKLİYOR yazar) emin ol ve tekrar dene.",true);
     else if(e&&(e.name==="SecurityError"||e.name==="NotAllowedError"))setStatus("Bu sayfa Bluetooth'a erişemiyor."+(IOS_APP?" iPhone Ayarlar › HİSAR TETİK › <b>Bluetooth</b> iznini aç.":APK?" Telefon ayarlarından Hisar Tetik için <b>Yakındaki cihazlar</b> (Bluetooth) iznini ver.":hostedLink()),true);
@@ -1011,9 +1015,11 @@ async function connectNow(first){
   clearTimeout(ble.timer); ble.timer=null; ble.busy=true;
   ble.st=ble.everConnected?"yeniden":"baglaniyor"; refreshChip(); updateLinkUi();
   if(!ble.everConnected&&first) setStatus("Bağlanıyor…");
-  try{ await bleConnect(); ble.busy=false; }
-  catch(e){ ble.busy=false; if(source!=="sensor"||ble.manual) return;
+  const dev=ble.dev;
+  try{ await bleConnect(); if(ble.dev===dev) ble.busy=false; }
+  catch(e){ if(ble.dev!==dev) return; ble.busy=false; if(source!=="sensor"||ble.manual) return;
     try{ if(ble.dev&&ble.dev.gatt.connected) ble.dev.gatt.disconnect(); }catch(_){}
+    if(APK&&!IOS_APP&&e&&e.name==="NotAllowedError"){ ble.st="off"; setStatus(esc(e.message||"Bluetooth kullanılamıyor.")+" Sonra <b>Bağlan</b>'a dokun.",true); refreshChip(); updateLinkUi(); return; }
     if(!ble.downAt) ble.downAt=now();
     scheduleReconnect(e); }
 }
@@ -1047,6 +1053,8 @@ function sensorDisconnect(){
 async function bleConnect(){
   const dev=ble.dev; if(!dev) throw new Error("sensör seçilmedi");
   const server=await withTimeout(dev.gatt.connect(),15000,"bağlantı zaman aşımı");
+  const iptal=()=>{ if(ble.dev===dev&&!ble.manual&&source==="sensor") return; if(ble.dev===dev||!APK) try{dev.gatt.disconnect();}catch(e){} throw new Error("bağlantı iptal edildi"); };
+  iptal();
   const svc=await withTimeout(server.getPrimaryService(SVC),8000,"sensör servisi bulunamadı");
   const chars=await withTimeout(svc.getCharacteristics(),8000,"sensör özellikleri okunamadı");
   const nc=chars.find(c=>c.properties.notify)||chars[0];
@@ -1064,11 +1072,12 @@ async function bleConnect(){
   try{nc.removeEventListener("characteristicvaluechanged",onBleValue);}catch(e){}
   nc.addEventListener("characteristicvaluechanged",onBleValue);
   await withTimeout(nc.startNotifications(),8000,"veri akışı başlatılamadı");
+  iptal();
   ble.chr=nc; ble.st="bagli"; ble.connAt=now(); ble.lastPkt=now(); ble.lastData=now(); ble.retry=0; ble.stall=false;
   if(ble.kind==="wit"&&wc){ for(const b of [[0xFF,0xAA,0x69,0x88,0xB5],[0xFF,0xAA,0x03,0x0B,0x00],[0xFF,0xAA,0x00,0x00,0x00]]){await bleWrite(b);await new Promise(r=>setTimeout(r,150));} }
   if(!resume){ const kb=S.bias["sensor:"+(dev.name||"x")]; if(kb){proc.bias0=kb;proc.bias=kb.slice();} }
   if(ble.everConnected){ ble.reconnects++; ble.lastOutage=ble.downAt?now()-ble.downAt:null;
-    if(!resume) setStatus(`Bağlantı geri geldi${ble.lastOutage!=null?" ("+fx(ble.lastOutage/1000,1)+" sn kesinti)":""}.`); }
+    setStatus(`Bağlantı geri geldi${ble.lastOutage!=null?" ("+fx(ble.lastOutage/1000,1)+" sn kesinti)":""}.`); }
   else setStatus(`Bağlı: <b>${esc(dev.name||"Sensör")}</b>.`);
   if(!ble.everConnected) greetOnConnect();
   ble.everConnected=true; ble.downAt=0;
@@ -1125,7 +1134,7 @@ function parseBle(dv,tArg){
     else if(f===0x62&&i+5<=n){const k=dv.getUint8(i+2);if(i+5+k*13>n)break;const o=i+5;
       streamPacket(unwrap16(dv.getUint16(i+3,true)),k,tn,(j,t,sq)=>feedSample(t,dv,o+j*13,sq,false));i+=5+k*13;}
     else if(f===0x64&&i+17<=n){const o=i+4;streamPacket(unwrap16(dv.getUint16(i+2,true)),1,tn,(j,t,sq)=>feedSample(t,dv,o,sq,false));i+=17;}
-    else if(f===0x65&&i+3<=n){const len=dv.getUint8(i+2);if(i+3+len>n)break;parseStatus2(dv,i+3,len);i+=3+len;}
+    else if(f===0x65&&i+3<=n){const len=Math.min(dv.getUint8(i+2),n-i-3);if(len<3)break;parseStatus2(dv,i+3,len);i+=3+len;}
     else if(f===0x67&&i+8<=n){onOtaFrame(dv.getUint8(i+2),dv.getUint8(i+3),dv.getUint32(i+4,true));i+=8;}
     else if(f===0x63&&i+6<=n){ble.bat=dv.getUint8(i+2);ble.chg=!!dv.getUint8(i+3);ble.fw=dv.getUint8(i+4);ble.imu=!!dv.getUint8(i+5);statusSeen();i+=6;}
     else if(f===0x61&&i+20<=n){const i16=o=>dv.getInt16(o,true);const t=ble.lastWit&&tn-ble.lastWit<100?Math.max(ble.lastWit+2,tn):tn;ble.lastWit=t;
@@ -1326,12 +1335,12 @@ const CHALLENGES=[
  {drill:"serbest",goal:"Üst üste 5 atış 85 ve üzeri",test:s=>{let k=0,m=0;for(const q of validShots(s)){k=q.sc>=85?k+1:0;m=Math.max(m,k);}return m>=5;}},
  {drill:"kiyas20",goal:"20 saniyede 10 etkili atış (70 ve üzeri)",test:s=>validShots(s).filter(q=>q.sc>=70).length>=10},
  {drill:"par",goal:"En az 4 atış par süresi içinde",test:s=>validShots(s).filter(q=>q.x&&q.x.parOk).length>=4},
- {drill:"ritim",goal:"20 atış, ortalama ritim sapması 0,15 sn altında",test:s=>{const o=validShots(s).map(q=>q.x&&q.x.offset).filter(x=>x!=null);return o.length>=20&&o.reduce((a,b)=>a+Math.abs(b),0)/o.length<150;}},
+ {drill:"ritim",need:()=>(S.ritimShots||20)>=20,needTxt:"Bunun için DRILL ayarında atış sayısını en az 20 yap.",goal:"20 atış, ortalama ritim sapması 0,15 sn altında",test:s=>{const o=validShots(s).map(q=>q.x&&q.x.offset).filter(x=>x!=null);return o.length>=20&&o.reduce((a,b)=>a+Math.abs(b),0)/o.length<150;}},
  {drill:"atiseli",goal:"10 atış, ortalama 75 ve üzeri",test:s=>{const v=validShots(s);return v.length>=10&&avgOf(v)>=75;}},
  {drill:"zamanlayici",goal:"5 tur: ilk atış ortalaması 1,5 sn altında, skor 70 ve üzeri",test:s=>{const r=validShots(s).filter(q=>q.x&&q.x.react!=null);return r.length>=5&&r.reduce((a,q)=>a+q.x.react,0)/r.length<1500&&avgOf(r)>=70;}},
- {drill:"dayaniklilik",goal:"30 atış, son 10 atışın ortalaması 75 ve üzeri",test:s=>{const v=validShots(s);return v.length>=30&&avgOf(v.slice(-10))>=75;}},
+ {drill:"dayaniklilik",need:()=>(S.dayanik||30)>=30,needTxt:"Bunun için DRILL ayarında atış sayısını en az 30 yap.",goal:"30 atış, son 10 atışın ortalaması 75 ve üzeri",test:s=>{const v=validShots(s);return v.length>=30&&avgOf(v.slice(-10))>=75;}},
  {drill:"destekeli",goal:"10 atış, ortalama 70 ve üzeri",test:s=>{const v=validShots(s);return v.length>=10&&avgOf(v)>=70;}},
- {drill:"rehine",goal:"En az 7 rehine kurtar",test:s=>validShots(s).filter(q=>q.x&&q.x.rehine==="kurtardi").length>=7}
+ {drill:"rehine",need:()=>(dsetOf("rehine").rounds||10)>=7,needTxt:"Bunun için DRILL ayarında tur sayısını en az 7 yap.",goal:"En az 7 rehine kurtar",test:s=>validShots(s).filter(q=>q.x&&q.x.rehine==="kurtardi").length>=7}
 ];
 const dayNo=t=>{const d=new Date(t==null?Date.now():t);return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);};
 function todayChallenge(){ return CHALLENGES[dayNo()%CHALLENGES.length]; }
@@ -1532,7 +1541,7 @@ function startRun(){
   if(cur.review||(cur.sess&&cur.sess.shots.length&&!cur.run)){ const d=cur.sess.drill; cur.sess=newSession(d); cur.review=false; cur.sel=-1; }
   if(!sourceReady()){ notConnected(); return; }
   audioUnlock();
-  const s=cur.sess; s.date=Date.now(); s.src=source; s.mode=S.mode; s.weapon=S.weapon; s.weaponName=S.weaponName; s.hand=S.hand; s.diff=S.diff; s.who=S.prof;
+  const s=cur.sess; s.date=Date.now(); s.src=source; s.mode=S.mode; s.weapon=S.weapon; s.weaponName=S.weaponName; s.hand=S.hand; s.diff=S.diff; s.who=S.prof; s.dist=S.dist; s.par=S.par;
   if(source==="sensor"||source==="phone"){ const mm=S.mount[source]; s.yt=!!(mm&&mm.B); } else delete s.yt;   // yön testi yapılmış mı (kanting sıfırı güvenilir mi)
   const d=DRM[s.drill]; const eng=ENG[s.drill]||{};
   const r={drill:d,eng,sess:s,t0:now(),timers:new Set(),active:true,cueT:null,cueType:null,st:{},msg:"",shotT:[]};
@@ -1552,7 +1561,7 @@ function stopRun(auto){
   r.timers.forEach(id=>clearTimeout(id)); r.timers.clear();
   try{ if(r.wake) r.wake.release(); }catch(e){}
   // son atışların ölçüm penceresi bitsin
-  setTimeout(()=>{ r.accept=true; proc.flush(); r.accept=false; finishRun(r,auto); },650);
+  setTimeout(()=>{ r.accept=true; proc.flush(); r.accept=false; finishRun(r,auto); },auto?1100:650);
   const b=$("btnStop"); b.disabled=true; b.querySelector("span").textContent="Bitiriliyor…";
 }
 function finishRun(r,auto){
@@ -1564,7 +1573,7 @@ function finishRun(r,auto){
   if(s.shots.length){ checkChallenge(s); saatOzet(s); setSub("ozet"); if(isDemoSess(s)) toast("Deneme oturumu: sanal atıcıyla yapıldı, geçmişe kaydedilmedi."); }
   else toast("Atış algılanmadı, oturum kaydedilmedi.");
   renderSession(); renderHome();
-  if(pendingReload) setTimeout(doUpdate,1500);
+  if(pendingReload){ clearTimeout(sessizGuncelle.t); sessizGuncelle.t=setTimeout(sessizGuncelle,4000); }
 }
 function checkChallenge(s){
   const c=todayChallenge(); if(!c||s.drill!==c.drill||s.safe||isDemoSess(s)) return;
@@ -1577,7 +1586,7 @@ function summarizeExtra(r){
   for(const k of ["miss","ok","late","bad","low"]) if(st[k]!=null) e[k]=st[k];
   return e;
 }
-$("btnStop").onclick=()=>{ if(cur.run&&cur.run.active) stopRun(false); else startRun(); };
+$("btnStop").onclick=()=>{ if(cur.run&&cur.run.active) stopRun(false); else startGuard(); };
 $("btnNote").onclick=()=>openNotes(cur.sess);
 // masaüstünde deneme için: boşluk tuşu atışı elle işaretler
 function manualShot(){ const r=cur.run; if(!r||!r.active) return; if(source==="demo"&&sim) sim.fire(now()); else proc.markShot(proc.lastT); }
@@ -1725,7 +1734,7 @@ for(const pass of [0,1]) for(let h=1;h<=12;h++){ const p=MAP_PISTOL[h]; if(!p) c
 CAUSE_H.yanak=12; SEE.yanak="geri_tepme";
 function causeArt(k,good){
   const h=CAUSE_H[k]; const a=h==null?0:(h*30-90)*RAD; const off=good||h==null?0:26;
-  const cx=60+Math.cos(a)*off, cy=52+Math.sin(a)*off; const spread=k==="gezinme"&&!good?15:k==="takip"&&!good?9:5;
+  const sol=(cur.sess?effHand(cur.sess):S.hand)==="L", cx=60+(sol?-1:1)*Math.cos(a)*off, cy=52+Math.sin(a)*off; const spread=k==="gezinme"&&!good?15:k==="takip"&&!good?9:5;
   let dots=""; const pts=[[0,0],[1,-.6],[-.8,.7],[.5,1],[-1,-.8],[.2,-1.1]]; pts.forEach(([x,y])=>{dots+=`<circle cx="${(cx+x*spread).toFixed(1)}" cy="${(cy+y*spread).toFixed(1)}" r="3.2" fill="#1d1d1d"/>`;});
   const tilt=k==="kanting"&&!good?`transform="rotate(14 60 52)"`:"";
   return `<svg viewBox="0 0 120 112" role="img" aria-label="${good?"Doğru":"Hatalı"}"><rect width="120" height="112" fill="#f2f2f2"/><g ${tilt}>${[44,32,20,9].map((r,i)=>`<circle cx="60" cy="52" r="${r}" fill="${i===3?"#d93a3f":"none"}" stroke="#b5b5b5" stroke-width="1.2"/>`).join("")}<path d="M60 4v96M12 52h96" stroke="#c9c9c9" stroke-width=".8"/></g>${dots}
@@ -1816,7 +1825,7 @@ function renderSession(){
 }
 function renderPre(){
   const s=cur.sess, d=DRM[s.drill]; const w=weekStats(d.id); const ch=todayChallenge();
-  $("preStart").innerHTML=`<h2>${esc(d.ad)}</h2><div class="ins"><p>Hedef: ${esc(d.hedef)}</p><p>Talimatlar: ${esc(d.talimat)}</p>${ch.drill===d.id?`<p><b>Günün görevi:</b> ${esc(ch.goal)}.</p>`:""}</div>
+  $("preStart").innerHTML=`<h2>${esc(d.ad)}</h2><div class="ins"><p>Hedef: ${esc(d.hedef)}</p><p>Talimatlar: ${esc(d.talimat)}</p>${ch.drill===d.id?`<p><b>Günün görevi:</b> ${esc(ch.goal)}.${ch.need&&!ch.need()?` <span class="warnt">${esc(ch.needTxt)}</span>`:""}</p>`:""}</div>
     <div class="wk"><div>Bu hafta${TROPHY}</div><div>Skor<b>${w?fx(w.avg,1):"–"}</b></div><div>ATIŞLAR<b>${w?w.n:0}</b></div></div>
     <div class="sq"><button id="preDrill" aria-label="Alıştırma ayarları">${IC_GEAR}<span>Drill</span></button><button id="preMode" aria-label="Atış tipi: ${esc(MODE_T[S.mode])}">${MODE_IC[S.mode]}<span>${esc(MODE_T[S.mode])}</span></button><button id="preHand" aria-label="Atış eli">${HAND_IC(S.hand)}<span>${S.hand==="R"?"Sağ":"Sol"}</span></button></div>
     <div class="wpn">${esc(S.weaponName||(S.weapon==="pistol"?"Tabanca":"Tüfek"))}</div>
@@ -1892,12 +1901,12 @@ function drawHedef(){
   const sw=silahBul(s.weaponName), kmm=sw&&sw.mm?sw.mm:(rifle?5.7:9);
   const {cx,cy,rw,black}=hdGeo(w,h,rifle), k=rw/hdRing(s), rh=Math.max(3.5,rw*0.3*clamp(Math.sqrt(kmm/9),0.8,1.1)), lim=Math.min(w,h)/2-10;
   const P=p=>{ let X=p[0]*k, Y=-p[1]*k; const L=Math.max(Math.abs(X),Math.abs(Y)); if(L>lim){X*=lim/L;Y*=lim/L;} return [cx+X,cy+Y]; };
-  const v=validShots(s), run=!!(cur.run&&cur.run.active);
+  const v=validShots(s), run=!!cur.run;
   if(HD.sid!==s.id){ HD.sid=s.id; HD.n=v.length; HD.t0=-1e9; }
   else if(v.length!==HD.n){ HD.t0=run&&v.length===HD.n+1?now():-1e9; HD.n=v.length; }
   const last=run&&v.length?v[v.length-1]:null;
   v.forEach(q=>{ if(q===last) return; const [X,Y]=P(hdShot(q).p); hdDelik(x,X,Y,rh,Math.hypot(X-cx,Y-cy)<black,last?0.7:1); });
-  if(!run&&v.length>=2){ const g=hdGrup(v), [mx,my]=P(g.m), rr=Math.max(rh*1.6,g.d*k/2+rh+3);
+  if(!run&&v.length>=2){ const g=hdGrup(v), [mx,my]=P(g.m), rr=Math.max(rh*1.6,Math.max(...v.map(q=>{const [X,Y]=P(hdShot(q).p);return Math.hypot(X-mx,Y-my);}))+rh+3);
     x.setLineDash([6,5]); x.strokeStyle="#22d3c5"; x.lineWidth=2; x.beginPath(); x.arc(mx,my,rr,0,Math.PI*2); x.stroke(); x.setLineDash([]);
     x.strokeStyle="#22d3c5"; x.lineWidth=2; x.beginPath(); x.moveTo(mx-6,my); x.lineTo(mx+6,my); x.moveTo(mx,my-6); x.lineTo(mx,my+6); x.stroke(); }
   if(!last) return;
@@ -1926,18 +1935,18 @@ function hedefMetin(s,v,q,run,rev,yeni){
   if(!q) return `<p class="note" style="text-align:center">Nişan al ve tetiğe bas. Atışın hedefte delik olarak görünecek.</p>`;
   const rw=hdRing(s), kart=(id,ids,iki,say)=>`<button class="hd-kart${iki?" iki":""}" data-cause="${id}" data-list="${ids.join(",")}"><span class="hd-k">${iki?"Ya da":"Neden"}${say?` · ${say} atışta`:""}</span><b>${esc(CAUSES[id].ad)}</b>${iki?"":`<span>${esc(CAUSES[id].ozet)}</span>`}<i>Nasıl düzeltilir ›</i></button>`;
   if(rev){ const avg=avgOf(v), [vt,vc]=verdict(avg), iyi=v.filter(x=>x.sc>=(S.sesEsik||85)).length, cc=causeCounts(v).filter(x=>CAUSES[x[0]]).slice(0,2), ids=cc.map(x=>x[0]);
-    let grup=""; if(v.length>=2){ const cm=hdGrup(v).d*RAD*(S.dist||25)*100; grup=` Grup çapı ≈ ${cm<10?fx(cm,1):Math.round(cm)} cm (${S.dist||25} m'de).`; }
-    return `<div class="hd"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(avg,0)}</b><small>Ortalama</small></div><div class="hd-ne"><b>${esc(vt.replace("ATIŞ","OTURUM"))}</b><span>${v.length} atış, ${iyi} tanesi iyi.${grup}</span></div></div>
+    let grup=""; if(v.length>=2){ const dm=s.dist||S.dist||25, cm=hdGrup(v).d*RAD*dm*100; grup=` Grup çapı ≈ ${cm<10?fx(cm,1):Math.round(cm)} cm (${fx(dm,dm%1?1:0)} m'de).`; }
+    return `<div class="hd"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(Math.floor(avg),0)}</b><small>Ortalama</small></div><div class="hd-ne"><b>${esc(vt.replace("ATIŞ","OTURUM"))}</b><span>${v.length} atış, ${iyi} tanesi ${S.sesEsik||85} ve üzeri.${grup}</span></div></div>
       ${ids.map((id,i)=>kart(id,ids,i>0,cc[i][1])).join("")}</div>`; }
   const [vt,vc]=verdict(q.sc), yon=hdYon(hdShot(q).p,rw), ids=(q.c||[]).filter(k=>CAUSES[k]), sw=silahBul(s.weaponName);
   const ilk=run&&q.n===1&&sw&&sw.tetik==="da_sa"?`<p class="note" style="margin:0">${esc(sw.ad)}: ilk atış çift hareketlidir, tetik ağır ve uzundur. Tetiğe sürekli ve düz bas.</p>`:"";
   const lej=run&&hdShot(q).iz?`<p class="hd-lej"><span><i style="background:var(--hold)"></i>Atıştan önce nişanın</span><span><i style="background:var(--trig)"></i>Tetiği çekerken kayma</span></p>`:"";
-  return `<div class="hd${an}"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(q.sc,0)}</b><small>Skor</small></div><div class="hd-ne"><b>${esc(vt)}</b><span>${esc(yon.t)}</span></div></div>
+  return `<div class="hd${an}"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(Math.floor(q.sc),0)}</b><small>Skor</small></div><div class="hd-ne"><b>${esc(vt)}</b><span>${esc(yon.t)}</span></div></div>
     ${ids.length?ids.map((id,i)=>kart(id,ids,i>0,0)).join(""):`<div class="hd-kart temiz"><span class="hd-k">Sonuç</span><b>${q.sc>=(S.sesEsik||85)?"Temiz atış":"Belirgin bir hata yok"}</b><span>${q.sc>=(S.sesEsik||85)?"Tetik düzgün düştü, nişan sabitti. Böyle devam.":"Puan, nişanın biraz oynamasından düştü. Nefesini ver, sakin tut."}</span></div>`}
     ${ilk}${lej}</div>`;
 }
 function loop(){
-  if(curView==="oturum"&&cur.sub==="skor"&&!pages.length) drawHedef();
+  if(curView==="oturum"&&cur.sub==="skor"&&!pages.length&&now()-HD.t0<HD_ANIM+700) drawHedef();
   if(setPage==="algilama"){ settingsMeter(); updDet(); } else if(setPage==="montaj") updateMontajLive();
   if(curView==="oturum"&&cur.run&&cur.run.active&&cur.run.eng.panel&&(cur.run.drill.id==="kiyas20"||cur.run.drill.id==="zamankiyas")) renderPanel();
   requestAnimationFrame(loop);
@@ -1962,7 +1971,7 @@ function renderGrafik(){
   const BW=340,BH=230,mid=BH/2,bl=34,br=12; const bw=Math.min(36,(BW-bl-br)/sh.length*0.9); const step=(BW-bl-br)/Math.max(1,sh.length);
   const yv=val=>val/top*(mid-12);
   let b=`<svg viewBox="0 0 ${BW} ${BH}" width="100%" role="img" aria-label="Atış başına tetik ve nişan hareketi"><line x1="${bl}" x2="${bl}" y1="8" y2="${BH-8}" stroke="#fff" stroke-width="2"/>`;
-  for(const f of [1/3,2/3,1]){ const t=top*f; b+=`<text x="${bl-6}" y="${mid-yv(t)+4}" fill="#fff" font-size="11" text-anchor="end">${fx(t,t<1?2:1)}</text><text x="${bl-6}" y="${mid+yv(t)+4}" fill="#fff" font-size="11" text-anchor="end">${fx(t,t<1?2:1)}</text>`; }
+  const ku=S.unit==="moa"?60:S.unit==="mil"?17.7778:1; for(const f of [1/3,2/3,1]){ const t=top*f; b+=`<text x="${bl-6}" y="${mid-yv(t)+4}" fill="#fff" font-size="11" text-anchor="end">${fx(t*ku,t*ku<1?2:1)}</text><text x="${bl-6}" y="${mid+yv(t)+4}" fill="#fff" font-size="11" text-anchor="end">${fx(t*ku,t*ku<1?2:1)}</text>`; }
   sh.forEach((q,i)=>{ const x0=bl+i*step+(step-bw)/2; const ht=yv(q.tr), hh=yv(q.ho), sel=i===cur.sel;
     b+=`<g data-i="${i}" style="cursor:pointer"><rect x="${x0}" y="${mid-ht}" width="${bw}" height="${Math.max(1,ht)}" fill="#f5c518" stroke="${sel?"#fff":"#fff8"}" stroke-width="${sel?2:1}"/><rect x="${x0}" y="${mid}" width="${bw}" height="${Math.max(1,hh)}" fill="#3b8ff0" stroke="${sel?"#fff":"#fff8"}" stroke-width="${sel?2:1}"/></g>`; });
   b+=`<line x1="${bl}" x2="${BW-br}" y1="${mid}" y2="${mid}" stroke="#fff" stroke-width="1"/></svg><p class="note">Yukarı: tetik çekme hareketi · aşağı: nişan hattı gezinmesi (${esc(S.unit==="deg"?"derece":S.unit==="moa"?"MOA":"milyem")}).</p>`;
@@ -2011,8 +2020,8 @@ function drawTrace(q,prog){
   const gs=-TR0/TRS; if(lim>=gs){const px=cx+xy[gs*2]*sc,py=cy-xy[gs*2+1]*sc;x.strokeStyle="#fff";x.lineWidth=2.5;x.beginPath();x.moveTo(px-6,py-6);x.lineTo(px+6,py+6);x.moveTo(px+6,py-6);x.lineTo(px-6,py+6);x.stroke();}
 }
 $("btnReplay").onclick=()=>{const q=cur.sess&&cur.sess.shots[cur.sel];if(!q)return;cancelAnimationFrame(replayRAF);const t0=now();const step=()=>{const p=Math.min(1,(now()-t0)/1400);drawTrace(q,p);if(p<1)replayRAF=requestAnimationFrame(step);};step();};
-$("btnReplayAll").onclick=()=>{const sh=cur.sess?cur.sess.shots:[];if(!sh.length)return;cancelAnimationFrame(replayRAF);let i=0;const t0=now();cur.sel=0;renderIz();
-  const step=()=>{const e=now()-t0;const k=Math.floor(e/1600);if(k>=sh.length){cur.sel=sh.length-1;renderIz();return;}if(k!==i){i=k;cur.sel=k;renderIz();}drawTrace(sh[k],Math.min(1,(e-k*1600)/1300));replayRAF=requestAnimationFrame(step);};step();};
+$("btnReplayAll").onclick=()=>{const s0=cur.sess,sh=s0?s0.shots:[];if(!sh.length)return;cancelAnimationFrame(replayRAF);let i=0;const t0=now();cur.sel=0;renderIz();
+  const step=()=>{if(cur.sess!==s0||curView!=="oturum"||cur.sub!=="iz"||pages.length)return;const e=now()-t0;const k=Math.floor(e/1600);if(k>=sh.length){cur.sel=sh.length-1;renderIz();return;}if(k!==i){i=k;cur.sel=k;renderIz();}drawTrace(sh[k],Math.min(1,(e-k*1600)/1300));replayRAF=requestAnimationFrame(step);};step();};
 $("btnCant").onclick=()=>openCantTable();
 $("btnDelShot").onclick=()=>{ const s=cur.sess, q=s&&s.shots[cur.sel]; if(!q||(cur.run&&cur.run.active)) return;
   askSheet("Atışı sil",`<b>${q.n}. atış</b> (skor ${fx(q.sc,1)}) oturumdan silinsin mi?`,"Sil",()=>{ s.shots.splice(cur.sel,1); s.shots.forEach((x,i)=>x.n=i+1); cur.sel=Math.min(cur.sel,s.shots.length-1);
@@ -2052,9 +2061,9 @@ function renderOzet(){
   const best=v.length?Math.max(...v.map(q=>q.sc)):null;
   const lines=s.shots.length&&!run?summaryLines(s).filter(([k])=>!/^(ortalama skor|atış)$/i.test(String(k).trim())):[];
   const ex=extraCols(s); const mx=Math.max(0.0001,...s.shots.map(q=>q.tr+q.ho));
-  $("sv-ozet").innerHTML=`<h2>${esc(d.ad)}</h2><div class="tot"><div>Ortalama Skor<b>${v.length?fx(avgOf(v),1):"–"}</b></div><div>Toplam Süre<b>${fx(dur||0,2)}s</b></div></div>
+  $("sv-ozet").innerHTML=`<h2>${esc(d.ad)}</h2><div class="tot"><div>Ortalama Skor<b>${v.length?fx(avgOf(v),1):"–"}</b></div><div>Toplam Süre<b>${fx(dur||0,run?1:0)} sn</b></div></div>
     ${lines.length?`<div class="xl">${lines.map(([k,val])=>`<span>${esc(k)}: <b>${esc(val)}</b></span>`).join("")}</div>`:""}
-    <table><thead><tr><th>Alıştırmalar</th><th>Skor</th><th>Zaman</th></tr></thead><tbody id="listBody">${s.shots.length?s.shots.map((q,i)=>{ const tw=q.tr/mx*100, hw=q.ho/mx*100;
+    <table><thead><tr><th>Atışlar</th><th>Skor</th><th>Zaman</th></tr></thead><tbody id="listBody">${s.shots.length?s.shots.map((q,i)=>{ const tw=q.tr/mx*100, hw=q.ho/mx*100;
       const extra=ex.map(e=>e[0]+" "+e[1](q)).join(" · ")+(q.x&&q.x.erken?" · sayılmadı (erken)":"");
       return `<tr class="${i===cur.sel?"sel":""}" data-i="${i}"><td>Atış #${q.n}${extra?`<div class="note">${esc(extra.replace(/^ · /,""))}</div>`:""}</td><td class="sc-${scCls(q.sc)}">${fx(q.sc,1)}${q.sc===best&&!(q.x&&q.x.erken)?TROPHY_S:""}</td><td>${q.x&&q.x.split!=null?fx(q.x.split/1000,2):"0,0"}</td></tr><tr data-i="${i}" class="${i===cur.sel?"sel":""}"><td colspan="3" style="padding:0 0 4px"><div class="hb"><i style="width:${hw.toFixed(1)}%;background:var(--hold)"></i><i style="width:${tw.toFixed(1)}%;background:var(--trig)"></i></div></td></tr>`;}).join(""):`<tr><td colspan="3" class="note" style="text-align:center">Henüz atış yok.</td></tr>`}</tbody></table>
     ${s.notes?`<p class="note" style="margin-top:12px">📝 ${esc(s.notes)}</p>`:""}
@@ -2074,7 +2083,7 @@ function summaryLines(s){
   else if(d==="dayaniklilik"){ if(v.length>=20){const f=mean(v.slice(0,10).map(q=>q.sc)),l=mean(v.slice(-10).map(q=>q.sc));out.push(["Yorgunluk etkisi",(l-f>=0?"+":"")+fx(l-f,1)+" puan"],["İlk 10 / son 10",fx(f,1)+" / "+fx(l,1)]);}
     else out.push(["Ortalama skor",v.length?fx(avg,1):"–"],["Yorgunluk etkisi","en az 20 atış gerekir"]);}
   else if(d==="zamanlayici"){const r=v.map(q=>q.x.react).filter(x=>x!=null);out.push(["Ort. ilk atış",r.length?sec(mean(r)):"–"],["En iyi",r.length?sec(Math.min(...r)):"–"],["Kaçan tur",String(s.extra.miss||0)]);}
-  else if(d==="par"){const n=v.filter(q=>q.x.parOk!=null);const ok=n.filter(q=>q.x.parOk).length;out.push(["Par içinde",n.length?`${ok}/${n.length} (%${Math.round(ok/n.length*100)})`:"–"],["Par süresi",fx(S.par,1)+" sn"]);}
+  else if(d==="par"){const n=v.filter(q=>q.x.parOk!=null);const ok=n.filter(q=>q.x.parOk).length;out.push(["Par içinde",n.length?`${ok}/${n.length} (%${Math.round(ok/n.length*100)})`:"–"],["Par süresi",fx(s.par||S.par,1)+" sn"]);}
   else if(d==="kiyas20"){const eff=v.filter(q=>q.sc>=70).length;out.push(["Etkili atış",String(eff)],["Toplam atış",String(v.length)],["Ortalama skor",fx(avg,1)]);}
   else if(d==="zamankiyas"){const r=v.map(q=>q.x.react).filter(x=>x!=null);const tot=r.length?Math.max(...r):null;out.push(["Toplam süre",tot==null?"–":sec(tot)],["Atış başına",tot==null||!v.length?"–":sec(tot/v.length)],["Ortalama skor",fx(avg,1)]);}
   else if(d==="surpriz"){const r=v.map(q=>q.x.react).filter(x=>x!=null);out.push(["Ort. tepki",r.length?sec(mean(r)):"–"],["Ortalama skor",fx(avg,1)],["Kaçan tur",String(s.extra.miss||0)]);}
@@ -2100,7 +2109,7 @@ async function buildReport(s){
   const rows=Math.min(v.length,30), more=v.length-rows;
   const cc=causeCounts(v).slice(0,4);
   const lines=summaryLines(s).filter(([k])=>!/^(ortalama skor|atış|süre)$/i.test(String(k).trim())).slice(0,6);
-  const H=210+330+(lines.length?Math.ceil(lines.length/3)*104+20:0)+330+460+110+rows*46+(more?46:0)+150;
+  const H=210+330+(lines.length?Math.ceil(lines.length/3)*104+20:0)+330+460+110+rows*46+(more?46:0)+(s.notes?200:160);
   const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
   const T=(t,px,py,font,col,al,base)=>{x.font=font;x.fillStyle=col;x.textAlign=al||"left";x.textBaseline=base||"alphabetic";x.fillText(t,px,py);};
   const RR=(px,py,w,h,r,fill,stroke)=>{x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();if(fill){x.fillStyle=fill;x.fill();}if(stroke){x.strokeStyle=stroke;x.lineWidth=2;x.stroke();}};
@@ -2114,7 +2123,7 @@ async function buildReport(s){
   T(dateTxt(s.date),W-P,y+40,`400 26px ${BODY}`,RC.muted,"right");
   y+=86;
   T(fit(UP(d.ad),`600 34px ${DSP}`,IW),P,y+34,`600 34px ${DSP}`,RC.accent);
-  const prof=[s.weapon==="pistol"?"Tabanca":"Tüfek",s.weaponName||null,(s.hand==="L"?"Sol el":"Sağ el")+(s.handMode==="weak"?" (destek eli)":s.handMode==="strong"?" (tek el)":""),MODE_T[s.mode]||s.mode,{kolay:"Kolay",normal:"Normal",zor:"Zor"}[s.diff]||"",{demo:"Deneme",phone:"Telefon sensörü",sensor:"M5Stick sensör"}[s.src]||""].filter(Boolean).join(" · ");
+  const prof=[s.weapon==="pistol"?"Tabanca":"Tüfek",s.weaponName||null,(s.hand==="L"?"Sol el":"Sağ el")+(s.handMode==="weak"?" (destek eli)":s.handMode==="strong"?" (tek el)":""),MODE_T[s.mode]||s.mode,{kolay:"Kolay",normal:"Normal",zor:"Zor"}[s.diff]||"",{demo:"Deneme",phone:"Telefon sensörü",sensor:"Bluetooth sensör"}[s.src]||""].filter(Boolean).join(" · ");
   T(fit(prof,`400 25px ${BODY}`,IW),P,y+76,`400 25px ${BODY}`,RC.muted);
   y+=124;
   // skor kartı
@@ -2153,8 +2162,8 @@ async function buildReport(s){
   const ex=P+half+24; RR(ex,y,half,430,22,RC.panel,RC.line); T("EN SIK HATALAR",ex+28,y+50,`600 22px ${DSP}`,RC.muted);
   if(!cc.length){ T("Belirgin bir hata yok.",ex+28,y+110,`500 26px ${BODY}`,RC.good); }
   else cc.forEach(([k,n2,p],i)=>{ const cy=y+96+i*82; const c2=CAUSES[k];
-    T(fit(c2?c2.ad:k,`600 24px ${BODY}`,half-120),ex+28,cy+6,`600 24px ${BODY}`,RC.fg); T("%"+Math.round(p*100),ex+half-28,cy+6,`500 24px ${MONO}`,RC.muted,"right");
-    x.fillStyle=RC.panel2; x.fillRect(ex+28,cy+20,half-56,10); x.fillStyle=RC.bad; x.fillRect(ex+28,cy+20,(half-56)*p,10);
+    T(fit(c2?c2.ad:k,`600 24px ${BODY}`,half-120),ex+28,cy+6,`600 24px ${BODY}`,RC.fg); const pa=v.length?Math.min(1,n2/v.length):p; T("%"+Math.round(pa*100),ex+half-28,cy+6,`500 24px ${MONO}`,RC.muted,"right");
+    x.fillStyle=RC.panel2; x.fillRect(ex+28,cy+20,half-56,10); x.fillStyle=RC.bad; x.fillRect(ex+28,cy+20,(half-56)*pa,10);
     if(c2&&c2.duzelt&&c2.duzelt[0]) T(fit("→ "+c2.duzelt[0],`400 18px ${BODY}`,half-56),ex+28,cy+54,`400 18px ${BODY}`,RC.muted); });
   y+=460;
   // atış tablosu
@@ -2226,7 +2235,7 @@ const RANGES=[["1G",1],["7G",7],["2H",14],["1A",30],["3A",91],["6A",182],["12A",
 const RANGE_T={1:"Son 1 gün",7:"Son 7 gün",14:"Son 2 hafta",30:"Son 1 ay",91:"Son 3 ay",182:"Son 6 ay",365:"Son 12 ay",0:"Tümü"};
 let hPer=182; const hF={drill:"",weapon:"",mode:""};
 const wName=s=>{ const w=silahBul(s.weaponName); return w?w.ad:(s.weaponName||(s.weapon==="pistol"?"Tabanca":"Tüfek")); };
-function causeCounts(shots){const m={};let n=0;for(const q of shots)for(const c of (q.c||[])){m[c]=(m[c]||0)+1;n++;}return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v,n?v/n:0]);}
+function causeCounts(shots){const m={};let n=0;for(const q of shots)for(const c of (q.c||[])) if(CAUSES.hasOwnProperty(c)){m[c]=(m[c]||0)+1;n++;}return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v,n?v/n:0]);}
 const hMatch=s=>(!hF.drill||s.drill===hF.drill)&&(!hF.weapon||wName(s)===hF.weapon)&&(!hF.mode||s.mode===hF.mode);
 function histFilter(per,offset){ const t=Date.now(); return statSess().filter(s=>hMatch(s)&&(!per||(s.date>=t-(offset+1)*per*864e5&&s.date<t-offset*per*864e5))); }
 function streakInfo(){
@@ -2253,7 +2262,7 @@ function renderHistory(){
   const nF=["drill","weapon","mode"].filter(k=>hF[k]).length; $("hFilterN").textContent=nF?nF+" ":"";
   $("perSeg").innerHTML=RANGES.map(([t,v])=>`<button data-per="${v}" aria-pressed="${v===hPer}">${t}</button>`).join("");
   $("perSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{hPer=+b.dataset.per;renderHistory();});
-  let ss=histFilter(hPer,0); const sample=!statSess().length&&!nF;
+  let ss=histFilter(hPer,0); const sample=!statSess().length&&!nF&&sessions.some(s=>s.sample);
   if(sample) ss=sessions.filter(s=>s.sample);
   const shots=ss.flatMap(s=>validShots(s));
   $("hsShots").textContent=shots.length; $("hsSess").textContent=ss.length; $("hsAvg").textContent=shots.length?fx(avgOf(shots),1):"–";
@@ -2266,7 +2275,7 @@ function renderHistory(){
   $("hGroups").onclick=()=>openGroups(); $("hCompare").onclick=()=>openCompare();
   const t=Date.now();
   const list=sample?ss:sessions.filter(s=>!s.sample&&whoOf(s)===S.prof&&hMatch(s)&&(!hPer||s.date>=t-hPer*864e5));
-  $("sessList").innerHTML=list.length?list.map(s=>{const v=validShots(s);return `<button class="h-sess" data-id="${s.id}"><span class="sn">${esc(DRM[s.drill]?DRM[s.drill].ad:"Antrenman")} - ${v.length} Atış${s.sample?'<span class="tag">Örnek</span>':""}${s.safe?'<span class="tag safe">Safe Space</span>':""}</span><span class="sv">${v.length?fx(avgOf(v),1):"–"}</span><span class="sv">${s.dur?s.dur+"s":""}</span><span class="sd">${esc(dateShort(s.date))}</span><span class="sm">${esc(MODE_T[s.mode]||"")} · ${esc(wName(s))}${s.notes?" · 📝":""}</span></button>`;}).join(""):`<div class="empty">Bu dönemde oturum yok.</div>`;
+  $("sessList").innerHTML=list.length?list.map(s=>{const v=validShots(s);return `<button class="h-sess" data-id="${esc(s.id)}"><span class="sn">${esc(DRM[s.drill]?DRM[s.drill].ad:"Antrenman")} - ${v.length} Atış${s.sample?'<span class="tag">Örnek</span>':""}${s.safe?'<span class="tag safe">Safe Space</span>':""}</span><span class="sv">${v.length?fx(avgOf(v),1):"–"}</span><span class="sv">${s.dur?esc(s.dur)+"s":""}</span><span class="sd">${esc(dateShort(s.date))}</span><span class="sm">${esc(MODE_T[s.mode]||"")} · ${esc(wName(s))}${s.notes?" · 📝":""}</span></button>`;}).join(""):`<div class="empty">Bu dönemde oturum yok.</div>`;
   $("sessList").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const s=sessions.find(x=>x.id===b.dataset.id);if(s)openReview(s);});
 }
 $("hFilter").onclick=()=>openHistFilter();
@@ -2395,7 +2404,7 @@ function anGroup(ss,cmp){
   const G=stat(all); AN.group={pts:all,G};
   if(!G) return anCard("anGroup","Atış grubu","an_grup",all.length?`Atış grubu için en az 5 atış gerekiyor (şu an ${all.length}).`:"Bu dönemde atış yok.","");
   let txt=`Atışlarının yarısı <b>${esc(ang(2*G.r50))}</b> çaplı bir dairede (${fx(S.dist,0)} m'de ${esc(atDist(2*G.r50))}).`;
-  const GB=stat(cmp.b.flatMap(validShots).filter(q=>q.dx!=null)); if(GB&&GB.r50>0){ const p=pctChg(G.r50,GB.r50); txt+=Math.abs(p)<8?` Grup ${cmp.lbl} göre aynı.`:` Grup ${cmp.lbl} göre %${Math.round(Math.abs(p))} daha ${p<0?"sıkı":"geniş"}.`; }
+  const GA=stat(cmp.a.flatMap(validShots).filter(q=>q.dx!=null).slice(-250)), GB=stat(cmp.b.flatMap(validShots).filter(q=>q.dx!=null)); if(GA&&GB&&GB.r50>0){ const p=pctChg(GA.r50,GB.r50); txt+=Math.abs(p)<8?` Grup ${cmp.lbl} göre aynı.`:` Grup ${cmp.lbl} göre %${Math.round(Math.abs(p))} daha ${p<0?"sıkı":"geniş"}.`; }
   const off=Math.hypot(G.mx,G.my); if(off>0.75*G.r50&&off>0.02) txt+=` Grubun merkezi <b>saat ${hourOf(G.mx,G.my)}</b> yönünde: tetik çekerken namlu hep o yöne kayıyor.`;
   return anCard("anGroup","Atış grubu","an_grup",txt,`<div class="an-c" data-an="group">${groupSvg(all,G)}</div>
     <div class="an-key"><span><i style="background:${AN_COL.good}"></i>85 ve üstü</span><span><i style="background:${AN_COL.warn}"></i>70–85</span><span><i style="background:${AN_COL.bad}"></i>70 altı</span><span><i class="ring"></i>atışların yarısı</span></div><p class="an-cap" id="anGrpCap">Son ${all.length} atış. Noktaya dokun: skoru ve kayma yönü.</p>`);
@@ -2939,7 +2948,7 @@ function saatHazir(id){ if(!S.saat||!S.saatKomut||!DRM[id]) return; saatGonder({
 window.__hisarSaat=cmd=>{
   if(!S.saat||!S.saatKomut) return;
   if(cmd==="dur"){ if(cur.run&&cur.run.active) stopRun(false); return; }
-  if(cmd!=="basla"||(cur.run&&cur.run.active)) return;
+  if(cmd!=="basla"||mesgul()) return;
   if(curView==="oturum"&&cur.sess&&!pages.length) startRun();
   else { openDrill(cur.sess?cur.sess.drill:"serbest"); setTimeout(()=>{ if(!(cur.run&&cur.run.active)) startRun(); },1200); }
 };
@@ -3143,6 +3152,7 @@ function onOtaFrame(kind,code,val){
   // 1: sıra dışı parça geldi, 2: eksik var (yoklamaya yanıt). İkisinde de val sensörün beklediği yer; öncesi sensörde, onay sayılır.
   else if(kind===4&&(code===1||code===2)){ ota.rewind=val; ota.acked=Math.max(ota.acked,val); }
   else if(kind===4) otaFailAll(Object.assign(new Error(OTA_ERR[code]||("sensör hatası "+code)),{kod:code}));
+  else if(kind===5) ota.iptal=true;
   otaKick(); renderFwCard();
 }
 function otaSend(bytes,resp){
@@ -3166,11 +3176,12 @@ async function otaAktar(img,info){
   Object.assign(ota,{st:"hazirla",sent:0,acked:0,rewind:null,fail:null,ready:false,done:false,sonda:false}); renderFwCard();
   const kes=()=>!!ota.fail||ota.abort||ble.st!=="bagli";
   const bak=()=>{ if(ota.abort) throw new Error("vazgeçildi"); if(ota.fail) throw ota.fail; if(ble.st!=="bagli") throw new Error("bağlantı koptu"); };
+  ota.iptal=false; await otaSend([0x13],true); await otaWait(()=>ota.iptal||ota.abort||ble.st!=="bagli",3000,null); ota.fail=null; bak();   // önceki denemenin yoldaki yanıtları boşalsın
   await otaSend([0x10,...u32le(img.length),...u32le(info.crc32>>>0)],true);
   await otaWait(()=>ota.ready||kes(),30000,"sensör güncellemeye hazırlanamadı"); bak();
   ota.st="yukle"; ota.t0=now(); renderFwCard();
   // yoldaki veri sensörün 48 parçalık sırasını taşırmasın; onay 2048 baytta bir geldiği için pencere en az 4 KB
-  const CH=Math.max(16,Math.min(240,(ble.mtu||23)-3-5)), WIN=Math.min(6144,Math.max(4096+CH,30*CH));
+  const CH=Math.min(240,(ble.mtu||23)-3-5), WIN=Math.min(6144,Math.max(4096+CH,30*CH));
   let off=0, n=0, seen=0, prog=now();
   for(;;){
     if(ota.done) return;
@@ -3538,11 +3549,11 @@ function wizardThr(){
 function download(name,text,type){
   if(APK&&window.HisarNative&&window.HisarNative.saveFile){ try{ window.HisarNative.saveFile(name,type,text); return; }catch(e){} }
   try{const b=new Blob([text],{type});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},800);}catch(e){toast("İndirme yapılamadı.");}}
-function exportJson(){download("hisar-tetik-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({app:"hisar-tetik",v:2,exported:Date.now(),settings:S,sessions:sessions.filter(s=>!s.sample)}),"application/json");}
+function exportJson(){download("hisar-tetik-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({app:"hisar-tetik",v:2,exported:Date.now(),settings:Object.assign({},S,{sonYer:null}),sessions:sessions.filter(s=>!s.sample)}),"application/json");}
 function exportCsv(){const rows=[["tarih","alistirma","silah","atis_tipi","atis_no","zaman_sn","skor","tetik_derece","gezinme_derece","yon_saat","kanting_derece","tepki_sn","ara_sn","neden1","neden2"]];
-  for(const s of sessions.filter(x=>!x.sample).slice().reverse())for(const q of s.shots)rows.push([new Date(s.date).toISOString(),DRM[s.drill]?DRM[s.drill].ad:s.drill,s.weaponName||s.weapon,s.mode,q.n,(q.at/1000).toFixed(2),q.sc,q.tr,q.ho,q.h,q.ca,q.x.react!=null?(q.x.react/1000).toFixed(3):"",q.x.split!=null?(q.x.split/1000).toFixed(3):"",(q.c&&q.c[0]&&CAUSES[q.c[0]])?CAUSES[q.c[0]].ad:"",(q.c&&q.c[1]&&CAUSES[q.c[1]])?CAUSES[q.c[1]].ad:""]);
-  download("hisar-tetik-atislar.csv","﻿"+rows.map(r=>r.map(v=>{const t=String(v);return /[",;\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}).join(";")).join("\n"),"text/csv");}
-function importJson(e){const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(j.app!=="hisar-tetik"||!Array.isArray(j.sessions))throw 0;let n=0;for(const s of j.sessions){if(!s||!s.id||!Array.isArray(s.shots)||isDemoSess(s)||sessions.some(x=>x.id===s.id))continue;sessions.push(s);saveSession(s);n++;}sessions.sort((a,b)=>b.date-a.date);saveMeta();toast(n+" oturum içe aktarıldı.");}catch(err){toast("Dosya okunamadı. HİSAR TETİK dışa aktarım dosyası seç.");}};rd.readAsText(f);e.target.value="";}
+  for(const s of sessions.filter(x=>!x.sample).slice().reverse())for(const q of s.shots)rows.push([new Date(s.date).toLocaleString("sv-SE"),DRM[s.drill]?DRM[s.drill].ad:s.drill,s.weaponName||s.weapon,s.mode,q.n,(q.at/1000).toFixed(2),q.sc,q.tr,q.ho,q.h,q.ca,q.x.react!=null?(q.x.react/1000).toFixed(3):"",q.x.split!=null?(q.x.split/1000).toFixed(3):"",(q.c&&q.c[0]&&CAUSES[q.c[0]])?CAUSES[q.c[0]].ad:"",(q.c&&q.c[1]&&CAUSES[q.c[1]])?CAUSES[q.c[1]].ad:""]);
+  download("hisar-tetik-atislar.csv","﻿"+rows.map(r=>r.map(v=>{const t=typeof v==="number"||/^-?\d+\.\d+$/.test(String(v))?String(v).replace(".",","):String(v);return /[",;\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}).join(";")).join("\n"),"text/csv");}
+function importJson(e){const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(j.app!=="hisar-tetik"||!Array.isArray(j.sessions))throw 0;const known=new Set(S.profiles.map(p=>p.id));for(const p of ((j.settings&&j.settings.profiles)||[]))if(p&&/^p\w{1,20}$/.test(p.id)&&!known.has(p.id)&&j.sessions.some(x=>x&&(x.who||"p1")===p.id)){S.profiles.push({id:p.id,ad:String(p.ad||"Atıcı").slice(0,30)});known.add(p.id);}let n=0,bad=0;for(const s of j.sessions){if(!s||!s.id||!Array.isArray(s.shots)||isDemoSess(s)||sessions.some(x=>x.id===s.id))continue;if(!known.has(s.who||"p1"))s.who=S.prof;sessions.push(s);if(saveSession(s))n++;else{sessions.pop();bad++;}}sessions.sort((a,b)=>b.date-a.date);saveMeta();toast(n+" oturum içe aktarıldı."+(bad?" "+bad+" oturum depolama dolu olduğu için alınamadı.":""));}catch(err){toast("Dosya okunamadı. HİSAR TETİK dışa aktarım dosyası seç.");}};rd.readAsText(f);e.target.value="";}
 
 /* --- v1 verisinden aktarım */
 function migrateV1(){
@@ -3573,14 +3584,15 @@ let updInstalled=false;  // yeni sayfa indirildi, yenilenince açılacak
 const apkPrompt=()=>APK&&!IOS_APP&&(!SELF_UPD||apkNeeded);   // güncelleme = APK indirip kurmak
 function nativeInfo(){ try{ return APK?JSON.parse(window.HisarNative.info()):null; }catch(e){ return null; } }
 function openExternal(u){ try{ if(APK&&window.HisarNative.openUrl){ window.HisarNative.openUrl(u); return; } }catch(e){} window.open(u,"_blank","noopener"); }
+function sayfaYenile(){ try{ if(window.HisarNative&&typeof window.HisarNative.reloadPage==="function"){ window.HisarNative.reloadPage(); return; } }catch(e){} location.reload(); }
 function doUpdate(){
-  if(updInstalled){ if(mesgul()){ pendingReload=true; return; } pendingReload=false; location.reload(); return; }
+  if(updInstalled){ if(mesgul()){ pendingReload=true; return; } pendingReload=false; sayfaYenile(); return; }
   if(SELF_UPD&&!apkNeeded){ if(mesgul()){ pendingReload=true; return; } pendingReload=false; toast("Yeni sürüm indiriliyor…");
     try{ window.HisarNative.update(); }catch(e){ toast("Güncelleme başlatılamadı."); } return; }
   if(APK){ openExternal(APK_URL); toast("İndirilen dosyayı aç ve Güncelle'ye bas. Verilerin silinmez."); return; }
   if(mesgul()){ pendingReload=true; return; }
   pendingReload=false; toast("Yeni sürüm yükleniyor…");
-  (async()=>{ try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith("tetik-")).map(k=>caches.delete(k)));}catch(e){}
+  (async()=>{
     try{const r=await navigator.serviceWorker.getRegistration();if(r)await r.update();}catch(e){}
     location.replace(location.pathname+"?v="+Date.now()); })();
 }
@@ -3588,7 +3600,7 @@ function doUpdate(){
 function sessizGuncelle(){
   clearTimeout(sessizGuncelle.t);
   if(mesgul()){ pendingReload=true; return; }
-  const ae=document.activeElement; if(!$("sheet").hidden||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))){ sessizGuncelle.t=setTimeout(sessizGuncelle,90000); return; }
+  const ae=document.activeElement; if(!$("sheet").hidden||curView==="oturum"||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))){ sessizGuncelle.t=setTimeout(sessizGuncelle,curView==="oturum"?4000:90000); return; }
   doUpdate(); }
 function askUpdate(){
   if(updAsked||mesgul()||!$("sheet").hidden) return; updAsked=true;
@@ -3617,7 +3629,7 @@ window.__hisarBack=()=>{ if(!$("sheet").hidden){closeSheet();return true;} if(sp
   if(curView!=="alistirma"){showView("alistirma");return true;} return false; };
 window.__hisarSaved=(ok,name)=>toast(ok?(name||"Dosya")+" kaydedildi.":"Dosya kaydedilmedi.");
 // yerel kod yeni sayfayı kurdu (Android): süren oturum yoksa hemen, varsa oturum bitince yenilenir
-window.__hisarUpdateReady=v=>{ updInstalled=true; updAvail=true; if(mesgul()){ pendingReload=true; return; } pendingReload=false; location.reload(); };
+window.__hisarUpdateReady=v=>{ updInstalled=true; updAvail=true; sessizGuncelle(); };
 window.__hisarUpdateFailed=msg=>toast("Yeni sürüm indirilemedi"+(msg?" ("+String(msg).slice(0,80)+")":"")+". İnternet bağlantısını kontrol et.");
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&ota.on){ ota.uyan=now(); otaUyanik(true); } });
 document.addEventListener("visibilitychange",()=>{const r=cur.run;if(!document.hidden&&r&&r.active){try{if(navigator.wakeLock)navigator.wakeLock.request("screen").then(w=>{r.wake=w;}).catch(()=>{});}catch(e){}}});

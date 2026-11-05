@@ -75,12 +75,19 @@ def surucu_kur():
 
 
 def yukle(port, dosya):
-    import esptool
+    import esptool, gc
+    veri = open(dosya, "rb").read()
+    parcalar = []
+    for adres, son in ((0x1000, 0x9000), (0xE000, len(veri))):   # 0x9000-0xE000 (NVS: sensör no, ayarlar) yazılmaz
+        yol = os.path.join(tempfile.gettempdir(), f"hisar-{adres:x}.bin")
+        with open(yol, "wb") as f:
+            f.write(veri[adres:son])
+        parcalar += [hex(adres), yol]
     for hiz in ("921600", "460800", "115200"):
         print(f"\nYükleniyor: {port} · hız {hiz}. Kabloyu çıkarma, 1–2 dakika sürer…\n")
         try:
             esptool.main(["--chip", "esp32", "--port", port, "--baud", hiz, "--before", "default_reset",
-                          "--after", "hard_reset", "write_flash", "-z", "0x0", dosya])
+                          "--after", "hard_reset", "write_flash", "-z", *parcalar])
             return True
         except SystemExit as e:
             if e.code in (0, None):
@@ -88,6 +95,7 @@ def yukle(port, dosya):
             print(f"\nBu hızda olmadı (çıkış {e.code}).")
         except Exception as e:
             print(f"\nBu hızda olmadı: {e}")
+        gc.collect()   # esptool hata verince seri portu açık bırakır (döngüsel başvuru); kapanmazsa sonraki deneme "Access is denied"
         time.sleep(1.5)
     return False
 

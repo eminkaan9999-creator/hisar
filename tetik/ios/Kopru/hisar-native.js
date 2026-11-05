@@ -33,6 +33,8 @@
     bleWrite: function (id, svc, chr, b64, resp) { post("bleWrite", [+id, str(svc), str(chr), str(b64), !!resp]); },
     // sayfanın yeni sürümünü GitHub Pages'ten indirip kurar; olmazsa window.__hisarUpdateFailed(mesaj)
     update: function () { post("update", []); },
+    // güncellenen sayfayı yeniden açar (sayfa hazır olunca, oturum ya da sensör güncellemesi bitince çağırır)
+    reloadPage: function () { post("reloadPage", []); },
     // telefonun konumu (Sensörü bul › son görüldüğü yer); sonuç window.__hisarKonum({lat,lon,acc} | {hata})
     konum: function () { post("konum", []); }
   };

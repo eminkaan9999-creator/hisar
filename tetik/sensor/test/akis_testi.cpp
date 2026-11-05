@@ -259,6 +259,15 @@ static void testOta() {
     uint8_t e = 0x12; rx.handle(&e, 1, fl, send); CHECK(rep.back().kind == 4 && rep.back().code == 2, "eksik veriyle bitirme reddedilir");
     uint8_t a = 0x13; rx.handle(&a, 1, fl, send); CHECK(rep.back().kind == 5 && fl.aborted && rx.state == OtaRx::IDLE, "vazgec");
     std::vector<uint8_t> c{0x11, 0, 0, 0, 0, 1, 2}; rx.handle(c.data(), c.size(), fl, send); CHECK(rep.back().kind == 4 && rep.back().code == 7, "baslatilmadan parca reddedilir"); }
+  { MemFlash fl; OtaRx rx; std::vector<OtaReply> rep; auto send = [&](const uint8_t* p, size_t n) { if (n == 8) rep.push_back({p[2], p[3], getU32(p + 4)}); };
+    std::vector<uint8_t> b{0x10}; u32(b, 100000); u32(b, 0); rx.handle(b.data(), b.size(), fl, send);
+    auto parca = [&](uint32_t off) { std::vector<uint8_t> c{0x11}; u32(c, off); c.insert(c.end(), 100, 0xAB); rx.handle(c.data(), c.size(), fl, send); };
+    parca(0); parca(100);                       // 200'deki parca kayboldu; arkasindakiler sira disi
+    for (uint32_t o = 300; o < 300 + 100 * 40; o += 100) parca(o);
+    int naks = 0; for (auto& r : rep) if (r.kind == 4 && r.code == 1 && r.val == 200) naks++;
+    CHECK(naks >= 2, "yeniden gonderilen parca da kaybolursa sira disi uyarisi tekrarlanir (%d kez)", naks);
+    CHECK(naks <= 3, "uyari her parcada degil, araliklarla (%d kez)", naks);
+    parca(200); CHECK(rx.offset == 300, "kaldigi yerden surer"); }
   { MemFlash fl; fl.failAt = 50000; OtaRx rx; std::vector<OtaReply> rep; run(fl, rx, (uint32_t)img.size(), crc, 240, nullptr, rep, false);
     bool e6 = false; for (auto& r : rep) if (r.kind == 4 && r.code == 6) e6 = true; CHECK(e6 && rx.state == OtaRx::FAILED && fl.aborted, "flash yazma hatasinda durur"); }
 }

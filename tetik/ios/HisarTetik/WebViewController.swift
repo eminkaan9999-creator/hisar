@@ -141,6 +141,7 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
         case "saveFile": saveFile(name: s(0), mime: s(1), text: s(2))
         case "shareFile": shareFile(name: s(0), mime: s(1), b64: s(2))
         case "update": runUpdate()
+        case "reloadPage": loadPage()
         case "konum": konum.iste { [weak self] j in self?.js("window.__hisarKonum&&window.__hisarKonum(\(j))") }
         case "exitApp": Log.i("exitApp: iPhone'da uygulama kendini kapatmaz")
         default: Log.i("bilinmeyen çağrı: \(fn)")
@@ -218,8 +219,9 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
             guard let self = self else { return }
             switch r {
             case .success(let v):
-                Log.i("güncelleme tamam: sürüm \(v.0) (önceki \(v.1)); sayfa yeniden açılıyor")
-                self.loadPage()
+                Log.i("güncelleme tamam: sürüm \(v.0) (önceki \(v.1)); sayfa uygun olunca yeniden açılacak")
+                // oturum ya da sensör güncellemesi sürüyorsa sayfa bekletir, bitince HisarNative.reloadPage() ile açar
+                self.js("window.__hisarUpdateReady?window.__hisarUpdateReady(\(v.0)):window.HisarNative.reloadPage()")
             case .failure(let f):
                 Log.i("güncelleme hatası: \(f.msg)")
                 self.js("window.__hisarUpdateFailed&&window.__hisarUpdateFailed(\(jsQuote(f.msg)))")

@@ -78,6 +78,7 @@ public class Ble {
     // hazırlık (izin, Bluetooth açık, konum)
     Runnable readyOk;
     Fail readyFail;
+    boolean readyScan;   // tarama mı (Android 11 ve öncesinde Konum gerekir), adresle doğrudan bağlanma mı (gerekmez)
 
     // cihaz seçici
     int reqId = -1;
@@ -175,7 +176,7 @@ public class Ble {
             catch (Exception e) { finishReady(false, "NotAllowedError", "Bluetooth kapalı. Bluetooth'u açıp tekrar dene."); }
             return;
         }
-        if (Build.VERSION.SDK_INT <= 30 && !locationOn()) {
+        if (readyScan && Build.VERSION.SDK_INT <= 30 && !locationOn()) {
             showSettingsDialog("Konum kapalı", "Android 11 ve öncesinde Bluetooth sensör aramak için telefonun Konum özelliği açık olmalı.", Settings.ACTION_LOCATION_SOURCE_SETTINGS, false);
             finishReady(false, "NotAllowedError", "Bluetooth araması için telefonun Konum özelliğini aç (Android 11 ve öncesi).");
             return;
@@ -224,6 +225,7 @@ public class Ble {
         if (reqId != -1) { err(id, "InvalidStateError", "Sensör listesi zaten açık."); return; }
         try { reqOpts = new JSONObject(opts == null ? "{}" : opts); } catch (Exception e) { reqOpts = new JSONObject(); }
         reqId = id;
+        readyScan = true;
         ensureReady(this::showChooser, (n, m) -> { int r = reqId; reqId = -1; err(r, n, m); });
     }
 
@@ -381,6 +383,7 @@ public class Ble {
     // ================================================================ bağlanma
     void connect(int id, String address) {
         if (address == null || !BluetoothAdapter.checkBluetoothAddress(address)) { err(id, "NotFoundError", "Geçersiz sensör adresi"); return; }
+        readyScan = false;
         ensureReady(() -> doConnect(id, address), (n, m) -> err(id, n, m));
     }
 

@@ -74,7 +74,7 @@ extern "C" bool verifyRollbackLater() { return true; }
 static bool appValid = false;
 static void markValid() { if (!appValid) { esp_ota_mark_app_valid_cancel_rollback(); appValid = true; } }
 
-#define FW_VERSION 5
+#define FW_VERSION 6
 #define SVC_UUID    "0000ffe5-0000-1000-8000-00805f9a34fb"
 #define NOTIFY_UUID "0000ffe4-0000-1000-8000-00805f9a34fb"
 #define WRITE_UUID  "0000ffe9-0000-1000-8000-00805f9a34fb"
@@ -221,6 +221,7 @@ class ServerCB : public NimBLEServerCallbacks {
     bleConnected = true;
     // iOS kurallarina uygun: 15-30 ms aralik, gecikme 0, kopma toleransi 5 sn
     s->updateConnParams(desc->conn_handle, 12, 24, 0, 500);
+    ble_gattc_exchange_mtu(desc->conn_handle, nullptr, nullptr);   // merkez MTU istemese de 185 (durum paketi 27 bayt)
     // Uzun baglanti katmani paketleri: 185 baytlik bildirim tek parca gider
     s->setDataLen(desc->conn_handle, 251);
   }
@@ -317,7 +318,7 @@ static void imuTask(void*) {
     int16_t g[3] = {(int16_t)((b[8] << 8) | b[9]), (int16_t)((b[10] << 8) | b[11]), (int16_t)((b[12] << 8) | b[13])};
     imuTempRaw = (int16_t)((b[6] << 8) | b[7]);
     if (havePrev) {
-      int32_t dx = a[0] - prev[0], dy = a[1] - prev[1], dz = a[2] - prev[2];
+      float dx = a[0] - prev[0], dy = a[1] - prev[1], dz = a[2] - prev[2];
       int32_t j = (int32_t)sqrtf((float)(dx * dx + dy * dy + dz * dz));
       if (j > maxJerkRaw) maxJerkRaw = j;
     }
@@ -414,7 +415,9 @@ static bool notifyRaw(const uint8_t* data, size_t len) {
 }
 
 static void serviceStream(uint32_t nowMs) {
-  if (otaActive) return;   // guncelleme sirasinda Bluetooth yazilim aktarimina ayrilir
+  static bool otaPaused = false;
+  if (otaActive) { otaPaused = true; return; }   // guncelleme sirasinda Bluetooth yazilim aktarimina ayrilir
+  if (otaPaused) { otaPaused = false; stream.sendSeq = ring.head; }
   stream.service(ring, bleConnected && subscribed, peerMtu, nowMs,
                  [](const uint8_t* p, size_t n) { return notifyRaw(p, n); });
 }
@@ -706,6 +709,8 @@ static void powerOffNow() {
   delay(650);
   ledcWrite(BUZ_CH, 0);
   M5.Power.setLed(0);
+  for (uint32_t t0 = millis(); !digitalRead(35) && millis() - t0 < 5000;) delay(10);  // guc dugmesi birakilsin
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, 0);   // USB takiliyken guc kesilmez: dugme uyandirsin
   M5.Power.powerOff();
 }
 
@@ -759,6 +764,7 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
       resultUntil = now + 1500;
       wakeScreen(now);
       if (!resultGood && !identifyUntil) { M5.Power.setLed(255); ledOffAt = now + 700; }
+      else if (resultGood && ledOffAt) { ledOffAt = 0; if (!identifyUntil) M5.Power.setLed(0); }
       drawScreen(now);
       break;
     default:
@@ -836,7 +842,7 @@ static uint32_t streamSince = 0;
 void loop() {
   uint32_t now = millis();
   if (stream.streaming) { if (!streamSince) streamSince = now | 1; } else streamSince = 0;
-  if (!appValid && (now > 60000 || (streamSince && now - streamSince > 10000))) markValid();
+  if (!appValid && (now > 60000 || (streamSince && (int32_t)(now - streamSince) > 10000))) markValid();
 
   CmdMsg m;
   while (xQueueReceive(cmdQ, &m, 0) == pdTRUE) handleCommand(m, now);
@@ -929,7 +935,7 @@ void loop() {
   }
 
   // Guncelleme tamam: yaniti gonderip yeni yazilimla yeniden basla
-  if (otaDoneAt && now - otaDoneAt > 900) {
+  if (otaDoneAt && (int32_t)(now - otaDoneAt) > 900) {
     markValid();                     // bu (calisan) yazilim saglikliydi; yenisi kendi denetiminden gecer
     showMessage("YENIDEN BASLIYOR");
     delay(200);
@@ -941,6 +947,7 @@ void loop() {
     lastDrawT = now;
     drawScreen(now);
   }
+  while (xQueueReceive(cmdQ, &m, 0) == pdTRUE) handleCommand(m, millis());   // 0x07, abonelikten once islensin
   serviceStream(millis());
   delay(1);
 }

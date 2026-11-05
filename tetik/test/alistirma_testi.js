@@ -219,17 +219,17 @@ const DRILLS = [
     check(JSON.stringify(mj.yer) === JSON.stringify(['Alt', 'Üst', 'Sağ', 'Sol']) && JSON.stringify(mj.yon) === JSON.stringify(['İleri', 'Arka']) && mj.t === 'Kalibrasyon ve yön' && mj.v === 'sensor', 'Montaj yönü ve yeri Sensör › Kalibrasyon ve yön › Elle ayarla\'da', mj);
     await page.click('#sYer [data-v="sag"]'); await page.click('#sYon [data-v="arka"]'); await sleep(100);
     await page.evaluate(() => window.__hisar.openSettings(null)); await sleep(200);
-    await page.click('#sPick'); await sleep(200); await page.click('[data-w="MPT-76"]'); await sleep(200);
+    await page.click('#sPick'); await sleep(200); await page.click('[data-w="MKE MPT-76"]'); await sleep(200);
     await page.click('#sMode [data-v="more"]'); await sleep(200); await page.click('#pgBody [data-mode="co2"]'); await sleep(200);
     await page.click('#rtSes'); await sleep(200); await page.click('#sSound [data-v="kapali"]'); await page.evaluate(() => window.__hisar.popPage());
     await page.click('#rtAdv'); await sleep(200); await page.click('#sDiff [data-v="zor"]'); await page.evaluate(() => window.__hisar.popPage());
     await page.click('#rtProgram'); await sleep(200); await page.click('#pDays [data-v="1"]'); await page.click('#pDays [data-v="3"]'); await page.click('#pGoal [data-v="20"]'); await page.evaluate(() => window.__hisar.popPage());
     const st = await page.evaluate(() => { const S = window.__hisar.S; return { w: S.weapon, n: S.weaponName, h: S.hand, m: S.mode, d: S.diff, s: S.sound, yer: S.mount.sensor.yer, yon: S.mount.sensor.yon, B: window.__hisar.proc.cfg.B, plan: S.plan, saved: JSON.parse(localStorage.getItem('hisarTetik.v2.meta')).settings }; });
-    check(st.w === 'rifle' && st.n === 'MPT-76' && st.h === 'L' && st.m === 'co2' && st.d === 'zor' && st.s === 'kapali' && st.yer === 'sag' && st.yon === 'arka' && st.B[1] === -1
-      && JSON.stringify(st.plan.days.sort()) === '[1,3]' && st.plan.goal === 20 && st.saved.weaponName === 'MPT-76' && st.saved.mode === 'co2' && st.saved.mount.sensor.yon === 'arka',
+    check(st.w === 'rifle' && st.n === 'MKE MPT-76' && st.h === 'L' && st.m === 'co2' && st.d === 'zor' && st.s === 'kapali' && st.yer === 'sag' && st.yon === 'arka' && st.B[1] === -1
+      && JSON.stringify(st.plan.days.sort()) === '[1,3]' && st.plan.goal === 20 && st.saved.weaponName === 'MKE MPT-76' && st.saved.mode === 'co2' && st.saved.mount.sensor.yon === 'arka',
       'Seçimler uygulandı ve kaydedildi (silah listeden, CO2 Daha fazla\'dan, montaj ARKA/SAĞ, program, zorluk, ses)', st);
     const lbl = await page.evaluate(() => Array.from(document.querySelectorAll('#v-ayarlar .mx-l span:first-child')).map(e => e.textContent));
-    check(lbl[0] === 'MPT-76' && lbl[1] === 'Sol El' && lbl[2] === 'CO2 Antrenmanı', 'Başlıklar seçimi gösteriyor (MPT-76, Sol El, CO2 Antrenmanı)', lbl);
+    check(lbl[0] === 'MKE MPT-76' && lbl[1] === 'Sol El' && lbl[2] === 'CO2 Antrenmanı', 'Başlıklar seçimi gösteriyor (MKE MPT-76, Sol El, CO2 Antrenmanı)', lbl);
     const pre = await page.evaluate(() => { window.__hisar.openDrill('serbest'); return document.getElementById('preStart').textContent; });
     check(/MPT-76/.test(pre) && /CO2/.test(pre) && /Sol/.test(pre), 'Alıştırma ekranındaki düğmeler seçimi gösteriyor', pre.slice(0, 200));
     await page.evaluate(() => window.__hisar.openSettings(null)); await sleep(200);

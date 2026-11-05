@@ -417,6 +417,9 @@ td.m{font-family:var(--mono)}
 .pick button{display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);padding:14px 4px;text-align:left;font-size:16px}
 .pick button[aria-pressed="true"]{color:var(--acc)}
 .pick button[aria-pressed="true"]::after{content:"✓"}
+.pick .sw{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.pick .sw small{font-size:12.5px;color:var(--muted)}
+.pick .sk{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1.5px solid var(--acc);border-radius:50%;color:var(--acc);font:italic 700 15px Georgia,serif}
 .flash{position:fixed;inset:0;z-index:40;display:grid;place-items:center;pointer-events:none;font-family:var(--logo);font-weight:700;font-size:min(22vw,140px);letter-spacing:.08em}
 .flash.go{background:rgba(47,181,74,.9);color:#03200f}
 .flash.no{background:rgba(182,33,38,.92);color:#fff}
@@ -543,7 +546,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=23;
+const VER=24;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -608,7 +611,7 @@ function pruneTraces(keep){
 function deleteSession(id){sessions=sessions.filter(s=>s.id!==id);lsDel(KEY+".s."+id);saveMeta();}
 function loadAll(){
   let meta=null; try{meta=JSON.parse(lsGet(KEY+".meta")||"null");}catch(e){}
-  if(meta){ merge(S,meta.settings||{}); for(const id of (meta.ids||[])){ try{const s=JSON.parse(lsGet(KEY+".s."+id)); if(s&&Array.isArray(s.shots)) sessions.push(s);}catch(e){} } }
+  if(meta){ merge(S,meta.settings||{}); if(S.weaponName&&SILAH_ESKI[S.weaponName]) S.weaponName=SILAH_ESKI[S.weaponName]; for(const id of (meta.ids||[])){ try{const s=JSON.parse(lsGet(KEY+".s."+id)); if(s&&Array.isArray(s.shots)) sessions.push(s);}catch(e){} } }
   else migrateV1();
   // önceki sürümlerde kaydedilmiş deneme oturumları: gerçek veriye karışmasın diye kaldırılır
   const demo=sessions.filter(isDemoSess);
@@ -1897,7 +1900,8 @@ function drawHedef(){
   const c=$("ring"); if(!c||!c.offsetParent) return; const s=cur.sess; if(!s) return;
   const [x,w,h]=fitCanvas(c), dpr=window.devicePixelRatio||1, rifle=s.weapon==="rifle";
   x.clearRect(0,0,w,h); x.drawImage(hdKagit(w,h,dpr,rifle),0,0,w,h);
-  const {cx,cy,rw,black}=hdGeo(w,h,rifle), k=rw/hdRing(s), rh=Math.max(4,rw*0.3), lim=Math.min(w,h)/2-10;
+  const sw=silahBul(s.weaponName), kmm=sw&&sw.mm?sw.mm:(rifle?5.7:9);
+  const {cx,cy,rw,black}=hdGeo(w,h,rifle), k=rw/hdRing(s), rh=Math.max(3.5,rw*0.3*clamp(Math.sqrt(kmm/9),0.8,1.1)), lim=Math.min(w,h)/2-10;
   const P=p=>{ let X=p[0]*k, Y=-p[1]*k; const L=Math.max(Math.abs(X),Math.abs(Y)); if(L>lim){X*=lim/L;Y*=lim/L;} return [cx+X,cy+Y]; };
   const v=validShots(s), run=!!(cur.run&&cur.run.active);
   if(HD.sid!==s.id){ HD.sid=s.id; HD.n=v.length; HD.t0=-1e9; }
@@ -1936,11 +1940,12 @@ function hedefMetin(s,v,q,run,rev,yeni){
     let grup=""; if(v.length>=2){ const cm=hdGrup(v).d*RAD*(S.dist||25)*100; grup=` Grup çapı ≈ ${cm<10?fx(cm,1):Math.round(cm)} cm (${S.dist||25} m'de).`; }
     return `<div class="hd"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(avg,0)}</b><small>Ortalama</small></div><div class="hd-ne"><b>${esc(vt.replace("ATIŞ","OTURUM"))}</b><span>${v.length} atış, ${iyi} tanesi iyi.${grup}</span></div></div>
       ${ids.map((id,i)=>kart(id,ids,i>0,cc[i][1])).join("")}</div>`; }
-  const [vt,vc]=verdict(q.sc), yon=hdYon(hdShot(q).p,rw), ids=(q.c||[]).filter(k=>CAUSES[k]);
+  const [vt,vc]=verdict(q.sc), yon=hdYon(hdShot(q).p,rw), ids=(q.c||[]).filter(k=>CAUSES[k]), sw=silahBul(s.weaponName);
+  const ilk=run&&q.n===1&&sw&&sw.tetik==="da_sa"?`<p class="note" style="margin:0">${esc(sw.ad)}: ilk atış çift hareketlidir, tetik ağır ve uzundur. Tetiğe sürekli ve düz bas.</p>`:"";
   const lej=run&&hdShot(q).iz?`<p class="hd-lej"><span><i style="background:var(--hold)"></i>Atıştan önce nişanın</span><span><i style="background:var(--trig)"></i>Tetiği çekerken kayma</span></p>`:"";
   return `<div class="hd${an}"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(q.sc,0)}</b><small>Skor</small></div><div class="hd-ne"><b>${esc(vt)}</b><span>${esc(yon.t)}</span></div></div>
     ${ids.length?ids.map((id,i)=>kart(id,ids,i>0,0)).join(""):`<div class="hd-kart temiz"><span class="hd-k">Sonuç</span><b>${q.sc>=(S.sesEsik||85)?"Temiz atış":"Belirgin bir hata yok"}</b><span>${q.sc>=(S.sesEsik||85)?"Tetik düzgün düştü, nişan sabitti. Böyle devam.":"Puan, nişanın biraz oynamasından düştü. Nefesini ver, sakin tut."}</span></div>`}
-    ${lej}</div>`;
+    ${ilk}${lej}</div>`;
 }
 function loop(){
   if(curView==="oturum"&&cur.sub==="skor"&&!pages.length) drawHedef();
@@ -2231,7 +2236,7 @@ $("sessShare").onclick=()=>openShare(cur.sess);
 const RANGES=[["1G",1],["7G",7],["2H",14],["1A",30],["3A",91],["6A",182],["12A",365],["HEPSİ",0]];
 const RANGE_T={1:"Son 1 gün",7:"Son 7 gün",14:"Son 2 hafta",30:"Son 1 ay",91:"Son 3 ay",182:"Son 6 ay",365:"Son 12 ay",0:"Tümü"};
 let hPer=182; const hF={drill:"",weapon:"",mode:""};
-const wName=s=>s.weaponName||(s.weapon==="pistol"?"Tabanca":"Tüfek");
+const wName=s=>{ const w=silahBul(s.weaponName); return w?w.ad:(s.weaponName||(s.weapon==="pistol"?"Tabanca":"Tüfek")); };
 function causeCounts(shots){const m={};let n=0;for(const q of shots)for(const c of (q.c||[])){m[c]=(m[c]||0)+1;n++;}return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[k,v,n?v/n:0]);}
 const hMatch=s=>(!hF.drill||s.drill===hF.drill)&&(!hF.weapon||wName(s)===hF.weapon)&&(!hF.mode||s.mode===hF.mode);
 function histFilter(per,offset){ const t=Date.now(); return statSess().filter(s=>hMatch(s)&&(!per||(s.date>=t-(offset+1)*per*864e5&&s.date<t-offset*per*864e5))); }
@@ -2493,7 +2498,7 @@ const IC_SPK=SV('<path d="M4 9.5v5h3.5L12.5 19V5L7.5 9.5z"/><path d="M16 9a4.5 4
 const IC_SLD=SV('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>');
 // ⓘ açıklamaları
 const INFO={
-  silah:["Silah","Tabanca ya da tüfek: hata şeması ve skor ölçeği buna göre seçilir. Silahını Seç'ten silahının adını seçersen Analiz'de silaha göre süzebilirsin."],
+  silah:["Silah","Tabanca ya da tüfek: hata şeması ve skor ölçeği buna göre seçilir. Silahını Seç'te listeden silahını seçersen özellik kartını görürsün (kalibre, ağırlık, namlu, tetik); hedefteki delik kalibreye göre çizilir, çift hareketli tetikte ilk atış için uyarı çıkar. Analiz'de silaha göre süzebilirsin."],
   tip:["Atış tipi","Kuru tetik: boş silahla tetik çalışması. Gerçek atış: mermiyle; tepme, namlu kalkışı ve toparlanma ölçülür. Daha fazla: CO2 ve her atış tipinin algılama ayarları (⚙). Algılama eşiği her tip için ayrı kaydedilir."],
   myon:["Montaj yönü","Sensörün ön ucu (USB-C girişinin karşı ucu) namluya bakıyorsa İLERİ, sana bakıyorsa ARKA. Yanlış seçilirse yukarı ve aşağı kaymalar ters görünür. Yön testi yaparsan bunu uygulama kendisi ölçer."],
   myer:["Montaj yeri","Sensörün silahın neresine takılı olduğu: namlunun altındaki ray (tabancada fener/lazer rayı) ya da şarjörün altı (ALT), üst ray (ÜST), sağ ya da sol ray. Kanting (yana yatma) buna göre ölçülür. Yön testi yaparsan bunu uygulama kendisi ölçer."],
@@ -2564,7 +2569,7 @@ function pgRoot(){
   return `<div class="mx">
     <div class="mx-l"><span>${esc(wl)}</span></div>
     ${mxSeg("sWeapon",[["pistol","",IC_PISTOL],["rifle","",IC_RIFLE]],S.weapon,"big")}
-    <button class="mx-btn" id="sPick" style="margin-top:14px">Silahını seç</button>
+    <button class="mx-btn" id="sPick" style="margin-top:14px">Silahını seç</button>${silahBul(S.weaponName)?`<button class="mx-btn" id="sKart" style="margin-top:8px">Silah kartı: ${esc(silahBul(S.weaponName).ad)}</button>`:""}
     <div class="mx-l"><span>${S.hand==="R"?"Sağ El":"Sol El"}</span></div>
     ${mxSeg("sHand",[["L","Sol",HAND_IC("L")],["R","Sağ",HAND_IC("R")]],S.hand,"hand")}
     <div class="mx-l"><span>${esc(MODE_A[S.mode])}</span>${infoBtn("tip")}</div>
@@ -2583,6 +2588,7 @@ function bindRoot(root){
   bindSeg(root,"sHand",v=>{S.hand=v;saveMeta();renderSettings();});
   bindSeg(root,"sMode",v=>{ if(v==="more"){ openModeList(); return; } setMode(v); renderSettings(); });
   $("sPick").onclick=()=>openSetPage("silah");
+  if($("sKart")) $("sKart").onclick=()=>openSilahKart(S.weaponName);
   $("profEdit").onclick=()=>openSetPage("profil");
   $("profPick").onclick=()=>openProfPick();
   $("rtProgram").onclick=()=>openSetPage("program");
@@ -2684,17 +2690,55 @@ function bindSes(root){
 }
 function playSample(){ audioUnlock(); const q={sc:92,c:[]}; if(S.sound==="kapali") return; if(S.sound==="bip"){ shotSound(q); setTimeout(()=>shotSound({sc:40,c:[]}),700); } else shotSound({sc:92,c:["bilek_asagi"]}); }
 /* --- Silahını seç (cephanelik) */
-const PRESETS=[["pistol",["Sarsılmaz SAR9","Canik TP9","Glock 17","Glock 19","Beretta 92","Sig Sauer P320","MKE Yavuz 16","CZ 75"]],["rifle",["MPT-76","MPT-55","HK33","G3","M4 / AR-15","AK-47"]]];
-function pgSilah(){ const my=S.weapons||[];
-  const item=(ad,tip,mine)=>`<button data-w="${esc(ad)}" data-t="${tip}" aria-pressed="${S.weaponName===ad&&S.weapon===tip}"><span>${esc(ad)} <span class="note">${tip==="pistol"?"Tabanca":"Tüfek"}</span></span>${mine?`<span class="note" data-del="${esc(ad)}" role="button" aria-label="${esc(ad)} sil" style="padding:4px 8px">✕</span>`:""}</button>`;
-  return `<div class="pg"><div class="pick"><button data-w="" data-t="${S.weapon}" aria-pressed="${!S.weaponName}"><span>Yalnız tür (${S.weapon==="pistol"?"Tabanca":"Tüfek"})</span></button>${my.map(w=>item(w.ad,w.tip,true)).join("")}</div>
-    <div class="card"><h2>Yeni silah</h2><input type="text" id="wNew" maxlength="30" placeholder="Silah adı, örn. Canik TP9 SF">${segHtml("wNewT",[["pistol","Tabanca"],["rifle","Tüfek"]],S.weapon)}<button class="btn primary" id="wAdd">Ekle ve seç</button></div>
-    ${PRESETS.map(([tip,list])=>`<div class="lbl" style="margin-top:6px">${tip==="pistol"?"Tabancalar":"Tüfekler"}</div><div class="pick">${list.filter(a=>!my.some(w=>w.ad===a)).map(a=>item(a,tip,false)).join("")}</div>`).join("")}</div>`; }
+/* --- Silahını seç: silah kütüphanesi ve özellik kartı. Değerler üretici sayfalarından (her kartta kaynak).
+   Uygulama şunları kullanır: tür (skor ölçeği, hata şeması), kalibre (hedefteki delik büyüklüğü), tetik tipi (kuru tetik
+   ipucu, çift hareketlide ilk atış uyarısı), tüfek/tabanca (önerilen hedef mesafesi). */
+const SILAHLAR=[{"ad":"Sarsılmaz SAR9","tip":"pistol","ur":"Sarsılmaz (Türkiye)","kal":"9×19 mm","mm":9.0,"kap":17,"agr":730,"agrNot":"","namlu":114,"boy":193,"tetik":"striker","tkg":"1,5–2,5","isl":"","kay":"https://sarsilmaz.com/en/product/sar9","kay2":"","not":"Şarjör seçenekleri: 10, 15, 17 ve 19 fişek."},{"ad":"Sarsılmaz Kılınç 2000 Light","tip":"pistol","ur":"Sarsılmaz (Türkiye)","kal":"9×19 mm","mm":9.0,"kap":15,"agr":1000,"agrNot":"","namlu":116,"boy":203,"tetik":"da_sa","tkg":null,"isl":"","kay":"https://www.sarsilmaz.com/en/product/kilinc-2000-light","kay2":"","not":"Şarjör seçenekleri: 15 ve 17 fişek."},{"ad":"Canik TP9 SF","tip":"pistol","ur":"Canik (Türkiye)","kal":"9×19 mm","mm":9.0,"kap":18,"agr":807,"agrNot":"","namlu":113,"boy":192,"tetik":"striker","tkg":null,"isl":"","kay":"https://www.canik.com/global/products/tp9sf","kay2":"","not":""},{"ad":"Canik TP9 SFx","tip":"pistol","ur":"Canik (Türkiye)","kal":"9×19 mm","mm":9.0,"kap":20,"agr":830,"agrNot":"","namlu":132,"boy":210,"tetik":"striker","tkg":null,"isl":"","kay":"https://www.canik.com/global/tr/urunler/tp9-sfx","kay2":"","not":""},{"ad":"Canik METE SF","tip":"pistol","ur":"Canik (Türkiye)","kal":"9×19 mm","mm":9.0,"kap":15,"agr":794,"agrNot":"","namlu":106,"boy":185,"tetik":"striker","tkg":null,"isl":"","kay":"https://www.canik.com/global/tr/urunler/mete-sf","kay2":"https://www.canik.com/products/mete-sf","not":"Üreticinin tablosunda 15 fişek; 18'lik şarjör de var."},{"ad":"MKE Yavuz 16","tip":"pistol","ur":"MKE (Türkiye)","kal":"9×19 mm","mm":9.0,"kap":15,"agr":850,"agrNot":"","namlu":125,"boy":217,"tetik":"da_sa","tkg":null,"isl":"","kay":"https://modernfirearms.net/en/handguns/handguns-en/turkey-semi-automatic-pistols/yavuz-16-eng/","kay2":"https://www.thefirearmblog.com/blog/2009/12/02/ati-at92-pistol-mkek-yavuz-16/","not":"Beretta 92FS türevi. Üreticinin verisi bulunamadı.","sup":["agr"]},{"ad":"Glock 17 Gen5","tip":"pistol","ur":"Glock (Avusturya)","kal":"9×19 mm","mm":9.0,"kap":17,"agr":630,"agrNot":"","namlu":114,"boy":202,"tetik":"striker","tkg":2.7,"isl":"","kay":"https://us.glock.com/en/Pistols/G17-Gen5-FS-US","kay2":"","not":""},{"ad":"Glock 19 Gen5","tip":"pistol","ur":"Glock (Avusturya)","kal":"9×19 mm","mm":9.0,"kap":15,"agr":610,"agrNot":"","namlu":102,"boy":185,"tetik":"striker","tkg":2.7,"isl":"","kay":"https://us.glock.com/en/Pistols/G19-Gen5-FS-US","kay2":"","not":""},{"ad":"Beretta 92FS","tip":"pistol","ur":"Beretta (İtalya)","kal":"9×19 mm","mm":9.0,"kap":15,"agr":945,"agrNot":"boş şarjörle","namlu":125,"boy":217,"tetik":"da_sa","tkg":null,"isl":"","kay":"https://www.berettadefense.com/wp-content/uploads/2022/03/387409444-92fs_bdt_en-min.pdf","kay2":"","not":""},{"ad":"Sig Sauer P320 Full-Size","tip":"pistol","ur":"SIG Sauer (ABD)","kal":"9×19 mm","mm":9.0,"kap":17,"agr":802,"agrNot":"boş şarjörle","namlu":119,"boy":203,"tetik":"striker","tkg":null,"isl":"","kay":"https://www.sigsauer.com/p320-full-size.html","kay2":"","not":""},{"ad":"Sig Sauer P226","tip":"pistol","ur":"SIG Sauer (ABD)","kal":"9×19 mm","mm":9.0,"kap":15,"agr":964,"agrNot":"boş şarjörle","namlu":112,"boy":196,"tetik":"da_sa","tkg":null,"isl":"","kay":"https://en.wikipedia.org/wiki/SIG_Sauer_P226","kay2":"https://www.sigsauer.com/p226-nitron-full-size.html","not":""},{"ad":"CZ 75 B","tip":"pistol","ur":"Česká zbrojovka (Çekya)","kal":"9×19 mm","mm":9.0,"kap":16,"agr":1000,"agrNot":"","namlu":114,"boy":206,"tetik":"da_sa","tkg":null,"isl":"","kay":"https://armyrecognition.com/military-products/army/weapons/pistols/ceska-zbrojovka-pistolets-tcheque-fr","kay2":"https://www.deltamike.co.nz/?p=36907","not":"Üreticinin sayfasına ulaşılamadı.","sup":["agr","namlu"]},{"ad":"H&K USP 9 mm","tip":"pistol","ur":"Heckler & Koch (Almanya)","kal":"9×19 mm","mm":9.0,"kap":15,"agr":748,"agrNot":"","namlu":108,"boy":194,"tetik":"da_sa","tkg":null,"isl":"","kay":"https://wikiwand.com/en/HK_USP","kay2":"https://mil.ee/en/hk-usp-pistol/","not":"Üreticinin verisi bulunamadı.","sup":["agr"]},{"ad":"MKE MPT-76","tip":"rifle","ur":"MKE (Türkiye)","kal":"7,62×51 mm NATO","mm":7.8,"kap":20,"agr":4200,"agrNot":"","namlu":406,"boy":1000,"tetik":"tufek","tkg":"2,0–3,1","isl":"kısa stroklu gaz pistonlu, döner kilit","kay":"https://mke.gov.tr/Content/D_Dosya/ckResim/Programlar/01-MKE-KATALOG-SMALL%20ARMS.pdf","kay2":"","not":"Boy dipçik açıkken; kapalıyken 900 mm."},{"ad":"MKE MPT-55","tip":"rifle","ur":"MKE (Türkiye)","kal":"5,56×45 mm NATO","mm":5.7,"kap":30,"agr":3300,"agrNot":"","namlu":369,"boy":884,"tetik":"tufek","tkg":"2,0–3,1","isl":"kısa stroklu gaz pistonlu, döner kilit","kay":"https://mke.gov.tr/Content/D_Dosya/ckResim/Programlar/01-MKE-KATALOG-SMALL%20ARMS.pdf","kay2":"https://www.mkeusa.com/en-US/catalogue/rifles/mpt-55/37/17","not":"Boy dipçik açıkken; kapalıyken 800 mm."},{"ad":"MKE KNT-76","tip":"rifle","ur":"MKE (Türkiye)","kal":"7,62×51 mm NATO","mm":7.8,"kap":20,"agr":5000,"agrNot":"","namlu":508,"boy":1110,"tetik":"tufek","tkg":"1,5–2,5","isl":"kısa stroklu gaz pistonlu, döner kilit (yarı otomatik)","kay":"https://mke.gov.tr/Content/D_Dosya/ckResim/Programlar/01-MKE-KATALOG-SMALL%20ARMS.pdf","kay2":"https://www.mkeusa.com/en-US/catalogue/rifles/knt-76/37/15","not":"Yarı otomatik keskin nişancı tüfeği. Boy dipçik açıkken; kapalıyken 1030 mm."},{"ad":"MKE HK33E","tip":"rifle","ur":"MKE (Türkiye, H&K lisansı)","kal":"5,56×45 mm NATO","mm":5.7,"kap":30,"agr":3900,"agrNot":"","namlu":390,"boy":920,"tetik":"tufek","tkg":null,"isl":"geciktirmeli makaralı kapak","kay":"https://mke.gov.tr/Content/D_Dosya/ckResim/Programlar/01-MKE-KATALOG-SMALL%20ARMS.pdf","kay2":"","not":"Sabit dipçikli (A2) değerler. Katlanır dipçikli A3: 4,0 kg, 740/920 mm."},{"ad":"MKE G3A7","tip":"rifle","ur":"MKE (Türkiye, H&K lisansı)","kal":"7,62×51 mm NATO","mm":7.8,"kap":20,"agr":4250,"agrNot":"","namlu":450,"boy":1020,"tetik":"tufek","tkg":null,"isl":"geciktirmeli makaralı kapak","kay":"https://mke.gov.tr/Content/D_Dosya/ckResim/Programlar/01-MKE-KATALOG-SMALL%20ARMS.pdf","kay2":"https://old.weaponsystems.net/weaponsystem/AA04%20-%20G3.html","not":"G3A3'ün Türkiye'deki adı, sabit dipçikli."},{"ad":"Colt M4A1 / AR-15","tip":"rifle","ur":"Colt (ABD)","kal":"5,56×45 mm NATO","mm":5.7,"kap":30,"agr":3400,"agrNot":"boş şarjörle","namlu":368,"boy":858,"tetik":"tufek","tkg":null,"isl":"doğrudan gaz tesirli (Stoner), döner kilit","kay":"https://www.colt.com/wp-content/uploads/2026/04/25-COLT-2043-COLLATERAL-MLE-Smart_Sheet-RND8-Web-1.pdf","kay2":"https://wikiwand.com/en/articles/M4A1","not":"14,5 inç namlulu karabina. Boy dipçik açıkken; kapalıyken 775 mm."},{"ad":"AKM (AK-47)","tip":"rifle","ur":"Izhmash / Tula (SSCB)","kal":"7,62×39 mm","mm":7.9,"kap":30,"agr":3100,"agrNot":"boş şarjörle","namlu":415,"boy":880,"tetik":"tufek","tkg":null,"isl":"uzun stroklu gaz pistonlu, döner kilit","kay":"https://en.wikipedia.org/wiki/AKM","kay2":"https://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq.ipfs.4everland.io/wiki/AKM.html","not":"AK-47 ailesi, sabit dipçik. Ağırlık kaynağa göre 3,1–3,3 kg.","sup":["agr"]},{"ad":"Sarsılmaz SAR 56","tip":"rifle","ur":"Sarsılmaz (Türkiye)","kal":"5,56×45 mm NATO","mm":5.7,"kap":30,"agr":3490,"agrNot":"","namlu":369,"boy":880,"tetik":"tufek","tkg":"2,5–4,1","isl":"kısa stroklu gaz pistonlu","kay":"https://sarsilmaz.com/en/product/sar-56-145","kay2":"","not":"14,5 inç namlulu model. Boy için dipçik durumu belirtilmemiş.","sup":["boy"]}];
+// eski sürümlerdeki kısa adlar (kayıtlı oturumlar ve ayar) kütüphanedeki karta bağlanır
+const SILAH_ESKI={"Canik TP9":"Canik TP9 SF","Glock 17":"Glock 17 Gen5","Glock 19":"Glock 19 Gen5","Beretta 92":"Beretta 92FS","Sig Sauer P320":"Sig Sauer P320 Full-Size","CZ 75":"CZ 75 B","MPT-76":"MKE MPT-76","MPT-55":"MKE MPT-55","HK33":"MKE HK33E","G3":"MKE G3A7","M4 / AR-15":"Colt M4A1 / AR-15","AK-47":"AKM (AK-47)"};
+function silahBul(ad){ if(!ad) return null; const a=SILAH_ESKI[ad]||ad; return SILAHLAR.find(w=>w.ad===a)||null; }
+const TETIK_T={striker:"Vurucu iğneli",da_sa:"Çift ve tek hareketli",sa:"Tek hareketli",tufek:"Tüfek tetiği"};
+const fmtAgr=g=>g>=1000?fx(g/1000,g%100?2:1)+" kg":g+" g";
+const silahYak=(w,k)=>(w.sup||[]).includes(k)?"≈ ":"";   // ≈: ikincil kaynaktan, üreticiyle doğrulanamadı
+function silahAlt(w){ return [w.kal,w.kap?w.kap+" fişek":"",w.agr?silahYak(w,"agr")+fmtAgr(w.agr):""].filter(Boolean).join(" · "); }
+function silahKart(w){
+  const sat=(k,v)=>v==null||v===""?"":`<div><div class="lbl">${esc(k)}</div><div class="num" style="font-size:15px">${esc(String(v))}</div></div>`;
+  const tk=w.tkg==null?null:typeof w.tkg==="object"?`çift ≈ ${fx(w.tkg.da,1)} kg · tek ≈ ${fx(w.tkg.sa,1)} kg`:typeof w.tkg==="string"?w.tkg+" kg":`≈ ${fx(w.tkg,1)} kg`, yk=k=>silahYak(w,k);
+  const ip=[`Hedefteki delik ${w.kal} kalibresine göre çizilir.`,
+    w.tetik==="striker"?"Vurucu iğneli tetik: kuru tetikte her atıştan sonra sürgüyü biraz geri çekip tetiği yeniden kurman gerekir.":"",
+    w.tetik==="da_sa"?"Çift hareketli ilk atış: horoz kurulu değilken tetik ağır ve uzundur. İlk atışta uygulama seni uyarır; tetiğe sürekli ve düz bas.":"",
+    w.tip==="rifle"?"Tüfekte hedef mesafesi 100 m önerilir; grup çapı bu mesafeye göre hesaplanır.":"Tabancada hedef mesafesi 25 m önerilir; grup çapı bu mesafeye göre hesaplanır."].filter(Boolean);
+  const host=u=>{ try{ return new URL(u).hostname.replace(/^www\./,""); }catch(e){ return u; } };
+  return `<div class="pg"><div class="card"><h2>${esc(w.ad)}</h2><p class="note" style="margin-top:-4px">${esc(w.ur||"")}</p>
+    <div class="kv">${sat("Tür",w.tip==="pistol"?"Tabanca":"Tüfek")}${sat("Kalibre",w.kal)}${sat("Şarjör",w.kap?w.kap+" fişek":null)}${sat("Ağırlık",w.agr?yk("agr")+fmtAgr(w.agr)+(w.agrNot?" ("+w.agrNot+")":""):null)}${sat("Namlu",w.namlu?yk("namlu")+w.namlu+" mm":null)}${sat("Toplam boy",w.boy?yk("boy")+w.boy+" mm":null)}${sat("Tetik",TETIK_T[w.tetik]||null)}${sat("Tetik ağırlığı",tk)}${sat("İşleyiş",w.isl||null)}</div>
+    ${w.not?`<p class="note">${esc(w.not)}</p>`:""}${(w.sup||[]).length?`<p class="note">≈ işaretli değerler ikincil kaynaktan; üreticinin sayfasıyla doğrulanamadı.</p>`:""}</div>
+    <div class="card"><h2>Uygulamada</h2><ul class="note" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${ip.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+    <button class="btn primary" id="skSec">${S.weaponName===w.ad?"Seçili silahın bu ✓":"Bu silahı seç"}</button>
+    ${w.kay?`<p class="note">Kaynak: <a href="${esc(w.kay)}" target="_blank" rel="noopener">${esc(host(w.kay))}</a>${w.kay2?`, <a href="${esc(w.kay2)}" target="_blank" rel="noopener">${esc(host(w.kay2))}</a>`:""}. Model yılına ve sürümüne göre küçük farklar olabilir.</p>`:""}</div>`;
+}
+function openSilahKart(ad){ const w=silahBul(ad); if(!w) return;
+  pushPage({set:"silahKart",back:"",title:"Silah kartı",render:()=>silahKart(w),bind:root=>{
+    root.querySelector("#skSec").onclick=()=>{ silahSec(w.ad,w.tip); popPage(); if(setPage==="silah") popPage(); else renderSettings(); };
+    root.querySelectorAll('a[target="_blank"]').forEach(a=>a.onclick=e=>{ e.preventDefault(); openExternal(a.href); }); }}); }
+function silahSec(ad,tip){
+  S.weapon=tip; S.weaponName=ad;
+  if(ad&&!silahBul(ad)&&!(S.weapons||[]).some(w=>w.ad===ad)) S.weapons=(S.weapons||[]).concat([{ad,tip}]);
+  if(silahBul(ad)){ if(tip==="rifle"&&S.dist<50){ S.dist=100; toast("Tüfek seçildi: hedef mesafesi 100 m yapıldı (Gelişmiş › Görünüm'den değiştirebilirsin).",5000); }
+    else if(tip==="pistol"&&S.dist>50){ S.dist=25; toast("Tabanca seçildi: hedef mesafesi 25 m yapıldı.",4000); } }
+  saveMeta(); }
+function pgSilah(){ const my=(S.weapons||[]).filter(w=>!silahBul(w.ad)), sec=(ad,tip)=>S.weaponName===ad&&S.weapon===tip;
+  const kendi=w=>`<button data-w="${esc(w.ad)}" data-t="${w.tip}" aria-pressed="${sec(w.ad,w.tip)}"><span>${esc(w.ad)} <span class="note">${w.tip==="pistol"?"Tabanca":"Tüfek"}</span></span><span class="note" data-del="${esc(w.ad)}" role="button" aria-label="${esc(w.ad)} sil" style="padding:4px 8px">✕</span></button>`;
+  const kut=w=>`<button data-w="${esc(w.ad)}" data-t="${w.tip}" aria-pressed="${sec(w.ad,w.tip)}"><span class="sw"><span>${esc(w.ad)}</span><small>${esc(silahAlt(w))}</small></span><span class="sk" data-kart="${esc(w.ad)}" role="button" aria-label="${esc(w.ad)} özellikleri">i</span></button>`;
+  return `<div class="pg"><div class="pick"><button data-w="" data-t="${S.weapon}" aria-pressed="${!S.weaponName}"><span>Yalnız tür (${S.weapon==="pistol"?"Tabanca":"Tüfek"})</span></button>${my.map(kendi).join("")}</div>
+    ${["pistol","rifle"].map(tip=>`<div class="lbl" style="margin-top:6px">${tip==="pistol"?"Tabancalar":"Tüfekler"} · özellikler için i'ye dokun</div><div class="pick">${SILAHLAR.filter(w=>w.tip===tip).map(kut).join("")}</div>`).join("")}
+    <div class="card"><h2>Listede olmayan silah</h2><input type="text" id="wNew" maxlength="30" placeholder="Silah adı">${segHtml("wNewT",[["pistol","Tabanca"],["rifle","Tüfek"]],S.weapon)}<button class="btn primary" id="wAdd">Ekle ve seç</button></div></div>`; }
 function bindSilah(root){
   let nt=S.weapon; bindSeg(root,"wNewT",v=>{nt=v;});
-  const pick=(ad,tip)=>{ S.weapon=tip; S.weaponName=ad; if(ad&&!(S.weapons||[]).some(w=>w.ad===ad)) S.weapons=(S.weapons||[]).concat([{ad,tip}]); saveMeta(); popPage(); };
-  root.querySelectorAll("[data-w]").forEach(b=>b.onclick=e=>{ const del=e.target.closest("[data-del]"); if(del){ S.weapons=(S.weapons||[]).filter(w=>w.ad!==del.dataset.del); if(S.weaponName===del.dataset.del) S.weaponName=""; saveMeta(); refreshPage(); return; } pick(b.dataset.w,b.dataset.t); });
-  $("wAdd").onclick=()=>{ const ad=$("wNew").value.trim(); if(!ad){ toast("Silah adını yaz."); return; } pick(ad,nt); };
+  root.querySelectorAll("[data-w]").forEach(b=>b.onclick=e=>{
+    const del=e.target.closest("[data-del]"); if(del){ S.weapons=(S.weapons||[]).filter(w=>w.ad!==del.dataset.del); if(S.weaponName===del.dataset.del) S.weaponName=""; saveMeta(); refreshPage(); return; }
+    const k=e.target.closest("[data-kart]"); if(k){ openSilahKart(k.dataset.kart); return; }
+    silahSec(b.dataset.w,b.dataset.t); popPage(); });
+  $("wAdd").onclick=()=>{ const ad=$("wNew").value.trim(); if(!ad){ toast("Silah adını yaz."); return; } silahSec(ad,nt); popPage(); };
 }
 /* --- Profil ve atıcı değiştirme */
 function pgProfil(){ const p=curProf(); const n=sessions.filter(s=>!s.sample&&whoOf(s)===p.id).length;
@@ -3616,7 +3660,7 @@ window.__hisar={trigClear,wizardAxis,applyCfg,wizardSensor,startGuard,mountPromp
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),
   hideSplash, splashOpen, get pages(){return pages;}, popPage, openCause, openModeList, openDrillSettings, openGroup, openGroups, todayChallenge, CHALLENGES, streakInfo, setYon, manualShot, get curView(){return curView;},
-  sensorTune, sensorShotBeep, sensorSoundTest, sensorSonuc, trSesler, SCUE, SHOT_GOOD, SHOT_BAD, hdShot, hdYon, hdGrup, hdRing, sessizGuncelle, greetOnConnect, speak, renderSensorView, mainSet, get AN(){return AN;},
+  sensorTune, sensorShotBeep, sensorSoundTest, SILAHLAR, silahBul, openSilahKart, sensorSonuc, trSesler, SCUE, SHOT_GOOD, SHOT_BAD, hdShot, hdYon, hdGrup, hdRing, sessizGuncelle, greetOnConnect, speak, renderSensorView, mainSet, get AN(){return AN;},
   openBul, sonYerAl, konumAl, uzaklik, rssiYon, haritaUrl, get BUL(){return BUL;}, saatVar, saatDene, saatAtis, saatOzet, openSetPage};
 
 /* --- başlat */

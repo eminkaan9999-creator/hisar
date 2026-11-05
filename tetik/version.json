@@ -1,1 +1,1 @@
-{"v": 23, "not": "Sensör yazılımı güncellemesi artık yarıda kalmıyor: kaybolan parçalarda sensöre nerede kaldığı sorulup oradan sürülüyor, bağlantı koparsa kendiliğinden yeniden deneniyor, güncelleme sırasında ekran açık kalıyor.", "apk": true, "apkMin": 1800}
+{"v": 24, "not": "Silah kütüphanesi: 13 tabanca, 8 tüfek. Her silahın özellik kartı var (kalibre, şarjör, ağırlık, namlu, boy, tetik); değerler üretici sayfalarından, kaynağıyla. Hedefteki delik kalibreye göre çiziliyor; çift hareketli tetikte ilk atış için uyarı çıkıyor.", "apk": true, "apkMin": 1800}

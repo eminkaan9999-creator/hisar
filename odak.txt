@@ -1,0 +1,1 @@
+  mCurrentFocus=Window{9dee750 u0 com.hisar.tetik/com.hisar.tetik.MainActivity}

@@ -1,0 +1,10 @@
+11-05 16:48:39.917  2770  2770 W JobService: onNetworkChanged() not implemented in org.chromium.android_webview.services.AwVariationsSeedFetcher. Must override in a subclass.
+11-05 16:48:40.208  2770  2770 W JobService: onNetworkChanged() not implemented in org.chromium.android_webview.services.AwVariationsSeedFetcher. Must override in a subclass.
+11-05 16:48:41.225  2930  3186 W chromium: [WARNING:dns_config_service_android.cc(115)] Failed to read DnsConfig.
+11-05 16:48:41.633  2930  2930 I HisarTetik: sayfa sürümü 25 (APK içi), APK içindeki 25
+11-05 16:48:42.116   521   551 I ActivityManager: Start proc 3334:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {com.hisar.tetik/org.chromium.content.app.SandboxedProcessService0:0}
+11-05 16:48:42.244   521   551 I ActivityManager: Start proc 3376:com.google.android.webview:webview_apk/u0a134 for service {com.google.android.webview/org.chromium.android_webview.nonembedded.AwComponentUpdateService}
+11-05 16:48:42.709  3334  3334 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+11-05 16:48:43.980  3376  3519 W cr_AWNetworkFetcherTask: 	at org.chromium.android_webview.nonembedded.NetworkFetcherTask.download(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:48)
+11-05 16:49:15.174  4264  4774 I cr_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@b71c06e
+11-05 16:49:55.247  2930  5920 I HisarTetik: sayfa güncellendi: 25 (önceki 25)

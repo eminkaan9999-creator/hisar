@@ -1,6 +1,6 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
-const CACHE='hisar-main-v63.1';
+const CACHE='hisar-main-v63.2';
 function worker(){const handlers={},stores=new Map();let online=true,skip=0,calls=0,failInstall=false;const key=x=>typeof x==='string'?x:x.url;
  const caches={async open(name){if(!stores.has(name))stores.set(name,new Map());const store=stores.get(name);return {async match(k){const v=store.get(key(k));return v&&v.clone();},async put(k,v){store.set(key(k),v.clone());},async add(k){store.set(key(k),new Response('ASSET'));},async addAll(keys){if(failInstall)throw Error('missing');for(const k of keys)store.set(key(k),new Response(key(k).includes('/iti/')?'ITI':'GAME'));}};},async keys(){return [...stores.keys()];},async delete(k){return stores.delete(k);}};
  const ctx={URL,Request,Response,caches,fetch:async(r)=>{calls++;if(!online)throw Error('offline');const u=key(r);return new Response(u.includes('/iti')?'ITI':'GAME');},self:{location:{href:'https://example.test/hisar/sw.js'},clients:{claim:async()=>{}},skipWaiting:async()=>{skip++;},addEventListener:(n,f)=>handlers[n]=f}};

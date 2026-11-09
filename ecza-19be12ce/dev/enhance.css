@@ -22,6 +22,6 @@
 .ux-sr{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .ux-large body{font-size:18px}.ux-large .kt p,.ux-large .kt li,.ux-large .hint,.ux-large .medical-note,.ux-large .note{font-size:17px!important;line-height:1.65}.ux-large .row .nm{font-size:19px}.ux-large .row .sub{font-size:16px}.ux-large .ux-note textarea{font-size:18px}.ux-large .ux-grid label{font-size:15px}
 #ux-import-preview:empty{display:none}#ux-import-preview:not(:empty){padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}#ux-import-preview p{margin-bottom:12px}
-@media(min-width:900px){.ux-dock{display:none}.ux-overview{padding:26px 30px}.ux-stats{max-width:620px}.ux-stats strong{font-size:32px}}
+@media(min-width:900px){#app>.menu{position:relative;inset:auto}.ux-dock{display:none}.ux-overview{padding:26px 30px}.ux-stats{max-width:620px}.ux-stats strong{font-size:32px}}
 @media(max-width:359px){.ux-grid{grid-template-columns:1fr}.ux-overview{padding:16px}.ux-stats{gap:8px}.ux-stats strong{font-size:23px}.ux-dock button{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.ux-dock *, .ux-overview *{transition:none!important;animation:none!important}}

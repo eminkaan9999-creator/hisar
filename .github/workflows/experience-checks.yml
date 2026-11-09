@@ -1,0 +1,32 @@
+name: HİSAR experience checks
+on:
+  push:
+    branches: [feature/hisar-experience-20261109]
+  pull_request:
+    paths: ['experience/**', 'scripts/experience-*', 'sw.js', '.github/workflows/experience-checks.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit integration points
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const text=fs.readFileSync('index.html','utf8');
+          console.log('SOURCE BYTES',Buffer.byteLength(text));
+          console.log('EXTERNAL SCRIPTS',Array.from(text.matchAll(/<script[^>]+src=["']([^"']+)/g),m=>m[1]));
+          const lines=text.split('\n');
+          const pattern=/WebGLRenderer|setPixelRatio|function.*[Pp]ause|let paused|var paused|const paused|isPaused|paused\s*=|requestAnimationFrame|visibilitychange|masterGain|audioCtx|soundEnabled|soundOn|localStorage\.(?:getItem|setItem)|VERSION\s*=|version\.json/;
+          const out=[];
+          lines.forEach((s,i)=>{ if(s.length<20000 && pattern.test(s))out.push(`${i+1}: ${s.slice(0,1100)}`); });
+          console.log(out.slice(0,140).join('\n'));
+          console.log('TAIL',lines.slice(-40).filter(s=>s.length<2000).join('\n'));
+          NODE
+      - name: Existing assistant tests
+        run: node iti/iti-assistant.test.cjs

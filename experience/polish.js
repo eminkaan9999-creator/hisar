@@ -122,6 +122,6 @@
  // Load the optional analog control adapter after the legacy game globals exist.
  // Failure leaves the original controls untouched.
  if(!root.HisarControls){const controlScript=document.createElement('script');controlScript.src=new URL('experience/controls.js',document.baseURI).href;controlScript.defer=true;controlScript.onerror=()=>notice('Analog kontrol modülü yüklenemedi; mevcut kumandalar kullanılabilir.');document.head.appendChild(controlScript);}
- // UI can finish loading after this module in inline/offline distributions.
+ // Optional audiovisual module, isolated from weapon and mission controls.\n if(!root.HisarAV){const avScript=document.createElement('script');avScript.src=new URL('experience/av-comfort.js',document.baseURI).href;avScript.defer=true;document.head.appendChild(avScript);}\n // UI can finish loading after this module in inline/offline distributions.
  if(!document.getElementById('hx-settings'))document.addEventListener('hisar:ui-ready',attach,{once:true});
 })(typeof window!=='undefined'?window:globalThis);

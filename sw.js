@@ -1,12 +1,63 @@
-// HISAR SIMULATOR servis calisani: sayfa ve surum bilgisi agdan (yoksa onbellekten), kutuphane ve ikonlar onbellekten
-// ONEMLI: /poligon/, /kk-..., /tetik/, /santiye-... ve /ecza-... klasorleri ayri uygulamalardir, kendi servis calisanlari var.
-// fetch icindeki bu bes istisnayi silme ve bu dosyayi yeniden yazarken koru; silinirse o sayfalar bu
-// uygulamanin index.html onbellegine yazilir ve HISAR acilisi bozulur (Surum 47'de bir kez silindi).
-const C='hisar-v62';
-const STATIC=['./three.min.js','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon-32.png','./manifest.webmanifest'];
-self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(STATIC.concat(['./','./index.html'])).catch(()=>{})))});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('hisar-v')&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||u.pathname.includes('/poligon/')||u.pathname.includes('/kk-')||u.pathname.includes('/tetik/')||u.pathname.includes('/santiye-')||u.pathname.includes('/ecza-'))return;
- const net=/version\.json$/.test(u.pathname)||e.request.mode==='navigate'||/\/(index\.html)?$/.test(u.pathname);
- if(net){e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok&&!/version\.json$/.test(u.pathname)){const cp=r.clone();caches.open(C).then(c=>c.put('./index.html',cp))}return r}).catch(()=>caches.match('./index.html')))}
- else e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(n=>{const cp=n.clone();caches.open(C).then(c=>c.put(e.request,cp));return n})))});
+/* HİSAR main PWA v63. Sub-app navigation must never replace the game shell. */
+'use strict';
+const CACHE='hisar-main-v63';
+const BASE=new URL('./',self.location.href);
+const url=p=>new URL(p,BASE).href;
+const CORE=['index.html','three.min.js','manifest.webmanifest','iti/index.html','iti/iti-assistant.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css'];
+const OPTIONAL=['icon-192.png','icon-512.png'];
+const STATIC=new Set([...CORE,...OPTIONAL].map(url));
+function pageKey(input){const u=new URL(input);if(u.origin!==BASE.origin)return null;const p=u.pathname;
+ if(p===BASE.pathname||p===BASE.pathname+'index.html')return url('index.html');
+ if(p===BASE.pathname+'iti'||p===BASE.pathname+'iti/'||p===BASE.pathname+'iti/index.html')return url('iti/index.html');
+ return null;
+}
+function assetKey(input){const u=new URL(input);u.search='';u.hash='';return STATIC.has(u.href)?u.href:null;}
+const ignore=promise=>Promise.resolve(promise).catch(()=>undefined);
+self.addEventListener('install',event=>{
+ event.waitUntil((async()=>{
+  const cache=await caches.open(CACHE);
+  // Fail installation rather than activate an incomplete new game shell.
+  await cache.addAll(CORE.map(url));
+  await Promise.all(OPTIONAL.map(p=>ignore(cache.add(url(p)))));
+  await self.skipWaiting();
+ })());
+});
+self.addEventListener('activate',event=>{
+ event.waitUntil((async()=>{
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('hisar-main-')||k.startsWith('hisar-cache-hisar-m60-ucangoz-'))).map(k=>caches.delete(k)));
+  await self.clients.claim();
+ })());
+});
+self.addEventListener('fetch',event=>{
+ const r=event.request,u=new URL(r.url);
+ if(r.method!=='GET'||u.origin!==BASE.origin)return;
+ if(u.pathname===BASE.pathname+'version.json'){
+  event.respondWith(fetch(r,{cache:'no-store'}).catch(()=>new Response('{"offline":true}',{status:503,headers:{'Content-Type':'application/json'}})));
+  return;
+ }
+ if(r.mode==='navigate'){
+  const key=pageKey(r.url);
+  if(!key)return; // Other apps keep their own service workers and offline pages.
+  const operation=(async()=>{
+   const cache=await caches.open(CACHE);
+   try{
+    const response=await fetch(r);
+    if(response.ok){await ignore(cache.put(key,response.clone()));return response;}
+    return (await cache.match(key))||response;
+   }catch{return (await cache.match(key))||new Response('Bu sayfa çevrimdışı kullanım için henüz hazır değil. İnternet bağlantısıyla yeniden aç.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});}
+  })();
+  event.respondWith(operation);event.waitUntil(ignore(operation));return;
+ }
+ const key=assetKey(r.url);if(!key)return;
+ // Versioned local assets are immutable for this worker version. Avoid unbounded ?t= entries.
+ const operation=(async()=>{
+  const cache=await caches.open(CACHE),hit=await cache.match(key);
+  if(hit)return hit;
+  const response=await fetch(r);
+  if(response.ok)await ignore(cache.put(key,response.clone()));
+  return response;
+ })();
+ event.respondWith(operation);event.waitUntil(ignore(operation));
+});
+self.addEventListener('message',event=>{if(event.data==='SKIP_WAITING')event.waitUntil(self.skipWaiting());});

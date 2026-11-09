@@ -1,1 +1,4 @@
-{"v": 62, "not": "Yeni M60A3'te paletler artık hızla akıyor: yol tekerlekleri, ön avara, arka tahrik dişlisi ve üstteki makaralar sürüşe göre dönüyor; sağ ve sol palet dönüşte ayrı hızlarda hareket ediyor. (Sürüm 61: kasmalar giderildi, yeni tank dış görünümü ve kamikaze Uçangöz modeli.)"}
+{
+  "v": 63,
+  "not": "Oyun içi İTİ ve ayar paneli, otomatik kalite ve doğru FPS ölçümü, FPS ve oturum raporları; ana oyun/İTİ çevrimdışı önbellek ayrımı düzeltildi."
+}

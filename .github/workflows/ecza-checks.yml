@@ -1,0 +1,70 @@
+name: Kardelen v7 checks
+on:
+  push:
+    branches: [main, feature/ecza-v7-20261110]
+    paths:
+      - 'ecza-19be12ce/dev/**'
+      - 'ecza-19be12ce/index.html'
+      - 'ecza-19be12ce/surum.json'
+      - 'ecza-19be12ce/sw.js'
+      - '.github/workflows/ecza-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ecza-checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Integrate and check data preservation and JavaScript syntax
+        run: |
+          node ecza-19be12ce/dev/integrate.cjs
+          sha256sum ecza-19be12ce/index.html > /tmp/ecza-build.sha
+          node ecza-19be12ce/dev/integrate.cjs
+          sha256sum --check /tmp/ecza-build.sha
+      - name: Install pinned browser tooling
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Browser, mobile, import and offline regression tests
+        run: node ecza-19be12ce/dev/browser-tests.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ecza-v7-browser-results
+          path: |
+            ecza-19be12ce/test-results/
+            ecza-19be12ce/index.html
+            ecza-19be12ce/sw.js
+            ecza-19be12ce/surum.json
+          retention-days: 7
+          if-no-files-found: error
+  integrate:
+    needs: check
+    if: github.ref == 'refs/heads/feature/ecza-v7-20261110'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Commit only tested application outputs to the feature branch
+        run: |
+          node ecza-19be12ce/dev/integrate.cjs
+          git add ecza-19be12ce/index.html ecza-19be12ce/surum.json ecza-19be12ce/sw.js
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build(ecza): integrate tested Kardelen v7 without changing medicine data'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

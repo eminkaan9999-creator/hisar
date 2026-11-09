@@ -14,8 +14,17 @@
  if(!male)return false;utterance.voice=male;
  try{speechSynthesis.cancel();speechSynthesis.speak(utterance);return true;}catch{return false;}
  }
+
+ function addPresentationStyles(){if(!root.document||document.getElementById('hisar-immersive-style'))return;
+ const style=document.createElement('style');style.id='hisar-immersive-style';style.textContent=`
+ #hisar-immersive-settings{box-shadow:0 10px 32px #0008;backdrop-filter:blur(12px)}
+ #hisar-immersive-settings button:focus-visible,#hisar-immersive-settings input:focus-visible{outline:2px solid #9fe9d7;outline-offset:3px}
+ @media(max-width:600px){#hisar-immersive-settings{right:calc(8px + env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom));max-width:calc(100vw - 32px);font-size:14px!important}}
+ @media(prefers-reduced-motion:reduce){#hisar-immersive-settings *{animation:none!important;transition:none!important}}
+ html[data-hisar-reduce-motion="true"] #hisar-immersive-settings *{animation:none!important;transition:none!important}
+ `;document.head.appendChild(style);}
  function installPanel(){if(!root.document||document.getElementById('hisar-immersive-settings'))return false;
- const panel=document.createElement('section');panel.id='hisar-immersive-settings';panel.setAttribute('aria-label','HİSAR görüntü ve ses tercihleri');
+ addPresentationStyles();const panel=document.createElement('section');panel.id='hisar-immersive-settings';panel.setAttribute('aria-label','HİSAR görüntü ve ses tercihleri');
  panel.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;background:#10191eea;color:#fff;border:1px solid #6b8b87;border-radius:12px;padding:10px;font:13px system-ui;max-width:min(300px,90vw)';
  const toggle=document.createElement('button');toggle.type='button';toggle.textContent='Görüntü ve Ses';toggle.setAttribute('aria-expanded','false');toggle.style.cssText='background:#243b40;color:white;border:0;padding:8px 12px;border-radius:8px;cursor:pointer';panel.appendChild(toggle);
  const fields=document.createElement('div');fields.hidden=true;fields.style.cssText='display:grid;gap:8px;margin-top:8px';
@@ -25,5 +34,5 @@
  panel.appendChild(fields);document.body.appendChild(panel);return true;}
  apply();
  if(root.document){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installPanel,{once:true});else installPanel();}
- root.HisarImmersive=Object.freeze({version:'1.0',defaults,normalize,load,save,speak,installPanel,getSettings:()=>({...state})});
+ root.HisarImmersive=Object.freeze({version:'1.0',defaults,normalize,load,save,speak,installPanel,addPresentationStyles,getSettings:()=>({...state})});
 })(typeof window!=='undefined'?window:globalThis);

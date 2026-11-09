@@ -119,6 +119,9 @@
  addEventListener('storage',e=>{if(e.key!==KEY)return;try{opts=settings(JSON.parse(e.newValue||'null'));refresh();queueTextures();}catch{}});
  root.HisarPolish=Object.freeze({version:api.version,getSettings:()=>({...opts}),set:change,diagnostics,clearInputs,attach});
  attach();safeUpdate();queueTextures();
+ // Load the optional analog control adapter after the legacy game globals exist.
+ // Failure leaves the original controls untouched.
+ if(!root.HisarControls){const controlScript=document.createElement('script');controlScript.src=new URL('experience/controls.js',document.baseURI).href;controlScript.defer=true;controlScript.onerror=()=>notice('Analog kontrol modülü yüklenemedi; mevcut kumandalar kullanılabilir.');document.head.appendChild(controlScript);}
  // UI can finish loading after this module in inline/offline distributions.
  if(!document.getElementById('hx-settings'))document.addEventListener('hisar:ui-ready',attach,{once:true});
 })(typeof window!=='undefined'?window:globalThis);

@@ -31,9 +31,10 @@ if(require.main===module){
  console.log('Syntax checked inline game scripts:',check(after));
  if(after!==before)fs.writeFileSync(file,after);
  const v=JSON.parse(fs.readFileSync('version.json','utf8'));
- if(Number(v.v)>63)throw Error('A newer version exists; do not overwrite it');
- v.v=63;v.not='Oyun içi İTİ ve ayar paneli, otomatik kalite ve doğru FPS ölçümü, FPS ve oturum raporları; ana oyun/İTİ çevrimdışı önbellek ayrımı düzeltildi.';
- fs.writeFileSync('version.json',JSON.stringify(v,null,2)+'\n');
+ // Daha yeni bir oyun sürümü (64+) yayımlanmışsa version.json'a dokunma; entegrasyon zaten idempotent.
+ if(Number(v.v)>63){console.log('Newer game version '+v.v+' present; version.json left unchanged');}
+ else{v.v=63;v.not='Oyun içi İTİ ve ayar paneli, otomatik kalite ve doğru FPS ölçümü, FPS ve oturum raporları; ana oyun/İTİ çevrimdışı önbellek ayrımı düzeltildi.';
+ fs.writeFileSync('version.json',JSON.stringify(v,null,2)+'\n');}
  console.log(after===before?'Integration already present':'Integrated experience v1; preserved original game');
 }
 module.exports={integrate,check};

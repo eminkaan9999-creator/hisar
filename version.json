@@ -1,5 +1,5 @@
 {
-  "v": 63,
+  "v": 64,
   "experience": "63.1",
-  "not": "Deneyim 63.1: çalışan sinematik ve kontrast seçenekleri; yumuşak takip kamerası, sarsıntı azaltma, isteğe bağlı filmik ton eşleme ve parlaklık, doku filtreleme, garaj/telefon menü taşması düzeltmeleri, arka plan kontrol ve ses temizliği. Ana oyun sürümü 63 korunur."
+  "not": "Termal nişangâh düzeltildi: termal görüntü her karede bir çizim hatasıyla yarıda kesiliyordu, sıcak hedefler görünmüyordu. Artık düşman araçları ve askerler WHT HOT'ta beyaz, BLK HOT'ta siyah görünüyor; arazi gri tonlarda okunuyor. Termalden çıkışta ve hava değişiminde oluşan kısa takılma da kaldırıldı."
 }

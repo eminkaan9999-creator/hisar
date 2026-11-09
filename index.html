@@ -2260,12 +2260,12 @@ function sel(d,v){const t=d/v;return Math.atan(6*t*t/Math.max(1,d))}       // il
 function shellV(){return SH[st].v*(1+.05*SV.U.fcs)}
 // ---- termal goruntu: kanvasa filtre + isi kutulari
 let fState='',envT=0;
-function tEnv(on){if(on===envT)return;envT=on;if(on){skyU.top.value.set(0x0c0c0c);skyU.bot.value.set(0x2a2a2a);S.background.set(0x2a2a2a);S.fog.color.set(0x3a3a3a);cloudM.opacity=.12;sunM.visible=false}else setW(wx)}
+function tEnv(on){if(on===envT)return;envT=on;if(on){skyU.top.value.set(0x080808);skyU.bot.value.set(0x1c1c1c);S.background.set(0x1c1c1c);S.fog.color.set(0x262626);cloudM.opacity=.12;sunM.visible=false}else setW(wx)}
 function setFilter(s){if(s===fState)return;fState=s;cv.style.filter=s}
 const _iv=window.ivCam;
 window.ivCam=function(){_iv();
  if(iv===1&&mode==='tank'){
-  if(SGT.m===1){if(SGT.cool>0)setFilter('grayscale(1) contrast(.55) brightness(.5) blur(2px)');else setFilter(SGT.pol?'grayscale(1) invert(1) contrast(1.3) brightness(1.02)':'grayscale(1) contrast(1.35) brightness(.96)');
+  if(SGT.m===1){if(SGT.cool>0)setFilter('grayscale(1) contrast(.55) brightness(.5) blur(2px)');else setFilter(SGT.pol?'grayscale(1) invert(1) contrast(1.45) brightness(1.04)':'grayscale(1) contrast(1.55) brightness(1.02)');
    tEnv(1);}
   else{setFilter(SGT.m===2?'sepia(.18) saturate(.85) brightness(.97)':'');tEnv(0)}
   if(SGT.m===2){if(CAM.fov!==7.5){CAM.fov=7.5;CAM.updateProjectionMatrix()}}
@@ -2275,11 +2275,11 @@ window.ivCam=function(){_iv();
 FRAME_HOOKS.push(dr=>{if(SGT.cool>0)SGT.cool=Math.max(0,SGT.cool-dr);if(!(iv===1&&mode==='tank'&&game==='play')){setFilter('');tEnv(0);if(HM.opacity!==.88)HM.opacity=.88}
  for(const b of sb.querySelectorAll('button')){const a=b.dataset.a;if(a==='m')b.textContent=['GÜNDÜZ','TERMAL','M105D'][SGT.m];else if(a==='pol'){b.textContent=SGT.pol?'BLK HOT':'WHT HOT';b.style.opacity=SGT.m===1?1:.4}else if(a==='fv'){b.textContent=SGT.m===1?(SGT.fv?'NFOV':'WFOV'):'ZOOM';b.style.opacity=SGT.m===2?.4:1}}});
 // ---- termal goruntu: 1. gecis gri Lambert (soguk dunya), 2. gecis sicak nesneler (isi kutulari, patlama, duman, mermi izi)
-const TMAT=new THREE.MeshLambertMaterial({color:0x2e2e2e});CAM.layers.enable(1);CAM.layers.enable(2);
+const TMAT=new THREE.MeshLambertMaterial({color:0x444444});CAM.layers.enable(1);CAM.layers.enable(2);
 const hotL=o=>{if(o.layers.mask!==2)o.layers.set(1)};
-const HOT=new THREE.MeshLambertMaterial({color:0xd8d8d8,emissive:0x7a7a7a});
+const HOT=new THREE.MeshBasicMaterial({color:0xffffff});
 const hotG=g=>{if(!g||g._hot)return;g._hot=1;g.traverse(o=>{if(o.isMesh)o.layers.enable(1)})},coldG=g=>{if(!g||!g._hot)return;g._hot=0;g.traverse(o=>{if(o.isMesh&&o.layers.mask===3)o.layers.disable(1)})};
-const _rnd=R.render.bind(R);
+window.THERM={TMAT,HOT};const _rnd=R.render.bind(R);
 R.render=function(sc,cam){
  if(sc!==S||cam!==CAM||!(iv===1&&mode==='tank'&&SGT.m===1&&game==='play')){_rnd(sc,cam);return}
  for(const f of fx){if(f.m.geometry===BGEO)hotL(f.m);else if(f.m.layers.mask!==4)f.m.layers.set(2)}for(const q of smk)q.g.traverse(hotL);for(const q of shells)q.m.traverse(hotL);for(const e of E){if(e.heat)e.heat.visible=false;hotG(e.g)}for(const w of wrecks)coldG(w);
@@ -4463,7 +4463,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=63,LOGO=window.HISAR_LOGO;
+const VER=64,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -5322,11 +5322,13 @@ function horizon(img){const c=document.createElement('canvas');c.width=64;c.heig
 // gece: ortam haritasi kaldirilmaz (kaldirilirsa tum malzemeler yeniden derlenir = donma); cok karanlik bir ortam kullanilir
 let _dkE=null;function darkEnv(){if(_dkE)return _dkE;try{const c=document.createElement('canvas');c.width=32;c.height=16;const x=c.getContext('2d'),g=x.createLinearGradient(0,0,0,16);g.addColorStop(0,'#0a0e18');g.addColorStop(.5,'#05070b');g.addColorStop(1,'#020203');x.fillStyle=g;x.fillRect(0,0,32,16);const t=new THREE.CanvasTexture(c);t.mapping=THREE.EquirectangularReflectionMapping;_dkE=pm.fromEquirectangular(t).texture;t.dispose()}catch(e){_dkE=null}return _dkE}
 window.__darkEnv=darkEnv;
+// gok yansima haritalari bir kez uretilir (termalden cikista / hava degisiminde her seferinde yeniden uretmek takilma yapiyordu)
+const ENVC={};
 function applySky(w){const o=SKY[w];if(!o)return;load(o.k,t=>{if((typeof wx!=='undefined'?wx:'gunduz')!==w)return;window.__phOn=1;t.mapping=THREE.EquirectangularReflectionMapping;if(!t.set)t.set=function(c){S.background=BGC;BGC.set(c);cur=null;if(typeof sky!=='undefined')sky.visible=true;return BGC};S.background=t;cur=w;
   if(!t.__hz)t.__hz=horizon(t.image);const hz=t.__hz;S.fog.color.copy(hz.h);if(typeof skyU!=='undefined'){skyU.bot.value.copy(hz.h);skyU.top.value.copy(hz.up)}
   hemi.color.copy(hz.up).lerp(new THREE.Color(1,1,1),.4);hemi.groundColor.copy(hz.lo).multiplyScalar(.7);
   const a=(o.u-.5)*Math.PI*2,el=Math.max(o.el,(.5-o.v)*Math.PI);SD.set(Math.cos(a)*Math.cos(el),Math.sin(el),Math.sin(a)*Math.cos(el)).normalize();sun.intensity=o.sun;
-  try{if(w==='gece'){S.environment=darkEnv()}else{if(envRT)envRT.dispose();envRT=pm.fromEquirectangular(t);S.environment=envRT.texture}}catch(e){}
+  try{if(w==='gece'){S.environment=darkEnv()}else{const ek=o.k;if(!ENVC[ek])ENVC[ek]=pm.fromEquirectangular(t);envRT=ENVC[ek];S.environment=envRT.texture}}catch(e){}
   if(typeof sky!=='undefined')sky.visible=false;if(typeof clouds!=='undefined')for(const c of clouds)c.visible=false;if(typeof sunM!=='undefined')sunM.visible=false;try{window.onSky&&onSky(w)}catch(e){}})}
 {const s0=window.setW;window.setW=function(w){S.background=BGC;if(typeof sky!=='undefined')sky.visible=true;if(typeof clouds!=='undefined')for(const c of clouds)c.visible=true;if(typeof sunM!=='undefined')sunM.visible=true;const r=s0.apply(this,arguments);applySky(w);return r}}
 {const u0=window.skyUp;window.skyUp=function(dt){const r=u0.apply(this,arguments);if(cur&&S.background&&S.background.isTexture){const o=mode==='drone'&&DR.on?DR:P;sun.position.set(o.x+SD.x*120,SD.y*120,o.z+SD.z*120)}return r}}
@@ -7168,7 +7170,10 @@ function mkSub(L){let s=null;
  else if(L.isHemisphereLight){s=new THREE.HemisphereLight(0,0,0)}
  else return null;
  s.intensity=0;s.castShadow=false;s.layers.mask=L.layers.mask;s.visible=false;s.userData.sub=1;s.name='yedekIsik';S.add(s);return s}
-function scan(){S.traverse(o=>{if(!o.isLight||o.userData.sub||SUB.has(o)||o.castShadow)return;if(!(o.layers.mask&1))return;const s=mkSub(o);if(s)SUB.set(o,{s,gone:0})})}
+// termal nisangah tum sahneyi tek malzemeyle (override) cizer; three r128'de renkli/renksiz cogaltilmis (Instanced) aglar ayni malzemeyi paylasinca
+// 'isInterleavedBufferAttribute' hatasi ile cizim yarida kesilir. Her cogaltilmis aga beyaz (etkisiz) renk verisi verilir.
+function fixInst(o){if(o.isInstancedMesh&&!o.instanceColor){const n=o.instanceMatrix.count;o.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(n*3).fill(1),3)}}
+function scan(){S.traverse(o=>{fixInst(o);if(!o.isLight||o.userData.sub||SUB.has(o)||o.castShadow)return;if(!(o.layers.mask&1))return;const s=mkSub(o);if(s)SUB.set(o,{s,gone:0})})}
 let tSync=0;
 function sync(){const t=performance.now();const dt=Math.min(.2,(t-tSync)/1000);tSync=t;
  for(const[L,r]of SUB){if(!inScene(L)){r.gone+=dt;if(r.gone>3){S.remove(r.s);if(r.s.target&&r.s.target.parent)r.s.target.parent.remove(r.s.target);SUB.delete(L);continue}r.s.visible=true;continue}
@@ -7192,6 +7197,8 @@ function views(){if(typeof iv==='undefined'||mode!=='tank'||game!=='play')return
  const lh=FRAME_HOOKS.filter(h=>{const s=String(h.__src||h);return s.includes('lay(C.IG)')});
  const run=v=>{iv=v;try{camUpdate()}catch(e){}for(const h of FRAME_HOOKS){try{h(0)}catch(e){}}drv();for(const h of lh){try{h(.6)}catch(e){}}try{camUpdate()}catch(e){}try{R.setViewport(0,0,4,4);R.render(S,CAM)}catch(e){}};
  const st0=window.CAB?CAB.st:0;
+ // termal nisangah gecisleri de onceden derlensin
+ try{if(window.SGT){const sm=SGT.m;SGT.m=1;run(1);run(1);SGT.m=sm}}catch(e){}
  try{for(const v of[3,3])run(v);if(window.CAB){for(let k=0;k<3;k++){CAB.st=k;run(2);run(2)}CAB.st=st0}else{run(2);run(2)}for(const v of[1,1,0])run(v)}finally{if(window.CAB)CAB.st=st0;iv=iv0;try{camUpdate()}catch(e){}R.setViewport(vp.x,vp.y,vp.z,vp.w)}}
 let warmed='',busy=0;
 function warm(){busy=0;const t0=performance.now();

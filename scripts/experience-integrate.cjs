@@ -6,9 +6,9 @@ function integrate(html){
  if(!html.includes('</head>')||!html.includes('</body>'))throw Error('Unexpected game document');
  const link='<script src="experience/guard.js?v=63"></script>\n<link rel="stylesheet" href="experience/ui.css?v=63">\n';
  const scripts='<!-- HISAR EXPERIENCE v1 -->\n'+['core','bridge','ui'].map(n=>`<script defer src="experience/${n}.js?v=63"></script>`).join('\n')+'\n';
- // Accept standalone and comma-separated legacy version declarations.
+ // Legacy v62 uses const VER=+'62',LOGO=... . Preserve all adjacent declarations.
  let count=0;
- html=html.replace(/((?:\b(?:const|let|var)\s+|,)\s*VER\s*=\s*)\d+\b/g,(_,prefix)=>{count++;return prefix+'63';});
+ html=html.replace(/((?:\b(?:const|let|var)\s+|,)\s*VER\s*=\s*)(?:\+\s*'\d+'|\+\s*"\d+"|\d+\b)/g,(_,prefix)=>{count++;return prefix+'63';});
  if(count!==1)throw Error('Expected exactly one game version declaration, found '+count+'; candidates: '+JSON.stringify(html.match(/.{0,50}\bVER\s*=.{0,80}/g)||[]));
  const fpsBefore='const dr=Math.min(.05,Math.max(0,(t-last)/1000)||0);last=t;fpsA+=dr;';
  const fpsAfter='const realDt=Math.max(0,(t-last)/1000)||0;const dr=Math.min(.05,realDt);last=t;fpsA+=Math.min(realDt,1);';

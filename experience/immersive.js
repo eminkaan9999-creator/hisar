@@ -30,8 +30,8 @@
  toggle.addEventListener('click',()=>{fields.hidden=!fields.hidden;fields.style.display=fields.hidden?'none':'grid';toggle.setAttribute('aria-expanded',String(!fields.hidden));});fields.style.display='none';
  for(const [key,label] of [['greenThermal','Yeşil gece görüş teması'],['motionReduction','Kamera hareketini azalt'],['radioVoice','Erkek telsiz sesi (varsa)']]){
  const row=document.createElement('label');row.style.cssText='display:flex;align-items:center;gap:8px';const input=document.createElement('input');input.type='checkbox';input.checked=state[key];input.addEventListener('change',()=>save({[key]:input.checked}));row.append(input,document.createTextNode(label));fields.appendChild(row);}
- panel.appendChild(fields);document.body.appendChild(panel);return true;}
+ panel.appendChild(fields);const settings=document.getElementById('hx-settings');if(settings){panel.style.cssText='position:relative;max-width:100%;background:#10191e;color:#fff;border:1px solid #6b8b87;border-radius:12px;padding:10px;font:13px system-ui';settings.appendChild(panel);}else{document.body.appendChild(panel);}return true;}
  apply();
- if(root.document){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installPanel,{once:true});else installPanel();}
+ if(root.document){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installPanel,{once:true});else installPanel();document.addEventListener('hisar:ui-ready',()=>{const settings=document.getElementById('hx-settings'),panel=document.getElementById('hisar-immersive-settings');if(settings&&panel&&panel.parentNode!==settings){panel.style.cssText='position:relative;max-width:100%;background:#10191e;color:#fff;border:1px solid #6b8b87;border-radius:12px;padding:10px;font:13px system-ui';settings.appendChild(panel);}});}
  root.HisarImmersive=Object.freeze({version:'1.0',defaults,normalize,load,save,speak,installPanel,addPresentationStyles,getSettings:()=>({...state})});
 })(typeof window!=='undefined'?window:globalThis);

@@ -9,8 +9,8 @@
  function apply(){if(!root.document)return;const d=document.documentElement;d.dataset.hisarGreenThermal=String(state.greenThermal);d.dataset.hisarReduceMotion=String(state.motionReduction);}
  function speak(message){if(!state.radioVoice||!root.speechSynthesis||!root.SpeechSynthesisUtterance)return false;
  const s=String(message||'').trim().slice(0,180);if(!s)return false;
- const utterance=new SpeechSynthesisUtterance(s);utterance.lang='tr-TR';utterance.rate=1.05;utterance.pitch=.78;
- const voices=root.speechSynthesis.getVoices()||[];const male=voices.find(v=>/tr[-_]TR/i.test(v.lang)&&/male|erkek|tolga|cem/i.test(v.name));if(!male)return false;utterance.voice=male;
+ const utterance=new root.SpeechSynthesisUtterance(s);utterance.lang='tr-TR';utterance.rate=1.05;utterance.pitch=.78;
+ const voices=typeof root.speechSynthesis.getVoices==='function'?(root.speechSynthesis.getVoices()||[]):[];const male=voices.find(v=>/tr[-_]TR/i.test(v.lang)&&/male|erkek|tolga|cem/i.test(v.name));if(!male)return false;utterance.voice=male;
  try{root.speechSynthesis.cancel();root.speechSynthesis.speak(utterance);return true;}catch{return false;}
  }
 

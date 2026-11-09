@@ -1,5 +1,11 @@
 name: Kaan Kardelen build check
 on:
+  push:
+    branches:
+      - 'kaan-kardelen-visual-upgrade-*'
+    paths:
+      - 'kk-9b4bc121/kaynak/**'
+      - '.github/workflows/kaan-kardelen-check.yml'
   pull_request:
     paths:
       - 'kk-9b4bc121/kaynak/**'

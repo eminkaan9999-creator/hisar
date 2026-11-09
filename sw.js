@@ -1,6 +1,6 @@
 /* HİSAR game 63 / experience 63.1. Independent app caches stay isolated. */
 'use strict';
-const CACHE='hisar-main-v63.1';
+const CACHE='hisar-main-v63.2';
 const BASE=new URL('./',self.location.href);
 const url=p=>new URL(p,BASE).href;
 const CORE=['index.html','three.min.js','manifest.webmanifest','iti/index.html','iti/iti-assistant.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js'];

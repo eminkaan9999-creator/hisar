@@ -29,8 +29,7 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    assert.equal(await page.evaluate(()=>window.APP_VER),63);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.1');ok(label+': original 3D engine, build 63 and experience 63.1 initialize');
    await page.locator('#hisar-experience-entry').click();assert.equal(await page.locator('#hisar-experience').evaluate(e=>e.open),true);
    const box=await page.locator('#hisar-experience').boundingBox();assert.ok(box.x>=0&&box.width<=(mobile?390:1280));ok(label+': integrated panel fits viewport');
-   await page.locator('#hx-question').fill('<img src=x onerror=alert(1)> MERHABA');await page.locator('#hx-question').press('Enter');
-   assert.equal(await page.locator('#hx-chat img').count(),0);assert.match(await page.locator('#hx-chat').innerText(),/Ben İTİ/);ok(label+': Turkish chat and HTML injection protection');
+   assert.equal(await page.locator('[data-page="assistant"]').count(),0);assert.equal(await page.locator('#hx-chat').count(),0);ok(label+': removed assistant is absent');
    await page.locator('[data-page="settings"]').click();await page.locator('#hx-quality').selectOption('dusuk');await page.locator('#hx-auto').uncheck();
    assert.equal(await page.locator('#hx-quality').evaluate(el=>{el.value='orta';el.dispatchEvent(new Event('change'));const level=HisarGameBridge.snapshot().quality;el.value='dusuk';el.dispatchEvent(new Event('change'));return level;}),'orta');
    const config=await page.evaluate(()=>HisarGameBridge.snapshot());assert.equal(config.quality,'dusuk');assert.equal(config.auto,false);ok(label+': native quality and adaptation controls work');
@@ -49,8 +48,8 @@ function ok(name){checks.push(name);console.log('PASS',name);}
     try{await page.waitForFunction(()=>HisarExperience.snapshot().activeSeconds>=2,{},{timeout:90000,polling:500});}
     catch(e){console.log('SESSION_DIAGNOSTIC',JSON.stringify(await diagnostic()));throw e;}
     console.log('PLAY_MEASURED',JSON.stringify(await diagnostic()));ok('desktop: real render loop records active time');
-    await page.keyboard.press('F2');await page.locator('[data-page="assistant"]').click();
-    assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'pause');await page.locator('#hx-question').fill('p p p');await page.locator('#hx-question').press('Enter');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'pause');ok('desktop: panel pauses game and typing cannot resume it');
+    await page.keyboard.press('F2');await page.locator('[data-page="settings"]').click();
+    assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'pause');assert.equal(await page.locator('#hx-quality').count(),1);ok('desktop: settings panel pauses game without chatbot');
     await page.locator('[data-page="session"]').click();await page.locator('#hx-save').click();console.log('SESSION_SAVE_STATUS',await page.locator('#hx-status').innerText());assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('hisar-session-history-v1')||'[]').length),1);ok('desktop: measured active session is saved');
     const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#hx-export').click()]);const report=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(report.schema,1);assert.equal(report.session.xp,120);ok('desktop: JSON report export contains real game values');
     await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'play');ok('desktop: Escape resumes the previously running game');

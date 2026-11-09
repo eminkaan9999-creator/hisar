@@ -39,9 +39,15 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().quality),'dusuk');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().auto),false);assert.equal(await page.evaluate(()=>HisarExperience.getSettings().largeText),true);assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().xp),120);ok(label+(mobile?': preferences save without erasing game progress':': preferences survive reload without erasing game progress'));
    if(!mobile){
     await page.locator('[data-m="serbest"]').first().click();await page.locator('#go').click();
-    await page.waitForFunction(()=>HisarGameBridge.snapshot().state==='play');await page.waitForTimeout(2500);await page.keyboard.press('F2');
+    await page.waitForFunction(()=>HisarGameBridge.snapshot().state==='play');
+    const diagnostic=()=>page.evaluate(()=>({state:HisarGameBridge.snapshot(),session:HisarExperience.snapshot(),hidden:document.hidden,hooks:typeof FRAME_HOOKS==='undefined'?'missing':FRAME_HOOKS.length,frames:typeof R==='undefined'?null:R.info.render.frame,errors:window.HERR?window.HERR.LOG:[]}));
+    console.log('PLAY_STARTED',JSON.stringify(await diagnostic()));
+    try{await page.waitForFunction(()=>HisarExperience.snapshot().activeSeconds>=2,{},{timeout:90000,polling:500});}
+    catch(e){console.log('SESSION_DIAGNOSTIC',JSON.stringify(await diagnostic()));throw e;}
+    console.log('PLAY_MEASURED',JSON.stringify(await diagnostic()));ok('desktop: real render loop records active time');
+    await page.keyboard.press('F2');
     assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'pause');await page.locator('#hx-question').fill('p p p');await page.locator('#hx-question').press('Enter');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'pause');ok('desktop: panel pauses game and typing cannot resume it');
-    await page.locator('[data-page="session"]').click();await page.locator('#hx-save').click();assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('hisar-session-history-v1')).length),1);ok('desktop: measured active session is saved');
+    await page.locator('[data-page="session"]').click();await page.locator('#hx-save').click();console.log('SESSION_SAVE_STATUS',await page.locator('#hx-status').innerText());assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('hisar-session-history-v1')||'[]').length),1);ok('desktop: measured active session is saved');
     const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#hx-export').click()]);const report=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(report.schema,1);assert.equal(report.session.xp,120);ok('desktop: JSON report export contains real game values');
     await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'play');ok('desktop: Escape resumes the previously running game');
     await page.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;});

@@ -50,3 +50,14 @@
  #hisar-experience .hx-card{padding:8px}
  #hisar-experience h3{margin:7px 0 4px}
 }
+
+/* Optional, GPU-light cinematic treatment: never intercept game controls. */
+body.hisar-cinematic::after{
+ content:"";position:fixed;inset:0;z-index:4;pointer-events:none;
+ background:radial-gradient(ellipse 95% 88% at 50% 46%,transparent 56%,rgba(5,12,12,.16) 88%,rgba(2,7,8,.28) 100%);
+}
+body.hisar-crosshair-contrast #cross{
+ filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 3px #000);
+ opacity:1!important;
+}
+@media(prefers-reduced-transparency:reduce){body.hisar-cinematic::after{display:none}}

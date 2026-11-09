@@ -1,6 +1,8 @@
 'use strict';
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const root=process.cwd(),checks=[];
+// beklenen oyun surumu yayimlanan version.json'dan okunur (oyun 63'ten sonra da surum artabilir)
+const GAME_V=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).v;
 const watchdog=setTimeout(()=>{console.error('Browser test exceeded 600 seconds. Completed checks:',checks);process.exit(1);},600000);watchdog.unref();
 const types={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png'};
 const server=http.createServer((req,res)=>{
@@ -26,7 +28,7 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    await page.goto(base,{waitUntil:'domcontentloaded',timeout:120000});
    await page.waitForFunction(()=>window.HisarExperience&&window.HisarPolish&&window.HisarGameBridge.snapshot().ready,{},{timeout:60000});
    await page.evaluate(()=>HisarGameBridge.quality('dusuk'));await page.waitForTimeout(3200);
-   assert.equal(await page.evaluate(()=>window.APP_VER),63);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.1');ok(label+': original 3D engine, build 63 and experience 63.1 initialize');
+   assert.equal(await page.evaluate(()=>window.APP_VER),GAME_V);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.1');ok(label+': original 3D engine, build '+GAME_V+' and experience 63.1 initialize');
    await page.locator('#hisar-experience-entry').click();assert.equal(await page.locator('#hisar-experience').evaluate(e=>e.open),true);
    const box=await page.locator('#hisar-experience').boundingBox();assert.ok(box.x>=0&&box.width<=(mobile?390:1280));ok(label+': integrated panel fits viewport');
    assert.equal(await page.locator('[data-page="assistant"]').count(),0);assert.equal(await page.locator('#hx-chat').count(),0);ok(label+': removed assistant is absent');

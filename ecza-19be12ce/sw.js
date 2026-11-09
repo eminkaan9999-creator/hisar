@@ -5,7 +5,7 @@
 // Önbellek adları app.js içindeki KABUK ve FOTO ile aynı olmalı.
 const KABUK = 'ecza-kabuk-v1', FOTO = 'ecza-foto-v1', YAZI = 'ecza-yazi-v1';
 const KOK = self.registration.scope;
-const ILK = ['manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png'];
+const ILK = ['manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png', 'ux-improvements.css?v=1'];
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(KABUK).then(c => c.match(KOK).then(hit => hit || fetch(KOK, { cache: 'no-store' }).then(r => { if (r.ok) return c.put(KOK, r); }))

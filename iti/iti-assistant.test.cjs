@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
+const ctx={};vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/iti-assistant.js','utf8'),ctx);
+const iti=ctx.HisarITI;assert.equal(iti.version,'0.1.0');
+assert.match(iti.respond('merhaba'),/İTİ/);assert.match(iti.respond('uçangöz'),/Uçuş/);
+assert.match(iti.respond(''),/soru/);
+assert.equal(iti.evaluateSession({objectivesTotal:5,objectivesCompleted:5,errors:0,durationSeconds:60}).score,100);
+assert.equal(iti.evaluateSession({objectivesTotal:5,objectivesCompleted:4,errors:1}).score,75);
+assert.equal(iti.evaluateSession({objectivesTotal:0}).score,null);
+assert.equal(iti.evaluateSession({objectivesTotal:1,objectivesCompleted:100,errors:100}).score,60);
+console.log('İTİ tests passed');

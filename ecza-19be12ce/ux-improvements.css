@@ -1,0 +1,30 @@
+/* Kardelen UX iyileştirmeleri — erişilebilirlik ve mobil uyum */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+@media (pointer: coarse) {
+  .mi, .nbtn, .mclose, .clr, .chip, .row, .pick { touch-action: manipulation; }
+  .mi, .nbtn, .mclose { min-height: 44px; }
+}
+@media (max-width: 420px) {
+  .ttl { font-size: clamp(17px, 5vw, 21px); }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile { min-width: 0; }
+  .tile b { overflow-wrap: anywhere; }
+  .row { min-width: 0; }
+  .row > * { min-width: 0; }
+}
+@media (max-width: 340px) {
+  .tiles { grid-template-columns: 1fr; }
+}
+@media (min-width: 900px) {
+  main#view { padding-inline: clamp(24px, 4vw, 72px); }
+}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid var(--link);
+  outline-offset: 3px;
+}
+#view, .menu-nav, .layer { scrollbar-gutter: stable; }
+@supports (height: 100dvh) {
+  html, body, #app { height: 100dvh; }
+}

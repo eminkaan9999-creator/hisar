@@ -1,27 +1,61 @@
 name: HİSAR experience checks
 on:
   push:
-    branches: [feature/hisar-experience-20261109]
+    branches: [main, feature/hisar-experience-20261109]
+    paths: ['experience/**', 'scripts/experience-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
   pull_request:
-    paths: ['experience/**', 'scripts/experience-*', 'sw.js', '.github/workflows/experience-checks.yml']
+    paths: ['experience/**', 'scripts/experience-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
 permissions:
   contents: read
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Audit integration points
+      - name: Unit and offline regression tests
         run: |
-          node <<'NODE'
-          const fs=require('node:fs'),lines=fs.readFileSync('index.html','utf8').split('\n');
-          for(const [a,b] of [[110,195],[400,425],[790,820],[4480,4515],[5000,5095]]){
-            console.log('RANGE',a,b);
-            for(let i=a-1;i<b;i++)if(lines[i]&&lines[i].length<12000)console.log(`${i+1}: ${lines[i].slice(0,1400)}`);
-          }
-          NODE
-      - name: Existing assistant tests
-        run: node iti/iti-assistant.test.cjs
+          node --test experience/*.test.cjs
+          node iti/iti-assistant.test.cjs
+      - name: Integrate into original game and parse every inline script
+        run: node scripts/experience-integrate.cjs
+      - name: Install browser test tooling
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test original game on desktop and mobile viewports
+        run: node scripts/experience-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experience-browser-results
+          path: |
+            experience-*.png
+            experience-browser-results.json
+          if-no-files-found: ignore
+          retention-days: 7
+  integrate:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/hisar-experience-20261109'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Commit only verified integration to feature branch
+        run: |
+          node scripts/experience-integrate.cjs
+          git add index.html version.json
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat: integrate verified experience panel and FPS fix into game v63'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -1,0 +1,22 @@
+name: Kaan Kardelen build check
+on:
+  pull_request:
+    paths:
+      - 'kk-9b4bc121/kaynak/**'
+      - '.github/workflows/kaan-kardelen-check.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source and compile preview
+        run: node kk-9b4bc121/kaynak/derle.js --cikti /tmp/kaan-kardelen-preview.html
+      - name: Check generated HTML
+        run: |
+          test -s /tmp/kaan-kardelen-preview.html
+          grep -q 'Kaan &amp; Kardelen' /tmp/kaan-kardelen-preview.html
+          grep -q 'prefers-reduced-motion' /tmp/kaan-kardelen-preview.html

@@ -36,6 +36,11 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    await page.locator('#hx-cinematic').check();await page.locator('#hx-crosshair').check();
    assert.equal(await page.evaluate(()=>HisarExperience.getSettings().cinematic&&HisarExperience.getSettings().contrastCrosshair&&document.body.classList.contains('hisar-cinematic')),true);ok(label+': visual checkboxes really execute their handlers');
    await page.locator('[data-polish="reduceShake"]').check();assert.equal(await page.evaluate(()=>HisarPolish.getSettings().reduceShake),true);ok(label+': camera comfort option is wired');
+   await page.waitForFunction(()=>!!window.HisarControls&&!!document.getElementById('hx-control-feel'));
+   await page.locator('#hx-control-feel select').selectOption('hassas');
+   assert.equal(await page.evaluate(()=>HisarControls.getProfile()),'hassas');
+   assert.equal(await page.evaluate(()=>HisarControls.axis(.03,'hassas')),0);
+   ok(label+': vehicle and drone analog control profile works');
    await page.locator('#hx-large').check();await page.screenshot({path:'experience-'+label+'.png'});
    await page.locator('#hx-close').click();if(!mobile){await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.HisarExperience&&!!window.HisarPolish);await page.waitForTimeout(3200);}
    assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().quality),'dusuk');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().auto),false);assert.equal(await page.evaluate(()=>HisarExperience.getSettings().largeText),true);assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().xp),120);

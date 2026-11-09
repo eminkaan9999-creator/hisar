@@ -10,13 +10,13 @@
  });
  function axis(value,profile){
   const p=profiles[profile]||profiles.dengeli;
-  const v=Math.max(-1,Math.min(1,Number(value)||0)),a=Math.abs(v);
+  const n=Number(value),v=Number.isFinite(n)?Math.max(-1,Math.min(1,n)):0,a=Math.abs(v);
   if(a<=p.deadzone)return 0;
   return Math.sign(v)*Math.pow((a-p.deadzone)/(1-p.deadzone),p.curve);
  }
  function smoothing(previous,target,dt,profile){
   const p=profiles[profile]||profiles.dengeli;
-  const time=Math.max(0,Math.min(.1,Number(dt)||0));
+  const n=Number(dt),time=Number.isFinite(n)?Math.max(0,Math.min(.1,n)):0;
   const a=1-Math.exp(-p.response*time);
   const v=previous+(target-previous)*a;
   return Math.abs(v)<.001&&target===0?0:v;
@@ -33,8 +33,10 @@
  if(typeof root.update==='function'){
   const original=root.update;
   root.update=function(dt){
-   if(typeof joy==='undefined'||typeof mode==='undefined'||typeof game==='undefined'||game!=='play')return original.apply(this,arguments);
+   if(typeof joy==='undefined'||!joy||typeof mode==='undefined'||typeof game==='undefined'||game!=='play'){reset();return original.apply(this,arguments);}
    if(mode!==lastMode){reset();lastMode=mode;}
+   // Never change non-driving/non-flight input, including menus and aim modes.
+   if(mode!=='tank'&&mode!=='drone')return original.apply(this,arguments);
    const rawX=joy.x,rawY=joy.y;
    const now=typeof performance!=='undefined'?performance.now():Date.now();
    const elapsed=Number.isFinite(dt)&&dt>0&&dt<=.1?dt:(lastTime?Math.min(.1,Math.max(0,(now-lastTime)/1000)):1/60);

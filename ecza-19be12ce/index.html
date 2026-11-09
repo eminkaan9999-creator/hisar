@@ -715,6 +715,8 @@ function yerYazi(y) { const f = F[y[0]]; return (f ? f.ad : 'Raf') + (y[5] ? `, 
 const tm = (t, kt) => (kt.startsWith(t) && t.length >= 3) || (t.startsWith(kt) && (t.length === kt.length || (kt.length >= 5 ? t.length - kt.length <= 5 : EK.test(t.slice(kt.length)))));
 function ara(q) {
   const nq = norm(q); if (!nq) return null;
+  // Çok uzun girişlerde gereksiz bulanık eşleştirme yükünü sınırla.
+  if (nq.length > 120) return { urun: [], exact: 0, siks: [], grups: [] };
   const qt = nq.split(' '); const fq = fon(qt[0]);
   const res = [];
   for (const u of V.urun) {
@@ -777,13 +779,14 @@ function vAra() {
 function vSonuc() {
   const r = ara(S.q);
   if (!r) return '';
+  const sonucSiniri = 60;
   let h = '';
   const sl = r.siks.filter(s => sikVar(s.id));
   if (sl.length) h += `<section class="sec"><h2>Şikâyet</h2><div class="chips">${sl.map(s => `<button class="chip" data-a="sik" data-id="${s.id}">${esc(s.ad)}</button>`).join('')}</div></section>`;
   if (r.grups.length) h += `<section class="sec"><h2>Grup</h2><div class="chips">${r.grups.map(g => `<button class="chip" data-a="grup" data-id="${g.id}">${esc(g.ad)}</button>`).join('')}</div></section>`;
   if (r.urun.length) {
     const fuzzy = r.exact === 0;
-    h += `<section class="sec"><h2>${fuzzy ? 'Bunu mu demek istedin?' : 'Ürünler'} <small>${r.urun.length} sonuç</small></h2>${rows(r.urun.slice(0, 60))}</section>`;
+    h += `<section class="sec"><h2>${fuzzy ? 'Bunu mu demek istedin?' : 'Ürünler'} <small>${r.urun.length} sonuç</small></h2>${rows(r.urun.slice(0, sonucSiniri))}${r.urun.length > sonucSiniri ? `<p class="hint" role="status">İlk ${sonucSiniri} sonuç gösteriliyor. Daha belirgin sonuçlar için ilaç adını veya etken maddeyi biraz daha ayrıntılı yazın.</p>` : ''}</section>`;
   } else if (!sl.length && !r.grups.length) {
     h += `<div class="empty"><span class="ei" style="--h:212">${ic.ara}</span><b>“${esc(S.q.trim())}” bulunamadı</b>Adın ilk birkaç harfini ya da etken maddeyi yazmayı dene. Raf fotoğraflarında adı okunmayan kutular listede yok.</div>`;
   }

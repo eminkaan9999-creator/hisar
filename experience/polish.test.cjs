@@ -8,5 +8,7 @@ test('lower exposure bound and numeric string are normalized',()=>{assert.equal(
 for(const rate of [30,60,120,144])test('camera damping is frame-rate independent at '+rate+' Hz',()=>{let x=0;for(let i=0;i<rate;i++)x+=(10-x)*p.alpha(1/rate);assert.ok(Math.abs(x-10*(1-Math.exp(-16)))<1e-9);});
 test('damping never extrapolates or produces NaN',()=>{for(const dt of [-5,0,NaN,Infinity,undefined,1/60,10]){const a=p.alpha(dt);assert.ok(a>=0&&a<=1);}});
 for(const q of ['dusuk','orta','yuksek','unknown'])test('texture detail respects GPU maximum for '+q,()=>{for(const max of [1,2,4,8,16]){assert.ok(p.textureLevel(q,max)<=max);assert.ok(p.textureLevel(q,max)>=1);}});
-test('all changed production scripts parse',()=>{for(const file of ['polish.js','ui.js','guard.js'])assert.doesNotThrow(()=>new vm.Script(fs.readFileSync(__dirname+'/'+file,'utf8')));});
+test('all changed production scripts parse',()=>{for(const file of ['polish.js','ui.js','guard.js','controls.js'])assert.doesNotThrow(()=>new vm.Script(fs.readFileSync(__dirname+'/'+file,'utf8')));});
 test('input guard releases inputs without manufacturing a browser blur',()=>{const s=fs.readFileSync(__dirname+'/guard.js','utf8');assert.match(s,/hisar:release-inputs/);assert.doesNotMatch(s,/new Event\('blur'\)/);});
+
+test('analog control loader is attached and cached for offline use',()=>{const p=fs.readFileSync(__dirname+'/polish.js','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert.match(p,/controlScript\.src/);assert.match(sw,/experience\/controls\.js/);});

@@ -17,16 +17,11 @@ jobs:
       - name: Audit integration points
         run: |
           node <<'NODE'
-          const fs=require('node:fs');
-          const text=fs.readFileSync('index.html','utf8');
-          console.log('SOURCE BYTES',Buffer.byteLength(text));
-          console.log('EXTERNAL SCRIPTS',Array.from(text.matchAll(/<script[^>]+src=["']([^"']+)/g),m=>m[1]));
-          const lines=text.split('\n');
-          const pattern=/WebGLRenderer|setPixelRatio|function.*[Pp]ause|let paused|var paused|const paused|isPaused|paused\s*=|requestAnimationFrame|visibilitychange|masterGain|audioCtx|soundEnabled|soundOn|localStorage\.(?:getItem|setItem)|VERSION\s*=|version\.json/;
-          const out=[];
-          lines.forEach((s,i)=>{ if(s.length<20000 && pattern.test(s))out.push(`${i+1}: ${s.slice(0,1100)}`); });
-          console.log(out.slice(0,140).join('\n'));
-          console.log('TAIL',lines.slice(-40).filter(s=>s.length<2000).join('\n'));
+          const fs=require('node:fs'),lines=fs.readFileSync('index.html','utf8').split('\n');
+          for(const [a,b] of [[110,195],[400,425],[790,820],[4480,4515],[5000,5095]]){
+            console.log('RANGE',a,b);
+            for(let i=a-1;i<b;i++)if(lines[i]&&lines[i].length<12000)console.log(`${i+1}: ${lines[i].slice(0,1400)}`);
+          }
           NODE
       - name: Existing assistant tests
         run: node iti/iti-assistant.test.cjs

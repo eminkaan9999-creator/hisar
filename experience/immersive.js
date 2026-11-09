@@ -6,7 +6,7 @@
  function load(){try{return normalize(JSON.parse(root.localStorage.getItem(KEY)||'null'));}catch{return normalize({});}}
  let state=load();
  function save(v){state=normalize({...state,...v});try{root.localStorage.setItem(KEY,JSON.stringify(state));}catch{} apply();return {...state};}
- function apply(){if(!root.document)return;const d=document.documentElement;d.dataset.hisarGreenThermal=String(state.greenThermal);d.dataset.hisarReduceMotion=String(state.motionReduction);}
+ function apply(){if(!root.document)return;const d=document.documentElement;d.dataset.hisarGreenThermal=String(state.greenThermal);d.dataset.hisarReduceMotion=String(state.motionReduction);d.dataset.hisarRadioVoice=String(state.radioVoice);if(typeof root.Event==='function')root.document.dispatchEvent(new root.Event('hisar:immersive-settings'));}
  function speak(message){if(!state.radioVoice||!root.speechSynthesis||!root.SpeechSynthesisUtterance)return false;
  const s=String(message||'').trim().slice(0,180);if(!s)return false;
  const utterance=new root.SpeechSynthesisUtterance(s);utterance.lang='tr-TR';utterance.rate=1.05;utterance.pitch=.78;

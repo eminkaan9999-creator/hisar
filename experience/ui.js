@@ -50,5 +50,7 @@
  apply();if(opts.quality!=='mevcut')B.quality(opts.quality);
  window.HisarExperience=Object.freeze({version:'1.1.0',open,close,snapshot,getSettings:()=>({...opts})});
  document.dispatchEvent(new Event('hisar:ui-ready'));
+ if(!window.HisarControls){const controls=document.createElement('script');controls.src=new URL('controls.js?v=63.2',document.currentScript.src).href;document.head.appendChild(controls);}
+
  if(window.HisarPolish)window.HisarPolish.attach();else{try{const s=document.createElement('script');s.src=new URL('polish.js?v=63.1',document.currentScript.src).href;s.onerror=()=>status('Görüntü geliştirme modülü yüklenemedi. GÜNCELLE ile tekrar dene.');document.head.appendChild(s);}catch{status('Görüntü geliştirmeleri için uygulamayı kendi adresinden aç.');}}
 })();

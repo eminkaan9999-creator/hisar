@@ -22,8 +22,8 @@
   return Math.abs(v)<.001&&target===0?0:v;
  }
  let profile='dengeli';try{const stored=localStorage.getItem(KEY);if(Object.hasOwn(profiles,stored))profile=stored;}catch{}
- let x=0,y=0,lastMode='';
- function reset(){x=y=0;lastMode='';}
+ let x=0,y=0,lastMode='',lastTime=0;
+ function reset(){x=y=0;lastMode='';lastTime=0;}
  function setProfile(name){if(!Object.hasOwn(profiles,name))return false;profile=name;reset();try{localStorage.setItem(KEY,name);}catch{}return true;}
  const api=Object.freeze({profiles,axis,smoothing,setProfile,getProfile:()=>profile,reset});
  root.HisarControls=api;
@@ -36,8 +36,11 @@
    if(typeof joy==='undefined'||typeof mode==='undefined'||typeof game==='undefined'||game!=='play')return original.apply(this,arguments);
    if(mode!==lastMode){reset();lastMode=mode;}
    const rawX=joy.x,rawY=joy.y;
-   x=smoothing(x,axis(rawX,profile),dt,profile);
-   y=smoothing(y,axis(rawY,profile),dt,profile);
+   const now=typeof performance!=='undefined'?performance.now():Date.now();
+   const elapsed=Number.isFinite(dt)&&dt>0&&dt<=.1?dt:(lastTime?Math.min(.1,Math.max(0,(now-lastTime)/1000)):1/60);
+   lastTime=now;
+   x=smoothing(x,axis(rawX,profile),elapsed,profile);
+   y=smoothing(y,axis(rawY,profile),elapsed,profile);
    joy.x=x;joy.y=y;
    try{return original.apply(this,arguments);}
    finally{joy.x=rawX;joy.y=rawY;}

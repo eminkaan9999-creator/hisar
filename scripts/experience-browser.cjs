@@ -26,7 +26,7 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    await page.goto(base,{waitUntil:'domcontentloaded',timeout:120000});
    await page.waitForFunction(()=>window.HisarExperience&&window.HisarPolish&&window.HisarGameBridge.snapshot().ready,{},{timeout:60000});
    await page.evaluate(()=>HisarGameBridge.quality('dusuk'));await page.waitForTimeout(3200);
-   assert.equal(await page.evaluate(()=>window.APP_VER),63);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.1');ok(label+': original 3D engine, build 63 and experience 63.1 initialize');
+   assert.equal(await page.evaluate(()=>window.APP_VER),63);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.2');ok(label+': original 3D engine, build 63 and experience 63.2 initialize');
    await page.locator('#hisar-experience-entry').click();assert.equal(await page.locator('#hisar-experience').evaluate(e=>e.open),true);
    const box=await page.locator('#hisar-experience').boundingBox();assert.ok(box.x>=0&&box.width<=(mobile?390:1280));ok(label+': integrated panel fits viewport');
    assert.equal(await page.locator('[data-page="assistant"]').count(),0);assert.equal(await page.locator('#hx-chat').count(),0);ok(label+': removed assistant is absent');

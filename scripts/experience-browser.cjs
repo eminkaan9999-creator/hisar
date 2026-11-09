@@ -26,7 +26,7 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    await page.goto(base,{waitUntil:'domcontentloaded',timeout:120000});
    await page.waitForFunction(()=>window.HisarExperience&&window.HisarPolish&&window.HisarGameBridge.snapshot().ready,{},{timeout:60000});
    await page.evaluate(()=>HisarGameBridge.quality('dusuk'));await page.waitForTimeout(3200);
-   assert.equal(await page.evaluate(()=>window.APP_VER),63);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.1');ok(label+': original 3D engine, build 63 and experience 63.1 initialize');
+   assert.equal(await page.evaluate(()=>window.APP_VER),63);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.2');ok(label+': original 3D engine, build 63 and experience 63.2 initialize');
    await page.locator('#hisar-experience-entry').click();assert.equal(await page.locator('#hisar-experience').evaluate(e=>e.open),true);
    const box=await page.locator('#hisar-experience').boundingBox();assert.ok(box.x>=0&&box.width<=(mobile?390:1280));ok(label+': integrated panel fits viewport');
    assert.equal(await page.locator('[data-page="assistant"]').count(),0);assert.equal(await page.locator('#hx-chat').count(),0);ok(label+': removed assistant is absent');
@@ -36,6 +36,11 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    await page.locator('#hx-cinematic').check();await page.locator('#hx-crosshair').check();
    assert.equal(await page.evaluate(()=>HisarExperience.getSettings().cinematic&&HisarExperience.getSettings().contrastCrosshair&&document.body.classList.contains('hisar-cinematic')),true);ok(label+': visual checkboxes really execute their handlers');
    await page.locator('[data-polish="reduceShake"]').check();assert.equal(await page.evaluate(()=>HisarPolish.getSettings().reduceShake),true);ok(label+': camera comfort option is wired');
+   await page.waitForFunction(()=>!!window.HisarControls&&!!document.getElementById('hx-control-feel'));
+   await page.locator('#hx-control-feel select').selectOption('hassas');
+   assert.equal(await page.evaluate(()=>HisarControls.getProfile()),'hassas');
+   assert.equal(await page.evaluate(()=>HisarControls.axis(.03,'hassas')),0);
+   ok(label+': vehicle and drone analog control profile works');
    await page.locator('#hx-large').check();await page.screenshot({path:'experience-'+label+'.png'});
    await page.locator('#hx-close').click();if(!mobile){await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.HisarExperience&&!!window.HisarPolish);await page.waitForTimeout(3200);}
    assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().quality),'dusuk');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().auto),false);assert.equal(await page.evaluate(()=>HisarExperience.getSettings().largeText),true);assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().xp),120);
@@ -54,8 +59,8 @@ function ok(name){checks.push(name);console.log('PASS',name);}
     const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#hx-export').click()]);const report=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(report.schema,1);assert.equal(report.session.xp,120);ok('desktop: JSON report export contains real game values');
     await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'play');ok('desktop: Escape resumes the previously running game');
     await page.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;});
-    await page.waitForFunction(async()=>await caches.has('hisar-main-v63.2'));
-    assert.equal(await page.evaluate(async()=>{const c=await caches.open('hisar-main-v63.2');return !!await c.match(new URL('experience/polish.js',location.href).href);}),true);ok('offline: presentation module is included in cache');
+    await page.waitForFunction(async()=>await caches.has('hisar-main-v63.3'));
+    assert.equal(await page.evaluate(async()=>{const c=await caches.open('hisar-main-v63.3');return !!await c.match(new URL('experience/polish.js',location.href).href);}),true);ok('offline: presentation module is included in cache');
     await page.goto(base+'iti/');assert.match(await page.title(),/İTİ/);await context.setOffline(true);
     const offlineTitle=await page.evaluate(()=>new Promise((resolve,reject)=>{const f=document.createElement('iframe');f.setAttribute('sandbox','allow-same-origin');f.onload=()=>{try{resolve({title:f.contentDocument.title,integrated:f.contentDocument.documentElement.innerHTML.includes('experience/ui.js?v=63')});}catch(e){reject(e);}};f.onerror=()=>reject(Error('offline navigation failed'));f.src='../?offline=1';document.body.appendChild(f);}));
     assert.match(offlineTitle.title,/HİSAR/);assert.equal(offlineTitle.integrated,true);ok('offline: visiting ITI never replaces the integrated main game shell');

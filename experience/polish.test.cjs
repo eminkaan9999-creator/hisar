@@ -10,3 +10,14 @@ test('damping never extrapolates or produces NaN',()=>{for(const dt of [-5,0,NaN
 for(const q of ['dusuk','orta','yuksek','unknown'])test('texture detail respects GPU maximum for '+q,()=>{for(const max of [1,2,4,8,16]){assert.ok(p.textureLevel(q,max)<=max);assert.ok(p.textureLevel(q,max)>=1);}});
 test('all changed production scripts parse',()=>{for(const file of ['polish.js','ui.js','guard.js'])assert.doesNotThrow(()=>new vm.Script(fs.readFileSync(__dirname+'/'+file,'utf8')));});
 test('input guard releases inputs without manufacturing a browser blur',()=>{const s=fs.readFileSync(__dirname+'/guard.js','utf8');assert.match(s,/hisar:release-inputs/);assert.doesNotMatch(s,/new Event\('blur'\)/);});
+
+test('camera response can be tuned but remains within safe bounds',()=>{
+ assert.equal(p.settings({}).cameraResponse,16);
+ assert.equal(p.settings({cameraResponse:2}).cameraResponse,8);
+ assert.equal(p.settings({cameraResponse:200}).cameraResponse,28);
+ assert.equal(p.settings({cameraResponse:20}).cameraResponse,20);
+ assert.ok(p.alpha(1/60,28)>p.alpha(1/60,8));
+ const src=fs.readFileSync(__dirname+'/polish.js','utf8');
+ assert.match(src,/alpha\(dt,opts\.cameraResponse\)/);
+ assert.match(src,/data-polish=\\"cameraResponse\\"/);
+});

@@ -2,43 +2,42 @@
 // Calistirma: JSCAD=/yol/@jscad/modeling node olcu-deneme.js  (ardindan: python3 fix_mesh.py olcu-deneme.stl)
 //
 // Ayni yaziciyla basilan parcalar yazicidan yaziciya birkac onda mm farkli cikar: eski kizak (yan bosluk 0.3 mm) bol geldi.
-// Bu baski 4 kucuk cerceve: ic olculeri sensorun kesitinden (24.0 x 13.5 mm) yan basina 0.0 / 0.1 / 0.2 / 0.3 mm buyuk.
-// Ust kenardaki centik sayisi = numara (1 en siki, 4 eski kizak kadar). Sensor hangisine oynamadan ve zorlamadan
-// geciyorsa yeni tutucu o boslukla cizilir. Alt ic kenarda 0.5 mm pah: ilk katmanin icerı tasmasi olcuyu bozmasin.
-// Eksenler: Z = baski yuksekligi (cerceveler dik basilir: kesit tablada, olcu XY'de dogru cikar).
+// Bu baski 4 kucuk U kelepce: ic genislikleri sensorun genisliginden (24.0 mm) yan basina 0.0 / 0.1 / 0.2 / 0.3 mm buyuk.
+// U oldugu icin sensor eski kizaktayken de denenir: kelepce sensorun ekran tarafindan, USB ucundan 1 cm surulur
+// (kollar 7 mm: kizagin 3.5 mm yan kenarina degmez). Sirttaki centik sayisi = numara (1 en siki, 4 eski kizak kadar).
+// Sensor hangisinde oynamadan ve zorlamadan kayiyorsa yeni tutucu o boslukla cizilir.
+// Kollar 2.6, sirt 3.5 mm kalin (esnemez, olcu yaniltmaz); kol uclarinin ic kenari pahli (kolay baslar).
+// Eksenler: Z = baski yuksekligi (U profili tablada: genislik XY'de dogru cikar).
 
 const path = require('path')
 const M = require(process.env.JSCAD || '@jscad/modeling')
-const { cuboid } = M.primitives
+const { cuboid, polygon } = M.primitives
+const { extrudeLinear } = M.extrusions
 const { union, subtract } = M.booleans
 const { translate } = M.transforms
 const { geom3, poly3 } = M.geometries
 const fs = require('fs')
 
+// cokgen noktalarini saat yonunun tersine cevirir (JSCAD dis cokgeni boyle bekler)
+const ccw = (pts) => { let a = 0; for (let i = 0; i < pts.length; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length]; a += x0 * y1 - x1 * y0 } return a < 0 ? pts.slice().reverse() : pts }
 const box = (x0, x1, y0, y1, z0, z1) =>
   cuboid({ size: [x1 - x0, y1 - y0, z1 - z0], center: [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2] })
 
-const DEV = { W: 24.0, T: 13.5 }        // M5StickC Plus2 kesiti (M5Stack resmi belge: 48.0 x 24.0 x 13.5)
-const WALL = 1.6, H = 6.0, PAH = 0.5
+const DEV_W = 24.0                     // M5StickC Plus2 genisligi (M5Stack resmi belge: 48.0 x 24.0 x 13.5)
+const ARM = 2.6, BACK = 3.5, DEPTH = 7.0, H = 8.0, PAH = 0.6
 const BOSLUK = [0.0, 0.1, 0.2, 0.3]
 
-const cerceve = (c, n) => {
-  const wi = DEV.W + 2 * c, ti = DEV.T + 2 * c
-  let f = subtract(
-    box(-wi / 2 - WALL, wi / 2 + WALL, -ti / 2 - WALL, ti / 2 + WALL, 0, H),
-    box(-wi / 2, wi / 2, -ti / 2, ti / 2, -1, H + 1),
-    box(-wi / 2 - PAH, wi / 2 + PAH, -ti / 2 - PAH, ti / 2 + PAH, -1, PAH)      // alt ic kenar pahi
-  )
-  // numara: ust kenarda, uzun duvarin dis yuzunde n centik (1 mm genis, 0.8 mm derin, 1.5 mm yuksek)
-  for (let k = 0; k < n; k++) {
-    const x = -(n - 1) * 1.6 + k * 3.2
-    f = subtract(f, box(x - 0.5, x + 0.5, ti / 2 + WALL - 0.8, ti / 2 + WALL + 1, H - 1.5, H + 1))
-  }
-  return f
+// U profili XY'de: sirt y in [0, BACK], kollar y in [BACK, BACK+DEPTH]; ic genislik x in [-wi/2, wi/2]
+// tek cokgenden (temiz, su gecirmez ag): dis alt kenarda numara centikleri, kol uclarinda ic pah (sensore kolay baslasin)
+const kelepce = (c, n) => {
+  const a = DEV_W / 2 + c, A = a + ARM, y1 = BACK + DEPTH, pts = [[-A, 0]]
+  for (let k = 0; k < n; k++) { const x = -(n - 1) * 1.7 + k * 3.4; pts.push([x - 0.5, 0], [x - 0.5, 0.6], [x + 0.5, 0.6], [x + 0.5, 0]) }
+  pts.push([A, 0], [A, y1], [a + PAH, y1], [a, y1 - PAH], [a, BACK], [-a, BACK], [-a, y1 - PAH], [-a - PAH, y1], [-A, y1])
+  return extrudeLinear({ height: H }, polygon({ points: ccw(pts) }))
 }
 
-const parts = BOSLUK.map((c, i) => translate([0, i * (DEV.T + 2 * WALL + 6), 0], cerceve(c, i + 1)))
-const plate = M.modifiers.generalize({ snap: true, triangulate: true, repair: true }, union(...parts))
+const parts = BOSLUK.map((c, i) => translate([i * (DEV_W + 2 * ARM + 6), 0, 0], kelepce(c, i + 1)))
+const plate = union(...parts)
 
 // ---------------------------------------------------------------- STL yazici (build.js ile ayni)
 const polys = geom3.toPolygons(plate), tris = []

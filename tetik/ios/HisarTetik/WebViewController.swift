@@ -303,6 +303,14 @@ final class WebViewController: UIViewController, WKNavigationDelegate, WKUIDeleg
 
     // MARK: - sayfa pencereleri ve izinler
 
+    // Lazer hedef: sayfa kamerayı istediğinde (getUserMedia) her açılışta ayrıca sorulmasın; iOS kendi iznini ilk seferde bir kez sorar.
+    // Mikrofon istenmez (sensörün kendi mikrofonu var).
+    func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+                 initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
+                 decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        decisionHandler(type == .camera ? .grant : .deny)
+    }
+
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         if let u = navigationAction.request.url { openExternal(u.absoluteString) }   // target="_blank" bağlantılar

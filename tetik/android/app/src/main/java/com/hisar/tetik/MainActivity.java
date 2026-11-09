@@ -33,6 +33,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.PermissionRequest;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -67,7 +68,8 @@ public class MainActivity extends Activity {
     static final String TAG = "HisarTetik";
     static final String HOST = "appassets.androidplatform.net";
     static final String START = "https://" + HOST + "/index.html";
-    static final int REQ_FILE = 11, REQ_SAVE = 12, REQ_LOC = 13, REQ_BILDIRIM = 14;
+    static final int REQ_FILE = 11, REQ_SAVE = 12, REQ_LOC = 13, REQ_BILDIRIM = 14, REQ_KAMERA = 15;
+    PermissionRequest kameraIstek;   // lazer hedef: sayfanın kamera isteği, Android izni gelince yanıtlanır
     /** Açık olan ekran (saatteki Başla/Dur düğmesi SaatAlici üzerinden buraya gelir). */
     static java.lang.ref.WeakReference<MainActivity> son = new java.lang.ref.WeakReference<>(null);
     static final int BG = Color.rgb(10, 14, 15);
@@ -239,6 +241,12 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int req, String[] perms, int[] res) {
         super.onRequestPermissionsResult(req, perms, res);
+        if (req == REQ_KAMERA) {
+            boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED;
+            if (kameraIstek != null) { if (ok) kameraIstek.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}); else kameraIstek.deny(); }
+            kameraIstek = null;
+            return;
+        }
         if (req == REQ_BILDIRIM) {
             boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED;
             js("window.__hisarSaatIzin&&window.__hisarSaatIzin(" + ok + ")");
@@ -468,6 +476,23 @@ public class MainActivity extends Activity {
     }
 
     class Chrome extends WebChromeClient {
+        // lazer hedef: sayfa kamerayı (getUserMedia) isteyince Android kamera iznini sor, yalnız görüntüye izin ver
+        @Override
+        public void onPermissionRequest(final PermissionRequest r) {
+            runOnUiThread(() -> {
+                boolean video = false;
+                for (String x : r.getResources()) if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(x)) video = true;
+                if (!video) { r.deny(); return; }
+                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    r.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                    return;
+                }
+                if (kameraIstek != null) kameraIstek.deny();
+                kameraIstek = r;
+                requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_KAMERA);
+            });
+        }
+
         @Override
         public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
             if (fileCb != null) fileCb.onReceiveValue(null);

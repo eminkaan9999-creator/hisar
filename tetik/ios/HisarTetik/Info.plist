@@ -24,6 +24,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Lazer hedefte, hedefteki yeşil lazer noktasını görmek için kamera kullanılır. Görüntü kaydedilmez, telefondan çıkmaz.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Atış sensörüne (HISAR-SENSOR) bağlanmak için Bluetooth gerekir.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

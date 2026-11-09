@@ -119,6 +119,7 @@
  addEventListener('storage',e=>{if(e.key!==KEY)return;try{opts=settings(JSON.parse(e.newValue||'null'));refresh();queueTextures();}catch{}});
  root.HisarPolish=Object.freeze({version:api.version,getSettings:()=>({...opts}),set:change,diagnostics,clearInputs,attach});
  attach();safeUpdate();queueTextures();
+ if(!root.HisarImmersive){const immersiveScript=document.createElement('script');immersiveScript.src=new URL('experience/immersive.js',document.baseURI).href;immersiveScript.defer=true;document.head.appendChild(immersiveScript);}
  // Load the optional analog control adapter after the legacy game globals exist.
  // Failure leaves the original controls untouched.
  if(!root.HisarControls){const controlScript=document.createElement('script');controlScript.src=new URL('experience/controls.js',document.baseURI).href;controlScript.defer=true;controlScript.onerror=()=>notice('Analog kontrol modülü yüklenemedi; mevcut kumandalar kullanılabilir.');document.head.appendChild(controlScript);}

@@ -24,9 +24,9 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    const page=await context.newPage(),errors=[];page.setDefaultTimeout(45000);page.setDefaultNavigationTimeout(120000);
    page.on('pageerror',e=>{errors.push(String(e.stack||e));console.log('PAGE_ERROR',String(e.stack||e).slice(0,1200));});
    await page.goto(base,{waitUntil:'domcontentloaded',timeout:120000});
-   await page.waitForFunction(()=>window.HisarExperience&&window.HisarGameBridge.snapshot().ready,{},{timeout:60000});
+   await page.waitForFunction(()=>window.HisarExperience&&window.HisarPolish&&window.HisarGameBridge.snapshot().ready,{},{timeout:60000});
    await page.evaluate(()=>HisarGameBridge.quality('dusuk'));await page.waitForTimeout(3200);
-   assert.equal(await page.evaluate(()=>window.APP_VER),63);ok(label+': original 3D engine and build 63 initialize');
+   assert.equal(await page.evaluate(()=>window.APP_VER),63);assert.equal(await page.evaluate(()=>HisarPolish.version),'63.1');ok(label+': original 3D engine, build 63 and experience 63.1 initialize');
    await page.locator('#hisar-experience-entry').click();assert.equal(await page.locator('#hisar-experience').evaluate(e=>e.open),true);
    const box=await page.locator('#hisar-experience').boundingBox();assert.ok(box.x>=0&&box.width<=(mobile?390:1280));ok(label+': integrated panel fits viewport');
    await page.locator('#hx-question').fill('<img src=x onerror=alert(1)> MERHABA');await page.locator('#hx-question').press('Enter');
@@ -34,31 +34,35 @@ function ok(name){checks.push(name);console.log('PASS',name);}
    await page.locator('[data-page="settings"]').click();await page.locator('#hx-quality').selectOption('dusuk');await page.locator('#hx-auto').uncheck();
    assert.equal(await page.locator('#hx-quality').evaluate(el=>{el.value='orta';el.dispatchEvent(new Event('change'));const level=HisarGameBridge.snapshot().quality;el.value='dusuk';el.dispatchEvent(new Event('change'));return level;}),'orta');
    const config=await page.evaluate(()=>HisarGameBridge.snapshot());assert.equal(config.quality,'dusuk');assert.equal(config.auto,false);ok(label+': native quality and adaptation controls work');
+   await page.locator('#hx-cinematic').check();await page.locator('#hx-crosshair').check();
+   assert.equal(await page.evaluate(()=>HisarExperience.getSettings().cinematic&&HisarExperience.getSettings().contrastCrosshair&&document.body.classList.contains('hisar-cinematic')),true);ok(label+': visual checkboxes really execute their handlers');
+   await page.locator('[data-polish="reduceShake"]').check();assert.equal(await page.evaluate(()=>HisarPolish.getSettings().reduceShake),true);ok(label+': camera comfort option is wired');
    await page.locator('#hx-large').check();await page.screenshot({path:'experience-'+label+'.png'});
-   await page.locator('#hx-close').click();if(!mobile){await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.HisarExperience);await page.waitForTimeout(3200);}
-   assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().quality),'dusuk');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().auto),false);assert.equal(await page.evaluate(()=>HisarExperience.getSettings().largeText),true);assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().xp),120);ok(label+(mobile?': preferences save without erasing game progress':': preferences survive reload without erasing game progress'));
+   await page.locator('#hx-close').click();if(!mobile){await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.HisarExperience&&!!window.HisarPolish);await page.waitForTimeout(3200);}
+   assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().quality),'dusuk');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().auto),false);assert.equal(await page.evaluate(()=>HisarExperience.getSettings().largeText),true);assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().xp),120);
+   assert.equal(await page.evaluate(()=>HisarExperience.getSettings().cinematic&&HisarPolish.getSettings().reduceShake),true);ok(label+(mobile?': preferences save without erasing game progress':': preferences survive reload without erasing game progress'));
    if(!mobile){
     await page.locator('[data-m="serbest"]').first().click();await page.locator('#go').click();
     await page.waitForFunction(()=>HisarGameBridge.snapshot().state==='play');
-    const diagnostic=()=>page.evaluate(()=>({state:HisarGameBridge.snapshot(),session:HisarExperience.snapshot(),hidden:document.hidden,hooks:typeof FRAME_HOOKS==='undefined'?'missing':FRAME_HOOKS.length,frames:typeof R==='undefined'?null:R.info.render.frame,errors:window.HERR?window.HERR.LOG:[]}));
+    const diagnostic=()=>page.evaluate(()=>({state:HisarGameBridge.snapshot(),session:HisarExperience.snapshot(),hidden:document.hidden,hooks:typeof FRAME_HOOKS==='undefined'?'missing':FRAME_HOOKS.length,frames:typeof R==='undefined'?null:R.info.render.frame,errors:window.HERR?window.HERR.LOG:[],polish:HisarPolish.diagnostics()}));
     console.log('PLAY_STARTED',JSON.stringify(await diagnostic()));
     try{await page.waitForFunction(()=>HisarExperience.snapshot().activeSeconds>=2,{},{timeout:90000,polling:500});}
     catch(e){console.log('SESSION_DIAGNOSTIC',JSON.stringify(await diagnostic()));throw e;}
     console.log('PLAY_MEASURED',JSON.stringify(await diagnostic()));ok('desktop: real render loop records active time');
-    await page.keyboard.press('F2');
+    await page.keyboard.press('F2');await page.locator('[data-page="assistant"]').click();
     assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'pause');await page.locator('#hx-question').fill('p p p');await page.locator('#hx-question').press('Enter');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'pause');ok('desktop: panel pauses game and typing cannot resume it');
     await page.locator('[data-page="session"]').click();await page.locator('#hx-save').click();console.log('SESSION_SAVE_STATUS',await page.locator('#hx-status').innerText());assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('hisar-session-history-v1')||'[]').length),1);ok('desktop: measured active session is saved');
     const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#hx-export').click()]);const report=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(report.schema,1);assert.equal(report.session.xp,120);ok('desktop: JSON report export contains real game values');
     await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'play');ok('desktop: Escape resumes the previously running game');
     await page.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;});
-    await page.waitForFunction(async()=>await caches.has('hisar-main-v63'));
+    await page.waitForFunction(async()=>await caches.has('hisar-main-v63.1'));
+    assert.equal(await page.evaluate(async()=>{const c=await caches.open('hisar-main-v63.1');return !!await c.match(new URL('experience/polish.js',location.href).href);}),true);ok('offline: presentation module is included in cache');
     await page.goto(base+'iti/');assert.match(await page.title(),/İTİ/);await context.setOffline(true);
-    // Test the real offline navigation shell without another expensive software-GPU initialization.
     const offlineTitle=await page.evaluate(()=>new Promise((resolve,reject)=>{const f=document.createElement('iframe');f.setAttribute('sandbox','allow-same-origin');f.onload=()=>{try{resolve({title:f.contentDocument.title,integrated:f.contentDocument.documentElement.innerHTML.includes('experience/ui.js?v=63')});}catch(e){reject(e);}};f.onerror=()=>reject(Error('offline navigation failed'));f.src='../?offline=1';document.body.appendChild(f);}));
     assert.match(offlineTitle.title,/HİSAR/);assert.equal(offlineTitle.integrated,true);ok('offline: visiting ITI never replaces the integrated main game shell');
     await page.goto(base+'iti/',{waitUntil:'domcontentloaded'});assert.match(await page.title(),/İTİ/);ok('offline: standalone ITI shell remains separate');
    }
-   assert.equal(errors.filter(e=>/experience\/(?:ui|guard|bridge|core)\.js/.test(e)).length,0);ok(label+': no new module runtime exceptions');
+   assert.equal(errors.filter(e=>/experience\/(?:ui|guard|bridge|core|polish)\.js/.test(e)).length,0);ok(label+': no new module runtime exceptions');
    await context.close();
   }
   console.log('BROWSER CHECKS PASSED',checks.length);fs.writeFileSync('experience-browser-results.json',JSON.stringify({passed:checks.length,checks},null,2));

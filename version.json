@@ -1,4 +1,5 @@
 {
   "v": 63,
-  "not": "Oyun içi İTİ ve ayar paneli, otomatik kalite ve doğru FPS ölçümü, FPS ve oturum raporları; ana oyun/İTİ çevrimdışı önbellek ayrımı düzeltildi."
+  "experience": "63.1",
+  "not": "Deneyim 63.1: çalışan sinematik ve kontrast seçenekleri; yumuşak takip kamerası, sarsıntı azaltma, isteğe bağlı filmik ton eşleme ve parlaklık, doku filtreleme, garaj/telefon menü taşması düzeltmeleri, arka plan kontrol ve ses temizliği. Ana oyun sürümü 63 korunur."
 }

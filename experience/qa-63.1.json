@@ -1,0 +1,10 @@
+{
+  "package": "63.1",
+  "gameBuild": 63,
+  "unitAndCacheTests": {"passed": 32, "failed": 0},
+  "domInteractionChecks": {"passed": 68, "failed": 0, "scope": "Real Three.js math, mocked renderer/audio/storage. Six viewport sizes, not physical devices."},
+  "actualGameAdapterChecks": {"passed": 24, "failed": 0, "scope": "Byte-verified v63 index.html, full game logic with no-GPU renderer. Four viewport sizes, seven mission initializers and four camera modes."},
+  "baseGameBlob": "b86016b875a5b69afc95d3848890c858df00dda0",
+  "productionBlobs": {"experience/polish.js": "dcf1e94fe3b475faa21e8b72eaee21e4e79f270f", "experience/ui.js": "87349d8c07f8f38ad938f69d3a4cc8a7636a2299", "experience/ui.css": "9bab14a42cc9541ffbae1e9285fb79b1e54b176f", "experience/guard.js": "208fdc6db7aa6b72b6b71ebd56530b55fd293f9d", "sw.js": "eee34f94753bf3c5cb939ac3a461f81f8fbf1797"},
+  "notValidated": ["Physical iPhone/Android hardware", "GPU-rendered appearance of new tone mapping", "Long-duration gameplay and all mission completions", "Other sub-apps internal functionality"]
+}

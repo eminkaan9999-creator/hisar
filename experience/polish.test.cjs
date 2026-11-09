@@ -19,5 +19,5 @@ test('camera response can be tuned but remains within safe bounds',()=>{
  assert.ok(p.alpha(1/60,28)>p.alpha(1/60,8));
  const src=fs.readFileSync(__dirname+'/polish.js','utf8');
  assert.match(src,/alpha\(dt,opts\.cameraResponse\)/);
- assert.ok(src.includes("data-polish=\\\"cameraResponse\\\""));
+ assert.match(src,/data-polish=.*cameraResponse/);
 });

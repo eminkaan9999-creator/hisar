@@ -6,3 +6,6 @@ test('smoothing is bounded and approaches target',()=>{let x=0;for(let i=0;i<120
 test('invalid profile is rejected',()=>{assert.equal(c.setProfile('invalid'),false);assert.equal(c.getProfile(),'dengeli');});
 
 test('legacy update wrapper uses elapsed time when dt is missing',()=>{const fs=require('node:fs'),vm=require('node:vm');const src=fs.readFileSync(__dirname+'/controls.js','utf8');const handlers={};const ctx={joy:{x:.7,y:0},mode:'tank',game:'play',localStorage:{getItem:()=>null,setItem:()=>{}},performance:{now:(()=>{let n=0;return()=>n+=16})()},document:{getElementById:()=>null,addEventListener:()=>{}},addEventListener:(k,fn)=>handlers[k]=fn,update(){this.sample=this.joy.x;},sample:0};ctx.window=ctx;vm.runInNewContext(src,ctx);ctx.update();assert.ok(ctx.sample>0);assert.equal(ctx.joy.x,.7);});
+
+test('non-finite analog input stays neutral',()=>{for(const v of [NaN,Infinity,-Infinity])assert.equal(c.axis(v,'dengeli'),0);});
+test('non-finite smoothing delta never produces NaN',()=>{for(const dt of [NaN,Infinity,-Infinity])assert.ok(Number.isFinite(c.smoothing(0,1,dt,'dengeli')));});

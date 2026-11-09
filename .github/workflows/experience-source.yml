@@ -1,0 +1,27 @@
+name: HİSAR source inspection
+on:
+  push:
+    branches: [feature/hisar-experience-20261109]
+    paths: ['.github/workflows/experience-source.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read frame hook contracts
+        run: |
+          node <<'NODE'
+          const lines=require('node:fs').readFileSync('index.html','utf8').split('\n');
+          lines.forEach((s,i)=>{if(s.length<20000 && /FRAME_HOOKS|requestAnimationFrame|function\s+loop|window\.loop\s*=|function\s+openMenu|addEventListener\('blur'/.test(s))console.log((i+1)+': '+s.slice(0,1600));});
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-game-source
+          path: |
+            index.html
+            three.min.js
+          retention-days: 1

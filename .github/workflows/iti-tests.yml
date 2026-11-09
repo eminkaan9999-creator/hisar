@@ -1,0 +1,24 @@
+name: ITI prototype checks
+on:
+  push:
+    paths:
+      - 'iti/**'
+      - '.github/workflows/iti-tests.yml'
+  pull_request:
+    paths:
+      - 'iti/**'
+      - '.github/workflows/iti-tests.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test training assistant
+        run: node iti/iti-assistant.test.cjs
+      - name: Verify standalone UI files
+        run: |
+          test -s iti/index.html
+          test -s iti/iti-assistant.js

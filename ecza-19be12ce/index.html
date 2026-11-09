@@ -21,6 +21,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" crossorigin href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Figtree:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="ux-improvements.css?v=1">
+<style>.medical-note{padding:12px 14px;border:1px solid var(--line,#ddd);border-radius:12px;background:var(--surface-2,#f5f6f9);color:var(--ink-2,#555);font-size:13px;line-height:1.5;margin:8px 0 14px}</style>
 </head>
 <body>
 <style>
@@ -749,7 +750,7 @@ function sikMols(id) { return Object.keys(molUrun).filter(k => (M[k].sik || []).
 function sikVar(id) { return sikMols(id).length > 0; }
 function sikEk(id) { return V.urun.filter(u => !u.mol && u.sk && u.sk.includes(id)); }
 function vAra() {
-  if (S.q.trim()) return vSonuc();
+  if (S.q.trim()) return `<p class="medical-note" role="note">Arama sonuçları tedavi önerisi değildir. Şikâyete göre ilaç kullanmadan önce eczacıya veya hekime danışın.</p>` + vSonuc();
   const top = S.nav[S.nav.length - 1];
   if (top && top.t === 'grup') return vGrup(top.id);
   if (top && top.t === 'sik') return vSik(top.id);
@@ -759,7 +760,7 @@ function vAra() {
   const g = gununIlaci();
   if (g) {
     const m = M[g.mol];
-    h += `<button class="hero" data-a="urun" data-id="${g.id}" style="--h:${hue(g)}"><span class="hl">${ic.starOn}Günün ilacı</span><span class="ht"><span class="hn">${esc(g.ad)}</span><span class="hsub"><b>${esc(m.ad)}</b> · ${esc(m.kisa)}</span><span class="hgo">Kartı aç${ic.chev}</span></span><span class="hpic">${kesEl(g, 140, 118)}</span></button>`;
+    h += `<button class="hero" data-a="urun" data-id="${g.id}" style="--h:${hue(g)}"><span class="hl">${ic.starOn}Bugün keşfet</span><span class="ht"><span class="hn">${esc(g.ad)}</span><span class="hsub"><b>${esc(m.ad)}</b> · ${esc(m.kisa)}</span><span class="hgo">Kartı aç${ic.chev}</span></span><span class="hpic">${kesEl(g, 140, 118)}</span></button>`;
   }
   const nf = Object.keys(D.fav).length;
   const kisa = [
@@ -845,6 +846,7 @@ function kartHTML(u) {
   const c = m ? ((u.k != null && V.kart && V.kart[u.k]) || m) : null;
   const fav = !!D.fav[u.id];
   let h = `<div class="inner"><div class="layer-bar gutter"><button class="nbtn" data-a="kapat" aria-label="Geri">${ic.back}</button><span class="ttl">${esc(g.ad)}</span><button class="nbtn${fav ? ' on' : ''}" data-a="fav" data-id="${u.id}" aria-label="${fav ? 'İşareti kaldır' : 'İşaretle'}" aria-pressed="${fav}">${fav ? ic.starOn : ic.star}</button></div><div class="layer-body gutter" id="kartbody">`;
+  h += `<p class="medical-note" role="note">Bilgilendirme amaçlıdır. İlaç seçimi, doz, kullanım süresi ve etkileşimler için güncel kullanma talimatını ve eczacınızı veya hekiminizi esas alın.</p>`;
   const img = kesEl(u, 250, 330);
   h += `<div class="pcard" style="--h:${g.h}"><div class="pimg">${img || kucuk(u, 96)}</div><div class="pinfo"><h2>${esc(u.ad)}</h2>`;
   if (m) h += `<p class="etk">Etken madde: <b>${esc(m.ad)}</b></p>`;

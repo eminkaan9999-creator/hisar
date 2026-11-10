@@ -65,7 +65,7 @@ $('#print-shelf').addEventListener('click',()=>{
  let records=[];try{const raw=JSON.parse(localStorage.getItem('kardelen.inventory.v1')||'[]');if(Array.isArray(raw))records=raw;}catch{}
  const shelves=[...new Set(records.map(x=>typeof x.shelf==='string'?x.shelf.trim():'').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr')).slice(0,300);
  if(!shelves.length){setStatus('Önce raf konumu içeren en az bir stok kaydı ekleyin.');return;}
- const popup=window.open('','_blank','noopener,noreferrer');
+ const popup=window.open('','_blank');
  if(!popup){setStatus('Yazdırma penceresi engellendi. Açılır pencerelere izin verin.');return;}
  const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  popup.document.write('<!doctype html><html lang="tr"><meta charset="utf-8"><title>Kardelen Raf Etiketleri</title><style>body{font:16px system-ui;margin:20px}main{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.tag{border:2px solid #222;border-radius:10px;padding:20px;min-height:95px;break-inside:avoid}b{font-size:21px}@media print{button{display:none}}</style><button onclick="print()">Yazdır</button><h1>Raf Etiketleri</h1><main>'+shelves.map(s=>'<div class="tag"><small>KARDELEN • RAF KONUMU</small><p><b>'+esc(s)+'</b></p></div>').join('')+'</main></html>');popup.document.close();

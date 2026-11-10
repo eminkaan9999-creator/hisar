@@ -18,9 +18,18 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Preserve concurrent main changes before validation
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p simple-reports
+          git fetch origin main
+          git rev-parse origin/main > simple-reports/base-main.txt
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' merge --no-edit origin/main
       - name: Apply guarded settings and audio integration
         run: |
           mkdir -p simple-reports
@@ -58,7 +67,7 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           REMOTE_HEAD=$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)
           test "$REMOTE_HEAD" = "$EXPECTED_HEAD"
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat: integrate verified automatic graphics and natural voice build 66'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat: integrate verified automatic graphics and natural voice build 67'
           git push origin "HEAD:${GITHUB_REF_NAME}"
           git rev-parse HEAD > simple-reports/integrated-commit.txt
       - name: Preserve tested source and hashes

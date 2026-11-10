@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Kardelen'in İlaç Defteri</title>
+<title>Kardelen’in Küçük Eczanesi</title>
 <meta name="description" content="Eczane raflarındaki ilaçlar: ne işe yarar, nasıl kullanılır, rafta nerede.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#D6222E" media="(prefers-color-scheme: light)">
@@ -2112,7 +2112,7 @@ window.addEventListener('hashchange', route);
   vAra = function(){
     const html=home();
     if (S.q.trim() || S.nav.length) return html;
-    return '<section class="bloom-welcome" aria-label="Kardelen karşılama"><span class="bloom-flower">'+flower+'</span><div><span class="bloom-eyebrow">KARDELEN BLOOM</span><h2>'+greeting()+' 🌸</h2><p>Bilginin çiçek açtığı yer. Bugün yeni bir şey keşfetmeye ne dersin?</p></div></section>'+html;
+    return '<section class="bloom-welcome" aria-label="Kardelen karşılama"><span class="bloom-flower">'+flower+'</span><div><span class="bloom-eyebrow">KARDELEN’İN KÜÇÜK ECZANESİ</span><h2>'+greeting()+' 🌸</h2><p>Bilginin çiçek açtığı yer. Bugün yeni bir şey keşfetmeye ne dersin?</p></div></section>'+html;
   };
   const notebook=vDefter;
   vDefter=function(){
@@ -2168,7 +2168,7 @@ window.addEventListener('hashchange', route);
   const splash=document.createElement('div');
   splash.className='bloom-splash';
   splash.setAttribute('aria-hidden','true');
-  splash.innerHTML='<span class="bloom-splash-flower">'+flower+'</span><strong>Kardelen’in İlaç Defteri</strong><small>Bilginin çiçek açtığı yer</small>';
+  splash.innerHTML='<span class="bloom-splash-flower">'+flower+'</span><strong>Kardelen’in Küçük Eczanesi</strong><small>Bilginin çiçek açtığı yer</small>';
   document.body.append(splash);
   splash.addEventListener('animationend',event=>{if(event.target===splash)splash.remove();});
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)splash.remove();

@@ -1,7 +1,7 @@
 {
-  "v": 65,
+  "v": 66,
   "experience": "63.1",
-  "not": "Dost tank telsizi: tek tek / tüm birliğe emir, Emredersiniz komutanım yanıtları, çevrimdışı sentetik erkek telsiz sesi; altı farklı hedef akışlı görev. Önceki drone, yeşil termal ve oynanış güncellemeleri bağlı.",
+  "not": "Tankın içi yenilendi: köşelerde, kutu altlarında ve duvar diplerinde gerçekçi gölgeler; temiz beyaz emaye duvarlar; çelik, pirinç kovan, kauçuk ve boyalı yüzeyler artık farklı parlıyor; kabin içi yansımalar; cihazlarda Türkçe etiket ve plakalar. Komutan kubbesinde tavan yerine gökyüzü görünme hatası giderildi. Telsiz ve görev güncellemesi (65) aynen korunuyor.",
   "gameplay": "1.2.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",

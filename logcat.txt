@@ -1,0 +1,11 @@
+11-10 19:39:31.897   523   551 I ActivityManager: Start proc 2960:com.google.android.webview:webview_service/u0a134 for service {com.google.android.webview/org.chromium.android_webview.services.VariationsSeedServer}
+11-10 19:39:33.359  2966  3104 W chromium: [WARNING:dns_config_service_android.cc(115)] Failed to read DnsConfig.
+11-10 19:39:33.588   523   551 I ActivityManager: Start proc 3100:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {com.hisar.tetik/org.chromium.content.app.SandboxedProcessService0:0}
+11-10 19:39:33.793  3100  3100 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+11-10 19:39:33.818  2966  2966 I HisarTetik: sayfa sürümü 28 (APK içi), APK içindeki 28
+11-10 19:39:33.993  2966  2966 I HisarTetik: sayfa sürümü 28 (APK içi), APK içindeki 28
+11-10 19:39:34.450   523   551 I ActivityManager: Start proc 3358:com.google.android.webview:webview_apk/u0a134 for service {com.google.android.webview/org.chromium.android_webview.nonembedded.AwComponentUpdateService}
+11-10 19:39:35.896  3358  3534 W cr_AWNetworkFetcherTask: 	at org.chromium.android_webview.nonembedded.NetworkFetcherTask.download(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:48)
+11-10 19:39:49.074  1398  1872 I HeterodyneSyncScheduler: Scheduling Phenotype for a PhenotypeSyncImmediately(6, org.chromium.net.cronet) one off with window [1, 2] in seconds [CONTEXT service_id=51 ]
+11-10 19:40:02.253  4316  5132 I cr_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@748e78f
+11-10 19:45:57.595  2966  6359 I HisarTetik: sayfa güncellendi: 28 (önceki 28)

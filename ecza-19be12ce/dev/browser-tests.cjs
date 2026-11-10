@@ -60,6 +60,12 @@ const server = http.createServer((req, res) => {
     assert((await page.locator('.bloom-welcome h2').innerText()).includes('Kardelen'));
     assert.equal(await page.locator('.bloom-dock button').count(), 4);
     pass('Bloom personalized welcome and renamed navigation render');
+    assert.equal(await page.locator('.bloom-splash').count(), 1, 'Extended floral splash should appear');
+    assert((await page.locator('.bloom-splash').evaluate(el=>getComputedStyle(el).animationDuration))==='2.8s');
+    await page.waitForTimeout(3100);
+    assert.equal(await page.locator('.bloom-splash').count(), 0, 'Splash must be removed after animation');
+    pass('Extended 2.8-second floral splash cleans up without blocking navigation');
+
 
     assert.equal(await page.evaluate(() => window.ECZ.surum), Number(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'surum.json'), 'utf8')).surum)); // sürüm surum.json'dan gelir
     assert.equal((await state()).puan, 123);

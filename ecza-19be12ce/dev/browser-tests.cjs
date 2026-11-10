@@ -105,8 +105,8 @@ const server = http.createServer((req, res) => {
     await page.locator('#ux-large').check();
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('#ux-theme').waitFor();
-    assert.equal(await page.locator('a[href="inventory.html"]').count(), 1);
-    pass('Inventory module is linked from the notebook');
+    assert.equal(await page.locator('a[href="inventory.html"]').count(), 0);
+    pass('Confusing inventory shortcut is hidden without deleting data');
     assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
     assert(await page.locator('#ux-large').isChecked());
     assert(await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.hint')).fontSize) >= 17));

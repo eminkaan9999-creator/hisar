@@ -56,6 +56,11 @@ const server = http.createServer((req, res) => {
   try {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('.ux-overview').waitFor();
+    await page.locator('.bloom-welcome').waitFor();
+    assert((await page.locator('.bloom-welcome h2').innerText()).includes('Kardelen'));
+    assert.equal(await page.locator('.bloom-dock button').count(), 4);
+    pass('Bloom personalized welcome and renamed navigation render');
+
     assert.equal(await page.evaluate(() => window.ECZ.surum), Number(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'surum.json'), 'utf8')).surum)); // sürüm surum.json'dan gelir
     assert.equal((await state()).puan, 123);
     pass('Version 8 boots and preserves existing progress');
@@ -101,6 +106,14 @@ const server = http.createServer((req, res) => {
     await page.locator('#kart [data-a="kapat"]').click();
     await page.waitForTimeout(200);
     await nav('defterim');
+    await page.locator('.bloom-garden').waitFor();
+    assert((await page.locator('.bloom-garden').innerText()).includes('Öğrenme bahçesi'));
+    await page.locator('[data-bloom="surprise"]').click();
+    await page.locator('#bloom-surprise').waitFor();
+    assert((await page.locator('#bloom-surprise').innerText()).includes('Sevgili Kardelen'));
+    await page.locator('.bloom-close').click();
+    assert.equal(await page.locator('#bloom-surprise').count(), 0);
+    pass('Learning garden and accessible surprise letter open and close');
     await page.locator('#ux-theme').selectOption('dark');
     await page.locator('#ux-large').check();
     await page.reload({ waitUntil: 'domcontentloaded' });

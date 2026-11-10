@@ -16,3 +16,6 @@ jobs:
         with:
           node-version: '22'
       - run: node ecza-19be12ce/dev/inventory-smoke.cjs
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install chromium
+      - run: node ecza-19be12ce/dev/inventory-browser.cjs

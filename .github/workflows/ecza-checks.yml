@@ -1,7 +1,7 @@
 name: Kardelen v8 checks
 on:
   push:
-    branches: [main, feature/ecza-kardelen-bloom-20261110]
+    branches: [main, feature/ecza-bloom-full-floral-20261110]
     paths:
       - 'ecza-19be12ce/dev/**'
       - 'ecza-19be12ce/index.html'
@@ -50,7 +50,7 @@ jobs:
           if-no-files-found: error
   integrate:
     needs: check
-    if: github.ref == 'refs/heads/feature/ecza-kardelen-bloom-20261110'
+    if: github.ref == 'refs/heads/feature/ecza-bloom-full-floral-20261110'
     runs-on: ubuntu-24.04
     permissions:
       contents: write

@@ -49,6 +49,7 @@
   splash.setAttribute('aria-hidden','true');
   splash.innerHTML='<span class="bloom-splash-flower">'+flower+'</span><strong>Kardelen’in İlaç Defteri</strong><small>Bilginin çiçek açtığı yer</small>';
   document.body.append(splash);
-  splash.addEventListener('animationend',()=>splash.remove(),{once:true});
+  splash.addEventListener('animationend',event=>{if(event.target===splash)splash.remove();});
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)splash.remove();
+  else setTimeout(()=>splash.remove(),3600);
 })();

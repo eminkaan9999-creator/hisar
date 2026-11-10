@@ -99,3 +99,9 @@ html,body{max-width:100%;overflow-x:clip}
 @keyframes bloom-drawer-breathe{from{opacity:.19;transform:rotate(-9deg) scale(.88)}to{opacity:.48;transform:rotate(7deg) scale(1.07)}}
 @keyframes bloom-drawer-open{from{opacity:0;transform:translateY(26px) scale(.45) rotate(-35deg)}to{opacity:.36;transform:translateY(0) scale(1) rotate(0)}}
 @media(prefers-reduced-motion:reduce){.bloom-drawer-flower,.bloom-floral-drawer.bloom-reopen .bloom-drawer-flower,.bloom-letter-refresh h2,.bloom-letter-refresh p{animation:none!important;transform:none!important}.bloom-floral-drawer button,.bloom-floral-drawer [data-a]{transition:none!important}}
+
+/* Replace the legacy letter E with the real Kardelen flower brand mark. */
+#menu .e-sign{font-size:0!important;color:transparent!important;background:#8f4164 url('icon-bloom.svg') center/cover no-repeat!important;border-radius:18px!important;box-shadow:0 6px 18px #45172b33!important;overflow:hidden}
+#menu .menu-head{position:relative;z-index:2}
+#menu .menu-nav{position:relative;z-index:2}
+#menu .menu-foot{position:relative;z-index:2}

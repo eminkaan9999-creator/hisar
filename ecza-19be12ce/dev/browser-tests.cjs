@@ -60,6 +60,18 @@ const server = http.createServer((req, res) => {
     assert((await page.locator('.bloom-welcome h2').innerText()).includes('Kardelen'));
     assert.equal(await page.locator('.bloom-dock button').count(), 4);
     pass('Bloom personalized welcome and renamed navigation render');
+    const flowerIcon = await page.locator('.bloom-dock [aria-current="page"]').evaluate(el => {
+      const style = getComputedStyle(el,'::before');
+      return { image: style.backgroundImage, animation: style.animationName };
+    });
+    assert(flowerIcon.image.includes('svg'), 'Active icon must have a flower motif');
+    assert(flowerIcon.animation.includes('bloom-icon-open'), 'Flower should open on navigation');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const reduced = await page.locator('.bloom-dock [aria-current="page"]').evaluate(el=>getComputedStyle(el,'::before').animationName);
+    assert.equal(reduced, 'none', 'Reduced-motion preference must disable flower animation');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    pass('Flower icon animation and reduced-motion accessibility');
+
     assert.equal(await page.locator('.bloom-splash').count(), 1, 'Extended floral splash should appear');
     assert((await page.locator('.bloom-splash').evaluate(el=>getComputedStyle(el).animationDuration))==='2.8s');
     await page.waitForTimeout(3100);
@@ -70,7 +82,7 @@ const server = http.createServer((req, res) => {
     assert.equal(await page.evaluate(() => window.ECZ.surum), Number(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'surum.json'), 'utf8')).surum)); // sürüm surum.json'dan gelir
     assert.equal((await state()).puan, 123);
     pass('Version 8 boots and preserves existing progress');
-    for (const width of [320, 390, 768, 1440]) {
+    for (const width of [320, 375, 390, 430, 768, 1440]) {
       await page.setViewportSize({ width, height: width > 900 ? 1000 : 844 });
       await page.waitForTimeout(100);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));

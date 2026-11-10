@@ -46,3 +46,22 @@
 @keyframes ux-pop{from{transform:scale(.78)}to{transform:scale(1)}}
 @media(hover:hover) and (pointer:fine){#view .row:hover,#view .card:hover{transform:translateY(-2px);box-shadow:0 7px 22px #00000012}}
 @media(prefers-reduced-motion:reduce){.ux-overview,.ux-filters,.ux-dock [aria-current=page] svg{animation:none!important}#view .row,#view .kt,#view .sec,#view .card,.ux-dock button,.ux-more{transition:none!important;transform:none!important}}
+
+/* Visual layer for study cards, photo viewer and accessible micro-interactions. */
+#view .kt{position:relative;overflow:hidden;border-radius:18px}
+#view .kt::after{content:"";pointer-events:none;position:absolute;inset:0;border-radius:inherit;border:1px solid transparent;transition:border-color .25s ease}
+#view .kt:focus-within::after{border-color:var(--red)}
+#view .row{position:relative;overflow:hidden;will-change:auto}
+#view .row::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 20%,var(--red-soft) 50%,transparent 80%);transform:translateX(-120%);opacity:0}
+#view .row:active::before{animation:ux-sheen .45s ease-out both}
+#view .shot{border-radius:16px;overflow:hidden;transition:transform .25s var(--ux-ease),filter .25s ease}
+#view .shot:active{transform:scale(.985);filter:brightness(.96)}
+#stage img{transition:transform .18s ease-out}
+#view .chip,#view .cta{transition:transform .18s var(--ux-ease),box-shadow .2s ease}
+#view .chip:active,#view .cta:active{transform:scale(.965)}
+#view .sec h2{letter-spacing:-.025em;text-wrap:balance}
+#view .kt h2,#view .kt h3{letter-spacing:-.025em}
+#view .hint{line-height:1.55}
+@keyframes ux-sheen{0%{transform:translateX(-120%);opacity:0}25%{opacity:.5}100%{transform:translateX(120%);opacity:0}}
+@media(hover:hover) and (pointer:fine){#view .shot:hover{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){#view .row::before{display:none}#view .shot,#view .chip,#view .cta,#stage img,#view .kt::after{transition:none!important;animation:none!important;transform:none!important}}

@@ -2,10 +2,26 @@
 (() => {
   'use strict';
   const flower = '<svg viewBox="0 0 80 90" width="52" height="58" aria-hidden="true"><path d="M39 80Q39 57 42 34" stroke="#4b8869" stroke-width="3" fill="none"/><path d="M41 58Q23 46 20 57Q30 65 41 58" fill="#79ae8b"/><path d="M42 37Q19 14 23 6Q43 6 43 37" fill="#fff" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q46 7 61 12Q66 28 43 37" fill="#fefafc" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q35 16 34 8Q53 11 43 37" fill="#f5e9ee" stroke="#b7d7c7" stroke-width="2"/><circle cx="43" cy="37" r="4" fill="#e9c75d"/></svg>';
-  const greeting = () => {
-    const hour = new Date().getHours();
-    return hour < 11 ? 'Günaydın Kardelen' : hour < 18 ? 'Güzel bir gün Kardelen' : 'İyi akşamlar Kardelen';
-  };
+  // Original, affectionate messages inspired by the user's tone. No private chat excerpts are published.
+  const greetings = [
+    'Günaydın minnakım 🌸', 'Yavrumm, bugün de harikasın ♡', 'Aşkım, yeni bir şey öğrenelim mi?',
+    'Minnakım, bu defter senin için ✨', 'Güzel bir gün olsun yavrum 🌷',
+    'Benim güzel Kardelen’im, hoş geldin', 'Yavrumm, bugün bir çiçek daha açsın',
+    'İyi ki varsın minnakım ♡'
+  ];
+  const letters = [
+    ['Yavrummm ♡', 'Bu küçücük defteri senin için hazırladım. Her açtığında yüzünde minicik bir gülümseme olsun istedim.', 'İyi ki varsın minnakım.'],
+    ['Minnakım 🌸', 'Sen bir şeyler öğrenirken ben de senin heyecanını görmeyi seviyorum. Bu çiçekler de o güzel heyecanına eşlik etsin.', 'Seni çook seviyorum yavrumm.'],
+    ['Aşkımmm ♡', 'Burası sadece ilaç defteri değil; senin için uğraştığım, içine biraz da sevgimi sakladığım küçücük bir yer.', 'Hep gül olur mu minnakım?'],
+    ['Benim Kardelen’im 🌷', 'Gün ne kadar yoğun geçerse geçsin, burada seni bekleyen bir çiçek ve sana ait küçücük bir sürpriz var.', 'İyi ki benimlesin yavrumm.'],
+    ['Yavrummm ✨', 'Bugün ne öğrendiysen, ne başardıysan seninle gurur duyuyorum. Bir de böyle minik bir not bırakmak istedim.', 'Kocaman seviyorum seni.'],
+    ['Minnak kuşum ♡', 'Bu defteri her açtığında seni düşündüğümü hatırla. Bir çiçek daha açsın, sen de biraz daha gül.', 'İyi ki tanımışım seni aşkım.'],
+    ['Kardelen’im 🌸', 'Senin adın çiçek gibi ya, uygulamanın her köşesinde bir kardelen açsın istedim. Hepsi sana özel.', 'Seni seviyorum minnakım.'],
+    ['Bebekkk ♡', 'Bak, bugün de sana yeni bir sürpriz sakladım. Biraz ders, biraz çiçek, biraz da bizden bir şey olsun.', 'Hep mutlu ol yavrum.']
+  ];
+  let greetingIndex = 0, letterIndex = -1;
+  const greeting = () => greetings[(greetingIndex++) % greetings.length];
+  const nextLetter = () => { letterIndex=(letterIndex+1)%letters.length; return letters[letterIndex]; };
   const flowerCount = () => {
     const fav = D.fav && typeof D.fav === 'object' ? Object.keys(D.fav).filter(id => Object.prototype.hasOwnProperty.call(U,id) && D.fav[id]).length : 0;
     const visits = D.son && Array.isArray(D.son) ? D.son.filter(id => Object.prototype.hasOwnProperty.call(U,id)).length : 0;
@@ -29,12 +45,36 @@
     const names={ara:'Keşfet',gruplar:'İlaçlar',raflar:'Raflar',defterim:'Bahçem'};
     dock.querySelectorAll('button').forEach(button=>{const label=button.querySelector('span');if(label&&names[button.dataset.id])label.textContent=names[button.dataset.id];});
   }
+  // Flower ornaments in the existing red drawer; purely decorative, never block controls.
+  const drawer=document.querySelector('#menu') || document.querySelector('.menu');
+  if(drawer){
+    drawer.classList.add('bloom-floral-drawer');
+    if(!drawer.querySelector('.bloom-drawer-flowers')){
+      const flowers=document.createElement('div');
+      flowers.className='bloom-drawer-flowers';
+      flowers.setAttribute('aria-hidden','true');
+      flowers.innerHTML=Array.from({length:7},(_,i)=>'<span class="bloom-drawer-flower bloom-drawer-flower-'+i+'">'+flower+'</span>').join('');
+      drawer.prepend(flowers);
+    }
+  }
+  const menuButton=document.querySelector('#navbtn');
+  if(menuButton)menuButton.addEventListener('click',()=>{drawer?.classList.remove('bloom-reopen');void drawer?.offsetWidth;drawer?.classList.add('bloom-reopen');});
   document.addEventListener('click',e=>{
     const btn=e.target.closest('[data-bloom="surprise"]');
     if(!btn)return;
     if(document.querySelector('#bloom-surprise'))return;
     const overlay=document.createElement('div');overlay.id='bloom-surprise';overlay.className='bloom-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Kardelen için küçük bir not');
-    overlay.innerHTML='<div class="bloom-letter"><button class="bloom-close" type="button" aria-label="Sürprizi kapat">×</button><div class="bloom-letter-flower">'+flower+'</div><span class="bloom-eyebrow">SANA ÖZEL</span><h2>Sevgili Kardelen 🌸</h2><p>Bu küçük defter, merakının ve öğrendiğin her güzel şeyin yanında olsun diye hazırlandı.</p><p>Her yeni bilgi, senin bahçende açan bir çiçek gibi.</p><p class="bloom-sign">İyi ki varsın. ♡</p></div>';
+    const [heading,first,sign]=nextLetter();
+    overlay.innerHTML='<div class="bloom-letter"><button class="bloom-close" type="button" aria-label="Sürprizi kapat">×</button><div class="bloom-letter-flower">'+flower+'</div><span class="bloom-eyebrow">SANA ÖZEL · HER AÇIŞTA YENİ BİR NOT</span><h2>'+heading+'</h2><p>'+first+'</p><p class="bloom-sign">'+sign+'</p><button type="button" class="bloom-next-note">Bir not daha oku ♡</button></div>';
+    overlay.querySelector('.bloom-next-note').addEventListener('click',()=>{
+      const [h,p,s]=nextLetter();
+      overlay.querySelector('h2').textContent=h;
+      overlay.querySelector('.bloom-letter p:not(.bloom-sign)').textContent=p;
+      overlay.querySelector('.bloom-sign').textContent=s;
+      overlay.querySelector('.bloom-letter').classList.remove('bloom-letter-refresh');
+      void overlay.querySelector('.bloom-letter').offsetWidth;
+      overlay.querySelector('.bloom-letter').classList.add('bloom-letter-refresh');
+    });
     document.body.append(overlay);
     const close=()=>{overlay.remove();btn.focus({preventScroll:true});document.removeEventListener('keydown',escClose);};
     const escClose=ev=>{if(ev.key==='Escape')close();};

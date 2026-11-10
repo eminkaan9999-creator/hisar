@@ -57,9 +57,13 @@ const server = http.createServer((req, res) => {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('.ux-overview').waitFor();
     await page.locator('.bloom-welcome').waitFor();
-    assert((await page.locator('.bloom-welcome h2').innerText()).includes('Kardelen'));
+    assert((await page.locator('.bloom-welcome h2').innerText()).trim().length>8);
     assert.equal(await page.locator('.bloom-dock button').count(), 4);
     pass('Bloom personalized welcome and renamed navigation render');
+    assert.equal(await page.locator('.bloom-drawer-flowers .bloom-drawer-flower').count(),7);
+    assert.equal(await page.locator('.bloom-drawer-flowers').getAttribute('aria-hidden'),'true');
+    pass('Seven decorative snowdrops are present in the red drawer');
+
     const flowerIcon = await page.locator('.bloom-dock [aria-current="page"]').evaluate(el => {
       const style = getComputedStyle(el,'::before');
       return { image: style.backgroundImage, animation: style.animationName };
@@ -128,7 +132,13 @@ const server = http.createServer((req, res) => {
     assert((await page.locator('.bloom-garden').innerText()).toLocaleLowerCase('tr').includes('öğrenme bahçesi'));
     await page.locator('[data-bloom="surprise"]').click();
     await page.locator('#bloom-surprise').waitFor();
-    assert((await page.locator('#bloom-surprise').innerText()).includes('Sevgili Kardelen'));
+    const firstLetter=await page.locator('#bloom-surprise h2').innerText();
+    assert(firstLetter.length>4);
+    await page.locator('.bloom-next-note').click();
+    const secondLetter=await page.locator('#bloom-surprise h2').innerText();
+    assert.notEqual(firstLetter,secondLetter,'Every tap should show a different personal note');
+    assert.equal(await page.locator('.bloom-next-note').count(),1);
+    pass('Surprise messages rotate without exposing private chat transcripts');
     await page.locator('.bloom-close').click();
     assert.equal(await page.locator('#bloom-surprise').count(), 0);
     pass('Learning garden and accessible surprise letter open and close');

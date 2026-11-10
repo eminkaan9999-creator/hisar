@@ -70,9 +70,11 @@ html = html.replace(/(<link[^>]+rel=["']manifest["'][^>]*href=["'])[^"']+/, '$1m
 if (!html.includes('apple-touch-icon.png?v=bloom9')) html = html.replace('</head>', '<link rel="apple-touch-icon" href="apple-touch-icon.png?v=bloom9">\n</head>');
 if (!html.includes('manifest.webmanifest?v=bloom9')) html = html.replace('</head>', '<link rel="manifest" href="manifest.webmanifest?v=bloom9">\n</head>');
 // Update the visible app branding without touching medicine data or local storage.
-html = html.replaceAll("Kardelen'in İlaç Defteri", "Kardelen’in Küçük Eczanesi");
-html = html.replaceAll("Kardelen’in İlaç Defteri", "Kardelen’in Küçük Eczanesi");
-html = html.replaceAll("İlaç Defteri", "Küçük Eczanesi");
+const sourceData = /(<script\\b[^>]*id="veri"[^>]*>)([\\s\\S]*?)(<\\/script>)/.exec(html);
+assert(sourceData, 'Medicine data script must be present');
+const safeBrand = s => s.replaceAll("Kardelen'in İlaç Defteri", "Kardelen’in Küçük Eczanesi").replaceAll("Kardelen’in İlaç Defteri", "Kardelen’in Küçük Eczanesi");
+const at = html.indexOf(sourceData[0]);
+html = safeBrand(html.slice(0, at)) + sourceData[0] + safeBrand(html.slice(at + sourceData[0].length));
 const guardSource = fs.readFileSync(path.join(__dirname, 'startup-recovery.js'), 'utf8');
 new vm.Script(guardSource);
 assert(!guardSource.includes('</script'), 'Guard cannot close its own script tag');

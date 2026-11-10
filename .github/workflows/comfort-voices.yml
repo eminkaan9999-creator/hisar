@@ -1,0 +1,37 @@
+name: HİSAR natural male voice bank
+on:
+  push:
+    branches: [feature/easy-clean-neural-20261110]
+    paths: ['scripts/comfort-voices.py', '.github/workflows/comfort-voices.yml']
+permissions:
+  contents: write
+concurrency:
+  group: comfort-voices
+  cancel-in-progress: false
+jobs:
+  voices:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install speech dependencies
+        run: |
+          python -m pip install edge-tts==7.3.1
+          command -v ffmpeg || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
+      - name: Generate ordinary Turkish game dialogue with Microsoft
+        run: python scripts/comfort-voices.py
+      - name: Commit only verified voice bank to development branch
+        run: |
+          git add assets/radio/neural
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'audio: verified Microsoft Brian neural Turkish clips at 1x'
+          git push origin HEAD:feature/easy-clean-neural-20261110
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: microsoft-natural-radio
+          path: assets/radio/neural/
+          retention-days: 7

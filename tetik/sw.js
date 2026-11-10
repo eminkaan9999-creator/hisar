@@ -1,7 +1,7 @@
 // HISAR TETIK servis calisani (kapsam: /tetik/)
 // Sayfalar, surum bilgisi, STL ve yazilim dosyalari agdan (yoksa onbellekten); ikonlar ve yazi tipleri onbellekten.
 // Her sayfa kendi adresiyle (sorgu kismi olmadan) onbelleklenir; baska bir sayfa index.html'in yerine yazilmaz.
-const C='tetik-v26';
+const C='tetik-v27';
 const STATIC=['./','./index.html','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon-32.png','./manifest.webmanifest'];
 // kurulumda HTTP onbellegi atlanir: yeni surum eski sayfayi onbellege almasin
 // önbelleğe alma bitmeden yeni sürüm devreye girmez (internetsiz açılış bozulmasın)

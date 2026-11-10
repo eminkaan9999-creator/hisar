@@ -206,7 +206,7 @@ inline int8_t tempFromRaw(int16_t raw) {
 }
 
 struct Command {
-  enum Type : uint8_t { NONE, TONE, SET, IDENTIFY, RESTART, POWEROFF, STATUS, START, RESULT } type = NONE;
+  enum Type : uint8_t { NONE, TONE, SET, IDENTIFY, RESTART, POWEROFF, STATUS, START, RESULT, LASER } type = NONE;
   uint16_t freq = 0, ms = 0;
   uint8_t  key = 0, val = 0;
   uint8_t  mode = 0, flags = 0;
@@ -219,6 +219,8 @@ struct Command {
 //  0x03 sensoru bul   0x04 yeniden baslat   0x05 kapat   0x06 durumu hemen gonder
 //  0x07 kip seq32 [bayrak] akis baslangici (kip 0 canli, kip 1 seq32'den devam; bayrak bit0 ses verisi)
 //  0x0A skor bayrak     atis sonucu ekranda (yazilim 5): skor 0-100, bayrak bit0 iyi atis (yesil), degilse kirmizi
+//  0x0B kip esik sure/10ms  lazer (yazilim 7, Grove G32): kip 0 kapali, 1 atista (1 kHz darbe esigi gecince sure kadar yanar),
+//                         2 surekli acik, 3 dene (sure kadar bir kez yanar, kip degismez); esik encodeJerk biriminde
 inline Command parseCommand(const uint8_t* d, size_t n) {
   Command c;
   if (n < 1) return c;
@@ -236,9 +238,41 @@ inline Command parseCommand(const uint8_t* d, size_t n) {
       c.flags = n >= 7 ? d[6] : 0;
       break;
     case 0x0A: if (n >= 3) { c.type = Command::RESULT; c.val = d[1] > 100 ? 100 : d[1]; c.flags = d[2] & 1; } break;
+    case 0x0B: if (n >= 4 && d[1] <= 3) { c.type = Command::LASER; c.mode = d[1]; c.val = d[2]; c.ms = (uint16_t)(d[3] * 10); } break;
   }
   return c;
 }
+
+// Lazer (yazilim 7): Grove girisine takili lazer (M5Stack Laser TX, sari kablo = G32). Atis kipinde imu gorevi her 1 ms'de
+// darbeyi verir; esik gecilince lazer 'sure' kadar yanar (gecikme ~1 ms). Kamera noktayi gorur, uygulama atisin hedefteki
+// yerini bulur. Kilit: ayni atisin tepmesi/yankisi darbeyi uzatmaz. Baglanti kopunca kapanir.
+struct Laser {
+  uint8_t  mode = 0;            // 0 kapali, 1 atista, 2 surekli
+  int32_t  thrRaw = 0;          // darbe esigi, ham birim (1/2048 g)
+  uint16_t pulse = 250;         // atista yanma suresi (ms)
+  uint32_t until = 0;           // darbe bitisi (millis)
+  uint32_t last = 0;            // son tetiklenme
+  bool     armed = false;       // until gecerli mi
+  static constexpr uint16_t LOCK = 350;
+  void configure(uint8_t m, uint8_t thrCode, uint16_t ms, uint32_t now) {
+    uint16_t d = ms < 30 ? 30 : ms > 2550 ? 2550 : ms;
+    if (m == 3) { until = now + d; armed = true; return; }   // dene: kip degismez
+    mode = m > 2 ? 0 : m;
+    pulse = d;
+    float g = decodeJerk(thrCode);
+    thrRaw = (int32_t)(g * 2048.0f + 0.5f);
+    if (thrRaw < 205) thrRaw = 205;                          // en az 0,1 g: gurultuyle yanmasin
+    if (mode == 0) armed = false;
+  }
+  // her 1 ms: j = ardisik iki ivme olcumu farkinin buyuklugu (ham)
+  void feed(int32_t j, uint32_t now) {
+    if (mode != 1 || j < thrRaw) return;
+    if (armed && (int32_t)(now - last) < (int32_t)LOCK) return;
+    last = now; until = now + pulse; armed = true;
+  }
+  bool on(uint32_t now) const { return mode == 2 || (armed && (int32_t)(until - now) > 0); }
+  void off() { mode = 0; armed = false; }
+};
 
 // Ayar sinirlari (gecersiz deger gelirse duzeltilir)
 struct Settings {

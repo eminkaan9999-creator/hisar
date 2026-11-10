@@ -181,6 +181,26 @@ static void testCommands() {
   { uint8_t d[] = {0x07, 0, 0, 0, 0, 0}; Command c = parseCommand(d, 6); CHECK(c.flags == 0, "eski uygulama: ses istegi yok"); }
   { uint8_t d[] = {0x99}; CHECK(parseCommand(d, 1).type == Command::NONE, "bilinmeyen komut"); }
   CHECK(parseCommand(nullptr, 0).type == Command::NONE, "bos komut");
+  // lazer (yazilim 7)
+  { uint8_t d[] = {0x0B, 1, 25, 25}; Command c = parseCommand(d, 4); CHECK(c.type == Command::LASER && c.mode == 1 && c.val == 25 && c.ms == 250, "lazer atis kipi"); }
+  { uint8_t d[] = {0x0B, 1, 25}; CHECK(parseCommand(d, 3).type == Command::NONE, "kisa lazer komutu reddedilmeli"); }
+  { uint8_t d[] = {0x0B, 7, 25, 25}; CHECK(parseCommand(d, 4).type == Command::NONE, "bilinmeyen lazer kipi reddedilmeli"); }
+  {
+    Laser L; uint32_t t = 1000;
+    CHECK(!L.on(t), "lazer acilista sonuk");
+    L.configure(1, encodeJerk(1.0f), 250, t);                       // atis kipi, esik 1 g
+    CHECK(!L.on(t) && L.thrRaw == 2048, "atis kipi kurulunca sonuk, esik 1 g = 2048 ham");
+    L.feed(1500, t + 5); CHECK(!L.on(t + 5), "esigin altindaki darbe yakmaz");
+    L.feed(2100, t + 10); CHECK(L.on(t + 11) && L.on(t + 259), "esigi gecen darbe 250 ms yakar");
+    CHECK(!L.on(t + 260), "250 ms sonra soner");
+    L.feed(3000, t + 200); CHECK(!L.on(t + 300), "kilit icindeki darbe (tepme yankisi) yeniden yakmaz");
+    L.feed(3000, t + 400); CHECK(L.on(t + 401) && !L.on(t + 650), "kilit bitince yeni atis yeniden yakar");
+    L.configure(3, 0, 1000, t + 700); CHECK(L.on(t + 1600) && !L.on(t + 1700) && L.mode == 1, "dene: 1 sn yanar, kip degismez");
+    L.configure(2, 0, 250, t + 2000); CHECK(L.on(t + 2000) && L.on(t + 99999), "surekli kip hep acik");
+    L.off(); CHECK(!L.on(t + 100000) && L.mode == 0, "baglanti kopunca kapanir");
+    L.configure(1, 0, 250, t); CHECK(L.thrRaw >= 205, "esik 0 gelirse en az 0,1 g (gurultuyle yanmaz)");
+    L.configure(0, 25, 250, t); L.feed(9999, t + 1); CHECK(!L.on(t + 2), "kapali kipte darbe yakmaz");
+  }
   Settings s;
   CHECK(!applySetting(s, 1, 2) && s.bri == 5, "parlaklik alt sinir");
   CHECK(!applySetting(s, 1, 250) && s.bri == 100, "parlaklik ust sinir");

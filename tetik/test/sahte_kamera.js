@@ -2,6 +2,7 @@
 // (10 halka, 7–10 siyah), istenen zamanlarda yeşil lazer noktası (doygun beyazımsı öz, yeşil hale).
 // Testler window.__cam üzerinden hedefi kaydırır (telefon kıpırdadı), nokta ekler, kamera iznini reddeder,
 // hedefin çevresine kamera gürültüsü (gurultu = kanal başına standart sapma) ekler; zayif nokta: güneşte soluk görünen lazer.
+// renk 'kirmizi': kırmızı lazer; sensor: true ise nokta yalnız sahte sensörün Grove lazeri yanarken görünür (yazılım 7).
 // Nokta konumları hedef merkezine göre pikseldir: hedef kayınca nokta da onunla kayar (silah gerçek hedefe bakıyor).
 (() => {
   const W = 1920, H = 1080;
@@ -17,9 +18,10 @@
       k.push(d); }
     gur = { key: C.gurultu + ',' + ox + ',' + oy, k, x0, y0, n: 0 };
   }
-  function nokta(x, y) {
+  function nokta(x, y, kirmizi) {
     const r = g.createRadialGradient(x, y, 0, x, y, 8);
-    r.addColorStop(0, 'rgba(235,255,235,1)'); r.addColorStop(0.3, 'rgba(70,255,100,1)'); r.addColorStop(0.7, 'rgba(40,230,70,0.6)'); r.addColorStop(1, 'rgba(40,230,70,0)');
+    if (kirmizi) { r.addColorStop(0, 'rgba(255,235,230,1)'); r.addColorStop(0.3, 'rgba(255,60,40,1)'); r.addColorStop(0.7, 'rgba(230,30,20,0.6)'); r.addColorStop(1, 'rgba(230,30,20,0)'); }
+    else { r.addColorStop(0, 'rgba(235,255,235,1)'); r.addColorStop(0.3, 'rgba(70,255,100,1)'); r.addColorStop(0.7, 'rgba(40,230,70,0.6)'); r.addColorStop(1, 'rgba(40,230,70,0)'); }
     g.fillStyle = r; g.beginPath(); g.arc(x, y, 8, 0, 7); g.fill();
   }
   function draw() {
@@ -32,8 +34,8 @@
     for (let k = 10; k >= 1; k--) { const r = R * k / 10; g.beginPath(); g.arc(ox, oy, r, 0, 7);
       g.fillStyle = k <= 4 ? 'rgb(22,22,22)' : 'rgb(240,238,230)'; g.fill(); g.lineWidth = 1.2; g.strokeStyle = k <= 4 ? 'rgb(225,225,225)' : 'rgb(30,30,30)'; g.stroke(); }
     if (C.gurultu) { if (!gur || gur.key !== C.gurultu + ',' + ox + ',' + oy) gurultuHazirla(ox, oy); g.putImageData(gur.k[gur.n++ % 6], gur.x0, gur.y0); }
-    for (const d of C.dots) if (t >= d.t0 && t <= d.t1) { const p = d.at ? d.at(t) : [d.x, d.y];
-      if (d.zayif) { g.fillStyle = 'rgba(40,255,70,0.2)'; g.beginPath(); g.arc(ox + p[0], oy + p[1], 6, 0, 7); g.fill(); } else nokta(ox + p[0], oy + p[1]); }
+    for (const d of C.dots) if (t >= d.t0 && t <= d.t1 && (!d.sensor || (window.__fake && window.__fake.lazerAcik(t)))) { const p = d.at ? d.at(t) : [d.x, d.y];   // sensor: yalnız sahte sensörün lazeri yanarken
+      if (d.zayif) { g.fillStyle = 'rgba(40,255,70,0.2)'; g.beginPath(); g.arc(ox + p[0], oy + p[1], 6, 0, 7); g.fill(); } else nokta(ox + p[0], oy + p[1], d.renk === 'kirmizi'); }
     C.frames++;
   }
   const md = navigator.mediaDevices;

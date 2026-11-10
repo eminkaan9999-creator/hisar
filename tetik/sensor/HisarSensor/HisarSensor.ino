@@ -74,7 +74,7 @@ extern "C" bool verifyRollbackLater() { return true; }
 static bool appValid = false;
 static void markValid() { if (!appValid) { esp_ota_mark_app_valid_cancel_rollback(); appValid = true; } }
 
-#define FW_VERSION 6
+#define FW_VERSION 7
 #define SVC_UUID    "0000ffe5-0000-1000-8000-00805f9a34fb"
 #define NOTIFY_UUID "0000ffe4-0000-1000-8000-00805f9a34fb"
 #define WRITE_UUID  "0000ffe9-0000-1000-8000-00805f9a34fb"
@@ -99,6 +99,23 @@ static constexpr int      MIC_BLOCK = 64;        // 2 ms
 static volatile bool      micOk = false;
 static bool               micReady = false;
 static portMUX_TYPE       micMux = portMUX_INITIALIZER_UNLOCKED;
+// Lazer (yazilim 7): Grove girisi sari kablo G32 (M5Stack Laser TX'in DIN ucu). Ayari ana dongu, darbeyi imu gorevi verir.
+static constexpr int      LASER_PIN = 32;
+static hisar::Laser       laser;
+static portMUX_TYPE       laserMux = portMUX_INITIALIZER_UNLOCKED;
+static bool               laserPin = false;
+static void laserOut(uint32_t now) {               // imu gorevi ve ana dongu cagirir: kilit icinde yazilir
+  portENTER_CRITICAL(&laserMux);
+  bool on = laser.on(now);
+  if (on != laserPin) { laserPin = on; digitalWrite(LASER_PIN, on ? HIGH : LOW); }
+  portEXIT_CRITICAL(&laserMux);
+}
+static void laserOff() {
+  portENTER_CRITICAL(&laserMux);
+  laser.off();
+  laserPin = false; digitalWrite(LASER_PIN, LOW);
+  portEXIT_CRITICAL(&laserMux);
+}
 static uint32_t           micPeak = 0;
 // Sensorun kendi bibi mikrofonu bastirir: calarken (+60 ms) ses bayti 0 gider, uygulama o an
 // atisi yalniz darbeyle algilar.
@@ -301,6 +318,7 @@ static void imuTask(void*) {
   TickType_t last = xTaskGetTickCount();
   for (;;) {
     vTaskDelayUntil(&last, 1);  // 1 ms (FreeRTOS 1000 Hz)
+    laserOut(millis());
     if (!M5.In_I2C.readRegister(IMU_ADDR, 0x3B, b, 14, I2C_FREQ)) {
       imuErrors++;
       if (++failRun >= 50) {           // 50 ms boyunca okunamadi: yeniden kur
@@ -321,6 +339,13 @@ static void imuTask(void*) {
       float dx = a[0] - prev[0], dy = a[1] - prev[1], dz = a[2] - prev[2];
       int32_t j = (int32_t)sqrtf((float)(dx * dx + dy * dy + dz * dz));
       if (j > maxJerkRaw) maxJerkRaw = j;
+      if (laser.mode == 1) {                       // atis kipi: esik gecilince lazer hemen yanar (~1 ms)
+        uint32_t ms = millis();
+        portENTER_CRITICAL(&laserMux);
+        laser.feed(j, ms);
+        portEXIT_CRITICAL(&laserMux);
+        laserOut(ms);
+      }
     }
     prev[0] = a[0]; prev[1] = a[1]; prev[2] = a[2];
     havePrev = true;
@@ -649,7 +674,7 @@ static void drawScreen(uint32_t now) {
   canvas.setFont(&fonts::Font0);
   canvas.setTextColor(0x8C71);
   canvas.setTextDatum(top_right);
-  canvas.drawString(String("No ") + String((int)cfg.no) + "  v" + String(FW_VERSION) + (micOk ? "  MIK" : ""), canvas.width() - 8, 11);
+  canvas.drawString(String("No ") + String((int)cfg.no) + "  v" + String(FW_VERSION) + (micOk ? "  MIK" : "") + (laser.mode ? "  LZR" : ""), canvas.width() - 8, 11);
   canvas.setTextDatum(top_left);
 
   canvas.setFont(&fonts::FreeSansBold12pt7b);
@@ -703,6 +728,7 @@ static void showMessage(const char* msg) {
 }
 
 static void powerOffNow() {
+  laserOff();
   markValid();
   showMessage("KAPANIYOR");
   PLAY(TUNE_OFF);
@@ -744,6 +770,7 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
       wakeScreen(now);
       break;
     case hisar::Command::RESTART:
+      laserOff();
       markValid();
       showMessage("YENIDEN BASLIYOR");
       delay(300);
@@ -757,6 +784,12 @@ static void handleCommand(const CmdMsg& m, uint32_t now) {
       break;
     case hisar::Command::START:
       stream.request(c.mode, c.seq, now, c.flags);
+      break;
+    case hisar::Command::LASER:
+      portENTER_CRITICAL(&laserMux);
+      laser.configure(c.mode, c.val, c.ms, now);
+      portEXIT_CRITICAL(&laserMux);
+      laserOut(now);
       break;
     case hisar::Command::RESULT:
       resultScore = c.val;
@@ -779,6 +812,8 @@ void setup() {
   mc.internal_spk = false;          // zil dogrudan LEDC ile surulur (bkz. "zil"); I2S0 mikrofonun
   mc.internal_mic = false;          // mikrofon dogrudan I2S0 ile okunur
   M5.begin(mc);
+  pinMode(LASER_PIN, OUTPUT);       // Grove lazeri (yazilim 7): acilista sonuk
+  digitalWrite(LASER_PIN, LOW);
   loadSettings();
   buzQ = xQueueCreate(1, sizeof(Tune));
   xTaskCreatePinnedToCore(buzTask, "buz", 3072, nullptr, 4, nullptr, 1);
@@ -869,7 +904,7 @@ void loop() {
     lastActivity = now;
     wakeScreen(now);
     if (bleConnected) PLAY(TUNE_CONN); else PLAY(TUNE_DISC);
-    if (!bleConnected) stream.onDisconnect();
+    if (!bleConnected) { stream.onDisconnect(); laserOff(); }
     if (!bleConnected && otaActive && ota.state == hisar::OtaRx::READY) { OtaMsg a; a.n = 1; a.d[0] = 0x13; xQueueSend(otaQ, &a, 0); }
   }
   if (bleConnected) lastActivity = now;

@@ -14,6 +14,7 @@
   };
   const encJerk = g => g <= 0 ? 0 : g <= 8 ? Math.min(200, Math.round(g / 0.04)) : Math.min(255, 200 + Math.round((g - 8) / 0.9));
   const encSnd = db => Math.max(0, Math.min(255, Math.round(db * 2.8)));
+  const decJerk = v => v <= 200 ? v * 0.04 : 8 + (v - 200) * 0.9;
   const micOk = () => F.fw >= 3 && F.micHw;
   function sample(seq) { const m = F.motion ? F.motion(seq) : null; return { acc: (m && m.acc) || [0, 0, 1], om: (m && m.om) || [0.4, -0.3, 0.2], j: (m && m.jerk) || 0.02, snd: m && m.snd != null ? m.snd : F.noiseDb }; }
   const dev = new EventTarget(); dev.id = 'sahte-1'; F.dev = dev;
@@ -28,7 +29,7 @@
       if (!F.inRange) throw new DOMException('Bluetooth Device is no longer in range.', 'NetworkError');
       F.connected = true; F.subscribed = false; F.streaming = false; F.silent = false; return server; },
     disconnect: () => { F.disconnectCalls++; drop('uygulama'); } };
-  function drop(why) { if (!F.connected) return; if (F.ota && (F.ota.st === 'ready' || F.ota.st === 'erase')) F.ota.st = 'idle'; F.connected = false; F.subscribed = false; F.streaming = false; F.startReq = null; F.events.push(['drop', now(), why]);
+  function drop(why) { if (!F.connected) return; F.lazer.kip = 0; F.lazerDene = 0; /* yazılım 7: bağlantı kopunca lazer söner */ if (F.ota && (F.ota.st === 'ready' || F.ota.st === 'erase')) F.ota.st = 'idle'; F.connected = false; F.subscribed = false; F.streaming = false; F.startReq = null; F.events.push(['drop', now(), why]);
     setTimeout(() => dev.dispatchEvent(new Event('gattserverdisconnected')), 0); }
   ntf.startNotifications = async () => { if (!F.connected) throw new DOMException('GATT Server is disconnected.', 'NetworkError'); F.subscribed = true; F.events.push(['abone', now()]); sendStatus(); return ntf; };
   ntf.stopNotifications = async () => { F.subscribed = false; return ntf; };
@@ -52,6 +53,7 @@
       case 5: F.poweredOff = true; F.inRange = false; setTimeout(() => drop('kapandi'), 60); break;
       case 6: F.wantStatus = true; break;
       case 7: F.startReq = { mode: b[1] || 0, seq: ((b[2] | (b[3] << 8) | (b[4] << 16) | (b[5] << 24)) >>> 0), at: now(), flags: b.length >= 7 ? b[6] : 0 }; break;
+      case 0x0B: if (F.fw >= 7 && b.length >= 4 && b[1] <= 3) { if (b[1] === 3) F.lazerDene = now() + b[3] * 10; else F.lazer = { kip: b[1], esik: decJerk(b[2]), sure: b[3] * 10 }; } break;   // yazılım 7: lazer
     }
   }
   F.reboot = why => { F.events.push(['yenidenbaslama', now(), why]); drop('yenidenbaslama'); F.t0 = now(); F.head = 0; F.sendSeq = 0; F.bootId = (F.bootId + 0x111) & 0xFFFF;
@@ -131,6 +133,12 @@
   // Atış hareketi: seq'de tetik; öncesindeki 150 ms'de namlu (dx sağ, dy yukarı derece) kayar.
   // click: tetiğin "tık" sesi (dB, null = ses yok), clickAt: darbeye göre ölçüm kayması (5 ms birim)
   F.shots = [];
+  // Grove lazeri (yazılım 7): atış kipinde darbe eşiği geçilince 'sure' ms yanar; sürekli kipte hep; dene: bir kez
+  F.lazer = { kip: 0, esik: 1, sure: 250 }; F.lazerDene = 0;
+  F.lazerAcik = t => { if (!(F.fw >= 7) || !F.connected) return false; if (t < F.lazerDene) return true; const L = F.lazer;
+    if (L.kip === 2) return true; if (L.kip !== 1) return false;
+    for (const s of F.shots) { const ts = F.t0 + s.seq * 5; if (t >= ts && t < ts + L.sure && (s.live ? 60 : s.spike) >= L.esik) return true; }
+    return false; };
   F.addShot = (seq, o) => { F.shots.push(Object.assign({ seq, dx: 0, dy: 0, spike: 3, live: false, tilt: 0, click: 72, clickAt: 0 }, o)); };
   F.sounds = [];                                   // shotsuz sesler: { seq, db }
   F.moves = [];                                    // jiroskop hareketi: { seq, n, om } (çekiş, yön testi)

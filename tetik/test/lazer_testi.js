@@ -126,6 +126,52 @@ const cm = d => Math.tan(d * Math.PI / 180) * 2500;          // derece → cm (2
   await H(() => window.__hisar.stopRun(false)); await sleep(1300);
   check(await H(() => !!window.__hisar.LZ.stream), 'Oturum bitince kamera hemen kapanmıyor (sıradaki oturum için 2 dk açık)');
 
+  section('Sensöre takılı kırmızı lazer (sensör yazılımı 7)');
+  // lazer artık sensörün Grove girişinde: sensör onu tetik düşünce yakar; nokta yalnız o anda görünür
+  const yazilar = () => H(() => window.__fake.writes.filter(b => b[0] === 0x0B).map(b => b.join(',')));
+  await H(() => window.__hisar.openSetPage('lazer')); await sleep(500);
+  await page.selectOption('#lzKyn', 'sensor'); await sleep(400);
+  const sn0 = await H(() => ({ renk: window.__hisar.S.lazer.renk, kip: !!document.getElementById('lzKip'), not: document.getElementById('lzSnN').textContent }));
+  check(sn0.renk === 'kirmizi' && sn0.kip && /yazılımı 7 gerekir/.test(sn0.not), 'Sensöre takılı seçilince renk kırmızı, eski sensör yazılımında güncelleme uyarısı', sn0);
+  await page.click('#lzDene'); await sleep(300);
+  check((await yazilar()).length === 0, 'Yazılım 7 yokken sensöre lazer komutu gönderilmedi');
+  await H(() => { window.__fake.fw = 7; window.__fake.wantStatus = true; }); await sleep(1500);
+  await H(() => { const h = window.__hisar; h.popPage(); h.openSetPage('lazer'); }); await sleep(500);
+  check(/Grove girişinde/.test(await H(() => document.getElementById('lzSnN').textContent)), 'Yazılım 7: lazer hazır');
+  await page.click('#lzDene'); await sleep(200);
+  const dene = await H(() => ({ y: window.__fake.writes.filter(b => b[0] === 0x0B).map(b => b.join(',')), acik: window.__fake.lazerAcik(performance.now()) }));
+  check(dene.y.some(x => /^11,3,\d+,100$/.test(x)) && dene.acik, '"Lazeri dene": sensöre 1 saniyelik deneme komutu, lazer yandı', dene);
+  // sıfırlama: bu lazer nişangahın 2 cm soluna, 4 cm üstüne bakıyor
+  const Z2 = [-2 * PX, -4 * PX];
+  const satis = o => H(o => { const F = window.__fake, C = window.__cam, seq = F.head + 80, tb = F.t0 + seq * 5;
+    C.dots.push({ t0: tb - 500, t1: tb + 600, x: o.nokta[0], y: o.nokta[1], renk: 'kirmizi', sensor: true });
+    F.addShot(seq, { dx: 0, dy: 0, click: null }); return tb; }, o);
+  await page.click('#lzSif'); await sleep(300);
+  check((await yazilar()).some(x => /^11,1,\d+,25$/.test(x)), 'Sıfırlamada sensöre "tetik düşünce yan" kipi gitti');
+  for (const [nx, ny] of [[0.5, 0.4], [-0.4, -0.6], [0.2, 0.3]]) { await satis({ nokta: [Z2[0] + nx, Z2[1] + ny] }); await sleep(1500); }
+  const z2 = await H(() => ({ z: window.__hisar.S.lazer.z, sur: !!window.__hisar.LZ.sifir }));
+  check(z2.z && Math.abs(z2.z[0] + 2) < 0.3 && Math.abs(z2.z[1] - 4) < 0.3 && !z2.sur, `Kırmızı lazerle sıfırlandı: ${z2.z} cm (gerçek −2, 4)`, z2);
+  check((await yazilar()).slice(-1)[0].startsWith('11,0,'), 'Sıfırlama bitince sensöre "kapat" gitti', (await yazilar()).slice(-2));
+  await H(() => { const h = window.__hisar; while (h.pages.length) h.popPage(); h.openDrill('serbest'); h.startRun(); }); await sleep(1500);
+  const ok1 = await H(() => ({ kyn: window.__hisar.cur.sess.lzKyn, kip: window.__hisar.cur.sess.lzKip }));
+  check(ok1.kyn === 'sensor' && ok1.kip === 'atis' && (await yazilar()).slice(-1)[0].match(/^11,1,\d+,25$/), 'Oturum başında sensöre "tetik düşünce yan" kipi gitti', ok1);
+  const svurus = async (nokta) => { await satis({ nokta: [Z2[0] + nokta[0] * PX, Z2[1] - nokta[1] * PX] }); await sleep(1600);
+    return H(() => { const h = window.__hisar, s = h.cur.sess, q = s.shots[s.shots.length - 1];
+      return { n: s.shots.length, lz: q && q.lz, metin: q ? h.hedefMetin(s, s.shots, q, h.cur.run, false, false).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ') : '' }; }); };
+  r = await svurus([0, 0]);
+  check(r.lz && r.lz.gor && r.lz.halka === 10 && Math.hypot(...yer(r)) < 0.5 && r.lz.dt >= -30, `Nokta yalnız tetik düşünce yandı, merkeze: 10 (yer ${yer(r)} cm, en yakın kare atışa ${r.lz && r.lz.dt} ms)`, r.lz);
+  r = await svurus([3.5, -2.5]);
+  check(r.lz && r.lz.gor && r.lz.halka === 9 && Math.abs(yer(r)[0] - 3.5) < 0.5 && Math.abs(yer(r)[1] + 2.5) < 0.5 && /İSABET: 9/.test(r.metin), `4,3 cm sağ alta: 9 (yer ${yer(r)} cm)`, r.lz);
+  await H(() => window.__hisar.stopRun(false)); await sleep(1300);
+  check((await yazilar()).slice(-1)[0].startsWith('11,0,'), 'Oturum bitince sensöre "kapat" gitti');
+  await H(() => { const h = window.__hisar; h.S.lazer.kip = 'surekli'; h.openDrill('serbest'); h.startRun(); }); await sleep(800);
+  const sur = await H(() => ({ y: window.__fake.writes.filter(b => b[0] === 0x0B).slice(-1)[0].join(','), acik: window.__fake.lazerAcik(performance.now()) }));
+  check(/^11,2,\d+,25$/.test(sur.y) && sur.acik, '"Oturum boyunca" kipinde lazer oturum başlayınca yandı', sur);
+  await H(() => window.__fake.drop()); await sleep(200);
+  check(await H(() => !window.__fake.lazerAcik(performance.now())), 'Bağlantı kopunca sensör lazeri söndürdü');
+  await H(() => window.__hisar.stopRun(false)); await sleep(1300);
+  await H(() => { const h = window.__hisar; h.S.lazer.kip = 'atis'; h.S.lazer.kaynak = 'silah'; h.S.lazer.renk = 'yesil'; });
+
   section('Kamera izni');
   const izin = await H(async () => { const h = window.__hisar; h.lzKapat(); window.__cam.denied = true; const ok = await h.lzAc(); const o = { ok, hata: h.LZ.hata }; window.__cam.denied = false; return o; });
   check(izin.ok === false && /izin verilmedi/.test(izin.hata), 'İzin verilmezse açık bir uyarı', izin);

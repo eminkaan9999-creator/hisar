@@ -69,6 +69,15 @@ html = html.replace(/(<link[^>]+rel=["']apple-touch-icon["'][^>]*href=["'])[^"']
 html = html.replace(/(<link[^>]+rel=["']manifest["'][^>]*href=["'])[^"']+/, '$1manifest.webmanifest?v=bloom9');
 if (!html.includes('apple-touch-icon.png?v=bloom9')) html = html.replace('</head>', '<link rel="apple-touch-icon" href="apple-touch-icon.png?v=bloom9">\n</head>');
 if (!html.includes('manifest.webmanifest?v=bloom9')) html = html.replace('</head>', '<link rel="manifest" href="manifest.webmanifest?v=bloom9">\n</head>');
+// Update the visible app branding without touching medicine data or local storage.
+const dataId = html.indexOf('id="veri"');
+const dataStart = dataId >= 0 ? html.lastIndexOf('<script', dataId) : -1;
+assert(dataStart >= 0, 'Medicine data script must be present');
+const dataEnd = html.indexOf('</script>', dataStart);
+assert(dataEnd > dataStart, 'Medicine data closing tag missing');
+const preservedData = html.slice(dataStart, dataEnd + 9);
+const safeBrand = s => s.replaceAll("Kardelen'in İlaç Defteri", "Kardelen’in Küçük Eczanesi").replaceAll("Kardelen’in İlaç Defteri", "Kardelen’in Küçük Eczanesi");
+html = safeBrand(html.slice(0, dataStart)) + preservedData + safeBrand(html.slice(dataEnd + 9));
 const guardSource = fs.readFileSync(path.join(__dirname, 'startup-recovery.js'), 'utf8');
 new vm.Script(guardSource);
 assert(!guardSource.includes('</script'), 'Guard cannot close its own script tag');

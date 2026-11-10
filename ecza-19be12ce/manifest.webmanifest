@@ -1,7 +1,7 @@
 {
-  "name": "Kardelen'in İlaç Defteri",
-  "short_name": "Kardelen Bloom",
-  "description": "Eczane raflarındaki ilaçlar: ne işe yarar, nasıl kullanılır, rafta nerede. Oyunla öğren.",
+  "name": "Kardelen’in Küçük Eczanesi",
+  "short_name": "Küçük Eczanem",
+  "description": "Kardelen’in Küçük Eczanesi: ilaçları keşfet, rafları öğren, oyunlarla bilgini geliştir.",
   "lang": "tr",
   "id": "./",
   "start_url": "./",

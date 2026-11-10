@@ -1,6 +1,52 @@
-const C="kk-v12";const F=["./", "index.html", "manifest.json", "ikon-192.png?v=2", "ikon-512.png?v=2", "apple-touch-icon.png?v=2","../three.min.js"];
-self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)));self.skipWaiting();});
-self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x.startsWith("kk-")).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
-self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;const u=new URL(e.request.url);if(u.origin!==location.origin){return;}
- if(e.request.mode==="navigate"||u.pathname.endsWith("/")||u.pathname.endsWith("index.html")){e.respondWith(fetch(e.request,{cache:"no-store"}).then(r=>{const k=r.clone();caches.open(C).then(c=>c.put("index.html",k));return r;}).catch(()=>caches.match("index.html")));return;}
- e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{ if(res.ok&&/\/(model|lib|ses)\//.test(u.pathname)){ const k=res.clone(); caches.open(C).then(c=>c.put(e.request,k)); } return res; })));});
+const CACHE = "kk-v13";
+const CORE = ["./", "./index.html", "./manifest.json"];
+const OPTIONAL = ["./ikon-192.png?v=2", "./ikon-512.png?v=2", "./apple-touch-icon.png?v=2", "../three.min.js"];
+self.addEventListener("install", event => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await Promise.allSettled([...CORE, ...OPTIONAL].map(async path => {
+      const response = await fetch(path, { cache: "reload" });
+      if (response.ok) await cache.put(path, response);
+    }));
+    await self.skipWaiting();
+  })());
+});
+self.addEventListener("activate", event => {
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter(name => name.startsWith("kk-") && name !== CACHE).map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
+});
+self.addEventListener("fetch", event => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  const isPage = request.mode === "navigate";
+  if (isPage) {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request, { cache: "no-store" });
+        if (response.ok) {
+          const cache = await caches.open(CACHE);
+          await cache.put("./index.html", response.clone());
+        }
+        return response;
+      } catch {
+        return (await caches.match("./index.html")) || Response.error();
+      }
+    })());
+    return;
+  }
+  event.respondWith((async () => {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    const response = await fetch(request);
+    if (response.ok && /\/(model|lib|ses)\//.test(url.pathname)) {
+      const cache = await caches.open(CACHE);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  })());
+});

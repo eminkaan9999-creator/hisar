@@ -48,6 +48,19 @@ const marker = '/* ---------- başlangıç ---------- */';
 assert.equal(html.split(marker).length, 2, 'Expected exactly one boot marker');
 html = html.replace(marker, block + '\n\n' + marker);
 assert.equal(html.split('const originalHome = vAra;').length, 2, 'Exactly one enhancement instance required');
+
+const bloomJS = fs.readFileSync(path.join(__dirname, 'bloom.js'), 'utf8');
+const bloomCSS = fs.readFileSync(path.join(__dirname, 'bloom.css'), 'utf8');
+new vm.Script(bloomJS);
+assert(!bloomJS.includes('</script'), 'Bloom script must not close the script tag');
+html = html.replace(/\/\* ECZA_BLOOM_START \*\/[\s\S]*?\/\* ECZA_BLOOM_END \*\/\s*/, '');
+const bloomBlock = '/* ECZA_BLOOM_START */\n' + bloomJS + '\n/* ECZA_BLOOM_END */';
+assert.equal(html.split('/* ---------- başlangıç ---------- */').length, 2, 'Boot marker missing');
+html = html.replace('/* ---------- başlangıç ---------- */', bloomBlock + '\n/* ---------- başlangıç ---------- */');
+const bloomStyle = '<style id="ecza-bloom-style">\n' + bloomCSS + '\n</style>';
+if (html.includes('id="ecza-bloom-style"')) html = html.replace(/<style id="ecza-bloom-style">[\s\S]*?<\/style>/, bloomStyle);
+else html = html.replace('</head>', bloomStyle + '\n</head>');
+
 const style = '<style id="ecza-enhance-style">\n' + css + '\n</style>';
 if (html.includes('id="ecza-enhance-style"')) html = html.replace(/<style id="ecza-enhance-style">[\s\S]*?<\/style>/, style);
 else html = html.replace('</head>', style + '\n</head>');

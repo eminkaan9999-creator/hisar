@@ -74,3 +74,28 @@ html,body{max-width:100%;overflow-x:clip}
 @keyframes bloom-icon-leaf{0%{transform:scale(.7) rotate(-14deg)}70%{transform:scale(1.13) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
 @media(max-width:390px){.bloom-dock button{font-size:10px;gap:2px}.bloom-dock button svg{width:20px;height:20px}.bloom-welcome,.bloom-garden{padding:14px}.bloom-welcome h2{font-size:19px}}
 @media(prefers-reduced-motion:reduce){.bloom-dock button::before,.bloom-dock button svg,#view button svg,#view .chip svg,#view .cta svg,#view .row .ico,#view .kt .ico{animation:none!important;transition:none!important;transform:none!important}.bloom-dock button[aria-current=page]::before{opacity:.35}}
+
+/* Snowdrop garden in the red drawer. Decorative SVGs do not intercept touches. */
+.bloom-floral-drawer{isolation:isolate;overflow:hidden}
+.bloom-drawer-flowers{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;opacity:.82}
+.bloom-floral-drawer > :not(.bloom-drawer-flowers){position:relative;z-index:1}
+.bloom-drawer-flower{position:absolute;display:block;width:70px;height:80px;opacity:.26;transform-origin:50% 100%;animation:bloom-drawer-breathe 4.5s ease-in-out infinite alternate}
+.bloom-drawer-flower svg{width:100%;height:100%;filter:drop-shadow(0 3px 6px #41172c55)}
+.bloom-drawer-flower-0{top:6%;right:4%;animation-delay:0s}
+.bloom-drawer-flower-1{top:19%;right:22%;width:48px;animation-delay:-1.2s}
+.bloom-drawer-flower-2{top:34%;right:5%;width:56px;animation-delay:-2.3s}
+.bloom-drawer-flower-3{top:51%;right:16%;width:43px;animation-delay:-.8s}
+.bloom-drawer-flower-4{top:68%;right:3%;width:78px;animation-delay:-3s}
+.bloom-drawer-flower-5{top:82%;right:27%;width:48px;animation-delay:-1.8s}
+.bloom-drawer-flower-6{top:91%;right:2%;width:54px;animation-delay:-3.8s}
+.bloom-floral-drawer.bloom-reopen .bloom-drawer-flower{animation:bloom-drawer-open .7s cubic-bezier(.22,1,.36,1) both,bloom-drawer-breathe 4.5s ease-in-out .7s infinite alternate}
+.bloom-floral-drawer button,.bloom-floral-drawer [data-a]{transition:transform .2s ease,background-color .2s ease}
+.bloom-floral-drawer button:active,.bloom-floral-drawer [data-a]:active{transform:scale(.975)}
+.bloom-dock button svg{filter:drop-shadow(0 1px 2px #ac64872a)}
+.bloom-dock button[aria-current=page] svg{filter:drop-shadow(0 2px 5px #a25c8d66)}
+.bloom-letter .bloom-next-note{display:inline-flex;align-items:center;justify-content:center;min-height:46px;margin-top:12px;padding:11px 18px;border:1px solid #d6a6bd;border-radius:16px;background:#f8e6ee;color:#7d3858;font:700 15px system-ui;cursor:pointer}
+.bloom-letter-refresh h2,.bloom-letter-refresh p{animation:bloom-note-enter .35s ease-out both}
+@keyframes bloom-note-enter{from{opacity:.2;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bloom-drawer-breathe{from{opacity:.19;transform:rotate(-9deg) scale(.88)}to{opacity:.48;transform:rotate(7deg) scale(1.07)}}
+@keyframes bloom-drawer-open{from{opacity:0;transform:translateY(26px) scale(.45) rotate(-35deg)}to{opacity:.36;transform:translateY(0) scale(1) rotate(0)}}
+@media(prefers-reduced-motion:reduce){.bloom-drawer-flower,.bloom-floral-drawer.bloom-reopen .bloom-drawer-flower,.bloom-letter-refresh h2,.bloom-letter-refresh p{animation:none!important;transform:none!important}.bloom-floral-drawer button,.bloom-floral-drawer [data-a]{transition:none!important}}

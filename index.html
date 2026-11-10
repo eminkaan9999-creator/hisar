@@ -49,7 +49,7 @@ body.dm #nz{display:block}
 #rec{left:12px;top:96px;font:700 13px monospace;color:#ff5a4a;text-shadow:0 0 3px #000;display:none}
 body.dm #osd,body.dm #osdl,body.dm #rec{display:block}
 #sigw{left:50%;top:30%;transform:translateX(-50%);font:700 26px monospace;color:#ff5a4a;text-shadow:0 0 5px #000;display:none;pointer-events:none}
-body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95)}
+body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-rotate(70deg) saturate(3)}
 #radio{left:12px;bottom:calc(74px + env(safe-area-inset-bottom,0px));max-width:min(420px,60vw);font:600 13px/1.35 system-ui;color:#dfffd0;background:rgba(10,20,10,.6);border-left:3px solid #8fbf4d;padding:5px 9px;border-radius:4px;opacity:0;transition:opacity .4s;pointer-events:none;text-shadow:0 1px 2px #000}
 #dz{left:12px;top:68px;display:flex;gap:4px;font:700 11px system-ui;color:#fff}
 #dz span{padding:2px 6px;border-radius:4px;background:#2d6a2d}
@@ -1429,7 +1429,9 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
 '#uAm{right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:6px}body.tc #uAm{right:calc(var(--fire) + 14px + 66px + env(safe-area-inset-right,0px))}'+
 '.am{pointer-events:auto;position:relative;width:var(--tile);height:var(--tile);border-radius:12px;display:grid;place-items:center;transition:transform .1s}.am svg{width:46%;height:60%;margin-top:-6px}.am small{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-size:8px;font-weight:800;letter-spacing:.3px;opacity:.85}.am b{position:absolute;right:4px;top:2px;font-size:11.5px;font-weight:800}.am u{position:absolute;left:5px;top:2px;font-size:9px;opacity:.55;text-decoration:none;font-weight:700}.am.on{border-color:#f2b134;box-shadow:0 0 0 1px #f2b134 inset,0 0 16px rgba(242,177,52,.5);transform:translateY(-3px)}.am.z{opacity:.42}.am:active{transform:scale(.93)}'+
 '#uPad{display:none;pointer-events:auto;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:var(--pad);height:var(--pad);touch-action:none;border-radius:50%;background:radial-gradient(circle,rgba(10,14,8,.5) 0,rgba(10,14,8,.42) 62%,rgba(10,14,8,.3) 100%);border:1.5px solid rgba(255,255,255,.3);box-shadow:0 4px 18px rgba(0,0,0,.4)}body.tc #uPad{display:block}'+
-'#uPad svg{position:absolute;inset:0;stroke-width:2.6;color:rgba(255,255,255,.5)}#uPad g{transition:color .1s,opacity .1s;opacity:.85}#uPad g.a{color:#f2b134;opacity:1}#uKnob{position:absolute;left:50%;top:50%;width:34%;height:34%;margin:-17% 0 0 -17%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(150,160,140,.45));border:1.5px solid rgba(255,255,255,.7);box-shadow:0 3px 10px rgba(0,0,0,.5);pointer-events:none}'+
+'#uPad svg{position:absolute;inset:0;stroke-width:2.6;color:rgba(255,255,255,.5)}'+
+'#uPad .pvz{fill:rgba(242,177,52,.07);stroke:none;transition:fill .12s}#uPad .pvz.a{fill:rgba(242,177,52,.3)}#uPad .pvl{stroke:rgba(255,255,255,.16);stroke-width:1.4;stroke-dasharray:4 5;fill:none}body.dm #uPad .pvz,body.dm #uPad .pvl{display:none}'+
+'#pMd{position:absolute;left:50%;top:-22px;transform:translateX(-50%);white-space:nowrap;font:800 10.5px system-ui,sans-serif;letter-spacing:.06em;color:#ffd27a;text-shadow:0 1px 3px rgba(0,0,0,.9);opacity:0;transition:opacity .12s;pointer-events:none}#pMd.on{opacity:1}#uPad g{transition:color .1s,opacity .1s;opacity:.85}#uPad g.a{color:#f2b134;opacity:1}#uKnob{position:absolute;left:50%;top:50%;width:34%;height:34%;margin:-17% 0 0 -17%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(150,160,140,.45));border:1.5px solid rgba(255,255,255,.7);box-shadow:0 3px 10px rgba(0,0,0,.5);pointer-events:none}'+
 '#uFire,#uScope,#uSw,#uEye{display:none;pointer-events:auto;border-radius:50%;place-items:center;color:#fff}body.tc #uFire,body.tc #uScope,body.tc #uSw,body.tc #uEye{display:grid}'+
 '#uFire{right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:var(--fire);height:var(--fire);background:radial-gradient(circle at 38% 30%,rgba(255,160,90,.34),rgba(14,9,6,.8) 72%);border:2.5px solid rgba(255,170,100,.85);box-shadow:0 0 18px rgba(255,120,40,.35),0 4px 16px rgba(0,0,0,.5)}#uFire svg{width:46%;height:46%;margin-top:-10%}#uFire b{position:absolute;left:0;right:0;bottom:12%;text-align:center;font-size:calc(var(--fire)*.24);font-weight:800;text-shadow:0 1px 3px #000}#uFire:active{transform:scale(.93);filter:brightness(1.3)}'+
 '#uScope{right:calc(14px + (var(--fire) - var(--scp))/2 + env(safe-area-inset-right,0px));bottom:calc(14px + var(--fire) + 12px + env(safe-area-inset-bottom,0px));width:var(--scp);height:var(--scp)}#uScope svg{width:62%;height:62%}'+
@@ -1448,7 +1450,7 @@ document.body.insertAdjacentHTML('beforeend','<div id="ui">'+
 '<div id="uStat" class="g1"></div>'+
 '<div id="uAb"><button id="abD" class="ab g1">'+svg('drone')+'<small></small><i><s></s></i></button><button id="abR" class="ab g1" title="Telsiz (T)">'+svg('radio')+'<b>T</b><small>TELSİZ</small></button><button id="abN" class="ab g1" title="İkmal navigasyonu (B)">'+svg('pin')+'<b>B</b><small>İKMAL</small></button></div>'+
 '<div id="uAm"></div>'+
-'<div id="uPad"><svg viewBox="-100 -100 200 200"><circle r="96" stroke="rgba(255,255,255,.18)"/><g id="pU"><path d="M-14 -42l14-12 14 12M-14 -62l14-12 14 12"/></g><g id="pD"><path d="M-14 42l14 12 14-12M-14 62l14 12 14-12"/></g><g id="pL"><path d="'+rotArrow(-1)+'"/></g><g id="pR"><path d="'+rotArrow(1)+'"/></g></svg><i id="uKnob"></i></div>'+
+'<div id="uPad"><svg viewBox="-100 -100 200 200"><path class="pvz" id="pvR" d="M0 0L83.1 -48A96 96 0 0 1 83.1 48Z"/><path class="pvz" id="pvL" d="M0 0L-83.1 -48A96 96 0 0 0 -83.1 48Z"/><path class="pvl" d="M24 -13.9L83.1 -48M24 13.9L83.1 48M-24 -13.9L-83.1 -48M-24 13.9L-83.1 48"/><circle r="96" stroke="rgba(255,255,255,.18)"/><g id="pU"><path d="M-14 -42l14-12 14 12M-14 -62l14-12 14 12"/></g><g id="pD"><path d="M-14 42l14 12 14-12M-14 62l14 12 14-12"/></g><g id="pL"><path d="'+rotArrow(-1)+'"/></g><g id="pR"><path d="'+rotArrow(1)+'"/></g></svg><i id="uKnob"></i><b id="pMd"></b></div>'+
 '<button id="uFire">'+shellSvg('#d8d8d8')+'<b></b></button><button id="uScope" class="g1">'+svg('scope')+'</button><button id="uSw" class="g1">'+svg('swap')+'</button><button id="uEye" class="g1">'+svg('eye')+'</button>'+
 '<div id="uDr"><button data-a="u" class="g1">▲ YÜKSEL</button><button data-a="d" class="g1">▼ ALÇAL</button><button data-a="isi" class="g1">ISI</button><button data-a="mk" class="g1">İŞARET</button><button data-a="rt" class="g1">DÖN</button><button data-a="kz" class="g1">KAMİKAZE</button></div>'+
 '<div id="uZoom" class="g1"><i></i></div></div>');
@@ -1473,11 +1475,20 @@ addEventListener('contextmenu',e=>{if(e.target===cv||document.pointerLockElement
 addEventListener('mousedown',e=>{if(e.button===2&&game==='play'&&document.pointerLockElement===cv){e.preventDefault();toggleSight()}});
 // ---- surus halkasi
 {const pad=U('uPad'),kn=U('uKnob'),gp={U:U('pU'),D:U('pD'),L:U('pL'),R:U('pR')};let pid=null;
- const hint=(x,y)=>{gp.U.classList.toggle('a',y>.35);gp.D.classList.toggle('a',y<-.35);gp.R.classList.toggle('a',x>.35);gp.L.classList.toggle('a',x<-.35)};
- const mv=e=>{const r=pad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width*.34;let dx=e.clientX-cx,dy=e.clientY-cy;const l=Math.hypot(dx,dy);if(l>R){dx*=R/l;dy*=R/l}kn.style.transform='translate('+dx+'px,'+dy+'px)';let jx=dx/R,jy=-dy/R;if(Math.hypot(jx,jy)<.16)jx=jy=0;joy.x=jx;joy.y=jy;hint(jx,jy)};
+ const pvR=U('pvR'),pvL=U('pvL'),pMd=U('pMd');let lmd='';
+ const hint=(x,y,md)=>{gp.U.classList.toggle('a',y>.35);gp.D.classList.toggle('a',y<-.35);gp.R.classList.toggle('a',x>.35);gp.L.classList.toggle('a',x<-.35);
+  pvR.classList.toggle('a',md==='p'&&x>0);pvL.classList.toggle('a',md==='p'&&x<0);if(md!==lmd){lmd=md;pMd.textContent=md==='p'?(x>0?'NOKTA DÖNÜŞÜ ↻':'↺ NOKTA DÖNÜŞÜ'):'';pMd.classList.toggle('on',!!pMd.textContent)}};
+ // v67: tankta cubuk yana itilince NOKTA DONUSU (yerinde, ileri-geri kacagi yok), dikeye yakinsa duz ileri/geri; arada viraj
+ const PV=30*Math.PI/180,SQ=15*Math.PI/180;
+ const mv=e=>{const r=pad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width*.34;let dx=e.clientX-cx,dy=e.clientY-cy;const l=Math.hypot(dx,dy);if(l>R){dx*=R/l;dy*=R/l}
+  let jx=dx/R,jy=-dy/R,md='';const m=Math.hypot(jx,jy);let kx=dx,ky=dy;
+  if(m<.16){jx=jy=0}else if(mode==='tank'){const a=Math.atan2(Math.abs(jy),Math.abs(jx));
+   if(a<PV){jx=Math.sign(jx)*Math.min(1,m);jy=0;md='p';kx=Math.sign(dx)*Math.min(R,Math.hypot(dx,dy));ky=0}
+   else if(a>Math.PI/2-SQ){jy=Math.sign(jy)*Math.min(1,m);jx=0;md=jy>0?'f':'b';ky=Math.sign(dy)*Math.min(R,Math.hypot(dx,dy));kx=0}}
+  kn.style.transform='translate('+kx+'px,'+ky+'px)';joy.x=jx;joy.y=jy;hint(jx,jy,md)};
  pad.addEventListener('pointerdown',e=>{if(pid!==null)return;pid=e.pointerId;try{pad.setPointerCapture(pid)}catch(_){}e.preventDefault();e.stopPropagation();mv(e)});
  pad.addEventListener('pointermove',e=>{if(e.pointerId===pid)mv(e)});
- const end=e=>{if(e.pointerId===pid){pid=null;kn.style.transform='';joy.x=joy.y=0;hint(0,0)}};pad.addEventListener('pointerup',end);pad.addEventListener('pointercancel',end)}
+ const end=e=>{if(e.pointerId===pid){pid=null;kn.style.transform='';joy.x=joy.y=0;hint(0,0,'')}};pad.addEventListener('pointerup',end);pad.addEventListener('pointercancel',end)}
 // ---- yakinlastirma cubugu (nisangah, dokunmatik)
 {const z=U('uZoom'),k=z.querySelector('i');let zid=null;const set=e=>{const r=z.getBoundingClientRect(),t=clamp((e.clientY-r.top)/r.height,0,1);zm=9+t*31;k.style.top=(t*(r.height-28))+'px'};
  z.addEventListener('pointerdown',e=>{zid=e.pointerId;try{z.setPointerCapture(zid)}catch(_){}e.preventDefault();e.stopPropagation();set(e)});z.addEventListener('pointermove',e=>{if(e.pointerId===zid)set(e)});const ze=e=>{if(e.pointerId===zid)zid=null};z.addEventListener('pointerup',ze);z.addEventListener('pointercancel',ze)}
@@ -1983,6 +1994,7 @@ const onR=(z,y,t)=>-(wx(z,y)-t),onL=(z,y,t)=>wx(z,y)-t;           // sag / sol d
 const HS=[];const hot=(t,d,x,y,z,g)=>HS.push({t,d,p:new THREE.Vector3(x,y,z),g:!!g});   // Turkce parca adlari (g: topa bagli)
 const knobs=(S,x,y,z,n,dz,ax)=>{for(let k=0;k<n;k++)S.cyl(.016,.018,.022,x,y,z+k*dz,STL,ax||'x',8)};
 const cable=(pts,r,c)=>{for(let i=0;i<pts.length-1;i++)Rd(pts[i],pts[i+1],r||.011,c==null?0x1c1d1e:c,5)};
+const GLQ=[];
 // ================= 1) KUBBE ASTARI, KUPOLA, TUR HALKASI, SEPET =================
 domeInto(SW,DOME.prof.map(q=>[q[0]*.955,q[1]*.985]),40,DOME.AXf,DOME.AXb,DOME.AZf,DOME.AZb,DOME.tp,DOME.CZ,{inv:1,col:WALL,hole:{x:CUP.x,z:CUP.z,r:.5}});
 {const cx=CUP.x,cz=CUP.z,NCU=24,R2=.545,AO=-2.5/24*PI*2,inw=(S,a,y0,y1,c,R)=>{const a0=a/NCU*PI*2+AO,a1=(a+1)/NCU*PI*2+AO,am=(a0+a1)/2;R=R||R2;S.quad([cx+Math.sin(a0)*R,y0,cz+Math.cos(a0)*R],[cx+Math.sin(a1)*R,y0,cz+Math.cos(a1)*R],[cx+Math.sin(a1)*R,y1,cz+Math.cos(a1)*R],[cx+Math.sin(a0)*R,y1,cz+Math.cos(a0)*R],c,[-Math.sin(am),0,-Math.cos(am)])};
@@ -1999,6 +2011,9 @@ domeInto(SW,DOME.prof.map(q=>[q[0]*.955,q[1]*.985]),40,DOME.AXf,DOME.AXb,DOME.AZ
   for(const y of[1.0,1.34]){const s=[];for(let u=0;u<=3;u++){const a=a0+(a1-a0)*u/3;s.push([cx+Math.sin(a)*(R2-.01),y,cz+Math.cos(a)*(R2-.01)])}for(let u=0;u<3;u++)Rd(s[u],s[u+1],.016,DK)}
   B(.22,.06,.08,cx+Math.sin(am)*(R2-.05),1.31,cz+Math.cos(am)*(R2-.05),GUNM,0,am);B(.2,.05,.07,cx+Math.sin(am)*(R2-.045),1.03,cz+Math.cos(am)*(R2-.045),GUNM,0,am);
   B(.03,.05,.03,cx+Math.sin(am)*(R2-.09),.98,cz+Math.cos(am)*(R2-.09),DK,0,am)}
+ // v66: gozetleme bloklarinda kalin zirhli cam (yari saydam, yesilimsi, ust kenarda parlama)
+ for(let m=0;m<6;m++){const a0=(4*m+1)/NCU*PI*2+AO,a1=(4*m+3)/NCU*PI*2+AO;for(let u=0;u<4;u++){const b0=a0+(a1-a0)*u/4,b1=a0+(a1-a0)*(u+1)/4,r=R2+.03;
+  GLQ.push([cx+Math.sin(b0)*r,WY0+.004,cz+Math.cos(b0)*r],[cx+Math.sin(b1)*r,WY0+.004,cz+Math.cos(b1)*r],[cx+Math.sin(b1)*r,WY1-.004,cz+Math.cos(b1)*r],[cx+Math.sin(b0)*r,WY1-.004,cz+Math.cos(b0)*r],u/4,(u+1)/4)}}
  hot('M19 KOMUTAN KULESİ','360° döner · 6 gözetleme periskobu, M85 uçaksavar',cx,1.3,cz+.45);
  // kupola dondurme cemberi + el krank
  for(let k=0;k<24;k++){const a0=k/24*PI*2,a1=(k+1)/24*PI*2;Rd([cx+Math.sin(a0)*.5,.78,cz+Math.cos(a0)*.5],[cx+Math.sin(a1)*.5,.78,cz+Math.cos(a1)*.5],.022,0x50555a)}
@@ -2007,6 +2022,9 @@ domeInto(SW,DOME.prof.map(q=>[q[0]*.955,q[1]*.985]),40,DOME.AXf,DOME.AXb,DOME.AZ
  B(.26,.14,.14,cx,.9,cz+.42,GUNM);Rd([cx-.1,.9,cz+.36],[cx-.17,.84,cz+.28],.02,BLK);Rd([cx+.1,.9,cz+.36],[cx+.17,.84,cz+.28],.02,BLK);Sp(.03,cx-.17,.84,cz+.28,BLK);Sp(.03,cx+.17,.84,cz+.28,BLK);Sp(.012,cx+.17,.87,cz+.28,RED);
  hot('M85 UÇAKSAVAR KUMANDASI','Komutan kulesinde · 12,7 mm, 900 adet cephane',cx,.92,cz+.4);
 }
+// v66: tur halkasi ve kupola halkasi civata sirasi (alti koseli bas)
+for(let k=0;k<36;k++){const a=k/36*PI*2+.04;Cy(.013,.013,.016,Math.sin(a)*1.13,.045,Math.cos(a)*1.13,0x3d4247,'y',6)}
+for(let k=0;k<18;k++){const a=k/18*PI*2;Cy(.011,.011,.014,CUP.x+Math.sin(a)*.47,.80,CUP.z+Math.cos(a)*.47,0x3d4247,'y',6)}
 // tur halkasi disli cemberi
 for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1.09,.0,Math.cos(a0)*1.09],[Math.sin(a1)*1.09,.0,Math.cos(a1)*1.09],.035,0x4d5257,6)}
 // sepet (tur halkasi icinde asagi) + taban
@@ -2101,7 +2119,16 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
  const rx=1.0,rz=-1.02;B(.82,.05,.62,rx,-.8,rz,0x2f3631);B(.82,.05,.62,rx,-.32,rz,0x2f3631);B(.04,.95,.62,rx+.43,-.35,rz,0x2f3631);
  for(const dz of[-.3,.3])B(.82,.04,.035,rx,.12,rz+dz,0x2f3631);for(const dx of[-.4,.4])B(.035,.95,.035,rx+dx,-.35,rz+.3,0x2f3631);
  const OGV=new THREE.LatheGeometry([[.05,0],[.05,.03],[.046,.08],[.036,.125],[.022,.16],[.008,.185],[0,.19]].map(a=>new THREE.Vector2(a[0],a[1])),14);
- const rd=(x,z,k)=>{Cy(.064,.068,.5,x,-.53,z,BRS,'y',12);Cy(.074,.074,.03,x,-.78,z,0x8a6f2a,'y',12);Cy(.016,.016,.006,x,-.795,z,0x6a5420,'y',8);Cy(.05,.064,.34,x,-.11,z,[0x33383a,0x6d7a4a,0xc9a53c,0xe0e0d8][k],'y',12);SI.geo(OGV,x,.06,z,[0x1c1e20,0xd8782a,0xd8c84a,0xf0f0f0][k]);Cy(.052,.052,.025,x,-.24,z,0xd8c84a,'y',12)};
+ // v66: pirinc kovan (dip tirnagi, cikarici yivi, boyun) + tipine gore mermi: APDS sabot+delici, HEAT kafa+uzatma cubugu, WP sivri, HEP kut burun
+ const LV=a=>a.map(q=>new THREE.Vector2(q[0],q[1]));
+ // gercek oranlar: ~62 cm kovan + 33-45 cm mermi (raf ustunden burunlar ve kovan boyunlari gorunur)
+ const CASE=new THREE.LatheGeometry(LV([[0,0],[.074,0],[.074,.028],[.064,.034],[.064,.044],[.068,.05],[.068,.55],[.062,.59],[.058,.62],[0,.62]]),18);
+ const KP=1.15,PRJ=[[[0,0],[.057,0],[.057,.17],[.05,.205],[.026,.222],[0,.224]],[[0,0],[.057,0],[.057,.13],[.05,.19],[.034,.24],[.016,.262],[0,.265]],
+  [[0,0],[.057,0],[.057,.14],[.052,.21],[.04,.28],[.022,.34],[.006,.375],[0,.378]],[[0,0],[.057,0],[.057,.18],[.055,.23],[.047,.28],[.032,.31],[0,.322]]].map(q=>new THREE.LatheGeometry(LV(q.map(a=>[a[0],a[1]*KP])),18));
+ const PEN=new THREE.LatheGeometry(LV([[0,0],[.017,0],[.017,.11],[.012,.15],[.004,.17],[0,.173]]),12);
+ const rd=(x,z,k)=>{SI.geo(CASE,x,-.795,z,BRS);const y0=-.175,body=[0x9aa3ad,0x6d7a4a,0xc9a53c,0xe0e0d8][k];
+  SI.geo(PRJ[k],x,y0,z,body);Cy(.0585,.0585,.024,x,y0+.07,z,[0x1c1e20,0xd8782a,0xd8c84a,0x9a2a20][k],'y',18);
+  if(k===0)SI.geo(PEN,x,y0+.24,z,0x1c1e20);else if(k===1){Cy(.011,.011,.17,x,y0+.38,z,0x2b2e30,'y',8);Cy(.015,.015,.012,x,y0+.465,z,0xd8782a,'y',10)}else if(k===2)Cy(.0575,.0575,.012,x,y0+.125,z,0x2b2e30,'y',18)};
  for(let r=0;r<2;r++)for(let c=0;c<4;c++)rd(rx-.2+r*.28,rz+.24-c*.16,(r*4+c)%4);
  for(const dz of[-.24,.0,.24])B(.6,.035,.03,rx,-.2,rz+dz-.08,TAN);
  hot('TOP CEPHANE RAFI','Yalıtkan raf · APDS / HEAT / HEP / WP (toplam 63 adet)',rx,-.1,rz);
@@ -2126,11 +2153,15 @@ for(let k=0;k<40;k++){const a0=k/40*PI*2,a1=(k+1)/40*PI*2;SI.rod([Math.sin(a0)*1
 for(const[x,z]of[[-.55,.3],[-.62,-.55],[.6,-.35]]){EB(.14,.02,.08,x,.97,z,0xfff3c4);B(.19,.03,.12,x,.995,z,GUNM);Cy(.018,.018,.03,x+.09,.98,z+.05,STL,'y',8)}
 hot('TAVAN LAMBASI','Kule tavanında 3 adet · beyaz veya kırmızı ışık',-.55,.96,.3);
 cable([[.22,.94,.85],[.24,1.0,.0],[.26,.97,-1.0]],.016,0x2c2e2c);cable([[-.1,.99,.82],[-.12,1.02,-.2],[-.12,.96,-1.2]],.012,0x34383c);
+// v66: duvar boyunca kablo demetleri (3 kablo) ve kelepceler
+for(const[sd,y]of[[-1,.62],[1,.7]]){const zs=[.75,.45,.15,-.15,-.45,-.75,-1.05],pts=[[],[],[]];
+ for(const z of zs){const x=sd<0?onR(z,y,.035):onL(z,y,.035);for(let i=0;i<3;i++)pts[i].push([x-sd*.0,y+(i-1)*.017,z]);B(.045,.06,.02,x,y,z,0x2b2e30)}
+ for(let i=0;i<3;i++)cable(pts[i],.0075,[0x1c1d1e,0x2a2c2d,0x18321d][i])}
 // ================= 7) TOP ILE HAREKETLI (gn yerel: tapa ekseni orijin) =================
 { // top besigi + tapa pimleri
  for(const s of[-1,1]){GB(.05,.36,.5,s*.2,0,-.22,OLV);GC(.08,.08,.12,s*.27,0,0,STL,'x',12)}
  // kama mekanizmasi (kama halkasi + dikey kayar kama)
- GB(.38,.44,.32,0,0,-1.05,0x5a5f63);GB(.3,.36,.06,0,0,-1.23,0x3d4247);GB(.2,.06,.05,0,.15,-1.26,0x555a60);GB(.06,.2,.05,.14,-.02,-1.26,0x555a60);
+ GB(.38,.44,.32,0,0,-1.05,0x5a5f63);for(const s of[-1,1])GB(.012,.4,.3,s*.193,0,-1.05,0x50555a);GB(.3,.36,.06,0,0,-1.23,0x3d4247);GB(.2,.06,.05,0,.15,-1.26,0x555a60);GB(.06,.2,.05,.14,-.02,-1.26,0x555a60);
  GC(.06,.06,.01,0,-.02,-1.264,0x0a0a0a,'z',22);SG.geo(new THREE.TorusGeometry(.068,.009,8,28),0,-.02,-1.262,0x30353a);for(let k=0;k<8;k++){const a=k/8*Math.PI*2+.2;GC(.011,.011,.014,Math.cos(a)*.16,Math.sin(a)*.19,-1.258,STL,'z',8)}GB(.31,.012,.012,0,.07,-1.262,0x1d2023);GB(.31,.012,.012,0,-.11,-1.262,0x1d2023);GR([-.19,.08,-.95],[-.27,.22,-1.12],.02,STL);SG.sph(.03,.03,.03,-.27,.22,-1.12,BLK,8);
  // geri tepme silindirleri
  GC(.05,.05,.7,0,.25,-.55,GUNM,'z',12);GC(.05,.05,.7,0,-.25,-.55,GUNM,'z',12);
@@ -2163,7 +2194,7 @@ DEC('P0',-.46,-.2,.8085,'-z',.13,.065);DEC('W9',-.2,-.27,.8575,'-z',.075,.019);
 DEC('W11',-.95,-.03,-1.3285,'z',.26,.065);DEC('P1',-.14,.15,-1.2285,'z',.1,.05);DEC('W6',0,.8185,-.455,'-y',.17,.042);
 DEC('W5',-.08,-.1,-1.5735,'z',.16,.03);DEC('W5',.6,-.09,-1.5835,'z',.16,.03);
 {const x=onL(-.98,.05,.05);DEC('W7',x-.0415,-.055,-.98,'-x',.12,.03);const x4=onL(.3,.1,.08);DEC('P4',x4-.0668,.13,.3,'-x',.056,.028)}
-DEC('W8',-.2415,-.11,-.82,'-x',.32,.08,1);DEC('P2',.1915,.08,-1.05,'x',.16,.08,1);
+DEC('W8',-.2415,-.11,-.82,'-x',.32,.08,1);DEC('P2',.2005,.08,-1.05,'x',.16,.08,1);
 // ---- pisir, UV ver, sahneye ekle
 bake(SW,.45);bake(SF,.5);bake(SI,.5);bake(SG,.52);
 const IG=new THREE.Group();IG.add(new THREE.Mesh(uvs(SW.mesh(null,false),1.6),MW),new THREE.Mesh(uvs(SF.mesh(null,false),3.2),MF),new THREE.Mesh(uvs(SI.mesh(null,false),3),MV),new THREE.Mesh(SE.mesh(null,false),ME));
@@ -2203,6 +2234,10 @@ function decMesh(L){const P=[],N=[],U=[],C=[];
  g.userData.raw=new Float32Array(C);g.computeBoundingSphere();const m=new THREE.Mesh(g,MD);m.userData.dec=1;return m}
 const DCm=[decMesh(DCL),decMesh(DCG)];
 IG.add(DCm[0]);gI.add(DCm[1]);
+{const gc=document.createElement('canvas');gc.width=8;gc.height=64;const gg=gc.getContext('2d'),gr=gg.createLinearGradient(0,0,0,64);gr.addColorStop(0,'rgba(220,240,230,.55)');gr.addColorStop(.12,'rgba(120,160,140,.22)');gr.addColorStop(.6,'rgba(70,110,95,.16)');gr.addColorStop(1,'rgba(40,70,60,.3)');gg.fillStyle=gr;gg.fillRect(0,0,8,64);
+ const P=[],U=[];for(let i=0;i<GLQ.length;i+=6){const[a,b,c,d,u0,u1]=GLQ.slice(i,i+6);for(const[q,uu,vv]of[[a,u0,0],[b,u1,0],[c,u1,1],[a,u0,0],[c,u1,1],[d,u0,1]]){P.push(q[0],q[1],q[2]);U.push(uu,vv)}}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.computeBoundingSphere();
+ const gm=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(gc),transparent:true,depthWrite:false,side:THREE.DoubleSide}));gm.renderOrder=2;IG.add(gm)}
 for(const h of HS)if(h.g){h.p.z-=1.0;h.p.y-=.44;h.par=GN}else h.par=TU;    // gn yerel donusum (pivot 0,.44,1.0)
 // ---- XM21 ekrani + komutan termal ekrani (canli doku)
 const xc=document.createElement('canvas');xc.width=160;xc.height=60;const xg=xc.getContext('2d'),xt=new THREE.CanvasTexture(xc);
@@ -2315,7 +2350,8 @@ function setFilter(s){if(s===fState)return;fState=s;cv.style.filter=s}
 const _iv=window.ivCam;
 window.ivCam=function(){_iv();
  if(iv===1&&mode==='tank'){
-  if(SGT.m===1){if(SGT.cool>0)setFilter('grayscale(1) contrast(.55) brightness(.5) blur(2px)');else setFilter(SGT.pol?'grayscale(1) invert(1) contrast(1.45) brightness(1.04)':'grayscale(1) contrast(1.55) brightness(1.02)');
+  // v67: TTS termal goruntu yesil fosfor ekranda (WHT HOT acik yesil sicak, BLK HOT koyu sicak)
+  if(SGT.m===1){const G=' sepia(1) hue-rotate(70deg) saturate(3)';if(SGT.cool>0)setFilter('grayscale(1) contrast(.55) brightness(.5) blur(2px)'+G);else setFilter(SGT.pol?'grayscale(1) invert(1) contrast(1.4) brightness(.86)'+G:'grayscale(1) contrast(1.55) brightness(1.02)'+G);
    tEnv(1);}
   else{setFilter(SGT.m===2?'sepia(.18) saturate(.85) brightness(.97)':'');tEnv(0)}
   if(SGT.m===2){if(CAM.fov!==7.5){CAM.fov=7.5;CAM.updateProjectionMatrix()}}
@@ -2339,6 +2375,7 @@ R.render=function(sc,cam){
 // ================= CIZIM =================
 const mono='"Courier New",ui-monospace,monospace';
 function txt(o,s,x,y,sz,c,al,b){o.font=(b?'bold ':'')+sz+'px '+mono;o.textAlign=al||'center';const dk=/^(rgba\((10|12|16),|#14)/.test(c);o.lineJoin='round';o.lineWidth=3;o.strokeStyle=dk?'rgba(255,255,255,.35)':'rgba(0,0,0,.6)';o.strokeText(s,x,y);o.fillStyle=c;o.fillText(s,x,y)}
+const GD={k:'',c:document.createElement('canvas')};
 window.drawScope=function(o,W,H,lockE){
  const m=SGT.m,cx=W/2,cy=H/2,f=(H/2)/Math.tan(CAM.fov*PI/360),now=performance.now();
  let rx,ry;if(m===1){ry=Math.min(H*.47,W*.56);rx=ry*.84}else if(m===0){rx=ry=Math.min(W*.47,H*.47)}else{rx=ry=Math.min(W,H)*.41}
@@ -2347,7 +2384,9 @@ window.drawScope=function(o,W,H,lockE){
  o.fillStyle='#000';o.beginPath();o.rect(0,0,W,H);o.ellipse(cx,cy,rx,ry,0,0,PI*2,true);o.fill('evenodd');
  o.save();o.translate(cx,cy);o.scale(1,ry/rx);const gr=o.createRadialGradient(0,0,rx*.72,0,0,rx);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,m===1?'rgba(0,0,0,.62)':'rgba(0,0,0,.5)');o.fillStyle=gr;o.beginPath();o.arc(0,0,rx,0,PI*2);o.fill();o.restore();
  o.save();o.beginPath();o.ellipse(cx,cy,rx,ry,0,0,PI*2);o.clip();
- const T=m===1,halo=T?(SGT.pol?'rgba(235,240,230,.35)':'rgba(0,0,0,.4)'):'rgba(255,255,240,.28)',ink=T?(SGT.pol?'rgba(10,14,10,.95)':'rgba(236,244,232,.95)'):m===2?'rgba(12,10,8,.95)':'rgba(16,18,14,.92)',soft=T?(SGT.pol?'rgba(10,14,10,.55)':'rgba(236,244,232,.55)'):'rgba(16,18,14,.55)',info=T?(SGT.pol?'#141a12':'#e9f6e2'):'#f2b134';
+ const T=m===1,NIL=!T&&typeof wx!=='undefined'&&wx==='gece',halo=T?(SGT.pol?'rgba(235,240,230,.35)':'rgba(0,0,0,.4)'):'rgba(255,255,240,.28)',info=T?(SGT.pol?'#0a2a0c':'#c8ffbe'):'#f2b134';
+ // v66: gecede gunduz kanali ve teleskopta aydinlatmali (kirmizi) retikul
+ const ink=NIL?'rgba(255,72,44,.96)':T?(SGT.pol?'rgba(6,26,8,.95)':'rgba(190,255,180,.95)'):m===2?'rgba(12,10,8,.95)':'rgba(16,18,14,.92)',soft=NIL?'rgba(255,96,64,.6)':T?(SGT.pol?'rgba(6,26,8,.55)':'rgba(190,255,180,.55)'):'rgba(16,18,14,.55)';
  if(T){o.fillStyle='rgba(0,0,0,.07)';for(let y=cy-ry;y<cy+ry;y+=3)o.fillRect(cx-rx,y,rx*2,1);
   if(SGT.cool>0){for(let i=0;i<260;i++){o.fillStyle='rgba(255,255,255,'+(Math.random()*.25).toFixed(2)+')';o.fillRect(cx+(Math.random()-.5)*rx*2,cy+(Math.random()-.5)*ry*2,2,2)}}}
  o.lineCap='butt';
@@ -2382,9 +2421,15 @@ window.drawScope=function(o,W,H,lockE){
  {const rd=cd<=0,T2=SH[st],fz=Math.round(ry*.055),x=cx+rx*.44,y=cy-ry*.72;txt(o,(['APDS','HEAT','WP','HEP'][st])+' ×'+TA[st],x,y,fz,m===1?ink:'#f2b134','center',1);
   const bw=rx*.34,p=rd?1:1-clamp(cd/Math.max(.3,SGT.cdMax),0,1);o.fillStyle='rgba(0,0,0,.45)';o.fillRect(x-bw/2,y+6,bw,5);o.fillStyle=rd?'#4ade6a':'#f2b134';o.fillRect(x-bw/2,y+6,bw*p,5);
   txt(o,rd?'HAZIR':'DOLDURUYOR',x,y+24,Math.round(fz*.85),rd?'#4ade6a':'#f2b134','center',1)}
+ // v66: optik cam: ince toz/cizik katmani ve hafif parlama
+ {const k=W+'x'+H+'x'+m;if(GD.k!==k){GD.k=k;GD.c.width=Math.ceil(rx*2);GD.c.height=Math.ceil(ry*2);const g=GD.c.getContext('2d');g.clearRect(0,0,GD.c.width,GD.c.height);let sd=7;const rnd=()=>{sd=(sd*16807)%2147483647;return sd/2147483647};
+  for(let i=0;i<90;i++){const x=rnd()*rx*2,y=rnd()*ry*2,r=.4+rnd()*1.3;g.fillStyle='rgba('+(m===1?'200,210,200':'30,28,24')+','+(.06+rnd()*.16).toFixed(2)+')';g.beginPath();g.arc(x,y,r,0,7);g.fill()}
+  g.lineWidth=.6;for(let i=0;i<7;i++){const x=rnd()*rx*2,y=rnd()*ry*2,a=rnd()*PI,l=12+rnd()*40;g.strokeStyle='rgba(255,255,255,'+(.04+rnd()*.06).toFixed(2)+')';g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+Math.cos(a)*l*.5+5,y+Math.sin(a)*l*.5,x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke()}}
+  o.drawImage(GD.c,cx-rx,cy-ry);if(m!==1&&!NIL){const gl=o.createLinearGradient(cx-rx,cy-ry,cx+rx*.2,cy+ry*.3);gl.addColorStop(0,'rgba(255,255,245,.07)');gl.addColorStop(.5,'rgba(255,255,245,0)');o.fillStyle=gl;o.fillRect(cx-rx,cy-ry,rx*2,ry*2)}}
  o.restore();
- // cerceve halkasi
- o.strokeStyle=m===1?'rgba(70,74,70,.9)':'rgba(30,30,28,.95)';o.lineWidth=5;o.beginPath();o.ellipse(cx,cy,rx+2,ry+2,0,0,PI*2);o.stroke();
+ // cerceve: kromatik kenar sacagi + kaucuk goz lastigi
+ o.lineWidth=2;o.strokeStyle='rgba(255,70,40,.16)';o.beginPath();o.ellipse(cx,cy,rx-1.5,ry-1.5,0,0,PI*2);o.stroke();o.strokeStyle='rgba(70,170,255,.12)';o.beginPath();o.ellipse(cx,cy,rx-4,ry-4,0,0,PI*2);o.stroke();
+ o.strokeStyle='#0b0c0b';o.lineWidth=9;o.beginPath();o.ellipse(cx,cy,rx+4,ry+4,0,0,PI*2);o.stroke();o.strokeStyle='rgba(255,255,255,.07)';o.lineWidth=1.2;o.beginPath();o.ellipse(cx,cy,rx+8,ry+8,0,0,PI*2);o.stroke();
  // dis bilgi (kenar disinda)
  
  if(!matchMedia('(pointer:coarse)').matches&&cx-rx>190){const lx=(cx-rx)/2,ly=cy-60;o.textAlign='center';o.font='800 13px system-ui,sans-serif';o.fillStyle='#f2b134';o.fillText(MODES[m],lx,ly);o.font='600 11.5px system-ui,sans-serif';o.fillStyle='rgba(235,240,225,.7)';
@@ -4513,7 +4558,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=67,LOGO=window.HISAR_LOGO;
+const VER=68,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+

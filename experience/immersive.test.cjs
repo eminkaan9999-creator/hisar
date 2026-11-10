@@ -1,0 +1,52 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync(__dirname+'/immersive.js','utf8');
+const male={name:'Microsoft Tolga - Turkish (Turkey)',lang:'tr-TR',localService:true};
+function setup(initialVoices=[male],options={}){
+ const calls=[],store=new Map(),listeners={},timers=new Map();let voices=initialVoices,id=0;
+ const root={localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},
+   speechSynthesis:{getVoices:()=>voices,cancel:()=>calls.push('cancel'),speak:u=>calls.push(u),addEventListener:(n,fn)=>listeners[n]=fn},
+   SpeechSynthesisUtterance:function(text){this.text=text;},setTimeout:(fn,ms)=>{timers.set(++id,{fn,ms});return id;},clearTimeout:i=>timers.delete(i)};
+ Object.assign(root,options);root.window=root;vm.runInNewContext(source,root);
+ return{api:root.HisarImmersive,root,calls,store,timers,listeners,setVoices:v=>voices=v,source};
+}
+test('production script parses',()=>assert.doesNotThrow(()=>new vm.Script(source)));
+test('the old female substring bug is reproduced independently',()=>assert.equal(/male|erkek|tolga|cem/i.test('Turkish Female'),true));
+test('female is never considered male',()=>{const s=setup([{name:'Turkish Female',lang:'tr-TR',localService:true}]);assert.equal(s.api.speak('Kontrol'),false);assert.equal(s.calls.length,0);});
+test('explicit female designation overrides a matching name',()=>{const s=setup([{...male,name:'Tolga female'}]);assert.equal(s.api.speak('Kontrol'),false);});
+test('unknown Turkish voice is not silently substituted',()=>assert.equal(setup([{...male,name:'Default Turkish'}]).api.speak('Kontrol'),false));
+test('nonlocal voices are not sent game text',()=>assert.equal(setup([{...male,localService:false}]).api.speak('Kontrol'),false));
+test('unknown locality is not silently assumed local',()=>assert.equal(setup([{name:'Tolga',lang:'tr-TR'}]).api.speak('Kontrol'),false));
+test('wrong-language male is rejected',()=>assert.equal(setup([{...male,lang:'en-US'}]).api.speak('Kontrol'),false));
+test('local Turkish named male voice is used without pitch tricks',()=>{const s=setup();assert.equal(s.api.speak('Anlaşıldı'),true);assert.equal(s.calls[0].voice,male);assert.equal(s.calls[0].pitch,1);});
+test('explicit male label uses word boundaries',()=>{const s=setup([{...male,name:'Turkish male'}]);assert.equal(s.api.speak('Kontrol'),true);});
+test('short Turkish language tag works',()=>assert.equal(setup([{...male,lang:'tr'}]).api.speak('Kontrol'),true));
+test('missing speech APIs do not throw',()=>{const s=setup([],{speechSynthesis:undefined});assert.equal(s.api.speak('Kontrol'),false);});
+test('throwing voice enumeration does not crash',()=>{const s=setup([],{speechSynthesis:{getVoices(){throw Error('unavailable')}}});assert.equal(s.api.speak('Kontrol'),false);});
+test('null and nonarray voice lists do not crash',()=>{for(const v of [null,undefined,{},'bad']){const s=setup([]);s.setVoices(v);assert.equal(s.api.speak('Kontrol'),false);}});
+test('constructor failure returns false',()=>{const s=setup([], {SpeechSynthesisUtterance:function(){throw Error('blocked')}});s.setVoices([male]);assert.equal(s.api.speak('Kontrol'),false);});
+test('speech engine failure returns false and clears queue',()=>{const s=setup();s.root.speechSynthesis.speak=()=>{throw Error('blocked')};assert.equal(s.api.speak('Kontrol'),false);assert.equal(s.api.diagnostics().radioQueued,0);});
+test('empty and nonstring speech requests are ignored',()=>{const s=setup();for(const text of ['', '  ',null,2,{},Symbol()])assert.equal(s.api.speak(text),false);});
+test('speech text is limited to 180 characters',()=>{const s=setup();s.api.speak('a'.repeat(500));assert.equal(s.calls[0].text.length,180);});
+test('new radio messages queue rather than interrupt',()=>{const s=setup();s.api.speak('Bir');s.api.speak('İki');assert.equal(s.calls.length,1);assert.equal(s.api.diagnostics().radioQueued,1);s.calls[0].onend();assert.equal(s.calls[1].text,'İki');assert.ok(!s.calls.includes('cancel'));});
+test('duplicate active and queued messages are rejected',()=>{const s=setup();s.api.speak('Bir');assert.equal(s.api.speak('Bir'),false);s.api.speak('İki');assert.equal(s.api.speak('İki'),false);});
+test('queue is bounded at four pending messages',()=>{const s=setup();for(let i=0;i<5;i++)assert.equal(s.api.speak('Mesaj '+i),true);assert.equal(s.api.speak('Fazla'),false);assert.equal(s.api.diagnostics().radioQueued,4);});
+test('voiceschanged discovers voices that arrive later',()=>{const s=setup([]);assert.equal(s.api.speak('Kontrol'),false);s.setVoices([male]);s.listeners.voiceschanged();assert.equal(s.api.speak('Kontrol'),true);});
+test('stop does not cancel unrelated speech',()=>{const s=setup();s.api.stop();assert.equal(s.calls.length,0);});
+test('busy unrelated speech is not interrupted',()=>{const s=setup();s.root.speechSynthesis.speaking=true;assert.equal(s.api.speak('Kontrol'),false);assert.equal(s.calls.length,0);});
+test('turning radio off clears owned speech and queue',()=>{const s=setup();s.api.speak('Bir');s.api.speak('İki');s.api.save({radioVoice:false});assert.equal(s.calls.at(-1),'cancel');assert.equal(s.api.diagnostics().radioSpeaking,false);assert.equal(s.api.diagnostics().radioQueued,0);assert.equal(s.api.speak('Üç'),false);});
+test('late onend after stop does not resume the queue',()=>{const s=setup();s.api.speak('Bir');const old=s.calls[0];s.api.speak('İki');s.api.stop();old.onend();assert.equal(s.calls.length,2);});
+test('speech errors advance bounded queue',()=>{const s=setup();s.api.speak('Bir');s.api.speak('İki');s.calls[0].onerror({error:'synthesis-failed'});assert.equal(s.calls[1].text,'İki');});
+test('watchdog stops a stuck utterance',()=>{const s=setup();s.api.speak('Bir');s.api.speak('İki');const t=[...s.timers.values()][0];assert.equal(t.ms,30000);t.fn();assert.equal(s.api.diagnostics().radioSpeaking,false);assert.equal(s.api.diagnostics().radioQueued,0);});
+test('no cancel method is harmless on stop',()=>{const s=setup();delete s.root.speechSynthesis.cancel;s.api.speak('Bir');assert.doesNotThrow(()=>s.api.stop());});
+test('settings are allowlisted and exact booleans',()=>{const s=setup();const v=s.api.save({greenThermal:false,motionReduction:'yes',evil:true});assert.equal(v.greenThermal,false);assert.equal(v.motionReduction,false);assert.equal('evil'in v,false);});
+test('preference limits tolerate malformed numerics',()=>{const s=setup();for(const v of [NaN,Infinity,-Infinity,Symbol(),{},'bad']){const n=s.api.normalize({thermalBrightness:v});assert.ok(n.thermalBrightness>=.7&&n.thermalBrightness<=1.4);}});
+test('brightness and contrast clamp to allowed ranges',()=>{const s=setup();assert.equal(s.api.save({thermalBrightness:20}).thermalBrightness,1.4);assert.equal(s.api.save({thermalContrast:-20}).thermalContrast,.8);});
+test('progress is never written or deleted',()=>{const s=setup();s.store.set('m60v2','ORIGINAL');s.api.save({greenThermal:false});assert.equal(s.store.get('m60v2'),'ORIGINAL');assert.deepEqual([...s.store.keys()].sort(),['hisar-immersive-v1','m60v2']);});
+test('unavailable storage does not stop the module',()=>{const s=setup([],{localStorage:{getItem(){throw Error('denied')},setItem(){throw Error('denied')}}});assert.doesNotThrow(()=>s.api.save({greenThermal:false}));assert.equal(s.api.diagnostics().storageOK,false);});
+test('getter returns copies, defaults are frozen',()=>{const s=setup();const p=s.api.getSettings();p.greenThermal=false;assert.equal(s.api.getSettings().greenThermal,true);assert.equal(Object.isFrozen(s.api.defaults),true);});
+test('green palette only applies to active thermal views',()=>{const c=setup().api;assert.equal(c.wantsGreen({playing:true,mode:'tank',view:1,thermal:true}),true);assert.equal(c.wantsGreen({playing:true,mode:'drone',thermal:true}),true);for(const v of [null,{}, {playing:false,mode:'tank',view:1,thermal:true},{playing:true,mode:'tank',view:0,thermal:true},{playing:true,mode:'tank',view:1,thermal:false},{playing:true,mode:'other',thermal:true}])assert.equal(c.wantsGreen(v),false);});
+for(const hz of [30,60,90,120,144])test('camera damping is frame-rate independent at '+hz+' Hz',()=>{const api=setup().api;let x=0;for(let i=0;i<hz;i++)x+=(10-x)*api.damping(1/hz);assert.ok(Math.abs(x-10*(1-Math.exp(-18)))<1e-9);});
+test('invalid camera timing does not produce NaN or overshoot',()=>{const api=setup().api;for(const dt of [NaN,Infinity,Symbol(),-1,0,1/60,10]){const a=api.damping(dt);assert.ok(Number.isFinite(a)&&a>=0&&a<=1);}});
+test('module execution is idempotent',()=>{const s=setup();const first=s.api;vm.runInNewContext(source,s.root);assert.equal(s.root.HisarImmersive,first);});
+test('module does not rewrite the game update or flight controls',()=>{assert.doesNotMatch(source,/root\.update\s*=|joy\.[xy]\s*=|DR\.(x|y|z|vx|vy|vz)\s*=/);});

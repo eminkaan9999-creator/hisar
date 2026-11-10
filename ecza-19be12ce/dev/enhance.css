@@ -33,7 +33,7 @@
 .ux-overview h2{letter-spacing:-.035em;text-wrap:balance}
 .ux-stats>div{border-radius:12px;transition:transform .25s var(--ux-ease)}
 .ux-stats>div:active{transform:scale(.97)}
-.ux-filters{animation:ux-enter .45s var(--ux-ease) both;animation-delay:.05s}
+.ux-filters{animation:none;opacity:1;transform:none}
 .ux-dock button{transition:transform .22s var(--ux-ease),background-color .2s,color .2s}
 .ux-dock button:active{transform:scale(.92)}
 .ux-dock [aria-current=page] svg{animation:ux-pop .3s var(--ux-ease) both}
@@ -65,3 +65,21 @@
 @keyframes ux-sheen{0%{transform:translateX(-120%);opacity:0}25%{opacity:.5}100%{transform:translateX(120%);opacity:0}}
 @media(hover:hover) and (pointer:fine){#view .shot:hover{transform:translateY(-2px)}}
 @media(prefers-reduced-motion:reduce){#view .row::before{display:none}#view .shot,#view .chip,#view .cta,#stage img,#view .kt::after{transition:none!important;animation:none!important;transform:none!important}}
+
+/* Mobile layout audit: keep notebook controls visible, compact and reachable. */
+#view .ux-filters{display:flex!important;visibility:visible!important;opacity:1!important;transform:none!important;animation:none!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
+#view .ux-filters .ux-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr))}
+#view .ux-filters .ux-actions{align-items:stretch}
+#view .ux-filters .ux-actions button{min-height:48px;max-width:100%;white-space:normal}
+#view .ux-filters label{min-width:0}
+#view .ux-filters select{min-width:0}
+#view .ux-note textarea{max-width:100%}
+#view .ux-overview{animation-duration:.28s}
+@media(max-width:600px){
+  #view .ux-filters{padding:14px;gap:12px;border-radius:16px}
+  #view .ux-filters .ux-grid{grid-template-columns:1fr}
+  #view .ux-filters .ux-actions{display:grid;grid-template-columns:1fr}
+  #view .ux-filters .ux-actions button{width:100%}
+  #view .sec{min-width:0}
+}
+@media(prefers-reduced-motion:reduce){#view .ux-overview{animation:none!important}}

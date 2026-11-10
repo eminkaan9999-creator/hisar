@@ -1,9 +1,9 @@
 // Kardelen v8.1: navigation network-first, offline fallback, isolated page caches.
 // Preserve localStorage/IndexedDB and existing saved medicine notes.
-const KABUK='ecza-kabuk-v2', FOTO='ecza-foto-v1', YAZI='ecza-yazi-v1';
+const KABUK='ecza-kabuk-v3', FOTO='ecza-foto-v1', YAZI='ecza-yazi-v1';
 const KOK=self.registration.scope;
 const HOME=new URL('./',KOK).href;
-const ILK=['./','./inventory.html','./manifest.webmanifest','./icon-192.png','./apple-touch-icon.png','./ux-improvements.css?v=1'];
+const ILK=['./','./inventory.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png','./ux-improvements.css?v=1'];
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(KABUK);

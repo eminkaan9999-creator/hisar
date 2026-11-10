@@ -1,18 +1,31 @@
 {
- "name": "Kardelen'in İlaç Defteri",
- "short_name": "İlaç Defteri",
- "description": "Eczane raflarındaki ilaçlar: ne işe yarar, nasıl kullanılır, rafta nerede. Oyunla öğren.",
- "lang": "tr",
- "id": "./",
- "start_url": "./",
- "scope": "./",
- "display": "standalone",
- "orientation": "portrait",
- "background_color": "#F2F3F6",
- "theme_color": "#D6222E",
- "icons": [
-  {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
-  {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
-  {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
- ]
+  "name": "Kardelen'in İlaç Defteri",
+  "short_name": "Kardelen Bloom",
+  "description": "Eczane raflarındaki ilaçlar: ne işe yarar, nasıl kullanılır, rafta nerede. Oyunla öğren.",
+  "lang": "tr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#6a274a",
+  "theme_color": "#a74e74",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }

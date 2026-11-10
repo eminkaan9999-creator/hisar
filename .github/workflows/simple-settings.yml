@@ -50,11 +50,11 @@ jobs:
         run: |
           python3 - <<'PY'
           import subprocess
-          allowed={'index.html','experience/ui.js','experience/polish.js','experience/immersive.js','sw.js','version.json','scripts/experience-browser.cjs','scripts/experience-browser-legacy.cjs','scripts/gameplay-browser.cjs','scripts/gameplay-integrate.cjs','scripts/radio-integrate.cjs','assets/radio/ack.mp3'}
+          allowed={'index.html','experience/ui.js','experience/polish.js','experience/immersive.js','sw.js','version.json','scripts/experience-browser.cjs','scripts/experience-browser-legacy.cjs','scripts/gameplay-browser.cjs','scripts/gameplay-integrate.cjs','scripts/radio-integrate.cjs','scripts/radio-browser.cjs','assets/radio/ack.mp3'}
           changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
           if not changed <= allowed: raise SystemExit('Unexpected changes: '+repr(changed-allowed))
           PY
-          git add index.html experience/ui.js experience/polish.js experience/immersive.js sw.js version.json scripts/experience-browser.cjs scripts/experience-browser-legacy.cjs scripts/gameplay-browser.cjs scripts/gameplay-integrate.cjs scripts/radio-integrate.cjs assets/radio/ack.mp3
+          git add index.html experience/ui.js experience/polish.js experience/immersive.js sw.js version.json scripts/experience-browser.cjs scripts/experience-browser-legacy.cjs scripts/gameplay-browser.cjs scripts/gameplay-integrate.cjs scripts/radio-integrate.cjs scripts/radio-browser.cjs assets/radio/ack.mp3
           if git diff --cached --quiet; then exit 0; fi
           REMOTE_HEAD=$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)
           test "$REMOTE_HEAD" = "$EXPECTED_HEAD"

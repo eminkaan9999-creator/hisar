@@ -1,0 +1,45 @@
+19:44:59.696 === açılış: HİSAR TETİK 28.0 (2800), iOS 26.2, iPhone18,3 (simülatör)
+19:45:00.173 sayfa dosyaları kopyalandı: bridge.js, fonts
+19:45:00.239 sayfa kuruldu: sürüm 28 (ilk kurulum)
+19:45:01.408 sayfa açılıyor: /Users/runner/Library/Developer/CoreSimulator/Devices/BC7CEBFB-6B90-4D7E-B85E-BB0102C99F06/data/Containers/Data/Application/49C966AB-14DA-4FEA-9393-67D411C1DD51/Documents/www/index.html
+19:45:05.470 js info: yerel köprü hazır; localStorage 0 anahtar
+19:45:05.900 sayfa hazır: title="Hisar Tetik" ver=28 köprü=function __hn=evet uygulama=evet localStorage=1 yazıtipi=yerel
+19:45:25.315 === açılış: HİSAR TETİK 28.0 (2800), iOS 26.2, iPhone18,3 (simülatör), argümanlar: -sayfa ayarlar/uygulama
+19:45:25.442 sayfa sürümü 28 (uygulamayla gelen 28)
+19:45:25.608 sayfa açılıyor: /Users/runner/Library/Developer/CoreSimulator/Devices/BC7CEBFB-6B90-4D7E-B85E-BB0102C99F06/data/Containers/Data/Application/49C966AB-14DA-4FEA-9393-67D411C1DD51/Documents/www/index.html#ayarlar/uygulama
+19:45:27.127 js info: yerel köprü hazır; localStorage 1 anahtar
+19:45:27.263 sayfa hazır: title="Hisar Tetik" ver=28 köprü=function __hn=evet uygulama=evet localStorage=1 yazıtipi=yerel
+19:45:36.747 === açılış: HİSAR TETİK 28.0 (2800), iOS 26.2, iPhone18,3 (simülatör), argümanlar: -sayfa kaynak/sensor
+19:45:36.863 sayfa sürümü 28 (uygulamayla gelen 28)
+19:45:37.016 sayfa açılıyor: /Users/runner/Library/Developer/CoreSimulator/Devices/BC7CEBFB-6B90-4D7E-B85E-BB0102C99F06/data/Containers/Data/Application/49C966AB-14DA-4FEA-9393-67D411C1DD51/Documents/www/index.html#kaynak/sensor
+19:45:38.215 js info: yerel köprü hazır; localStorage 1 anahtar
+19:45:38.424 sayfa hazır: title="Hisar Tetik" ver=28 köprü=function __hn=evet uygulama=evet localStorage=1 yazıtipi=yerel
+19:45:38.717 ble: sensör seçici (istek 1) {"filters":[{"services":["0000ffe5-0000-1000-8000-00805f9a34fb"]},{"namePrefix":"HISAR"},{"namePrefix":"WT"}],"optionalServices":["0000ffe5-0000-1000-8000-00805f9a34fb"]}
+19:45:38.727 ble: Bluetooth başlatılıyor
+19:45:38.815 ble: Bluetooth durumu: desteklenmiyor
+19:45:38.816 ble: 1 → NotSupportedError: Bu cihazda Bluetooth LE yok.
+19:46:08.205 === açılış: HİSAR TETİK 28.0 (2800), iOS 26.2, iPhone18,3 (simülatör), argümanlar: -sayfa ayarlar/veri -hisarJS document.getElementById('dExp').click()
+19:46:08.290 sayfa sürümü 28 (uygulamayla gelen 28)
+19:46:08.406 sayfa açılıyor: /Users/runner/Library/Developer/CoreSimulator/Devices/BC7CEBFB-6B90-4D7E-B85E-BB0102C99F06/data/Containers/Data/Application/49C966AB-14DA-4FEA-9393-67D411C1DD51/Documents/www/index.html#ayarlar/veri
+19:46:09.908 js info: yerel köprü hazır; localStorage 1 anahtar
+19:46:10.384 sayfa hazır: title="Hisar Tetik" ver=28 köprü=function __hn=evet uygulama=evet localStorage=1 yazıtipi=yerel
+19:46:12.496 saveFile: hisar-tetik-2026-11-10.json (application/json, 1362 bayt)
+19:46:14.445 test JS: çalıştı
+19:46:22.044 === açılış: HİSAR TETİK 28.0 (2800), iOS 26.2, iPhone18,3 (simülatör), argümanlar: -hisarJS fetch('https://eminkaan9999-creator.github.io/hisar/tetik/version.json?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){console.log('ağ testi: sürüm '+j.v)}).catch(function(e){console.log('ağ testi hatası: '+e)})
+19:46:22.125 sayfa sürümü 28 (uygulamayla gelen 28)
+19:46:22.239 sayfa açılıyor: /Users/runner/Library/Developer/CoreSimulator/Devices/BC7CEBFB-6B90-4D7E-B85E-BB0102C99F06/data/Containers/Data/Application/49C966AB-14DA-4FEA-9393-67D411C1DD51/Documents/www/index.html
+19:46:23.737 js info: yerel köprü hazır; localStorage 1 anahtar
+19:46:23.925 sayfa hazır: title="Hisar Tetik" ver=28 köprü=function __hn=evet uygulama=evet localStorage=1 yazıtipi=yerel
+19:46:26.017 test JS: çalıştı
+19:46:26.040 js log: ağ testi: sürüm 28
+19:46:30.436 === açılış: HİSAR TETİK 28.0 (2800), iOS 26.2, iPhone18,3 (simülatör), argümanlar: -hisarTest guncelle -sayfa ayarlar/uygulama
+19:46:30.547 sayfa sürümü 28 (uygulamayla gelen 28)
+19:46:30.641 sayfa açılıyor: /Users/runner/Library/Developer/CoreSimulator/Devices/BC7CEBFB-6B90-4D7E-B85E-BB0102C99F06/data/Containers/Data/Application/49C966AB-14DA-4FEA-9393-67D411C1DD51/Documents/www/index.html#ayarlar/uygulama
+19:46:31.531 js info: yerel köprü hazır; localStorage 1 anahtar
+19:46:31.734 sayfa hazır: title="Hisar Tetik" ver=28 köprü=function __hn=evet uygulama=evet localStorage=1 yazıtipi=yerel
+19:46:33.817 test: güncelleme başlıyor
+19:46:33.829 güncelleme: indiriliyor https://eminkaan9999-creator.github.io/hisar/tetik/index.html?t=1794339993819
+19:46:34.013 güncelleme tamam: sürüm 28 (önceki 28); sayfa uygun olunca yeniden açılacak
+19:46:34.015 sayfa açılıyor: /Users/runner/Library/Developer/CoreSimulator/Devices/BC7CEBFB-6B90-4D7E-B85E-BB0102C99F06/data/Containers/Data/Application/49C966AB-14DA-4FEA-9393-67D411C1DD51/Documents/www/index.html
+19:46:34.037 js info: yerel köprü hazır; localStorage 1 anahtar
+19:46:34.084 sayfa hazır: title="Hisar Tetik" ver=28 köprü=function __hn=evet uygulama=evet localStorage=1 yazıtipi=yerel

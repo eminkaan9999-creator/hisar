@@ -56,9 +56,9 @@ const server = http.createServer((req, res) => {
   try {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('.ux-overview').waitFor();
-    assert.equal(await page.evaluate(() => window.ECZ.surum), 7);
+    assert.equal(await page.evaluate(() => window.ECZ.surum), 8);
     assert.equal((await state()).puan, 123);
-    pass('Version 7 boots and preserves existing progress');
+    pass('Version 8 boots and preserves existing progress');
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: width > 900 ? 1000 : 844 });
       await page.waitForTimeout(100);
@@ -105,6 +105,8 @@ const server = http.createServer((req, res) => {
     await page.locator('#ux-large').check();
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('#ux-theme').waitFor();
+    assert.equal(await page.locator('a[href="inventory.html"]').count(), 1);
+    pass('Inventory module is linked from the notebook');
     assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
     assert(await page.locator('#ux-large').isChecked());
     assert(await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.hint')).fontSize) >= 17));

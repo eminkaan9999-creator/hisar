@@ -11,3 +11,41 @@
 :root[data-theme=dark] .bloom-welcome,:root[data-theme=dark] .bloom-garden{background:linear-gradient(130deg,#30232b,#282329);border-color:#58414e;color:#f9e9f1}
 :root[data-theme=dark] .bloom-welcome p,:root[data-theme=dark] .bloom-garden p{color:#e0bdcc}
 @media(prefers-reduced-motion:reduce){.bloom-flower,.bloom-letter,.bloom-splash,.bloom-splash-flower{animation:none!important}.bloom-splash{display:none!important}.bloom-progress>span{transition:none!important}}
+
+/* Kardelen Bloom — complete floral visual system, subtle throughout the app. */
+:root{
+ --bloom-rose:#b65d80;--bloom-petal:#f5dce7;--bloom-leaf:#6a9c7e;
+ --bloom-ornament:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Cg fill='none' stroke='%23bd7895' stroke-width='1.4' opacity='.32'%3E%3Cpath d='M118 145Q108 103 130 68M126 96Q104 89 100 104M127 83Q147 76 145 62'/%3E%3C/g%3E%3Cg fill='%23f2d8e3' opacity='.66'%3E%3Cellipse cx='129' cy='55' rx='8' ry='16' transform='rotate(-15 129 55)'/%3E%3Cellipse cx='116' cy='66' rx='8' ry='15' transform='rotate(-65 116 66)'/%3E%3Cellipse cx='141' cy='67' rx='8' ry='15' transform='rotate(60 141 67)'/%3E%3C/g%3E%3Ccircle cx='129' cy='67' r='5' fill='%23e0c66f'/%3E%3C/svg%3E");
+}
+#view{background-image:radial-gradient(circle at 98% 1%,rgba(236,188,207,.11),transparent 34%);background-attachment:local}
+#view .sec,#view .kt,#view .ux-filters,#view .ux-overview,#view .bloom-garden,#view .bloom-welcome{
+ position:relative;isolation:isolate;
+}
+#view .sec::before,#view .kt::before,#view .ux-filters::before,#view .ux-overview::after,#view .bloom-garden::after,#view .bloom-welcome::after{
+ content:"";position:absolute;right:0;top:0;width:118px;height:118px;pointer-events:none;z-index:-1;
+ background-image:var(--bloom-ornament);background-size:118px 118px;background-repeat:no-repeat;opacity:.55;
+}
+#view .sec,#view .kt{border-radius:18px}
+#view .sec h2,#view .kt h2{position:relative;padding-right:14px}
+#view .row{border-radius:14px}
+#view .row:focus-visible{outline-color:var(--bloom-rose)}
+#view .chip:focus-visible,#view .cta:focus-visible{outline:3px solid var(--bloom-rose);outline-offset:2px}
+.bloom-dock{background-image:linear-gradient(0deg,rgba(245,220,231,.16),transparent 95%);box-shadow:0 -5px 22px #6e36500c}
+.bloom-dock button[aria-current=page]{box-shadow:inset 0 0 0 1px #dcb2c5}
+.bloom-welcome{background-image:linear-gradient(135deg,#fff8fa,#fffdf7),var(--bloom-ornament)}
+.bloom-garden{background-image:linear-gradient(135deg,#fff8fa,#fffdf7),var(--bloom-ornament)}
+.bloom-letter{background-image:var(--bloom-ornament),linear-gradient(160deg,#fffafc,#fffdf6);background-position:right top,center;background-repeat:no-repeat;background-size:150px,cover}
+.bloom-splash{background:radial-gradient(circle at 48% 36%,#fff 0,#fff8fb 43%,#f7e6ef 100%);animation:bloom-exit 2.8s ease-in-out both}
+.bloom-splash::before,.bloom-splash::after{content:"";position:absolute;pointer-events:none;width:160px;height:160px;background:var(--bloom-ornament) center/contain no-repeat;opacity:.7}
+.bloom-splash::before{top:7%;right:4%;transform:rotate(20deg)}
+.bloom-splash::after{bottom:8%;left:2%;transform:rotate(195deg)}
+.bloom-splash-flower{animation:bloom-grow 1.6s cubic-bezier(.22,1,.36,1) both}
+.bloom-splash-flower svg{width:122px;height:137px;filter:drop-shadow(0 8px 12px #9e60732a)}
+.bloom-splash strong{font-size:clamp(20px,5vw,28px);letter-spacing:-.04em;text-align:center}
+.bloom-splash small{font-size:14px;letter-spacing:.04em}
+@keyframes bloom-grow{0%{opacity:0;transform:translateY(18px) scale(.65) rotate(-8deg)}55%{opacity:1;transform:translateY(-5px) scale(1.08) rotate(2deg)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+@keyframes bloom-exit{0%,67%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+@media(max-width:390px){.bloom-splash::before,.bloom-splash::after{width:110px;height:110px}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) #view .sec::before,:root:not([data-theme=light]) #view .kt::before{opacity:.22}}
+:root[data-theme=dark] #view .sec::before,:root[data-theme=dark] #view .kt::before{opacity:.22}
+@media(prefers-reduced-motion:reduce){.bloom-splash,.bloom-splash-flower{animation:none!important}.bloom-splash{display:none!important}}

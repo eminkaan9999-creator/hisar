@@ -61,11 +61,15 @@ if (guardStart >= 0) {
   assert(guardEnd > guardStart, 'Incomplete recovery guard');
   html = html.slice(0, guardStart) + guardTag + html.slice(guardEnd + '</script>'.length);
 } else html = html.replace('</head>', guardTag + '\n</head>');
+// Sürüm numarası ana derlemenin (build.py) yazdığı surum.json'dan gelir; 8'in altına inmez.
+const surumFile = path.join(root, 'surum.json');
+const surum = fs.existsSync(surumFile) ? JSON.parse(fs.readFileSync(surumFile, 'utf8')) : {};
+const release = Math.max(8, Number(surum.surum) || 0);
 let versionFound = false;
 html = html.replace(/window\.ECZ\s*=\s*(\{[^;]+\});/, (_, raw) => {
   const config = JSON.parse(raw);
-  assert(Number(config.surum) <= 8, 'Refusing to downgrade a newer release');
-  config.surum = 8; config.tarih = '10 Kasım 2026'; versionFound = true;
+  assert(Number(config.surum) <= release, 'Refusing to downgrade a newer release');
+  config.surum = release; config.tarih = surum.tarih || '10 Kasım 2026'; versionFound = true;
   return 'window.ECZ=' + JSON.stringify(config) + ';';
 });
 assert(versionFound, 'Missing application version');
@@ -77,9 +81,9 @@ for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
 }
 assert(parsed >= 2, 'Expected original executable scripts');
 fs.writeFileSync(file, html);
-fs.writeFileSync(path.join(root, 'surum.json'), JSON.stringify({ surum: 8, tarih: '10 Kasım 2026', not: 'Arama filtreleri ve devam eden sonuçlar; kişisel notlar, güvenli yedek birleştirme, görünüm ayarları, hızlı gezinme ve raf yakınlaştırma kontrolleri.' }) + '\n');
+if (release > (Number(surum.surum) || 0)) fs.writeFileSync(surumFile, JSON.stringify({ surum: release, tarih: surum.tarih || '10 Kasım 2026', not: surum.not || 'Arama filtreleri ve devam eden sonuçlar; kişisel notlar, güvenli yedek birleştirme, görünüm ayarları, hızlı gezinme ve raf yakınlaştırma kontrolleri.' }) + '\n');
 const swFile = path.join(root, 'sw.js');
 const sw = fs.readFileSync(swFile, 'utf8');
 assert(sw.includes("const KABUK='ecza-kabuk-v2'"), 'Expected v2 cache worker');
 new vm.Script(sw);
-console.log(JSON.stringify({ version: 8, dataSha256: before, inlineScriptsParsed: parsed, preservedData: true, enhancementInstances: 1 }));
+console.log(JSON.stringify({ version: release, dataSha256: before, inlineScriptsParsed: parsed, preservedData: true, enhancementInstances: 1 }));

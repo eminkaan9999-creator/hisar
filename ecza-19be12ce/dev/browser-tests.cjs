@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
   try {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('.ux-overview').waitFor();
-    assert.equal(await page.evaluate(() => window.ECZ.surum), 8);
+    assert.equal(await page.evaluate(() => window.ECZ.surum), Number(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'surum.json'), 'utf8')).surum)); // sürüm surum.json'dan gelir
     assert.equal((await state()).puan, 123);
     pass('Version 8 boots and preserves existing progress');
     for (const width of [320, 390, 768, 1440]) {

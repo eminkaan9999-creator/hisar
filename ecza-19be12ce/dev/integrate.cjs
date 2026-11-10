@@ -54,8 +54,8 @@ else html = html.replace('</head>', style + '\n</head>');
 let versionFound = false;
 html = html.replace(/window\.ECZ\s*=\s*(\{[^;]+\});/, (_, raw) => {
   const config = JSON.parse(raw);
-  assert(Number(config.surum) <= 7, 'Refusing to downgrade a newer release');
-  config.surum = 7; config.tarih = '10 Kasım 2026'; versionFound = true;
+  assert(Number(config.surum) <= 8, 'Refusing to downgrade a newer release');
+  config.surum = 8; config.tarih = '10 Kasım 2026'; versionFound = true;
   return 'window.ECZ=' + JSON.stringify(config) + ';';
 });
 assert(versionFound, 'Missing application version');
@@ -67,11 +67,11 @@ for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
 }
 assert(parsed >= 2, 'Expected original executable scripts');
 fs.writeFileSync(file, html);
-fs.writeFileSync(path.join(root, 'surum.json'), JSON.stringify({ surum: 7, tarih: '10 Kasım 2026', not: 'Arama filtreleri ve devam eden sonuçlar; kişisel notlar, güvenli yedek birleştirme, görünüm ayarları, hızlı gezinme ve raf yakınlaştırma kontrolleri.' }) + '\n');
+fs.writeFileSync(path.join(root, 'surum.json'), JSON.stringify({ surum: 8, tarih: '10 Kasım 2026', not: 'Arama filtreleri ve devam eden sonuçlar; kişisel notlar, güvenli yedek birleştirme, görünüm ayarları, hızlı gezinme ve raf yakınlaştırma kontrolleri.' }) + '\n');
 const swFile = path.join(root, 'sw.js');
 let sw = fs.readFileSync(swFile, 'utf8');
 const old = "const ILK = ['manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png'];";
 const updated = "const ILK = ['manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png', 'ux-improvements.css?v=1'];";
 assert(sw.includes(old) || sw.includes(updated), 'Unexpected service worker precache definition');
 sw = sw.replace(old, updated); new vm.Script(sw); fs.writeFileSync(swFile, sw);
-console.log(JSON.stringify({ version: 7, dataSha256: before, inlineScriptsParsed: parsed, preservedData: true, enhancementInstances: 1 }));
+console.log(JSON.stringify({ version: 8, dataSha256: before, inlineScriptsParsed: parsed, preservedData: true, enhancementInstances: 1 }));

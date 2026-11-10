@@ -70,7 +70,8 @@ html = html.replace(/(<link[^>]+rel=["']manifest["'][^>]*href=["'])[^"']+/, '$1m
 if (!html.includes('apple-touch-icon.png?v=bloom9')) html = html.replace('</head>', '<link rel="apple-touch-icon" href="apple-touch-icon.png?v=bloom9">\n</head>');
 if (!html.includes('manifest.webmanifest?v=bloom9')) html = html.replace('</head>', '<link rel="manifest" href="manifest.webmanifest?v=bloom9">\n</head>');
 // Update the visible app branding without touching medicine data or local storage.
-const dataStart = html.indexOf('<script id="veri">');
+const dataId = html.indexOf('id="veri"');
+const dataStart = dataId >= 0 ? html.lastIndexOf('<script', dataId) : -1;
 assert(dataStart >= 0, 'Medicine data script must be present');
 const dataEnd = html.indexOf('</script>', dataStart);
 assert(dataEnd > dataStart, 'Medicine data closing tag missing');

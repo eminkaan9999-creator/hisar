@@ -1,9 +1,9 @@
 /* HİSAR game 63 / experience 63.1. Independent app caches stay isolated. */
 'use strict';
-const CACHE='hisar-main-v64-controls-1';
+const CACHE='hisar-main-v65-operations-13';
 const BASE=new URL('./',self.location.href);
 const url=p=>new URL(p,BASE).href;
-const CORE=['index.html','three.min.js','manifest.webmanifest','iti/index.html','iti/iti-assistant.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js'];
+const CORE=['index.html','three.min.js','manifest.webmanifest','iti/index.html','iti/iti-assistant.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-sound.js','experience/radio-missions.js','assets/radio/ack.mp3'];
 const OPTIONAL=['icon-192.png','icon-512.png'];
 const STATIC=new Set([...CORE,...OPTIONAL].map(url));
 function pageKey(input){const u=new URL(input);if(u.origin!==BASE.origin)return null;const p=u.pathname;

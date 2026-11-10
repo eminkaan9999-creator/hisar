@@ -1,5 +1,10 @@
 {
-  "v": 64,
+  "v": 65,
   "experience": "63.1",
-  "not": "Termal nişangâh düzeltildi: termal görüntü her karede bir çizim hatasıyla yarıda kesiliyordu, sıcak hedefler görünmüyordu. Artık düşman araçları ve askerler WHT HOT'ta beyaz, BLK HOT'ta siyah görünüyor; arazi gri tonlarda okunuyor. Termalden çıkışta ve hava değişiminde oluşan kısa takılma da kaldırıldı."
+  "not": "Dost tank telsizi: tek tek / tüm birliğe emir, Emredersiniz komutanım yanıtları, çevrimdışı sentetik erkek telsiz sesi; altı farklı hedef akışlı görev. Önceki drone, yeşil termal ve oynanış güncellemeleri bağlı.",
+  "gameplay": "1.2.0",
+  "presentation": "1.1.0",
+  "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",
+  "operations": "1.3.0",
+  "operationNotes": "Karanlıkta Çağrı, Konvoy Yolu, Son İstasyon, Sisli Geçit, Kayıp Kayıt, Kimse Geride Kalmasın. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır."
 }

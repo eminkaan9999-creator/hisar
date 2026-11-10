@@ -1,0 +1,77 @@
+name: HİSAR gameplay refresh validation
+on:
+  push:
+    branches: [feature/gameplay-refresh-20261110]
+  pull_request:
+    paths: ['experience/**', 'scripts/gameplay-*', '.github/workflows/gameplay-refresh.yml']
+permissions:
+  contents: read
+concurrency:
+  group: gameplay-refresh-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply source-guarded integration
+        run: node scripts/gameplay-integrate.cjs
+      - name: Preserve tested source snapshot and provenance
+        run: |
+          mkdir -p gameplay-reports
+          git rev-parse HEAD > gameplay-reports/source-commit.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile, hashlib, json
+          paths=[]
+          for name in ['index.html','three.min.js','version.json','sw.js','manifest.webmanifest','README.md']:
+              if Path(name).is_file(): paths.append(Path(name))
+          for name in ['experience','scripts','iti']:
+              paths.extend(p for p in Path(name).rglob('*') if p.is_file())
+          hashes={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+          with zipfile.ZipFile('gameplay-reports/game-source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in paths: z.write(p,str(p))
+          Path('gameplay-reports/source-hashes.json').write_text(json.dumps(hashes,indent=2))
+          print('Game snapshot:',len(paths),'files; no unrelated sub-apps included')
+          PY
+      - name: Unit and cache regression tests
+        run: |
+          set -o pipefail
+          node --test experience/*.test.cjs 2>&1 | tee gameplay-reports/unit-tests.tap
+      - name: Parse original game scripts
+        run: node scripts/experience-integrate.cjs
+      - name: Test gameplay update in original WebGL game
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node scripts/gameplay-browser.cjs
+      - name: Commit verified integration to development branch only
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/gameplay-refresh-20261110'
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          allowed={'experience/polish.js','sw.js','version.json','scripts/experience-browser.cjs'}
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          if not changed <= allowed: raise SystemExit('Unexpected changes: '+repr(changed-allowed))
+          PY
+          git add experience/polish.js sw.js version.json scripts/experience-browser.cjs
+          if git diff --cached --quiet; then exit 0; fi
+          REMOTE_HEAD=$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)
+          test "$REMOTE_HEAD" = "$EXPECTED_HEAD"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat: integrate verified gameplay 1.2 and presentation 1.1 into existing v64 shell'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git rev-parse HEAD > gameplay-reports/integrated-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gameplay-refresh-results
+          path: gameplay-reports/
+          retention-days: 3

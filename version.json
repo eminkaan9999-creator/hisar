@@ -1,5 +1,8 @@
 {
   "v": 64,
   "experience": "63.1",
-  "not": "Termal nişangâh düzeltildi: termal görüntü her karede bir çizim hatasıyla yarıda kesiliyordu, sıcak hedefler görünmüyordu. Artık düşman araçları ve askerler WHT HOT'ta beyaz, BLK HOT'ta siyah görünüyor; arazi gri tonlarda okunuyor. Termalden çıkışta ve hava değişiminde oluşan kısa takılma da kaldırıldı."
+  "not": "Termal nişangâh düzeltildi: termal görüntü her karede bir çizim hatasıyla yarıda kesiliyordu, sıcak hedefler görünmüyordu. Artık düşman araçları ve askerler WHT HOT'ta beyaz, BLK HOT'ta siyah görünüyor; arazi gri tonlarda okunuyor. Termalden çıkışta ve hava değişiminde oluşan kısa takılma da kaldırıldı.",
+  "gameplay": "1.2.0",
+  "presentation": "1.1.0",
+  "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı."
 }

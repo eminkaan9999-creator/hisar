@@ -3,6 +3,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),http
 const root=process.cwd(),checks=[];
 // beklenen oyun surumu yayimlanan version.json'dan okunur (oyun 63'ten sonra da surum artabilir)
 const GAME_V=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8')).v;
+const CACHE=fs.readFileSync(path.join(root,'sw.js'),'utf8').match(/const CACHE='([^']+)'/)[1];
 const watchdog=setTimeout(()=>{console.error('Browser test exceeded 600 seconds. Completed checks:',checks);process.exit(1);},600000);watchdog.unref();
 const types={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png'};
 const server=http.createServer((req,res)=>{
@@ -56,8 +57,8 @@ function ok(name){checks.push(name);console.log('PASS',name);}
     const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#hx-export').click()]);const report=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(report.schema,1);assert.equal(report.session.xp,120);ok('desktop: JSON report export contains real game values');
     await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>HisarGameBridge.snapshot().state),'play');ok('desktop: Escape resumes the previously running game');
     await page.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;});
-    await page.waitForFunction(async()=>await caches.has('hisar-main-v63.2'));
-    assert.equal(await page.evaluate(async()=>{const c=await caches.open('hisar-main-v63.2');return !!await c.match(new URL('experience/polish.js',location.href).href);}),true);ok('offline: presentation module is included in cache');
+    await page.waitForFunction(async name=>await caches.has(name),CACHE);
+    assert.equal(await page.evaluate(async name=>{const c=await caches.open(name);return !!await c.match(new URL('experience/polish.js',location.href).href);},CACHE),true);ok('offline: presentation module is included in cache');
     await page.goto(base+'iti/');assert.match(await page.title(),/İTİ/);await context.setOffline(true);
     const offlineTitle=await page.evaluate(()=>new Promise((resolve,reject)=>{const f=document.createElement('iframe');f.setAttribute('sandbox','allow-same-origin');f.onload=()=>{try{resolve({title:f.contentDocument.title,integrated:f.contentDocument.documentElement.innerHTML.includes('experience/ui.js?v=63')});}catch(e){reject(e);}};f.onerror=()=>reject(Error('offline navigation failed'));f.src='../?offline=1';document.body.appendChild(f);}));
     assert.match(offlineTitle.title,/HİSAR/);assert.equal(offlineTitle.integrated,true);ok('offline: visiting ITI never replaces the integrated main game shell');

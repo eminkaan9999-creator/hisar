@@ -125,3 +125,18 @@
  // UI can finish loading after this module in inline/offline distributions.
  if(!document.getElementById('hx-settings'))document.addEventListener('hisar:ui-ready',attach,{once:true});
 })(typeof window!=='undefined'?window:globalThis);
+
+// HİSAR presentation/gameplay pack. Sequenced, same-origin and non-blocking.
+(function(root){
+ if(!root.document)return;
+ const script=root.document.currentScript;
+ const base=new URL('./',script&&script.src?script.src:new URL('experience/',root.document.baseURI).href);
+ function load(name,ready,next){
+  if(ready()){next();return;}
+  const id='hisar-load-'+name;if(root.document.getElementById(id))return;
+  const el=root.document.createElement('script');el.id=id;el.src=new URL(name+'.js?v=1.2.0',base).href;
+  el.onload=next;el.onerror=()=>{const n=root.document.getElementById('hx-status');if(n)n.textContent='Yeni oyun modülü yüklenemedi; mevcut oyun korunuyor. GÜNCELLE ile yeniden dene.';};
+  root.document.head.appendChild(el);
+ }
+ load('immersive',()=>!!root.HisarImmersive,()=>load('gameplay',()=>!!root.HisarGameplay,()=>{}));
+})(typeof window!=='undefined'?window:globalThis);

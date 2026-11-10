@@ -1,0 +1,21 @@
+name: Kardelen inventory checks
+on:
+  push:
+    branches: [feature/ecza-v8-inventory-20261110]
+    paths: ['ecza-19be12ce/inventory.html','ecza-19be12ce/dev/inventory-smoke.cjs','.github/workflows/ecza-v8-inventory.yml']
+  pull_request:
+    paths: ['ecza-19be12ce/inventory.html','ecza-19be12ce/dev/inventory-smoke.cjs','.github/workflows/ecza-v8-inventory.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node ecza-19be12ce/dev/inventory-smoke.cjs
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install chromium
+      - run: node ecza-19be12ce/dev/inventory-browser.cjs

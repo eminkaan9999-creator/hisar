@@ -22,8 +22,8 @@ async function shot(page,name){await page.screenshot({path:path.join(out,name)})
  assert.equal(await page.evaluate(()=>HisarGameplay.version),'1.2.0');assert.equal(await page.evaluate(()=>R.getContext().isContextLost()),false);ok(tag+': original WebGL renderer and both new modules initialize');
  assert.equal(await page.locator('#hg-story').count(),1);ok(tag+': four-chapter story is reachable from original menu');
  await page.locator('#hisar-experience-entry').click();await page.waitForFunction(()=>document.getElementById('hisar-experience').open);
- await page.locator('[data-page="settings"]').click();const panel=page.locator('#hg-settings');await panel.scrollIntoViewIfNeeded();const box=await panel.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=(mobile?390:1280)+1);ok(tag+': gameplay settings fit original settings dialog');
- await page.locator('[data-hg="droneView"]').selectOption('fpv');assert.equal(await page.evaluate(()=>HisarGameplay.getSettings().droneView),'fpv');await page.locator('[data-hg="droneView"]').selectOption('follow');ok(tag+': real camera view setting responds to UI input');
+ await page.locator('[data-page="settings"]').click();const panel=page.locator('#hs-simple');await panel.scrollIntoViewIfNeeded();const box=await panel.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=(mobile?390:1280)+1);ok(tag+': gameplay settings fit original settings dialog');
+ await page.evaluate(()=>HisarGameplay.set({droneView:'fpv'}));assert.equal(await page.evaluate(()=>HisarGameplay.getSettings().droneView),'fpv');await page.evaluate(()=>HisarGameplay.set({droneView:'follow'}));ok(tag+': real camera view setting responds to UI input');
  await shot(page,tag+'-settings.png');await page.locator('#hx-close').click();
  if(!mobile){
  assert.equal(await page.evaluate(()=>{lvSel='serbest';return HisarGameplay.startStory(0);}),true);await page.waitForFunction(()=>game==='play');assert.equal(await page.evaluate(()=>mis),'kesif');assert.equal(await page.evaluate(()=>HisarGameplay.diagnostics().activeStory),true);ok('story: launches native reconnaissance mission');

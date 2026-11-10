@@ -1,10 +1,14 @@
 {
-  "v": 66,
+  "v": 67,
   "experience": "63.1",
-  "not": "Tankın içi yenilendi: köşelerde, kutu altlarında ve duvar diplerinde gerçekçi gölgeler; temiz beyaz emaye duvarlar; çelik, pirinç kovan, kauçuk ve boyalı yüzeyler artık farklı parlıyor; kabin içi yansımalar; cihazlarda Türkçe etiket ve plakalar. Komutan kubbesinde tavan yerine gökyüzü görünme hatası giderildi. Telsiz ve görev güncellemesi (65) aynen korunuyor.",
+  "not": "Grafikler artık cihazına göre otomatik. Ayrıntılı görüntü seçeneklerinin yerine yalnız ses, kumanda hassasiyeti ve zorluk bulunan sade ayarlar. Kolay başlangıç; kayıtlar ve önceki görevler korunur. Microsoft erkek telsiz kayıtları normal konuşma hızında; robotik yedek ses kaldırıldı.",
   "gameplay": "1.2.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",
   "operations": "1.3.0",
-  "operationNotes": "Karanlıkta Çağrı, Konvoy Yolu, Son İstasyon, Sisli Geçit, Kayıp Kayıt, Kimse Geride Kalmasın. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır."
+  "operationNotes": "Karanlıkta Çağrı, Konvoy Yolu, Son İstasyon, Sisli Geçit, Kayıp Kayıt, Kimse Geride Kalmasın. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır.",
+  "previousReleaseNotes": "Tankın içi yenilendi: köşelerde, kutu altlarında ve duvar diplerinde gerçekçi gölgeler; temiz beyaz emaye duvarlar; çelik, pirinç kovan, kauçuk ve boyalı yüzeyler artık farklı parlıyor; kabin içi yansımalar; cihazlarda Türkçe etiket ve plakalar. Komutan kubbesinde tavan yerine gökyüzü görünme hatası giderildi. Telsiz ve görev güncellemesi (65) aynen korunuyor.",
+  "simpleSettings": "1.0.0",
+  "radioVoice": "Microsoft Brian Multilingual Neural",
+  "radioSpeed": 1
 }

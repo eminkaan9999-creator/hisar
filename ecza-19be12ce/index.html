@@ -153,6 +153,22 @@
 })();
 
 </script>
+<style id="ecza-bloom-style">
+
+/* Kardelen Bloom: romantic but readable, with motion reduced on request. */
+.bloom-welcome,.bloom-garden{background:linear-gradient(130deg,#fff8fa,#fffdf8);color:#513340;border:1px solid #efdde5;border-radius:22px;padding:20px;margin:0 0 18px;box-shadow:0 8px 25px #8b4e6810}
+.bloom-welcome{display:flex;align-items:center;gap:16px}.bloom-welcome h2,.bloom-garden h2{font:750 clamp(20px,5vw,27px)/1.2 system-ui;margin:5px 0 7px;letter-spacing:-.035em}.bloom-welcome p,.bloom-garden p{font-size:14px;line-height:1.6;margin:5px 0;color:#715663}.bloom-flower{display:inline-flex;flex:none;align-items:center;justify-content:center;background:#f7eaf0;border-radius:50%;width:76px;height:76px;animation:bloom-float 4s ease-in-out infinite}.bloom-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:800;color:#a64d73}.bloom-garden-head{display:flex;align-items:center;gap:12px}.bloom-garden{margin-bottom:20px}.bloom-progress{height:12px;background:#f2e4ea;border-radius:999px;overflow:hidden;margin:15px 0 8px}.bloom-progress>span{display:block;height:100%;background:linear-gradient(90deg,#a96b88,#d995a7);border-radius:inherit;transition:width .45s ease}.bloom-count{font-weight:700}.bloom-secret-trigger{border:1px solid #dfbac9;border-radius:14px;background:#f8e8ef;color:#813c59;min-height:46px;padding:10px 14px;font:700 14px system-ui;cursor:pointer;margin-top:12px}.bloom-secret-trigger:focus-visible,.bloom-close:focus-visible{outline:3px solid #b35a80;outline-offset:3px}
+.bloom-dock{border-top:1px solid #ecd8e1!important}.bloom-dock [aria-current=page]{background:#f7e6ee!important;color:#9a4569!important}
+.bloom-overlay{position:fixed;inset:0;z-index:2147483600;background:#21151cba;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}.bloom-letter{position:relative;width:min(100%,440px);background:linear-gradient(160deg,#fffafc,#fffdf6);color:#50323e;padding:32px 26px;border-radius:24px;text-align:center;box-shadow:0 18px 55px #160b1c55;animation:bloom-appear .4s ease-out}.bloom-letter h2{font-size:26px}.bloom-letter p{line-height:1.7}.bloom-letter-flower{display:flex;justify-content:center}.bloom-letter-flower svg{width:88px;height:98px}.bloom-sign{font-weight:750;color:#9a4569}.bloom-close{position:absolute;top:12px;right:12px;border:0;border-radius:50%;width:44px;height:44px;background:#f4e3eb;color:#6e3650;font-size:26px;cursor:pointer}
+.bloom-splash{pointer-events:none;position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:linear-gradient(145deg,#fff8fb,#fffdf6);color:#7d435c;animation:bloom-exit 1.4s ease-out both}.bloom-splash-flower svg{width:96px;height:108px}.bloom-splash strong{font:750 22px system-ui}.bloom-splash small{font:500 13px system-ui}.bloom-splash-flower{animation:bloom-appear .8s ease-out both}
+@keyframes bloom-float{50%{transform:translateY(-4px)}}@keyframes bloom-appear{from{opacity:0;transform:scale(.92) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}@keyframes bloom-exit{0%,45%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+@media(max-width:390px){.bloom-welcome{gap:10px;padding:14px}.bloom-flower{width:60px;height:60px}.bloom-flower svg{width:43px}.bloom-welcome p{font-size:13px}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .bloom-welcome,:root:not([data-theme=light]) .bloom-garden{background:linear-gradient(130deg,#30232b,#282329);border-color:#58414e;color:#f9e9f1}:root:not([data-theme=light]) .bloom-welcome p,:root:not([data-theme=light]) .bloom-garden p{color:#e0bdcc}}
+:root[data-theme=dark] .bloom-welcome,:root[data-theme=dark] .bloom-garden{background:linear-gradient(130deg,#30232b,#282329);border-color:#58414e;color:#f9e9f1}
+:root[data-theme=dark] .bloom-welcome p,:root[data-theme=dark] .bloom-garden p{color:#e0bdcc}
+@media(prefers-reduced-motion:reduce){.bloom-flower,.bloom-letter,.bloom-splash,.bloom-splash-flower{animation:none!important}.bloom-splash{display:none!important}.bloom-progress>span{transition:none!important}}
+
+</style>
 </head>
 <body>
 <style>
@@ -1955,6 +1971,62 @@ window.addEventListener('hashchange', route);
 
 /* ECZA_ENHANCE_END */
 
+/* ECZA_BLOOM_START */
+/* Kardelen Bloom — personal visual layer, educational progress only. */
+(() => {
+  'use strict';
+  const flower = '<svg viewBox="0 0 80 90" width="52" height="58" aria-hidden="true"><path d="M39 80Q39 57 42 34" stroke="#4b8869" stroke-width="3" fill="none"/><path d="M41 58Q23 46 20 57Q30 65 41 58" fill="#79ae8b"/><path d="M42 37Q19 14 23 6Q43 6 43 37" fill="#fff" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q46 7 61 12Q66 28 43 37" fill="#fefafc" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q35 16 34 8Q53 11 43 37" fill="#f5e9ee" stroke="#b7d7c7" stroke-width="2"/><circle cx="43" cy="37" r="4" fill="#e9c75d"/></svg>';
+  const greeting = () => {
+    const hour = new Date().getHours();
+    return hour < 11 ? 'Günaydın Kardelen' : hour < 18 ? 'Güzel bir gün Kardelen' : 'İyi akşamlar Kardelen';
+  };
+  const flowerCount = () => {
+    const fav = D.fav && typeof D.fav === 'object' ? Object.keys(D.fav).filter(id => Object.prototype.hasOwnProperty.call(U,id) && D.fav[id]).length : 0;
+    const visits = D.son && Array.isArray(D.son) ? D.son.filter(id => Object.prototype.hasOwnProperty.call(U,id)).length : 0;
+    return {fav,visits,petals:Math.min(8,Math.floor((fav+visits)/3))};
+  };
+  const home = vAra;
+  vAra = function(){
+    const html=home();
+    if (S.q.trim() || S.nav.length) return html;
+    return '<section class="bloom-welcome" aria-label="Kardelen karşılama"><span class="bloom-flower">'+flower+'</span><div><span class="bloom-eyebrow">KARDELEN BLOOM</span><h2>'+greeting()+' 🌸</h2><p>Bilginin çiçek açtığı yer. Bugün yeni bir şey keşfetmeye ne dersin?</p></div></section>'+html;
+  };
+  const notebook=vDefter;
+  vDefter=function(){
+    const {fav,visits,petals}=flowerCount();
+    const progress=Math.round(petals/8*100);
+    return '<section class="bloom-garden" aria-label="Öğrenme bahçesi"><div class="bloom-garden-head"><span class="bloom-flower">'+flower+'</span><div><span class="bloom-eyebrow">KARDELEN’İN ÖĞRENME BAHÇESİ</span><h2>Her bilgi bir çiçek 🌷</h2></div></div><p>Favorilerine eklediğin ve tekrar baktığın ürünlerle bahçen gelişiyor.</p><div class="bloom-progress" role="progressbar" aria-label="Bahçe ilerlemesi" aria-valuenow="'+progress+'" aria-valuemin="0" aria-valuemax="100"><span style="width:'+progress+'%"></span></div><p class="bloom-count">'+petals+'/8 yaprak · '+fav+' favori · '+visits+' yakın zamanda görüntülenen ürün</p><p class="hint">Bu, öğrenme motivasyonu içindir; tıbbi yeterlilik ölçümü değildir.</p><button type="button" class="bloom-secret-trigger" data-bloom="surprise">Kardelen’e küçük bir sürpriz ✨</button></section>'+notebook();
+  };
+  const dock=document.querySelector('.ux-dock');
+  if(dock){
+    dock.classList.add('bloom-dock');
+    const names={ara:'Keşfet',gruplar:'İlaçlar',raflar:'Raflar',defterim:'Bahçem'};
+    dock.querySelectorAll('button').forEach(button=>{const label=button.querySelector('span');if(label&&names[button.dataset.id])label.textContent=names[button.dataset.id];});
+  }
+  document.addEventListener('click',e=>{
+    const btn=e.target.closest('[data-bloom="surprise"]');
+    if(!btn)return;
+    if(document.querySelector('#bloom-surprise'))return;
+    const overlay=document.createElement('div');overlay.id='bloom-surprise';overlay.className='bloom-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Kardelen için küçük bir not');
+    overlay.innerHTML='<div class="bloom-letter"><button class="bloom-close" type="button" aria-label="Sürprizi kapat">×</button><div class="bloom-letter-flower">'+flower+'</div><span class="bloom-eyebrow">SANA ÖZEL</span><h2>Sevgili Kardelen 🌸</h2><p>Bu küçük defter, merakının ve öğrendiğin her güzel şeyin yanında olsun diye hazırlandı.</p><p>Her yeni bilgi, senin bahçende açan bir çiçek gibi.</p><p class="bloom-sign">İyi ki varsın. ♡</p></div>';
+    document.body.append(overlay);
+    const close=()=>{overlay.remove();btn.focus({preventScroll:true});document.removeEventListener('keydown',escClose);};
+    const escClose=ev=>{if(ev.key==='Escape')close();};
+    overlay.querySelector('.bloom-close').addEventListener('click',close);
+    overlay.addEventListener('click',ev=>{if(ev.target===overlay)close();});
+    document.addEventListener('keydown',escClose);
+    overlay.querySelector('.bloom-close').focus();
+  });
+  // The splash is decorative and never blocks interaction; no timers or storage resets.
+  const splash=document.createElement('div');
+  splash.className='bloom-splash';
+  splash.setAttribute('aria-hidden','true');
+  splash.innerHTML='<span class="bloom-splash-flower">'+flower+'</span><strong>Kardelen’in İlaç Defteri</strong><small>Bilginin çiçek açtığı yer</small>';
+  document.body.append(splash);
+  splash.addEventListener('animationend',()=>splash.remove(),{once:true});
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)splash.remove();
+})();
+/* ECZA_BLOOM_END */
 /* ---------- başlangıç ---------- */
 { const p = V.ad.split(' '); $('#mowner').textContent = p[0]; $('#mname').textContent = p.slice(1).join(' '); }
 route();

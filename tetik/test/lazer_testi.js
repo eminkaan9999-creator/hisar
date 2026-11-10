@@ -1,5 +1,6 @@
 // Lazer hedef testi (sahte sensör + sahte kamera): hedefi üç dokunuşla tanıtma, lazeri sıfırlama, atışın kağıttaki gerçek
-// yeri (halka puanı, hedef dışı, lazer görülmedi), sensör izi ile birleştirme, telefon kıpırdayınca hedefi izleme, kamera izni.
+// yeri (halka puanı, hedef dışı, lazer görülmedi), sensör izi ile birleştirme, telefon kıpırdayınca hedefi izleme, kamera izni;
+// kamerasız: yalnız sensör ve sensöre takılı lazer (tetik düşünce seçilen süre kadar yanar, oturum sürerken ayar değişince hemen).
 'use strict';
 const { serve, check, section, finish, openApp, chromium, fs, path, sleep } = require('./ortak');
 const PORT = 8829;
@@ -12,7 +13,7 @@ const cm = d => Math.tan(d * Math.PI / 180) * 2500;          // derece → cm (2
   const srv = await serve(PORT); const browser = await chromium.launch();
   const { page, errs, ctx } = await openApp(browser, { port: PORT, init: [FAKE, CAM] });
   const H = (fn, a) => page.evaluate(fn, a);
-  await H(() => { const h = window.__hisar; h.S.mic = 'kapali'; h.S.sensorShotBeep = false; h.S.mode = 'kuru'; h.S.dist = 25; h.S.sound = 'kapali'; h.applyCfg(); h.selectSource('sensor', true); });
+  await H(() => { const h = window.__hisar; h.S.mic = 'kapali'; h.S.sensorShotBeep = false; h.S.mode = 'kuru'; h.S.dist = 25; h.S.sound = 'kapali'; h.S.lazer.on = true; h.applyCfg(); h.selectSource('sensor', true); });   // kamerayla puan açık (kamera bölümü görünsün)
   check(await waitFor(page, () => window.__hisar.ble.st === 'bagli', 9000), 'Sensör bağlandı');
   // atış: 400 ms sonra tetik düşer; nokta [x,y] hedef merkezine göre piksel (tetiğe basılı kaldıkça: 500 ms önce – 300 ms sonra)
   // yol: [başlangıç, bitiş] — nokta tetik düşmeden önceki 150 ms'de başlangıçtan bitişe kayar (sensördeki tetik hareketiyle aynı)
@@ -171,6 +172,40 @@ const cm = d => Math.tan(d * Math.PI / 180) * 2500;          // derece → cm (2
   check(await H(() => !window.__fake.lazerAcik(performance.now())), 'Bağlantı kopunca sensör lazeri söndürdü');
   await H(() => window.__hisar.stopRun(false)); await sleep(1300);
   await H(() => { const h = window.__hisar; h.S.lazer.kip = 'atis'; h.S.lazer.kaynak = 'silah'; h.S.lazer.renk = 'yesil'; });
+
+  section('Kamerasız: yalnız sensör ve lazer');
+  check(await waitFor(page, () => window.__hisar.ble.st === 'bagli' && window.__fake.connected, 15000), 'Sensör yeniden bağlandı');
+  const son0B = () => H(() => (window.__fake.writes.filter(b => b[0] === 0x0B).slice(-1)[0] || []).join(','));
+  await H(() => { const h = window.__hisar, L = h.S.lazer; h.lzKapat(); L.on = false; L.kaynak = 'sensor'; L.renk = 'kirmizi'; L.sn = true; L.kip = 'atis'; L.sure = 250; h.openSetPage('lazer'); }); await sleep(500);
+  const ui = await H(() => ({ cv: !!document.getElementById('lzCv'), sure: !!document.getElementById('lzSure'), sn: !!document.getElementById('lzSn'), kam: !!window.__hisar.LZ.stream, opened: window.__cam.opened }));
+  check(!ui.cv && ui.sure && ui.sn && !ui.kam, 'Kamerayla puan kapalı: sayfada yalnız lazer ayarları, kamera açılmadı', ui);
+  await page.selectOption('#lzSure', '600'); await sleep(200);
+  const oz1 = await H(() => window.__hisar.lzOzet());
+  check(await H(() => window.__hisar.S.lazer.sure === 600) && /tetik düşünce 0,6 sn yanar/.test(oz1), `Yanma süresi 0,6 sn seçildi (özet: ${oz1})`);
+  await H(() => { const h = window.__hisar; while (h.pages.length) h.popPage(); h.openDrill('serbest'); h.startRun(); }); await sleep(800);
+  const k1 = await H(() => { const s = window.__hisar.cur.sess; return { lzR: s.lzR, kyn: s.lzKyn, kip: s.lzKip, kam: !!window.__hisar.LZ.stream }; });
+  k1.y = await son0B();
+  check(/^11,1,\d+,60$/.test(k1.y) && !k1.lzR && k1.kyn === 'sensor' && k1.kip === 'atis' && !k1.kam, 'Kamera olmadan oturum başında sensöre "tetik düşünce 0,6 sn yan" gitti; kamera açılmadı', k1);
+  const tb0 = await H(() => { const F = window.__fake, seq = F.head + 80; F.addShot(seq, { dx: 0, dy: 0, click: null }); return F.t0 + seq * 5; });
+  await sleep(1600);
+  const yan = await H(tb => { const F = window.__fake, s = window.__hisar.cur.sess, q = s.shots[s.shots.length - 1];
+    return { once: F.lazerAcik(tb - 20), bas: F.lazerAcik(tb + 5), son: F.lazerAcik(tb + 580), sonra: F.lazerAcik(tb + 640), n: s.shots.length, lz: q && q.lz }; }, tb0);
+  check(!yan.once && yan.bas && yan.son && !yan.sonra && yan.n === 1 && !yan.lz, 'Tetik düşünce lazer 0,6 sn yandı; atış sensörle ölçüldü (kamera sonucu yok)', yan);
+  await H(() => window.__hisar.openSetPage('lazer')); await sleep(400);
+  await page.selectOption('#lzKip', 'surekli'); await sleep(300);
+  const k2 = await H(() => ({ acik: window.__fake.lazerAcik(performance.now()), kip: window.__hisar.cur.sess.lzKip, sure: !!document.getElementById('lzSure') }));
+  k2.y = await son0B();
+  check(/^11,2,/.test(k2.y) && k2.acik && k2.kip === 'surekli' && !k2.sure, 'Oturum sürerken "Oturum boyunca" seçilince lazer hemen yandı; süre seçimi gizlendi', k2);
+  await page.click('#lzSn'); await sleep(300);
+  const k3 = await H(() => ({ acik: window.__fake.lazerAcik(performance.now()), kyn: window.__hisar.cur.sess.lzKyn, sn: window.__hisar.S.lazer.sn }));
+  k3.y = await son0B();
+  check(/^11,0,/.test(k3.y) && !k3.acik && !k3.kyn && k3.sn === false, '"Oturumlarda lazer yansın" kapatılınca lazer hemen söndü', k3);
+  await H(() => { const h = window.__hisar; while (h.pages.length) h.popPage(); h.stopRun(false); }); await sleep(1300);
+  const n0 = await H(() => window.__fake.writes.filter(b => b[0] === 0x0B).length);
+  await H(() => { const h = window.__hisar; h.openDrill('serbest'); h.startRun(); }); await sleep(800);
+  check(await H(n => window.__fake.writes.filter(b => b[0] === 0x0B).length === n, n0), 'Lazer kapalıyken oturum başında sensöre lazer komutu gitmedi');
+  await H(() => window.__hisar.stopRun(false)); await sleep(1300);
+  await H(() => { const L = window.__hisar.S.lazer; L.sn = true; L.kip = 'atis'; L.sure = 250; L.kaynak = 'silah'; L.renk = 'yesil'; });
 
   section('Kamera izni');
   const izin = await H(async () => { const h = window.__hisar; h.lzKapat(); window.__cam.denied = true; const ok = await h.lzAc(); const o = { ok, hata: h.LZ.hata }; window.__cam.denied = false; return o; });

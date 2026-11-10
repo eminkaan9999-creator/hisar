@@ -1,10 +1,10 @@
 name: Kardelen inventory checks
 on:
   push:
-    branches: [feature/ecza-v8-inventory-20261110]
-    paths: ['ecza-19be12ce/inventory.html','ecza-19be12ce/dev/inventory-smoke.cjs','.github/workflows/ecza-v8-inventory.yml']
+    branches: [feature/ecza-v8-shelfmap-20261110]
+    paths: ['ecza-19be12ce/inventory.html','ecza-19be12ce/dev/**','.github/workflows/ecza-v8-inventory.yml']
   pull_request:
-    paths: ['ecza-19be12ce/inventory.html','ecza-19be12ce/dev/inventory-smoke.cjs','.github/workflows/ecza-v8-inventory.yml']
+    paths: ['ecza-19be12ce/inventory.html','ecza-19be12ce/dev/**','.github/workflows/ecza-v8-inventory.yml']
 permissions:
   contents: read
 jobs:

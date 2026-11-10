@@ -66,6 +66,7 @@
   }
   function sound() {
     safe(() => root.setS(settings.sound ? 1 : 0), null);
+    safe(() => { const im = root.HisarImmersive; if (im?.getSettings?.().radioVoice !== settings.sound) im?.save?.({ radioVoice: settings.sound }); }, null);
     safe(() => { SV.voice = settings.sound ? 1 : 0; SV.radioV = settings.sound ? 1 : 0; }, null);
     if (!settings.sound) { safe(() => root.HisarImmersive?.stop(), null); safe(() => root.HisarRadioSound?.stop(), null); }
   }

@@ -4,12 +4,16 @@ function edit(f,a,b){const s=fs.readFileSync(f,'utf8');if(s.includes(b))return;i
 edit('scripts/gameplay-integrate.cjs','s=>s.includes("const CACHE=\'hisar-main-v64-gameplay-12\'")||s.includes("hisar-main-v65-operations-13")','s=>s.includes("const CACHE=\'hisar-main-v64-gameplay-12\'")||s.includes("hisar-main-v65-operations-13")||s.includes("experience/simple-settings.js")');
 edit('scripts/gameplay-integrate.cjs',"s=>s.includes('const CACHE=fs.readFileSync')","s=>s.includes('const CACHE=fs.readFileSync')||s.includes(\"require('./simple-browser.cjs')\")");
 edit('scripts/radio-integrate.cjs',"plan('sw.js',baseline['sw.js'],s=>s.includes('hisar-main-v65-operations-13')","plan('sw.js',baseline['sw.js'],s=>s.includes('hisar-main-v65-operations-13')||s.includes('experience/simple-settings.js')");
-edit('scripts/radio-integrate.cjs',"s=>s.includes('const VER=65,LOGO=window.HISAR_LOGO;')","s=>s.includes('const VER=65,LOGO=window.HISAR_LOGO;')||s.includes('const VER=66,LOGO=window.HISAR_LOGO;')");
+if(!fs.readFileSync('scripts/radio-integrate.cjs','utf8').includes('return !!m&&+m[1]>=65')){
+edit('scripts/radio-integrate.cjs',"s=>s.includes('const VER=65,LOGO=window.HISAR_LOGO;')","s=>s.includes('const VER=65,LOGO=window.HISAR_LOGO;')||s.includes('const VER=67,LOGO=window.HISAR_LOGO;')");
+}
 edit('experience/immersive.js','  function speak(message) {','  function speak(message) {\n    if (root.HisarRadioSound?.neural) return state.radioVoice && !doc?.hidden ? root.HisarRadioSound.speak(message) : false;');
 edit('experience/immersive.js','  function stop() {','  function stop() {\n    if (root.HisarRadioSound?.neural) root.HisarRadioSound.stop();');
+if(!fs.readFileSync('scripts/radio-browser.cjs','utf8').includes('assert.equal(await p.evaluate(()=>APP_VER),GAME_V)')){
 edit('scripts/radio-browser.cjs',"const root=process.cwd(),out=","const EXPECTED_VERSION=JSON.parse(fs.readFileSync('version.json','utf8')).v;\nconst root=process.cwd(),out=");
 edit('scripts/radio-browser.cjs',"assert.equal(await p.evaluate(()=>APP_VER),65)","assert.equal(await p.evaluate(()=>APP_VER),EXPECTED_VERSION)");
 edit('scripts/radio-browser.cjs',"': build 65 and all modules ready'","': build '+EXPECTED_VERSION+' and all modules ready'");
+}
 edit('scripts/radio-browser.cjs',"ok('offline synthetic male acknowledgement MP3 actually decodes');","assert.equal(audio.source,'microsoft-brian-multilingual-neural');assert.equal(audio.playbackRate,1);ok('Microsoft neural male acknowledgement MP3 decodes at normal 1x speed');");
 const manifest=JSON.parse(fs.readFileSync('assets/radio/neural/manifest.json','utf8'));
 if(manifest.voice!=='en-US-BrianMultilingualNeural'||manifest.rate!=='+0%'||manifest.pitch!=='+0Hz'||manifest.playbackRate!==1)throw Error('Unverified voice bank');

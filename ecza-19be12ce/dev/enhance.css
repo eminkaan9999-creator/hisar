@@ -25,3 +25,24 @@
 @media(min-width:900px){#app>.menu{position:relative;inset:auto}.ux-dock{display:none}.ux-overview{padding:26px 30px}.ux-stats{max-width:620px}.ux-stats strong{font-size:32px}}
 @media(max-width:359px){.ux-grid{grid-template-columns:1fr}.ux-overview{padding:16px}.ux-stats{gap:8px}.ux-stats strong{font-size:23px}.ux-dock button{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.ux-dock *, .ux-overview *{transition:none!important;animation:none!important}}
+
+/* Kardelen visual refresh: lightweight, GPU-friendly motion. */
+:root{--ux-ease:cubic-bezier(.22,1,.36,1)}
+.ux-overview{position:relative;isolation:isolate;background:linear-gradient(145deg,var(--surface),var(--surface-2));animation:ux-enter .52s var(--ux-ease) both}
+.ux-overview::before{content:"";position:absolute;pointer-events:none;z-index:-1;width:210px;height:210px;right:-80px;top:-95px;border-radius:50%;background:radial-gradient(circle,var(--red-soft),transparent 70%);opacity:.75}
+.ux-overview h2{letter-spacing:-.035em;text-wrap:balance}
+.ux-stats>div{border-radius:12px;transition:transform .25s var(--ux-ease)}
+.ux-stats>div:active{transform:scale(.97)}
+.ux-filters{animation:ux-enter .45s var(--ux-ease) both;animation-delay:.05s}
+.ux-dock button{transition:transform .22s var(--ux-ease),background-color .2s,color .2s}
+.ux-dock button:active{transform:scale(.92)}
+.ux-dock [aria-current=page] svg{animation:ux-pop .3s var(--ux-ease) both}
+#view .row,#view .kt,#view .sec,#view .card{transition:transform .2s var(--ux-ease),box-shadow .2s ease}
+#view .row:active,#view .card:active{transform:scale(.985)}
+#view .row:focus-visible,#view button:focus-visible,.ux-dock button:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+.ux-more{transition:transform .2s var(--ux-ease)}
+.ux-more:active{transform:scale(.98)}
+@keyframes ux-enter{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes ux-pop{from{transform:scale(.78)}to{transform:scale(1)}}
+@media(hover:hover) and (pointer:fine){#view .row:hover,#view .card:hover{transform:translateY(-2px);box-shadow:0 7px 22px #00000012}}
+@media(prefers-reduced-motion:reduce){.ux-overview,.ux-filters,.ux-dock [aria-current=page] svg{animation:none!important}#view .row,#view .kt,#view .sec,#view .card,.ux-dock button,.ux-more{transition:none!important;transform:none!important}}

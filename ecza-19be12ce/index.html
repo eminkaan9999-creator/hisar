@@ -51,6 +51,27 @@
 @media(max-width:359px){.ux-grid{grid-template-columns:1fr}.ux-overview{padding:16px}.ux-stats{gap:8px}.ux-stats strong{font-size:23px}.ux-dock button{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.ux-dock *, .ux-overview *{transition:none!important;animation:none!important}}
 
+/* Kardelen visual refresh: lightweight, GPU-friendly motion. */
+:root{--ux-ease:cubic-bezier(.22,1,.36,1)}
+.ux-overview{position:relative;isolation:isolate;background:linear-gradient(145deg,var(--surface),var(--surface-2));animation:ux-enter .52s var(--ux-ease) both}
+.ux-overview::before{content:"";position:absolute;pointer-events:none;z-index:-1;width:210px;height:210px;right:-80px;top:-95px;border-radius:50%;background:radial-gradient(circle,var(--red-soft),transparent 70%);opacity:.75}
+.ux-overview h2{letter-spacing:-.035em;text-wrap:balance}
+.ux-stats>div{border-radius:12px;transition:transform .25s var(--ux-ease)}
+.ux-stats>div:active{transform:scale(.97)}
+.ux-filters{animation:ux-enter .45s var(--ux-ease) both;animation-delay:.05s}
+.ux-dock button{transition:transform .22s var(--ux-ease),background-color .2s,color .2s}
+.ux-dock button:active{transform:scale(.92)}
+.ux-dock [aria-current=page] svg{animation:ux-pop .3s var(--ux-ease) both}
+#view .row,#view .kt,#view .sec,#view .card{transition:transform .2s var(--ux-ease),box-shadow .2s ease}
+#view .row:active,#view .card:active{transform:scale(.985)}
+#view .row:focus-visible,#view button:focus-visible,.ux-dock button:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+.ux-more{transition:transform .2s var(--ux-ease)}
+.ux-more:active{transform:scale(.98)}
+@keyframes ux-enter{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes ux-pop{from{transform:scale(.78)}to{transform:scale(1)}}
+@media(hover:hover) and (pointer:fine){#view .row:hover,#view .card:hover{transform:translateY(-2px);box-shadow:0 7px 22px #00000012}}
+@media(prefers-reduced-motion:reduce){.ux-overview,.ux-filters,.ux-dock [aria-current=page] svg{animation:none!important}#view .row,#view .kt,#view .sec,#view .card,.ux-dock button,.ux-more{transition:none!important;transform:none!important}}
+
 </style>
 <script id="ecza-startup-recovery">
 /* Kardelen startup recovery. No storage or service-worker deletion. */
@@ -1536,7 +1557,7 @@ window.addEventListener('hashchange', route);
     return originalCard(u).replace(/<\/div><\/div>\s*$/, controls + '</div></div>')
       .replace('raftaki muadiller', 'aynı etken maddeyle kayıtlı ürünler');
   };
-  const prefs = () => `<section class="sec"><h2>Stok ve raf yönetimi</h2><p class="hint">Ürün sayımı, son kullanma tarihi, barkod ve raf etiketleri için ayrı yerel envanter modülü.</p><p><a class="cta" href="inventory.html" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Stok ve Raf Yönetimini Aç</a></p><p class="hint">Envanter kayıtları bu cihazda saklanır; farklı cihazlara otomatik aktarılmaz.</p></section><section class="sec"><h2>Görünüm ve yedekleme</h2><div class="ux-filters"><div class="ux-grid"><label>Görünüm<select id="ux-theme">${option('auto', 'Cihaz ayarı', D.ux.theme)}${option('light', 'Açık', D.ux.theme)}${option('dark', 'Koyu', D.ux.theme)}</select></label><label class="ux-check"><input id="ux-large" type="checkbox"${D.ux.large ? ' checked' : ''}> Büyük metin</label></div><p class="hint">Favoriler, öğrenme notları ve oyun ilerlemesi bu tarayıcıdadır. Yedek dosyası kişisel verilerinizi içerebilir; güvenli saklayın.</p><div class="ux-actions"><button class="cta" data-ux="export">Yedeği indir</button><button class="cta ghost" data-ux="import">Yedekten birleştir</button><input type="file" id="ux-import" accept="application/json,.json" hidden></div><div id="ux-import-preview" role="status"></div><p class="hint">İçe aktarma mevcut kayıtları silmez. Çakışan notlarda bu cihazdaki not korunur.</p></div></section>`;
+  const prefs = () => `<section class="sec"><h2>Görünüm ve yedekleme</h2><div class="ux-filters"><div class="ux-grid"><label>Görünüm<select id="ux-theme">${option('auto', 'Cihaz ayarı', D.ux.theme)}${option('light', 'Açık', D.ux.theme)}${option('dark', 'Koyu', D.ux.theme)}</select></label><label class="ux-check"><input id="ux-large" type="checkbox"${D.ux.large ? ' checked' : ''}> Büyük metin</label></div><p class="hint">Favoriler, öğrenme notları ve oyun ilerlemesi bu tarayıcıdadır. Yedek dosyası kişisel verilerinizi içerebilir; güvenli saklayın.</p><div class="ux-actions"><button class="cta" data-ux="export">Yedeği indir</button><button class="cta ghost" data-ux="import">Yedekten birleştir</button><input type="file" id="ux-import" accept="application/json,.json" hidden></div><div id="ux-import-preview" role="status"></div><p class="hint">İçe aktarma mevcut kayıtları silmez. Çakışan notlarda bu cihazdaki not korunur.</p></div></section>`;
   const originalNotebook = vDefter;
   vDefter = function () { return prefs() + originalNotebook(); };
   const nav = document.createElement('nav');

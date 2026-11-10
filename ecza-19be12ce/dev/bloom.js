@@ -31,7 +31,7 @@
   vAra = function(){
     const html=home();
     if (S.q.trim() || S.nav.length) return html;
-    return '<section class="bloom-welcome" aria-label="Kardelen karşılama"><span class="bloom-flower">'+flower+'</span><div><span class="bloom-eyebrow">KARDELEN BLOOM</span><h2>'+greeting()+' 🌸</h2><p>Bilginin çiçek açtığı yer. Bugün yeni bir şey keşfetmeye ne dersin?</p></div></section>'+html;
+    return '<section class="bloom-welcome" aria-label="Kardelen karşılama"><span class="bloom-flower">'+flower+'</span><div><span class="bloom-eyebrow">KARDELEN’İN KÜÇÜK ECZANESİ</span><h2>'+greeting()+' 🌸</h2><p>Bilginin çiçek açtığı yer. Bugün yeni bir şey keşfetmeye ne dersin?</p></div></section>'+html;
   };
   const notebook=vDefter;
   vDefter=function(){
@@ -87,7 +87,7 @@
   const splash=document.createElement('div');
   splash.className='bloom-splash';
   splash.setAttribute('aria-hidden','true');
-  splash.innerHTML='<span class="bloom-splash-flower">'+flower+'</span><strong>Kardelen’in İlaç Defteri</strong><small>Bilginin çiçek açtığı yer</small>';
+  splash.innerHTML='<span class="bloom-splash-flower">'+flower+'</span><strong>Kardelen’in Küçük Eczanesi</strong><small>Bilginin çiçek açtığı yer</small>';
   document.body.append(splash);
   splash.addEventListener('animationend',event=>{if(event.target===splash)splash.remove();});
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)splash.remove();

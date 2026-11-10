@@ -105,6 +105,22 @@ const server = http.createServer((req, res) => {
     await page.locator('#ux-large').check();
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('#ux-theme').waitFor();
+    const settings = page.locator('#view .ux-filters');
+    await settings.waitFor({ state: 'visible' });
+    const panel = await settings.evaluate(el => {
+      const s = getComputedStyle(el), rect = el.getBoundingClientRect(), title = el.previousElementSibling?.getBoundingClientRect();
+      return { opacity: Number(s.opacity), visibility: s.visibility, height: rect.height, gap: title ? rect.top - title.bottom : 0, width: rect.width, x: rect.left };
+    });
+    assert.equal(panel.opacity, 1, 'Notebook settings must not be transparent');
+    assert.equal(panel.visibility, 'visible');
+    assert(panel.height > 180 && panel.height < 950, 'Notebook settings height should fit content');
+    assert(panel.gap >= 0 && panel.gap < 45, 'No oversized blank space above settings');
+    assert(panel.x >= -1 && panel.x + panel.width <= 391, 'Settings must fit iPhone viewport');
+    await page.locator('#ux-theme').scrollIntoViewIfNeeded();
+    assert(await page.locator('#ux-theme').isVisible());
+    assert(await page.locator('[data-ux="export"]').isVisible());
+    pass('Notebook settings visible and compact on iPhone viewport');
+
     assert.equal(await page.locator('a[href="inventory.html"]').count(), 0);
     pass('Confusing inventory shortcut is hidden without deleting data');
     assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');

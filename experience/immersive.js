@@ -91,6 +91,7 @@
     } catch { speaking = null; queue.length = 0; status('Bu tarayıcıda ses başlatılamadı.'); }
   }
   function speak(message) {
+    if (root.HisarRadioSound?.neural) return state.radioVoice && !doc?.hidden ? root.HisarRadioSound.speak(message) : false;
     if (!state.radioVoice || doc?.hidden || typeof root.SpeechSynthesisUtterance !== 'function' ||
       typeof root.speechSynthesis?.speak !== 'function') return false;
     const text = typeof message === 'string' ? message.trim().slice(0, 180) : '';
@@ -101,6 +102,7 @@
     queue.push(text); drain(); return !!speaking || queue.length > 0;
   }
   function stop() {
+    if (root.HisarRadioSound?.neural) root.HisarRadioSound.stop();
     queue.length = 0; clearTimer(watchdog); watchdog = null;
     const owned = speaking; speaking = null;
     if (owned) safe(() => root.speechSynthesis.cancel(), undefined);

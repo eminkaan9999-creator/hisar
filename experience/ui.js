@@ -27,7 +27,8 @@
  function history(){const list=read(HISTORY,[]);return Array.isArray(list)?list.filter(x=>x&&typeof x==='object').slice(-30).map(C.sample):[];}
  function showHistory(){const values=history().slice(-5).reverse();$('hx-history').replaceChildren();if(!values.length){$('hx-history').textContent='Henüz kaydedilmiş oturum yok.';return;}for(const s of values){const row=document.createElement('p'),date=new Date(s.at);row.textContent=(Number.isNaN(date.getTime())?'Oturum':date.toLocaleString('tr-TR'))+' · '+C.duration(s.activeSeconds)+' · '+s.fps+' FPS';$('hx-history').appendChild(row);}}
  function saveSession(notify){if(session.activeSeconds<1){if(notify)status('Kaydetmeden önce oyunu başlat. Menü süresi oturum sayılmaz.');return false;}const values=history().filter(x=>x.id!==session.id);values.push(snapshot());const ok=write(HISTORY,values.slice(-30));if(notify){showHistory();status(ok?'Oturum bu cihazda kaydedildi.':'Tarayıcı kaydetmeye izin vermiyor. JSON raporunu kullanabilirsin.');}return ok;}
- function apply(){document.body.classList.toggle('hisar-cinematic',opts.cinematic);document.body.classList.toggle('hisar-crosshair-contrast',opts.contrastCrosshair);dialog.classList.toggle('hx-large',opts.largeText);$('hx-quality').value=opts.quality;for(const[id,key]of FLAGS)$(id).checked=opts[key];B.auto(opts.autoQuality);if(!opts.showFPS)badge.hidden=true;}
+ function apply(){opts.quality='mevcut';opts.autoQuality=true;opts.cinematic=false;opts.contrastCrosshair=false;opts.showFPS=false;document.body.classList.toggle('hisar-cinematic',opts.cinematic);document.body.classList.toggle('hisar-crosshair-contrast',opts.contrastCrosshair);dialog.classList.toggle('hx-large',opts.largeText);$('hx-quality').value=opts.quality;for(const[id,key]of FLAGS)$(id).checked=opts[key];B.auto(opts.autoQuality);if(!opts.showFPS)badge.hidden=true;}
+ function automatic(){apply();persist();}
  function persist(){if(!write(KEY,opts))status('Ayarlar bu oturumda geçerli; tarayıcı kalıcı kayda izin vermiyor.');}
  function page(name){if(!['settings','session'].includes(name))return;for(const b of dialog.querySelectorAll('[data-page]'))b.setAttribute('aria-pressed',String(b.dataset.page===name));for(const p of ['settings','session'])$('hx-'+p).hidden=p!==name;if(name==='session'){refresh();showHistory();}}
  let last=performance.now(),wasActive=false,lastRefresh=0,windowFrames=0,windowTime=0;
@@ -48,7 +49,7 @@
  addEventListener('blur',()=>{resumeAfter=false;wasActive=false;saveSession(false);});
  addEventListener('pagehide',()=>saveSession(false));addEventListener('storage',e=>{if(e.key===KEY){opts=normalize(read(KEY,{}));apply();if(opts.quality!=='mevcut')B.quality(opts.quality);}});
  apply();if(opts.quality!=='mevcut')B.quality(opts.quality);
- window.HisarExperience=Object.freeze({version:'1.1.0',open,close,snapshot,getSettings:()=>({...opts})});
+ window.HisarExperience=Object.freeze({version:'1.1.0',open,close,snapshot,useAutomatic:automatic,getSettings:()=>({...opts})});
  document.dispatchEvent(new Event('hisar:ui-ready'));
  if(window.HisarPolish)window.HisarPolish.attach();else{try{const s=document.createElement('script');s.src=new URL('polish.js?v=63.1',document.currentScript.src).href;s.onerror=()=>status('Görüntü geliştirme modülü yüklenemedi. GÜNCELLE ile tekrar dene.');document.head.appendChild(s);}catch{status('Görüntü geliştirmeleri için uygulamayı kendi adresinden aç.');}}
 })();

@@ -1,9 +1,9 @@
 /* HİSAR game 63 / experience 63.1. Independent app caches stay isolated. */
 'use strict';
-const CACHE='hisar-main-v65-operations-13';
+const CACHE='hisar-main-v67-simple-1';
 const BASE=new URL('./',self.location.href);
 const url=p=>new URL(p,BASE).href;
-const CORE=['index.html','three.min.js','manifest.webmanifest','iti/index.html','iti/iti-assistant.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-sound.js','experience/radio-missions.js','assets/radio/ack.mp3'];
+const CORE=['index.html','three.min.js','manifest.webmanifest','iti/index.html','iti/iti-assistant.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-sound.js','experience/radio-missions.js','experience/simple-settings.js','assets/radio/ack.mp3','assets/radio/neural/manifest.json','assets/radio/neural/ack.mp3','assets/radio/neural/follow.mp3','assets/radio/neural/hold.mp3','assets/radio/neural/target.mp3','assets/radio/neural/free.mp3','assets/radio/neural/cease.mp3','assets/radio/neural/spread.mp3','assets/radio/neural/back.mp3','assets/radio/neural/regroup.mp3','assets/radio/neural/convoy-wait.mp3','assets/radio/neural/convoy-go.mp3','assets/radio/neural/status.mp3','assets/radio/neural/ready.mp3','assets/radio/neural/phase.mp3','assets/radio/neural/rest.mp3','assets/radio/neural/ground.mp3','assets/radio/neural/air.mp3','assets/radio/neural/drone.mp3','assets/radio/neural/reload.mp3','assets/radio/neural/hit.mp3','assets/radio/neural/success.mp3','assets/radio/neural/failure.mp3','assets/radio/neural/damage.mp3','assets/radio/neural/rescue.mp3','assets/radio/neural/convoy.mp3','assets/radio/neural/relay.mp3','assets/radio/neural/fog.mp3','assets/radio/neural/record.mp3','assets/radio/neural/return.mp3'];
 const OPTIONAL=['icon-192.png','icon-512.png'];
 const STATIC=new Set([...CORE,...OPTIONAL].map(url));
 function pageKey(input){const u=new URL(input);if(u.origin!==BASE.origin)return null;const p=u.pathname;

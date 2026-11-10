@@ -46,7 +46,7 @@
     dock.querySelectorAll('button').forEach(button=>{const label=button.querySelector('span');if(label&&names[button.dataset.id])label.textContent=names[button.dataset.id];});
   }
   // Flower ornaments in the existing red drawer; purely decorative, never block controls.
-  const drawer=document.querySelector('#menunav') || document.querySelector('.menu');
+  const drawer=document.querySelector('#menu') || document.querySelector('.menu');
   if(drawer){
     drawer.classList.add('bloom-floral-drawer');
     if(!drawer.querySelector('.bloom-drawer-flowers')){

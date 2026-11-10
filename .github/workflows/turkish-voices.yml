@@ -1,0 +1,47 @@
+name: HİSAR native Turkish radio
+on:
+  push:
+    branches: [feature/turkish-radio-drone-20261111]
+    paths: ['scripts/turkish-voices.py', '.github/workflows/turkish-voices.yml']
+permissions:
+  contents: write
+concurrency:
+  group: hisar-turkish-voices
+  cancel-in-progress: false
+jobs:
+  voices:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install speech and audio validation tools
+        run: |
+          python -m pip install edge-tts==7.3.1
+          command -v ffmpeg || (sudo apt-get update -qq && sudo apt-get install -y ffmpeg)
+      - name: Generate Turkish Ahmet at normal rate and pitch
+        run: python scripts/turkish-voices.py
+      - name: Preserve verified bank
+        uses: actions/upload-artifact@v4
+        with:
+          name: hisar-native-turkish-voices
+          path: assets/radio/tr/
+          retention-days: 7
+      - name: Commit bank onto latest development branch without overwriting code
+        run: |
+          cp -a assets/radio/tr "$RUNNER_TEMP/hisar-turkish-bank"
+          git fetch origin feature/turkish-radio-drone-20261111
+          git checkout -B voice-result origin/feature/turkish-radio-drone-20261111
+          mkdir -p assets/radio/tr
+          cp -a "$RUNNER_TEMP/hisar-turkish-bank/." assets/radio/tr/
+          git add assets/radio/tr
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'audio: verified Turkish Ahmet commander and squad clips at 1x'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:feature/turkish-radio-drone-20261111; then exit 0; fi
+            git fetch origin feature/turkish-radio-drone-20261111
+            git rebase origin/feature/turkish-radio-drone-20261111
+          done
+          exit 1

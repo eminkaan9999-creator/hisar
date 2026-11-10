@@ -51,6 +51,16 @@ assert.equal(html.split('const originalHome = vAra;').length, 2, 'Exactly one en
 const style = '<style id="ecza-enhance-style">\n' + css + '\n</style>';
 if (html.includes('id="ecza-enhance-style"')) html = html.replace(/<style id="ecza-enhance-style">[\s\S]*?<\/style>/, style);
 else html = html.replace('</head>', style + '\n</head>');
+const guardSource = fs.readFileSync(path.join(__dirname, 'startup-recovery.js'), 'utf8');
+new vm.Script(guardSource);
+assert(!guardSource.includes('</script'), 'Guard cannot close its own script tag');
+const guardTag = '<script id="ecza-startup-recovery">\n' + guardSource + '\n</script>';
+const guardStart = html.indexOf('<script id="ecza-startup-recovery">');
+if (guardStart >= 0) {
+  const guardEnd = html.indexOf('</script>', guardStart);
+  assert(guardEnd > guardStart, 'Incomplete recovery guard');
+  html = html.slice(0, guardStart) + guardTag + html.slice(guardEnd + '</script>'.length);
+} else html = html.replace('</head>', guardTag + '\n</head>');
 let versionFound = false;
 html = html.replace(/window\.ECZ\s*=\s*(\{[^;]+\});/, (_, raw) => {
   const config = JSON.parse(raw);

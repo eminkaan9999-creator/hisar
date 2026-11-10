@@ -177,6 +177,8 @@ const server = http.createServer((req, res) => {
     assert((await page.locator('#ux-results .row').count()) > 0);
     assert.equal((await state()).notes[product.id], note);
     pass('Offline reload, search and local notes work');
+    assert.equal(await page.locator('#ecza-recovery').count(), 0);
+    pass('Startup recovery stays hidden during normal operation');
     assert.deepEqual(errors, []);
     pass('No uncaught browser errors');
   } catch (error) {

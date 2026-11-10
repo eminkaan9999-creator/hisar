@@ -107,7 +107,7 @@ const server = http.createServer((req, res) => {
     await page.waitForTimeout(200);
     await nav('defterim');
     await page.locator('.bloom-garden').waitFor();
-    assert((await page.locator('.bloom-garden').innerText()).includes('Öğrenme bahçesi'));
+    assert((await page.locator('.bloom-garden').innerText()).toLocaleLowerCase('tr').includes('öğrenme bahçesi'));
     await page.locator('[data-bloom="surprise"]').click();
     await page.locator('#bloom-surprise').waitFor();
     assert((await page.locator('#bloom-surprise').innerText()).includes('Sevgili Kardelen'));

@@ -1,5 +1,6 @@
 'use strict';
 require('./kurulus-fixes.cjs');
+require('./kurulus-range-fix.cjs');
 const fs=require('node:fs'),vm=require('node:vm');
 function edit(p,a,b){let s=fs.readFileSync(p,'utf8');if(s.includes(b))return;if(s.split(a).length!==2)throw Error('Unexpected source '+p);s=s.replace(a,b);new vm.Script(s);fs.writeFileSync(p,s);}
 // Measure after the real pause click, not while the game is still advancing before the click.

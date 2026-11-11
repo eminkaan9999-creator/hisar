@@ -57,6 +57,13 @@ const server = http.createServer((req, res) => {
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('.ux-overview').waitFor();
     await page.locator('.bloom-welcome').waitFor();
+    assert((await page.title()).includes('Kardelen’in Küçük Eczanesi'), 'Page title must use full app name');
+    assert((await page.locator('.ux-eyebrow').first().innerText()).includes('KARDELEN’İN KÜÇÜK ECZANESİ'), 'Overview must use full app name');
+    const manifest = JSON.parse(fs.readFileSync(path.join(appRoot,'manifest.webmanifest'),'utf8'));
+    assert.equal(manifest.name,'Kardelen’in Küçük Eczanesi');
+    assert.equal(manifest.short_name,'Küçük Eczanem');
+    pass('Brand consistent across title, overview and installed-app manifest');
+
     assert((await page.locator('.bloom-welcome h2').innerText()).trim().length>8);
     assert.equal(await page.locator('.bloom-dock button').count(), 4);
     pass('Bloom personalized welcome and renamed navigation render');

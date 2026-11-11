@@ -25,6 +25,7 @@ jobs:
           node <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto');
           const base='https://eminkaan9999-creator.github.io/hisar/komuta/';
+          const expected=JSON.parse(fs.readFileSync('komuta/version.json','utf8'));
           const hashes=JSON.parse(fs.readFileSync('komuta/publication-hashes.json','utf8'));
           const entries=Object.entries(hashes).filter(([p])=>!['.nojekyll','_headers'].includes(p));
           for(const [p,h]of entries){if(p.startsWith('/')||p.split('/').includes('..')||!/^[a-f0-9]{64}$/.test(h))throw Error('Invalid receipt');}
@@ -32,12 +33,14 @@ jobs:
           async function get(p,a){const u=new URL(p,base);u.searchParams.set('release',process.env.GITHUB_SHA);u.searchParams.set('attempt',a);const r=await fetch(u,{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error(p+' HTTP '+r.status);return Buffer.from(await r.arrayBuffer());}
           (async()=>{let last;for(let a=1;a<=18;a++){
             try{
-              const v=JSON.parse((await get('version.json',a)).toString());if(v.v!=='1.1.1'||!v.independent)throw Error('Standalone release not yet served');
+              const v=JSON.parse((await get('version.json',a)).toString());if(v.v!==expected.v||!v.independent)throw Error('Standalone release not yet served');
               const verified=[];
               for(let i=0;i<entries.length;i+=8){verified.push(...await Promise.all(entries.slice(i,i+8).map(async([p,h])=>{const b=await get(p,a);if(digest(b)!==h)throw Error(p+' hash mismatch');return {path:p,bytes:b.length,sha256:h};})));}
-              const receipt={url:base,version:v.v,sourceCommit:v.sourceCommit,deployedCommit:process.env.GITHUB_SHA,verifiedAt:new Date().toISOString(),verifiedFiles:verified.length,files:verified};
+              let constructionRemoved=false;
+              if(expected.construction===false){const r=await fetch(new URL('site/index.html?removed='+process.env.GITHUB_SHA,base),{cache:'no-store',signal:AbortSignal.timeout(15000)});if(![404,410].includes(r.status))throw Error('Old construction route is still published');constructionRemoved=true;}
+              const receipt={url:base,version:v.v,sourceCommit:v.sourceCommit,deployedCommit:process.env.GITHUB_SHA,verifiedAt:new Date().toISOString(),constructionRemoved,verifiedFiles:verified.length,files:verified};
               fs.mkdirSync('publication-report',{recursive:true});fs.writeFileSync('publication-report/komuta-live.json',JSON.stringify(receipt,null,2));
-              console.log('LIVE_VERIFIED',JSON.stringify({url:base,version:v.v,files:verified.length}));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'HİSAR KOMUTA 1.1.1: live standalone URL verified; '+verified.length+' files match.\n');return;
+              console.log('LIVE_VERIFIED',JSON.stringify({url:base,version:v.v,constructionRemoved,files:verified.length}));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'HİSAR KOMUTA '+v.v+': live standalone URL verified; '+verified.length+' files match.\n');return;
             }catch(e){last=e;console.log('Check '+a+': '+e.message);if(a<18)await new Promise(r=>setTimeout(r,15000));}
           }throw last;})().catch(e=>{console.error(e);process.exitCode=1;});
           NODE

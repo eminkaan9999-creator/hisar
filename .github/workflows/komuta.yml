@@ -4,7 +4,7 @@ on:
     branches: [hisar-komuta]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: komuta-${{ github.sha }}
   cancel-in-progress: false
@@ -12,9 +12,11 @@ jobs:
   validate:
     if: github.ref == 'refs/heads/hisar-komuta'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -24,21 +26,15 @@ jobs:
           python3 bootstrap.py
           python3 build.py
           set -o pipefail
-          node --test tests/unit.cjs | tee reports/unit.tap
+          node --test tests/unit.cjs tests/native-graphics.test.cjs | tee reports/unit.tap
       - name: Install original game browser tooling
         run: |
           npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
       - name: Walk, select equipment, fire, pick up controller and fly
         run: node tests/browser.cjs
-      - name: Keep readable source only after successful tests
-        run: |
-          test "$(git ls-remote origin refs/heads/hisar-komuta | cut -f1)" = "$GITHUB_SHA" || exit 0
-          git add app build.py README.md tests
-          git rm -r transport
-          if git diff --cached --quiet; then exit 0; fi
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'komuta: retain tested plain sources in independent game branch'
-          git push origin HEAD:hisar-komuta
+      - name: Verify native high graphics and local environment textures
+        run: node tests/native-graphics-browser.cjs
       - name: Preserve test result and exact deployed candidate
         if: always()
         run: |

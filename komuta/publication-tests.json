@@ -1,0 +1,15 @@
+{
+  "checks": [
+    "standalone entry with isolated saves and no sibling game boot",
+    "service worker controls only KOMUTA address",
+    "walking base loads from independent nested URL",
+    "physical range transition and all ten equipment choices",
+    "complete original tank scene and isolated asset paths",
+    "clearing game storage does not change original applications",
+    "three scenes have no uncaught errors or missing local files"
+  ],
+  "errors": [],
+  "failures": [],
+  "scope": "http://127.0.0.1:36199/hisar/komuta/",
+  "note": "Installed runner Chrome via CDP, software WebGL, low test profile and injected station endpoints. Not physical iPhone FPS."
+}

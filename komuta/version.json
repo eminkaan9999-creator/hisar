@@ -1,0 +1,13 @@
+{
+  "name": "HİSAR: KOMUTA",
+  "v": "1.1.1",
+  "independent": true,
+  "changes": [
+    "Yaya üs başlangıcı",
+    "Yakınlık gerektiren poligon ve Uçangöz etkileşimi",
+    "Kişisel yüz modelleri ve kartları kaldırıldı",
+    "Özgün araçlar ve Uçangöz hareketi korundu"
+  ],
+  "sourceCommit": "1de116f4055da9d8845554d05cd688df3736efa7",
+  "publication": "standalone-pages"
+}

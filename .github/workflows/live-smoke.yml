@@ -35,15 +35,15 @@ jobs:
           const base='https://eminkaan9999-creator.github.io/hisar/';
           const expected=JSON.parse(fs.readFileSync('version.json','utf8')).v;
           const paths=['index.html','version.json','sw.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-missions.js','experience/radio-sound.js','experience/simple-settings.js','assets/radio/ack.mp3'].filter(p=>fs.existsSync(p));
-          const manifestPath='assets/radio/neural/manifest.json';
+          const manifestPath='assets/radio/tr/manifest.json';
           const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
           if(fs.existsSync(manifestPath)){
             const m=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-            if(m.voice!=='en-US-BrianMultilingualNeural'||m.rate!=='+0%'||m.pitch!=='+0Hz'||m.playbackRate!==1)throw Error('Unexpected voice bank');
+            if(m.voice!=='tr-TR-AhmetNeural'||m.rate!=='+0%'||m.pitch!=='+0Hz'||m.playbackRate!==1)throw Error('Unexpected voice bank');
             paths.push(manifestPath);
             for(const c of Object.values(m.clips)){
               if(!/^[-a-z0-9]+\.mp3$/.test(c.file))throw Error('Invalid clip filename');
-              const p='assets/radio/neural/'+c.file;
+              const p='assets/radio/tr/'+c.file;
               if(digest(fs.readFileSync(p))!==c.sha256)throw Error('Local voice checksum mismatch: '+p);
               paths.push(p);
             }

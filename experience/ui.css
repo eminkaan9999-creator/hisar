@@ -20,3 +20,55 @@ body.hisar-crosshair-contrast #cross{filter:drop-shadow(0 1px 2px #000) drop-sha
  #menu #gsub{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#menu #gsub button{min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px!important}#menu #gsub small{display:block;margin-left:0}
  @media(min-width:640px){#menu #gsub{grid-template-columns:repeat(4,minmax(0,1fr))}}
  @media(max-width:360px),(max-height:500px){#menu #heroSp{display:none!important}}
+
+/* Portrait phones (≤600px wide): one HUD grid without overlaps.
+   Left column: status, mission card, radio line. Right column: minimap, TELSİZ, context buttons, view bar.
+   Bottom: the dock clears NİŞAN; the coach tip sits above the dock (or the drone remote); the centre message sits under the reticle. */
+@media (max-width:600px) and (orientation:portrait){
+ body{--hudMM:27vw}
+ body #mm{box-sizing:border-box!important;width:var(--hudMM)!important;height:var(--hudMM)!important}
+ body #hr-objective{left:calc(12px + env(safe-area-inset-left,0px))!important;top:calc(113px + env(safe-area-inset-top,0px))!important;width:205px!important}
+ body #hr-radio-entry{top:calc(18px + env(safe-area-inset-top,0px) + var(--hudMM))!important;right:calc(12px + env(safe-area-inset-right,0px))!important}
+ body #ctx{top:calc(70px + env(safe-area-inset-top,0px) + var(--hudMM))!important;right:calc(12px + env(safe-area-inset-right,0px))!important}
+ body #vbar#vbar{top:calc(157px + env(safe-area-inset-top,0px) + var(--hudMM))!important;left:auto!important;right:calc(12px + env(safe-area-inset-right,0px))!important;transform:none!important;align-items:flex-end!important}
+ body #vbar .r:not(.s){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;width:132px!important;max-width:132px!important;overflow:visible!important;padding:4px!important;box-sizing:border-box}
+ body #vbar .r:not(.s) button{min-width:0!important;justify-content:center!important;padding:8px 3px!important;font-size:10.5px!important;white-space:normal!important}
+ body #vbar .r.s{max-width:132px!important}
+ body #radio#radio{left:calc(12px + env(safe-area-inset-left,0px))!important;right:auto!important;bottom:auto!important;transform:none!important;max-width:160px!important;width:auto!important;text-align:left!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:12px!important;line-height:1.3!important;padding:5px 8px!important;box-sizing:border-box}
+ body #msg{top:calc(50% + 46px)!important}
+ body #rec{left:50%!important;transform:translateX(-50%)!important;top:calc(12px + env(safe-area-inset-top,0px))!important}
+ body #uDock{bottom:calc(var(--pad,118px) + 38px + env(safe-area-inset-bottom,0px))!important}
+ body #coach{bottom:calc(var(--pad,118px) + 94px + env(safe-area-inset-bottom,0px))!important}
+ body.dm #coach{bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
+}
+
+/* Drone remote (#kmd) on portrait phones, laid out like the reference controller: two antennas,
+   five status LEDs, mode switch at top centre, gimbal wells in the upper corners, function buttons
+   in the middle, and a wide dark screen along the lower body. Every control keeps its data-k wiring. */
+@media (max-width:600px) and (orientation:portrait){
+ body #kmd{height:clamp(260px,36vh,310px)!important}
+ body #kmd .gr{display:none!important}
+ body #kmd .an{top:0!important;height:26%!important;width:14px!important;border-radius:7px 7px 3px 3px!important;transform:none!important}
+ body #kmd .an.l{left:24%!important;right:auto!important}
+ body #kmd .an.r{right:24%!important;left:auto!important}
+ body #kmd .bd{inset:24% 0 0 0!important;border-radius:36px 36px 46px 46px/18px 18px 34px 34px!important;background:linear-gradient(180deg,#2d3237 0,#1d2024 46%,#121417 100%)!important}
+ body #kmd .bd::before{content:"";position:absolute;left:50%;top:6%;width:84px;height:6px;transform:translateX(-50%);background:radial-gradient(circle,#a6ffb8 0 2.2px,transparent 2.8px) 0 0/17px 6px repeat-x;filter:drop-shadow(0 0 3px rgba(125,224,122,.8))}
+ body #kmd .st{top:40%!important;bottom:auto!important;width:76px!important;height:76px!important;max-width:none!important;max-height:none!important}
+ body #kmd .st.l{left:3%!important;right:auto!important}
+ body #kmd .st.r{right:3%!important;left:auto!important}
+ body #kmd .st small{font-size:7px!important;letter-spacing:0!important;white-space:nowrap}
+ body #kmd .sh{top:27%!important;bottom:auto!important;height:8%!important;width:14%!important;font-size:7.5px!important;letter-spacing:0!important;padding:0 2px!important}
+ body #kmd .sh.l2{left:3%!important;right:auto!important}
+ body #kmd .sh.l1{left:19%!important;right:auto!important}
+ body #kmd .sh.r1{right:19%!important;left:auto!important}
+ body #kmd .sh.r2{right:3%!important;left:auto!important}
+ body #kmd .kz{top:33%!important;bottom:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:110px!important;height:22px!important}
+ body #kmd .rd{width:42px!important;height:42px!important;max-width:none!important;max-height:none!important}
+ body #kmd .h{left:26%!important;right:auto!important;top:42%!important;bottom:auto!important}
+ body #kmd .ps{left:50%!important;right:auto!important;top:42%!important;bottom:auto!important;transform:translateX(-50%)!important;background:radial-gradient(circle at 40% 35%,#ff7a6a,#b3261a)!important;color:#fff!important}
+ body #kmd .c1{left:auto!important;right:26%!important;top:42%!important;bottom:auto!important}
+ body #kmd .tk{left:26%!important;right:auto!important;top:60%!important;bottom:auto!important}
+ body #kmd .c2{left:auto!important;right:26%!important;top:60%!important;bottom:auto!important}
+ body #kmd .bomb{left:50%!important;right:auto!important;top:60%!important;bottom:auto!important;transform:translateX(-50%)!important;width:44px!important;height:44px!important;max-width:none!important;max-height:none!important}
+ body #kmd .sc{left:6%!important;right:6%!important;top:76%!important;bottom:auto!important;height:20%!important}
+}

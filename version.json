@@ -1,7 +1,7 @@
 {
-  "v": 70,
+  "v": 71,
   "experience": "63.1",
-  "not": "Artı kıllar ABD Ordusu'nun herkese açık yayınlarına göre yenilendi: TTS'de merkez nişan noktalı, mil taksimatlı nişan haçı; M105D'de namlu ekseni artısı, mermi cinsine göre balistik mesafe çizgileri, önleme çizgileri ve muharebe nişanı. Kabin parça adları ve görevleri açık kaynaklara göre yeniden yazıldı. Kuruluş (69) ve önceki güncellemeler korunuyor.",
+  "not": "Oyun telsizi artık doğal Türkçe Microsoft Ahmet (tr-TR) erkek sesiyle konuşuyor; Amerikan aksanlı İngilizce ses kullanılmıyor. Dar telefon ekranında görev kartı, TELSİZ, gece görüşü, REC, görünüm çubuğu ve alt gösterge üst üste binmeyecek şekilde yeniden düzenlendi. Dron kumandası; iki anten, LED şeridi, üstte mod anahtarı, ortada tuşlar ve alt ekranla yeniden çizildi. Tüm tuş işlevleri aynı.",
   "gameplay": "1.2.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",
@@ -9,7 +9,7 @@
   "operationNotes": "Karanlıkta Çağrı, Konvoy Yolu, Son İstasyon, Sisli Geçit, Kayıp Kayıt, Kimse Geride Kalmasın. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır.",
   "previousReleaseNotes": "HİSAR Kuruluş: tek hikâye ve üç tam oyun alanı; özgün tanklar, kabinler, şantiye araçları, poligon hedefleri korunur. Ortak Uçangöz, araç/görüş kataloğu, yatay iki elli kontrol ve Türkçe Ahmet sesi. Alanlar geçişle yüklenir; kesintisiz tek arazi değildir.",
   "simpleSettings": "1.0.0",
-  "radioVoice": "Microsoft Brian Multilingual Neural",
+  "radioVoice": "Microsoft Ahmet (tr-TR) Neural",
   "radioSpeed": 1,
   "kurulus": "1.1.0"
 }

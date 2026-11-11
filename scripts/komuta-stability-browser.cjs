@@ -1,0 +1,57 @@
+'use strict';
+const assert=require('node:assert/strict');
+exports.checks=async({ev,child,wait,sleep,send,shot,ok})=>{
+ await ev(child('document.querySelector("#go").click();true'));
+ await wait(child('game==="play"'),45000);
+ await ev(child('keys.w=1;joy.x=.8;joy.y=-.9;hold=1;true'));
+ await ev('document.querySelector("#pause").click();true');
+ await ev(child('KomutaScene.pause(true);KomutaScene.pause(true);true'));
+ assert.equal(await ev(child('game')),'pause');
+ assert.equal(await ev(child('keys.w===0&&joy.x===0&&joy.y===0&&hold===0')),true);
+ await ev('document.querySelector("#resume").click();true');
+ assert.equal(await ev(child('game')),'play');
+ assert.equal(await ev(child('getComputedStyle(document.getElementById("menu")).display')),'none');
+ ok('active tank mission resumes after repeated pause; movement and trigger holds released');
+ await ev(child('dispatchEvent(new Event("blur"));true'));
+ assert.equal(await ev(child('game')),'pause');
+ await ev('document.querySelector("#pause").click();true');
+ await ev('document.querySelector("#resume").click();true');
+ assert.equal(await ev(child('game')),'play');
+ ok('native blur pause resumes without leaving the simulator menu over the game');
+ assert.equal(await ev('document.activeElement===document.querySelector("iframe")'),true);
+ await send('Input.dispatchKeyEvent',{type:'keyDown',key:'w',code:'KeyW',windowsVirtualKeyCode:87});
+ assert.equal(await ev(child('!!keys.w')),true);
+ await send('Input.dispatchKeyEvent',{type:'keyUp',key:'w',code:'KeyW',windowsVirtualKeyCode:87});
+ assert.equal(await ev(child('!!keys.w')),false);ok('keyboard input returns to game frame after parent resume');
+ await ev(child('initAudio();true'));
+ await ev('document.querySelector("#pause").click();true');
+ await ev('document.querySelector("#resume").click();true');
+ await wait(child('AC&&AC.state==="running"'),5000);
+ ok('resume returns existing game audio context to running state');
+ await shot('active-tank');
+ // Existing Uçangöz button and engine; no flight or targeting parameters are changed.
+ await ev(child('document.getElementById("abD").dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,pointerId:9}));true'));
+ await wait(child('mode==="drone"&&DR.on'),10000);
+ await ev('document.querySelector("#pause").click();true');
+ const battery=await ev(child('DR.bat'));await sleep(700);assert.equal(await ev(child('DR.bat')),battery);
+ await ev(child('KomutaScene.pause(true);true'));await ev('document.querySelector("#resume").click();true');
+ assert.equal(await ev(child('game==="play"&&mode==="drone"')),true);
+ ok('native Uçangöz pauses without battery loss and resumes the same flight');
+ await shot('ucangoz');
+ for(const size of [{width:844,height:390},{width:740,height:360}]){
+  await send('Emulation.setDeviceMetricsOverride',{...size,deviceScaleFactor:1,mobile:false});
+  await ev('KomutaHost.status("Tank · İç görünüm ve Uçangöz kontrolü");true');
+  const bounds=await ev('["back","full","pause"].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return {id,x:r.x,right:r.right};})');
+  assert.ok(bounds.every(b=>b.x>=0&&b.right<=size.width));assert.ok(bounds[1].x>=bounds[0].right&&bounds[2].x>=bounds[1].right);
+  await shot('landscape-'+size.width);ok('active game top controls do not overlap at '+size.width+'x'+size.height);
+ }
+ await send('Emulation.setDeviceMetricsOverride',{width:1000,height:600,deviceScaleFactor:1,mobile:false});
+ await ev(child('R.forceContextLoss();true'));
+ await wait('KomutaHost.diagnostics().failed===true');
+ assert.equal(await ev('document.querySelector("#retry").hidden'),false);
+ await shot('recovery');
+ await ev('document.querySelector("#retry").click();true');
+ await wait('KomutaHost.diagnostics().scene==="tank"&&!KomutaHost.diagnostics().loading',120000);
+ assert.equal(await ev(child('KomutaScene.diagnostics().contextLost')),false);assert.equal(await ev('document.querySelectorAll("iframe").length'),1);
+ ok('lost WebGL context offers recovery and retry starts one fresh tank scene');
+};

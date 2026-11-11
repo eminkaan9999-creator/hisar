@@ -1,5 +1,8 @@
 name: HİSAR Kuruluş live verification
 on:
+  push:
+    branches: [main]
+    paths: ['kurulus/**', 'shared/**', '.github/workflows/kurulus-live.yml']
   workflow_dispatch:
   workflow_run:
     workflows: ['pages build and deployment']

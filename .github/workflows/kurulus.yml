@@ -20,7 +20,9 @@ jobs:
         with:
           node-version: '22'
       - name: Expand exact source package
-        run: python3 scripts/kurulus-unpack.py
+        run: |
+          python3 scripts/kurulus-unpack.py
+          node scripts/kurulus-fixes.cjs
       - name: Prepare pinned rendering and verified Turkish voice assets
         run: python3 scripts/kurulus-vendor.py
       - name: Integrate three original games and run all unit checks

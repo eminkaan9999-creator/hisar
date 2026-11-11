@@ -11,7 +11,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -19,11 +19,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Prepare pinned rendering and verified voice assets
+        run: python3 scripts/kurulus-vendor.py
       - name: Apply integration when available
         run: |
+          mkdir -p kurulus-reports
           if [ -f scripts/kurulus-integrate.cjs ]; then node scripts/kurulus-integrate.cjs; fi
-          if [ -d shared ]; then node --test shared/*.test.cjs; fi
-          node --test experience/*.test.cjs
+          if compgen -G 'shared/*.test.cjs' > /dev/null; then node --test shared/*.test.cjs; fi
+          node --test experience/*.test.cjs > kurulus-reports/legacy-tests.tap
       - name: Preserve game sources, no personal chat or unrelated applications
         if: always()
         run: |

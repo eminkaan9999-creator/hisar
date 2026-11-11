@@ -57,5 +57,5 @@
   attempt(()=>R.domElement.addEventListener('webglcontextlost',lost));
   window.KomutaScene=api;H.connect('tank',api);
  },100);
- readyTimeout=setTimeout(()=>{if(!done&&!window.KomutaScene){clearInterval(timer);H.notice('Tank alanı hazırlanamadı. YENİDEN DENE ile açılışı tekrarlayabilirsin.');}},25000);
+ readyTimeout=setTimeout(()=>{if(!done&&!window.KomutaScene){H.notice('Tank alanı hazırlanamadı. YENİDEN DENE ile açılışı tekrarlayabilirsin.');}},25000);
 })();

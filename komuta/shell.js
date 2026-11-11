@@ -48,8 +48,8 @@
  }
  window.KomutaHost=Object.freeze({snapshot:()=>JSON.parse(JSON.stringify(state)),notice,fail,
   connect(scene,engine){
-   if(scene!==kind||!frame||engine?.owner!==frame.contentWindow||typeof engine.pause!=='function'||failed)return false;
-   api=engine;loading=false;clearLoads();$('stage').setAttribute('aria-busy','false');$('loading').hidden=true;$('pause').disabled=false;mute();
+   if(scene!==kind||!frame||engine?.owner!==frame.contentWindow||typeof engine.pause!=='function'||(failed&&api))return false;
+   api=engine;loading=false;failed=false;clearLoads();$('stage').setAttribute('aria-busy','false');$('loading').hidden=true;$('pause').disabled=false;mute();
    metrics.push({scene,readyMs:Math.round(performance.now()-bootAt)});if(metrics.length>30)metrics.shift();if(document.hidden)setPause(true);else frame.contentWindow.focus();return true;
   },
   transfer(next){if(!valid(next)||loading||paused||!api||!canLeave())return false;return load(next);},
@@ -62,7 +62,7 @@
  $('full').onclick=async()=>{try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen?.();if(screen.orientation?.lock)await screen.orientation.lock('landscape');}catch{notice('Yatay kullanmak için ekran dönüş kilidini kapatıp telefonu çevir.');}};
  function rotate(){$('rotation').hidden=innerWidth>=innerHeight;}addEventListener('resize',rotate);rotate();
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&api&&!loading){saveScene();setPause(true);}});
- addEventListener('pagehide',()=>{saveScene();try{api?.pause(true);}catch{}});
+ addEventListener('pagehide',()=>{saveScene();setPause(true);});
  // A page kept in the browser back/forward cache must remain resumable, not disposed.
  if('serviceWorker'in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js',{scope:'./',updateViaCache:'none'}).catch(()=>{});
 })();

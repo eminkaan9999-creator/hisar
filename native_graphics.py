@@ -25,7 +25,8 @@ p.write_text(s)
 p=ROOT/'app/core.js';s=p.read_text();s=s.replace("VERSION='1.0.0'","VERSION='1.1.0'");p.write_text(s)
 p=ROOT/'app/range.inc.js';s=p.read_text()
 s=change(s,"OPT.motion=0;OPT.d3=false;","OPT.motion=0;/* Keep original 3D preference. */")
-s=change(s,"ready:true,paused,shots:S.shots.length","ready:true,paused,threeD:!!(OPT.d3&&G3),rendererReady:!!G3,shots:S.shots.length")
+if 'threeD:!!(OPT.d3&&G3)' not in s:
+    s=change(s,"ready:true,paused,shots:S.shots.length","ready:true,paused,threeD:!!(OPT.d3&&G3),rendererReady:!!G3,shots:S.shots.length")
 s=change(s,"dispose(){disposed=true;S.started=false;S.trig.down=false;saveST();}","dispose(){disposed=true;S.started=false;S.trig.down=false;saveST();if(G3){G3.r.dispose();G3.r.forceContextLoss();G3=null;}}")
 p.write_text(s)
 

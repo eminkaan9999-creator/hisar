@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HİSAR · Uçangöz kumanda testi</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0c100a;color:#d6e6d0;font-family:system-ui,-apple-system,sans-serif;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+#wrap{position:fixed;inset:0;display:grid;grid-template-columns:150px 1fr 48px 150px;gap:10px;padding:10px 14px}
+.col{display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:0}
+.btn{border:none;border-radius:16px;font:700 15px system-ui,sans-serif;color:#f4fff0;touch-action:none;cursor:pointer}
+#markbtn{width:130px;height:58px;background:#2d4a33;border:2px solid #5d8a66}
+#bombbtn{width:130px;height:92px;background:#8b2d1f;border:2px solid #d0603f;font-size:18px;letter-spacing:1px}
+.stick{position:relative;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle at 50% 45%,#1d2f22,#0b130d);border:2px solid #4a6b52;touch-action:none}
+.knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#c9f2cf,#4c7a57);box-shadow:0 3px 10px #000;pointer-events:none}
+#screen{position:relative;min-width:0;min-height:0;border-radius:14px;overflow:hidden;border:2px solid #34503a;background:#06090a}
+#view{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;font:600 12px/1.45 ui-monospace,Menlo,monospace;color:#c8f5cf;text-shadow:0 1px 3px #000;pointer-events:none}
+#hudL{left:10px;top:8px}
+#hudR{right:10px;top:8px;text-align:right}
+#hudB{left:10px;bottom:8px;color:#ffd08a}
+#cross{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border:2px solid rgba(255,90,70,.95);border-radius:50%;pointer-events:none}
+#cross::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:#ff5a46}
+#lock{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;border:2px solid #ffb13b;display:none;pointer-events:none;box-shadow:0 0 10px rgba(255,177,59,.6)}
+#msg{position:absolute;left:50%;top:14%;transform:translateX(-50%);display:none;padding:6px 12px;border-radius:10px;background:rgba(0,0,0,.55);color:#fff;font:600 13px system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+#tilt{position:relative;width:48px;height:100%;border-radius:24px;background:#0f1810;border:2px solid #34503a;touch-action:none}
+#tiltknob{position:absolute;left:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe2b5,#a8723a);box-shadow:0 2px 8px #000;pointer-events:none}
+.tlab{position:absolute;left:0;right:0;text-align:center;font:700 13px system-ui,sans-serif;color:#7fa389;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="col">
+    <button class="btn" id="markbtn">İŞARETLE</button>
+    <div class="stick" id="lstick"><div class="knob"></div></div>
+  </div>
+  <div id="screen">
+    <canvas id="view"></canvas>
+    <div class="hud" id="hudL"><div id="alt">İRTİFA 0 m</div><div id="spd">HIZ 0 km/sa</div><div id="bat">PİL %100</div></div>
+    <div class="hud" id="hudR"><div id="bombs">BOMBA</div><div id="score">İMHA 0/0</div></div>
+    <div class="hud" id="hudB"><span id="lockinfo"></span></div>
+    <div id="cross"></div>
+    <div id="lock"></div>
+    <div id="msg"></div>
+  </div>
+  <div class="col">
+    <div id="tilt"><div class="tlab" style="top:6px">▲</div><div id="tiltknob"></div><div class="tlab" style="bottom:6px">▼</div></div>
+  </div>
+  <div class="col">
+    <button class="btn" id="bombbtn">BOMBA</button>
+    <div class="stick" id="rstick"><div class="knob"></div></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const G=9.8;
+const axis=(p,n)=>(held.has(p)?1:0)-(held.has(n)?1:0);
+const ax=(t,k)=>Math.abs(t)>0.02?t:k;
+
+/* ---- sahne ---- */
+const renderer=new THREE.WebGLRenderer({canvas:$('view'),antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9bb3bf);
+scene.fog=new THREE.Fog(0x9bb3bf,260,1150);
+const camera=new THREE.PerspectiveCamera(70,1.6,0.3,2000);
+camera.rotation.order='YXZ';
+scene.add(new THREE.HemisphereLight(0xffffff,0x4d5e3a,0.95));
+const sun=new THREE.DirectionalLight(0xffffff,0.7);
+sun.position.set(-200,300,120);scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(3000,3000),new THREE.MeshLambertMaterial({color:0x6d7d48}));
+ground.rotation.x=-Math.PI/2;scene.add(ground);
+const coneG=new THREE.ConeGeometry(2.2,6,6),crateG=new THREE.BoxGeometry(4,3,4);
+const treeM=new THREE.MeshLambertMaterial({color:0x3d5a2e}),rockM=new THREE.MeshLambertMaterial({color:0x7d7f78});
+for(let i=0;i<140;i++){
+  const tree=i%3!==0;
+  const m=new THREE.Mesh(tree?coneG:crateG,tree?treeM:rockM);
+  m.position.set((Math.random()-.5)*900,tree?3:1.5,(Math.random()-.5)*900);
+  if(Math.abs(m.position.x)<30&&m.position.z>0)continue;
+  scene.add(m);
+}
+
+/* ---- hedef tanklar ---- */
+const targets=[];
+const tankColors=[0x5b6b38,0x6b5b3a,0x4e5c3a,0x7a6a45];
+function makeTank(color){
+  const g=new THREE.Group();
+  const hull=new THREE.Mesh(new THREE.BoxGeometry(3.4,1.1,6.2),new THREE.MeshLambertMaterial({color}));
+  hull.position.y=0.8;g.add(hull);
+  const tur=new THREE.Mesh(new THREE.BoxGeometry(2.1,0.8,2.6),new THREE.MeshLambertMaterial({color:0x46553a}));
+  tur.position.set(0,1.9,0);g.add(tur);
+  const bar=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,4,8),new THREE.MeshLambertMaterial({color:0x222222}));
+  bar.rotation.x=Math.PI/2;bar.position.set(0,1.9,-3.1);g.add(bar);
+  return g;
+}
+for(let i=0;i<7;i++){
+  const g=makeTank(tankColors[i%tankColors.length]);
+  g.position.set((Math.random()-.5)*340,0,-170-Math.random()*250);
+  g.rotation.y=Math.random()*Math.PI*2;
+  scene.add(g);targets.push({mesh:g,alive:true});
+}
+
+/* ---- durum ---- */
+const drone={pos:new THREE.Vector3(0,45,90),vel:new THREE.Vector3(),yaw:0,vy:0};
+let tilt=-0.3,battery=100,bombs=6,score=0,lock=null,cooldown=0,msgT=0;
+const bombList=[],blasts=[];
+const touch={lx:0,ly:0,rx:0,ry:0};
+const held=new Set();
+const tmp=new THREE.Vector3(),fwd=new THREE.Vector3(),dv=new THREE.Vector3();
+
+function flash(t){const el=$('msg');el.textContent=t;el.style.display='block';msgT=1.8;}
+function inFront(p){camera.getWorldDirection(fwd);dv.copy(p).sub(camera.position);return dv.dot(fwd)>0;}
+
+/* ---- kumanda: sol ve sağ çubuk ---- */
+function makeStick(el,set){
+  const knob=el.querySelector('.knob');
+  let pid=null;
+  function move(e){
+    const r=el.getBoundingClientRect();
+    const t=el.clientWidth/2-28;
+    let x=(e.clientX-(r.left+r.width/2))/t;
+    let y=-(e.clientY-(r.top+r.height/2))/t;
+    const m=Math.hypot(x,y);if(m>1){x/=m;y/=m;}
+    knob.style.transform='translate('+(x*t)+'px,'+(-y*t)+'px)';
+    set(x,y);
+  }
+  function up(e){if(e.pointerId!==pid)return;pid=null;knob.style.transform='translate(0px,0px)';set(0,0);}
+  el.addEventListener('pointerdown',e=>{pid=e.pointerId;el.setPointerCapture(pid);move(e);});
+  el.addEventListener('pointermove',e=>{if(e.pointerId===pid)move(e);});
+  el.addEventListener('pointerup',up);
+  el.addEventListener('pointercancel',up);
+}
+makeStick($('lstick'),(x,y)=>{touch.lx=x;touch.ly=y;});
+makeStick($('rstick'),(x,y)=>{touch.rx=x;touch.ry=y;});
+
+/* ---- kamera açısı: dikey çubuk (yukarı = yukarı bak, aşağı = aşağı bak) ---- */
+const tiltEl=$('tilt');let tpid=null;
+function tiltMove(e){
+  const r=tiltEl.getBoundingClientRect();
+  const t=clamp((e.clientY-r.top)/r.height,0,1);
+  tilt=clamp(0.25-t*1.7,-1.45,0.25);
+}
+tiltEl.addEventListener('pointerdown',e=>{tpid=e.pointerId;tiltEl.setPointerCapture(tpid);tiltMove(e);});
+tiltEl.addEventListener('pointermove',e=>{if(e.pointerId===tpid)tiltMove(e);});
+const tiltEnd=e=>{if(e.pointerId===tpid)tpid=null;};
+tiltEl.addEventListener('pointerup',tiltEnd);
+tiltEl.addEventListener('pointercancel',tiltEnd);
+
+/* ---- bomba ve kilit ---- */
+function bomb(){
+  if(bombs<=0||cooldown>0)return;
+  bombs--;cooldown=0.7;
+  const mesh=new THREE.Mesh(new THREE.SphereGeometry(0.6,8,6),new THREE.MeshBasicMaterial({color:0x202020}));
+  mesh.position.set(drone.pos.x,drone.pos.y-1.5,drone.pos.z);
+  const v=new THREE.Vector3(drone.vel.x,drone.vy,drone.vel.z);
+  let aided=false;
+  if(lock&&lock.alive){
+    // kilitli hedefe düşecek yatay hız: yer çekimiyle düşüş süresi kadar
+    const h=mesh.position.y;
+    const t=(v.y+Math.sqrt(v.y*v.y+2*G*h))/G;
+    v.x=(lock.mesh.position.x-mesh.position.x)/t;
+    v.z=(lock.mesh.position.z-mesh.position.z)/t;
+    aided=true;
+  }
+  scene.add(mesh);bombList.push({mesh,vel:v});
+  flash(aided?'Bomba kilitli hedefe gönderildi':'Bomba bırakıldı');
+}
+function markTarget(){
+  camera.updateMatrixWorld();
+  if(lock){lock=null;flash('Kilit kaldırıldı');return;}
+  let best=null,bd=0.5;
+  for(const tg of targets){
+    if(!tg.alive)continue;
+    tmp.set(tg.mesh.position.x,2,tg.mesh.position.z);
+    if(!inFront(tmp))continue;
+    tmp.project(camera);
+    const d=Math.hypot(tmp.x,tmp.y);
+    if(d<bd){bd=d;best=tg;}
+  }
+  lock=best;
+  flash(best?'Hedef kilitlendi':'Nişanda hedef yok');
+}
+function explode(x,z){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),new THREE.MeshBasicMaterial({color:0xff9a3c,transparent:true,opacity:0.95}));
+  m.position.set(x,2,z);scene.add(m);blasts.push({mesh:m,t:0});
+  let hits=0;
+  for(const tg of targets){
+    if(!tg.alive)continue;
+    if(Math.hypot(tg.mesh.position.x-x,tg.mesh.position.z-z)<11){
+      tg.alive=false;hits++;
+      tg.mesh.traverse(o=>{if(o.isMesh)o.material=new THREE.MeshLambertMaterial({color:0x151515});});
+      tg.mesh.rotation.z=0.3;
+    }
+  }
+  score+=hits;
+  flash(hits?'HEDEF İMHA EDİLDİ':'Iska');
+}
+$('bombbtn').addEventListener('pointerdown',e=>{e.preventDefault();bomb();});
+$('markbtn').addEventListener('pointerdown',e=>{e.preventDefault();markTarget();});
+
+/* ---- klavye (bilgisayarda deneme): WASD ileri-geri/yan, Q-E yükseklik, ok sol-sağ dönüş, ok yukarı-aşağı kamera, Boşluk bomba, M işaretle ---- */
+addEventListener('keydown',e=>{
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+  if(e.repeat)return;
+  held.add(e.code);
+  if(e.code==='Space')bomb();
+  if(e.code==='KeyM')markTarget();
+});
+addEventListener('keyup',e=>held.delete(e.code));
+
+/* ---- güncelleme ---- */
+function updateDrone(dt){
+  const lx=ax(touch.lx,axis('ArrowRight','ArrowLeft'));
+  const ly=ax(touch.ly,axis('KeyE','KeyQ'));
+  const rx=ax(touch.rx,axis('KeyD','KeyA'));
+  const ry=ax(touch.ry,axis('KeyW','KeyS'));
+  drone.yaw-=lx*1.7*dt;
+  drone.vy+=(ly*9-drone.vy)*Math.min(1,dt*3);
+  drone.pos.y+=drone.vy*dt;
+  if(drone.pos.y<2){drone.pos.y=2;if(drone.vy<0)drone.vy=0;}
+  if(drone.pos.y>600)drone.pos.y=600;
+  const fx=-Math.sin(drone.yaw),fz=-Math.cos(drone.yaw);
+  const sx=Math.cos(drone.yaw),sz=-Math.sin(drone.yaw);
+  const tx=fx*ry*16+sx*rx*10,tz=fz*ry*16+sz*rx*10;
+  const k=Math.min(1,dt*2.5);
+  drone.vel.x+=(tx-drone.vel.x)*k;drone.vel.z+=(tz-drone.vel.z)*k;
+  drone.pos.x+=drone.vel.x*dt;drone.pos.z+=drone.vel.z*dt;
+  battery=Math.max(0,battery-dt*(0.2+0.02*(Math.hypot(drone.vel.x,drone.vel.z)+Math.abs(drone.vy))));
+  camera.position.copy(drone.pos);
+  camera.rotation.set(tilt,drone.yaw,0);
+}
+function updateBombs(dt){
+  for(let i=bombList.length-1;i>=0;i--){
+    const b=bombList[i];
+    b.vel.y-=G*dt;
+    b.mesh.position.addScaledVector(b.vel,dt);
+    if(b.mesh.position.y<=0){
+      explode(b.mesh.position.x,b.mesh.position.z);
+      scene.remove(b.mesh);bombList.splice(i,1);
+    }
+  }
+}
+function updateBlasts(dt){
+  for(let i=blasts.length-1;i>=0;i--){
+    const b=blasts[i];b.t+=dt;
+    b.mesh.scale.setScalar(1+b.t*16);
+    b.mesh.material.opacity=Math.max(0,0.95-b.t*1.7);
+    if(b.t>0.6){scene.remove(b.mesh);blasts.splice(i,1);}
+  }
+}
+function updateHUD(){
+  $('alt').textContent='İRTİFA '+Math.round(drone.pos.y)+' m';
+  $('spd').textContent='HIZ '+Math.round(Math.hypot(drone.vel.x,drone.vel.z)*3.6)+' km/sa';
+  $('bat').textContent='PİL %'+Math.round(battery);
+  $('bombs').textContent='BOMBA '+'●'.repeat(bombs)+'○'.repeat(6-bombs);
+  $('score').textContent='İMHA '+score+'/'+targets.length;
+  $('tiltknob').style.top=((0.25-tilt)/1.7*100)+'%';
+  const L=$('lock');
+  if(lock&&lock.alive){
+    const d=Math.hypot(lock.mesh.position.x-drone.pos.x,lock.mesh.position.z-drone.pos.z);
+    $('lockinfo').textContent='KİLİT '+Math.round(d)+' m';
+    tmp.set(lock.mesh.position.x,2,lock.mesh.position.z);
+    if(inFront(tmp)){
+      tmp.project(camera);
+      if(Math.abs(tmp.x)<1&&Math.abs(tmp.y)<1){
+        L.style.display='block';
+        L.style.left=((tmp.x*0.5+0.5)*100)+'%';
+        L.style.top=((-tmp.y*0.5+0.5)*100)+'%';
+      }else L.style.display='none';
+    }else L.style.display='none';
+  }else{
+    L.style.display='none';
+    $('lockinfo').textContent='';
+  }
+}
+function resize(){
+  const el=$('screen');const w=el.clientWidth,h=el.clientHeight;
+  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);resize();
+
+let last=performance.now();
+function frame(now){
+  const dt=clamp((now-last)/1000,0,0.05);last=now;
+  cooldown=Math.max(0,cooldown-dt);
+  if(held.has('ArrowUp'))tilt+=dt*0.9;
+  if(held.has('ArrowDown'))tilt-=dt*0.9;
+  tilt=clamp(tilt,-1.45,0.25);
+  updateDrone(dt);
+  updateBombs(dt);
+  updateBlasts(dt);
+  if(lock&&!lock.alive)lock=null;
+  if(msgT>0){msgT-=dt;if(msgT<=0)$('msg').style.display='none';}
+  renderer.render(scene,camera);
+  updateHUD();
+  requestAnimationFrame(frame);
+}
+flash('Hedefe yaklaş · İŞARETLE ile kilitle · BOMBA ile bırak');
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

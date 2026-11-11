@@ -1915,7 +1915,7 @@ window.addEventListener('hashchange', route);
     let html = originalHome();
     if (S.q.trim() || S.nav.length) return html;
     const count = Object.keys(D.fav).filter(known).length;
-    return `<section class="ux-overview" aria-label="Defter özeti"><div class="ux-eyebrow">KARDELEN’İN İLAÇ DEFTERİ <span class="ux-network" role="status">${navigator.onLine ? 'Çevrimiçi' : 'Çevrimdışı'}</span></div><h2>Defterine hızlı bakış</h2><p>Ürünleri bul, raftaki yerini gör, öğrendiklerini kaydet.</p><div class="ux-stats"><div><strong>${V.urun.length}</strong><span>kayıtlı ürün</span></div><div><strong>${V.foto.length}</strong><span>raf fotoğrafı</span></div><div><strong>${count}</strong><span>favori</span></div></div></section>` + html;
+    return `<section class="ux-overview" aria-label="Defter özeti"><div class="ux-eyebrow">KARDELEN’İN KÜÇÜK ECZANESİ <span class="ux-network" role="status">${navigator.onLine ? 'Çevrimiçi' : 'Çevrimdışı'}</span></div><h2>Defterine hızlı bakış</h2><p>Ürünleri bul, raftaki yerini gör, öğrendiklerini kaydet.</p><div class="ux-stats"><div><strong>${V.urun.length}</strong><span>kayıtlı ürün</span></div><div><strong>${V.foto.length}</strong><span>raf fotoğrafı</span></div><div><strong>${count}</strong><span>favori</span></div></div></section>` + html;
   };
   const originalCard = kartHTML;
   kartHTML = function (u) {
@@ -2079,7 +2079,7 @@ window.addEventListener('hashchange', route);
 /* ECZA_ENHANCE_END */
 
 /* ECZA_BLOOM_START */
-/* Kardelen Bloom — personal visual layer, educational progress only. */
+/* Kardelen’in Küçük Eczanesi — personal visual layer, educational progress only. */
 (() => {
   'use strict';
   const flower = '<svg viewBox="0 0 80 90" width="52" height="58" aria-hidden="true"><path d="M39 80Q39 57 42 34" stroke="#4b8869" stroke-width="3" fill="none"/><path d="M41 58Q23 46 20 57Q30 65 41 58" fill="#79ae8b"/><path d="M42 37Q19 14 23 6Q43 6 43 37" fill="#fff" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q46 7 61 12Q66 28 43 37" fill="#fefafc" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q35 16 34 8Q53 11 43 37" fill="#f5e9ee" stroke="#b7d7c7" stroke-width="2"/><circle cx="43" cy="37" r="4" fill="#e9c75d"/></svg>';

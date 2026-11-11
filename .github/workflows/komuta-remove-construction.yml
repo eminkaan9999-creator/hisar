@@ -21,11 +21,11 @@ jobs:
         run: python3 scripts/komuta-remove-construction.py
       - name: Direct tank, range, cache migration and save isolation
         run: node scripts/komuta-tank-only-browser.cjs
-      - name: Stage only tested game output and version verifier
+      - name: Stage only tested game output
         run: |
           test "$(git ls-remote origin refs/heads/fix/remove-komuta-construction-20261111 | cut -f1)" = "$GITHUB_SHA" || exit 0
-          git add -A -- komuta .github/workflows/komuta-pages-live.yml
-          git diff --cached --name-only | awk '!/^komuta\// && $0 != ".github/workflows/komuta-pages-live.yml" {bad=1} END {exit bad}'
+          git add -A -- komuta
+          git diff --cached --name-only | awk '!/^komuta\// {bad=1} END {exit bad}'
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'komuta 1.2.0: remove construction game, direct tank and range, retain simulator and saves'
           git push origin HEAD:refs/heads/fix/remove-komuta-construction-20261111
           git rev-parse HEAD > tank-only-reports/tested-commit.txt

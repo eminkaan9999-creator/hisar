@@ -14,5 +14,5 @@ if not (root/'build.py').exists():
     print('Verified KOMUTA sources expanded')
 else:
     print('Plain KOMUTA sources already present')
-if (root/'fixes.py').exists():runpy.run_path(str(root/'fixes.py'))
-if (root/'native_graphics.py').exists():runpy.run_path(str(root/'native_graphics.py'))
+for name in ['fixes.py','native_graphics.py','local_range_assets.py']:
+    if (root/name).exists():runpy.run_path(str(root/name))

@@ -1,16 +1,16 @@
 name: KOMUTA standalone publication candidate
 on:
   push:
-    branches: [release/komuta-site-20261111]
+    branches: [release/komuta-site-native-20261111]
 permissions:
   contents: write
 concurrency:
-  group: komuta-standalone-publication
+  group: komuta-standalone-${{ github.sha }}
   cancel-in-progress: false
 jobs:
   prepare:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,14 +31,9 @@ jobs:
           python3 publish_standalone.py
           node --check public/storage-scope.js
           node --check public/sw.js
-      - name: Install browser validation
+      - name: Actual browser checks using preinstalled Chrome
         working-directory: source
-        run: |
-          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
-          npx playwright install --with-deps chromium
-      - name: Check standalone URL, scenes and sibling save isolation
-        working-directory: source
-        run: node tests/standalone-pages.cjs
+        run: node tests/standalone-cdp.cjs
       - name: Create publication branch with only KOMUTA files
         run: |
           test ! -e destination/komuta

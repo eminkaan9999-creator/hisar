@@ -1,6 +1,6 @@
 """Expand the hash-verified source transport once; no network downloads."""
 from pathlib import Path
-import hashlib, io, zipfile
+import hashlib, io, zipfile, runpy
 root=Path(__file__).resolve().parent
 if not (root/'build.py').exists():
     raw=b''.join((root/f'transport/part{i}.bin').read_bytes() for i in range(1,4))
@@ -14,3 +14,4 @@ if not (root/'build.py').exists():
     print('Verified KOMUTA sources expanded')
 else:
     print('Plain KOMUTA sources already present')
+if (root/'fixes.py').exists():runpy.run_path(str(root/'fixes.py'))

@@ -1,3 +1,0 @@
-# kaynak dosyaları her bilgisayarda LF satır sonuyla dursun; derle.js CRLF gelse de doğru derler
-* text=auto eol=lf
-*.jpg binary

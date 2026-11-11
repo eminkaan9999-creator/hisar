@@ -1,7 +1,0 @@
-{
-  "build": 67,
-  "sourceCommit": "c44f2157775e6edbfd9c265f4606ed2c41292351",
-  "purpose": "Republish the tested build 67 after Pages synchronization timeouts.",
-  "gameFilesChanged": false,
-  "publicationStatus": "requested; consult the successful live verification receipt for confirmation"
-}

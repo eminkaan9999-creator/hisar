@@ -1,0 +1,61 @@
+name: HİSAR KOMUTA independent game
+on:
+  push:
+    branches: [hisar-komuta]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: komuta-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/hisar-komuta'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build isolated game and test sources
+        run: |
+          mkdir -p reports
+          python3 bootstrap.py
+          python3 build.py
+          set -o pipefail
+          node --test tests/unit.cjs | tee reports/unit.tap
+      - name: Install original game browser tooling
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Walk, select equipment, fire, pick up controller and fly
+        run: node tests/browser.cjs
+      - name: Keep readable source only after successful tests
+        run: |
+          test "$(git ls-remote origin refs/heads/hisar-komuta | cut -f1)" = "$GITHUB_SHA" || exit 0
+          git add app build.py README.md tests
+          git rm -r transport
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'komuta: retain tested plain sources in independent game branch'
+          git push origin HEAD:hisar-komuta
+      - name: Preserve test result and exact deployed candidate
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib,zipfile,subprocess
+          out=Path('reports');out.mkdir(exist_ok=True)
+          if Path('build-report.json').exists():(out/'build-report.json').write_bytes(Path('build-report.json').read_bytes())
+          files=[p for p in Path('public').rglob('*') if p.is_file()]
+          (out/'hashes.json').write_text(json.dumps({str(p.relative_to('public')):hashlib.sha256(p.read_bytes()).hexdigest() for p in files},indent=2))
+          (out/'source-commit.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD']).decode())
+          with zipfile.ZipFile(out/'tested-site.zip','w',zipfile.ZIP_DEFLATED) as z:
+            for p in files:z.write(p,p.relative_to('public'))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: komuta-validation
+          path: reports/
+          retention-days: 7

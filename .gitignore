@@ -1,0 +1,5 @@
+node_modules/
+public/
+reports/
+__pycache__/
+build-report.json

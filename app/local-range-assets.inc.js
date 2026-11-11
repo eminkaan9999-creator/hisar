@@ -2,6 +2,8 @@
 function realAssets(sc,skyM,ground,r,aniso){
  const T=THREE,ld=new T.TextureLoader(),owner=G3;
  if(!owner||owner.sc!==sc)return;
+ // Same color/output pipeline as the original HİSAR base renderer.
+ r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=.92;
  const status={ground:false,berm:false,foliage:false,errors:[]};owner.localAssets=status;
  function texture(file,rx,ry,done,key){
   ld.load('../site/assets/'+file,t=>{

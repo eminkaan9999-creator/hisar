@@ -1,0 +1,63 @@
+name: KOMUTA standalone publication candidate
+on:
+  push:
+    branches: [release/komuta-site-20261111]
+permissions:
+  contents: write
+concurrency:
+  group: komuta-standalone-publication
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: destination
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build tested independent game and isolate app storage
+        working-directory: source
+        run: |
+          python3 bootstrap.py
+          python3 build.py
+          node --test tests/unit.cjs tests/native-graphics.test.cjs
+          python3 publish_standalone.py
+          node --check public/storage-scope.js
+          node --check public/sw.js
+      - name: Install browser validation
+        working-directory: source
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Check standalone URL, scenes and sibling save isolation
+        working-directory: source
+        run: node tests/standalone-pages.cjs
+      - name: Create publication branch with only KOMUTA files
+        run: |
+          test ! -e destination/komuta
+          cp -a source/public destination/komuta
+          cp source/standalone-hashes.json destination/komuta/publication-hashes.json
+          cp source/standalone-reports/browser.json destination/komuta/publication-tests.json
+          cd destination
+          git switch -c publish/komuta-standalone-20261111
+          git add -- komuta
+          git diff --cached --name-only | awk '!/^komuta\// {bad=1} END {exit bad}'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'publish: standalone HİSAR KOMUTA at own URL without modifying other apps'
+          git push origin HEAD:refs/heads/publish/komuta-standalone-20261111
+          git rev-parse HEAD > ../source/standalone-reports/publication-commit.txt
+      - name: Preserve exact publication verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: komuta-standalone-publication
+          path: |
+            source/standalone-reports/
+            source/standalone-hashes.json
+          retention-days: 7

@@ -17,6 +17,7 @@ rng=required(rng,'new T3.ConeGeometry(rr,h,7),hillMat','new T3.SphereGeometry(rr
 '''
 s=edit(s,needle,replacement);p.write_text(s)
 p=ROOT/'app/range.inc.js';s=p.read_text();s=edit(s,"document.documentElement.classList.add('komuta-scene');","document.documentElement.classList.add('komuta-scene');document.body.classList.add('km-native-range');")
+s=edit(s,"document.body.classList.add('km-native-range');","document.body.classList.add('km-native-range');resize();")
 s=edit(s,"rendererReady:!!G3,shots:","rendererReady:!!G3,localAssetsReady:!!(G3&&G3.localAssets&&G3.localAssets.ground&&G3.localAssets.berm&&G3.localAssets.foliage),localAssetErrors:G3?.localAssets?.errors||[],shots:")
 p.write_text(s)
 p=ROOT/'app/scene.css';s=p.read_text()

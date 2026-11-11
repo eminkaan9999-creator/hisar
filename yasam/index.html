@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#10150f">
+<title>HİSAR SİMÜLATÖR · Yaşam</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0c100a;color:#e4eedc;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;pointer-events:none;text-shadow:0 1px 2px #000}
+#zone{left:12px;top:10px}
+#hint{right:12px;top:12px;font-size:12px;opacity:.8;text-align:right}
+.pill{display:inline-block;background:rgba(10,14,9,.55);border:1px solid rgba(180,210,160,.25);border-radius:8px;padding:5px 9px;margin-bottom:6px;font-size:13px}
+#cross{position:fixed;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;pointer-events:none;display:none}
+#cross:before,#cross:after{content:"";position:absolute;background:rgba(235,255,225,.9)}
+#cross:before{left:6px;top:0;width:2px;height:14px}
+#cross:after{left:0;top:6px;width:14px;height:2px}
+#prompt{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(10,14,9,.74);border:1px solid #9ccc78;border-radius:10px;padding:8px 14px;font-size:15px;display:none;white-space:nowrap;pointer-events:none}
+#prompt b{color:#c8f0a4}
+#toast{position:fixed;left:50%;top:22%;transform:translateX(-50%);background:rgba(10,14,9,.82);border-radius:10px;padding:9px 16px;font-size:15px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#toast.on{opacity:1}
+#ring{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(200,230,180,.35);pointer-events:none;display:none}
+.btn{position:fixed;display:none;align-items:center;justify-content:center;text-align:center;border-radius:50%;width:74px;height:74px;background:rgba(255,255,255,.08);border:2px solid rgba(200,230,180,.32);color:#e8f2de;font:700 12px/1.15 system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+body.touch .btn{display:flex}
+.btn.on{background:rgba(170,220,130,.38)}
+#bAct{right:18px;bottom:112px}
+#bRun{right:108px;bottom:24px}
+#bFire{right:20px;bottom:22px;width:88px;height:88px;background:rgba(220,110,80,.18);border-color:rgba(255,190,160,.42)}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="zone" class="hud"><span class="pill" id="zoneTxt">ÜS</span><br><span class="pill" id="modeTxt">YAYA</span></div>
+<div id="hint" class="hud"></div>
+<div id="cross"></div>
+<div id="prompt"></div>
+<div id="toast"></div>
+<div id="ring"></div>
+<div id="bRun" class="btn" data-b="run">KOŞ</div>
+<div id="bAct" class="btn" data-b="act">ETKİLEŞİM</div>
+<div id="bFire" class="btn" data-b="fire">ATEŞ</div>
+<script src="../three.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/world.js"></script>
+<script src="js/player.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

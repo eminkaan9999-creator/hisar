@@ -1,7 +1,7 @@
 # HİSAR SİMÜLATÖR · Yaşam (yasam/)
 
 Tek sahne, tek döngü, tek dünya. Yükleme sırası (index.html):
-`core → world → player → tank-model → tank → rifle-data → rifle → main`
+`core → world → player → tank-model → tank → rifle-data → rifle → drone → main`
 Sıra önemli: önce kayıt olan modül öncelikli (istem, E tuşu tüketimi).
 
 ## Modüller
@@ -12,13 +12,14 @@ Sıra önemli: önce kayıt olan modül öncelikli (istem, E tuşu tüketimi).
 - **tank.js**: garajdan çıkarma (E), binme/inme, sürüş, kule ve namlu, ana top, poligon hedeflerine isabet.
 - **rifle-data.js**: poligon tüfek kataloğu (10 silah). Kaynak: `poligon/index.html` `RIFLES`.
 - **rifle.js**: silah rafı menüsü, nişan (ADS), otomatik ateş, şarjör, balistik düşüş.
+- **drone.js**: Uçangöz. Şantiye rampası (E). DJI tarzı kumanda: sol çubuk dönüş ve irtifa, sağ çubuk ileri-geri ve yan, sütun kamera açısı, İŞARETLE, BOMBA, İNİŞ. Kilit, hedefe öncülük, 11 m patlama, pil. İniş: L (3 m altında) ya da pil bitince; rampada pil ve bombalar dolar. Hedefler: poligon plakaları.
 - **main.js**: bölge adı, E etkileşimleri (`H.actions`).
 
 ## Durum
 - [x] Üs, Şantiye, Poligon, yollar, yürüme, çarpışma
 - [x] M60A3: garajdan çıkar, bin, sür, ateş et, in
 - [x] Poligon tüfekleri (10 silah), nişan, otomatik ateş, şarjör
-- [ ] Uçangöz (drone): `yasam/kumanda-testi.html` içindeki DJI tarzı kontrol dünyaya bağlanacak
+- [x] Uçangöz (drone): DJI tarzı kumanda dünyaya bağlandı (kaynak: `yasam/kumanda-testi.html`)
 - [ ] Şantiye iş makineleri ve drone parkuru (kaynak: `santiye-250888c5/index.html`)
 - [ ] Diğer tanklar ve garaj menüsü (kaynak: kök `index.html` `TK` ve `BUILD`)
 - [ ] Tank iç görünümü: diğer sohbetteki güncellemeler bekleniyor
@@ -30,5 +31,5 @@ Sıra önemli: önce kayıt olan modül öncelikli (istem, E tuşu tüketimi).
 - Ana dala ya da Pages'e çıkmadan önce kullanıcı onayı alınır. Şimdilik yalnız `yasam-simulatoru` dalında çalışılır.
 
 ## Test
-Headless Chromium ile (`scratchpad/yasam-*.js`): açılış, yürüme, çarpışma, tank akışı, tüfek akışı. Sayfa hatası yok.
+Headless Chromium ile (`scratchpad/yasam-*.js`): açılış, yürüme, çarpışma, tank akışı, tüfek akışı, drone akışı (kalkış, uçuş, dokunma çubukları, kilit, bomba, iniş). Sayfa hatası yok.
 Kamera notu: `getWorldDirection` bu sürümde kameranın ileri yönünü veriyor; ışın için `quaternion` ile `(0,0,-1)` kullanılır.

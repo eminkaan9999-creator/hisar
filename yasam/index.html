@@ -40,6 +40,28 @@ body.touch .btn{display:flex}
 .ritem span{font-size:12px;opacity:.75}
 .ritem:active{background:rgba(170,220,130,.25)}
 #rclose{align-self:flex-end;background:transparent;border:1px solid rgba(180,210,160,.4);color:#e8f2de;border-radius:8px;padding:7px 14px;font:14px system-ui,sans-serif}
+/* Uçangöz kumandası: yalnız body.drone iken görünür */
+#dkui{display:none;position:fixed;inset:0;pointer-events:none;z-index:8;font-family:system-ui,-apple-system,sans-serif}
+body.drone #dkui{display:block}
+body.drone #hint,body.drone .btn,body.drone #ring{display:none!important}
+.dstat{position:absolute;font:600 13px/1.5 ui-monospace,Menlo,monospace;color:#d8f7dc;text-shadow:0 1px 3px #000;background:rgba(8,12,8,.5);border:1px solid rgba(180,210,160,.25);border-radius:8px;padding:6px 9px}
+#dL{left:12px;top:84px}
+#dR{right:12px;top:12px;text-align:right}
+#dCross{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border:2px solid rgba(255,90,70,.95);border-radius:50%}
+#dCross:after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:#ff5a46}
+#dLockBox{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;border:2px solid #ffb13b;display:none;box-shadow:0 0 10px rgba(255,177,59,.6)}
+.kstick{position:absolute;bottom:18px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(29,47,34,.85),rgba(11,19,13,.85));border:2px solid rgba(120,160,130,.6);pointer-events:auto;touch-action:none}
+#dls{left:18px}
+#drs{right:18px}
+.kknob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#c9f2cf,#4c7a57);box-shadow:0 3px 10px #000;pointer-events:none}
+#dtilt{position:absolute;right:22px;top:100px;height:34%;width:44px;border-radius:22px;background:#0f1810;border:2px solid rgba(120,160,130,.6);pointer-events:auto;touch-action:none}
+#dtiltk{position:absolute;left:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffe2b5,#a8723a);box-shadow:0 2px 8px #000;pointer-events:none}
+.tlab{position:absolute;left:0;right:0;text-align:center;font:700 13px system-ui,sans-serif;color:#7fa389;pointer-events:none}
+.kbtns{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:18px;align-items:flex-end;pointer-events:auto}
+.kbtn{border:2px solid rgba(255,255,255,.4);border-radius:50%;width:64px;height:64px;background:rgba(20,28,20,.6);color:#f4fff0;font:700 11px/1.1 system-ui,sans-serif;touch-action:none;-webkit-user-select:none;user-select:none;pointer-events:auto}
+.kbtn.mark{width:auto;height:48px;border-radius:14px;padding:0 14px;white-space:nowrap}
+.kbtn.bomb{width:84px;height:84px;background:rgba(139,45,31,.85);border-color:rgba(255,160,130,.7);font-size:14px}
+#dLand{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:auto;height:34px;border-radius:10px;padding:0 12px;white-space:nowrap;pointer-events:auto}
 </style>
 </head>
 <body>
@@ -62,6 +84,20 @@ body.touch .btn{display:flex}
     <button id="rclose">Kapat (Esc)</button>
   </div>
 </div>
+<div id="dkui" class="kui">
+  <div class="dstat" id="dL"><div id="dAlt">İRTİFA 0 m</div><div id="dSpd">HIZ 0 km/sa</div><div id="dBat">PİL %100</div><div id="dLockInfo"></div></div>
+  <div class="dstat" id="dR"><div id="dBombs">BOMBA</div><div id="dScore">İMHA 0/0</div></div>
+  <div id="dCross"></div>
+  <div id="dLockBox"></div>
+  <button class="kbtn" id="dLand">İNİŞ · L</button>
+  <div class="kstick" id="dls"><div class="kknob"></div></div>
+  <div class="kstick" id="drs"><div class="kknob"></div></div>
+  <div id="dtilt"><span class="tlab" style="top:6px">▲</span><div id="dtiltk"></div><span class="tlab" style="bottom:6px">▼</span></div>
+  <div class="kbtns">
+    <button class="kbtn mark" id="dMark">İŞARETLE</button>
+    <button class="kbtn bomb" id="dBomb">BOMBA</button>
+  </div>
+</div>
 <script src="../three.min.js"></script>
 <script src="js/core.js"></script>
 <script src="js/world.js"></script>
@@ -70,6 +106,7 @@ body.touch .btn{display:flex}
 <script src="js/tank.js"></script>
 <script src="js/rifle-data.js"></script>
 <script src="js/rifle.js"></script>
+<script src="js/drone.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

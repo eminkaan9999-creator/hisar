@@ -18,7 +18,10 @@
       if (H.tank.spawn()) H.toast('Tank garajdan çıkarıldı · yanına git, E ile bin.', 3200);
       else H.toast('Tank zaten dışarıda · yanına git, E ile bin.');
     },
-    rack: function () { H.rifle.openMenu(); }
+    rack: function () { H.rifle.openMenu(); },
+    drone: function () {
+      if (!H.drone.launch()) H.toast('Uçangöz zaten havada.');
+    }
   };
 
   function zoneName(x, z) {

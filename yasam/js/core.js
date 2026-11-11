@@ -199,7 +199,7 @@
   var STICK_R = 60;
   window.addEventListener('pointerdown', function (e) {
     if (!isTouch || e.pointerType === 'mouse' || H.uiOpen) return;
-    if (e.target && e.target.closest && e.target.closest('.btn')) return;
+    if (e.target && e.target.closest && e.target.closest('.btn, .kui')) return;   // düğmeler ve drone kumandası kendi olaylarını yönetir
     if (e.clientX < window.innerWidth * 0.45 && stickId === null) {
       stickId = e.pointerId;
       stickBase = { x: e.clientX, y: e.clientY };

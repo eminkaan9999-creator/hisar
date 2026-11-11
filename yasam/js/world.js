@@ -16,6 +16,14 @@
   H.targets = [];
   H.spawn = { x: 0, z: 28, yaw: 0 };
 
+  // hedefi vur: plaka/boya gizlenir, respawn sn sonra geri gelir (tank.js yeniler)
+  H.killTarget = function (t, respawn) {
+    t.alive = false;
+    if (t.plate) t.plate.visible = false;
+    if (t.bull) t.bull.visible = false;
+    t.respawn = respawn === undefined ? 12 : respawn;
+  };
+
   var C = {
     grassA: 0x6f7649, grassB: 0x8d9463, dust: 0xa99b76, sand: 0xb8a77f,
     road: 0x5a5751, concrete: 0x9c9b93, olive: 0x66703f, tan: 0xb7ab86,
@@ -103,11 +111,12 @@
   block(232, 296, 8, 8.4, -116, -84, C.steel, false);           // çatı
   H.anchors.push({ id: 'garaj', label: 'Garajdan tank çıkar', x: 264, z: -78, r: 6 });
 
-  // istif kasalar ve Uçangöz rampası (sonraki dilimlerde bağlanır)
+  // istif kasalar ve Uçangöz rampası (drone.js kalkışı bağlar)
   block(160, 168, 0, 2.6, -48, -40, C.yellow);
   block(160, 168, 2.6, 5.2, -48, -40, C.yellow);
   block(176, 186, 0, 2.6, -70, -62, C.rust);
   floor(186, 214, 22, 50, C.concrete, 0.03);
+  H.anchors.push({ id: 'drone', label: 'Uçangözü başlat', x: 200, z: 36, r: 6 });
 
   // ---------- POLİGON ----------
   floor(-300, -120, -430, -80, C.dust, 0.02);

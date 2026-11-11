@@ -1,4 +1,4 @@
-/* Kardelen Bloom — personal visual layer, educational progress only. */
+/* Kardelen’in Küçük Eczanesi — personal visual layer, educational progress only. */
 (() => {
   'use strict';
   const flower = '<svg viewBox="0 0 80 90" width="52" height="58" aria-hidden="true"><path d="M39 80Q39 57 42 34" stroke="#4b8869" stroke-width="3" fill="none"/><path d="M41 58Q23 46 20 57Q30 65 41 58" fill="#79ae8b"/><path d="M42 37Q19 14 23 6Q43 6 43 37" fill="#fff" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q46 7 61 12Q66 28 43 37" fill="#fefafc" stroke="#b7d7c7" stroke-width="2"/><path d="M43 37Q35 16 34 8Q53 11 43 37" fill="#f5e9ee" stroke="#b7d7c7" stroke-width="2"/><circle cx="43" cy="37" r="4" fill="#e9c75d"/></svg>';

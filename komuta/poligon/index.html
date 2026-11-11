@@ -2235,7 +2235,7 @@ function realAssets(sc,skyM,ground,r,aniso){
  r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=.92;
  const status={ground:false,berm:false,foliage:false,errors:[]};owner.localAssets=status;
  function texture(file,rx,ry,done,key){
-  ld.load('../site/assets/'+file,t=>{
+  ld.load('../environment/'+file,t=>{
    if(G3!==owner){t.dispose();return;}
    t.encoding=T.sRGBEncoding;t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx,ry);t.anisotropy=Math.min(8,aniso);done(t);status[key]=true;
   },undefined,()=>{status.errors.push(file);});

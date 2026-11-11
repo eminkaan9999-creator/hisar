@@ -1,7 +1,7 @@
 {
   "name": "HİSAR: KOMUTA",
   "short_name": "KOMUTA",
-  "description": "Yürüyerek üs, poligon, iş makineleri, tank ve Uçangöz.",
+  "description": "Tank, poligon ve Uçangöz. Ayrı oyun, doğrudan alan seçimi.",
   "lang": "tr",
   "start_url": "./",
   "scope": "./",

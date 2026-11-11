@@ -1,13 +1,18 @@
 {
   "name": "HİSAR: KOMUTA",
-  "v": "1.1.1",
+  "v": "1.2.0",
   "independent": true,
   "changes": [
-    "Yaya üs başlangıcı",
-    "Yakınlık gerektiren poligon ve Uçangöz etkileşimi",
-    "Kişisel yüz modelleri ve kartları kaldırıldı",
-    "Özgün araçlar ve Uçangöz hareketi korundu"
+    "İnşaat oyunu ve zorunlu yaya üs girişi kaldırıldı",
+    "Tank ve poligon doğrudan açılır",
+    "Tankın özgün iç/dış görünümleri ve Uçangözü korunur",
+    "Eski inşaat dosyaları ve önbelleği kaldırılır"
   ],
   "sourceCommit": "1de116f4055da9d8845554d05cd688df3736efa7",
-  "publication": "standalone-pages"
+  "publication": "standalone-pages",
+  "construction": false,
+  "availableScenes": [
+    "tank",
+    "range"
+  ]
 }

@@ -6,8 +6,8 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: kurulus-${{ github.ref }}
-  cancel-in-progress: true
+  group: kurulus-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
 jobs:
   validate:
     runs-on: ubuntu-24.04
@@ -48,10 +48,10 @@ jobs:
           changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
           bad=[p for p in changed if p not in exact and not p.startswith(allowed_prefix)]
           if bad:raise SystemExit('Unexpected tracked changes: '+repr(bad))
-          # Keep maintainable expanded source, not opaque transfer chunks.
           for p in Path('scripts').glob('kurulus-pack-*.txt'):p.unlink()
           PY
-          git add index.html version.json manifest.webmanifest sw.js experience/radio-missions.js santiye-250888c5/index.html poligon/index.html shared kurulus assets/radio/tr scripts/kurulus-*
+          git add index.html version.json manifest.webmanifest sw.js experience/radio-missions.js santiye-250888c5/index.html poligon/index.html shared kurulus assets/radio/tr
+          git add -A -- 'scripts/kurulus-*'
           REMOTE_HEAD=$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)
           test "$REMOTE_HEAD" = "$EXPECTED_HEAD"
           if ! git diff --cached --quiet; then

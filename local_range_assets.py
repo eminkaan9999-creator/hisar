@@ -26,4 +26,15 @@ if '/* Native range viewport */' not in s:s+='''
 .km-native-range #km-range-menu{top:8px;right:50%;transform:translateX(50%);min-height:44px;font-size:11px;padding:6px 12px;background:#192b23e8;border-color:#9aad8a75}
 '''
 p.write_text(s)
+p=ROOT/'tests/native-graphics-browser.cjs';s=p.read_text()
+s=edit(s,"await p.screenshot({path:out+'/native-3d-range.png'});","await f.waitForFunction(()=>KomutaScene.diagnostics().localAssetsReady,{},{timeout:20000});assert.deepEqual(await f.evaluate(()=>KomutaScene.diagnostics().localAssetErrors),[]);ok('original local ground, berm and foliage textures loaded before capture');await p.screenshot({path:out+'/native-3d-range.png'});")
+s=edit(s,"const p=await ctx.newPage();", "await ctx.route('https://dl.polyhaven.org/**',route=>{missing.push({url:route.request().url(),reason:'external environment dependency'});return route.abort();});\n const p=await ctx.newPage();")
+p.write_text(s)
+p=ROOT/'tests/native-graphics.test.cjs';s=p.read_text()
+if '// Bundled environment regression' not in s:s+='''
+// Bundled environment regression
+for(const file of ['rocky_terrain_02_d.jpg','rubble_d.jpg','bush1.webp'])test('original local HİSAR texture retained '+file,()=>assert.equal(digest(fs.readFileSync('original/santiye-250888c5/assets/'+file)),digest(fs.readFileSync('public/site/assets/'+file))));
+test('range surface loader no longer downloads external environment assets',()=>{const s=range.slice(range.indexOf('function realAssets('),range.indexOf('const HAVA='));assert.doesNotMatch(s,/https?:|PH\\+/);assert.match(s,/site\\/assets/);assert.match(range,/komutaFoliageGeometry/);assert.doesNotMatch(range,/ConeGeometry\\(2\\.6,11,7\\)/);});
+'''
+p.write_text(s)
 print('Local original textures replace external range downloads; cone vegetation replaced with original photo cutouts.')

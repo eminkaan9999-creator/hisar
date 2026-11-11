@@ -1,12 +1,13 @@
 {
   "name": "HİSAR: KOMUTA",
-  "v": "1.2.0",
+  "v": "1.2.1",
   "independent": true,
   "changes": [
-    "İnşaat oyunu ve zorunlu yaya üs girişi kaldırıldı",
-    "Tank ve poligon doğrudan açılır",
-    "Tankın özgün iç/dış görünümleri ve Uçangözü korunur",
-    "Eski inşaat dosyaları ve önbelleği kaldırılır"
+    "İnşaat oyunu kaldırılmış olarak kalır",
+    "Tekrarlanan duraklatma ve ekrana dönüşte kontrol düzeltmesi",
+    "Takılı hareket, dokunma ve tetik girişlerini bırakma",
+    "Tank görüntü bağlantısı koptuğunda yeniden deneme",
+    "Sahne değişiminde grafik ve ses kaynaklarını serbest bırakma"
   ],
   "sourceCommit": "1de116f4055da9d8845554d05cd688df3736efa7",
   "publication": "standalone-pages",

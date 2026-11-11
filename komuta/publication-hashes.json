@@ -1,7 +1,7 @@
 {
   ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "_headers": "5689923ac97d40123e5d2fc4c22ccbcbd0481b1ba52f6f049194993ad4acc75d",
-  "app.css": "4cb9be6aa263bfe2f47785e4af114dfbde3574f73e101ae7acfa49c163434ef5",
+  "app.css": "3fbe65fe0f978011fef6604e9109b56729753fece9e7c32775c6c2ce079be35c",
   "apple-touch-icon.png": "396f40fbe4fbdcfa0305c31efe183c33548381a76864ed69a6002605b168e0d5",
   "assets/embedded/015cc308675eba07.jpg": "015cc308675eba07607337fe21b2a08d7cea5446a78efbc2d7d2ae84a6b7f1e4",
   "assets/embedded/03c9b1766d4e649e.jpg": "03c9b1766d4e649e6449f863f8555e8ce898e35bb9bf6b567652a92f2c32fd76",
@@ -87,7 +87,7 @@
   "assets/radio/tr/success.mp3": "78009ad6966b203bb208e58172a4693b7f2100672265ebed1531c2104245d25c",
   "assets/radio/tr/target.mp3": "ad99a47451708787310084979d46b5ff7e6d5a86f7112213bad886fd86a27218",
   "assets/radio/tr/unclear.mp3": "510883cffcc8db0567f109475c5174d6c21046cf26c6bc4d23e05abeb0a0739b",
-  "core.js": "be48baae90f4b006dff6177fafcd06b892b25d83a3ee810d4451a801bb870f10",
+  "core.js": "76182ccb710e1acad007d1acf144d6a34d83c259f2693ae0ed25e16347a662c7",
   "environment/bush1.webp": "afe707d5c76e5489b96d3b4967aac09aec491455642bde38c67ff748708d419e",
   "environment/rocky_terrain_02_d.jpg": "9b88f2e7d93c93269f634602ee663830b8b6f43847ea3bdf38311f3dec0213af",
   "environment/rubble_d.jpg": "0b08bcbe981d7731788d15be5b01a17edb546850f6e5f2d033178455709eb1cd",
@@ -109,7 +109,7 @@
   "favicon-32.png": "56af329d4dc575d4c52e50100a258c12f5ac2c18e9bd9bda4cfc012a075a079e",
   "icon-192.png": "56af329d4dc575d4c52e50100a258c12f5ac2c18e9bd9bda4cfc012a075a079e",
   "icon-512.png": "8a8c954bacd8070f954cecb01b7e251cf14bb95fbc57048b667989cdcaabdef6",
-  "index.html": "d4a71d372c11f4a7b56f57b81624b5c7e6eba2fe890e3ef8fa31e7b9fc5cf048",
+  "index.html": "7eac627880a8dcf88be180ae50352f3373390ea91dfd40abfda549a0c6d7d1f5",
   "manifest.webmanifest": "b6f3d59cef02b6c73bedfa400d802b404730c18f88768108fce82248ca393441",
   "poligon/apple-touch-icon.png": "66b87101ca35f77686377f7d9340c353e382020867fdc0cd5346c3613ed0e66f",
   "poligon/favicon-32.png": "11d8941b4b635d893acfce7f915fafaf7fa790da5cdbe896d2b4a848b795adb5",
@@ -121,11 +121,11 @@
   "radio-tr.js": "1cfcfe8274411e01695bec1827f47430200a8edc71a8c1e3fb33c221295f2f2e",
   "removal-report.json": "6c93a6c049da3ba4d52a91f33c5bda371dfed777189ad19220de724a777183c7",
   "scene.css": "def1c5cf0759172c1d0a1140e7f1c2569bc04af96037ec4c2d2477aad3b34a61",
-  "shell.js": "cf9c775e1c001e3fae09483bfed111d21da10b3f12f9d30c0fb31ac280bba5bc",
+  "shell.js": "ad2a636674f5e55647c5a174b0dcd125e5c950637cebd63e737abfaa49e9b479",
   "storage-scope.js": "687d252f518d06782ee9c32770af477d938e6b4f474e83b481658844a78db71b",
-  "sw.js": "398b2c302d58c32c405d9c33f7c883f29ce9922d8a81bb302f253248b1fc1d9e",
-  "tank-komuta.js": "4ec840ef16e9baf8e292e108fd6eae382b8efc52fac71eb0555e70e12025c27e",
+  "sw.js": "ef1ca8f01e1fcb85458d5e51fa256073f665d45cf5bb8a686fd1ea9c10b3cc6e",
+  "tank-komuta.js": "b352da2fd0c1c18042f82c1b98e7d2deed860c5df21c5dc17f9a671a6ac0ebfc",
   "tank/index.html": "9933f845104c5ac86abf65c41b4a8d39bdc41a07cd4b123ae83354e1a3b2c430",
   "three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
-  "version.json": "ff25276419a6452a3c098d066b19f8cf80520592aba5e74eb16eb9d6d111b693"
+  "version.json": "c7a5968621458cf207ce3f2366bdea290c52fd3ef94efa642ee8304b85b27ac8"
 }

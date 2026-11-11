@@ -13,6 +13,10 @@ for filename in ['core.js','sw.js','index.html']:
         if '1.2.0' not in s:raise RuntimeError('Unexpected release in '+filename)
         p.write_text(s.replace('1.2.0',v))
 edit(app/'shell.js',"addEventListener('pagehide',()=>{saveScene();try{api?.pause(true);}catch{}});","addEventListener('pagehide',()=>{saveScene();setPause(true);});")
+# A timeout exposes retry; a valid late FIRST handshake must still finish loading.
+edit(app/'shell.js',"typeof engine.pause!=='function'||failed)return false;","typeof engine.pause!=='function'||(failed&&api))return false;")
+edit(app/'shell.js',"api=engine;loading=false;clearLoads();","api=engine;loading=false;failed=false;clearLoads();")
+edit(app/'tank-komuta.js',"if(!done&&!window.KomutaScene){clearInterval(timer);H.notice(","if(!done&&!window.KomutaScene){H.notice(")
 css=app/'app.css';s=css.read_text()
 if '/* Keep the outer bar' not in s:
     s+='''\n/* Keep the outer bar from squeezing game controls on compact landscape screens. */
@@ -26,6 +30,11 @@ old='await wait("caches.keys().then(k=>k.includes(\'hisar-komuta-site-1.2.0\')&&
 new='await wait("caches.keys().then(k=>k.includes("+JSON.stringify("hisar-komuta-site-"+JSON.parse(fs.readFileSync(root+"/version.json")).v)+")&&!k.includes(\'hisar-komuta-site-1.1.1\')&&k.includes(\'hisar-main-KEEP\'))")'
 edit(p,old,new)
 edit(p,"await shot('tank');","await shot('tank');\n if(process.env.KOMUTA_STABILITY==='1')await require('./komuta-stability-browser.cjs').checks({ev,child,wait,sleep,send,shot,ok});")
+# Keep real diagnostics on failure instead of repeatedly waiting without evidence.
+edit(p,"})().catch(e=>{errors.push(String(e.stack||e));console.error(e);process.exitCode=1;})",'''})().catch(async e=>{errors.push(String(e.stack||e));console.error(e);process.exitCode=1;try{const diag=await ev('(()=>{const f=document.querySelector("iframe"),w=f?.contentWindow;return {host:window.KomutaHost?.diagnostics(),message:document.getElementById("load-message")?.textContent,child:w?{url:w.location.href,ready:w.document.readyState,scene:w.KomutaScene?.diagnostics(),bridge:w.HisarGameBridge?.snapshot(),game:w.eval("typeof game===\\\"undefined\\\"?null:game")}:null};})()');fs.writeFileSync(out+'/failure-diagnostics.json',JSON.stringify(diag,null,2));await shot('failure');console.error('DIAGNOSTICS',JSON.stringify(diag));}catch(diagError){console.error('Diagnostic capture:',diagError.message);}})''')
+tests=root/'scripts/komuta-stability.test.cjs';s=tests.read_text()
+if 'slow first load may still connect' not in s:
+    tests.write_text(s+"\ntest('host: slow first load may still connect after timeout',()=>{const x=shell(),f=x.start();[...x.timers.values()].find(t=>t.ms===35000).fn();assert.equal(x.ctx.KomutaHost.diagnostics().failed,true);x.connect(f);assert.equal(x.ctx.KomutaHost.diagnostics().loading,false);assert.equal(x.ctx.KomutaHost.diagnostics().failed,false);});\n")
 p=app/'version.json';data=json.loads(p.read_text())
 if data.get('v') not in ['1.2.0',v] or data.get('construction') is not False:raise RuntimeError('Unexpected game scope')
 data['v']=v

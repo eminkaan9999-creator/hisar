@@ -1,0 +1,36 @@
+/* Scoped to the integrated story: legacy standalone games remain unchanged. */
+html.kurulus-scene{padding-top:0!important}html.kurulus-scene body{overscroll-behavior:none}
+#kurulus-drone{position:fixed;inset:0;pointer-events:none;z-index:7000;font:600 12px system-ui;color:#ecfff5}
+.kd-toolbar{position:absolute;top:8px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:6px;padding:5px 9px;background:#0d191de8;border:1px solid #62817680;border-radius:12px;max-width:calc(100% - 120px);white-space:nowrap;pointer-events:auto;box-shadow:0 4px 16px #0006}
+.kd-toolbar strong{font-size:11px;letter-spacing:.06em}.kd-toolbar button,.kd-alt button{min-height:42px;border:1px solid #668377;border-radius:8px;background:#1b302c;color:#edfff7;font:700 11px system-ui;padding:6px 10px;touch-action:none}
+.kd-toolbar button:focus-visible,.kd-alt button:focus-visible{outline:3px solid #c7f3ba;outline-offset:2px}
+.kd-flight,.kd-reticle{display:none}.kd-on .kd-flight,.kd-on .kd-reticle{display:block}
+.kd-stick{position:absolute;bottom:max(16px,env(safe-area-inset-bottom));width:clamp(100px,20vh,145px);height:clamp(100px,20vh,145px);border:2px solid #98cbb180;border-radius:50%;background:radial-gradient(circle,#34554b80,#142d2870);touch-action:none;pointer-events:auto;box-shadow:inset 0 0 20px #0007}
+.kd-stick[data-stick=move]{left:max(28px,env(safe-area-inset-left))}.kd-stick[data-stick=look]{right:max(28px,env(safe-area-inset-right))}
+.kd-stick i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:#bde9d5a0;border:2px solid #e0f9ec;pointer-events:none}
+.kd-stick span{position:absolute;top:-24px;left:0;width:100%;text-align:center;text-shadow:0 2px 4px #000;font-size:11px;letter-spacing:.15em}
+.kd-alt{position:absolute;bottom:max(24px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto}
+.kd-alt button{min-width:70px;min-height:48px;background:#142823dd}
+.kd-reticle{position:absolute;left:50%;top:50%;width:32px;height:32px;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 2px #000)}
+.kd-reticle i{position:absolute;left:15px;top:0;height:32px;width:2px;background:#dbfff3}.kd-reticle b{position:absolute;top:15px;left:0;width:32px;height:2px;background:#dbfff3}
+.kurulus-scene #hr-radio-entry{position:fixed!important;right:8px!important;left:auto!important;top:8px!important;bottom:auto!important;min-width:80px!important;min-height:44px!important;z-index:7100!important}
+.kurulus-scene #hr-radio{z-index:9000!important;max-height:calc(100dvh - 24px)!important}
+.kurulus-scene #hr-objective{left:50%!important;transform:translateX(-50%)!important;top:auto!important;bottom:10px!important;max-width:260px!important;background:transparent!important;border:0!important;pointer-events:none!important}
+.kurulus-scene #hr-objective>strong,.kurulus-scene #hr-objective>p,.kurulus-scene #hr-objective>small,.kurulus-scene #hr-objective>progress{display:none!important}
+.kurulus-scene #hr-objective>button{pointer-events:auto!important;min-height:44px}
+.kurulus-scene:not(.kurulus-free) #hg-story,.kurulus-scene:not(.kurulus-free) #hr-missions,.kurulus-scene:not(.kurulus-free) #bNew,.kurulus-scene:not(.kurulus-free) #upd,.kurulus-scene:not(.kurulus-free) #upd2,.kurulus-scene:not(.kurulus-free) #bMenu,.kurulus-scene:not(.kurulus-free) #btnMenu{display:none!important}
+.kurulus-flying #ctl,.kurulus-flying #joy,.kurulus-flying #jb,.kurulus-flying #controls,.kurulus-flying #jbase,.kurulus-flying #btns,.kurulus-flying #dctrl,.kurulus-flying #cross,.kurulus-flying #sigw,.kurulus-flying #scope,.kurulus-flying #fpv,.kurulus-flying #trig,.kurulus-flying #stick,.kurulus-flying #hr-objective{visibility:hidden!important;pointer-events:none!important}
+@media(max-height:450px){.kd-toolbar{top:4px;gap:4px;padding:4px 6px}.kd-toolbar button{min-height:36px;font-size:10px;padding:5px 8px}.kd-toolbar strong{display:none}.kd-stick{bottom:12px;width:100px;height:100px}.kd-alt{bottom:18px}.kd-alt button{min-height:44px}}
+@media(max-width:560px){.kd-toolbar{left:8px;right:8px;transform:none;max-width:calc(100% - 16px);flex-wrap:wrap;font-size:10px}.kd-toolbar strong{display:none}.kd-toolbar button{padding:5px 7px}.kd-stick{width:100px;height:100px}.kd-stick[data-stick=move]{left:14px}.kd-stick[data-stick=look]{right:14px}.kd-alt{bottom:135px}.kurulus-scene #hr-radio-entry{top:65px!important}}
+
+#kurulus-drone:not(.kd-on) .kd-toolbar{top:auto;bottom:10px;max-width:240px}#kurulus-drone:not(.kd-on) .kd-toolbar strong{display:none}.kurulus-flying #viewbar,.kurulus-flying #vbar{visibility:hidden!important;pointer-events:none!important}
+
+/* The shared controller replaces, rather than overlays, the legacy flight controls. */
+.kurulus-flying #kmd,.kurulus-flying #ui,.kurulus-flying #rc,.kurulus-flying #hg-hud{display:none!important}
+.kurulus-scene #hr-panel{z-index:9000!important;max-height:calc(100dvh - 24px)!important;overflow:auto!important}
+.kd-actions{position:absolute;top:64px;left:50%;transform:translateX(-50%);display:grid;gap:6px;width:min(300px,80vw);padding:10px;background:#10231ff5;border:1px solid #7d9e8f;border-radius:12px;pointer-events:auto}
+.kd-actions[hidden]{display:none!important}.kd-actions button{min-height:44px;background:#29483d;color:#f4fff8;border:1px solid #7d9e8f;border-radius:8px;font:600 12px system-ui;padding:7px 10px}
+@media(max-width:760px){.kd-on .kd-toolbar{left:10px;transform:none;max-width:calc(100% - 110px);flex-wrap:wrap}.kd-on .kd-toolbar strong{display:none}.kd-actions{top:92px}}
+
+/* Docked launch stays clear of the native bottom-centre interaction button. */
+.kurulus-scene #kurulus-drone:not(.kd-on) .kd-toolbar{left:12px;right:auto;transform:none;bottom:132px;top:auto;max-width:190px;font-size:10px}

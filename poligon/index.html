@@ -413,6 +413,12 @@ select.inp{font-size:13px;}
 .spt0{font-family:var(--display);font-weight:800;letter-spacing:.5em;color:var(--accent);font-size:clamp(14px,4vw,20px);opacity:0;animation:sprise .5s .85s ease-out forwards;margin-bottom:-6px;padding-left:.5em;}
 .spt .acc .ox{width:.82em;height:.82em;}
 </style>
+
+<!-- hisar-kurulus-1 -->
+<link rel="stylesheet" href="../shared/kurulus.css?v=1">
+<script src="../shared/kurulus-core.js?v=1"></script>
+<script src="../shared/kurulus-runtime.js?v=1"></script>
+<script>if(window.HisarKurulus){document.write('<script src="../shared/radio-tr.js?v=1"><\/script>');}</script>
 </head>
 <body>
 
@@ -1655,9 +1661,14 @@ function spawnPop(i){
 }
 
 // ================= DÖNGÜ =================
+function rangeFrameDelta(now,previous){return Number.isFinite(now)&&Number.isFinite(previous)?Math.max(0,Math.min(.05,(now-previous)/1000)):0;}
 let last=performance.now(),t=0,hudT=0,windT=0;
 function frame(now){
-  const dt=Math.min(.05,(now-last)/1000);last=now;t+=dt;
+  // A first requestAnimationFrame timestamp can precede the initialization clock.
+  now=Number.isFinite(now)?now:performance.now();
+  const dt=rangeFrameDelta(now,last);last=now;
+  if(window.HisarKurulusSession?.diagnostics?.().paused){requestAnimationFrame(frame);return;}
+  t+=dt;
   const R=R_(),P=POS[S.pos],DF=DIFF[OPT.diff];
   if(S.run){
     S.run.t+=dt*(OPT.motion&&MS.on?(msRunning()?1:.12):1);if(S.run.type==='sprint')S.timeLeft-=dt;
@@ -1748,6 +1759,7 @@ function hills(Y,p,camX,col,base,amp,fq,off){
 const FLAG={d:90,x:-2.2,h:4};
 function dFarNow(){return Math.max(S.dist,S.mode==='popup'?300:0,S.mode==='hareket'?200:0,S.mode==='keskin'?800:0,...S.targets.map(t=>t.d));}
 function render(now){
+  if(!Number.isFinite(W)||!Number.isFinite(H)||W<=0||H<=0){resize();if(!Number.isFinite(W)||!Number.isFinite(H)||W<=0||H<=0)return;}
   if(!W)resize();
   const P=POS[S.pos],e=P.eye+(S.E||0),R=R_();
   ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -1976,7 +1988,7 @@ function ironRear(type,w,h,cx,cy,R,pm){
   }
   ironCache.k=key;ironCache.c=cv2;return cv2;
 }
-function metalFill(x0,y0,x1,y1,base,hi){const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,hi);g.addColorStop(.35,base);g.addColorStop(1,'#050605');return g;}
+function metalFill(x0,y0,x1,y1,base,hi){if(![x0,y0,x1,y1].every(Number.isFinite))throw Error('Poligon geometry: '+JSON.stringify({W,H,mis:S.mis,pos:S.pos,rifle:S.rifle,hr:S.hr,clock:last}));const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,hi);g.addColorStop(.35,base);g.addColorStop(1,'#050605');return g;}
 function drawIron(type,o,cant){
   const cx=W/2,cy=VCY(),R=Math.min(W,VH())*.44,pm=Math.min(W,VH())/60,fx=cx+o.x,fy=cy+o.y,night=S.night;
   const base=night?'#0c0d0c':'#161816',hi=night?'#1c1e1c':'#3c403a';
@@ -3773,6 +3785,20 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
   if(OPT.gq==='dusuk')return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,sp=document.createElement('span');sp.className='rip';sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
   if(getComputedStyle(b).position==='static')b.style.position='relative';b.style.overflow='hidden';b.appendChild(sp);setTimeout(()=>sp.remove(),650);},true);
 (()=>{const sp=$('splash');if(!sp)return;const end=()=>{if(sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),600);};sp.addEventListener('pointerdown',()=>{audio();end();});setTimeout(end,3400);})();window.addEventListener('online',()=>wLoadAll(false));
+// Retain all original range models, targets and modes. Story completion observes actual game shots only.
+if(window.HisarKurulus){
+ const H=window.HisarKurulus.host,free=H.chapter().mode==='free';let paused=false,wasStarted=true,done=false;
+ OPT.voice=0;if(!free){OPT.diff='kolay';OPT.motion=0;startMode('serbest');}
+ document.getElementById('menu').hidden=true;document.getElementById('splash')?.remove();if(!free)S.started=true;
+ const savedFire=fire;fire=function(){if(paused||(!free&&done))return;const before=S.shots.length,r=savedFire.apply(this,arguments);if(S.shots.length>before){H.fleet({['range:'+S.rifle]:{name:RIFLES[S.rifle]?.name||S.rifle,used:1,lastSeen:new Date().toISOString()}});if(!free){H.progress('range-shots',S.shots.length);H.goal('Poligon tanışması · '+Math.min(5,S.shots.length)+'/5 oyun atışı.');if(S.shots.length>=5){done=true;S.trig.down=false;H.complete();}}}return r;};
+ const api={pause(v){if(paused===!!v)return;paused=!!v;if(paused){wasStarted=S.started;S.started=false;S.trig.down=false;}else S.started=wasStarted;},dispose(){S.trig.down=false;saveST();},
+ catalogue:()=>[...Object.entries(RIFLES).map(([id,v])=>({id:'equipment:'+id,label:v.name,group:'Poligon ekipmanları'})),...Object.entries(TG).map(([id,v])=>({id:'target:'+id,label:v.name,group:'Hedef kartları'})),...(free?Object.entries(TASKS).map(([id,v])=>({id:'mode:'+id,label:v.name,group:'Bütün poligon oyunları'})):[]),{id:'sight:iron',label:'Gez ve arpacık görünümü',group:'Görüşler'},{id:'sight:optic',label:'Optik görünüm',group:'Görüşler'},...(free?[{id:'native-menu',label:'Bütün özgün ayarlar, kayıtlar ve modlar',group:'Tam içerik'}]:[])],
+ activate(key){const [kind,id]=String(key).split(':');if(kind==='equipment'&&RIFLES[id]){S.rifle=id;startMode('serbest');return {ok:true};}if(kind==='target'&&TG[id]){S.target=id;startMode('serbest');return {ok:true};}if(kind==='mode'&&free&&TASKS[id]){startMode(id);return {ok:true};}if(kind==='sight'&&['iron','optic'].includes(id)){S.sight=id;syncUI();return {ok:true};}if(key==='native-menu'&&free)return {ok:true,after:()=>document.getElementById('menu').hidden=false};return {ok:false};},
+ diagnostics:()=>({scene:'range',free,paused,shots:S.shots.length,done,rifle:S.rifle,target:S.target,mode:S.mode})};
+ window.HisarKurulusSession=api;H.connect('range',api);H.goal(free?'Bütün ekipmanları, hedefleri ve oyunları ARAÇ / GÖRÜŞ bölümünden açabilirsin.':'Beş oyun atışı yap. İsabet şartı ve süre sınırı yok.');
+ document.documentElement.classList.add('kurulus-scene');if(free)document.documentElement.classList.add('kurulus-free');
+}
+
 })();
 
 </script>

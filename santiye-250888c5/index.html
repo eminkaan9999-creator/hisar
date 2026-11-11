@@ -1,5 +1,11 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#1d1b18"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="icon" href="../favicon-32.png"><style>[hidden]{display:none!important}html,body{margin:0;height:100%;background:#1d1b18}</style></head><body>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#1d1b18"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="icon" href="../favicon-32.png"><style>[hidden]{display:none!important}html,body{margin:0;height:100%;background:#1d1b18}</style>
+<!-- hisar-kurulus-1 -->
+<link rel="stylesheet" href="../shared/kurulus.css?v=1">
+<script src="../shared/kurulus-core.js?v=1"></script>
+<script src="../shared/kurulus-runtime.js?v=1"></script>
+<script>if(window.HisarKurulus){document.write('<script src="../shared/radio-tr.js?v=1"><\/script>');}</script>
+</head><body>
 <title>Hisar Şantiye</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Barlow:wght@400;600;700&display=swap">
@@ -237,7 +243,7 @@ body.cab #mini{display:none}
   <div class="wrap">
     <div class="brand">
       <h1>HİSAR <b>ŞANTİYE</b><small>SİMÜLATÖR</small></h1>
-      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı drone sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve drone parkurunu kuruyor. Sabah 07.30'da Azizhan Üsteğmen masada görevleri dağıtır, sonra gün senin görevlerinle akar: denetim turu, 10.00 çay molası, makine başına geçmek, öğle yemeği, öğleden sonra kontrolü, akşam çayı. Arada arızalar, yakıt tankeri, Ufuk Binbaşı'nın ziyareti ve Levent Paşa'nın baskını çıkar. Yeşil halka nereye gideceğini gösterir; HARİTA'dan bir yere dokun, YÜRÜ de. 5. gün Paşa'nın büyük teftişi var: hedefleri tuttur, takdirnameyi al.</p>
+      <p>Tepedeki çay ocağından bütün garnizon ayağının altında: Kempar kapalı uçangöz sığınağını kazıyor, ekskavatör bunker yaşam alanının çukurunu açıyor, askerler 400 m atış alanını ve uçangöz parkurunu kuruyor. Sabah 07.30'da Azizhan Üsteğmen masada görevleri dağıtır, sonra gün senin görevlerinle akar: denetim turu, 10.00 çay molası, makine başına geçmek, öğle yemeği, öğleden sonra kontrolü, akşam çayı. Arada arızalar, yakıt tankeri, Ufuk Binbaşı'nın ziyareti ve Levent Paşa'nın baskını çıkar. Yeşil halka nereye gideceğini gösterir; HARİTA'dan bir yere dokun, YÜRÜ de. 5. gün Paşa'nın büyük teftişi var: hedefleri tuttur, takdirnameyi al.</p>
     </div>
     <div class="projs">
       <div class="phead"><h3 class="sub">Tabur durumu</h3><span class="bank" id="bank" hidden></span></div>
@@ -252,19 +258,19 @@ body.cab #mini{display:none}
 </div>
 <div id="load">YÜKLENİYOR…</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/SSAOShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/math/SimplexNoise.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/SSAOPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="../three.min.js"></script>
+<script src="../shared/vendor/three-r128/GLTFLoader.js"></script>
+<script src="../shared/vendor/three-r128/SkeletonUtils.js"></script>
+<script src="../shared/vendor/three-r128/CopyShader.js"></script>
+<script src="../shared/vendor/three-r128/SSAOShader.js"></script>
+<script src="../shared/vendor/three-r128/LuminosityHighPassShader.js"></script>
+<script src="../shared/vendor/three-r128/SimplexNoise.js"></script>
+<script src="../shared/vendor/three-r128/EffectComposer.js"></script>
+<script src="../shared/vendor/three-r128/RenderPass.js"></script>
+<script src="../shared/vendor/three-r128/ShaderPass.js"></script>
+<script src="../shared/vendor/three-r128/MaskPass.js"></script>
+<script src="../shared/vendor/three-r128/SSAOPass.js"></script>
+<script src="../shared/vendor/three-r128/UnrealBloomPass.js"></script>
 <script>
 window.FRAME_HOOKS = [];
 window.rnd = (a, b) => a + Math.random() * (b - a);
@@ -4655,7 +4661,7 @@ const DGCOL = [[0xff6a10, 0x1d1d1d], [0x1e6fd8, 0xf2f2f2], [0xffd21f, 0x1d1d1d],
     const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
     const st = texCanvas(64, 64, c => { c.clearRect(0, 0, 64, 64); c.strokeStyle = "rgba(44,58,40,.95)"; c.lineWidth = 2.2; for (let k = 0; k <= 64; k += 8) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k, 64); c.stroke(); c.beginPath(); c.moveTo(0, k); c.lineTo(64, k); c.stroke(); } c.fillStyle = "rgba(30,36,28,.95)"; c.fillRect(0, 0, 64, 3); });
     st.wrapS = st.wrapT = THREE.RepeatWrapping; const sn = new THREE.Mesh(g, new THREE.MeshStandardMaterial({map: st, alphaTest: .35, side: THREE.DoubleSide, roughness: .9})); sn.userData.noAO = true; scene.add(sn); }
-  gPostSign("DRONE PARKURU · İNŞAAT", -46, -31, 0, 7, 1.4, "Sorumlu: Orhan Üsteğmen", "#0f2a3a", "#7fe3ff"); }
+  gPostSign("UÇANGÖZ PARKURU · İNŞAAT", -46, -31, 0, 7, 1.4, "Sorumlu: Orhan Üsteğmen", "#0f2a3a", "#7fe3ff"); }
 // one gate: the opening across the local z axis, the drone flies through along local x
 function dgBuild(kind, i) {
   const s = SP(), [ca, cb] = DGCOL[i % DGCOL.length], t = .2;
@@ -4820,16 +4826,16 @@ window.__hs.gar = {GN, GE, gRoute, TANKSPOTS, SPORT, OBST, RNG, DRC, TRAFFIC, ra
 const OFF_DEF = [
   {key: "kaan", name: "KAAN TEĞMEN", short: "Kaan", rank: 1, cls: 2024, h: 1.80, role: "Yapay zekâ ve yazılım subayı · gömülü komuta yeri · 1. tank bölüğü", chair: 6,
     lines: ["Komuta yerinin projesi hazır, tablete yükledim.", "Yansın Hisar!", "Resmen enkaz devraldım.", "Bunun yazılımını yaparız komutanım.", "Planı tablete işledim, herkese gönderiyorum.", "Yapay zekâya sordum, kazı yarın biter diyor."]},
-  {key: "furkan", name: "FURKAN TEĞMEN", short: "Furkan", rank: 1, cls: 2025, h: 1.78, role: "Ayın personeli · kapalı drone sığınağında askerle omuz omuza kazma-kürek · 2. tank bölüğü", chair: 3,
+  {key: "furkan", name: "FURKAN TEĞMEN", short: "Furkan", rank: 1, cls: 2025, h: 1.78, role: "Ayın personeli · kapalı uçangöz sığınağında askerle omuz omuza kazma-kürek · 2. tank bölüğü", chair: 3,
     lines: ["Askerle beraber sığınağı kazıyoruz komutanım.", "Emredersiniz komutanım.", "Cansınız komutanım.", "Planlama ve koordinasyon için beklemekteyiz, arz ederim.", "Kürek bende komutanım, sorun yok.", "Kepçe varken neden kürek komutanım?"]},
-  {key: "boran", name: "BORAN TEĞMEN", short: "Boran", rank: 1, cls: 2024, h: 1.69, role: "Kapalı drone sığınağı · ara sıra kazmayı alır, çoğu zaman iş yaptırır · resmî hitabet ustası · 2. tank bölüğü", chair: 5,
+  {key: "boran", name: "BORAN TEĞMEN", short: "Boran", rank: 1, cls: 2024, h: 1.69, role: "Kapalı uçangöz sığınağı · ara sıra kazmayı alır, çoğu zaman iş yaptırır · resmî hitabet ustası · 2. tank bölüğü", chair: 5,
     lines: ["Ben koordine ediyorum, siz kazın arkadaşlar.", "Furkan kaçma, gel Furkan.", "Yarın sabah tam teçhizat, çelik plakalar dahil.", "Arz ederim komutanım.", "Hisar taburunda şenlik havası hakim.", "Ekip sağlam.", "Bir şey diyeceğim ama…"]},
   {key: "ahmet", name: "AHMET ÜSTEĞMEN", short: "Ahmet", rank: 2, h: 1.78, role: "1. tank bölük komutanı · bütün şantiyelerin gezici denetçisi · nereye gitse Levent Paşa'ya yakalanır", chair: 1, roam: true,
     lines: ["Ben bir şantiyeleri dolaşıp geleyim.", "Nereye gitsem paşam orada, inanmıyorum!", "Teknik iyi ama geliştirmen lazım.", "Sen kralsın kardeşim.", "Lahmacun 18.30'da tabldotta.", "Seferberlik ilan ediyoruz.", "Kamyonlar dökümhaneye, ekskavatör kazıya."]},
   {key: "ali", name: "ALİ ÜSTEĞMEN", short: "Ali", rank: 2, h: 1.76, role: "Karargâh bölük komutanı · lojistik · 400 m atış alanı inşaatı", chair: 4, belly: true,
     lines: ["Atış alanında hedef çerçeveleri dikiliyor.", "Dört yüz metre hattına kadar set çekeceğiz.", "Tek rakibim kendim.", "Kapım sana her daim açık.", "Çakı gibi asker.", "Özel olarak konuşalım bunu.", "Yakıt tankeri öğleden sonra geliyor."]},
-  {key: "orhan", name: "ORHAN ÜSTEĞMEN", short: "Orhan", rank: 2, h: 1.88, role: "Dron subayı · keşif bölük komutanı · drone parkuru inşaatı", chair: 2,
-    lines: ["Drone parkurunun kapıları dikiliyor.", "Keşifte ZPT'ler hazır, Barkan-2 de hazır.", "Dronu kaldırdım, saha temiz.", "Yukarıdan bakınca her şey belli.", "Keşif tamam, ilerleyebiliriz.", "Pil yarıda, iniyorum."]},
+  {key: "orhan", name: "ORHAN ÜSTEĞMEN", short: "Orhan", rank: 2, h: 1.88, role: "Dron subayı · keşif bölük komutanı · uçangöz parkuru inşaatı", chair: 2,
+    lines: ["Uçangöz parkurunun kapıları dikiliyor.", "Keşifte ZPT'ler hazır, Barkan-2 de hazır.", "Dronu kaldırdım, saha temiz.", "Yukarıdan bakınca her şey belli.", "Keşif tamam, ilerleyebiliriz.", "Pil yarıda, iniyorum."]},
   {key: "azizhan", name: "AZİZHAN ÜSTEĞMEN", short: "Azizhan", rank: 3, h: 1.78, role: "Genel koordinatör · 2. tank bölük komutanı · buranın ağası · masanın baş köşesi, planın beyni", chair: 0, chief: true,
     lines: ["Genel koordinasyon bende, herkes işinin başına.", "La bana çok güvenme.", "Yarınki planı konuşalım.", "Sabah ilk iş galeri iki, sonra döküm.", "Herkes görevini biliyor mu?", "Toplantı bitmedi, oturun.", "Çaylar tazelensin."]},
   {key: "ufuk", name: "UFUK BİNBAŞI", short: "Ufuk", rank: 4, h: 1.90, role: "Tabur komutanı", visitor: true,
@@ -5617,7 +5623,7 @@ function mkJob(v, k, title, sup, spot) { if (!v) return null; const j = {v, k, t
 const KEMPAR = vOf("gt"), TRB = vOf("tr", 0), EXC = vOf("ex"), DOZ = vOf("dz"), BHL = vOf("bh"), LDR = vOf("ld"), TRX = vOf("tr", 1), GRD = vOf("gr");
 // the projects: the covered drone shelter the Kempar is digging (Furkan with the soldiers, Boran), the bunker living area at the garage (Kaan),
 // the stock yard and the roads (Ahmet, who looks in everywhere); Ali's 400 m range and Orhan's drone course are built by hand in the garrison
-mkJob(KEMPAR, "siginak", "Kapalı drone sığınağı · kazı", "furkan", () => ({x: KEMPAR.x - 10, z: KEMPAR.z + 7}));
+mkJob(KEMPAR, "siginak", "Kapalı uçangöz sığınağı · kazı", "furkan", () => ({x: KEMPAR.x - 10, z: KEMPAR.z + 7}));
 mkJob(TRB, "siginak", "Sığınak · bant altı nakliye", "boran", () => ({x: DUMP.x + DUMP.w + 4, z: DUMP.y + DUMP.h + 3}));
 mkJob(BHL, "siginak", "Sığınak · bant altı temizlik", "boran", () => ({x: (KEMPAR ? KEMPAR.x : 110) - 16, z: (KEMPAR ? KEMPAR.z : 63) - 9}));
 mkJob(EXC, "bunker", "Gömülü komuta yeri · toprak örtü", "kaan", () => ({x: XR0 - 4.5, z: BCZ + 7.5}));
@@ -5625,10 +5631,10 @@ mkJob(TRX, "stok", "Stok sahası · hafriyat nakliyesi", "ahmet", () => ({x: TRX
 mkJob(DOZ, "stok", "Stok sahası · yığınları toplama", "ahmet", () => ({x: OPS.sp.x - 9, z: OPS.sp.z - 7}));
 mkJob(LDR, "stok", "Stoktan döküm sahasına", "ahmet", () => ({x: OPS.sp.x - 9, z: OPS.sp.z - 7}));
 mkJob(GRD, "yol", "Yol bakımı", "ahmet", () => ({x: 62, z: ROAD.y - 4.5}));
-const JOBNAME = {siginak: "Kapalı drone sığınağı", bunker: "Gömülü komuta yeri", stok: "Stok sahası", yol: "Yol", atis: "400 m atış alanı", parkur: "Drone parkuru", tunel: "Tünel", cukur: "Temel çukuru", bant: "Bant altı"};
+const JOBNAME = {siginak: "Kapalı uçangöz sığınağı", bunker: "Gömülü komuta yeri", stok: "Stok sahası", yol: "Yol", atis: "400 m atış alanı", parkur: "Uçangöz parkuru", tunel: "Tünel", cukur: "Temel çukuru", bant: "Bant altı"};
 const GJOBS = [
   {k: "atis", title: "400 m atış alanı inşaatı", sup: "ali", on: true, v: null, prog: () => RNG.p, spot: () => { const f = rangeFront(); return {x: f.x - 3, z: f.z + 1.5}; }, look: () => { const f = rangeFront(); return {x: f.x + 2.5, y: null, z: f.z}; }},
-  {k: "parkur", title: "Drone parkuru inşaatı", sup: "orhan", on: true, v: null, prog: () => DRC.p, spot: () => { const f = courseFront(); return {x: f.x, z: f.z}; }, look: () => { const f = courseFront(); return {x: f.x - 2.2, y: null, z: f.z - 1.5}; }}];
+  {k: "parkur", title: "Uçangöz parkuru inşaatı", sup: "orhan", on: true, v: null, prog: () => DRC.p, spot: () => { const f = courseFront(); return {x: f.x, z: f.z}; }, look: () => { const f = courseFront(); return {x: f.x - 2.2, y: null, z: f.z - 1.5}; }}];
 
 // ---- hand a machine to its soldier driver, take it back ----
 function opsGive(v) {
@@ -5953,7 +5959,7 @@ const jobEl = (() => {
     '<div id="jList"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="big" id="jAll">HERKES İŞ BAŞINA</button><button type="button" class="big alt" id="jTea">ÇAY MOLASI</button></div></div>';
   document.body.appendChild(d); d.addEventListener("click", e => { if (e.target === d) closeJobs(); }); return d; })();
 function jobsHtml() {
-  const head = t => `<div style="margin:10px 2px 6px;font:700 12px system-ui;letter-spacing:.1em;opacity:.65">${t}</div>`, groups = [["siginak", "KAPALI DRONE SIĞINAĞI · KEMPAR"], ["bunker", "GÖMÜLÜ KOMUTA YERİ"], ["stok", "STOK SAHASI"], ["yol", "YOLLAR"]];
+  const head = t => `<div style="margin:10px 2px 6px;font:700 12px system-ui;letter-spacing:.1em;opacity:.65">${t}</div>`, groups = [["siginak", "KAPALI UÇANGÖZ SIĞINAĞI · KEMPAR"], ["bunker", "GÖMÜLÜ KOMUTA YERİ"], ["stok", "STOK SAHASI"], ["yol", "YOLLAR"]];
   let h = "";
   for (const [k, t] of groups) { const list = JOBS.map((j, i) => [j, i]).filter(([j]) => j.k === k); if (!list.length) continue; h += head(t);
     h += list.map(([j, i]) => { const s = OFFK[j.sup], o = OFFM[j.sup], away = o && (o.st === "work" || o.st === "walk") && o.site === j.k;
@@ -6076,12 +6082,12 @@ function rollCall() {
   playSeqAt(1.5, [
     [lead, "Arkadaşlar günaydın. Tabur olarak bugünün görev dağılımını yapıyorum.", 2.6],
     ["all", q => devre(q.d.key, lead.d.key) ? "Günaydın devrem!" : "Günaydın komutanım!", 1.3],
-    [lead, `Furkan, Boran: Kempar'la kapalı drone sığınağı. Hedef ${g.tunnel} metre.`, 2.6],
+    [lead, `Furkan, Boran: Kempar'la kapalı uçangöz sığınağı. Hedef ${g.tunnel} metre.`, 2.6],
     [O.furkan, "Emredersiniz komutanım, kürek bende!", 1.7],
     [O.boran, "Emredersiniz komutanım, askerleri ben yönetirim.", 1.9],
     [lead, "Kaan: gömülü komuta yeri. Kempar yarmayı açıyor.", 2.4],
     [O.kaan, "Emredersiniz komutanım!", 1.4],
-    [lead, "Ali: 400 metrelik atış alanı. Orhan: drone parkuru.", 2.3],
+    [lead, "Ali: 400 metrelik atış alanı. Orhan: uçangöz parkuru.", 2.3],
     [O.ali, "Emredersiniz komutanım!", 1.3],
     [O.orhan, devre("orhan", lead.d.key) ? "Tamamdır devrem, parkur hızlı ilerliyor." : "Emredersiniz komutanım, parkur hızlı ilerliyor.", 1.6],
     [lead, "Ahmet: stok sahası ile yollar senden, bütün şantiyeleri de gez.", 2.4],
@@ -6242,7 +6248,7 @@ function newDay() {
 function taburHtml() { // the battalion on the menu instead of the old company account
   const t = (v, k, cl) => `<div class="tt${cl ? " " + cl : ""}"><b>${v}</b><span>${k}</span></div>`;
   return t(DAY.day + ". gün", "tabur takvimi") + t(Math.round(DAY.sat), "komutan memnuniyeti") + t("🎖️ ×" + DAY.stars, "takdirname", DAY.stars ? "star" : "") +
-    t(DAY.total.tunnel.toFixed(0) + " m", "sığınakta toplam ilerleme") + t(DAY.total.trips, "kamyon seferi") + t("%" + Math.round(RNG.p * 100), "400 m atış alanı") + t("%" + Math.round(DRC.p * 100), "drone parkuru"); }
+    t(DAY.total.tunnel.toFixed(0) + " m", "sığınakta toplam ilerleme") + t(DAY.total.trips, "kamyon seferi") + t("%" + Math.round(RNG.p * 100), "400 m atış alanı") + t("%" + Math.round(DRC.p * 100), "uçangöz parkuru"); }
 function updTaburMenu() { const el = document.getElementById("tabur"); if (el) el.innerHTML = taburHtml(); }
 updTaburMenu();
 
@@ -6877,9 +6883,9 @@ const PL = [
   {k: "havan", n: "HAVAN", x: -190, z: -46, r: 10},
   {k: "engel", n: "ENGEL PARKURU", x: -136, z: -52, r: 14},
   {k: "atis", n: "400 m ATIŞ ALANI", x: -82, z: -96, r: 12, at: () => { const f = rangeFront(); return {x: f.x - 3, z: f.z + 4}; }},
-  {k: "parkur", n: "DRONE PARKURU", x: -46, z: -52, r: 12, at: () => { const f = courseFront(); return {x: f.x, z: f.z + 3}; }},
+  {k: "parkur", n: "UÇANGÖZ PARKURU", x: -46, z: -52, r: 12, at: () => { const f = courseFront(); return {x: f.x, z: f.z + 3}; }},
   {k: "kapi", n: "ŞANTİYE KAPISI", x: -2, z: 53, r: 5},
-  {k: "siginak", n: "KAPALI DRONE SIĞINAĞI", x: edgeX(75) - 8, z: 75, r: 12, at: () => jobSpot("siginak")},
+  {k: "siginak", n: "KAPALI UÇANGÖZ SIĞINAĞI", x: edgeX(75) - 8, z: 75, r: 12, at: () => jobSpot("siginak")},
   {k: "bunker", n: "GÖMÜLÜ KOMUTA YERİ", x: PIT.x + PIT.w / 2, z: PIT.y + PIT.h / 2, r: 12, at: () => jobSpot("bunker")},
   {k: "stok", n: "STOK SAHASI", x: OPS.sp.x, z: OPS.sp.z, r: 12, at: () => ({x: OPS.sp.x - 6, z: OPS.sp.z - 5})},
   {k: "dokum", n: "DÖKÜM SAHASI", x: DUMP.x + DUMP.w / 2, z: DUMP.y + DUMP.h / 2, r: 10},
@@ -7107,7 +7113,7 @@ const SITEREP = {
   bunker: ["kaan", () => DX.bnkSay()],
   stok: ["ahmet", () => `Komutanım, kamyonlar bugün ${DAY.trips - DAY.s0.trips} sefer yaptı, stok sahası toparlanıyor.`],
   atis: ["ali", () => RNG.p >= .999 ? "Komutanım, atış alanı tamam, teftişe hazır." : `Komutanım, atış alanı yüzde ${Math.round(RNG.p * 100)} tamam. Hedef çerçeveleri dikiliyor.`],
-  parkur: ["orhan", () => DRC.p >= .999 ? "Komutanım, drone parkuru tamam, dron bütün kapılardan geçiyor." : `Komutanım, drone parkuru yüzde ${Math.round(DRC.p * 100)}. Kapılar yerine oturuyor.`]};
+  parkur: ["orhan", () => DRC.p >= .999 ? "Komutanım, uçangöz parkuru tamam, dron bütün kapılardan geçiyor." : `Komutanım, uçangöz parkuru yüzde ${Math.round(DRC.p * 100)}. Kapılar yerine oturuyor.`]};
 function siteReport(k) { const [who, f] = SITEREP[k], o = OFFM[who], txt = f();
   if (o && o.S && !isPlayer(o) && o.S.root.visible && Math.hypot(o.x - mePos().x, o.z - mePos().z) < 22) say(o, txt, 3.2); else subShow(`<span style="color:#ffd27a">ŞANTİYE ÇAVUŞU:</span> ${txt}`, 3.2); }
 // the inspection round: every site once, the nearest first
@@ -7181,8 +7187,8 @@ const CAMP = {day: 5, goal: {tunnel: 100, pit: 80, atis: 1, parkur: 1}, start: n
 try { const s = JSON.parse(localStorage.getItem("hs-camp") || "null"); if (s) Object.assign(CAMP, s); } catch (e) {}
 function campSave() { try { localStorage.setItem("hs-camp", JSON.stringify({day: CAMP.day, start: CAMP.start, done: CAMP.done, res: CAMP.res})); } catch (e) {} }
 function campState() { const g = CAMP.goal, tun = stats.kemparM || 0;
-  return [["Kapalı drone sığınağı", Math.min(1, tun / g.tunnel), `${tun.toFixed(0)}/${g.tunnel} m`], ["Bunker yaşam alanı", BNK.p, "%" + Math.round(BNK.p * 100)],
-    ["400 m atış alanı", RNG.p, "%" + Math.round(RNG.p * 100)], ["Drone parkuru", DRC.p, "%" + Math.round(DRC.p * 100)]]; }
+  return [["Kapalı uçangöz sığınağı", Math.min(1, tun / g.tunnel), `${tun.toFixed(0)}/${g.tunnel} m`], ["Bunker yaşam alanı", BNK.p, "%" + Math.round(BNK.p * 100)],
+    ["400 m atış alanı", RNG.p, "%" + Math.round(RNG.p * 100)], ["Uçangöz parkuru", DRC.p, "%" + Math.round(DRC.p * 100)]]; }
 function campHtml() { const left = Math.max(0, CAMP.day - DAY.day);
   return `<div class="ob camp"><span class="r"><span>${CAMP.done ? "Büyük teftiş yapıldı" : left ? "Büyük teftişe " + left + " gün" : "BUGÜN BÜYÜK TEFTİŞ"}</span><span>${Math.round(campState().reduce((a, r) => a + r[1], 0) / 4 * 100)}%</span></span></div>`; }
 function storyCamp() { if (CAMP.start == null) { CAMP.start = DAY.day; CAMP.day = DAY.day + 4; campSave(); }
@@ -7263,15 +7269,15 @@ function betonCard() {
 
 // ---------------- the situations of a day ----------------
 const SIT = [
-  {k: "kempar", win: [560, 900], w: 3, cond: () => !KEMPAR.broken && wx("siginak") >= 1, card: () => ({app: "Telsiz · Kapalı drone sığınağı", who: "Furkan Teğmen", ic: "⚙️", col: "#334155", title: "Kempar'ın dişleri aşındı",
+  {k: "kempar", win: [560, 900], w: 3, cond: () => !KEMPAR.broken && wx("siginak") >= 1, card: () => ({app: "Telsiz · Kapalı uçangöz sığınağı", who: "Furkan Teğmen", ic: "⚙️", col: "#334155", title: "Kempar'ın dişleri aşındı",
     text: "Komutanım, Kempar'ın kesici dişleri aşındı, aynada zor ilerliyoruz. Ne yapalım?",
     opts: [{t: "Bakım ekibini çağır", d: "Kempar bir süre durur, dişler değişince eskisinden hızlı keser", go: () => { const j = jobV(KEMPAR); if (j) breakEvent(j, "Kesici dişleri değişiyor, bakım ekibi geliyor.", false, true); wmod("siginak", 1.35, 300); say(who("furkan") || OFFM.furkan, "Bakımcılar geliyor komutanım.", 2.4); }},
       {t: "Akşama kadar idare edin", d: "Kesim yavaşlar · arıza da yapabilir", go: () => { wmod("siginak", .55, Math.max(30, 1050 - DAY.t)); if (Math.random() < .45) gTimeout(() => { const j = jobV(KEMPAR); if (j && isWork()) breakEvent(j, "Komutanım, dişler tamamen bitti, Kempar durdu!"); }, (60 + Math.random() * 90) * 1000); }},
       {t: "Gidip kendim bakacağım", d: "Sığınağa git · sen oradayken bakım hemen gelir", go: () => goTask("kempar", "Kempar'a bak", "Sığınağa git, Furkan'la dişlere bak.", () => plTarget(PLK.siginak), () => {
           const f = who("furkan"); if (f) say(f, "Bakın komutanım, dişler bitmiş. Ekibi çağırdım, hemen geliyorlar.", 3.2); const j = jobV(KEMPAR); if (j) breakEvent(j, "Dişler değişiyor.", true, true); wmod("siginak", 1.35, 300); satAdd(1, "Kempar'a bizzat baktın"); })}]})},
-  {k: "dron", win: [600, 960], w: 3, card: () => ({app: "Telsiz · Drone parkuru", who: "Orhan Üsteğmen", ic: "🛸", col: "#0f766e", title: "Dron kapıya çarptı",
+  {k: "dron", win: [600, 960], w: 3, card: () => ({app: "Telsiz · Uçangöz parkuru", who: "Orhan Üsteğmen", ic: "🛸", col: "#0f766e", title: "Dron kapıya çarptı",
     text: `${cap1(hitapTo(OFFM.orhan, CUR))}, test uçuşunda dron üçüncü kapıya çarptı, iki pervanesi kırıldı.`,
-    opts: [{t: "Yedek dronu kullanın", d: "İş durmaz", go: () => { DRONE.hideT = 8; say(who("orhan") || OFFM.orhan, `Yedek dron havada ${hitapTo(OFFM.orhan, CUR)}, devam.`, 2.4); }},
+    opts: [{t: "Yedek uçangözü kullanın", d: "İş durmaz", go: () => { DRONE.hideT = 8; say(who("orhan") || OFFM.orhan, `Yedek uçangöz havada ${hitapTo(OFFM.orhan, CUR)}, devam.`, 2.4); }},
       {t: "Rotayı yapay zekâyla ayarlayalım", d: "Pilot çadırına git · parkur bugün çok hızlanır", go: () => { DRONE.hideT = 30; goTask("dron", "Pilot çadırına git", "Orhan'la rotayı yeniden ayarla.", () => ({x: -74, z: -31.5, n: "PİLOT ÇADIRI", r: 5}), () => {
           const o = who("orhan"); if (o) say(o, "Rota tamam komutanım, kapılardan tam ortadan geçiyor!", 3); DRONE.hideT = 0; wmod("parkur", 1.5, 300); satAdd(1, "parkurun rotası düzeldi"); }); }},
       {t: "Bugünlük ara verin", d: "Parkur iki saat durur", go: () => { DRONE.hideT = 120; wmod("parkur", 0, 120); }}]})},
@@ -7285,12 +7291,12 @@ const SIT = [
     opts: [{t: "Orhan Barkan-2'leri hazırlasın", d: "Orhan parkurdan bir süre ayrılır · Paşa bir dahaki gelişinde memnun kalır", go: () => { DAY.barkanReady = true; wmod("parkur", .4, 90); errand("orhan", -258, 14, "Barkan-2'ler yıkandı, yağlandı. Barkan 4 olmasa da bunlar parlıyor!"); }},
       {t: "Öyle bir araç olmadığını söyle", d: "Doğrusu bu · Paşa bozulur", go: () => { satAdd(-2, "Paşa'ya Barkan 4 yok dendi"); gTimeout(() => phoneNote("Telefon · Tugay", "Paşa'nın yaveri", "Paşam 'bulun' dedi komutanım…"), 4000); }},
       {t: `${meName() === "Kaan" ? "Ben" : "Kaan"} bir Barkan 4 yazılımı yazsın`, d: "Şaka · çay ocağında herkes güler", go: () => { satAdd(1, "Barkan 4 şakası tabura moral oldu"); const k = who("kaan"); if (k) say(k, "Barkan 4'ün yazılımı hazır komutanım, donanımı bekliyor!", 3); }}]})},
-  {k: "nisan", win: [520, 980], w: 2, card: () => ({app: "Telsiz · Kapalı drone sığınağı", who: "Furkan Teğmen", ic: "💍", col: "#9d174d", title: "Askerin nişanı var",
+  {k: "nisan", win: [520, 980], w: 2, card: () => ({app: "Telsiz · Kapalı uçangöz sığınağı", who: "Furkan Teğmen", ic: "💍", col: "#9d174d", title: "Askerin nişanı var",
     text: "Komutanım, sığınakta çalışan bir askerimizin hafta sonu nişanı var, iki gün izin istiyor.",
     opts: [{t: "Ver izni, mutlu olsun", d: "Bir kişi eksik çalışılır · tabur sever", go: () => { wmod("siginak", .92, 600); satAdd(1, "askere nişan izni verildi"); const f = who("furkan"); if (f) say(f, "Çok sevindi komutanım, sağ olun!", 2.4); }},
       {t: "Sığınak bitince gitsin", d: "İş aksamaz · moral bozulur", go: () => { satAdd(-1, "askerin izni ertelendi"); }},
       {t: "Bölük komutanı karar versin", d: "İşi sahibine bırak", go: () => { const a = who("azizhan"); if (a) say(a, "La verin izni, nişan bir kere olur.", 2.6); wmod("siginak", .95, 600); }}]})},
-  {k: "kavga", win: [560, 980], w: 2, cond: () => !!who("boran"), card: () => ({app: "Telsiz · Kapalı drone sığınağı", who: "Furkan Teğmen", ic: "⚠️", col: "#a16207", title: "Sığınakta tartışma",
+  {k: "kavga", win: [560, 980], w: 2, cond: () => !!who("boran"), card: () => ({app: "Telsiz · Kapalı uçangöz sığınağı", who: "Furkan Teğmen", ic: "⚠️", col: "#a16207", title: "Sığınakta tartışma",
     text: "Komutanım, Boran Teğmen ile bir çavuş kürek yüzünden tartıştı, sığınakta iş durdu.",
     opts: [{t: "Ben gelip konuşurum", d: "Sığınağa git · iş yeniden başlar", go: () => { wmod("siginak", .3, 90); const m = goTask("kavga", "Sığınaktaki tartışma", "Sığınağa git, Boran'la çavuşu barıştır.", () => plTarget(PLK.siginak), () => {
           WMOD.forEach(q => { if (q.k === "siginak" && q.f === .3) q.until = 0; }); const b = who("boran"); if (b) { say(b, "Komutanım, ben sadece koordine ediyordum…", 2.8); gTimeout(() => say(b, "Tamam, küreği ben de alıyorum.", 2.4), 3200); } satAdd(2, "sığınaktaki tartışmayı çözdün"); }); }},
@@ -7439,10 +7445,10 @@ const KSPOT = () => { const K = KEMPAR, z = K.trench ? 63.3 : K.z, e = edgeX(z),
 const SITES = {
   yol: {n: "ŞANTİYE YOLU", spot: () => ({x: 62, z: ROAD.y - 4.5, lx: GRD.x, lz: GRD.z}), beam: () => [ROAD.x + 4, ROAD.y + ROAD.h / 2]},
   stok: {n: "STOK SAHASI", spot: () => ({x: 44, z: 68, lx: 60, lz: 72}), beam: () => [OPS.sp.x - 4, OPS.sp.z]},
-  siginak: {n: "KAPALI DRONE SIĞINAĞI", spot: KSPOT, beam: () => { const s = KSPOT(); return [s.lx - 2, s.lz]; }},
+  siginak: {n: "KAPALI UÇANGÖZ SIĞINAĞI", spot: KSPOT, beam: () => { const s = KSPOT(); return [s.lx - 2, s.lz]; }},
   bunker: {n: "GÖMÜLÜ KOMUTA YERİ", spot: () => ({x: XR0 - 6, z: BCZ + 6.2, lx: BCX, lz: BCZ}), beam: () => [BCX, BCZ]},
   atis: {n: "400 m ATIŞ ALANI", spot: () => { const f = TCX.rf || rangeFront(); return {x: f.x - 3, z: f.z + 1.5, lx: f.x + 2.5, lz: f.z}; }, beam: () => { const f = TCX.rf || rangeFront(); return [f.x + 2.5, f.z]; }},
-  parkur: {n: "DRONE PARKURU", spot: () => { const f = TCX.cf || courseFront(); return {x: f.x, z: f.z, lx: f.x - 2.2, lz: f.z - 1.5}; }, beam: () => { const f = TCX.cf || courseFront(); return [f.x - 2.2, f.z - 1.5]; }}};
+  parkur: {n: "UÇANGÖZ PARKURU", spot: () => { const f = TCX.cf || courseFront(); return {x: f.x, z: f.z, lx: f.x - 2.2, lz: f.z - 1.5}; }, beam: () => { const f = TCX.cf || courseFront(); return [f.x - 2.2, f.z - 1.5]; }}};
 const MSITE = {}; for (const k in SITES) MSITE[k] = SITES[k].n;
 const siteZone = (ks, rect) => ({rect: rect || null, beams: ks.map(k => SITES[k].beam())});
 // which job a machine is doing now (the Kempar and its truck work on the command post's cut in that job)
@@ -7458,13 +7464,13 @@ const C_TIRE = () => ({app: "Telsiz · Stok sahası", who: "Kepçe operatörü",
   text: "Komutanım, kepçenin ön lastiği patladı, yığının ortasında kaldım! Kamyon da boş bekliyor.",
   opts: [{t: "Tamir ekibini çağır", d: "Ekip gelip değiştirir · biraz sürer", go: () => { breakJ(LDR, "Lastik değişiyor, tamir ekibi geliyor."); }},
     {t: "Gidip başında dururum", d: "Kepçenin yanına git · sen oradayken iş çabuk biter", go: () => { breakJ(LDR, "Lastik değişiyor."); gmGo("Kepçenin başına git", () => LDR.broken ? {x: LDR.x, z: LDR.z, n: "KEPÇE", r: 9} : null, null, {done: () => !LDR.broken}); }}]});
-const C_TEETH = () => ({app: "Telsiz · Kapalı drone sığınağı", who: cardName("furkan", true), ic: "⚙️", col: "#334155", title: "Kempar'ın dişleri aşındı",
+const C_TEETH = () => ({app: "Telsiz · Kapalı uçangöz sığınağı", who: cardName("furkan", true), ic: "⚙️", col: "#334155", title: "Kempar'ın dişleri aşındı",
   text: fillK("furkan", "{H}, Kempar'ın kesici dişleri aşındı, aynada zor ilerliyoruz. Ne yapalım?"),
   opts: [{t: "Bakım ekibini çağır", d: "Kempar bir süre durur, dişler değişince hızlı keser", go: () => { breakJ(KEMPAR, "Kesici dişleri değişiyor, bakım ekibi geliyor."); wmod("siginak", 1.35, 9999); radioK("furkan", "Bakımcılar geliyor {h}."); }},
     {t: "İdare edin", d: "Kesim yavaşlar · dişler tamamen bitebilir", go: () => { wmod("siginak", .55, 9999); if (Math.random() < .45) gTimeout(() => { if (PROJ.active && !PROJ.done) breakJ(KEMPAR, "Komutanım, dişler tamamen bitti, Kempar durdu!", true); }, (25 + Math.random() * 25) * 1000); }},
     {t: "Gidip kendim bakarım", d: "Kempar'ın yanına git · sen oradayken bakım hemen biter", go: () => gmGo("Kempar'a bak", () => ({x: KEMPAR.x - 7, z: KEMPAR.z + 4.5, n: "KEMPAR", r: 9}), () => {
       radioK("furkan", "Bakın {h}, dişler bitmiş. Ekibi çağırdım, hemen geliyorlar."); breakJ(KEMPAR, "Dişler değişiyor.", false, true); wmod("siginak", 1.35, 9999); satAdd(1, "Kempar'a bizzat baktın"); })}]});
-const C_MUD = () => ({app: "Telsiz · Kapalı drone sığınağı", who: "Kamyon şoförü", ic: "🚛", col: "#475569", title: "Kamyon çamura saplandı",
+const C_MUD = () => ({app: "Telsiz · Kapalı uçangöz sığınağı", who: "Kamyon şoförü", ic: "🚛", col: "#475569", title: "Kamyon çamura saplandı",
   text: "Komutanım, dökümden dönerken kamyon çamura saplandı, kendi başıma çıkamıyorum!",
   opts: [{t: "Beko loder çeksin", d: "Beko loder işini bırakıp çeker · çabuk biter", go: () => { breakJ(TRB, "Komutanım, kamyon çamura saplandı!", false, true); holdFor(BHL, 12); radioK("boran", "Beko loderi gönderdim {h}, arz ederim."); }},
     {t: "Gidip başında dururum", d: "Kamyonun yanına git · sen oradayken çabuk çıkar", go: () => { breakJ(TRB, "Komutanım, kamyon çamura saplandı!"); gmGo("Saplanan kamyona git", () => TRB.broken ? {x: TRB.x, z: TRB.z, n: "KAMYON", r: 9} : null, null, {done: () => !TRB.broken}); }},
@@ -7493,9 +7499,9 @@ const C_RWATER = () => ({app: "Telsiz · 400 m atış alanı", who: cardName("al
       waterRun(f.x + 4, f.z + 9, () => { W.until = 0; wmod("atis", 1.3, 9999); radioK("ali", "Su geldi {h}, sağ olun!"); satAdd(1, "atış alanına su yetişti"); }); }},
     {t: "Kantinden su aldırın", d: "İş kısa bir süre yavaşlar", go: () => { wmod("atis", .5, 25); radioK("ali", "İki asker kantine koştu {h}."); }},
     {t: "Akşama kadar dayansınlar", d: "İş yavaşlar · bir asker fenalaşabilir", go: () => { wmod("atis", .65, 9999); if (Math.random() < .5) gTimeout(() => { if (!PROJ.active || PROJ.done) return; satAdd(-3, "atış alanında bir asker sıcaktan fenalaştı"); phoneNote("Telsiz · 400 m atış alanı", oName(OFFM.ali), "Komutanım, bir asker sıcaktan fenalaştı, revire götürüyoruz!"); }, (25 + Math.random() * 20) * 1000); }}]});
-const C_DRONE = () => ({app: "Telsiz · Drone parkuru", who: cardName("orhan", true), ic: "🛸", col: "#0f766e", title: "Dron kapıya çarptı",
+const C_DRONE = () => ({app: "Telsiz · Uçangöz parkuru", who: cardName("orhan", true), ic: "🛸", col: "#0f766e", title: "Dron kapıya çarptı",
   text: fillK("orhan", "{H}, test uçuşunda dron üçüncü kapıya çarptı, iki pervanesi kırıldı."),
-  opts: [{t: "Yedek dronu kullanın", d: "İş durmaz", go: () => { DRONE.hideT = 6; radioK("orhan", "Yedek dron havada {h}, devam."); }},
+  opts: [{t: "Yedek uçangözü kullanın", d: "İş durmaz", go: () => { DRONE.hideT = 6; radioK("orhan", "Yedek uçangöz havada {h}, devam."); }},
     {t: "Rotayı yapay zekâyla ayarlayalım", d: "Pilot çadırına git · parkur çok hızlanır", go: () => { DRONE.hideT = 1e9; const W = slow("parkur", .6);
       gmGo("Pilot çadırına git", () => ({x: -74, z: -31.5, n: "PİLOT ÇADIRI", r: 5}), () => { W.until = 0; DRONE.hideT = 0; radioK("orhan", "Rota tamam {h}, kapılardan tam ortadan geçiyor!"); wmod("parkur", 1.5, 9999); satAdd(1, "parkurun rotası düzeldi"); }); }},
     {t: "Bir süre ara verin", d: "Parkur bir süre durur", go: () => { DRONE.hideT = 40; wmod("parkur", 0, 40); }}]});
@@ -7504,7 +7510,7 @@ const C_DRONE = () => ({app: "Telsiz · Drone parkuru", who: cardName("orhan", t
 const TRBPARK = {x: 96, z: 90, a: 0};   // where the command post's truck waits once the cut is through (out of the crane's way)
 const TIPDRV = "Makineleri askerler sürer, sen yönetirsin: hangi işin başında durursan o iş hızlanır. İstediğin makineyi SÜR ile alırsın, İN ile askere geri verirsin.";
 const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun görev · her görevde birkaç iş birden · sonunda Levent Paşa'nın büyük teftişi",
-  get end() { const r = GM.inspRes; return r === "iyi" ? "Levent Paşa teftişten memnun ayrıldı: yol, stok sahası, sığınak, gömülü komuta yeri, atış alanı ve drone parkuru tugayın en düzgün şantiyesi seçildi. Ufuk Binbaşı bu akşam herkese çay ısmarlıyor."
+  get end() { const r = GM.inspRes; return r === "iyi" ? "Levent Paşa teftişten memnun ayrıldı: yol, stok sahası, sığınak, gömülü komuta yeri, atış alanı ve uçangöz parkuru tugayın en düzgün şantiyesi seçildi. Ufuk Binbaşı bu akşam herkese çay ısmarlıyor."
     : r === "orta" ? "Teftiş bitti. Paşa eksikleri not aldı, bir ay sonra yeniden gelecek. Kalan işleri menüden bitirip teftişi yeniden oynayabilirsin."
     : "Teftiş kötü geçti, Paşa çok kızdı. Görevleri menüden tamamla, sonra teftişe yeniden çık."; },
   missions: [
@@ -7518,7 +7524,7 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
       cards: [{at: .16, mk: C_GRADER}, {at: .52, mk: C_TIRE}]},
     {title: "Kapalı Drone Sığınağı", g: "furkan", sites: ["siginak"], veh: ["gt", "tr", "bh"], mach: () => [KEMPAR, TRB, BHL], pay: 45000, par: 360,
       get zone() { return siteZone(["siginak"]); },
-      brief: "Kapalı drone sığınağının galerilerini Kempar açıyor. Kesilen kaya banttan kamyona akıyor, kamyon dolunca döküm sahasına boşaltıyor, beko loder de bant altını temizliyor. Galeri teftişe kadar yirmi altı metre ilerlemeli.",
+      brief: "Kapalı uçangöz sığınağının galerilerini Kempar açıyor. Kesilen kaya banttan kamyona akıyor, kamyon dolunca döküm sahasına boşaltıyor, beko loder de bant altını temizliyor. Galeri teftişe kadar yirmi altı metre ilerlemeli.",
       tip: TIPDRV, obj: [{t: "Galeri ilerlemesi", f: () => kempDone() ? 99 : kemM() - (TCX.kem || 0), goal: 26, u: " m"}],
       spawn: () => { kempReady(); },
       G: {brief: "{H}, sığınakta asıl iş bu! Kempar aynada, kamyon bant altında, beko loder de temizlikte. Galeriyi yirmi altı metre daha ilerletmemiz lazım. Ben askerle aşağıdayım, kürek bende!",
@@ -7536,9 +7542,9 @@ const TEFTIS = {id: "teftis", name: "Büyük Teftişe Hazırlık", sub: "5 uzun 
       cards: [{cond: () => BNK.trench > .36 && BNK.trench < .8 && !(KEMPAR.hold > 0), mk: C_WATER}, {cond: () => BNK.mods >= 1 && (CR.st === "lift" ? BNK.mods + 1 : BNK.mods) < BNKN && (CR.st === "ready" || CR.st === "lift") && CR.hold < 1e8, mk: C_CRACK}, {cond: () => bnkCover() > .2 && bnkCover() < .72, mk: C_SHIFT}]},
     {title: "Atış Alanı ve Drone Parkuru", g: "ali", sites: ["atis", "parkur"], veh: [], mach: () => [], pay: 40000, par: 420, hand: true,
       get zone() { return siteZone(["atis", "parkur"]); },
-      brief: "Garnizonda iki iş birden: Ali Üsteğmen'in askerleri 400 metrelik atış alanında hedef çerçevelerini dikiyor, setleri yükseltiyor; Orhan Üsteğmen'in drone parkurunda kapılar dikiliyor, dron her yeni kapıdan test uçuşu yapıyor. Makine yok; iş kürekle, kum torbasıyla. Hangi işin başında durursan o hızlanır.",
+      brief: "Garnizonda iki iş birden: Ali Üsteğmen'in askerleri 400 metrelik atış alanında hedef çerçevelerini dikiyor, setleri yükseltiyor; Orhan Üsteğmen'in uçangöz parkurunda kapılar dikiliyor, dron her yeni kapıdan test uçuşu yapıyor. Makine yok; iş kürekle, kum torbasıyla. Hangi işin başında durursan o hızlanır.",
       tip: "Burada makine yok: askerin başında dur, iş hızlansın. İki saha da garnizonun güneyinde; GİT ile gidebilirsin.",
-      obj: [{t: "Atış alanı", f: () => (RNG.p - (TCX.rng || 0)) * 100, goal: 30, u: " %"}, {t: "Drone parkuru", f: () => (DRC.p - (TCX.drc || 0)) * 100, goal: 35, u: " %"}],
+      obj: [{t: "Atış alanı", f: () => (RNG.p - (TCX.rng || 0)) * 100, goal: 30, u: " %"}, {t: "Uçangöz parkuru", f: () => (DRC.p - (TCX.drc || 0)) * 100, goal: 35, u: " %"}],
       spawn: () => { let ch = false; if (RNG.p > .7) { RNG.p = .7; ch = true; } if (DRC.p > .65) { DRC.p = .65; ch = true; } if (ch) { projVisuals(); saveGarProj(); } },
       G: {brief: "{H}, atış alanında hedef çerçevelerini dikiyoruz, setleri de yükseltiyoruz. Orhan da parkurun kapılarını dikiyor. Makine yok, iş asker işi. Hangimizin başında durursan o iş çakı gibi olur. Tek rakibin kendinsin!",
         go: "İp çekildi {h}, çerçeveler geliyor! Orhan da dronu havaya aldı.", mid: "Yarısı oldu {h}, aynen böyle.", ok: "Çakı gibi oldu {h}! Atış alanı da parkur da hazır. Kapım her daim açık, çaya gel."},
@@ -7710,7 +7716,7 @@ function gmPanel(M) {
     h += `<div class="gmrow mc${me ? " me" : ""}"><span><b>${v.name}</b><i>${st}</i></span><button type="button" class="gmb${me ? " alt" : ""}" data-take="${vehicles.indexOf(v)}">${me ? "İN" : "SÜR"}</button></div>`; }
   if (M.info) for (const [n, t] of M.info()) h += `<div class="gmrow mc info"><span><b>${n}</b><i>${t}</i></span>${n === "VİNÇ KAMYONU" && CR.st === "ready" && CR.hold < 1e8 && BNK.mods < BNKN && !PILOT.mode ? `<button type="button" class="gmb" data-gm="crane">KULLAN</button>` : ""}</div>`;   // what works without a driver of ours (the crane truck)
   if (GM.go) { const t = GM.go.target(), dd = t ? Math.round(distTo(t)) : null; h += `<div class="gmrow go"><span>▶ ${GM.go.t}${dd != null ? ` · ${dd} m` : ""}</span>${t && dd > (t.r || 4) + 2 && FOOT.on && !FOOT.seq ? `<button type="button" class="gmb" data-gm="errand">GİT</button>` : ""}</div>`; }
-  h += `<div class="gmrow tea"><button type="button" class="gmb alt" data-gm="tea">${SEAT.on ? "KALK" : "☕ ÇAY OCAĞI"}</button><button type="button" class="gmb alt" data-gm="shop">🛒 TEDARİK</button>${OFFM.orhan && !PILOT.mode ? `<button type="button" class="gmb alt" data-gm="drone">🛸 DRON</button>` : ""}</div>`;
+  h += `<div class="gmrow tea"><button type="button" class="gmb alt" data-gm="tea">${SEAT.on ? "KALK" : "☕ ÇAY OCAĞI"}</button><button type="button" class="gmb alt" data-gm="shop">🛒 TEDARİK</button>${OFFM.orhan && !PILOT.mode ? `<button type="button" class="gmb alt" data-gm="drone">🛸 UÇANGÖZ</button>` : ""}</div>`;
   return h; }
 tasksEl.addEventListener("pointerdown", e => { const b = e.target.closest(".gmb"); if (!b || !GM.on) return; e.preventDefault(); e.stopPropagation(); tasksEl.__h = null;
   if (b.dataset.take != null) { gmTake(vehicles[+b.dataset.take]); return; }
@@ -7946,8 +7952,8 @@ const INSPSTOPS = [
   {n: "STOK SAHASI · ŞANTİYE YOLU", k: "stok", lines: () => dn(0)
     ? [["ahmet", "Komutanım, şantiye yolu greyderle baştan sona düzeltildi, stok sahasındaki hafriyat da döküm sahasına taşındı.", 3.6], ["levent", "Hı. Arabam hiç sarsılmadı. Ahmet, bu sefer seni bir şeyde yakalayamadım.", 3.2]]
     : [["ahmet", "Komutanım, yolun bir kısmı hâlâ bozuk, stok sahası da toparlanıyor…", 3.2], ["levent", "Ahmet! Yine sen! Bu ne dağ gibi yığın, bu yol teftişe böyle mi kaldı?!", 3.2]]},
-  {n: "KAPALI DRONE SIĞINAĞI", k: "siginak", lines: () => dn(1)
-    ? [["furkan", `Komutanım, kapalı drone sığınağının galerisi ${kemM() >= 2 ? Math.round(kemM()) + " metreye ulaştı" : "hedef derinliğe ulaştı"}. Kempar aynada kesiyor.`, 3.4], ["boran", "Koordinasyon bendeydi komutanım, arz ederim.", 2.4], ["levent", "Baran, sen hep koordinasyon diyorsun ama iş güzel olmuş. Aferin.", 3.2], ["boran", "Boran, komutanım…", 1.8]]
+  {n: "KAPALI UÇANGÖZ SIĞINAĞI", k: "siginak", lines: () => dn(1)
+    ? [["furkan", `Komutanım, kapalı uçangöz sığınağının galerisi ${kemM() >= 2 ? Math.round(kemM()) + " metreye ulaştı" : "hedef derinliğe ulaştı"}. Kempar aynada kesiyor.`, 3.4], ["boran", "Koordinasyon bendeydi komutanım, arz ederim.", 2.4], ["levent", "Baran, sen hep koordinasyon diyorsun ama iş güzel olmuş. Aferin.", 3.2], ["boran", "Boran, komutanım…", 1.8]]
     : [["furkan", "Komutanım, Kempar aynada, galeri hedefin gerisinde…", 2.8], ["levent", "Sığınak bitmeden dronlar ortada mı kalacak?! Bu ne rehavet!", 3]]},
   {n: "GÖMÜLÜ KOMUTA YERİ", k: "bunker", lines: () => { const cr = BNK.crack && BNK.crackK >= 0 && BNK.crackK < BNK.mods, top = () => camAt(BCX - 10, BCZ + 14, 30, BCX, BCZ, 0, .5, 0);
     if (bnkCover() >= .999) return [["kaan", "Komutanım, gömülü komuta yeri hazır: Kempar yarmayı açtı, altı korugan içine art arda dizildi, üstü toprakla örtüldü.", 3.6], ["orhan", "Komutanım, dronla yukarıdan bakın: komuta yeri hiç görünmüyor, sadece çimenli bir tepe var.", 3.4, top], ["levent", "Proje yapan çocuk! Bu sefer projen kâğıtta kalmamış, aferin.", 3.2]]
@@ -7957,8 +7963,8 @@ const INSPSTOPS = [
   {n: "400 m ATIŞ ALANI", k: "atis", lines: () => dn(3)
     ? [["ali", `Komutanım, 400 metre atış alanı yüzde ${Math.round(RNG.p * 100)}, hedef çerçeveleri dikildi.`, 3.2], ["levent", "Ali… Seni hiç sevmem, biliyorsun. Ama atış alanı olmuş.", 3], ["ali", "Sağ olun komutanım, kapım her daim açık.", 2.2]]
     : [["ali", "Komutanım, atış alanında çerçevelerin bir kısmı eksik…", 2.8], ["levent", "Ali! Seni de hiç sevmem! Çerçeveler nerede?!", 2.8]]},
-  {n: "DRONE PARKURU", k: "parkur", lines: () => dn(3)
-    ? [["orhan", "Komutanım, drone parkuru hazır. Dron şimdi bütün kapılardan geçecek!", 3.2], ["levent", "Hı… Güzel uçuyor. Orhan, Barkan 4'ler hazır mı?", 3], ["orhan", "Hazır komutanım, fabrikadan çıkmak üzere!", 2.4]]
+  {n: "UÇANGÖZ PARKURU", k: "parkur", lines: () => dn(3)
+    ? [["orhan", "Komutanım, uçangöz parkuru hazır. Dron şimdi bütün kapılardan geçecek!", 3.2], ["levent", "Hı… Güzel uçuyor. Orhan, Barkan 4'ler hazır mı?", 3], ["orhan", "Hazır komutanım, fabrikadan çıkmak üzere!", 2.4]]
     : [["orhan", "Komutanım, parkurun kapıları eksik, dron şimdilik yarım tur atıyor.", 3], ["levent", "Orhan! Keşif bölüğünü denetleyeceğim, TMK hazırla! Barkan 4'leri de görmek istiyorum!", 3.4]]}];
 function seqRun(steps, done) { let i = 0; const nx = () => { if (!GM.insp) return; const s = steps[i++]; if (!s) { if (done) done(); return; } try { if (s.f) s.f(); } catch (e) { console.error(e); } gTimeout(nx, (s.d || 0) * 1000); }; nx(); }
 const INSPIN = GATEIN.concat(SITEIN.slice(1, 6)).concat([[6, 54.6], [9.5, 55.3]]);
@@ -8178,7 +8184,7 @@ const PC = {hx: 0, hz: 0, hy: 0, k: -1, rot: 0, told: 0};                       
 const PD = {x: 0, y: 0, z: 0, yaw: 0, vx: 0, vz: 0, vy: 0, bat: 0, gates: [], home: null, fpv: false, done: false};   // the drone
 const bPilA = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big"; b.id = "bPilA"; b.hidden = true; const c = document.querySelector(".ctx"); if (c) c.appendChild(b); b.addEventListener("click", () => pilotAct()); return b; })();
 const bPilB = (() => { const b = document.createElement("button"); b.type = "button"; b.className = "big alt"; b.id = "bPilB"; b.hidden = true; const c = document.querySelector(".ctx"); if (c) c.appendChild(b); b.addEventListener("click", () => pilotEnd()); return b; })();
-function pilotBtns() { const m = PILOT.mode; bPilA.hidden = m !== "crane"; bPilB.hidden = !m; if (m === "crane") bPilA.textContent = PC.k >= 0 ? "BIRAK" : "KANCA"; if (m) bPilB.textContent = m === "crane" ? "VİNÇTEN İN" : "DRONU İNDİR";
+function pilotBtns() { const m = PILOT.mode; bPilA.hidden = m !== "crane"; bPilB.hidden = !m; if (m === "crane") bPilA.textContent = PC.k >= 0 ? "BIRAK" : "KANCA"; if (m) bPilB.textContent = m === "crane" ? "VİNÇTEN İN" : "UÇANGÖZÜ İNDİR";
   if (m) { bBoard.hidden = true; bCtx.hidden = true; bCtx2.hidden = true; padLlbl.textContent = m === "crane" ? "KANCA ↔" : "UÇUŞ"; padRlbl.textContent = m === "crane" ? "KANCA ↕" : "DÖN · YÜKSEL"; } }
 // the sticks and the keys, read the same way for both
 function pilotInput() { let mx = 0, mz = 0, rx = 0, ry = 0;
@@ -8232,10 +8238,10 @@ function craneCam(dt) { const C = craneCol(), hx = PC.hx, hz = PC.hz, hy = PC.hy
 
 // ---------------- the drone ----------------
 function droneStart() {
-  if (!pilotFree()) return; if (DRONE.hideT > 0) { toast("Dron şu an uçamıyor", 1.8); return; }
+  if (!pilotFree()) return; if (DRONE.hideT > 0) { toast("Uçangöz şu an uçamıyor", 1.8); return; }
   PILOT.mode = "drone"; PILOT.t = 0; const g = footGround(FOOT.x, FOOT.z); Object.assign(PD, {x: FOOT.x + Math.cos(FOOT.a) * 2, y: g + 1.2, z: FOOT.z + Math.sin(FOOT.a) * 2, yaw: FOOT.a, vx: 0, vz: 0, vy: 2, bat: 150, gates: [], done: false, home: {x: FOOT.x, z: FOOT.z}});
   DRONE.pilot = true; DRONE.visible = true; FOOT.vx = FOOT.vz = 0; FOOT.spd = 0; camSnap = true; pilotBtns();
-  toast("DRON SENDE · sol: uç · sağ: dön, yüksel · parkurun kapılarından geç", 3.4); }
+  toast("UÇANGÖZ SENDE · sol: uç · sağ: dön, yüksel · parkurun kapılarından geç", 3.4); }
 const gateN = () => Math.floor(DRC.p * DGATES.length + 1e-6);
 function droneFrame(dt) {
   const I = pilotInput(), S = PLAYER; locoSoldier(S, 0, dt); PD.bat -= dt;
@@ -8247,9 +8253,9 @@ function droneFrame(dt) {
   DRONE.position.set(PD.x, PD.y, PD.z); DRONE.rotation.set(clamp(-(PD.vx * c + PD.vz * s) * .025, -.35, .35), -PD.yaw, clamp((-PD.vx * s + PD.vz * c) * .025, -.35, .35), "YXZ"); DRONE.visible = true;
   // the gates: through the ones that stand (the frame's middle, close and low)
   const n = gateN(); for (let i = 0; i < n; i++) { if (PD.gates.includes(i)) continue; const [gx, gz] = DGATES[i]; if (Math.hypot(PD.x - gx, PD.z - gz) < 2.4 && PD.y < heightAt(gx, gz) + 4.2) { PD.gates.push(i); toast(`KAPI ${i + 1} ✓ · ${PD.gates.length}/${n}`, 1.4); shot("beep", .3, 1.4);
-      if (PD.gates.length >= n && n >= 3 && !PD.done) { PD.done = true; GM.droneShow = true; satAdd(2, "dronla bütün kapılardan geçtin"); toast("🛸 DRONE GÖSTERİSİ · bütün kapılar geçildi!", 3); } } }
-  if (PD.bat <= 0) { toast("Dronun pili bitti · iniyor", 2.4); pilotEnd(); return; }
-  if (PD.bat < 20 && PD.bat + dt >= 20) toast("Dron pili %15 · 20 saniye", 2);
+      if (PD.gates.length >= n && n >= 3 && !PD.done) { PD.done = true; GM.droneShow = true; satAdd(2, "dronla bütün kapılardan geçtin"); toast("🛸 UÇANGÖZE GÖSTERİSİ · bütün kapılar geçildi!", 3); } } }
+  if (PD.bat <= 0) { toast("Uçangözun pili bitti · iniyor", 2.4); pilotEnd(); return; }
+  if (PD.bat < 20 && PD.bat + dt >= 20) toast("Uçangöz pili %15 · 20 saniye", 2);
   PILOT.t += dt; }
 const PDV = new THREE.Vector3(), PDL = new THREE.Vector3();
 function droneCam(dt) { const c = Math.cos(PD.yaw), s = Math.sin(PD.yaw);
@@ -8602,11 +8608,11 @@ const PRO_LINES = () => { const me = CUR.d.short, is = k => CUR.d.key === k, who
   ["azizhan", "La bir hafta mı? Yol perişan, stok sahası dağ gibi, komuta yerinin koruganları daha istifte.", 4.2],
   ["ufuk", "O yüzden toplandık. Ahmet: şantiye yolu ve stok sahası senden. Paşam'ın arabası sarsılmayacak.", 4.2],
   [who("ahmet"), "Sen kralsın komutanım, greyder sabah yolda.", 2.6],
-  ["ufuk", "Furkan, Boran: kapalı drone sığınağı. Galeri teftişe kadar ilerleyecek.", 3.6],
+  ["ufuk", "Furkan, Boran: kapalı uçangöz sığınağı. Galeri teftişe kadar ilerleyecek.", 3.6],
   [who("furkan"), "Kürek bende komutanım, askerle aşağıdayım.", 2.6], [who("boran"), "Koordinasyon bende komutanım, arz ederim.", 2.4],
   ["ufuk", "Kaan: gömülü komuta yeri. Koruganlar geldi, yarmayı Kempar açacak, üstü toprakla kapanacak.", 4.2],
   [who("kaan"), "Projeyi tablete işledim komutanım. Yukarıdan hiçbir şey görünmeyecek. Yansın Hisar!", 3.4],
-  ["ufuk", "Ali, Orhan: atış alanı ve drone parkuru. Paşam'a uçuş gösterisi istiyorum.", 3.6],
+  ["ufuk", "Ali, Orhan: atış alanı ve uçangöz parkuru. Paşam'a uçuş gösterisi istiyorum.", 3.6],
   [who("ali"), "Çakı gibi olacak komutanım.", 2], [who("orhan"), "Barkan 4'ler de o güne yetişirse Paşam'ı uçururuz komutanım.", 3],
   ["ufuk", `${me}, sen işlerin başında dur. Makineleri askerler sürer, sen yönetirsin; çıkan sorunu sen çözersin. Kimse çay ocağında yakalanmasın.`, 5, o => camAt(TH.x + 6, TH.z + 3.5, 2.2, TH.x - 1, TH.z, 1.2, -.2, 0)],
   ["me", "Emredersiniz komutanım.", 1.8],
@@ -9275,6 +9281,61 @@ UPD.push(dt => DETL.frame(dt));
 window.__hs.detl = DETL;
 
 ;(window.__INIT || (window.__INIT = [])).push(["perf", performance.now()]);
+
+// Installed inside the existing construction scene closure; no legacy save is reset.
+if(window.HisarKurulus){
+ const K=window.HisarKurulus,H=K.host,ch=H.chapter(),free=ch.mode==='free',number=Number(new URLSearchParams(location.search).get('chapter'));
+ const nativeDroneStart=droneStart,nativePilotEnd=pilotEnd,nativeDroneCam=droneCam;
+ let session,wasRunning=false,scan=H.snapshot().progress['scan']||0,roadStart=stats.road,roadSaved=H.snapshot().progress['road']||0,elapsed=0,done=false,transport=false,travel=0,previous=null;
+ const dest={x:-42,z:-27};let routeMarker=null;
+ function markAt(x,z,color){if(routeMarker)scene.remove(routeMarker);routeMarker=new THREE.Mesh(new THREE.RingGeometry(4,4.5,32),new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide,transparent:true,opacity:.9}));routeMarker.rotation.x=-Math.PI/2;routeMarker.position.set(x,heightAt(x,z)+.2,z);scene.add(routeMarker);}
+ if(!free){GM.on=false;PROJ.active=false;if(typeof HAY!=='undefined')HAY.on=false;}
+ const oldMenu=document.getElementById('menu');oldMenu.hidden=true;document.getElementById('hud').hidden=false;document.getElementById('ctl').hidden=false;
+ if(free){start(vehicles[cur].type,cur);}
+ else if(number===1){start('gr');const v=vehicles[cur];v.x=ROAD.x+2;v.z=ROAD.y+ROAD.h/2;v.a=0;v.v=0;pose(v,0);setZone({rect:ROAD,beam:[ROAD.x+16,ROAD.y+ROAD.h/2]});}
+ else if(number===7){start('tk');const v=vehicles[cur];dest.x=v.x;dest.z=v.z;v.z+=20;v.a=-Math.PI/2;v.v=0;pose(v,0);markAt(dest.x,dest.z,0xb8eb95);}
+ else{start('tk');footInstant(-62,-30,0);if(number===4)markAt(dest.x,dest.z,0xf2cd6c);}
+ // Use one shared model, not a differently styled drone in each game.
+ for(const child of DRONE.children)child.visible=false;const common=K.model(THREE);DRONE.add(common);DRONE.pilot=true;DRONE.visible=false;
+ const a={scene:'site',model:common,ground:heightAt,bounds:{x0:-400,x1:250,z0:-140,z1:190},
+ origin:()=>({x:FOOT.on?FOOT.x:vehicles[cur].x,y:heightAt(FOOT.on?FOOT.x:vehicles[cur].x,FOOT.on?FOOT.z:vehicles[cur].z)+1,z:FOOT.on?FOOT.z:vehicles[cur].z}),
+ launch(d){if(!FOOT.on)footInstant(vehicles[cur].x+3,vehicles[cur].z,0);if(SEAT.on)standUp(true);AUTO.on=false;nativeDroneStart();if(PILOT.mode!=='drone')return false;this.pose(d,0);return true;},
+ pose(d,dt){const p=d.flight.pos;Object.assign(PD,{x:p.x,y:p.y,z:p.z,yaw:Math.PI/2-d.camera.yaw,bat:d.battery*1.5});DRONE.pilot=true;DRONE.visible=d.flight.status!=='docked';DRONE.position.set(p.x,p.y,p.z);DRONE.scale.setScalar(1);DRONE.rotation.set(-d.flight.vz*.015,d.camera.yaw,d.flight.vx*.015,'YXZ');for(const r of common.userData.rot)r.rotation.y+=dt*50;},
+ land(){nativePilotEnd();DRONE.pilot=true;DRONE.visible=false;cam.up.set(0,1,0);},
+ release(){for(const key of Object.keys(keys))delete keys[key];L.x=L.y=Rj.x=Rj.y=0;L.on=Rj.on=false;},
+ pause(v){if(v){wasRunning=running;running=false;if(ac)master.gain.value=0;}else{running=wasRunning;if(ac)master.gain.value=soundOn?VOL.v:0;}},save(){saveWorld(false);},
+ catalogue(){return [...vehicles.map((v,i)=>({id:'vehicle:'+i,label:v.name+' · '+(i+1),group:'Bütün sürülebilen araçlar'})),...CAMS.map((n,i)=>({id:'camera:'+i,label:n,group:'Kameralar'})),...(free?[{id:'native-menu',label:'Bütün şantiye projeleri, garnizon ve mevcut menü',group:'Tam içerik'}]:[])];},
+ activate(key){const [kind,id]=String(key).split(':');if(kind==='vehicle'&&/^\d+$/.test(id)&&vehicles[+id]){switchTo(+id);return {ok:true};}if(kind==='camera'&&['0','1','2','3'].includes(id)){camMode=+id;camSnap=true;return {ok:true};}if(key==='native-menu'&&free)return {ok:true,after:()=>openMenu()};return {ok:false};},
+ tick(dt,d){elapsed+=dt;if(elapsed>3){elapsed=0;const report={};vehicles.forEach((v,i)=>{report['site:'+v.type+'-'+i]={name:v.name,fuel:v.fuel||0,load:v.load||0,used:cur===i?1:0,lastSeen:new Date().toISOString()};});H.fleet(report);}if(done||free)return;const f=d.flight;
+  if(number===0){H.goal(f.status==='docked'?'Uçangözü KALDIR ile başlat.':'İlk uçuş: '+Math.min(8,Math.floor(f.seconds))+'/8 sn · sonra GERİ ÇAĞIR.');}
+  if(number===1){const earned=Math.max(H.snapshot().progress['road']||0,roadSaved+stats.road-roadStart);H.goal('Yolu düzelt: '+Math.min(6,Math.floor(earned))+'/6 bölüm · bıçak aşağıda, yavaş ilerle.');if(earned>0&&Math.floor(earned)>(H.snapshot().progress['road']||0))H.progress('road',Math.floor(earned));if(earned>=6||stats.road>=roadCells.length*.8){done=true;saveWorld(false);session.done();}}
+  if(number===4){
+   if(scan<2&&f.status==='airborne'&&Math.hypot(f.pos.x-dest.x,f.pos.z-dest.z)<8){scan+=dt;if(scan>=2)H.progress('scan',2);}
+   if(scan<2)H.goal('Uçangöz ile sarı halka üzerine gel · orada iki saniye kal.');
+   else if(f.status!=='docked')H.goal('İşaret bulundu. Uçangözü geri çağır.');
+   else{if(!transport){transport=true;start('tr');const v=vehicles[cur];v.x=-64;v.z=-27;v.a=0;v.v=0;pose(v,0);}const v=vehicles[cur];H.goal('Hizmet aracını sarı halkaya götür · '+Math.round(Math.hypot(v.x-dest.x,v.z-dest.z))+' m');if(Math.hypot(v.x-dest.x,v.z-dest.z)<5){done=true;saveWorld(false);session.done();}}
+  }
+  if(number===7){const v=vehicles[cur];if(previous)travel+=Math.min(3,Math.hypot(v.x-previous.x,v.z-previous.z));previous={x:v.x,z:v.z};H.goal('Tankı yeşil halkaya park et · '+Math.round(Math.hypot(v.x-dest.x,v.z-dest.z))+' m');if(travel>8&&Math.hypot(v.x-dest.x,v.z-dest.z)<5&&Math.abs(v.v)<1.3){done=true;saveWorld(false);session.done();}}
+ }
+ };
+ session=K.mount(a);window.HisarSiteCampaign={session,metrics:()=>({road:stats.road,roadStart,scan,travel,done,dest:{...dest}})};
+ droneStart=()=>session.start();pilotEnd=function(){if(PILOT.mode==='drone'&&session.active()){session.recall();return;}return nativePilotEnd();};
+ droneFrame=dt=>{
+  locoSoldier(PLAYER,0,dt);
+  // Preserve the original construction parkour objectives under shared movement.
+  const n=gateN();for(let i=0;i<n;i++){
+   if(PD.gates.includes(i))continue;const [gx,gz]=DGATES[i];
+   if(Math.hypot(PD.x-gx,PD.z-gz)<2.4&&PD.y<heightAt(gx,gz)+4.2){
+    PD.gates.push(i);toast('KAPI '+(i+1)+' ✓ · '+PD.gates.length+'/'+n,1.4);shot('beep',.3,1.4);
+    if(PD.gates.length>=n&&n>=3&&!PD.done){PD.done=true;GM.droneShow=true;satAdd(2,'uçangözle bütün kapılardan geçtin');toast('UÇANGÖZ GÖSTERİSİ · bütün kapılar geçildi!',3);}
+   }
+  }
+  PILOT.t+=dt;
+ };droneCam=dt=>{if(!session.camera(cam))nativeDroneCam(dt);};
+ UPD.push(dt=>session.frame(dt));window.__hs.droneStart=droneStart;window.__hs.pilotEnd=pilotEnd;
+ const oldCamera=updateCam;updateCam=function(dt){oldCamera(dt);if(session.active())session.camera(cam);else{DRONE.visible=false;cam.up.set(0,1,0);}};
+ document.getElementById('bPilB')?.setAttribute('hidden','');
+}
 
 })().catch(e => { console.error(e); const l = document.getElementById("load"); if (l) { l.hidden = false; l.textContent = "Yükleme hatası: " + (e && e.message || e) + " · Sayfayı yenile."; } });
 </script>

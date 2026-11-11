@@ -159,7 +159,7 @@ function updateMission(dt){if(!active||active.finished||!playing())return;active
  const living=allies();if(!living.length){finishMission(false,'Dost araç kalmadı. Görevi yeniden deneyebilirsin.');return;}
  const g=active.config.goals[active.step],p=active.points[g.at];if(!g)return;safe(()=>{edT=Math.max(edT,15);},null);convoyStep(dt,g,p);
  const near=Math.hypot(P.x-p.x,P.z-p.z)<14,nearAllies=living.filter(a=>Math.hypot(a.x-p.x,a.z-p.z)<30).length;
- const s={tank:mode==='tank',drone:mode==='drone'&&DR.on&&!DR.rt&&!DR.fall,droneNear:Math.hypot(DR.x-p.x,DR.z-p.z)<18,signal:DR.sig??1,playerNear:near,interacting,nearAllies,aliveAllies:living.length,convoyNear:!!convoy&&Math.hypot(convoy.x-p.x,convoy.z-p.z)<12,enemies:E.length};
+ const s={tank:mode==='tank',drone:mode==='drone'&&DR.on&&!DR.rt&&!DR.fall,droneNear:Math.hypot(DR.x-p.x,DR.z-p.z)<18,signal:DR.sig??1,playerNear:near,interacting,nearAllies,aliveAllies:living.length,convoyNear:!!convoy&&Math.hypot(convoy.x-p.x,convoy.z-p.z)<12,enemies:E.length+(root.HisarKurulusSession?.pendingThreats?.()||0)};
  const r=objectiveStep(g,active.amount,s,dt);active.amount=r.amount;
  if(r.done){score+=100;emit('KOMUTA','Aşama tamamlandı. '+g.text,true,false);active.step++;enterGoal();}
  if(sim-lastPaint>.15){lastPaint=sim;paintObjective();if(opened)paintRoster();}

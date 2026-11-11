@@ -1,0 +1,337 @@
+{
+  "version": "2.0.0",
+  "provider": "Microsoft Speech",
+  "voice": "tr-TR-AhmetNeural",
+  "language": "tr-TR",
+  "rate": "+0%",
+  "pitch": "+0Hz",
+  "playbackRate": 1,
+  "neural": true,
+  "synthetic": true,
+  "clips": {
+    "ack": {
+      "file": "ack.mp3",
+      "text": "Emredersiniz komutanım.",
+      "duration": 2.832,
+      "sha256": "56017c71b37f25d77cc8c74c14bc4b265b9937aa0a3f6235cdc2f3a628173030"
+    },
+    "follow": {
+      "file": "follow.mp3",
+      "text": "Emredersiniz komutanım. Sizi takip ediyorum.",
+      "duration": 5.232,
+      "sha256": "95d0c6deb492af521718f9647e3f10dcfa0011d7a41fd0565737e0394bfbefa2"
+    },
+    "hold": {
+      "file": "hold.mp3",
+      "text": "Emredersiniz komutanım. Burada bekliyorum.",
+      "duration": 5.136,
+      "sha256": "54b646dda01eb996738e82d9c7bced2ba3ecc21b0f766c15b4ba7b8ca5ad4c4d"
+    },
+    "target": {
+      "file": "target.mp3",
+      "text": "Emredersiniz komutanım. İşaretli hedefe yöneliyorum.",
+      "duration": 5.832,
+      "sha256": "ad99a47451708787310084979d46b5ff7e6d5a86f7112213bad886fd86a27218"
+    },
+    "free": {
+      "file": "free.mp3",
+      "text": "Emredersiniz komutanım. Anlaşıldı.",
+      "duration": 4.68,
+      "sha256": "fdd0f26e1e3eb91995f06c3a8f44c357b1bdda3222752b85aea5a3ceb3fdcc82"
+    },
+    "cease": {
+      "file": "cease.mp3",
+      "text": "Emredersiniz komutanım. Ateşi kestim.",
+      "duration": 4.968,
+      "sha256": "3f71283cd56c0a3e285d39120b0bcf12821b5d2bb23624721c58de4e9780e999"
+    },
+    "spread": {
+      "file": "spread.mp3",
+      "text": "Emredersiniz komutanım. Aralık açıyorum.",
+      "duration": 5.064,
+      "sha256": "b03aaf7d5c348492455d49e5813070c9dfdc93a0e6232abdb943ef213b0646c5"
+    },
+    "back": {
+      "file": "back.mp3",
+      "text": "Emredersiniz komutanım. Geri geliyorum.",
+      "duration": 4.896,
+      "sha256": "0531a249866f4ddbee67f60047ee70ea7d575b0e9161d51be123e6c7ec96f3b4"
+    },
+    "regroup": {
+      "file": "regroup.mp3",
+      "text": "Emredersiniz komutanım. Yanınızda toplanıyorum.",
+      "duration": 5.4,
+      "sha256": "729427d3bd8c3457e97555413bfb453bd966306b0f2a09ccf94058c32eab3fe4"
+    },
+    "convoy-wait": {
+      "file": "convoy-wait.mp3",
+      "text": "Emredersiniz komutanım. Konvoy bekliyor.",
+      "duration": 4.992,
+      "sha256": "6177371dc20528b62806c4872e33b6df31dde3f9005e0b68b4e1ff96fd9425f2"
+    },
+    "convoy-go": {
+      "file": "convoy-go.mp3",
+      "text": "Emredersiniz komutanım. Konvoy devam ediyor.",
+      "duration": 5.256,
+      "sha256": "3bcac1e88d4f010fdb481f74d5b88121706a9922e12ea8eaac8c4bb89ee123e0"
+    },
+    "status": {
+      "file": "status.mp3",
+      "text": "Komutanım, durum raporum ekranda. Göreve devam ediyorum.",
+      "duration": 5.952,
+      "sha256": "811d663aca404a7abe80e05f464e76418f1014db0be0aa3a3f7d7fefa905fb08"
+    },
+    "ready": {
+      "file": "ready.mp3",
+      "text": "Birlik hazır komutanım. Önce çevreyi inceleyelim.",
+      "duration": 5.568,
+      "sha256": "16a3e7b41d030ce227ca110bca16cee00078f80f7a96a47920a607ba187298e3"
+    },
+    "phase": {
+      "file": "phase.mp3",
+      "text": "Bu aşama tamamlandı. Sıradaki görev ekranda.",
+      "duration": 5.208,
+      "sha256": "96e91b72514eaa7e286b2d7ac7eea71058e19553049ee11411c97d4194d9006a"
+    },
+    "rest": {
+      "file": "rest.mp3",
+      "text": "Bölge temiz. Yeni hedef gelmeden önce hazırlanabilirsiniz.",
+      "duration": 6.12,
+      "sha256": "89c3a4f3b0eed7b18a1b0b905b9250a0e28603c183a560d31d4e851e200bda0d"
+    },
+    "ground": {
+      "file": "ground.mp3",
+      "text": "Yeni bir kara hedefi geliyor. Acele etmeyin.",
+      "duration": 5.136,
+      "sha256": "f0f5671a01b1aa0395cfb7d3005c5447132a9f4ecf3fde716102f045df61a736"
+    },
+    "air": {
+      "file": "air.mp3",
+      "text": "Kara hedefi temizlendi. Sırada tek bir helikopter var.",
+      "duration": 5.64,
+      "sha256": "9182e190eb31fc411bdb0e5ada12ac1e90e1168179da3f29e37968ecafd5ec75"
+    },
+    "drone": {
+      "file": "drone.mp3",
+      "text": "Uçangöz hazır. Kontrol sizde komutanım.",
+      "duration": 5.136,
+      "sha256": "ffa845a267cfdbe3dece039aae7bc3985b7729441b0df62cfecfa70ba75c091e"
+    },
+    "reload": {
+      "file": "reload.mp3",
+      "text": "Yeniden dolduruluyor.",
+      "duration": 2.568,
+      "sha256": "8688f80f0679ff0fca9b3b5d8025740323c0420acd0acd30042de94a84a4f161"
+    },
+    "hit": {
+      "file": "hit.mp3",
+      "text": "Hedef vuruldu.",
+      "duration": 2.232,
+      "sha256": "8abc3201f239e431faf46e27384628c3e417e66baeeeaddad675379b96023be8"
+    },
+    "success": {
+      "file": "success.mp3",
+      "text": "Görev tamamlandı komutanım. Güzel iş çıkardık.",
+      "duration": 5.448,
+      "sha256": "78009ad6966b203bb208e58172a4693b7f2100672265ebed1531c2104245d25c"
+    },
+    "failure": {
+      "file": "failure.mp3",
+      "text": "Bu kez olmadı komutanım. Hazır olduğunuzda tekrar deneyebiliriz.",
+      "duration": 6.408,
+      "sha256": "f2a71c3808320d1dd85f9b15d330b9f6b6a8b82ee6bd70d63fb1b85f2b08f6d3"
+    },
+    "damage": {
+      "file": "damage.mp3",
+      "text": "Araç hasar aldı. Biraz geri çekilip toparlanalım.",
+      "duration": 5.784,
+      "sha256": "aad3d941a9d9d55db3a8c7a491313a7da0460baaedd6797052c76caf0603dce5"
+    },
+    "rescue": {
+      "file": "rescue.mp3",
+      "text": "Kayıp ekibin işaretini uçangözle bulalım. Ardından tankla ekibi alıp birlikte üsse döneceğiz.",
+      "duration": 8.16,
+      "sha256": "a591e9c3f0eaca740767b4952f4ed98941d999f063bae81209f48dc5903287c8"
+    },
+    "convoy": {
+      "file": "convoy.mp3",
+      "text": "İkmal aracını yalnız bırakmayalım. Hazır olduğunuzda telsizden takip emri verin.",
+      "duration": 7.296,
+      "sha256": "61ab32a8553ae50bd9ac61f8dc01c9042b66698f6e51a0176f5f432a07af8fd0"
+    },
+    "relay": {
+      "file": "relay.mp3",
+      "text": "Önce iki bağlantıyı onaralım. Ardından sırayla gelen hedeflere karşı bölgeyi koruyacağız.",
+      "duration": 8.016,
+      "sha256": "0a0693cf7592b974d266b917d7c87ee23cc0a99501661e6634069364061e97f2"
+    },
+    "fog": {
+      "file": "fog.mp3",
+      "text": "Rota işaretlerini sırayla geçelim. Son noktada dost tanklarımızı bekleyeceğiz.",
+      "duration": 7.368,
+      "sha256": "8599b0560fc0e10dbe8b71679d63b6f7695559629f58e58eb80fc6661a51b628"
+    },
+    "record": {
+      "file": "record.mp3",
+      "text": "Üç işareti uçangözle inceleyelim. Kaydı bulduktan sonra tankla alıp üsse götüreceğiz.",
+      "duration": 7.728,
+      "sha256": "47726152e41f2c92ae7898b9e85ea786c4e527fd76ad5251822a51072b36beab"
+    },
+    "return": {
+      "file": "return.mp3",
+      "text": "Birliğimizle buluşup bölgedeki görevi tamamlayalım. Dönüşte kimseyi geride bırakmayacağız.",
+      "duration": 7.92,
+      "sha256": "bf43cab86320ccae41d2a939759bcd381eff6a4948ffe1477d74c40d04144302"
+    },
+    "cmd-follow": {
+      "file": "cmd-follow.mp3",
+      "text": "Beni takip edin.",
+      "duration": 2.4,
+      "sha256": "6be4cf2bb0090529d53f9b448850582e4fb1887131c7cf756d95ecab0d62c62a"
+    },
+    "cmd-hold": {
+      "file": "cmd-hold.mp3",
+      "text": "Bulunduğunuz yerde bekleyin.",
+      "duration": 2.928,
+      "sha256": "c762588451a1620221e4c598dd45f6c37454e51afa93922a77f2435136ba501b"
+    },
+    "cmd-target": {
+      "file": "cmd-target.mp3",
+      "text": "İşaretli hedefe yönelin.",
+      "duration": 2.904,
+      "sha256": "f38867358e78263e4ad02bba72ed276e61c808ddb7094e24982626d3d417f929"
+    },
+    "cmd-free": {
+      "file": "cmd-free.mp3",
+      "text": "Ateş serbest.",
+      "duration": 2.28,
+      "sha256": "1c43b6eee71f97a109afebfb743267419ed4f5d97db8b3199ba2548e7fb70ee0"
+    },
+    "cmd-cease": {
+      "file": "cmd-cease.mp3",
+      "text": "Ateşi kesin.",
+      "duration": 2.184,
+      "sha256": "e9c8769b7fc904fb0eb503816aa2834cd7aac4a195c379002cc407319dd56f8d"
+    },
+    "cmd-spread": {
+      "file": "cmd-spread.mp3",
+      "text": "Aralık açın.",
+      "duration": 2.136,
+      "sha256": "cd78488a28083415fb0dec03401c49bec40635b604e90d7d16f63e279aec727b"
+    },
+    "cmd-back": {
+      "file": "cmd-back.mp3",
+      "text": "Geri gelin.",
+      "duration": 1.968,
+      "sha256": "08c4787bd4425d9dc82a0f8cad30402d55249a7d39e1db625654c659bce9bce7"
+    },
+    "cmd-status": {
+      "file": "cmd-status.mp3",
+      "text": "Durum bildirin.",
+      "duration": 2.232,
+      "sha256": "3020eb073750c7a1871b30426e6893bda7966dc29ff12eef7af8c1d6ed91ec25"
+    },
+    "cmd-regroup": {
+      "file": "cmd-regroup.mp3",
+      "text": "Yanımda toplanın.",
+      "duration": 2.352,
+      "sha256": "0ecf08c50b6808b3542679f5d0c582d0c3199eaa9c43fd8bf4a213d66620724e"
+    },
+    "cmd-move": {
+      "file": "cmd-move.mp3",
+      "text": "Seçtiğim noktaya gidin ve orada bekleyin.",
+      "duration": 3.624,
+      "sha256": "3783e86b40342967d1ff084045977a1b30fd613e8fc16dcb72661e7caf1cf386"
+    },
+    "address-all": {
+      "file": "address-all.mp3",
+      "text": "Tüm birlik.",
+      "duration": 1.872,
+      "sha256": "d777e124d0069dfd58619b27f36d3887f9ca56cc788abf3cf39e2a0ff9af3593"
+    },
+    "address-two": {
+      "file": "address-two.mp3",
+      "text": "Kaplan bir iki.",
+      "duration": 2.256,
+      "sha256": "eb12a72e67b9df957061715692a6e838cc7c215c2008579556af2f35f5b48370"
+    },
+    "address-three": {
+      "file": "address-three.mp3",
+      "text": "Kaplan bir üç.",
+      "duration": 2.208,
+      "sha256": "3acb180af3b1faf3cea9df003c50bab4fd1041e4acf10b8f35b9447fcc54de7b"
+    },
+    "address-four": {
+      "file": "address-four.mp3",
+      "text": "Kaplan bir dört.",
+      "duration": 2.28,
+      "sha256": "28ff42a143ccc4f599476c47fccddc95b1ad5dd0d9ba18ac60b5bd806cd50966"
+    },
+    "address-convoy": {
+      "file": "address-convoy.mp3",
+      "text": "İkmal bir.",
+      "duration": 2.088,
+      "sha256": "09d18dfb5dcb50bc6de9330536ecd804ca3be4a951528efcafcaa3b410c52a66"
+    },
+    "move": {
+      "file": "move.mp3",
+      "text": "Emredersiniz komutanım. Seçtiğiniz noktaya ilerliyorum.",
+      "duration": 5.808,
+      "sha256": "917c2262f5c0a3a0aaf1acf42c3beaa5256888104e7f7a12d1c9a41c113d8758"
+    },
+    "arrived": {
+      "file": "arrived.mp3",
+      "text": "Komutanım, gösterdiğiniz noktaya ulaştım. Burada bekliyorum.",
+      "duration": 6.096,
+      "sha256": "026733a456a4e36a697513dd2daa9adaba7c8909d7685db945598ef59896d7d1"
+    },
+    "blocked": {
+      "file": "blocked.mp3",
+      "text": "Komutanım, o noktaya ulaşamıyorum. Başka bir nokta gösterebilir misiniz?",
+      "duration": 6.744,
+      "sha256": "7757c43cbbb770493d813c0158441c1ad1741aee604fc2d58e0b734e8fccb4ae"
+    },
+    "unclear": {
+      "file": "unclear.mp3",
+      "text": "Komut anlaşılmadı. Lütfen tekrar eder misiniz?",
+      "duration": 5.328,
+      "sha256": "510883cffcc8db0567f109475c5174d6c21046cf26c6bc4d23e05abeb0a0739b"
+    },
+    "point-needed": {
+      "file": "point-needed.mp3",
+      "text": "Gideceğimiz noktayı haritada işaretler misiniz?",
+      "duration": 4.224,
+      "sha256": "15396dd6d9775f6f7a0a1579b62efd579fa5bbd12a54119e5c194f4507729240"
+    },
+    "contact-front": {
+      "file": "contact-front.mp3",
+      "text": "Komutanım, ön tarafta bir hedef görüyorum.",
+      "duration": 3.696,
+      "sha256": "d63e43909a783a825eb6bf833825525415bfdf6d91e7ed8e6ea923637b571d35"
+    },
+    "contact-right": {
+      "file": "contact-right.mp3",
+      "text": "Komutanım, sağ tarafta bir hedef görüyorum.",
+      "duration": 3.792,
+      "sha256": "9101e89d073656bf311ae09469ccf960bc2339f56f7ca354e7bce1c84b19973b"
+    },
+    "contact-left": {
+      "file": "contact-left.mp3",
+      "text": "Komutanım, sol tarafta bir hedef görüyorum.",
+      "duration": 3.816,
+      "sha256": "e992cfc98e20e23f0903f897f90d1f4b964716ee46ccdef345e1f9036880a88a"
+    },
+    "contact-rear": {
+      "file": "contact-rear.mp3",
+      "text": "Komutanım, arka tarafta bir hedef görüyorum.",
+      "duration": 3.864,
+      "sha256": "7c363cbe6b86a15264e48c06234880fd8e520e055a697f30713e4ceaa017a85f"
+    },
+    "drone-camera": {
+      "file": "drone-camera.mp3",
+      "text": "Kamera hazır komutanım.",
+      "duration": 2.664,
+      "sha256": "1415f604ca3b2d284d01febb26da8f3b1b6930563e07027e16db1254441a6a21"
+    }
+  }
+}

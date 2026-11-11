@@ -67,7 +67,7 @@
     let html = originalHome();
     if (S.q.trim() || S.nav.length) return html;
     const count = Object.keys(D.fav).filter(known).length;
-    return `<section class="ux-overview" aria-label="Defter özeti"><div class="ux-eyebrow">KARDELEN’İN İLAÇ DEFTERİ <span class="ux-network" role="status">${navigator.onLine ? 'Çevrimiçi' : 'Çevrimdışı'}</span></div><h2>Defterine hızlı bakış</h2><p>Ürünleri bul, raftaki yerini gör, öğrendiklerini kaydet.</p><div class="ux-stats"><div><strong>${V.urun.length}</strong><span>kayıtlı ürün</span></div><div><strong>${V.foto.length}</strong><span>raf fotoğrafı</span></div><div><strong>${count}</strong><span>favori</span></div></div></section>` + html;
+    return `<section class="ux-overview" aria-label="Defter özeti"><div class="ux-eyebrow">KARDELEN’İN KÜÇÜK ECZANESİ <span class="ux-network" role="status">${navigator.onLine ? 'Çevrimiçi' : 'Çevrimdışı'}</span></div><h2>Defterine hızlı bakış</h2><p>Ürünleri bul, raftaki yerini gör, öğrendiklerini kaydet.</p><div class="ux-stats"><div><strong>${V.urun.length}</strong><span>kayıtlı ürün</span></div><div><strong>${V.foto.length}</strong><span>raf fotoğrafı</span></div><div><strong>${count}</strong><span>favori</span></div></div></section>` + html;
   };
   const originalCard = kartHTML;
   kartHTML = function (u) {

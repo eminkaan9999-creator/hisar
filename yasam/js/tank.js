@@ -79,7 +79,7 @@
     P.yaw = T.h;
     P.group.visible = true;
     H.mode = 'foot';
-    H.crosshair(false);
+    H.crosshair(!!(H.rifle && H.rifle.id));
     H.toast('Tanktan indin');
   }
 

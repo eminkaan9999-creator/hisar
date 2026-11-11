@@ -18,7 +18,7 @@
       if (H.tank.spawn()) H.toast('Tank garajdan çıkarıldı · yanına git, E ile bin.', 3200);
       else H.toast('Tank zaten dışarıda · yanına git, E ile bin.');
     },
-    rack: function () { H.toast('Tüfek rafı: poligon silahları bir sonraki adımda.'); }
+    rack: function () { H.rifle.openMenu(); }
   };
 
   function zoneName(x, z) {

@@ -75,7 +75,7 @@
 
   // ---------- güncelleme ----------
   H.onUpdate(function (dt) {
-    if (H.mode !== 'foot') return;
+    if (H.mode !== 'foot' || H.uiOpen) return;
     var inp = H.input;
 
     // bakış: kamera yörüngesi ve yükseltisi

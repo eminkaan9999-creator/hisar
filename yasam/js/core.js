@@ -142,10 +142,10 @@
   // ---------- girdi ----------
   var keys = {};            // klavye: e.code -> basılı mı
   var edge = {};            // bu karede basılanlar (act, fire)
-  var mouseHeld = false;
+  var mouseHeld = false, mouseAim = false;
   var stickVec = { x: 0, y: 0 };          // sol dokunmatik çubuk (-1..1, aşağı = +y)
-  var btnHeld = { fire: false, run: false };
-  var input = (H.input = { fwd: 0, side: 0, lookX: 0, lookY: 0, fire: false, run: false });
+  var btnHeld = { fire: false, run: false, aim: false };
+  var input = (H.input = { fwd: 0, side: 0, lookX: 0, lookY: 0, fire: false, run: false, aim: false });
   H.pressed = function (name) { return !!edge[name]; };
   H.key = function (code) { return !!keys[code]; };          // basılı tuş (KeyJ, KeyI …)
   H.consume = function (name) { delete edge[name]; };        // tek karelik girdiyi harca
@@ -153,8 +153,10 @@
   function clearHeld() {
     for (var k in keys) keys[k] = false;
     mouseHeld = false;
+    mouseAim = false;
     btnHeld.fire = false;
     btnHeld.run = false;
+    btnHeld.aim = false;
   }
 
   window.addEventListener('keydown', function (e) {
@@ -162,6 +164,7 @@
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
     if (e.code === 'Space' || e.code.indexOf('Arrow') === 0) e.preventDefault();
     if (!e.repeat) {
+      edge[e.code] = true;                 // her tuş tek karelik (Digit1, KeyR, Escape …)
       if (e.code === 'KeyE') edge.act = true;
       if (e.code === 'Space') edge.fire = true;
     }
@@ -172,12 +175,18 @@
 
   // fare: tıkla → imleç kilidi; kilitliyken hareket bakışa çevrilir
   canvas.addEventListener('mousedown', function (e) {
-    if (isTouch || e.button !== 0) return;
+    if (isTouch || H.uiOpen) return;
+    if (e.button === 2) { mouseAim = true; return; }      // sağ tık: nişan
+    if (e.button !== 0) return;
     mouseHeld = true;
     edge.fire = true;
     if (document.pointerLockElement !== canvas && canvas.requestPointerLock) canvas.requestPointerLock();
   });
-  window.addEventListener('mouseup', function (e) { if (e.button === 0) mouseHeld = false; });
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  window.addEventListener('mouseup', function (e) {
+    if (e.button === 0) mouseHeld = false;
+    if (e.button === 2) mouseAim = false;
+  });
   window.addEventListener('mousemove', function (e) {
     if (isTouch || document.pointerLockElement !== canvas) return;
     input.lookX += e.movementX * 0.0024;
@@ -189,7 +198,7 @@
   var stickId = null, stickBase = null, lookId = null, lastLook = null;
   var STICK_R = 60;
   window.addEventListener('pointerdown', function (e) {
-    if (!isTouch || e.pointerType === 'mouse') return;
+    if (!isTouch || e.pointerType === 'mouse' || H.uiOpen) return;
     if (e.target && e.target.closest && e.target.closest('.btn')) return;
     if (e.clientX < window.innerWidth * 0.45 && stickId === null) {
       stickId = e.pointerId;
@@ -239,6 +248,7 @@
       if (kind === 'act') edge.act = true;
       if (kind === 'fire') { btnHeld.fire = true; edge.fire = true; }
       if (kind === 'run') btnHeld.run = true;
+      if (kind === 'aim') btnHeld.aim = true;
     });
     function up(e) {
       if (e.pointerId !== pid) return;
@@ -246,6 +256,7 @@
       b.classList.remove('on');
       if (kind === 'fire') btnHeld.fire = false;
       if (kind === 'run') btnHeld.run = false;
+      if (kind === 'aim') btnHeld.aim = false;
     }
     b.addEventListener('pointerup', up);
     b.addEventListener('pointercancel', up);
@@ -273,6 +284,7 @@
     input.side = H.clamp(s + stickVec.x, -1, 1);
     input.fire = !!(keys.Space || mouseHeld || btnHeld.fire);
     input.run = !!(keys.ShiftLeft || keys.ShiftRight || btnHeld.run);
+    input.aim = !!(keys.KeyQ || mouseAim || btnHeld.aim);
 
     for (var i = 0; i < listeners.length; i++) listeners[i](dt);
     applyPrompt();

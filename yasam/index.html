@@ -29,6 +29,17 @@ body.touch .btn{display:flex}
 #bAct{right:18px;bottom:112px}
 #bRun{right:108px;bottom:24px}
 #bFire{right:20px;bottom:22px;width:88px;height:88px;background:rgba(220,110,80,.18);border-color:rgba(255,190,160,.42)}
+#bAim{right:108px;bottom:112px}
+#wpnTxt{left:12px;bottom:12px;font-size:13px;text-shadow:0 1px 2px #000;pointer-events:none}
+#rmenu{position:fixed;inset:0;background:rgba(5,8,4,.74);display:none;align-items:center;justify-content:center;z-index:20}
+#rmenu .panel{background:#141b12;border:1px solid rgba(180,210,160,.3);border-radius:14px;padding:14px;width:min(460px,92vw);max-height:88vh;display:flex;flex-direction:column;gap:8px}
+#rmenu h2{margin:2px 0 6px;font-size:17px;color:#d7ecc4}
+#rlist{overflow:auto;display:flex;flex-direction:column;gap:6px;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.ritem{background:rgba(255,255,255,.06);border:1px solid rgba(180,210,160,.22);border-radius:10px;color:#e8f2de;text-align:left;padding:9px 11px;font:14px system-ui,sans-serif;display:flex;flex-direction:column;gap:2px}
+.ritem b{font-size:15px}
+.ritem span{font-size:12px;opacity:.75}
+.ritem:active{background:rgba(170,220,130,.25)}
+#rclose{align-self:flex-end;background:transparent;border:1px solid rgba(180,210,160,.4);color:#e8f2de;border-radius:8px;padding:7px 14px;font:14px system-ui,sans-serif}
 </style>
 </head>
 <body>
@@ -42,12 +53,23 @@ body.touch .btn{display:flex}
 <div id="bRun" class="btn" data-b="run">KOŞ</div>
 <div id="bAct" class="btn" data-b="act">ETKİLEŞİM</div>
 <div id="bFire" class="btn" data-b="fire">ATEŞ</div>
+<div id="bAim" class="btn" data-b="aim">NİŞAN</div>
+<div id="wpnTxt" class="hud"></div>
+<div id="rmenu">
+  <div class="panel">
+    <h2>Tüfek rafı · silah seç</h2>
+    <div id="rlist"></div>
+    <button id="rclose">Kapat (Esc)</button>
+  </div>
+</div>
 <script src="../three.min.js"></script>
 <script src="js/core.js"></script>
 <script src="js/world.js"></script>
 <script src="js/player.js"></script>
 <script src="js/tank-model.js"></script>
 <script src="js/tank.js"></script>
+<script src="js/rifle-data.js"></script>
+<script src="js/rifle.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

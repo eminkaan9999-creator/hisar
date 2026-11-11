@@ -1,0 +1,39 @@
+name: KOMUTA remove construction validation
+on:
+  push:
+    branches: [fix/remove-komuta-construction-20261111]
+    paths: ['scripts/komuta-remove-construction.py', 'scripts/komuta-tank-only-browser.cjs', '.github/workflows/komuta-remove-construction.yml']
+permissions:
+  contents: write
+concurrency:
+  group: komuta-remove-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Remove only the construction scene from KOMUTA
+        run: python3 scripts/komuta-remove-construction.py
+      - name: Direct tank, range, cache migration and save isolation
+        run: node scripts/komuta-tank-only-browser.cjs
+      - name: Stage only tested game output and version verifier
+        run: |
+          test "$(git ls-remote origin refs/heads/fix/remove-komuta-construction-20261111 | cut -f1)" = "$GITHUB_SHA" || exit 0
+          git add -A -- komuta .github/workflows/komuta-pages-live.yml
+          git diff --cached --name-only | awk '!/^komuta\// && $0 != ".github/workflows/komuta-pages-live.yml" {bad=1} END {exit bad}'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'komuta 1.2.0: remove construction game, direct tank and range, retain simulator and saves'
+          git push origin HEAD:refs/heads/fix/remove-komuta-construction-20261111
+          git rev-parse HEAD > tank-only-reports/tested-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: komuta-tank-only-checks
+          path: |
+            tank-only-reports/
+            komuta/removal-report.json
+          retention-days: 7

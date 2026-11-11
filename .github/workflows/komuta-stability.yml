@@ -4,7 +4,7 @@ on:
     branches: [fix/komuta-controls-stability-20261111]
     paths: ['komuta/**', 'scripts/komuta-stability*', '.github/workflows/komuta-stability.yml']
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: komuta-stability-${{ github.ref }}
   cancel-in-progress: true
@@ -14,15 +14,29 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run focused lifecycle tests when present
+      - name: Prepare scoped release and run lifecycle regressions
         run: |
-          if test -f scripts/komuta-stability.test.cjs; then node --test scripts/komuta-stability.test.cjs; fi
-          if test -f scripts/komuta-stability-browser.cjs; then node scripts/komuta-stability-browser.cjs; fi
+          mkdir -p stability-reports
+          python3 scripts/komuta-stability-release.py
+          set -o pipefail
+          node --test scripts/komuta-stability.test.cjs | tee stability-reports/unit.tap
+      - name: Actual tank, Uçangöz, range and recovery in preinstalled Chrome
+        env:
+          KOMUTA_STABILITY: '1'
+        run: |
+          set -o pipefail
+          node scripts/komuta-tank-only-browser.cjs | tee stability-reports/browser.log
+      - name: Commit only successfully tested application output
+        run: |
+          test "$(git ls-remote origin refs/heads/fix/komuta-controls-stability-20261111 | cut -f1)" = "$GITHUB_SHA" || exit 0
+          git add -- komuta scripts/komuta-tank-only-browser.cjs
+          git diff --cached --name-only | awk '!/^komuta\// && $0 != "scripts/komuta-tank-only-browser.cjs" {bad=1} END {exit bad}'
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'komuta 1.2.1: verified pause, input and scene recovery release'
+          git push origin HEAD:refs/heads/fix/komuta-controls-stability-20261111
       - name: Preserve scoped source and test evidence
         if: always()
         run: |

@@ -1,0 +1,66 @@
+name: KOMUTA native simulator graphics
+on:
+  push:
+    branches: [fix/komuta-visuals-20261111]
+  pull_request:
+    branches: [hisar-komuta]
+permissions:
+  contents: read
+concurrency:
+  group: komuta-native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and verify original simulator sources
+        run: |
+          mkdir -p reports
+          python3 bootstrap.py
+          python3 bootstrap.py
+          python3 build.py
+          test "$(git hash-object original/index.html)" = '7dd86f53ccc29cc6c145efb97f60cacd12249316'
+          set -o pipefail
+          node --test tests/unit.cjs tests/native-graphics.test.cjs | tee reports/native-unit.tap
+      - name: Install browser tooling
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Original walking, all scene transitions and flight regressions
+        run: node tests/browser.cjs
+      - name: High-detail graphics and actual 3D range
+        if: success() || failure()
+        run: node tests/native-graphics-browser.cjs
+      - name: Preserve exact candidate and receipts
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,zipfile,subprocess
+          out=Path('reports');out.mkdir(exist_ok=True)
+          files=[p for p in Path('public').rglob('*') if p.is_file()]
+          (out/'source-commit.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD']).decode())
+          (out/'hashes.json').write_text(json.dumps({str(p.relative_to('public')):hashlib.sha256(p.read_bytes()).hexdigest() for p in files},indent=2))
+          if Path('build-report.json').exists():(out/'build-report.json').write_bytes(Path('build-report.json').read_bytes())
+          with zipfile.ZipFile(out/'tested-site.zip','w',zipfile.ZIP_DEFLATED) as z:
+            for p in files:z.write(p,p.relative_to('public'))
+          with zipfile.ZipFile(out/'tested-source.zip','w',zipfile.ZIP_DEFLATED) as z:
+            for folder in ['app','tests']:
+              for p in Path(folder).rglob('*'):
+                if p.is_file():z.write(p,str(p))
+            for name in ['build.py','bootstrap.py','fixes.py','native_graphics.py']:
+              if Path(name).is_file():z.write(name,name)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: komuta-native-graphics
+          path: reports/
+          retention-days: 7

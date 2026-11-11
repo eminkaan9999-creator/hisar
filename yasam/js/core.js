@@ -15,6 +15,33 @@
     return a;
   };
   H.lerpAngle = function (a, b, t) { return a + H.wrapAngle(b - a) * t; };
+  // dairesel gövdeyi (yarıçap r) H.colliders kutularından dışarı iter; [x, z] döner
+  H.pushOut = function (x, z, r) {
+    var cols = H.colliders, R2 = r * r;
+    for (var pass = 0; pass < 2; pass++) {
+      for (var i = 0; i < cols.length; i++) {
+        var c = cols[i];
+        var cx = x < c.x0 ? c.x0 : (x > c.x1 ? c.x1 : x);
+        var cz = z < c.z0 ? c.z0 : (z > c.z1 ? c.z1 : z);
+        var dx = x - cx, dz = z - cz, d2 = dx * dx + dz * dz;
+        if (d2 >= R2) continue;
+        if (d2 > 1e-10) {
+          var d = Math.sqrt(d2), k = (r - d) / d;
+          x += dx * k;
+          z += dz * k;
+        } else {
+          // merkez kutunun içinde: en yakın yüzden dışarı it
+          var l = x - c.x0, rr = c.x1 - x, b = z - c.z0, f = c.z1 - z;
+          var m = Math.min(l, rr, b, f);
+          if (m === l) x = c.x0 - r;
+          else if (m === rr) x = c.x1 + r;
+          else if (m === b) z = c.z0 - r;
+          else z = c.z1 + r;
+        }
+      }
+    }
+    return [x, z];
+  };
   // tekrarlanabilir rastgele sayılar (mulberry32)
   H.rng = function (seed) {
     return function () {
@@ -93,14 +120,17 @@
     toastTimer = setTimeout(function () { toastEl.classList.remove('on'); }, ms || 2400);
   };
   var promptEl = document.getElementById('prompt');
-  var promptNow = '';
-  H.prompt = function (html) {
-    html = html || '';
+  var promptNow = '', promptReq = '';
+  // ilk çağıran kazanır (önce kayıt olan modül öncelikli); kare sonunda uygulanır
+  H.prompt = function (html) { if (html && !promptReq) promptReq = html; };
+  function applyPrompt() {
+    var html = promptReq;
+    promptReq = '';
     if (html === promptNow) return;
     promptNow = html;
     promptEl.innerHTML = html;
     promptEl.style.display = html ? 'block' : 'none';
-  };
+  }
   H.setText = function (id, text) {
     var el = document.getElementById(id);
     if (el && el.textContent !== text) el.textContent = text;
@@ -117,6 +147,8 @@
   var btnHeld = { fire: false, run: false };
   var input = (H.input = { fwd: 0, side: 0, lookX: 0, lookY: 0, fire: false, run: false });
   H.pressed = function (name) { return !!edge[name]; };
+  H.key = function (code) { return !!keys[code]; };          // basılı tuş (KeyJ, KeyI …)
+  H.consume = function (name) { delete edge[name]; };        // tek karelik girdiyi harca
 
   function clearHeld() {
     for (var k in keys) keys[k] = false;
@@ -243,6 +275,7 @@
     input.run = !!(keys.ShiftLeft || keys.ShiftRight || btnHeld.run);
 
     for (var i = 0; i < listeners.length; i++) listeners[i](dt);
+    applyPrompt();
 
     // tek karelik girdiler ve bakış farkları bu karede tüketildi
     for (var k in edge) delete edge[k];

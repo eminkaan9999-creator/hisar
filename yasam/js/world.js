@@ -101,7 +101,7 @@
   block(232, 296, 0, 8, -116, -84, C.metal);
   block(252, 276, 0, 6.2, -84.15, -83.9, C.metalDark, false);   // kapı
   block(232, 296, 8, 8.4, -116, -84, C.steel, false);           // çatı
-  H.anchors.push({ id: 'garaj', label: 'Garaja gir · tank al', x: 264, z: -78, r: 6 });
+  H.anchors.push({ id: 'garaj', label: 'Garajdan tank çıkar', x: 264, z: -78, r: 6 });
 
   // istif kasalar ve Uçangöz rampası (sonraki dilimlerde bağlanır)
   block(160, 168, 0, 2.6, -48, -40, C.yellow);

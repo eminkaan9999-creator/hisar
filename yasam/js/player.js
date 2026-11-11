@@ -73,34 +73,6 @@
   P.group = rig.group;
   H.scene.add(P.group);
 
-  // ---------- çarpışma: dairesel gövde, AABB kutulara karşı ----------
-  function pushOut(x, z) {
-    var cols = H.colliders;
-    for (var pass = 0; pass < 2; pass++) {
-      for (var i = 0; i < cols.length; i++) {
-        var c = cols[i];
-        var cx = x < c.x0 ? c.x0 : (x > c.x1 ? c.x1 : x);
-        var cz = z < c.z0 ? c.z0 : (z > c.z1 ? c.z1 : z);
-        var dx = x - cx, dz = z - cz, d2 = dx * dx + dz * dz;
-        if (d2 >= R * R) continue;
-        if (d2 > 1e-10) {
-          var d = Math.sqrt(d2), k = (R - d) / d;
-          x += dx * k;
-          z += dz * k;
-        } else {
-          // merkez kutunun içinde: en yakın yüzden dışarı it
-          var l = x - c.x0, r = c.x1 - x, b = z - c.z0, f = c.z1 - z;
-          var m = Math.min(l, r, b, f);
-          if (m === l) x = c.x0 - R;
-          else if (m === r) x = c.x1 + R;
-          else if (m === b) z = c.z0 - R;
-          else z = c.z1 + R;
-        }
-      }
-    }
-    return [x, z];
-  }
-
   // ---------- güncelleme ----------
   H.onUpdate(function (dt) {
     if (H.mode !== 'foot') return;
@@ -122,7 +94,7 @@
 
     var goal = moving ? (inp.run ? RUN : WALK) * ml : 0;
     P.speed += (goal - P.speed) * Math.min(1, dt * 7);
-    var q = pushOut(P.x + mx * P.speed * dt, P.z + mz * P.speed * dt);
+    var q = H.pushOut(P.x + mx * P.speed * dt, P.z + mz * P.speed * dt, R);
     P.x = H.clamp(q[0], -BOUND, BOUND);
     P.z = H.clamp(q[1], -BOUND, BOUND);
 

@@ -1,0 +1,47 @@
+name: KOMUTA controls and lifecycle
+on:
+  push:
+    branches: [fix/komuta-controls-stability-20261111]
+    paths: ['komuta/**', 'scripts/komuta-stability*', '.github/workflows/komuta-stability.yml']
+permissions:
+  contents: read
+concurrency:
+  group: komuta-stability-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run focused lifecycle tests when present
+        run: |
+          if test -f scripts/komuta-stability.test.cjs; then node --test scripts/komuta-stability.test.cjs; fi
+          if test -f scripts/komuta-stability-browser.cjs; then node scripts/komuta-stability-browser.cjs; fi
+      - name: Preserve scoped source and test evidence
+        if: always()
+        run: |
+          mkdir -p stability-reports
+          git rev-parse HEAD > stability-reports/source-commit.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          with zipfile.ZipFile('stability-reports/scoped-source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in Path('komuta').rglob('*'):
+                  if p.is_file(): z.write(p)
+              for p in Path('scripts').glob('komuta-*'):
+                  if p.is_file(): z.write(p)
+              for p in Path('.github/workflows').glob('komuta-*'):
+                  if p.is_file(): z.write(p)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: komuta-stability-evidence
+          path: stability-reports/
+          retention-days: 7

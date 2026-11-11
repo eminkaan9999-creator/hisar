@@ -136,7 +136,7 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:.45}body.cv #vg{display:block}
 </style>
 <script src="experience/guard.js?v=63"></script>
-<link rel="stylesheet" href="experience/ui.css?v=64">
+<link rel="stylesheet" href="experience/ui.css?v=65">
 
 <!-- hisar-kurulus-1 -->
 <link rel="stylesheet" href="shared/kurulus.css?v=1">
@@ -3504,6 +3504,37 @@ FRAME_HOOKS.push(dr=>{const dm=mode==='drone'&&DR.on;const show=!!SV.rc&&dm;docu
  const md=DR.fall?'⚠ DÜŞÜYOR':DR.rt?'EVE DÖNÜŞ':hover?'ASILI':DR.th?'ISI KAMERA':'MANUEL';set('md',md);
  K.querySelector('[data-v="bat"]').className=b<25?'w':'';K.querySelector('.ps').classList.toggle('on',!!hover);K.querySelector('.h').classList.toggle('on',!!DR.rt);K.querySelector('.r2').classList.toggle('on',!!DR.th);
  const bb=K.querySelector('.bomb b');const t=String(ammo);if(bb.textContent!==t)bb.textContent=t});
+// ---- gimbal kamera: dronun altına bakan kamera, kumanda ekranında (#kmd .sc) canlı gösterilir
+// Gimbal drone eğilse de aşağı sabit bakar; yönü dronun burnunu (yaw) izler. Ayrı bir WebGL bağlamı açılmaz:
+// ana tuvalde ekran alanı kırpılıp (scissor) çizilir ve 2B tuvale kopyalanır. Saniyede 30 kare.
+const GIM={cam:null,cv:null,cx:null,n:0,ok:true,ar:0},GV2=new THREE.Vector2(),GV4=new THREE.Vector4(),GV4b=new THREE.Vector4();
+function gimbalFrame(){
+ if(!GIM.ok||!document.body.classList.contains('dm')||!DR.g)return;
+ const sc=K.querySelector('.sc');if(!sc)return;
+ if(!GIM.cv){GIM.cv=document.createElement('canvas');GIM.cv.className='gim';sc.appendChild(GIM.cv);GIM.cx=GIM.cv.getContext('2d');GIM.cam=new THREE.PerspectiveCamera(55,1,.2,600)}
+ if(GIM.n++&1)return;
+ try{
+  const cr=R.domElement.getBoundingClientRect(),r=GIM.cv.getBoundingClientRect();
+  if(r.width<4||r.height<4||cr.width<4)return;
+  const pr=Math.min(devicePixelRatio||1,2),bw=Math.round(r.width*pr),bh=Math.round(r.height*pr);
+  if(GIM.cv.width!==bw||GIM.cv.height!==bh){GIM.cv.width=bw;GIM.cv.height=bh}
+  const cam=GIM.cam,ar=r.width/r.height;
+  if(GIM.ar!==ar){GIM.ar=ar;cam.aspect=ar;cam.updateProjectionMatrix()}
+  cam.position.set(DR.x,DR.y-.25,DR.z);cam.up.set(Math.sin(yaw),0,Math.cos(yaw));cam.lookAt(DR.x,DR.y-200,DR.z);
+  R.getSize(GV2);R.getViewport(GV4);R.getScissor(GV4b);
+  const sct=R.getScissorTest(),sa=R.shadowMap.autoUpdate,vis=DR.g.visible,x0=r.left-cr.left,y0=GV2.y-(r.top-cr.top)-r.height;
+  try{
+   DR.g.visible=false;R.shadowMap.autoUpdate=false;
+   R.setScissorTest(true);R.setScissor(x0,y0,r.width,r.height);R.setViewport(x0,y0,r.width,r.height);
+   R.render(S,cam);
+  }finally{
+   DR.g.visible=vis;R.shadowMap.autoUpdate=sa;R.setViewport(GV4);R.setScissor(GV4b);R.setScissorTest(sct);
+  }
+  const k=R.domElement.width/cr.width;
+  GIM.cx.drawImage(R.domElement,(r.left-cr.left)*k,(r.top-cr.top)*k,r.width*k,r.height*k,0,0,bw,bh);
+ }catch(e){GIM.ok=false;err('gimbal',e)}
+}
+FRAME_HOOKS.push(gimbalFrame);
 // ---- ayar
 const ta=document.getElementById('ta');if(ta){ta.insertAdjacentHTML('beforeend','<h3>UÇANGÖZ KUMANDASI</h3><div class="row"><button data-rc="1">Kumanda görünümü</button><button data-rc="0">Sade tuşlar</button></div><p>Kumanda: Uçangöz uçarken ekranın altında gerçek kumanda çıkar (sol çubuk hareket, sağ çubuk yükseklik ve dönüş, BOMBA, H eve dönüş, ⏸ asılı kal).</p>');
  const ap=()=>document.querySelectorAll('[data-rc]').forEach(b=>b.classList.toggle('sel',+b.dataset.rc===SV.rc));ta.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{SV.rc=+b.dataset.rc;save();ap()});ap()}
@@ -4572,7 +4603,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=71,LOGO=window.HISAR_LOGO;
+const VER=72,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+

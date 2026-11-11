@@ -1,7 +1,7 @@
 {
-  "v": 71,
+  "v": 72,
   "experience": "63.1",
-  "not": "Oyun telsizi artık doğal Türkçe Microsoft Ahmet (tr-TR) erkek sesiyle konuşuyor; Amerikan aksanlı İngilizce ses kullanılmıyor. Dar telefon ekranında görev kartı, TELSİZ, gece görüşü, REC, görünüm çubuğu ve alt gösterge üst üste binmeyecek şekilde yeniden düzenlendi. Dron kumandası; iki anten, LED şeridi, üstte mod anahtarı, ortada tuşlar ve alt ekranla yeniden çizildi. Tüm tuş işlevleri aynı.",
+  "not": "Dron kumandasının ekranında artık dronun altını gösteren gimbal kamera görüntüsü canlı izleniyor: kamera aşağı sabit bakar ve yönünü dronun burnundan alır. Yük, pil, hız, sinyal ve mesafe bilgileri görüntünün kenarlarında okunur kalır. Diğer tuşlar ve oyun akışı aynı.",
   "gameplay": "1.2.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",

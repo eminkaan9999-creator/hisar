@@ -1,7 +1,7 @@
 {
-  "v": 74,
+  "v": 75,
   "experience": "63.1",
-  "not": "Dar yatay ekranda (640×360, 667×375) ve dikey tablette (768×1024) HUD üst üste binmiyor: görüş çubuğu, telsiz, ipucu, mesaj, harita, rüzgâr ve bağlam düğmeleri kendi alanında; kabin alt sırası gerekirse yatay kaydırılır. Dron kumandasında REC ışığı ve düğme yazıları taşmaz. Görev menüsünde tek GÖREV ızgarası ve tek BAŞLAT; tank görünüş çubuğu (DIŞ, NİŞAN, KABİN, SÜRÜCÜ) sağ altta 2×2 toplanır. M60A3 tank topu mermisi belgelere göre 63 adet (önceki 60); varsayılan ve hazır yüklemeler 63'e ölçeklendi; tank ağırlığı 51 ton.",
+  "not": "Dikey telefonda görünüş düğmelerinin alt sırası ROTAYI KAPAT ve GECE GÖRÜŞ düğmelerini örtmez; iki sütunlu blok olarak sağda toplanır. NİŞAN yakınlaştırma çubuğu sol kenara geçti, mesaj bildirimi dock'un üstüne indi, drondaki FPS sayacı REC'in yanına alındı. Dikey telefonda telsiz görevlerinde (ör. Karanlıkta Çağrı) GÖREV kartı objektif kartıyla çakışmasın diye gizlenir. Yatayda GÖREV kartı görünüş düğmelerinin altına girmez, FPS sayacı menüyle çakışmaz. 375×667 ve 667×375 gibi daha kısa ekranlarda bazı düğmeler hâlâ üst üste gelebilir.",
   "gameplay": "1.2.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",

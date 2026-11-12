@@ -21,25 +21,39 @@ body.hisar-crosshair-contrast #cross{filter:drop-shadow(0 1px 2px #000) drop-sha
  @media(min-width:640px){#menu #gsub{grid-template-columns:repeat(4,minmax(0,1fr))}}
  @media(max-width:360px),(max-height:500px){#menu #heroSp{display:none!important}}
 
+/* Mission menu: the list scrolls in its own region, so BAŞLAT never sits over a tile. */
+#mp{overflow:hidden!important}
+#mp>#mpBody{flex:1 1 auto!important;min-height:0!important;width:100%;max-width:560px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;align-items:center}
+#mp .acts{position:relative!important;bottom:auto!important;flex:none;width:100%;max-width:560px;margin:0!important}
+
 /* Portrait phones (≤600px wide): one HUD grid without overlaps.
-   Left column: status, mission card, radio line. Right column: minimap, TELSİZ, context buttons, view bar.
+   Left column: status, mission card, radio line. Right column: minimap, TELSİZ, context buttons. The view bar (2×2) sits bottom-right, just above NİŞAN and ATEŞ.
    Bottom: the dock clears NİŞAN; the coach tip sits above the dock (or the drone remote); the centre message sits under the reticle. */
 @media (max-width:600px) and (orientation:portrait){
  body{--hudMM:27vw}
  body #mm{box-sizing:border-box!important;width:var(--hudMM)!important;height:var(--hudMM)!important}
- body #hr-objective{left:calc(12px + env(safe-area-inset-left,0px))!important;top:calc(113px + env(safe-area-inset-top,0px))!important;width:205px!important}
- body #hr-radio-entry{top:calc(18px + env(safe-area-inset-top,0px) + var(--hudMM))!important;right:calc(12px + env(safe-area-inset-right,0px))!important}
- body #ctx{top:calc(70px + env(safe-area-inset-top,0px) + var(--hudMM))!important;right:calc(12px + env(safe-area-inset-right,0px))!important}
- body #vbar#vbar{top:calc(157px + env(safe-area-inset-top,0px) + var(--hudMM))!important;left:auto!important;right:calc(12px + env(safe-area-inset-right,0px))!important;transform:none!important;align-items:flex-end!important}
- body #vbar .r:not(.s){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;width:132px!important;max-width:132px!important;overflow:visible!important;padding:4px!important;box-sizing:border-box}
- body #vbar .r:not(.s) button{min-width:0!important;justify-content:center!important;padding:8px 3px!important;font-size:10.5px!important;white-space:normal!important}
- body #vbar .r.s{max-width:132px!important}
- body #radio#radio{left:calc(12px + env(safe-area-inset-left,0px))!important;right:auto!important;bottom:auto!important;transform:none!important;max-width:160px!important;width:auto!important;text-align:left!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:12px!important;line-height:1.3!important;padding:5px 8px!important;box-sizing:border-box}
- body #msg{top:calc(50% + 46px)!important}
+ body #hr-objective{left:calc(12px + env(safe-area-inset-left,0px))!important;top:calc(172px + env(safe-area-inset-top,0px))!important;width:205px!important}
+ body #drvH{left:calc(12px + env(safe-area-inset-left,0px))!important;right:auto!important;bottom:auto!important;top:calc(344px + env(safe-area-inset-top,0px))!important;transform:none!important;width:228px!important;max-width:calc(100vw - 24px)!important;white-space:normal!important;text-align:left!important}
+ body #hr-radio-entry{top:calc(var(--hudMM) + 50px + env(safe-area-inset-top,0px))!important;right:calc(12px + env(safe-area-inset-right,0px))!important}
+ body #wnd#wnd{top:calc(var(--hudMM) + 16px + env(safe-area-inset-top,0px))!important;right:calc(12px + env(safe-area-inset-right,0px))!important;left:auto!important;transform:none!important}
+ body #ctx{top:calc(var(--hudMM) + 102px + env(safe-area-inset-top,0px))!important;right:calc(12px + env(safe-area-inset-right,0px))!important}
+ body #vbar#vbar{top:auto!important;bottom:calc(var(--pad,118px) + 144px + env(safe-area-inset-bottom,0px))!important;left:auto!important;right:calc(12px + env(safe-area-inset-right,0px))!important;transform:none!important;align-items:flex-end!important;flex-direction:column-reverse!important}
+ body #vbar#vbar .r:not(.s){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;width:132px!important;max-width:132px!important;overflow:visible!important;padding:4px!important;box-sizing:border-box}
+ body #vbar#vbar .r:not(.s) button{min-width:0!important;flex-direction:column!important;justify-content:center!important;gap:2px!important;padding:4px 2px!important;min-height:36px!important;max-height:36px!important;box-sizing:border-box!important;font-size:9px!important;line-height:1!important;white-space:nowrap!important}
+ body #vbar#vbar .r:not(.s) button svg{width:13px!important;height:13px!important}
+ body #vbar#vbar .r.s{max-width:132px!important}
+ body #radio#radio{left:calc(12px + env(safe-area-inset-left,0px))!important;right:auto!important;top:auto!important;bottom:calc(var(--pad,118px) + 144px + env(safe-area-inset-bottom,0px))!important;transform:none!important;max-width:160px!important;width:auto!important;text-align:left!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;font-size:12px!important;line-height:1.3!important;padding:5px 8px!important;box-sizing:border-box}
+ body #msg{top:calc(292px + env(safe-area-inset-top,0px))!important}
  body #rec{left:50%!important;transform:translateX(-50%)!important;top:calc(12px + env(safe-area-inset-top,0px))!important}
+ body #uMapB{top:calc(10px + var(--hudMM) - 36px + env(safe-area-inset-top,0px))!important;right:calc(12px + var(--hudMM) - 36px + env(safe-area-inset-right,0px))!important}
+ body.dm #rec{left:auto!important;right:calc(12px + env(safe-area-inset-right,0px))!important;top:auto!important;bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important;transform:none!important}
  body #uDock{bottom:calc(var(--pad,118px) + 38px + env(safe-area-inset-bottom,0px))!important}
- body #coach{bottom:calc(var(--pad,118px) + 94px + env(safe-area-inset-bottom,0px))!important}
+ body #coach{bottom:calc(var(--pad,118px) + 195px + env(safe-area-inset-bottom,0px))!important;left:calc(12px + env(safe-area-inset-left,0px))!important;right:auto!important;width:min(228px,calc(100vw - 24px))!important;transform:translate(0,16px)!important}
+ body #coach.on{transform:translate(0,0)!important}
+ body #uZoom#uZoom{top:calc(var(--hudMM) + 160px + env(safe-area-inset-top,0px))!important;bottom:auto!important;height:150px!important;min-height:0!important;right:calc(8px + env(safe-area-inset-right,0px))!important}
+ body.dm.rcOn #radio#radio{bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
  body.dm #coach{bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
+ body.dm.rcOn #coach{bottom:calc(clamp(260px,36vh,310px) + 66px + env(safe-area-inset-bottom,0px))!important}
 }
 
 /* Drone remote (#kmd) on portrait phones, laid out like the reference controller: two antennas,
@@ -63,14 +77,14 @@ body.hisar-crosshair-contrast #cross{filter:drop-shadow(0 1px 2px #000) drop-sha
  body #kmd .sh.r1{right:19%!important;left:auto!important}
  body #kmd .sh.r2{right:3%!important;left:auto!important}
  body #kmd .kz{top:33%!important;bottom:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:110px!important;height:22px!important}
- body #kmd .rd{width:42px!important;height:42px!important;max-width:none!important;max-height:none!important}
- body #kmd .h{left:26%!important;right:auto!important;top:42%!important;bottom:auto!important}
- body #kmd .ps{left:50%!important;right:auto!important;top:42%!important;bottom:auto!important;transform:translateX(-50%)!important;background:radial-gradient(circle at 40% 35%,#ff7a6a,#b3261a)!important;color:#fff!important}
- body #kmd .c1{left:auto!important;right:26%!important;top:42%!important;bottom:auto!important}
- body #kmd .tk{left:26%!important;right:auto!important;top:60%!important;bottom:auto!important}
- body #kmd .c2{left:auto!important;right:26%!important;top:60%!important;bottom:auto!important}
- body #kmd .bomb{left:50%!important;right:auto!important;top:60%!important;bottom:auto!important;transform:translateX(-50%)!important;width:44px!important;height:44px!important;max-width:none!important;max-height:none!important}
- body #kmd .sc{left:6%!important;right:6%!important;top:76%!important;bottom:auto!important;height:20%!important}
+ body #kmd .rd{width:36px!important;height:36px!important;box-sizing:border-box!important;padding:0!important;max-width:none!important;max-height:none!important}
+ body #kmd .h{left:26%!important;right:auto!important;top:45%!important;bottom:auto!important}
+ body #kmd .ps{left:50%!important;right:auto!important;top:45%!important;bottom:auto!important;transform:translateX(-50%)!important;background:radial-gradient(circle at 40% 35%,#ff7a6a,#b3261a)!important;color:#fff!important}
+ body #kmd .c1{left:auto!important;right:26%!important;top:45%!important;bottom:auto!important}
+ body #kmd .tk{left:26%!important;right:auto!important;top:58%!important;bottom:auto!important}
+ body #kmd .c2{left:auto!important;right:26%!important;top:58%!important;bottom:auto!important}
+ body #kmd .bomb{left:50%!important;right:auto!important;top:58%!important;bottom:auto!important;transform:translateX(-50%)!important;width:38px!important;height:38px!important;max-width:none!important;max-height:none!important}
+ body #kmd .sc{left:4%!important;right:4%!important;top:70%!important;bottom:auto!important;height:28%!important}
 }
 /* Gimbal kamera: kumanda ekranında dronun altı canlı görünür; telemetri kenarlarda okunur kalır */
 body #kmd .sc canvas.gim{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:inherit;pointer-events:none;z-index:0}
@@ -78,3 +92,134 @@ body #kmd .sc::after{content:"";position:absolute;inset:0;z-index:0;pointer-even
 body #kmd .sc>span{position:relative;z-index:1;text-shadow:0 1px 2px #000,0 0 6px #000}
 body #kmd .sc>span:nth-child(odd){text-align:left}
 body #kmd .sc>span:nth-child(even){text-align:right}
+/* Yatay telefon düzeni: kumanda parçaları birbirine binmez; portre düzeni bu kurala dahil değildir */
+@media (min-aspect-ratio:1/1) and (max-height:500px){
+ body #kmd{width:min(860px,calc(100vw - 16px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)))!important;height:clamp(140px,38vmin,156px)!important}
+ body #kmd .lg{display:none!important}
+ body #kmd .sh{top:5px!important;height:26px!important}
+ body #kmd .st{top:36px!important;bottom:auto!important;width:56px!important;height:56px!important;max-width:none!important;max-height:none!important}
+ body #kmd .st small{white-space:nowrap!important;font-size:8px!important;letter-spacing:0!important}
+ body #kmd .sc{top:34px!important;bottom:52px!important;left:22%!important;right:22%!important;height:auto!important;font-size:11px!important;line-height:1.3!important}
+ body #kmd .tk,body #kmd .c2{top:40px!important;bottom:auto!important}
+ body #kmd .tk{left:17%!important;right:auto!important}
+ body #kmd .c2{right:17%!important;left:auto!important}
+ body #kmd .rd{width:26px!important;height:26px!important;box-sizing:border-box!important;padding:0!important;max-width:none!important;max-height:none!important}
+ body #kmd .h,body #kmd .ps,body #kmd .c1{top:auto!important;bottom:12px!important}
+ body #kmd .c1{left:58%!important;right:auto!important}
+ body #kmd .bomb{left:50%!important;right:auto!important;top:auto!important;bottom:12px!important;transform:translateX(-50%)!important;width:36px!important;height:36px!important;max-width:none!important;max-height:none!important}
+}
+
+/* Radio sheet open: the HUD underneath is hidden so the sheet is the only thing to read (all orientations) */
+body:has(#hr-panel:not([hidden])) :is(#uTL,#hr-objective,#mm,#mmW,#wnd,#ctx,#vbar,#radio,#msg,#coach,#drvH,#uDock,#uStat,#uPad,#uFire,#uEye,#uSw,#uScope,#uZoom,#uMapB,#hr-radio-entry,#rec,#cross,#gRing){visibility:hidden!important}
+
+/* Landscape phones (about 844x390 and similar): top bar, left column and right column each get their own band */
+@media (min-aspect-ratio:1/1) and (max-height:500px){
+ body #vbar#vbar{left:246px!important;right:auto!important;transform:none!important}
+ body #radio#radio{left:246px!important;right:auto!important;transform:none!important}
+ body #hr-objective{top:156px!important;width:200px!important;padding:4px 8px!important}
+ body #hr-objective p{margin:0!important;font-size:11px!important;line-height:1.3!important}
+ body #uPad{width:104px!important;height:104px!important}
+ body #coach{left:246px!important;right:auto!important;top:6px!important;bottom:auto!important;width:354px!important;font-size:11px!important;padding:5px 10px!important;transform:translate(0,16px)!important}
+ body #coach i{font-size:16px!important}
+ body #hr-objective small{display:none!important}
+ body #vbar#vbar .r.s button{font-size:10px!important;padding:4px 6px!important;letter-spacing:0!important;min-width:0!important;min-height:26px!important;height:26px!important}
+ body #coach.on{transform:translate(0,0)!important}
+ body #gRing{width:108px!important;height:108px!important;left:10px!important;top:auto!important;right:auto!important;bottom:10px!important}
+ body #radio#radio{white-space:nowrap!important;max-width:calc(100vw - 300px)!important}
+ body #drvH{left:50%!important;right:auto!important;bottom:auto!important;top:296px!important;transform:translateX(-50%)!important;width:auto!important}
+ body #ctx{top:162px!important;gap:5px!important}
+ body #ctx button{height:26px!important;min-height:0!important;max-height:26px!important;line-height:1!important}
+ body #wnd#wnd{top:130px!important;right:12px!important;left:auto!important;transform:none!important}
+ body #hr-radio-entry{top:10px!important;right:132px!important;left:auto!important}
+ body #uMapB{top:92px!important;right:132px!important}
+ body #kmd .sh{white-space:nowrap!important;font-size:9px!important;letter-spacing:0!important}
+ body.dm #rec{left:246px!important;right:auto!important;top:64px!important}
+ body #uZoom#uZoom{top:140px!important;height:180px!important;min-height:0!important;bottom:auto!important;right:158px!important}
+}
+
+/* Mission card: under the top-left block on tablets and portrait phones; landscape phones keep their own top (156px) */
+@media (min-height:501px){ body #hr-objective{top:172px!important} }
+body #kmd .st{pointer-events:none!important}
+#mp>#mpBody{padding-bottom:10px}
+
+/* Landscape (all sizes): the coach tip sits in the empty band between the top-left block and TELSİZ */
+@media (min-aspect-ratio:1/1){
+ body #coach{left:246px!important;right:auto!important;top:6px!important;bottom:auto!important;width:354px!important;font-size:11px!important;transform:translate(0,16px)!important}
+ body #coach.on{transform:translate(0,0)!important}
+}
+
+/* Tablets and desktops (any orientation): the REC light sits in the top-right corner, clear of the top-left block;
+   remote labels stay on one line so they do not spill out of their buttons */
+@media (min-width:601px) and (min-height:501px){
+ body.dm #rec{left:auto!important;right:12px!important;top:12px!important;transform:none!important}
+ body #kmd .sh{white-space:nowrap!important;font-size:10px!important;letter-spacing:0!important}
+ body #kmd .rd{white-space:nowrap!important;font-size:10px!important;letter-spacing:0!important}
+}
+
+/* Tablets and desktops in landscape: the zoom bar sits left of the context column; remote labels fit between the buttons */
+@media (min-aspect-ratio:1/1) and (min-height:501px){
+ body #uZoom#uZoom{right:calc(12px + 132px + 12px)!important}
+ body #kmd .st{width:84px!important;height:84px!important}
+ body #kmd .rd.tk,body #kmd .rd.c2{margin-top:8px!important}
+ /* the minimap (about 164px) sits top right; TELSİZ, wind chip and map button stand just left of it */
+ body #hr-radio-entry{top:10px!important;right:186px!important;left:auto!important}
+ body #uMapB{top:140px!important;right:186px!important}
+ body #wnd#wnd{top:180px!important;right:12px!important;left:auto!important;transform:none!important}
+ body #ctx{top:218px!important}
+ body #kmd .rd.tk{font-size:9px!important;letter-spacing:0!important;padding:0!important}
+ body.dm #rec{left:360px!important;right:auto!important;top:68px!important}
+}
+
+/* Very short landscape phones (about 667x375 and 640x360). Right edge: TELSİZ, map, wind chip, context buttons, fire cluster.
+   Centre: view bar, radio, message, drone tip; each is capped at 100vw - 440px so it stops before the zoom bar.
+   Dock ends 200px from the right, so the zoom bar and the dock never meet. */
+@media (min-aspect-ratio:1/1) and (max-height:420px) and (max-width:760px){
+ body #coach{left:246px!important;right:auto!important;top:6px!important;width:calc(100vw - 370px)!important;transform:translate(0,16px)!important}
+ body #coach.on{transform:translate(0,0)!important}
+ body #vbar#vbar{left:246px!important;right:auto!important;transform:none!important;max-width:calc(100vw - 396px)!important}
+ body #vbar#vbar .r{max-width:calc(100vw - 396px)!important}
+ body #vbar#vbar button{font-size:10px!important;padding:7px 4px!important;line-height:12px!important;letter-spacing:0!important;gap:3px!important}
+ body #vbar#vbar .r.s button{padding:7px 3px!important}
+ body #radio#radio{left:246px!important;right:auto!important;transform:none!important;max-width:calc(100vw - 440px)!important;box-sizing:border-box!important;white-space:normal!important;font-size:11px!important}
+ body #msg{left:246px!important;right:auto!important;top:198px!important;transform:none!important;width:calc(100vw - 440px)!important;max-width:calc(100vw - 440px)!important;box-sizing:border-box!important;font-size:14px!important;text-align:left!important;white-space:normal!important}
+ body #drvH{left:246px!important;right:auto!important;top:152px!important;transform:none!important;width:calc(100vw - 440px)!important;max-width:calc(100vw - 440px)!important;box-sizing:border-box!important;font-size:10px!important;line-height:1.2!important;padding:3px 8px!important;white-space:normal!important}
+ body #coach span{font-size:10px!important}
+ body #coach b{font-size:9px!important}
+ body #hr-objective{padding:3px 7px!important}
+ body #hr-objective progress{margin-top:2px!important}
+ body #ctx{top:138px!important}
+ body #mm{display:none!important}
+ body #hr-radio-entry{top:10px!important;right:12px!important;left:auto!important}
+ body #uMapB{top:60px!important;right:42px!important}
+ body #wnd#wnd{top:96px!important;right:12px!important;left:auto!important;transform:none!important;font-size:10px!important;padding:3px 8px!important}
+ body #wnd svg{display:none!important}
+ body #uZoom#uZoom{right:150px!important;top:140px!important;height:180px!important;min-height:0!important;bottom:auto!important}
+ body #kmd .sh{white-space:nowrap!important;font-size:8.5px!important;letter-spacing:0!important;padding:0 1px!important}
+ body.tc #uDock,body.lefty.tc #uDock{left:130px!important;right:190px!important}
+ body.lefty.tc #uDock{left:140px!important}
+ body.tc #uDock #uStat{width:160px!important}
+ body.tc #uDock #uAm,body.tc #uDock #uAb{gap:3px!important}
+ body.tc #uDock .am,body.tc #uDock .ab{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}
+ body.dm #rec{left:246px!important;right:auto!important;top:68px!important}
+}
+
+/* Dikey tablet (601-1100 px genislik): sol ustte menu, gorev karti; ortada gorus cubugu, telsiz, ipucu ve mesaj ust uste
+   (JS dikey siralar); sagda harita, TELSIZ, ruzgar, baglam dugmeleri ve zum cubugu; alt kisimda ipucu kutusu surus tuslarinin ustunde */
+@media (min-width:601px) and (max-width:1100px) and (orientation:portrait){
+ body{--tcW:clamp(240px,calc(100vw - 424px),360px)}
+ body #mm{width:144px!important;height:144px!important;top:10px!important;right:12px!important;left:auto!important;bottom:auto!important}
+ body #uMapB#uMapB{top:118px!important;left:618px!important;right:auto!important;bottom:auto!important}
+ body #hr-radio-entry{top:160px!important;right:12px!important;left:auto!important;bottom:auto!important}
+ body #wnd#wnd{top:212px!important;right:12px!important;left:auto!important;bottom:auto!important;transform:none!important}
+ body #ctx{top:248px!important;right:12px!important;left:auto!important;bottom:auto!important}
+ body #uZoom#uZoom{top:340px!important;bottom:auto!important;height:380px!important;min-height:0!important;right:12px!important;left:auto!important}
+ body.dm #rec{left:auto!important;right:12px!important;top:340px!important;bottom:auto!important;transform:none!important}
+ body #hr-objective{left:12px!important;right:auto!important;top:172px!important;bottom:auto!important;width:231px!important;max-width:231px!important;box-sizing:border-box!important}
+ body #vbar#vbar{left:256px!important;right:auto!important;top:10px!important;bottom:auto!important;transform:none!important;max-width:var(--tcW)!important}
+ body #vbar#vbar .r{flex-wrap:wrap!important;max-width:var(--tcW)!important;justify-content:flex-start!important}
+ body #radio#radio{left:256px!important;right:auto!important;bottom:auto!important;transform:none!important;width:var(--tcW)!important;max-width:var(--tcW)!important;box-sizing:border-box!important}
+ body #drvH{left:256px!important;right:auto!important;bottom:auto!important;transform:none!important;width:var(--tcW)!important;max-width:var(--tcW)!important;box-sizing:border-box!important;white-space:normal!important;text-align:left!important}
+ body #msg{left:256px!important;right:auto!important;bottom:auto!important;transform:none!important;width:var(--tcW)!important;max-width:var(--tcW)!important;box-sizing:border-box!important;text-align:left!important;white-space:normal!important}
+ body #coach{left:50%!important;right:auto!important;top:auto!important;bottom:calc(var(--pad,164px) + 104px + env(safe-area-inset-bottom,0px))!important;transform:translateX(-50%)!important;width:min(400px,calc(100vw - 368px))!important}
+ body #kmd .rd{width:44px!important;height:44px!important;max-width:none!important;max-height:none!important;font-size:9px!important}
+}

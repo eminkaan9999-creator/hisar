@@ -1,7 +1,7 @@
 {
-  "v": 72,
+  "v": 74,
   "experience": "63.1",
-  "not": "Dron kumandasının ekranında artık dronun altını gösteren gimbal kamera görüntüsü canlı izleniyor: kamera aşağı sabit bakar ve yönünü dronun burnundan alır. Yük, pil, hız, sinyal ve mesafe bilgileri görüntünün kenarlarında okunur kalır. Diğer tuşlar ve oyun akışı aynı.",
+  "not": "Dar yatay ekranda (640×360, 667×375) ve dikey tablette (768×1024) HUD üst üste binmiyor: görüş çubuğu, telsiz, ipucu, mesaj, harita, rüzgâr ve bağlam düğmeleri kendi alanında; kabin alt sırası gerekirse yatay kaydırılır. Dron kumandasında REC ışığı ve düğme yazıları taşmaz. Görev menüsünde tek GÖREV ızgarası ve tek BAŞLAT; tank görünüş çubuğu (DIŞ, NİŞAN, KABİN, SÜRÜCÜ) sağ altta 2×2 toplanır. M60A3 tank topu mermisi belgelere göre 63 adet (önceki 60); varsayılan ve hazır yüklemeler 63'e ölçeklendi; tank ağırlığı 51 ton.",
   "gameplay": "1.2.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",

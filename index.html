@@ -136,7 +136,7 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:.45}body.cv #vg{display:block}
 </style>
 <script src="experience/guard.js?v=63"></script>
-<link rel="stylesheet" href="experience/ui.css?v=65">
+<link rel="stylesheet" href="experience/ui.css?v=67">
 
 <!-- hisar-kurulus-1 -->
 <link rel="stylesheet" href="shared/kurulus.css?v=1">
@@ -928,7 +928,7 @@ function sndUpdate(mv,tn){if(!AC||!AU)return;const t=AC.currentTime,dt=Math.min(
 // ---- BIRLIK (Tek tank / Kisim / Takim), TELSIZ KOMUTLARI, MUHIMMAT YUKLEMESI
 const CSN=['KAPLAN 1-1','KAPLAN 1-2','KAPLAN 1-3','KAPLAN 1-4'];
 const SLOT=[[14,-9],[-14,-9],[0,-20]];
-try{SV.form=1;SV.load=[22,14,6,12];const j=JSON.parse(localStorage.getItem('m60v2')||'null');if(j){if(j.form!=null)SV.form=j.form;if(Array.isArray(j.load)&&j.load.length===4)SV.load=j.load}}catch(e){}
+try{SV.form=1;SV.load=[26,16,7,14];const j=JSON.parse(localStorage.getItem('m60v2')||'null');if(j){if(j.form!=null)SV.form=j.form;if(Array.isArray(j.load)&&j.load.length===4)SV.load=j.load}}catch(e){}
 let lastRep=0,cmdTgt=null;
 function radioCS(a,t){radio(a.cs+': '+t)}
 const pickL=a=>a[Math.random()*a.length|0];
@@ -1009,8 +1009,8 @@ document.querySelector('.tabs').insertAdjacentHTML('afterbegin','');
 document.querySelector('.tabs button[data-t="u"]').insertAdjacentHTML('beforebegin','<button data-t="b">Birlik</button>');
 document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>tab(b.dataset.t));
 document.querySelector('#tu').insertAdjacentHTML('beforebegin','<section id="tb"><h3>BİRLİK</h3><div class="row grid3"><button data-f="0"><b>Tek tank</b><small>1 tank · sadece sen</small></button><button data-f="1"><b>Kısım</b><small>2 tank · sen + 1 müttefik</small></button><button data-f="3"><b>Takım</b><small>4 tank · sen + 3 müttefik</small></button></div><p id="fdesc"></p><h3>MÜHİMMAT YÜKLEMESİ</h3><div id="ld"></div><div class="row" style="margin-top:8px"><button data-pre="0">Dengeli</button><button data-pre="1">Zırh avı</button><button data-pre="2">Piyade / yapı</button></div></section>');
-const capN=()=>60+8*SV.U.cap;
-const AMN=[['APDS · Zırh delici','Tank, zırhlı araç, topçu'],['HEAT · Çok amaçlı','Tank, bunker, bina'],['WP · Beyaz fosfor','Duman perdesi + yangın etkisi · piyade, hafif araç'],['HEP · Plastik patlayıcı','Bina, bunker, piyade']],PRE=[[22,14,6,12],[34,12,4,8],[10,16,6,28]];
+const capN=()=>63+8*SV.U.cap;
+const AMN=[['APDS · Zırh delici','Tank, zırhlı araç, topçu'],['HEAT · Çok amaçlı','Tank, bunker, bina'],['WP · Beyaz fosfor','Duman perdesi + yangın etkisi · piyade, hafif araç'],['HEP · Plastik patlayıcı','Bina, bunker, piyade']],PRE=[[26,16,7,14],[37,13,4,9],[10,17,6,30]];
 const FD={0:'Yalnız hareket edersin. Telsiz komutu yok.',1:'Kısım: seninle birlikte 2 tank. KAPLAN 1-2 yanında gelir.',3:'Takım: 4 tank. KAPLAN 1-2, 1-3 ve 1-4 birliğinde, tek tek ya da topluca komut verebilirsin (T).'};
 function ldRender(){const tot=SV.load.reduce((a,b)=>a+b,0);
  $('ld').innerHTML=AMN.map((a,i)=>'<div class="up"><span><b style="color:#fff">'+(i<2?i+1:i===2?4:3)+' · '+a[0]+'</b><em>'+a[1]+'</em></span><span class="cnt"><button data-ld="'+i+':-1">−</button><b>'+SV.load[i]+'</b><button data-ld="'+i+':1">+</button></span></div>').join('')+'<div class="kl" style="text-align:center;margin-top:6px">Toplam: <b>'+tot+' / '+capN()+'</b> mermi · ikmal aracı bu miktara kadar doldurur</div>';
@@ -2713,7 +2713,7 @@ function lights(V,E,s,x,y,z){V.box(.16,.14,.1,s*x,y,z,STL);E.cyl(.055,.055,.03,s
 function tail(V,E,s,x,y,z){V.box(.14,.12,.05,s*x,y,z,STL);E.box(.1,.07,.02,s*x,y,z-.03,TAIL)}
 // ---------- TANK TANIMLARI ----------
 const TK={
- m60:{n:'M60A3 Patton',u:'ABD',y:1978,cap:'105 mm M68',tons:'52 t',crew:4,price:0,flag:'🇺🇸',st:{arm:1,spd:1,rel:1,dmg:1},d:'TTS termal nişangâhlı, güvenilir Soğuk Savaş tankı. Bu oyunun detaylı kabinli tankı.'},
+ m60:{n:'M60A3 Patton',u:'ABD',y:1978,cap:'105 mm M68',tons:'51 t',crew:4,price:0,flag:'🇺🇸',st:{arm:1,spd:1,rel:1,dmg:1},d:'TTS termal nişangâhlı, güvenilir Soğuk Savaş tankı. Bu oyunun detaylı kabinli tankı.'},
  leo1:{n:'Leopard 1A5',u:'Almanya',y:1987,cap:'105 mm L7A3',tons:'42 t',crew:4,price:1500,flag:'🇩🇪',st:{arm:.82,spd:1.28,rel:.95,dmg:1},d:'Hızlı ve çevik; ince zırhını hareketle telafi eder. Özel: en hızlı dönen tank.',
   hc:'#5d6a45',pal:['#3f4a2e','#6d5b3f','#262a20'],MZ:{ty:1.56,tz:.05,gy:.42,z:1.05,d:5.3},TKX:1.33,TKW:.28,ANT:[.7,2.3,-1.35],DOCK:3.35,wheel:{r:.34,list:[2.3,1.55,.8,.05,-.7,-1.45,-2.2]},idl:[3.0,.62,.3],spr:[-2.95,.72,.32]},
  t72:{n:'T-72B',u:'SSCB',y:1985,cap:'125 mm 2A46M',tons:'45 t',crew:3,price:2500,flag:'☭',st:{arm:1.12,spd:.98,rel:.86,dmg:1.25},d:'Alçak siluet, otomatik yükleyici, reaktif zırh. Özel: en hızlı dolum; ama yandan vurulursa karuseldeki cephane infilak edebilir. Düşman birlikleri de bunu kullanır.',
@@ -3619,17 +3619,13 @@ RS.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
  else if(b.dataset.sa==='las'){window.lase&&lase()}else if(b.dataset.sa&&window.sgAct)sgAct(b.dataset.sa);
  else if(b.dataset.st!=null){CAB.st=+b.dataset.st;CAB.hy=CAB.hp=0;say('KABİN · '+STN[CAB.st],1.1);if(typeof sndBip==='function')sndBip()}
  else if(b.dataset.ct==='lab')CAB.lab=!CAB.lab;else if(b.dataset.ct==='look')CAB.look=!CAB.look;subKey='';sub()});
-// konum: pusulanin altina; telsiz ve buyuk mesaj cubugun altina
-const radio=document.getElementById('radio'),msg=document.getElementById('msg');
-let t=0,shown=false;
+// gorus cubugu konumu burada; telsiz ve mesaj konumu asagidaki m_mob bolumunde tek yerden yazilir
+let t=0;
 FRAME_HOOKS.push(dr=>{const on=game==='play'&&mode==='tank'&&!window.mapOpen;document.body.classList.toggle('vbOn',on);document.body.classList.toggle('paused',game==='pause');
- if(!on){if(shown){shown=false;radio&&radio.style.removeProperty('top');msg&&msg.style.removeProperty('top')}return}shown=true;
+ if(!on)return;
  RM.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',+b.dataset.v===iv&&!(window.AA&&AA.on)));sub();
  t+=dr;if(t<.25)return;t=0;
- const W=innerWidth,H=innerHeight,por=H>W*1.05,top=por?Math.round(clamp(W*.26,96,140)+44)+48:60;B.style.top=top+'px';
- const r=B.getBoundingClientRect(),bot=Math.round(r.bottom);
- if(radio)radio.style.setProperty('top',(bot+8)+'px','important');const rh=radio&&getComputedStyle(radio).opacity>.05?radio.offsetHeight+14:0;
- if(msg)msg.style.setProperty('top',Math.max(H*(por?.36:.22),bot+44+rh)+'px','important')});
+ const W=innerWidth,H=innerHeight,por=H>W*1.05,top=por?Math.round(clamp(W*.26,96,140)+44)+48:60;B.style.top=top+'px'});
 // menu ✕ DEVAM
 const X=document.createElement('button');X.id='mX';X.innerHTML='✕ DEVAM';document.body.appendChild(X);
 X.addEventListener('click',e=>{e.preventDefault();if(game==='pause')closeMenu()});
@@ -4603,7 +4599,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=72,LOGO=window.HISAR_LOGO;
+const VER=74,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4670,7 +4666,7 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
 const IC={g:'🎯',a:'⚙️',b:'🪖',u:'🏆',k:'🎮'};document.querySelectorAll('#mp>.tabs [data-t]').forEach(b=>{const k=b.dataset.t;if(IC[k]&&!b.dataset.ic){b.dataset.ic=1;b.textContent=IC[k]+' '+b.textContent}});
 // muhimmat yuklemesi: tus sirasi (1 APDS, 2 HEAT, 3 HEP, 4 WP), renkli serit, buyuk +/-
 const ORD=[0,1,3,2],COL=['#9aa3ad','#e8822a','#e8e8e8','#e8c23a'],NM=['APDS · Zırh delici','HEAT · Çok amaçlı','WP · Beyaz fosfor','HEP · Plastik patlayıcı'],DS=['Tank, zırhlı araç, topçu','Tank, sığınak, bina','Sis perdesi + yangın · piyade','Bina, sığınak, piyade'];
-const capN=()=>60+8*SV.U.cap;
+const capN=()=>63+8*SV.U.cap;
 window.ldRender=function(){const el=document.getElementById('ld');if(!el)return;const tot=SV.load.reduce((a,b)=>a+b,0),cap=capN();
  el.innerHTML=ORD.map((i,n)=>'<div class="am2"><i style="background:'+COL[i]+'"></i><div class="tx"><b>'+(n+1)+' · '+NM[i]+'</b><small>'+DS[i]+'</small></div><div class="st"><button data-ld="'+i+':-2">−</button><span>'+SV.load[i]+'</span><button data-ld="'+i+':2">+</button></div></div>').join('')+
   '<div class="tot">Toplam: <b style="color:#ffd27a">'+tot+' / '+cap+'</b> mermi · ikmal noktası bu miktara kadar doldurur<u><s style="width:'+Math.min(100,tot/cap*100)+'%"></s></u></div>';
@@ -5350,11 +5346,24 @@ const keep=()=>{hook(document.getElementById('vX'));hook(document.getElementById
 document.head.insertAdjacentHTML('beforeend','<style>body.ui-sade.vbOn #vX{display:none!important}body.mobIn #vbar{top:calc(8px + env(safe-area-inset-top,0px))!important}'+
  '@media (orientation:portrait){body.vbOn:not(.mobIn) #vbar{top:calc(146px + env(safe-area-inset-top,0px))!important}body.mobIn #uInfo,body.mobIn #mm,body.mobIn #mmW,body.mobIn #objC{visibility:hidden!important}}</style>');
 FRAME_HOOKS.push(()=>{const on=game==='play'&&mode==='tank'&&(iv===2||iv===3)&&document.body.classList.contains('ui-sade');document.body.classList.toggle('mobIn',on)});
-// telsiz ve buyuk mesaj her zaman gorus cubugunun altinda (baska modul stili sifirlasa da)
+// telsiz ve buyuk mesaj konumu tek yazici: yatayda gorus cubugunun altinda (telsiz + mesaj);
+// dikeyde inline top kaldirilir, CSS yerlestirir (telsiz solda alt satir, mesaj nisanin altinda)
 const RA=document.getElementById('radio'),MS=document.getElementById('msg');
-let pT=0;FRAME_HOOKS.push(dr=>{pT+=dr;if(pT<.2)return;pT=0;if(!document.body.classList.contains('vbOn')||game!=='play')return;const r=B.getBoundingClientRect();if(!r.height)return;const bot=Math.round(r.bottom);
- if(RA&&RA.style.getPropertyValue('top')!==(bot+8)+'px')RA.style.setProperty('top',(bot+8)+'px','important');
- if(MS){const t=Math.max(innerHeight*(innerHeight>innerWidth?.36:.24),bot+52)+'px';if(MS.style.getPropertyValue('top')!==t)MS.style.setProperty('top',t,'important')}});
+const place=(el,v)=>{if(!el)return;if(v==null){if(el.style.getPropertyValue('top'))el.style.removeProperty('top');return}if(el.style.getPropertyValue('top')!==v)el.style.setProperty('top',v,'important')};
+const mqC=matchMedia('(min-aspect-ratio:1/1) and (max-height:420px) and (max-width:760px)');
+const mqT=matchMedia('(min-width:601px) and (max-width:1100px) and (orientation:portrait)');
+const DH=document.getElementById('drvH');
+const shown=e=>!!e&&getComputedStyle(e).display!=='none'&&getComputedStyle(e).opacity>.05;
+const lay=()=>{
+ const por=innerHeight>innerWidth*1.05;
+ if(!document.body.classList.contains('vbOn')||game!=='play'||(por&&!mqT.matches)){place(RA,null);place(MS,null);place(DH,null);return}
+ const r=B.getBoundingClientRect();if(!r.height)return;const bot=Math.round(r.bottom);
+ if(por){let y=bot+8;place(RA,y+'px');if(shown(RA))y+=RA.offsetHeight+8;place(DH,y+'px');if(shown(DH))y+=DH.offsetHeight+8;place(MS,y+'px');return}
+ const rh=RA&&getComputedStyle(RA).opacity>.05?RA.offsetHeight+14:0;
+ place(RA,(bot+8)+'px');place(MS,mqC.matches?null:Math.max(innerHeight*.24,bot+44+rh)+'px')};
+let pT=0;FRAME_HOOKS.push(dr=>{pT+=dr;if(pT<.2)return;pT=0;lay()});
+// gorus cubugunun boyu degisince (NISAN alt satiri acilinca) telsiz ve mesaj hemen yeniden yerlesir; bir kare beklenmez
+if(window.ResizeObserver)new ResizeObserver(lay).observe(B);
 })();
 
 

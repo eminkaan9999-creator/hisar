@@ -19,14 +19,14 @@ async function shot(page,name){await page.screenshot({path:path.join(out,name)})
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:120000});
  await page.waitForFunction(()=>!!window.HisarGameplay&&!!window.HisarImmersive&&!!window.HisarPolish&&window.HisarGameBridge.snapshot().ready,{},{timeout:90000});
  await page.evaluate(()=>{HisarGameBridge.quality('dusuk');HisarGameBridge.auto(false);});
- assert.equal(await page.evaluate(()=>HisarGameplay.version),'1.2.0');assert.equal(await page.evaluate(()=>R.getContext().isContextLost()),false);ok(tag+': original WebGL renderer and both new modules initialize');
- assert.equal(await page.locator('#hg-story').count(),1);ok(tag+': four-chapter story is reachable from original menu');
+ assert.equal(await page.evaluate(()=>HisarGameplay.version),'1.3.0');assert.equal(await page.evaluate(()=>R.getContext().isContextLost()),false);ok(tag+': original WebGL renderer and both new modules initialize');
+ assert.equal(await page.locator('#hg-story').count(),0);assert.equal(await page.locator('#tg [data-g]').count(),8);ok(tag+': old story is gone and one list holds the eight missions');
  await page.locator('#hisar-experience-entry').click();await page.waitForFunction(()=>document.getElementById('hisar-experience').open);
  await page.locator('[data-page="settings"]').click();const panel=page.locator('#hs-simple');await panel.scrollIntoViewIfNeeded();const box=await panel.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=(mobile?390:1280)+1);ok(tag+': gameplay settings fit original settings dialog');
  await page.evaluate(()=>HisarGameplay.set({droneView:'fpv'}));assert.equal(await page.evaluate(()=>HisarGameplay.getSettings().droneView),'fpv');await page.evaluate(()=>HisarGameplay.set({droneView:'follow'}));ok(tag+': real camera view setting responds to UI input');
  await shot(page,tag+'-settings.png');await page.locator('#hx-close').click();
  if(!mobile){
- assert.equal(await page.evaluate(()=>{lvSel='serbest';return HisarGameplay.startStory(0);}),true);await page.waitForFunction(()=>game==='play');assert.equal(await page.evaluate(()=>mis),'kesif');assert.equal(await page.evaluate(()=>HisarGameplay.diagnostics().activeStory),true);ok('story: launches native reconnaissance mission');
+ assert.equal(await page.evaluate(()=>{lvSel='serbest';return HisarOperations.start(0);}),true);await page.waitForFunction(()=>game==='play');assert.equal(await page.evaluate(()=>mis),'op_temas');ok('mission: first new mission launches in the native scene');
  await page.waitForTimeout(1600);await shot(page,'story-native-scene.png');
  // Exercise all currently registered player vehicle models without changing the user's live save.
  const ids=await page.evaluate(()=>Object.keys(TANKS));
@@ -44,10 +44,9 @@ async function shot(page,name){await page.screenshot({path:path.join(out,name)})
  await page.evaluate(()=>{DR.th=1;mode='drone';DR.on=true;camUpdate();R.render(S,CAM);});assert.match(await page.evaluate(()=>R.domElement.style.filter),/hisar-thermal-palette/);ok('drone: green palette reaches the real WebGL canvas');await shot(page,'drone-green.png');
  await page.evaluate(()=>{DR.th=0;mode='tank';iv=0;camUpdate();R.render(S,CAM);});assert.doesNotMatch(await page.evaluate(()=>R.domElement.style.filter),/hisar-thermal-palette/);ok('daylight: green filter is removed from original canvas');
  // Native outcome handler is the only event that unlocks the next story chapter.
- await page.evaluate(()=>endGame(true,'CI native outcome test'));assert.equal(await page.evaluate(()=>HisarGameplay.diagnostics().story.unlocked),1);ok('story: native victory unlocks next chapter and shows debrief');
- assert.equal(await page.locator('#hg-debrief').count(),1);await shot(page,'story-debrief.png');
+ await page.evaluate(()=>endGame(false,'CI native outcome test'));assert.equal(await page.evaluate(()=>game),'over');assert.equal(await page.locator('#hr-debrief').count(),1);ok('mission: native outcome ends the mission and shows its debrief');await shot(page,'story-debrief.png');
  }
- const values=await page.evaluate(()=>({xp:SV.xp,story:localStorage.getItem('hisar-story-v1'),gameplay:localStorage.getItem('hisar-gameplay-v1')}));assert.ok(values.gameplay);ok(tag+': preferences saved in separate namespace');
+ const values=await page.evaluate(()=>({xp:SV.xp,gameplay:localStorage.getItem('hisar-gameplay-v1')}));assert.ok(values.gameplay);ok(tag+': preferences saved in separate namespace');
  if(mobile){for(const [w,h]of [[320,568],[844,390]]){await page.setViewportSize({width:w,height:h});await page.locator('#hisar-experience-entry').click();await page.locator('[data-page="settings"]').click();await panel.scrollIntoViewIfNeeded();const bb=await panel.boundingBox();assert.ok(bb.x>=0&&bb.x+bb.width<=w+1);ok('mobile layout: '+w+'x'+h+' gameplay panel within viewport');await page.locator('#hx-close').click();}}
  await page.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;});
  await page.waitForFunction(async name=>await caches.has(name),cache,{timeout:90000});

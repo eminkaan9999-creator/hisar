@@ -10,12 +10,10 @@ test('arcade carry is capped and rejects teleports',()=>{assert.ok(Math.hypot(..
 const ready={playing:true,on:true,falling:false,returning:false,spin:1,ammo:5,pending:0,cooldown:0};
 for(const [change,reason]of [[{playing:false},'paused'],[{on:false},'not-ready'],[{falling:true},'not-ready'],[{returning:true},'not-ready'],[{spin:.3},'not-ready'],[{ammo:0},'empty'],[{pending:12},'busy'],[{cooldown:.4},'cooldown']])test('drop guard '+reason+JSON.stringify(change),()=>assert.equal(api.canDrop({...ready,...change}),reason));
 test('ready drone can drop',()=>assert.equal(api.canDrop(ready),''));
-test('story progress uses native mission outcomes',()=>{assert.equal(api.progress({total:4,remaining:3}),.25);assert.equal(api.progress({mission:'kesif',total:4,marked:3}),.75);assert.equal(api.progress({total:0}),0);assert.equal(api.progress({finished:true}),1);});
-test('story save is bounded and allowlisted',()=>assert.deepEqual(api.storyData({chapter:99,unlocked:-5,completed:'true',evil:1}),{chapter:3,unlocked:0,completed:false}));
-test('four chapters have distinct valid native missions',()=>{assert.equal(api.CHAPTERS.length,4);assert.equal(new Set(api.CHAPTERS.map(c=>c.mission)).size,4);});
+test('mission progress uses native outcomes',()=>{assert.equal(api.progress({total:4,remaining:3}),.25);assert.equal(api.progress({total:0}),0);assert.equal(api.progress({finished:true}),1);});
 function fixture(){const store=new Map([['m60v2','UNCHANGED']]),removed=[],spoken=[],events={};const root={
  console,document:{body:null,hidden:false,addEventListener:(t,f)=>events[t]=f,querySelector:()=>null},addEventListener:(t,f)=>events[t]=f,
- localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},game:'play',mode:'drone',iv:0,mis:'kopru',lvSel:'normal',ammo:5,ammoT:0,
+ localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},game:'play',mode:'drone',iv:0,mis:'op_temas',lvSel:'normal',ammo:5,ammoT:0,
  DR:{on:true,x:0,y:4,z:0,sp:1,g:{visible:true,scale:{setScalar(v){this.value=v;}}}},P:{x:0,z:0},E:[],AL:[],bombs:[],shells:[],SV:{voice:1,radioV:1,U:{bmb:0}},L:{cone:0},FRAME_HOOKS:[],
  hAt:()=>0,los:()=>true,blockedAt:()=>null,spotted:()=>true,emx:()=>100,ENT:{tank:'TANK'},
  bigBoom(){},rm(m){removed.push(m);},killE(e){root.E=root.E.filter(x=>x!==e);},hurt(e,d){e.hp-=d;if(e.hp<=0)root.killE(e);},
@@ -40,5 +38,5 @@ test('native subtitles preserved without duplicated legacy speech',()=>{const f=
 test('crew and radio are connected to the new voice adapter',()=>{const f=fixture();f.root.CREW.say('Merhaba',1,'test',3);f.root.CREW.radio('Duyuldu');assert.deepEqual(f.spoken,['Merhaba','Duyuldu']);});
 test('muted native voice preference is honored',()=>{const f=fixture();f.root.SV.voice=0;f.root.radio('Sessiz');f.root.CREW.say('Sessiz');assert.equal(f.spoken.length,0);});
 test('reset clears cooldown and preserves game progress key',()=>{const f=fixture();f.root.fire();assert.equal(f.root.reset(),'reset');assert.equal(f.api.diagnostics().cooldown,0);assert.equal(f.store.get('m60v2'),'UNCHANGED');});
-test('locked story chapter cannot start',()=>{const f=fixture();assert.equal(f.api.startStory(2),false);assert.equal(f.root.mis,'kopru');});
-test('story begins native mission and advances only on native win',()=>{const f=fixture();assert.equal(f.api.startStory(0),true);assert.equal(f.root.mis,'kesif');f.root.endGame(true);assert.equal(f.api.diagnostics().story.unlocked,1);assert.equal(f.store.get('m60v2'),'UNCHANGED');});
+
+test('old story chapters are gone',()=>{assert.equal(api.CHAPTERS,undefined);assert.equal(api.storyData,undefined);const src=require('node:fs').readFileSync(__dirname+'/gameplay.js','utf8');assert.doesNotMatch(src,/startStory|hisar-story-v1|kesif|konvoy|kopru/);});

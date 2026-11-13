@@ -1,15 +1,14 @@
 {
-  "v": 76,
+  "v": 77,
   "experience": "63.1",
-  "not": "Eski görevlerin ve hikâye girişinin hepsi kaldırıldı; yerine tank ve uçangözü birlikte kullanan 8 yeni görev geldi ve hepsi tek GÖREV listesinde. Düşmanlar artık aynı anda değil tek tek çıkar: sahadaki vurulmadan sıradaki gelmez. Dron kumandası büyüdü: düğmeler ve ekran daha büyük. Menü yatayda kaymaz, sekmeler tek sırada. 375×667 ve 667×375 gibi daha kısa ekranlarda bazı düğmeler hâlâ üst üste gelebilir.",
-  "gameplay": "1.2.0",
+  "not": "Eski oyun modlarının kodu tamamen silindi: dalga, konvoy, köprü, keşif, köy, yakıt hattı ve obüs modları, Kuruluş hikâyesi ve Kayıp Sinyal hikâyesi artık yok. Oyunda yalnız 8 yeni görev ve eğitim alanı var. Menü sadeleşti: 8 görev tek ekranda, günlük görev kutusu ve fazladan açıklamalar kaldırıldı. 375×667 ve 667×375 gibi daha kısa ekranlarda bazı düğmeler hâlâ üst üste gelebilir.",
+  "gameplay": "1.3.0",
   "presentation": "1.1.0",
-  "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",
+  "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",
   "operations": "1.3.0",
   "operationNotes": "Karanlıkta Çağrı, Konvoy Yolu, Son İstasyon, Sisli Geçit, Kayıp Kayıt, Kimse Geride Kalmasın. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır.",
   "previousReleaseNotes": "HİSAR Kuruluş: tek hikâye ve üç tam oyun alanı; özgün tanklar, kabinler, şantiye araçları, poligon hedefleri korunur. Ortak Uçangöz, araç/görüş kataloğu, yatay iki elli kontrol ve Türkçe Ahmet sesi. Alanlar geçişle yüklenir; kesintisiz tek arazi değildir.",
   "simpleSettings": "1.0.0",
   "radioVoice": "Microsoft Ahmet (tr-TR) Neural",
-  "radioSpeed": 1,
-  "kurulus": "1.1.0"
+  "radioSpeed": 1
 }

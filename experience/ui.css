@@ -240,7 +240,7 @@ html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
 #mp .acts button{min-width:0!important}
 #mp *{max-width:100%}
 @media (max-width:600px) and (orientation:portrait){
- html body #menu#menu #mp#mp .tabs{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)!important;gap:2px!important;padding:4px!important}
+ html body #menu#menu #mp#mp .tabs{display:grid!important;width:100%!important;box-sizing:border-box!important;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)!important;gap:2px!important;padding:4px!important}
  html body #menu#menu #mp#mp .tabs button{min-width:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:8px 1px!important;font-size:8.5px!important;overflow:hidden!important;letter-spacing:0!important;white-space:nowrap!important;min-height:48px!important}
  /* v76: dron kumandası büyüdü; düğmeler ve ekran daha büyük. Üstündeki öğeler --kmdH ile birlikte kayar */
  body{--kmdH:clamp(300px,46vh,400px)}
@@ -265,3 +265,15 @@ html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
  body #kmd#kmd .bomb{top:50.5%!important;width:50px!important;height:50px!important}
  body #kmd#kmd .sc{top:66.5%!important;height:31.5%!important;left:4%!important;right:4%!important;font-size:12px!important;line-height:1.45!important}
 }
+/* v77: sade menü — tek görev listesi, kısa kartlar, fazladan açıklama ve günlük görev kutusu yok */
+#tg #dly{display:none!important}
+#tg>p:not(#gd){display:none!important}
+#tg #gd{font-size:12.5px!important;line-height:1.4!important;margin:8px 2px 4px!important;min-height:0!important}
+#mp #tutB{min-height:0!important;max-height:54px!important;padding:8px 12px!important;overflow:hidden!important;margin-bottom:10px!important}
+#mp #tutB small{display:none!important}
+#tg .row.grid .hr-op{min-height:56px!important;padding:8px 10px!important}
+#tg .row.grid .hr-op b{font-size:14px!important}
+#tg .row.grid .hr-op small{font-size:10.5px!important}
+#mp #updBox{margin:4px 0 8px!important}
+#mp #updBox>*:not(button){display:none!important}
+#mp #hisar-experience-entry{min-height:38px!important;padding:6px 10px!important;font-size:13px!important;margin:6px 0!important}

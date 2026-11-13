@@ -4490,7 +4490,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=80,LOGO=window.HISAR_LOGO;
+const VER=81,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -5656,18 +5656,10 @@ function evReset(){EV.t=rr(55,95);EV.n=0;EV.max=1+(typeof lvKey!=='undefined'&&l
 evReset();
 function spawnAt(type,x,z,o){try{return window.addE(type,x,z,o)}catch(e){return null}}
 function evRun(k){
- if(k==='pusu'){const a=P.h+PI+rr(-1,1),r=rr(55,75),x=P.x+Math.sin(a)*r,z=P.z+Math.cos(a)*r,c=clk(x,z);
-  spawnAt('apc',x,z);for(let i=0;i<3;i++){const e=spawnAt('inf',x+rr(-9,9),z+rr(-9,9),i===0?{at:1}:null);if(i===0)mkAT(e)}
-  radio('PUSU! Saat '+c+' yönünde düşman: zırhlı araç ve tanksavar timi!');say('⚠ PUSU · SAAT '+c,2.4);say2('Pusu! Saat '+c+'!',2,'ev',3)}
- else if(k==='topcu'){const cx=P.x,cz=P.z;radio('Topçu baskını! Hemen yer değiştirin!');say('⚠ TOPÇU BASKINI · HAREKET ET!',2.4);try{sndWhistle()}catch(x){}
-  for(let i=0;i<6;i++){const tx=cx+rr(-16,16),tz=cz+rr(-16,16),rg=new THREE.Mesh(RG,RGM);rg.rotation.x=-PI/2;rg.position.set(tx,hAt(tx,tz)+.4,tz);S.add(rg);inc.push({x:tx,z:tz,t:2.6+i*.55,rg})}}
- else if(k==='takviye'){let cx=0,cz=0,n=0;for(const e of E){cx+=e.x;cz+=e.z;n++}const a=n?Math.atan2(cx/n-P.x,cz/n-P.z):P.h,r=rr(150,170);let c=12;
-  for(const s of[-1,1]){const aa=a+s*.22,x=P.x+Math.sin(aa)*r,z=P.z+Math.cos(aa)*r;const e=spawnAt('tank',x,z);if(e)c=clk(e.x,e.z)}
-  radio('Düşman takviyesi: 2 tank saat '+c+' yönünden geliyor!');say('⚠ DÜŞMAN TAKVİYESİ · SAAT '+c,2.4);say2('Takviye geliyor, iki tank, saat '+c+'!',2,'ev',3)}
- else if(k==='hedef'){let t=E.find(e=>e.type==='tank'&&!e.pri)||E.find(e=>e.type==='apc'&&!e.pri);if(!t){const a=P.h+rr(-.6,.6),r=rr(120,150);t=spawnAt('tank',P.x+Math.sin(a)*r,P.z+Math.cos(a)*r)}
-  if(!t)return;t.mark=1;t.pri=1;const c=clk(t.x,t.z);radio('Yeni emir: düşman komuta tankını imha edin! Saat '+c+', ödül +150 kredi.');say('◆ ÖNCELİKLİ HEDEF · SAAT '+c,2.6);say2('Yeni emir! Komuta tankı, saat '+c+'!',2,'ev',3)}}
+ if(k==='topcu'){const cx=P.x,cz=P.z;radio('Topçu baskını! Hemen yer değiştirin!');say('⚠ TOPÇU BASKINI · HAREKET ET!',2.4);try{sndWhistle()}catch(x){}
+  for(let i=0;i<6;i++){const tx=cx+rr(-16,16),tz=cz+rr(-16,16),rg=new THREE.Mesh(RG,RGM);rg.rotation.x=-PI/2;rg.position.set(tx,hAt(tx,tz)+.4,tz);S.add(rg);inc.push({x:tx,z:tz,t:2.6+i*.55,rg})}}}
 FRAME_HOOKS.push(()=>{if(game!=='play'||!L.cd||(window.TUT&&TUT.on))return;if(EV.n>=EV.max||tP<EV.t)return;EV.n++;EV.t=tP+rr(70,110);
- const o=['pusu','topcu','takviye','hedef'].filter(k=>!EV.done[k]);const k=o[RN()*o.length|0];if(!k)return;EV.done[k]=1;evRun(k)});
+ const o=['topcu'].filter(k=>!EV.done[k]);const k=o[RN()*o.length|0];if(!k)return;EV.done[k]=1;evRun(k)});
 {const k0=window.killE;window.killE=function(e){const was=e&&e.pri&&E.includes(e);const r=k0.apply(this,arguments);if(was&&!E.includes(e)){try{if(window.award)award(150,'ÖNCELİKLİ HEDEF')}catch(x){}radio('Komuta tankı imha edildi! Ödül verildi.');say('◆ ÖNCELİKLİ HEDEF İMHA +150',2)}return r}}
 window.EVRUN=evRun;
 // ---------------- 6) gorev sonu: SONRAKI GOREV (bagli harekat sirasi) ----------------

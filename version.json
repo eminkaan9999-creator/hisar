@@ -1,7 +1,7 @@
 {
-  "v": 75,
+  "v": 76,
   "experience": "63.1",
-  "not": "Dikey telefonda görünüş düğmelerinin alt sırası ROTAYI KAPAT ve GECE GÖRÜŞ düğmelerini örtmez; iki sütunlu blok olarak sağda toplanır. NİŞAN yakınlaştırma çubuğu sol kenara geçti, mesaj bildirimi dock'un üstüne indi, drondaki FPS sayacı REC'in yanına alındı. Dikey telefonda telsiz görevlerinde (ör. Karanlıkta Çağrı) GÖREV kartı objektif kartıyla çakışmasın diye gizlenir. Yatayda GÖREV kartı görünüş düğmelerinin altına girmez, FPS sayacı menüyle çakışmaz. 375×667 ve 667×375 gibi daha kısa ekranlarda bazı düğmeler hâlâ üst üste gelebilir.",
+  "not": "Eski görevlerin ve hikâye girişinin hepsi kaldırıldı; yerine tank ve uçangözü birlikte kullanan 8 yeni görev geldi ve hepsi tek GÖREV listesinde. Düşmanlar artık aynı anda değil tek tek çıkar: sahadaki vurulmadan sıradaki gelmez. Dron kumandası büyüdü: düğmeler ve ekran daha büyük. Menü yatayda kaymaz, sekmeler tek sırada. 375×667 ve 667×375 gibi daha kısa ekranlarda bazı düğmeler hâlâ üst üste gelebilir.",
   "gameplay": "1.2.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, dört bölümlük Kayıp Sinyal hikâyesi, görünür hedef etiketleri ve telsiz bağlantısı.",

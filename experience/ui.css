@@ -50,23 +50,23 @@ body.hisar-crosshair-contrast #cross{filter:drop-shadow(0 1px 2px #000) drop-sha
  body.dm #msg{top:calc(292px + env(safe-area-inset-top,0px))!important}
  body #rec{left:50%!important;transform:translateX(-50%)!important;top:calc(12px + env(safe-area-inset-top,0px))!important}
  body #uMapB{top:calc(10px + var(--hudMM) - 36px + env(safe-area-inset-top,0px))!important;right:calc(12px + var(--hudMM) - 36px + env(safe-area-inset-right,0px))!important}
- body.dm #rec{left:auto!important;right:calc(12px + env(safe-area-inset-right,0px))!important;top:auto!important;bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important;transform:none!important}
- body.dm #fpsC{left:auto!important;right:calc(82px + env(safe-area-inset-right,0px))!important;bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
+ body.dm #rec{left:auto!important;right:calc(12px + env(safe-area-inset-right,0px))!important;top:auto!important;bottom:calc(var(--kmdH,310px) + 14px + env(safe-area-inset-bottom,0px))!important;transform:none!important}
+ body.dm #fpsC{left:auto!important;right:calc(82px + env(safe-area-inset-right,0px))!important;bottom:calc(var(--kmdH,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
  body.hr-mission-active #uInfo{display:none!important}
  body #uDock{bottom:calc(var(--pad,118px) + 38px + env(safe-area-inset-bottom,0px))!important}
  body #coach{bottom:calc(var(--pad,118px) + 195px + env(safe-area-inset-bottom,0px))!important;left:calc(12px + env(safe-area-inset-left,0px))!important;right:auto!important;width:min(228px,calc(100vw - 24px))!important;transform:translate(0,16px)!important}
  body #coach.on{transform:translate(0,0)!important}
  body #uZoom#uZoom{top:300px!important;bottom:auto!important;height:112px!important;min-height:0!important;left:calc(12px + env(safe-area-inset-left,0px))!important;right:auto!important}
- body.dm.rcOn #radio#radio{bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
- body.dm #coach{bottom:calc(clamp(260px,36vh,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
- body.dm.rcOn #coach{bottom:calc(clamp(260px,36vh,310px) + 66px + env(safe-area-inset-bottom,0px))!important}
+ body.dm.rcOn #radio#radio{bottom:calc(var(--kmdH,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
+ body.dm #coach{bottom:calc(var(--kmdH,310px) + 14px + env(safe-area-inset-bottom,0px))!important}
+ body.dm.rcOn #coach{bottom:calc(var(--kmdH,310px) + 66px + env(safe-area-inset-bottom,0px))!important}
 }
 
 /* Drone remote (#kmd) on portrait phones, laid out like the reference controller: two antennas,
    five status LEDs, mode switch at top centre, gimbal wells in the upper corners, function buttons
    in the middle, and a wide dark screen along the lower body. Every control keeps its data-k wiring. */
 @media (max-width:600px) and (orientation:portrait){
- body #kmd{height:clamp(260px,36vh,310px)!important}
+ body #kmd{height:var(--kmdH,310px)!important}
  body #kmd .gr{display:none!important}
  body #kmd .an{top:0!important;height:26%!important;width:14px!important;border-radius:7px 7px 3px 3px!important;transform:none!important}
  body #kmd .an.l{left:24%!important;right:auto!important}
@@ -230,4 +230,38 @@ body #kmd .st{pointer-events:none!important}
  body #msg{left:256px!important;right:auto!important;bottom:auto!important;transform:none!important;width:var(--tcW)!important;max-width:var(--tcW)!important;box-sizing:border-box!important;text-align:left!important;white-space:normal!important}
  body #coach{left:50%!important;right:auto!important;top:auto!important;bottom:calc(var(--pad,164px) + 104px + env(safe-area-inset-bottom,0px))!important;transform:translateX(-50%)!important;width:min(400px,calc(100vw - 368px))!important}
  body #kmd .rd{width:44px!important;height:44px!important;max-width:none!important;max-height:none!important;font-size:9px!important}
+}
+
+/* v76: menü yatayda kaymaz; alt çubuk ve sekmeler ekran genişliğine sığar */
+html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
+#menu.ov{overflow-x:hidden!important;touch-action:pan-y}
+#mp{overflow-x:hidden!important;box-sizing:border-box!important;max-width:100vw!important}
+#mp .acts{box-sizing:border-box!important;width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important}
+#mp .acts button{min-width:0!important}
+#mp *{max-width:100%}
+@media (max-width:600px) and (orientation:portrait){
+ html body #menu#menu #mp#mp .tabs{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)!important;gap:2px!important;padding:4px!important}
+ html body #menu#menu #mp#mp .tabs button{min-width:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:8px 1px!important;font-size:8.5px!important;overflow:hidden!important;letter-spacing:0!important;white-space:nowrap!important;min-height:48px!important}
+ /* v76: dron kumandası büyüdü; düğmeler ve ekran daha büyük. Üstündeki öğeler --kmdH ile birlikte kayar */
+ body{--kmdH:clamp(300px,46vh,400px)}
+ body #kmd#kmd{height:var(--kmdH)!important}
+ body #kmd#kmd .an{height:13%!important}
+ body #kmd#kmd .bd{inset:12% 0 0 0!important}
+ body #kmd#kmd .bd::before{top:1.5%!important}
+ body #kmd#kmd .sh{top:15%!important;height:11%!important;width:22%!important;font-size:10.5px!important;border-radius:10px!important;margin:0!important}
+ body #kmd#kmd .sh.l2{left:3%!important}
+ body #kmd#kmd .sh.l1{left:26.5%!important}
+ body #kmd#kmd .sh.r1{right:26.5%!important}
+ body #kmd#kmd .sh.r2{right:3%!important}
+ body #kmd#kmd .kz{top:28%!important;width:120px!important;height:7.2%!important;font-size:11px!important}
+ body #kmd#kmd .st{top:37%!important;width:84px!important;height:84px!important}
+ body #kmd#kmd .st small{font-size:8px!important;bottom:-13px!important}
+ body #kmd#kmd .rd{width:46px!important;height:46px!important;font-size:10px!important;margin:0!important}
+ body #kmd#kmd .h{left:27%!important;top:37%!important}
+ body #kmd#kmd .ps{top:37%!important}
+ body #kmd#kmd .c1{right:27%!important;top:37%!important}
+ body #kmd#kmd .tk{left:27%!important;top:50.5%!important}
+ body #kmd#kmd .c2{right:27%!important;top:50.5%!important}
+ body #kmd#kmd .bomb{top:50.5%!important;width:50px!important;height:50px!important}
+ body #kmd#kmd .sc{top:66.5%!important;height:31.5%!important;left:4%!important;right:4%!important;font-size:12px!important;line-height:1.45!important}
 }

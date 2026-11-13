@@ -1,9 +1,9 @@
-/* HİSAR 1.3: fictional AI squad radio + six objective-driven game missions.
+/* HİSAR 1.4: fictional AI squad radio + eight objective-driven game missions. Game targets appear one at a time.
  * Uses existing game units, navigation and rendering. No hardware or real-world weapon data.
  */
 (function(root){
 'use strict';
-const VERSION='1.3.0', SAVE='hisar-operations-v1';
+const VERSION='1.4.0', SAVE='hisar-operations-v1';
 const safe=(fn,d)=>{try{return fn();}catch{return d;}}, clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(v)?v:a));
 const clean=t=>typeof t==='string'?t.slice(0,160).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9\s-]/g,' ').replace(/\s+/g,' ').trim():'';
 const ORDERS=Object.freeze({
@@ -39,14 +39,17 @@ function reply(unit,code){
  if(code===8){const h=Math.round(clamp(unit.hp/(unit.mx||100),0,1)*100);return 'Komutanım, '+(unit.convoy?(unit.waiting?'bekliyorum':'yoldayım'):({follow:'takipteyim',hold:'bekliyorum',attack:'oyun hedefindeyim',disperse:'aralık açıyorum',retreat:'geri geliyorum'}[unit.cmd]||'hazırım'))+'. Araç durumu yüzde '+h+'.';}
  return 'Emredersiniz komutanım. '+(unit.convoy?(unit.waiting?'Konvoy bekliyor.':'Konvoy devam ediyor.'):ORDERS[code].reply);
 }
-const goal=(type,at,text,seconds=0)=>Object.freeze({type,at,text,seconds});
+const goal=(type,at,text,seconds=0,foes=null)=>Object.freeze({type,at,text,seconds,foes:foes?Object.freeze([...foes]):null});
+const FOES=Object.freeze({tank:'tank',apc:'zırhlı araç',inf:'piyade',mgn:'makineli mevzi',bunker:'korugan',aa:'hava savunma aracı',arty:'top mevzisi'});
 const SCENARIOS=Object.freeze([
- {id:'hr_rescue',title:'Karanlıkta Çağrı',tag:'KEŞİF · KURTARMA',weather:'gece',brief:'Kayıp ekibin işaretini uçangözle bul. Tankla ulaş, ekibi al ve dost araçlarla üsse dön.',goals:[goal('scan','a','Uçangözle ışıklı işareti tara',3),goal('interact','a','Tankla işarete ulaş; X / Etkileş ile ekibi al',4),goal('regroup','base','En az bir dost tankla üsse dön',2)]},
- {id:'hr_convoy',title:'Konvoy Yolu',tag:'EŞLİK · TELSİZ',weather:'gunduz',brief:'İkmal aracı yalnız bırakıldığında durur. Telsizden devam/bekle komutu ver, yanından ayrılmadan iki kontrol noktasına götür.',goals:[goal('escort','a','İKMAL 1 ile ilk kontrol noktasına ilerle'),goal('interact','a','Kontrol noktasında X / Etkileş ile geçiş kaydını al',3),goal('escort','b','İkmal aracını varış noktasına ulaştır')]},
- {id:'hr_relay',title:'Son İstasyon',tag:'ONARIM · DAYANMA',weather:'gunduz',brief:'İstasyondaki iki bağlantıyı onar. Ardından oyun saldırısı boyunca bölgede kal; süre dolduğunda kalan oyun hedeflerini temizle.',goals:[goal('interact','a','Birinci röleyi X / Etkileş ile onar',4),goal('interact','b','İkinci röleyi X / Etkileş ile onar',4),goal('defend','b','Bağlantı tamamlanana kadar bölgede kal',35)]},
- {id:'hr_fog',title:'Sisli Geçit',tag:'ROTA · BİRLİK',weather:'yagmur',brief:'Yağmurda üç kontrol noktasını sırayla geç. Son noktada birliğini telsizle topla; yalnız varmak görevi bitirmez.',goals:[goal('reach','a','Birinci rota işaretine ulaş',1),goal('reach','b','İkinci rota işaretine ulaş',1),goal('regroup','c','Son işarette en az bir dost tankı bekle',3)]},
- {id:'hr_record',title:'Kayıp Kayıt',tag:'UÇANGÖZ · ARAMA',weather:'gunduz',brief:'Üç ayrı işareti uçangözle incele. Son kaydı tankla al ve üsse getir. Tarama sırasında işaretin üzerinde kal.',goals:[goal('scan','a','Birinci işareti uçangözle incele',3),goal('scan','b','İkinci işareti uçangözle incele',3),goal('scan','c','Son işareti uçangözle incele',3),goal('interact','c','Tankla kayda ulaş; X / Etkileş ile al',4),goal('reach','base','Kaydı üsse getir',2)]},
- {id:'hr_return',title:'Kimse Geride Kalmasın',tag:'DAYANMA · GERİ DÖNÜŞ',weather:'gece',brief:'İleri noktaya ekibinle ulaş. Kısa oyun saldırısını atlat ve hayatta kalan dost araçları üsse getir; birlik kaybı görev değerlendirmesine yansır.',goals:[goal('regroup','a','En az bir dost tankla buluşma alanına gel',2),goal('defend','a','Oyun saldırısı bitene kadar bölgede kal',25),goal('all-home','base','Hayatta kalan bütün dost tankları üsse getir',2)]}
+ {id:'op_temas',icon:'🎯',title:'İlk Temas',tag:'UÇANGÖZ · TANK',weather:'gunduz',brief:'Uçangözle bölgeyi tara. Oyun hedefleri tek tek ortaya çıkacak; sırayla etkisiz hale getir ve üsse dön.',goals:[goal('scan','a','Uçangözle işaretli bölgeyi tara',3),goal('hunt','a','Sırayla çıkan 2 oyun hedefini vur',0,['apc','tank']),goal('reach','base','Üsse dön',2)]},
+ {id:'op_gozcu',icon:'🔭',title:'Gözcü Tepesi',tag:'ROTA · KEŞİF',weather:'gunduz',brief:'Tankla tepeye çık, uçangözle karşı yamacı tara. Ardından mevzileri sırayla temizle.',goals:[goal('reach','a','Tankla gözcü tepesine ulaş',1),goal('scan','b','Uçangözle karşı yamacı tara',3),goal('hunt','b','Sırayla çıkan 3 oyun hedefini vur',0,['mgn','bunker','apc'])]},
+ {id:'op_baskin',icon:'🌙',title:'Gece Baskını',tag:'GECE · BİRLİK',weather:'gece',brief:'Karanlıkta hedef bölgesini uçangözle bul. Hedefleri sırayla vur, sonra birliğinle üste toplan.',goals:[goal('scan','a','Uçangözle karanlıktaki bölgeyi tara',3),goal('hunt','a','Sırayla çıkan 3 oyun hedefini vur',0,['inf','apc','tank']),goal('regroup','base','En az bir dost tankla üste toplan',2)]},
+ {id:'op_ikmal',icon:'🚚',title:'İkmal Koridoru',tag:'EŞLİK · TELSİZ',weather:'gunduz',convoy:true,brief:'İkmal aracı yalnız kalınca durur. Telsizden takip et de, yolu açan hedefleri sırayla vur ve aracı varış noktasına götür.',goals:[goal('escort','a','İKMAL 1 ile ilk noktaya ilerle'),goal('hunt','a','Yolu kesen 2 oyun hedefini sırayla vur',0,['apc','tank']),goal('escort','b','İkmal aracını varış noktasına ulaştır')]},
+ {id:'op_kopru',icon:'🌉',title:'Köprübaşı',tag:'ONARIM · SAVUNMA',weather:'gunduz',brief:'Köprübaşına ulaş ve işaret vericiyi kur. Süre dolana kadar bölgede kal; hedefler tek tek gelecek.',goals:[goal('reach','c','Tankla köprübaşına ulaş',1),goal('interact','c','X / Etkileş ile işaret vericiyi kur',4),goal('defend','c','Süre dolana kadar bölgede kal',30,['apc','tank','apc']),goal('hunt','c','Son oyun hedefini vur',0,['tank'])]},
+ {id:'op_hava',icon:'📡',title:'Gökyüzü Temiz',tag:'UÇANGÖZ · HAVA SAVUNMA',weather:'gunduz',brief:'Hava savunma araçları uçangöz için tehlikelidir. Önce uzaktan tara, sonra tankla tek tek vur.',goals:[goal('scan','b','Uçangözle birinci mevziyi tara',3),goal('hunt','b','Hava savunma aracını tankla vur',0,['aa']),goal('scan','c','Uçangözle ikinci mevziyi tara',3),goal('hunt','c','Sırayla çıkan 2 oyun hedefini vur',0,['aa','arty'])]},
+ {id:'op_sis',icon:'🌫️',title:'Sisli Vadi',tag:'SİS · ROTA',weather:'sis',brief:'Siste iki rota işaretini geç. Vadideki iki tankı sırayla vur ve hayatta kalan bütün dost tankları üsse getir.',goals:[goal('reach','a','Birinci rota işaretine ulaş',1),goal('reach','b','İkinci rota işaretine ulaş',1),goal('hunt','b','Sırayla çıkan 2 tankı vur',0,['tank','tank']),goal('all-home','base','Hayatta kalan bütün dost tankları üsse getir',2)]},
+ {id:'op_sonhat',icon:'🛡️',title:'Son Hat',tag:'GECE · BÜYÜK GÖREV',weather:'gece',brief:'Birliğinle hatta toplan ve saldırıyı karşıla. Ardından uçangözle top mevzisini bul, hedefleri sırayla vur ve herkesi üsse getir.',goals:[goal('regroup','a','En az bir dost tankla hatta toplan',2),goal('defend','a','Süre dolana kadar hatta kal',35,['apc','tank','inf','tank']),goal('scan','c','Uçangözle top mevzisini tara',3),goal('hunt','c','Sırayla çıkan 3 oyun hedefini vur',0,['arty','bunker','tank']),goal('all-home','base','Hayatta kalan bütün dost tankları üsse getir',2)]}
 ].map(s=>Object.freeze({...s,goals:Object.freeze(s.goals)})));
 function objectiveStep(g,previous,s,dt){
  dt=clamp(dt,0,.1);let valid=false;
@@ -57,11 +60,12 @@ function objectiveStep(g,previous,s,dt){
  if(g.type==='all-home')valid=s.tank&&s.playerNear&&s.aliveAllies>0&&s.nearAllies===s.aliveAllies;
  if(g.type==='escort')valid=s.playerNear&&s.convoyNear;
  if(g.type==='defend')valid=s.playerNear;
+ if(g.type==='hunt')valid=s.foesLeft===0;
  const amount=valid?previous+dt:(['scan','interact','regroup','all-home'].includes(g.type)?0:previous);
  const duration=g.seconds||.5;
  return {amount:Math.min(duration,amount),done:valid&&amount>=duration&&(g.type!=='defend'||s.enemies===0)};
 }
-const core=Object.freeze({VERSION,clean,parse,ORDERS,SCENARIOS,applyOrder,reply,objectiveStep});
+const core=Object.freeze({VERSION,clean,parse,ORDERS,SCENARIOS,FOES,applyOrder,reply,objectiveStep});
 if(typeof module==='object'&&module.exports)module.exports=core;
 const doc=root.document;if(!doc||root.HisarOperations)return;
 let sim=0,queue=[],feed=[],history=[],selected='all',lastOrder=new Map(),versions=new Map(),serial=0,opened=false,active=null,preparing=null,finishing=false,interacting=false,microphone=null,micTimer=null,micEpoch=0,lastPaint=-1;
@@ -137,16 +141,17 @@ function initMission(config){
  if(root.THREE&&typeof S!=='undefined'){
  marker=new THREE.Group();const ring=new THREE.Mesh(new THREE.RingGeometry(8,8.6,48),new THREE.MeshBasicMaterial({color:0x93efc6,side:THREE.DoubleSide,transparent:true,opacity:.85,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.userData.hrOwn=true;marker.add(ring);
  const mast=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,4,6),new THREE.MeshBasicMaterial({color:0xafffe0}));mast.position.y=2;mast.userData.hrOwn=true;marker.add(mast);S.add(marker);props.push(marker);
- if(config.id==='hr_convoy'){const p=point(8,16),g=safe(()=>root.mkE('truck'),null);if(g){g.name='HSR_IKMAL_1';S.add(g);props.push(g);convoy={g,x:p.x,z:p.z,h:0,cs:'İKMAL 1',hp:100,mx:100,convoy:true,waiting:true,path:[],goal:-1};g.position.set(p.x,hAt(p.x,p.z),p.z);}}
+ if(config.convoy){const p=point(8,16),g=safe(()=>root.mkE('truck'),null);if(g){g.name='HSR_IKMAL_1';S.add(g);props.push(g);convoy={g,x:p.x,z:p.z,h:0,cs:'İKMAL 1',hp:100,mx:100,convoy:true,waiting:true,path:[],goal:-1};g.position.set(p.x,hAt(p.x,p.z),p.z);}}
  }
  doc.body.classList.add('hr-mission-active');safe(()=>root.setW(config.weather),null);enterGoal();emit('KOMUTA',config.brief,true,false);
 }
 function enterGoal(){
- if(!active||active.finished)return;active.amount=0;active.defenceSpawned=false;interacting=false;
+ if(!active||active.finished)return;active.amount=0;active.defenceSpawned=false;active.foes=null;active.foeWait=1.5;interacting=false;
  const g=active.config.goals[active.step];if(!g){finishMission(true);return;}const p=active.points[g.at];placeMarker(p);
  safe(()=>root.startNav({x:p.x,z:p.z,n:g.text}),null);
  if(convoy){convoy.goal=-1;convoy.path=[];}
- if(g.type==='defend'){active.defenceSpawned=true;const positions=[point(p.x+65,p.z+20),point(p.x-60,p.z+35)];for(const q of positions)safe(()=>root.addE('apc',q.x,q.z),null);}
+ // Oyun hedefleri aynı anda değil, tek tek çıkar: sahadaki vurulmadan sıradaki gelmez.
+ if(g.foes){active.defenceSpawned=true;active.foes=[...g.foes];}
  warn(g.text);paintObjective();
 }
 function convoyStep(dt,g,p){if(!convoy||g.type!=='escort')return;
@@ -155,11 +160,15 @@ function convoyStep(dt,g,p){if(!convoy||g.type!=='escort')return;
  const route=convoy.path,way=route[convoy.index]||[p.x,p.z],dx=way[0]-convoy.x,dz=way[1]-convoy.z,d=Math.hypot(dx,dz);if(d<3){if(convoy.index<route.length-1)convoy.index++;return;}
  const step=Math.min(d,6*dt);convoy.x+=dx/d*step;convoy.z+=dz/d*step;safe(()=>root.pushOut(convoy,2.8),null);convoy.h=Math.atan2(dx,dz);convoy.g.position.set(convoy.x,hAt(convoy.x,convoy.z),convoy.z);convoy.g.rotation.y=convoy.h;
 }
-function updateMission(dt){if(!active||active.finished||!playing())return;active.elapsed+=dt;if(active.elapsed>720){finishMission(false,'Görev süresi bitti.');return;}
+function foeStep(dt,g,p){if(!active.foes||!active.foes.length||E.length>0)return;active.foeWait-=dt;if(active.foeWait>0)return;
+ const type=active.foes.shift(),n=active.foeN=(active.foeN||0)+1,angle=n*2.4,q=point(p.x+Math.cos(angle)*52,p.z+Math.sin(angle)*52);safe(()=>root.addE(type,q.x,q.z),null);active.foeWait=2.5;
+ if(g.type==='hunt')safe(()=>root.startNav({x:q.x,z:q.z,n:'Hedef: '+(FOES[type]||type)}),null);emit('KOMUTA','Yeni oyun hedefi: '+(FOES[type]||type)+'. Sırada '+active.foes.length+' hedef var.',false,false);
+}
+function updateMission(dt){if(!active||active.finished||!playing())return;active.elapsed+=dt;if(active.elapsed>1500){finishMission(false,'Görev süresi bitti.');return;}
  const living=allies();if(!living.length){finishMission(false,'Dost araç kalmadı. Görevi yeniden deneyebilirsin.');return;}
- const g=active.config.goals[active.step],p=active.points[g.at];if(!g)return;safe(()=>{edT=Math.max(edT,15);},null);convoyStep(dt,g,p);
+ const g=active.config.goals[active.step],p=active.points[g.at];if(!g)return;safe(()=>{edT=Math.max(edT,15);},null);convoyStep(dt,g,p);foeStep(dt,g,p);
  const near=Math.hypot(P.x-p.x,P.z-p.z)<14,nearAllies=living.filter(a=>Math.hypot(a.x-p.x,a.z-p.z)<30).length;
- const s={tank:mode==='tank',drone:mode==='drone'&&DR.on&&!DR.rt&&!DR.fall,droneNear:Math.hypot(DR.x-p.x,DR.z-p.z)<18,signal:DR.sig??1,playerNear:near,interacting,nearAllies,aliveAllies:living.length,convoyNear:!!convoy&&Math.hypot(convoy.x-p.x,convoy.z-p.z)<12,enemies:E.length+(root.HisarKurulusSession?.pendingThreats?.()||0)};
+ const s={tank:mode==='tank',drone:mode==='drone'&&DR.on&&!DR.rt&&!DR.fall,droneNear:Math.hypot(DR.x-p.x,DR.z-p.z)<18,signal:DR.sig??1,playerNear:near,interacting,nearAllies,aliveAllies:living.length,convoyNear:!!convoy&&Math.hypot(convoy.x-p.x,convoy.z-p.z)<12,enemies:E.length+(active.foes?active.foes.length:0)+(root.HisarKurulusSession?.pendingThreats?.()||0),foesLeft:E.length+(active.foes?active.foes.length:0)};
  const r=objectiveStep(g,active.amount,s,dt);active.amount=r.amount;
  if(r.done){score+=100;emit('KOMUTA','Aşama tamamlandı. '+g.text,true,false);active.step++;enterGoal();}
  if(sim-lastPaint>.15){lastPaint=sim;paintObjective();if(opened)paintRoster();}
@@ -168,10 +177,10 @@ function finishMission(ok,text){if(!active||active.finished)return;finishing=tru
 function paintObjective(){if(!objectivePanel||!active)return;objectivePanel.hidden=!playing()||active.finished;if(objectivePanel.hidden)return;const g=active.config.goals[active.step],p=active.points[g.at];
  objectivePanel.querySelector('strong').textContent=active.config.title+' · '+(active.step+1)+'/'+active.config.goals.length;objectivePanel.querySelector('p').textContent=g.text;
  const percent=clamp(active.amount/(g.seconds||.5),0,1);objectivePanel.querySelector('progress').value=percent;
- objectivePanel.querySelector('small').textContent=Math.round(Math.hypot(P.x-p.x,P.z-p.z))+' oyun m · '+allies().length+' dost araç'+(g.seconds?' · '+Math.ceil(active.amount)+'/'+g.seconds+' sn':'')+(g.type==='escort'&&convoy?(convoy.waiting?' · İKMAL 1 bekliyor: telsizden Takip et de.':' · Konvoy yakındaysan ilerler.'):'');
+ objectivePanel.querySelector('small').textContent=Math.round(Math.hypot(P.x-p.x,P.z-p.z))+' oyun m · '+allies().length+' dost araç'+(g.seconds?' · '+Math.ceil(active.amount)+'/'+g.seconds+' sn':'')+(g.foes?' · Kalan hedef: '+(E.length+(active.foes?active.foes.length:0)):'')+(g.type==='escort'&&convoy?(convoy.waiting?' · İKMAL 1 bekliyor: telsizden Takip et de.':' · Konvoy yakındaysan ilerler.'):'');
  const b=objectivePanel.querySelector('button');b.hidden=g.type!=='interact';b.disabled=mode!=='tank'||Math.hypot(P.x-p.x,P.z-p.z)>=14;
 }
-function debrief(a,ok){const parent=doc.querySelector('#rep .c')||doc.getElementById('mpBody')||doc.getElementById('mp');if(!parent)return;doc.getElementById('hr-debrief')?.remove();const box=doc.createElement('div');box.className='hr-card';box.id='hr-debrief';const h=doc.createElement('h3');h.textContent=ok?'GÖREV TAMAMLANDI':'YENİDEN DENE';const p=doc.createElement('p');p.textContent=a.config.title+' · '+Math.round(a.elapsed)+' saniye · '+allies().length+'/'+a.initial+' dost araç döndü · '+history.length+' telsiz emri';const b=doc.createElement('button');b.type='button';b.textContent=ok?'Farklı göreve geç':'Bu görevi yeniden oyna';const idx=SCENARIOS.findIndex(c=>c.id===a.id);b.onclick=()=>start(ok?(idx+1)%SCENARIOS.length:idx);box.append(h,p,b);parent.appendChild(box);}
+function debrief(a,ok){const parent=doc.querySelector('#rep .c')||doc.getElementById('mpBody')||doc.getElementById('mp');if(!parent)return;doc.getElementById('hr-debrief')?.remove();const box=doc.createElement('div');box.className='hr-card';box.id='hr-debrief';const h=doc.createElement('h3');h.textContent=ok?'GÖREV TAMAMLANDI':'YENİDEN DENE';const p=doc.createElement('p');p.textContent=a.config.title+' · '+Math.round(a.elapsed)+' saniye · '+allies().length+'/'+a.initial+' dost araç döndü · '+history.length+' telsiz emri';const b=doc.createElement('button');b.type='button';b.textContent=ok?'Sıradaki göreve geç':'Bu görevi yeniden oyna';const idx=SCENARIOS.findIndex(c=>c.id===a.id);b.onclick=()=>start(ok?(idx+1)%SCENARIOS.length:idx);box.append(h,p,b);parent.appendChild(box);}
 function start(index){if(!Number.isInteger(index)||!SCENARIOS[index])return false;close();safe(()=>root.HisarImmersive.stop(),null);doc.querySelector('#rep')?.classList.remove('on');root.setG(SCENARIOS[index].id);root.reset(typeof lvSel==='string'?lvSel:'normal');return !!active;}
 function connect(){
  if(typeof MI!=='undefined')for(const c of SCENARIOS)MI[c.id]={n:c.title,t:c.goals[0].text,r:c.brief,w:c.title+' tamamlandı'};
@@ -193,7 +202,7 @@ function installUI(){if(!doc.body||radioPanel)return;const mpEl=doc.getElementBy
 #hr-radio-entry{position:fixed;right:12px;top:120px;z-index:22;min-height:44px;background:#1c4539;color:white;border:1px solid #82b39c;border-radius:9px;font:700 13px system-ui;padding:8px 12px}#hr-radio-entry[hidden]{display:none!important}
 .hr-card{background:#101d22;color:#eef5ef;border:1px solid #54766a;border-radius:14px;padding:14px;margin:12px 0;font:14px/1.45 system-ui;box-sizing:border-box;min-width:0}.hr-card h3{margin:0 0 10px}.hr-card p{margin:8px 0}.hr-card button,.hr-card select{min-height:44px;border:1px solid #648c7a;background:#203d35;color:#f6fff9;border-radius:8px;padding:8px 10px;font:inherit;max-width:100%;cursor:pointer}.hr-card button:focus-visible,.hr-card select:focus-visible{outline:3px solid #c6ffdc;outline-offset:2px}.hr-card button:disabled{opacity:.45;cursor:default}.hr-card [hidden],#hr-panel[hidden],#hr-objective[hidden]{display:none!important}
 #hr-panel{position:fixed;z-index:65;left:12px;bottom:max(12px,env(safe-area-inset-bottom));width:min(420px,calc(100vw - 24px));max-height:calc(100dvh - 30px);overflow-y:auto;overscroll-behavior:contain;margin:0;box-shadow:0 10px 40px #000b}#hr-panel header{display:flex;justify-content:space-between;align-items:center;gap:8px}#hr-roster{width:100%;margin-top:10px}.hr-orders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0}.hr-orders button{text-align:left;font-size:12px}#hr-log{max-height:125px;overflow:auto;border-top:1px solid #47725a;margin-top:8px;font-size:12px}#hr-log b{color:#9cf6c9}#hr-panel small{display:block;font-size:11px;color:#b9d2c8}#hr-panel label{display:flex;align-items:flex-start;gap:8px;margin:10px 0;font-size:11px}#hr-panel input{flex:none;width:24px;height:24px}#hr-status{font-size:12px;color:#ffd99f}
-.ov .row.grid .hr-op{min-height:74px}.ov .row.grid .hr-note{grid-column:1/-1;font-size:11px;opacity:.7;margin:2px 2px 0;line-height:1.35}#hg-story{display:none!important}
+.ov .row.grid .hr-op{min-height:74px}.ov .row.grid .hr-note{grid-column:1/-1;font-size:11px;opacity:.7;margin:2px 2px 0;line-height:1.35}#hg-story,#kurulus-entry{display:none!important}#tg .row.grid>[data-g]:not(.hr-op){display:none!important}
 #hr-objective{position:fixed;left:12px;top:max(96px,env(safe-area-inset-top));z-index:14;width:min(300px,calc(100vw - 24px));margin:0;padding:10px;pointer-events:none;font-size:12px}#hr-objective p{font-size:12px}#hr-objective small{display:block}#hr-objective progress{width:100%;height:6px;accent-color:#8df7bd}#hr-objective button{pointer-events:auto;touch-action:none;width:100%;margin-top:7px}body.hr-mission-active #hg-hud{display:none!important}
 @media(max-width:600px){#hr-panel{font-size:13px}#hr-objective{top:126px;width:205px;font-size:11px}#hr-objective p{font-size:11px}}@media(max-height:470px){#hr-panel{max-height:calc(100dvh - 12px);bottom:6px;padding:9px}#hr-log{max-height:70px}#hr-objective{top:84px;width:210px;padding:7px}.hr-orders{grid-template-columns:repeat(3,minmax(0,1fr))}}`;
  doc.head.appendChild(style);
@@ -207,16 +216,16 @@ function installUI(){if(!doc.body||radioPanel)return;const mpEl=doc.getElementBy
  log=el('div');log.id='hr-log';log.setAttribute('role','log');log.setAttribute('aria-live','polite');radioPanel.appendChild(log);radioPanel.addEventListener('pointerdown',e=>e.stopPropagation());doc.body.appendChild(radioPanel);
  objectivePanel=el('section');objectivePanel.id='hr-objective';objectivePanel.className='hr-card';objectivePanel.hidden=true;objectivePanel.append(el('strong'),el('p'),el('progress'),el('small'));objectivePanel.querySelector('progress').max=1;
  const interact=el('button','Basılı tut · ETKİLEŞ (X)');interact.type='button';interact.addEventListener('pointerdown',e=>{if(interact.disabled)return;e.preventDefault();interacting=true;safe(()=>interact.setPointerCapture(e.pointerId),null);});for(const type of ['pointerup','pointercancel','lostpointercapture'])interact.addEventListener(type,()=>{interacting=false;});objectivePanel.appendChild(interact);doc.body.appendChild(objectivePanel);
- // Operasyonlar ayrı kart değil: ana GÖREV ızgarasına eklenir; tek BAŞLAT ile başlar.
- const grid=doc.querySelector('#tg .row.grid');if(grid&&!grid.querySelector('.hr-op')){
-  const icons={hr_rescue:'🔦',hr_convoy:'🛣️',hr_relay:'🛠️',hr_fog:'🌫️',hr_record:'📼',hr_return:'🤝'};
-  for(const c of SCENARIOS){const tile=el('button');tile.type='button';tile.className='hr-op';tile.dataset.g=c.id;tile.append(el('b',(icons[c.id]||'🎯')+' '+c.title),el('small',c.tag));tile.onclick=()=>root.setG(c.id);grid.appendChild(tile);}
-  const note=el('small','Operasyonlarda telsiz komutları oyundaki üç dost tanka gider. Eski kayıtların korunur.');note.className='hr-note';grid.appendChild(note);
+ // Tek görev listesi: eski görev kutuları kaldırılır, yalnız sekiz yeni görev kalır; tek BAŞLAT ile başlar.
+ const grid=doc.querySelector('#tg .row.grid');if(grid){
+  for(const old of [...grid.querySelectorAll('[data-g]:not(.hr-op)')])old.remove();grid.querySelector('.hr-note')?.remove();
+  if(!grid.querySelector('.hr-op')){let n=0;for(const c of SCENARIOS){const tile=el('button');tile.type='button';tile.className='hr-op';tile.dataset.g=c.id;tile.append(el('b',(++n)+'. '+c.icon+' '+c.title),el('small',c.tag));tile.onclick=()=>root.setG(c.id);grid.appendChild(tile);}}
+  if(typeof MI!=='undefined'&&MI[SCENARIOS[0].id]&&!SCENARIOS.some(c=>c.id===safe(()=>mis,'')))safe(()=>root.setG(SCENARIOS[0].id),null);
  }
  root.addEventListener('keydown',e=>{if(/input|textarea|select/i.test(e.target?.tagName||''))return;if(e.code==='KeyX'&&playing()&&mode==='tank'&&active&&!active.finished&&active.config.goals[active.step]?.type==='interact'){interacting=true;e.preventDefault();e.stopImmediatePropagation();}},true);
  root.addEventListener('keyup',e=>{if(e.code==='KeyX')interacting=false;},true);
 }
 function leave(){close();interacting=false;queue=[];safe(()=>root.HisarRadioSound.stop(),null);}
-root.HisarOperations=Object.freeze({version:VERSION,core,issue,parse,start,toggle,close,listen,connect,diagnostics:()=>({version:VERSION,hooks:{...hooks},queued:queue.length,feed:feed.map(m=>({...m})),orders:history.map(h=>({...h})),microphone:!!microphone,selected,allies:allies().map(a=>({cs:a.cs,cmd:a.cmd,fire:a.fire,x:a.x,z:a.z})),mission:active?{id:active.id,step:active.step,amount:active.amount,elapsed:active.elapsed,finished:active.finished,goal:active.config.goals[active.step]||null,points:active.points}:null,convoy:convoy?{x:convoy.x,z:convoy.z,waiting:convoy.waiting,path:convoy.path.length}:null})});
-installUI();connect();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{installUI();connect();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
+root.HisarOperations=Object.freeze({version:VERSION,core,issue,parse,start,toggle,close,listen,connect,diagnostics:()=>({version:VERSION,hooks:{...hooks},queued:queue.length,feed:feed.map(m=>({...m})),orders:history.map(h=>({...h})),microphone:!!microphone,selected,allies:allies().map(a=>({cs:a.cs,cmd:a.cmd,fire:a.fire,x:a.x,z:a.z})),mission:active?{id:active.id,foesLeft:E.length+(active.foes?active.foes.length:0),step:active.step,amount:active.amount,elapsed:active.elapsed,finished:active.finished,goal:active.config.goals[active.step]||null,points:active.points}:null,convoy:convoy?{x:convoy.x,z:convoy.z,waiting:convoy.waiting,path:convoy.path.length}:null})});
+connect();installUI();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
 })(typeof window!=='undefined'?window:globalThis);

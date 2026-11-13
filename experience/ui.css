@@ -147,7 +147,7 @@ body:has(#hr-panel:not([hidden])) :is(#uTL,#hr-objective,#mm,#mmW,#wnd,#ctx,#vba
 
 /* Mission card: under the top-left block on tablets and portrait phones; landscape phones keep their own top (156px) */
 @media (min-height:501px){ body #hr-objective{top:172px!important} }
-body #kmd .st{pointer-events:none!important}
+body #kmd .st{pointer-events:auto!important;touch-action:none!important}
 #mp>#mpBody{padding-bottom:10px}
 
 /* Landscape (all sizes): the coach tip sits in the empty band between the top-left block and TELSİZ */

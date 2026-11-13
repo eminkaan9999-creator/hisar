@@ -136,7 +136,7 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:.45}body.cv #vg{display:block}
 </style>
 <script src="experience/guard.js?v=63"></script>
-<link rel="stylesheet" href="experience/ui.css?v=72">
+<link rel="stylesheet" href="experience/ui.css?v=73">
 
 </head>
 <body>
@@ -541,7 +541,7 @@ function impact(s,x,y,z,e){const T=SH[s.k],mk=e&&e.mark?1.5:1;
  if(e)hurt(e,(T.dm[e.type]??T.dmd)*mk*(1+.1*SV.U.dmg));
  if(T.sp)for(const o of[...E])if(o!==e&&o.hp>0&&Math.hypot(o.x-x,o.z-z)<T.sp)hurt(o,(T.dm[o.type]??T.dmd)*.5*mk*(1+.1*SV.U.dmg));
  if(s.k!==0)dust(x,z,0xffb040,.8,2,y+.5,5)}
-function endGame(ok,txt){if(game!=='play')return;game='over';document.exitPointerLock();
+function endGame(ok,txt){if(game!=='play')return;game='over';if(document.exitPointerLock)try{document.exitPointerLock()}catch(e){}
  const kr=(ok?({kolay:100,normal:150,zor:250,serbest:40}[lvSel]||150):0)+Math.round(score/40);SV.kr+=kr;SV.xp+=score;const b=SV.best[mis]||{s:0,t:0};if(score>b.s)b.s=score;if(ok&&(!b.t||tP<b.t))b.t=Math.round(tP);SV.best[mis]=b;save();renderGar();
  $('mt').textContent=(ok?'GÖREV TAMAMLANDI':'GÖREV BAŞARISIZ')+' · '+(txt||'')+' · Skor: '+score+' · +'+(kr+(window.KRM||0))+' kredi (görev bonusu '+kr+') · Rütbe: '+rankOf().n;openMenu()}
 const MI={egitim:{n:'Eğitim',t:'Eğitim hedeflerini vur',r:'Komuta: Eğitim alanındasın. Hedefler ateş etmez; adımları sırayla tamamla.',w:'Eğitim tamamlandı'}};
@@ -767,7 +767,7 @@ function setS(v){sndOn=v;if(MG)MG.gain.value=v?.55:0;document.querySelectorAll('
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>setS(+b.dataset.s));setS(1);
 function setR(v){rpOn=v;document.querySelectorAll('[data-r]').forEach(b=>b.classList.toggle('sel',+b.dataset.r===v))}
 document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>setR(+b.dataset.r));setR(1);renderGar();
-function openMenu(){if(game==='play'){game='pause';document.exitPointerLock();$('rs').style.display='';$('go').textContent='↻ YENİ GÖREV'}else{$('rs').style.display='none';$('go').textContent='▶ BAŞLAT'}$('menu').style.display='flex'}
+function openMenu(){if(game==='play'){game='pause';if(document.exitPointerLock)try{document.exitPointerLock()}catch(e){}$('rs').style.display='';$('go').textContent='↻ YENİ GÖREV'}else{$('rs').style.display='none';$('go').textContent='▶ BAŞLAT'}$('menu').style.display='flex'}
 function closeMenu(){if(game==='pause'){game='play';$('menu').style.display='none'}}
 $('go').onclick=()=>reset(lvSel);$('rs').onclick=()=>closeMenu();
 document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>setW(b.dataset.w));setW('gunduz');
@@ -4490,7 +4490,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=79,LOGO=window.HISAR_LOGO;
+const VER=80,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7374,5 +7374,6 @@ window.DRNX={apply,geos,mat};
 <script defer src="experience/bridge.js?v=63"></script>
 <script defer src="experience/ui.js?v=63"></script>
 
+<script src="experience/crew-orders.js?v=1"></script>
 </body>
 </html>

@@ -300,3 +300,20 @@ html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
 @media (min-aspect-ratio:1/1) and (max-height:500px){
  body #radio#radio#radio{white-space:normal!important;max-width:min(340px,calc(100vw - 460px))!important;max-height:62px!important;overflow:hidden!important;box-sizing:border-box!important}
 }
+/* v80: uzun dikey telefonda kumanda 410 px; düğmeler sıkıştırıldı, ekran yukarı doğru büyüdü (176 px) */
+@media (max-width:600px) and (orientation:portrait) and (min-height:750px){
+ body{--kmdH:410px}
+ body #kmd#kmd .an{height:50px!important}
+ body #kmd#kmd .bd{inset:40px 0 0 0!important}
+ body #kmd#kmd .sh{top:50px!important;height:36px!important}
+ body #kmd#kmd .kz{top:92px!important;height:24px!important}
+ body #kmd#kmd .st{top:122px!important;width:76px!important;height:76px!important}
+ body #kmd#kmd .rd{width:44px!important;height:44px!important}
+ body #kmd#kmd .h,body #kmd#kmd .ps,body #kmd#kmd .c1{top:122px!important}
+ body #kmd#kmd .tk,body #kmd#kmd .c2,body #kmd#kmd .bomb{top:170px!important}
+ body #kmd#kmd .bomb{width:46px!important;height:46px!important}
+ body #kmd#kmd .sc{top:226px!important;bottom:8px!important;height:auto!important;font-size:13px!important}
+}
+/* v80: ipucu kutuları yalnız eğitimde görünür; bildirimler dokununca kapanır */
+body:not(.tut) #coach{display:none!important}
+#msg,#hg-notice{pointer-events:auto!important}

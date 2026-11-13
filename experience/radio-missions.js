@@ -78,7 +78,7 @@ const units=()=>convoy?[...allies(),convoy]:allies();
 function write(){safe(()=>root.localStorage.setItem(SAVE,JSON.stringify(record)),null);}
 function emit(who,text,voice=true,fallback=true){
  const message=who+': '+text;feed.push({who,text,at:sim});if(feed.length>12)feed.shift();
- const prior=safe(()=>SV.voice,undefined);try{if(typeof SV!=='undefined')SV.voice=0;safe(()=>root.radio(message),null);}finally{if(typeof SV!=='undefined'){if(prior===undefined)delete SV.voice;else SV.voice=prior;}}
+ const prior=safe(()=>SV.voice,undefined);try{if(typeof SV!=='undefined')SV.voice=0;safe(()=>root.radio(message),null);safe(()=>{radT=Math.min(radT,3);},null);}finally{if(typeof SV!=='undefined'){if(prior===undefined)delete SV.voice;else SV.voice=prior;}}
  const enabled=voice&&playing()&&!doc.hidden&&safe(()=>SV.voice!==0&&SV.radioV!==0,true)&&safe(()=>root.HisarImmersive.getSettings().radioVoice,true);
  if(enabled&&!safe(()=>root.HisarImmersive.speak(message),false)&&fallback)safe(()=>root.HisarRadioSound.play(),null);
  paintFeed();
@@ -143,7 +143,7 @@ function initMission(config){
  const mast=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,4,6),new THREE.MeshBasicMaterial({color:0xafffe0}));mast.position.y=2;mast.userData.hrOwn=true;marker.add(mast);S.add(marker);props.push(marker);
  if(config.convoy){const p=point(8,16),g=safe(()=>root.mkE('truck'),null);if(g){g.name='HSR_IKMAL_1';S.add(g);props.push(g);convoy={g,x:p.x,z:p.z,h:0,cs:'İKMAL 1',hp:100,mx:100,convoy:true,waiting:true,path:[],goal:-1};g.position.set(p.x,hAt(p.x,p.z),p.z);}}
  }
- doc.body.classList.add('hr-mission-active');safe(()=>root.setW(config.weather),null);enterGoal();emit('KOMUTA',config.brief,true,false);
+ doc.body.classList.add('hr-mission-active');safe(()=>root.setW(config.weather),null);enterGoal();emit('KOMUTA',config.title+' başladı.',true,false);
 }
 function enterGoal(){
  if(!active||active.finished)return;active.amount=0;active.defenceSpawned=false;active.foes=null;active.foeWait=1.5;interacting=false;
@@ -162,7 +162,7 @@ function convoyStep(dt,g,p){if(!convoy||g.type!=='escort')return;
 }
 function foeStep(dt,g,p){if(!active.foes||!active.foes.length||E.length>0)return;active.foeWait-=dt;if(active.foeWait>0)return;
  const type=active.foes.shift(),n=active.foeN=(active.foeN||0)+1,angle=n*2.4,q=point(p.x+Math.cos(angle)*52,p.z+Math.sin(angle)*52);safe(()=>root.addE(type,q.x,q.z),null);active.foeWait=2.5;
- if(g.type==='hunt')safe(()=>root.startNav({x:q.x,z:q.z,n:'Hedef: '+(FOES[type]||type)}),null);emit('KOMUTA','Yeni oyun hedefi: '+(FOES[type]||type)+'. Sırada '+active.foes.length+' hedef var.',false,false);
+ if(g.type==='hunt')safe(()=>root.startNav({x:q.x,z:q.z,n:'Hedef: '+(FOES[type]||type)}),null);emit('KOMUTA','Hedef: '+(FOES[type]||type)+'.',false,false);
 }
 function updateMission(dt){if(!active||active.finished||!playing())return;active.elapsed+=dt;if(active.elapsed>1500){finishMission(false,'Görev süresi bitti.');return;}
  const living=allies();if(!living.length){finishMission(false,'Dost araç kalmadı. Görevi yeniden deneyebilirsin.');return;}
@@ -170,7 +170,7 @@ function updateMission(dt){if(!active||active.finished||!playing())return;active
  const near=Math.hypot(P.x-p.x,P.z-p.z)<14,nearAllies=living.filter(a=>Math.hypot(a.x-p.x,a.z-p.z)<30).length;
  const s={tank:mode==='tank',drone:mode==='drone'&&DR.on&&!DR.rt&&!DR.fall,droneNear:Math.hypot(DR.x-p.x,DR.z-p.z)<18,signal:DR.sig??1,playerNear:near,interacting,nearAllies,aliveAllies:living.length,convoyNear:!!convoy&&Math.hypot(convoy.x-p.x,convoy.z-p.z)<12,enemies:E.length+(active.foes?active.foes.length:0),foesLeft:E.length+(active.foes?active.foes.length:0)};
  const r=objectiveStep(g,active.amount,s,dt);active.amount=r.amount;
- if(r.done){score+=100;emit('KOMUTA','Aşama tamamlandı. '+g.text,true,false);active.step++;enterGoal();}
+ if(r.done){score+=100;emit('KOMUTA','Aşama tamam.',true,false);active.step++;enterGoal();}
  if(sim-lastPaint>.15){lastPaint=sim;paintObjective();if(opened)paintRoster();}
 }
 function finishMission(ok,text){if(!active||active.finished)return;finishing=true;try{root.endGame(ok,text||(ok?active.config.title+' tamamlandı.':'Görev tamamlanamadı.'));}finally{finishing=false;}}
@@ -221,10 +221,12 @@ function installUI(){if(!doc.body||radioPanel)return;const mpEl=doc.getElementBy
   if(!grid.querySelector('.hr-op')){let n=0;for(const c of SCENARIOS){const tile=el('button');tile.type='button';tile.className='hr-op';tile.dataset.g=c.id;tile.append(el('b',(++n)+'. '+c.icon+' '+c.title),el('small',c.tag));tile.onclick=()=>root.setG(c.id);grid.appendChild(tile);}}
   if(typeof MI!=='undefined'&&MI[SCENARIOS[0].id]&&!SCENARIOS.some(c=>c.id===safe(()=>mis,'')))safe(()=>root.setG(SCENARIOS[0].id),null);
  }
+ // Bildirimler dokununca kapanır.
+ for(const id of ['radio','msg','hg-notice','coach']){const box=doc.getElementById(id);if(box&&!box.dataset.hrTap){box.dataset.hrTap='1';box.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();box.style.opacity='0';box.classList.remove('on','pop');if(id==='radio')safe(()=>{radT=0;},null);if(id==='msg')safe(()=>{msgT=0;},null);if(id==='hg-notice')box.hidden=true;});}}
  root.addEventListener('keydown',e=>{if(/input|textarea|select/i.test(e.target?.tagName||''))return;if(e.code==='KeyX'&&playing()&&mode==='tank'&&active&&!active.finished&&active.config.goals[active.step]?.type==='interact'){interacting=true;e.preventDefault();e.stopImmediatePropagation();}},true);
  root.addEventListener('keyup',e=>{if(e.code==='KeyX')interacting=false;},true);
 }
 function leave(){close();interacting=false;queue=[];safe(()=>root.HisarRadioSound.stop(),null);}
 root.HisarOperations=Object.freeze({version:VERSION,core,issue,parse,start,toggle,close,listen,connect,diagnostics:()=>({version:VERSION,hooks:{...hooks},queued:queue.length,feed:feed.map(m=>({...m})),orders:history.map(h=>({...h})),microphone:!!microphone,selected,allies:allies().map(a=>({cs:a.cs,cmd:a.cmd,fire:a.fire,x:a.x,z:a.z})),mission:active?{id:active.id,foesLeft:E.length+(active.foes?active.foes.length:0),step:active.step,amount:active.amount,elapsed:active.elapsed,finished:active.finished,goal:active.config.goals[active.step]||null,points:active.points}:null,convoy:convoy?{x:convoy.x,z:convoy.z,waiting:convoy.waiting,path:convoy.path.length}:null})});
-connect();installUI();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
+connect();installUI();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{const rb=doc.getElementById('radio');if(rb)rb.style.pointerEvents=+rb.style.opacity>0?'auto':'none';const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
 })(typeof window!=='undefined'?window:globalThis);

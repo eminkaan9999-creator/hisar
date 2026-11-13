@@ -277,3 +277,26 @@ html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
 #mp #updBox{margin:4px 0 8px!important}
 #mp #updBox>*:not(button){display:none!important}
 #mp #hisar-experience-entry{min-height:38px!important;padding:6px 10px!important;font-size:13px!important;margin:6px 0!important}
+/* v79: kısa dikey telefon (iPhone SE, 375×667): sağ sütun sıkıştırıldı, hiçbir düğme üst üste gelmez */
+@media (max-width:600px) and (orientation:portrait) and (max-height:700px){
+ body #hr-radio-entry#hr-radio-entry{top:calc(10px + env(safe-area-inset-top,0px))!important;right:calc(20px + var(--hudMM) + env(safe-area-inset-right,0px))!important;left:auto!important;min-height:36px!important;padding:6px 10px!important}
+ body #ctx#ctx{top:calc(var(--hudMM) + 58px + env(safe-area-inset-top,0px))!important;gap:4px!important}
+ body #ctx#ctx button{height:28px!important;min-height:0!important;max-height:28px!important;line-height:1!important}
+ body #vbar#vbar .r.s{grid-template-columns:repeat(3,minmax(0,1fr))!important;width:204px!important;max-width:204px!important}
+ body #hr-objective#hr-objective{top:calc(64px + env(safe-area-inset-top,0px))!important}
+ body #uZoom#uZoom{top:calc(170px + env(safe-area-inset-top,0px))!important}
+ body #drvH#drvH{top:auto!important;bottom:calc(var(--pad,118px) + 240px + env(safe-area-inset-bottom,0px))!important}
+ body #kmd#kmd .rd{width:38px!important;height:38px!important}
+ body #kmd#kmd .bomb{width:40px!important;height:40px!important}
+ body #kmd#kmd .st{width:72px!important;height:72px!important}
+}
+/* v79: kısa yatay telefon (667×375): bildirim, sürücü ipucu ve kumanda çubukları kendi alanında */
+@media (min-aspect-ratio:1/1) and (max-height:420px) and (max-width:760px){
+ body #msg#msg{top:218px!important;bottom:auto!important}
+ body #drvH#drvH{top:178px!important}
+ body #kmd#kmd .st{width:50px!important;height:50px!important}
+}
+/* v79: yatay telefonda KOMUTA bandı minimapın altına girmez; en fazla üç satır */
+@media (min-aspect-ratio:1/1) and (max-height:500px){
+ body #radio#radio#radio{white-space:normal!important;max-width:min(340px,calc(100vw - 460px))!important;max-height:62px!important;overflow:hidden!important;box-sizing:border-box!important}
+}

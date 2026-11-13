@@ -1,7 +1,7 @@
 {
-  "v": 78,
+  "v": 79,
   "experience": "63.1",
-  "not": "Dron kumandasının çubukları yeniden çalışıyor: sol çubuk hareket, sağ çubuk yükseklik ve dönüş. Sürüm 74'te eklenen bir stil kuralı çubuklara dokunmayı kapatıyordu. Eski oyun modlarının kodu tamamen silindi: dalga, konvoy, köprü, keşif, köy, yakıt hattı ve obüs modları, Kuruluş hikâyesi ve Kayıp Sinyal hikâyesi artık yok. Oyunda yalnız 8 yeni görev ve eğitim alanı var. Menü sadeleşti: 8 görev tek ekranda, günlük görev kutusu ve fazladan açıklamalar kaldırıldı. 375×667 ve 667×375 gibi daha kısa ekranlarda bazı düğmeler hâlâ üst üste gelebilir.",
+  "not": "Küçük ekranlardaki üst üste binmeler giderildi: 375×667 dikey ve 667×375 yatay telefonda görünüş düğmeleri, ROTAYI KAPAT, TELSİZ, KOMUTA bandı, sürücü ipucu ve dron kumandası kendi alanında. Yatayda KOMUTA bandı minimapın altına girmez. Dron kumandasının çubukları çalışıyor (sürüm 78). Oyunda 8 görev ve eğitim alanı var; düşmanlar tek tek çıkar.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",

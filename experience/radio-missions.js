@@ -3,27 +3,33 @@
  */
 (function(root){
 'use strict';
-const VERSION='1.4.0', SAVE='hisar-operations-v1';
+const VERSION='1.5.0', SAVE='hisar-operations-v1';
 const safe=(fn,d)=>{try{return fn();}catch{return d;}}, clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(v)?v:a));
 const clean=t=>typeof t==='string'?t.slice(0,160).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9\s-]/g,' ').replace(/\s+/g,' ').trim():'';
 const ORDERS=Object.freeze({
  1:{title:'Beni takip et',reply:'Sizi takip ediyorum.'},2:{title:'Burada bekle',reply:'Burada bekliyorum.'},
  3:{title:'İşaretli oyun hedefi',reply:'İşaretli oyun hedefine yöneliyorum.'},4:{title:'Oyunda ateş serbest',reply:'Anlaşıldı.'},
  5:{title:'Ateşi kes',reply:'Ateşi kestim.'},6:{title:'Aralık aç',reply:'Aralık açıyorum.'},
- 7:{title:'Geri gel',reply:'Geri geliyorum.'},8:{title:'Durum bildir',reply:''},9:{title:'Yanımda toplan',reply:'Yanınızda toplanıyorum.'}
+ 7:{title:'Geri gel',reply:'Geri geliyorum.'},8:{title:'Durum bildir',reply:''},9:{title:'Yanımda toplan',reply:'Yanınızda toplanıyorum.'},
+ 10:{title:'Mevzilen',reply:'Mevziye giriyorum.'}
 });
+// Her araca en yakın boş mevziyi verir; aynı mevzi iki araca verilmez. keepOut içindeki (oyuncunun durduğu) mevziler atlanır.
+function assignPositions(list,positions,keepOut){const free=(positions||[]).filter(p=>!keepOut||Math.hypot(p.x-keepOut.x,p.z-keepOut.z)>=(keepOut.r||10)),out=new Map();
+ for(const u of list||[]){let best=-1,bd=Infinity;for(let i=0;i<free.length;i++){const d=Math.hypot(free[i].x-u.x,free[i].z-u.z);if(d<bd){bd=d;best=i;}}if(best<0)break;out.set(u,free.splice(best,1)[0]);}
+ return out;}
 function parse(text,selected='all'){
  const s=clean(text);if(!s||(/\b(yapma|etme|durma|bekleme|takip etme)\b/.test(s)&&!s.includes('ates etme')))return null;
  const t=s.replace(/\bbir\b/g,'1').replace(/\biki\b/g,'2').replace(/\buc\b/g,'3').replace(/\bdort\b/g,'4');
  let recipient=selected, explicit=t.match(/\b(?:kaplan\s*)?1\s*-?\s*([234])\b/);
  if(/\b(tum birlik|butun birlik|herkes|tum tanklar)\b/.test(s))recipient='all';else if(explicit)recipient='KAPLAN 1-'+explicit[1];else if(/\bikmal\b/.test(s))recipient='İKMAL 1';
- const tests=[[5,/\b(atesi kes|ates kes|ates etme)\b/],[8,/\b(durum bildir|durumunuz|durum raporu|ses kontrol|duyuyor musun)\b/],[9,/\b(toplan|yanima gel|yanimda toplan)\b/],[1,/\b(takip et|takip edin|pesimden gel|beni izle)\b/],[2,/\b(bekle|bekleyin|dur|durun)\b/],[7,/\b(geri gel|geri don|geri cekil)\b/],[6,/\b(aralik ac|dagil)\b/],[4,/\b(ates serbest)\b/],[3,/\b(isaretli hedef|hedefe ates)\b/]];
+ const tests=[[5,/\b(atesi kes|ates kes|ates etme)\b/],[8,/\b(durum bildir|durumunuz|durum raporu|ses kontrol|duyuyor musun)\b/],[9,/\b(toplan|yanima gel|yanimda toplan)\b/],[1,/\b(takip et|takip edin|pesimden gel|beni izle)\b/],[10,/\b(mevzilen|mevzilenin|mevziye gir|mevziye girin|mevzi al|mevzi alin)\b/],[2,/\b(bekle|bekleyin|dur|durun)\b/],[7,/\b(geri gel|geri don|geri cekil)\b/],[6,/\b(aralik ac|dagil)\b/],[4,/\b(ates serbest)\b/],[3,/\b(isaretli hedef|hedefe ates)\b/]];
  const match=tests.find(([,r])=>r.test(s));return match?{recipient,code:match[0]}:null;
 }
 function applyOrder(unit,code,target){
  if(!unit||unit.dead||unit.hp<=0)return {ok:false,reason:'unavailable'};
  if(!ORDERS[code])return {ok:false,reason:'unknown'};
  if(code===3&&!target)return {ok:false,reason:'no-target'};
+ if(code===10&&(!target||unit.convoy))return {ok:false,reason:'no-position'};
  if(unit.convoy){if(![1,2,8,9].includes(code))return {ok:false,reason:'unsupported'};if(code!==8)unit.waiting=code===2;return {ok:true};}
  if(code===1||code===9){unit.cmd='follow';unit.tgt=null;}
  if(code===2){unit.cmd='hold';unit.hold={x:unit.x,z:unit.z};unit.tgt=null;}
@@ -33,10 +39,11 @@ function applyOrder(unit,code,target){
  if(code===5){unit.fire=0;unit.tgt=null;if(unit.cmd==='attack'){unit.cmd='hold';unit.hold={x:unit.x,z:unit.z};}}
  if(code===6){unit.cmd='disperse';unit.tgt=null;}
  if(code===7){unit.cmd='retreat';unit.fire=0;unit.tgt=null;}
+ if(code===10){unit.cmd='hold';unit.hold={x:target.x,z:target.z,h:target.h||0,position:true};unit.tgt=null;}
  return {ok:true};
 }
 function reply(unit,code){
- if(code===8){const h=Math.round(clamp(unit.hp/(unit.mx||100),0,1)*100);return 'Komutanım, '+(unit.convoy?(unit.waiting?'bekliyorum':'yoldayım'):({follow:'takipteyim',hold:'bekliyorum',attack:'oyun hedefindeyim',disperse:'aralık açıyorum',retreat:'geri geliyorum'}[unit.cmd]||'hazırım'))+'. Araç durumu yüzde '+h+'.';}
+ if(code===8){const h=Math.round(clamp(unit.hp/(unit.mx||100),0,1)*100);return 'Komutanım, '+(unit.convoy?(unit.waiting?'bekliyorum':'yoldayım'):({follow:'takipteyim',hold:unit.hold&&unit.hold.position?'mevzideyim':'bekliyorum',attack:'oyun hedefindeyim',disperse:'aralık açıyorum',retreat:'geri geliyorum'}[unit.cmd]||'hazırım'))+'. Araç durumu yüzde '+h+'.';}
  return 'Emredersiniz komutanım. '+(unit.convoy?(unit.waiting?'Konvoy bekliyor.':'Konvoy devam ediyor.'):ORDERS[code].reply);
 }
 const goal=(type,at,text,seconds=0,foes=null)=>Object.freeze({type,at,text,seconds,foes:foes?Object.freeze([...foes]):null});
@@ -65,7 +72,7 @@ function objectiveStep(g,previous,s,dt){
  const duration=g.seconds||.5;
  return {amount:Math.min(duration,amount),done:valid&&amount>=duration&&(g.type!=='defend'||s.enemies===0)};
 }
-const core=Object.freeze({VERSION,clean,parse,ORDERS,SCENARIOS,FOES,applyOrder,reply,objectiveStep});
+const core=Object.freeze({VERSION,clean,parse,ORDERS,SCENARIOS,FOES,applyOrder,assignPositions,reply,objectiveStep});
 if(typeof module==='object'&&module.exports)module.exports=core;
 const doc=root.document;if(!doc||root.HisarOperations)return;
 let sim=0,queue=[],feed=[],history=[],selected='all',lastOrder=new Map(),versions=new Map(),serial=0,opened=false,active=null,preparing=null,finishing=false,interacting=false,microphone=null,micTimer=null,micEpoch=0,lastPaint=-1;
@@ -92,7 +99,9 @@ function issue(recipient,code){
  const token=recipient+'|'+code;if(sim-(lastOrder.get(token)??-99)<.6)return {ok:false,reason:'duplicate'};
  const target=code===3?safe(()=>root.designate(),null):null;
  if(code===3&&!target){warn('İşaretli oyun hedefi bulunamadı.');return {ok:false,reason:'no-target'};}
- let accepted=[];for(const u of chosen){const result=applyOrder(u,code,target);if(result.ok)accepted.push(u);}
+ const spots=code===10?assignPositions(chosen,safe(()=>root.HisarCrewOrders.core.POSITIONS,[]),safe(()=>({x:P.x,z:P.z,r:10}),null)):null;
+ if(code===10&&!spots.size){warn('Boş mevzi yok.');return {ok:false,reason:'no-position'};}
+ let accepted=[];for(const u of chosen){const result=applyOrder(u,code,code===10?spots.get(u):target);if(result.ok)accepted.push(u);}
  if(!accepted.length){warn('Bu araç seçilen komutu uygulayamıyor.');return {ok:false,reason:'unsupported'};}
  safe(()=>root.HisarRadioSound.warm(),null);lastOrder.set(token,sim);if(lastOrder.size>64)lastOrder.delete(lastOrder.keys().next().value);
  emit('SİZ',(recipient==='all'?'Tüm birlik':recipient)+', '+ORDERS[code].title.toLocaleLowerCase('tr-TR')+'.',false);
@@ -135,7 +144,7 @@ function point(x,z){
 function cleanup(){for(const p of props){safe(()=>S.remove(p),null);p.traverse?.(o=>{if(o.userData?.hrOwn){safe(()=>o.geometry.dispose(),null);safe(()=>o.material.dispose(),null);}});}props.length=0;marker=null;convoy=null;interacting=false;doc.body?.classList.remove('hr-mission-active');if(objectivePanel)objectivePanel.hidden=true;}
 function placeMarker(p){if(!marker)return;marker.position.set(p.x,hAt(p.x,p.z)+.15,p.z);}
 function initMission(config){
- const pts={base:point(0,0),a:point(30,35),b:point(-35,55),c:point(-58,8)};
+ const pts={base:point(0,0),a:point(30,35),b:point(-31,64),c:point(62,-34)};
  active={id:config.id,config,step:0,amount:0,elapsed:0,finished:false,initial:allies().length,points:pts,orders:history.length,defenceSpawned:false};
  safe(()=>{if(root.STG){STG.q=[];STG.tot=0;STG.cur=0;}mT=0;},null);
  if(root.THREE&&typeof S!=='undefined'){
@@ -228,5 +237,5 @@ function installUI(){if(!doc.body||radioPanel)return;const mpEl=doc.getElementBy
 }
 function leave(){close();interacting=false;queue=[];safe(()=>root.HisarRadioSound.stop(),null);}
 root.HisarOperations=Object.freeze({version:VERSION,core,issue,parse,start,toggle,close,listen,connect,diagnostics:()=>({version:VERSION,hooks:{...hooks},queued:queue.length,feed:feed.map(m=>({...m})),orders:history.map(h=>({...h})),microphone:!!microphone,selected,allies:allies().map(a=>({cs:a.cs,cmd:a.cmd,fire:a.fire,x:a.x,z:a.z})),mission:active?{id:active.id,foesLeft:E.length+(active.foes?active.foes.length:0),step:active.step,amount:active.amount,elapsed:active.elapsed,finished:active.finished,goal:active.config.goals[active.step]||null,points:active.points}:null,convoy:convoy?{x:convoy.x,z:convoy.z,waiting:convoy.waiting,path:convoy.path.length}:null})});
-connect();installUI();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{const rb=doc.getElementById('radio');if(rb)rb.style.pointerEvents=+rb.style.opacity>0?'auto':'none';const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
+connect();installUI();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{safe(()=>{for(const a of AL){if(a.dead||a.cmd!=='hold'||!a.hold||!a.hold.position)continue;if(Math.hypot(a.x-a.hold.x,a.z-a.hold.z)<2.6){let d=a.hold.h-a.h;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;a.h+=d*.08;}}},null);const rb=doc.getElementById('radio');if(rb)rb.style.pointerEvents=+rb.style.opacity>0?'auto':'none';const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
 })(typeof window!=='undefined'?window:globalThis);

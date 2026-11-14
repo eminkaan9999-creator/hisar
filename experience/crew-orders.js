@@ -16,8 +16,8 @@ function separate(bodies){let moved=0;for(let i=0;i<bodies.length;i++)for(let j=
 function segDist(ax,az,bx,bz,px,pz){const vx=bx-ax,vz=bz-az,l2=vx*vx+vz*vz;let t=l2?((px-ax)*vx+(pz-az)*vz)/l2:0;t=Math.max(0,Math.min(1,t));return Math.hypot(ax+vx*t-px,az+vz*t-pz);}
 // Dost tank oyuncuya en az "gap" kadar uzak tutulur; oyuncu itilmez.
 function keepAway(player,ally,gap){const dx=ally.x-player.x,dz=ally.z-player.z,d=Math.hypot(dx,dz);if(d>=gap)return false;const ux=d>1e-4?dx/d:1,uz=d>1e-4?dz/d:0;ally.x=player.x+ux*gap;ally.z=player.z+uz*gap;return true;}
-// Tank mevzileri: görev noktalarının yanında, üsten dışarı bakan U biçimli toprak siperler.
-const POSITIONS=Object.freeze([{x:0,z:-16},{x:30,z:35},{x:-35,z:55},{x:-58,z:8},{x:44,z:-28},{x:-20,z:-40}].map(p=>Object.freeze({...p,h:Math.atan2(p.x,p.z)})));
+// Tank mevzileri: görev noktalarının yakınında, kuru ve düz arazide, üsten dışarı bakan U biçimli toprak siperler.
+const POSITIONS=Object.freeze([{x:2,z:-12},{x:44,z:12},{x:-6,z:62},{x:8,z:76},{x:56,z:-26},{x:70,z:-42},{x:80,z:22}].map(p=>Object.freeze({...p,h:Math.atan2(p.x,p.z)})));
 function inPosition(x,z,list){for(const p of list||POSITIONS)if(Math.hypot(x-p.x,z-p.z)<4.2)return p;return null;}
 const core=Object.freeze({AMMO,ammoLine,shouldDelay,separate,segDist,keepAway,POSITIONS,inPosition});
 if(typeof module==='object'&&module.exports)module.exports=core;

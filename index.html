@@ -4490,7 +4490,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=83,LOGO=window.HISAR_LOGO;
+const VER=84,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important;width:76px!important;height:76px!important;border-radius:50%!important;overflow:visible}#menu .hd .logo img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -6997,9 +6997,7 @@ function atgmGuide(dt){for(const b of ebul){if(!b.atgm||b.life<=0)continue;const
   const tx=P.x-p.x,ty=hAt(P.x,P.z)+1.6-p.y,tz=P.z-p.z,l=Math.hypot(tx,ty,tz)||1,sp=Math.hypot(b.vx,b.vy,b.vz)||38,k=Math.min(1,dt*1.6);
   b.vx+=(tx/l*sp-b.vx)*k;b.vy+=(ty/l*sp-b.vy)*k;b.vz+=(tz/l*sp-b.vz)*k;const s2=Math.hypot(b.vx,b.vy,b.vz)||1;b.vx*=sp/s2;b.vy*=sp/s2;b.vz*=sp/s2;b.m.lookAt(p.x+b.vx,p.y+b.vy,p.z+b.vz)}}
 function bmpStep(e,dt){e.atgmT-=dt;const d=dist3(e,P);if(e.atgmT<=0){e.atgmT=rr(13,19);if(L.cd&&d<175&&d>25&&!(e.fl>0)&&!(typeof smoked==='function'&&smoked(P.x,P.z))){window.__curE=e;fireATGM(e)}}
- if(!e.dis&&e.hp<e.hp0*.5){e.dis=1;dismount(e,2)}}
-function dismount(e,n){for(let i=0;i<n;i++){const a=(e.h||0)+PI+rr(-.6,.6),r=rr(4,6);try{addE('inf',e.x+Math.sin(a)*r,e.z+Math.cos(a)*r)}catch(x){}}if(dist3(e,P)<160)say2('BMP\'den piyade indi!',1,'dism',8)}
-{const k=window.killE;window.killE=function(e){const was=e&&E.includes(e);const r=k.apply(this,arguments);try{if(was&&!E.includes(e)&&e.bmp&&!e.dis2){e.dis2=1;if(RN()<.7)dismount(e,e.dis?1:2)}}catch(x){}return r}}
+}
 // ---------------- SILKA ----------------
 const DV={x:0,y:0,z:0,vx:0,vy:0,vz:0,ok:0};
 function zsuStep(e,dt){const u=e.g.userData;if(!u||!u.t)return;e.cd=1e9;if(u.dish)u.dish.rotation.y+=dt*4;
@@ -7366,6 +7364,6 @@ window.DRNX={apply,geos,mat};
 <script defer src="experience/bridge.js?v=63"></script>
 <script defer src="experience/ui.js?v=63"></script>
 
-<script src="experience/crew-orders.js?v=3"></script>
+<script src="experience/crew-orders.js?v=4"></script>
 </body>
 </html>

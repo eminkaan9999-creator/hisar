@@ -16,7 +16,7 @@
 }
 
 /* ---------- yazı ---------- */
-html body #ui,html body #vbar,html body #ctx,html body #wnd,html body #coach,html body #radio,html body #msg,html body #hit,html body #krC,html body #krT,html body #medT,html body #dlyT,html body #chg,html body #tutEnd,html body #rep,html body #rep2,html body #fmap,html body #kmd,html body #whl,html body #pho,html body #phoV,html body #mX,html body #menu,html body .hr-card,html body #hr-radio-entry,html body #hisar-experience,html body #hg-notice,html body #drvH{font-family:var(--sf)!important}
+html body #ui,html body #vbar,html body #ctx,html body #wnd,html body #coach,html body #radio,html body #msg,html body #hit,html body #krC,html body #krT,html body #medT,html body #chg,html body #tutEnd,html body #rep,html body #rep2,html body #fmap,html body #kmd,html body #whl,html body #pho,html body #phoV,html body #mX,html body #menu,html body .hr-card,html body #hr-radio-entry,html body #hisar-experience,html body #hg-notice,html body #drvH{font-family:var(--sf)!important}
 html body #ui button,html body #ui .am,html body #ui .ab,html body #menu button,html body .hr-card button,html body .hr-card select,html body #hisar-experience button,html body #hisar-experience select{font-family:var(--sf)!important}
 
 /* ---------- oyun içi: yuvarlak zeytin düğmeler ---------- */
@@ -72,8 +72,8 @@ html body #uZoom i{background:linear-gradient(180deg,var(--yesil),var(--yesil2))
 html body #coach{background:var(--komur-cam)!important;border:1px solid var(--cizgi)!important;border-left:3px solid var(--yesil)!important;border-radius:4px!important}
 html body #coach b{font-weight:800!important;letter-spacing:.08em!important;color:var(--yesil)!important}html body #coach span{font-weight:600!important;font-size:15px!important}
 html body #coach .bt button{font-family:var(--sf)!important;font-weight:800!important;letter-spacing:.05em!important;text-transform:uppercase;border-radius:3px!important}
-html body #medT,html body #dlyT{border-radius:4px!important;background:var(--komur-cam)!important;border-color:var(--cizgi)!important}
-html body #medT b,html body #dlyT b{font-weight:800!important;letter-spacing:.08em!important;color:var(--sari)!important}html body #medT span,html body #dlyT span{font-weight:700!important}
+html body #medT{border-radius:4px!important;background:var(--komur-cam)!important;border-color:var(--cizgi)!important}
+html body #medT b{font-weight:800!important;letter-spacing:.08em!important;color:var(--sari)!important}html body #medT span{font-weight:700!important}
 html body #krC{font-family:var(--sf)!important;font-weight:800!important;letter-spacing:.04em;border-radius:4px!important}
 html body #krT div{font-family:var(--sf)!important;font-weight:800!important;letter-spacing:.03em}
 /* eski GÖREV kutusu (eğitim alanında görünür) */
@@ -140,7 +140,8 @@ html body #mp .hd h1{display:block!important;flex:1 1 auto;min-width:0;margin:0!
 html body #mp .hd h1 small{display:none!important}
 html body #mp .hd h1 .dev{display:block!important;margin-top:0!important;padding:3px 0 1px;font:700 11px/1.1 var(--sf)!important;letter-spacing:.07em!important;color:var(--kemik2)!important;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body #mp .hd h1 .dev b{color:var(--sari)!important;font-weight:800!important;letter-spacing:.07em!important}
-html body #rb2.pill{flex:none;margin:0!important;padding:6px 9px!important;border:1px solid var(--cizgi)!important;border-radius:3px!important;background:rgba(0,0,0,.35)!important;font:800 13px/1 var(--sf)!important;letter-spacing:.04em!important;color:#fff!important;white-space:nowrap}
+html body #rb2.pill{flex:none;display:flex!important;flex-direction:column;align-items:flex-end;gap:3px;margin:0!important;padding:5px 9px!important;border:1px solid var(--cizgi)!important;border-radius:3px!important;background:rgba(0,0,0,.35)!important;font:800 13px/1 var(--sf)!important;letter-spacing:.04em!important;color:#fff!important;white-space:nowrap}
+html body #rb2.pill b{font-weight:800}html body #rb2.pill i{font-style:normal;font-size:12.5px;color:var(--sari)}
 /* ayarlar: üst çubukta tek kare dişli düğmesi */
 html body #mp #hisar-experience-entry{position:fixed!important;z-index:9;top:calc(8px + env(safe-area-inset-top,0px));left:calc(10px + env(safe-area-inset-left,0px));width:40px!important;max-width:none!important;min-height:0!important;height:36px!important;margin:0!important;padding:0!important;border:1px solid var(--cizgi)!important;border-radius:4px!important;background:var(--zirh)!important;color:#fff!important;font-size:0!important;line-height:0!important;letter-spacing:0!important;overflow:hidden}
 html body #mp #hisar-experience-entry::before{content:"";display:block;width:22px;height:22px;margin:auto;background:currentColor;-webkit-mask:var(--ic-gear) center/contain no-repeat;mask:var(--ic-gear) center/contain no-repeat}
@@ -188,15 +189,6 @@ html body .ov .row button b{font:800 16px/1.1 var(--sf)!important;letter-spacing
 html body .ov .row button small{display:block;margin-top:3px;font:700 11.5px/1.1 var(--sf)!important;letter-spacing:.05em!important;color:var(--kemik2)!important;opacity:1!important;text-transform:uppercase}
 html body .ov .row button.sel{background:linear-gradient(180deg,#4b6426,#34471a)!important;border-color:var(--sari)!important;box-shadow:inset 0 0 0 1px var(--sari)!important;color:#fff!important}
 html body .ov .row button.sel small{color:#e6f4c2!important}
-/* görev kutucukları: sarı sıra numarası, ad ve tür */
-html body #tg .row.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
-html body #tg .row.grid .hr-op{display:grid!important;grid-template-columns:26px minmax(0,1fr);grid-template-areas:"n t" "n s";align-items:center;column-gap:8px;row-gap:0;min-height:54px!important;padding:8px 9px 8px 7px!important;text-align:left!important}
-html body #tg .row.grid .hr-op i{grid-area:n;font:800 25px/1 var(--sf);font-style:normal;color:var(--sari);text-align:center}
-html body #tg .row.grid .hr-op b{grid-area:t;align-self:end;font-size:17px!important;padding-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-html body #tg .row.grid .hr-op small{grid-area:s;align-self:start;margin-top:0!important;padding-top:3px;font-size:11.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-html body #tg .row.grid .hr-note{grid-column:1/-1}
-html body #tg #dly,html body #tg>p:not(#gd){display:none!important}
-html body #tg #gd{margin:8px 0 2px!important;padding:9px 11px!important;min-height:0!important;background:rgba(0,0,0,.28)!important;border:0!important;border-left:3px solid var(--yesil)!important;border-radius:0!important;font:600 14.5px/1.35 var(--sf)!important;letter-spacing:.01em;color:var(--kemik)!important;opacity:1!important}
 /* eğitim: zeytin düğme */
 html body #mp #tutB{display:flex!important;align-items:center;gap:10px;min-height:0!important;max-height:none!important;margin:0 auto 12px!important;padding:10px 12px!important;border-radius:3px!important;-webkit-clip-path:none!important;clip-path:none!important;border:1px solid rgba(190,226,118,.55)!important;background:linear-gradient(180deg,#52692c,#3b4f1e)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;overflow:hidden!important}
 html body #mp #tutB[style*="upP"]{animation:sahaNabiz 1.8s ease-in-out infinite!important}
@@ -263,7 +255,6 @@ html body #menu .kl b{color:var(--sari)!important;font-weight:800!important;lett
 }
 @media (min-aspect-ratio:1/1) and (max-height:430px){
  html body .ov h3{margin:10px 0 6px!important;font-size:14px!important}
- html body #tg .row.grid .hr-op{min-height:46px!important;padding:5px 8px 5px 6px!important}
 }
 
 /* eski ayarlar bölümü: sekmesi kaldırıldı; ayarlar yalnız üst çubuktaki dişli düğmesinden açılır */
@@ -289,7 +280,6 @@ html body #rep .g small{letter-spacing:.08em!important;font-family:var(--sf)!imp
 html body #rep .c,html body #rep2 .c,html body #tutEnd .c{border-radius:4px!important;border:1px solid var(--cizgi)!important;background:var(--komur)!important;box-shadow:0 24px 70px rgba(0,0,0,.7)!important}
 html body #rep .bt button,html body #tutEnd button{border-radius:3px!important;-webkit-clip-path:none!important;clip-path:none!important;font:800 17px/1 var(--sf)!important;letter-spacing:.07em!important;text-transform:uppercase;min-height:46px}
 html body #rep .bt .a,html body #tutEnd .a{background:linear-gradient(180deg,var(--yesil),var(--yesil2))!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:0!important;box-shadow:inset 0 -3px 0 rgba(30,70,0,.45)!important}
-html body #hr-debrief{border-left:3px solid var(--sari)}
 
 /* ============ DRONE KUMANDASI: kömür gövde, zeytin düğmeler ============ */
 html body #kmd#kmd .bd{background:linear-gradient(180deg,#2c2f28,#1a1c18)!important;border:1px solid var(--cizgi)!important;box-shadow:0 -4px 18px rgba(0,0,0,.5)!important}

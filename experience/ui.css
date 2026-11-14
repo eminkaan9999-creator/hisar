@@ -107,7 +107,7 @@ body:has(#hr-panel:not([hidden])) :is(#uTL,#hr-objective,#mm,#mmW,#wnd,#ctx,#vba
  body #uPad{width:104px!important;height:104px!important}
  body #coach{left:246px!important;right:auto!important;top:6px!important;bottom:auto!important;width:354px!important;font-size:11px!important;padding:5px 10px!important;transform:translate(0,16px)!important}
  body #coach i{font-size:16px!important}
- body #hr-objective small{display:none!important}
+ body #hr-objective small{font-size:10.5px!important;margin-top:3px!important}
  body #vbar#vbar .r.s button{font-size:10px!important;padding:4px 6px!important;letter-spacing:0!important;min-width:0!important;min-height:26px!important;height:26px!important}
  body #coach.on{transform:translate(0,0)!important}
  body #gRing{width:108px!important;height:108px!important;left:10px!important;top:auto!important;right:auto!important;bottom:10px!important}
@@ -278,7 +278,7 @@ body #kmd#kmd.low .bd::after{background-image:radial-gradient(circle,#ff7a6a 0 2
  body #kmd#kmd .bomb{top:39px!important;bottom:auto!important}
  body #kmd#kmd .bd::before,body #kmd#kmd .bd::after{top:auto!important;bottom:7px!important}
 }
-/* v85: görevlerde tek görev kartı vardır; eski GÖREV kutusu gizlenir. Yatayda kart yukarı, çentiğin dışına alınır; yaralanma kutusu kartın altına iner. */
+/* Savaşta tek durum kartı vardır (güvenli alan, kalan takımlar); eski bilgi kutusu gizlenir. Yatayda kart yukarı, çentiğin dışına alınır; yaralanma kutusu kartın altına iner. */
 body.hr-mission-active #uInfo{display:none!important}
 @media (min-aspect-ratio:1/1) and (max-height:500px){
  body #hr-objective#hr-objective{top:calc(62px + env(safe-area-inset-top,0px))!important;left:calc(12px + env(safe-area-inset-left,0px))!important;width:min(200px,calc(228px - env(safe-area-inset-left,0px)))!important}

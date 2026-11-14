@@ -1,6 +1,6 @@
 # ÇELİK BÖRÜ
 
-M60A3 tank ve Uçangöz harekât simülatörü. Tarayıcıda çalışır; telefona uygulama gibi kurulur.
+M60A3 tankı ve Uçangöz ile oynanan tank savaşı. 1,6 km × 1,6 km haritada takımlar dağılır, güvenli alan aşama aşama daralır, son kalan takım kazanır. Rakipler yapay zekâdır. Tarayıcıda çalışır; telefona uygulama gibi kurulur.
 
 **Oyna:** https://eminkaan9999-creator.github.io/hisar/
 
@@ -14,7 +14,8 @@ M60A3 tank ve Uçangöz harekât simülatörü. Tarayıcıda çalışır; telefo
 Yeni sürüm yayınlandığında oyun menüsündeki **GÜNCELLE** tuşu "YENİ SÜRÜM" diye yanıp söner. Dokununca yeni sürüm yüklenir; krediler, rütbe ve tanklar korunur.
 
 ## Dosyalar
-- `index.html` — oyun (tek dosya)
+- `index.html` — oyun motoru, araçlar, arazi, garaj
+- `experience/` — savaş kipi (`battle.js`), telsiz emirleri, görünüm, ayarlar ve sınamalar
 - `three.min.js` — 3B kütüphane (r128)
 - `manifest.webmanifest`, `sw.js` — uygulama kurulumu ve internetsiz çalışma
 - `version.json` — güncelleme kontrolü

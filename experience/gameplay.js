@@ -5,23 +5,22 @@ const VERSION='1.3.0', KEY='hisar-gameplay-v1';
 const safe=(fn,fallback)=>{try{return fn();}catch{return fallback;}};
 const num=(v,d=0)=>safe(()=>Number.isFinite(Number(v))?Number(v):d,d);
 const clamp=(v,a,b,d=0)=>Math.max(a,Math.min(b,num(v,d)));
-const defaults=Object.freeze({droneView:'follow',clearDrone:true,vehicleDetail:true,targetLabels:true,hitFeedback:true,balancedDrops:true,storyHUD:true});
-function settings(v){v=v&&typeof v==='object'?v:{};return {droneView:v.droneView==='fpv'?'fpv':'follow',clearDrone:v.clearDrone!==false,vehicleDetail:v.vehicleDetail!==false,targetLabels:v.targetLabels!==false,hitFeedback:v.hitFeedback!==false,balancedDrops:v.balancedDrops!==false,storyHUD:v.storyHUD!==false};}
+const defaults=Object.freeze({droneView:'follow',clearDrone:true,vehicleDetail:true,targetLabels:true,hitFeedback:true,balancedDrops:true});
+function settings(v){v=v&&typeof v==='object'?v:{};return {droneView:v.droneView==='fpv'?'fpv':'follow',clearDrone:v.clearDrone!==false,vehicleDetail:v.vehicleDetail!==false,targetLabels:v.targetLabels!==false,hitFeedback:v.hitFeedback!==false,balancedDrops:v.balancedDrops!==false};}
 // Unitless arcade balance. These values do not model any real munition or weapon.
 function blastFactor(distance,radius,blocked){if(blocked||!Number.isFinite(distance)||!Number.isFinite(radius)||radius<=0||distance>=radius)return 0;return Math.max(.12,1-Math.pow(Math.max(0,distance)/radius,1.35));}
 function carryVelocity(dx,dz,dt){if(!(dt>0&&dt<=.1)||![dx,dz].every(Number.isFinite)||Math.hypot(dx,dz)>8)return {x:0,z:0};let x=dx/dt*.55,z=dz/dt*.55,s=Math.hypot(x,z);if(s>18){x*=18/s;z*=18/s;}return {x,z};}
 function canDrop(s){if(!s||!s.playing)return 'paused';if(!s.on||s.falling||s.returning||s.spin<.6)return 'not-ready';if(s.ammo<=0)return 'empty';if(s.pending>=12)return 'busy';if(s.cooldown>0)return 'cooldown';return '';}
-function progress(data){const total=Math.max(0,num(data.total)),left=Math.max(0,num(data.remaining));if(data.finished)return 1;return total?clamp((total-left)/total,0,1):0;}
-const core=Object.freeze({VERSION,defaults,settings,blastFactor,carryVelocity,canDrop,progress});
+const core=Object.freeze({VERSION,defaults,settings,blastFactor,carryVelocity,canDrop});
 if(typeof module==='object'&&module.exports)module.exports=core;
 const doc=root.document;if(!doc||root.HisarGameplay)return;
 let opts=settings(safe(()=>JSON.parse(root.localStorage.getItem(KEY)),null));
 let sim=0,dropAt=-1,nextInfo=0,nextLabels=0,nextDetail=0,noticeEnd=0,noticeText='';
-let velocity={x:0,z:0},stats={shots:0,drops:0,hits:0,destroyed:0,total:0},panel,hud,targetLayer,notice;
+let velocity={x:0,z:0},stats={shots:0,drops:0,hits:0,destroyed:0},panel,targetLayer,notice;
 let labels=[],lastTargets=[],patched=Object.create(null),nativeVoiceCalls=0,detailGroups=0,customImpacts=0;
 const detailed=new WeakSet(),textureOriginal=new Map(),radioTimes=new Map();
 let seenTextures=new WeakSet();
-const watch=()=>safe(()=>({playing:game==='play',mode,view:iv,on:!!DR.on,drone:mode==='drone'&&DR.on,falling:!!DR.fall,returning:!!DR.rt,spin:DR.sp,ammo,pending:bombs.length,cooldown:Math.max(0,dropAt-sim),mission:mis,remaining:E.length,marked:E.filter(e=>e.mark).length,total:stats.total,finished:false}),{playing:false,drone:false,mode:'',view:-1,mission:'',remaining:0,marked:0,total:0});
+const watch=()=>safe(()=>({playing:game==='play',mode,view:iv,on:!!DR.on,drone:mode==='drone'&&DR.on,falling:!!DR.fall,returning:!!DR.rt,spin:DR.sp,ammo,pending:bombs.length,cooldown:Math.max(0,dropAt-sim),mission:mis,remaining:E.length,marked:E.filter(e=>e.mark).length,finished:false}),{playing:false,drone:false,mode:'',view:-1,mission:'',remaining:0,marked:0,total:0});
 function announce(text){noticeText=String(text).slice(0,180);noticeEnd=sim+2; if(notice){notice.textContent=noticeText;notice.hidden=false;}}
 function speak(text,key,cool=5){const now=sim;if(key&&radioTimes.has(key)&&now-radioTimes.get(key)<cool)return false;if(key){radioTimes.set(key,now);if(radioTimes.size>48)radioTimes.delete(radioTimes.keys().next().value);}return !!safe(()=>root.HisarImmersive.speak(String(text)),false);}
 function noLegacyVoice(fn,self,args){const prior=safe(()=>SV.voice,undefined);try{if(typeof SV!=='undefined')SV.voice=0;return fn.apply(self,args);}finally{if(typeof SV!=='undefined'){if(prior===undefined)delete SV.voice;else SV.voice=prior;}}}
@@ -69,8 +68,8 @@ function installHooks(){patchVoices();
  });
  wrap('hurt',old=>function(e,damage){const before=e?.hp;const r=old.apply(this,arguments);if(e&&Number.isFinite(before)&&before>0&&e.hp<before){stats.hits++;if(opts.hitFeedback)announce(e.hp<=0?'Hedef devre dışı':'İsabet · −'+Math.round(before-Math.max(0,e.hp)));e.hgHitUntil=sim+1.4;}return r;});
  wrap('killE',old=>function(e){const was=safe(()=>E.includes(e),false);const r=old.apply(this,arguments);if(was&&!safe(()=>E.includes(e),false))stats.destroyed++;return r;});
- wrap('reset',old=>function(){for(const [t,a]of textureOriginal){t.anisotropy=a;t.needsUpdate=true;}textureOriginal.clear();seenTextures=new WeakSet();sim=0;dropAt=-1;velocity={x:0,z:0};stats={shots:0,drops:0,hits:0,destroyed:0,total:0};radioTimes.clear();clearLabels();const r=old.apply(this,arguments);stats.total=safe(()=>E.length,0);nextDetail=0;nextInfo=0;updatePresentation();return r;});
- wrap('endGame',old=>function(ok){const was=watch().playing;const r=old.apply(this,arguments);if(!was||watch().playing)return r;clearLabels();if(hud)hud.hidden=true;if(notice)notice.hidden=true;return r;});
+ wrap('reset',old=>function(){for(const [t,a]of textureOriginal){t.anisotropy=a;t.needsUpdate=true;}textureOriginal.clear();seenTextures=new WeakSet();sim=0;dropAt=-1;velocity={x:0,z:0};stats={shots:0,drops:0,hits:0,destroyed:0};radioTimes.clear();clearLabels();const r=old.apply(this,arguments);stats.total=safe(()=>E.length,0);nextDetail=0;nextInfo=0;updatePresentation();return r;});
+ wrap('endGame',old=>function(ok){const was=watch().playing;const r=old.apply(this,arguments);if(!was||watch().playing)return r;clearLabels();if(notice)notice.hidden=true;return r;});
  wrap('camUpdate',old=>function(){const r=old.apply(this,arguments),s=watch();if(s.playing&&s.drone&&!safe(()=>root.PHOTO?.on||root.BCAM?.on||root.mapOpen,false)){if(opts.droneView==='fpv')DR.g.visible=false;else{DR.g.visible=true;DR.g.scale.setScalar(.58);}}return r;});
  if(!patched.frame&&Array.isArray(safe(()=>FRAME_HOOKS,null))){FRAME_HOOKS.push(updatePresentation);patched.frame=true;}
 }
@@ -93,33 +92,24 @@ function updateTargets(s){if(!targetLayer||!opts.targetLabels||!s.playing||safe(
 }
 function updatePresentation(){const s=watch();if(doc.hidden)return;
  doc.body?.classList.toggle('hg-clear-drone',!!(opts.clearDrone&&s.playing&&s.drone));
- if(!s.playing){clearLabels();if(hud)hud.hidden=true;if(notice)notice.hidden=true;return;}
+ if(!s.playing){clearLabels();if(notice)notice.hidden=true;return;}
  if(notice){notice.hidden=!opts.hitFeedback||sim>=noticeEnd;}
  if(sim>=nextDetail){nextDetail=sim+2;safe(detail,null);}
  if(sim>=nextLabels){nextLabels=sim+.12;safe(()=>updateTargets(s),null);}
  if(sim<nextInfo)return;nextInfo=sim+.1;
- if(hud){hud.hidden=!opts.storyHUD;
-  hud.querySelector('strong').textContent=safe(()=>MI[mis].n,'Görev');
-  const total=Math.max(stats.total,s.remaining+stats.destroyed);stats.total=total;
-  const pc=progress({...s,total});hud.querySelector('.hg-track i').style.width=Math.round(pc*100)+'%';
-  const phase='Görev ilerlemesi '+stats.destroyed+'/'+total;
-  let text=phase;if(s.drone){const sig=safe(()=>DR.sig,1);text+=' · '+(opts.droneView==='fpv'?'FPV':'TAKİP')+' · '+s.ammo+' bomba';if(sig<.35)text+=' · SİNYAL ZAYIF';if(s.cooldown>0)text+=' · HAZIRLANIYOR';}
-  hud.querySelector('small').textContent=text;
- }
  const b=doc.querySelector('#kmd [data-k="bomb"]');if(b){b.setAttribute('aria-disabled',String(!!canDrop(s)));b.classList.toggle('hg-reloading',!!s.cooldown);b.title=s.ammo<=0?'Mühimmat bitti · ikmal için tanka dön':s.cooldown>0?'Bırakma mekanizması hazırlanıyor':'Oyun bombası bırak';}
 }
 function refreshPanel(){if(!panel)return;for(const input of panel.querySelectorAll('[data-hg]')){const k=input.dataset.hg;if(input.type==='checkbox')input.checked=opts[k];else input.value=opts[k];}}
 function installUI(){if(!doc.body)return;
  if(!doc.getElementById('hisar-gameplay-style')){const style=doc.createElement('style');style.id='hisar-gameplay-style';style.textContent=`
 .hg-card{border:1px solid #46605a;border-radius:12px;background:#111c20;color:#edf3ed;padding:14px;margin:12px 0;font:14px/1.5 system-ui;box-sizing:border-box;min-width:0}.hg-card h3{margin:0 0 8px;font-size:15px;letter-spacing:.5px}.hg-card p{margin:8px 0;color:#bdcec6}.hg-card button,.hg-card select{min-height:44px;border:1px solid #6a8277;border-radius:8px;background:#233b35;color:#fff;padding:8px 12px;max-width:100%;font:inherit}.hg-card label{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:10px 0}.hg-card input{width:22px;height:22px}.hg-card button:focus-visible,.hg-card select:focus-visible{outline:3px solid #a0f4c5}.hg-card small{display:block;color:#abc3b6}
-#hg-hud{position:fixed;top:max(54px,env(safe-area-inset-top));left:12px;z-index:12;pointer-events:none;max-width:min(320px,calc(100vw - 24px));padding:9px 12px;border:1px solid #78988b88;border-radius:8px;background:#091513d9;color:#f0faf4;font:12px/1.35 system-ui;box-sizing:border-box}#hg-hud strong{display:block;font-size:13px}#hg-hud small{display:block;margin-top:4px}.hg-track{height:3px;margin-top:6px;background:#536158}.hg-track i{display:block;height:100%;background:#a4eac4;width:0}
-#hg-notice{position:fixed;top:24%;left:50%;transform:translateX(-50%);z-index:13;pointer-events:none;max-width:88vw;background:#0d211ee6;border:1px solid #b8ebd4;border-radius:7px;padding:8px 13px;color:#effff5;font:700 14px system-ui;text-align:center}#hg-targets{position:fixed;inset:0;z-index:11;pointer-events:none}.hg-target{position:absolute;transform:translate(-50%,-100%);max-width:150px;padding:4px 7px;background:#101818da;border:1px solid #e7bc75;color:#fff;font:700 11px system-ui;border-radius:4px;text-align:center}.hg-target .bar{height:3px;background:#472923;margin-top:3px}.hg-target .bar i{display:block;height:100%;background:#edb171}.hg-reloading{opacity:.55!important}body.hg-clear-drone #fpvG{opacity:.3!important}body.hg-clear-drone #kmd{filter:drop-shadow(0 -3px 8px #0006)}#hg-hud[hidden],#hg-notice[hidden],#hg-targets [hidden]{display:none!important}
-@media(max-width:600px){#hg-hud{top:max(48px,env(safe-area-inset-top));max-width:200px;padding:7px 9px;font-size:11px}#hg-hud strong{font-size:12px}.hg-card{padding:10px}.hg-target{font-size:10px}#hg-notice{font-size:12px}}@media(max-height:450px){#hg-hud{top:40px;max-width:190px}#hg-hud small{font-size:10px}}`;
+#hg-notice{position:fixed;top:24%;left:50%;transform:translateX(-50%);z-index:13;pointer-events:none;max-width:88vw;background:#0d211ee6;border:1px solid #b8ebd4;border-radius:7px;padding:8px 13px;color:#effff5;font:700 14px system-ui;text-align:center}#hg-targets{position:fixed;inset:0;z-index:11;pointer-events:none}.hg-target{position:absolute;transform:translate(-50%,-100%);max-width:150px;padding:4px 7px;background:#101818da;border:1px solid #e7bc75;color:#fff;font:700 11px system-ui;border-radius:4px;text-align:center}.hg-target .bar{height:3px;background:#472923;margin-top:3px}.hg-target .bar i{display:block;height:100%;background:#edb171}.hg-reloading{opacity:.55!important}body.hg-clear-drone #fpvG{opacity:.3!important}body.hg-clear-drone #kmd{filter:drop-shadow(0 -3px 8px #0006)}#hg-notice[hidden],#hg-targets [hidden]{display:none!important}
+@media(max-width:600px){.hg-card{padding:10px}.hg-target{font-size:10px}#hg-notice{font-size:12px}}`;
  doc.head.appendChild(style);}
- if(!hud){hud=doc.createElement('div');hud.id='hg-hud';hud.hidden=true;hud.innerHTML='<strong></strong><div class="hg-track"><i></i></div><small></small>';doc.body.appendChild(hud);notice=doc.createElement('div');notice.id='hg-notice';notice.setAttribute('role','status');notice.hidden=true;doc.body.appendChild(notice);
+ if(!notice){notice=doc.createElement('div');notice.id='hg-notice';notice.setAttribute('role','status');notice.hidden=true;doc.body.appendChild(notice);
  targetLayer=doc.createElement('div');targetLayer.id='hg-targets';doc.body.appendChild(targetLayer);for(let i=0;i<4;i++){const l=doc.createElement('div');l.className='hg-target';l.hidden=true;l.innerHTML='<b></b><div class="bar"><i></i></div>';targetLayer.appendChild(l);labels.push(l);}}
  const parent=doc.getElementById('hx-settings');if(parent&&!doc.getElementById('hg-settings')){panel=doc.createElement('section');panel.id='hg-settings';panel.className='hg-card';const h=doc.createElement('h3');h.textContent='Oynanış ve görünüm · '+VERSION;panel.appendChild(h);
- for(const [key,title]of[['clearDrone','Net drone görüntüsü'],['vehicleDetail','Araç dokularını netleştir'],['targetLabels','Görünen işaretli hedef etiketleri'],['hitFeedback','Vuruş geri bildirimi'],['balancedDrops','Dengeli bomba / ikmal sistemi'],['storyHUD','Görev ilerleme paneli']]){const l=doc.createElement('label'),s=doc.createElement('span'),i=doc.createElement('input');s.textContent=title;i.type='checkbox';i.dataset.hg=key;i.onchange=()=>set({[key]:i.checked});l.append(s,i);panel.appendChild(l);}
+ for(const [key,title]of[['clearDrone','Net drone görüntüsü'],['vehicleDetail','Araç dokularını netleştir'],['targetLabels','Görünen işaretli hedef etiketleri'],['hitFeedback','Vuruş geri bildirimi'],['balancedDrops','Dengeli bomba / ikmal sistemi']]){const l=doc.createElement('label'),s=doc.createElement('span'),i=doc.createElement('input');s.textContent=title;i.type='checkbox';i.dataset.hg=key;i.onchange=()=>set({[key]:i.checked});l.append(s,i);panel.appendChild(l);}
  const label=doc.createElement('label'),text=doc.createElement('span'),select=doc.createElement('select');text.textContent='Drone kamerası';select.dataset.hg='droneView';for(const [v,t]of[['follow','Takip · gövde görünür'],['fpv','FPV · temiz ekran']]){const o=doc.createElement('option');o.value=v;o.textContent=t;select.appendChild(o);}select.onchange=()=>set({droneView:select.value});label.append(text,select);panel.appendChild(label);const note=doc.createElement('small');note.textContent='Oyun dengesi ve görsel ayarlardır; gerçek araç/nişangâh kalibrasyonu değildir. Sinyal kaybı uyarıları korunur.';panel.appendChild(note);parent.appendChild(panel);refreshPanel();}
 }
 function diagnostics(){return {version:VERSION,settings:{...opts},hooks:{...patched},stats:{...stats},customImpacts,nativeVoiceCalls,detailGroups,visibleTargetTypes:lastTargets.slice(),cooldown:Math.max(0,dropAt-sim),scene:watch()};}

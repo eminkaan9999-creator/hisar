@@ -64,7 +64,7 @@
  addEventListener('pointerdown',resumeAudio,true);addEventListener('keydown',resumeAudio,true);
  if(ready&&typeof openMenu==='function'){const original=openMenu;root.openMenu=function(){clearInputs();
   if(typeof document.exitPointerLock==='function')return original.apply(this,arguments);
-  if(game==='play')game='pause';const menu=document.getElementById('menu'),resume=document.getElementById('rs'),start=document.getElementById('go');if(menu)menu.style.display='flex';if(resume)resume.style.display=game==='pause'?'':'none';if(start)start.textContent=game==='pause'?'YENİ GÖREV':'BAŞLAT';
+  if(game==='play')game='pause';const menu=document.getElementById('menu'),resume=document.getElementById('rs'),start=document.getElementById('go');if(menu)menu.style.display='flex';if(resume)resume.style.display=game==='pause'?'':'none';if(start)start.textContent=game==='pause'?'YENİ SAVAŞ':'BAŞLAT';
  };}
  const textureOriginal=new WeakMap();let texturesChanged=0,lastQ=null,textureTimer=0;
  function textures(){if(!ready)return;const max=R.capabilities?.getMaxAnisotropy?.()||1;const level=textureLevel(typeof qlv==='string'?qlv:'orta',max);const seen=new Set();texturesChanged=0;

@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const api=require('./gameplay.js'),src=fs.readFileSync(__dirname+'/gameplay.js','utf8');
-for(const input of [null,undefined,5,[],{},'bad',{droneView:'bad',targetLabels:'false',balancedDrops:0}])test('settings normalize '+JSON.stringify(input),()=>{const v=api.settings(input);assert.equal(Object.keys(v).length,7);assert.ok(['fpv','follow'].includes(v.droneView));});
+for(const input of [null,undefined,5,[],{},'bad',{droneView:'bad',targetLabels:'false',balancedDrops:0}])test('settings normalize '+JSON.stringify(input),()=>{const v=api.settings(input);assert.equal(Object.keys(v).length,6);assert.ok(['fpv','follow'].includes(v.droneView));});
 test('unknown preference keys cannot enter settings',()=>assert.ok(!('intruder' in api.settings({intruder:true}))));
 for(const d of [0,1,2,5,8,10,20])test('falloff bounded at '+d,()=>{const f=api.blastFactor(d,10,false);assert.ok(f>=0&&f<=1);if(d>=10)assert.equal(f,0);});
 test('game blast diminishes outward and stops at cover',()=>{assert.ok(api.blastFactor(1,10,false)>api.blastFactor(8,10,false));assert.equal(api.blastFactor(1,10,true),0);});
@@ -10,7 +10,7 @@ test('arcade carry is capped and rejects teleports',()=>{assert.ok(Math.hypot(..
 const ready={playing:true,on:true,falling:false,returning:false,spin:1,ammo:5,pending:0,cooldown:0};
 for(const [change,reason]of [[{playing:false},'paused'],[{on:false},'not-ready'],[{falling:true},'not-ready'],[{returning:true},'not-ready'],[{spin:.3},'not-ready'],[{ammo:0},'empty'],[{pending:12},'busy'],[{cooldown:.4},'cooldown']])test('drop guard '+reason+JSON.stringify(change),()=>assert.equal(api.canDrop({...ready,...change}),reason));
 test('ready drone can drop',()=>assert.equal(api.canDrop(ready),''));
-test('mission progress uses native outcomes',()=>{assert.equal(api.progress({total:4,remaining:3}),.25);assert.equal(api.progress({total:0}),0);assert.equal(api.progress({finished:true}),1);});
+test('old mission progress box is deleted',()=>{assert.equal(api.progress,undefined);assert.equal(api.defaults.storyHUD,undefined);const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'gameplay.js'),'utf8');for(const gone of ['hg-hud','storyHUD','Görev ilerleme'])assert.ok(!src.includes(gone),gone);});
 function fixture(){const store=new Map([['m60v2','UNCHANGED']]),removed=[],spoken=[],events={};const root={
  console,document:{body:null,hidden:false,addEventListener:(t,f)=>events[t]=f,querySelector:()=>null},addEventListener:(t,f)=>events[t]=f,
  localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},game:'play',mode:'drone',iv:0,mis:'op_temas',lvSel:'normal',ammo:5,ammoT:0,

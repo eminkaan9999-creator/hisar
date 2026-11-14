@@ -18,7 +18,7 @@ test('the game ships its own condensed typeface with Turkish letters',()=>{
 });
 test('theme loads nothing from other sites',()=>{assert.doesNotMatch(skin,/url\(\s*["']?(?:https?:)?\/\//);assert.doesNotMatch(skin,/@import/);});
 test('menu has four icon tabs and no settings tab',()=>{
- assert.match(code,/<div class="tabs"><button data-t="g">Görev<\/button><button data-t="u">Garaj<\/button><button data-t="k">Kontroller<\/button><\/div>/);
+ assert.match(code,/<div class="tabs"><button data-t="g">Savaş<\/button><button data-t="u">Garaj<\/button><button data-t="k">Kontroller<\/button><\/div>/);
  assert.doesNotMatch(code,/<button data-t="a"/);
  for(const t of ['b','u','k'])assert.match(skin,new RegExp('\\.tabs button\\[data-t="'+t+'"\\]::before\\{'));
  assert.match(skin,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
@@ -60,4 +60,13 @@ test('map header is plain text and garage tabs carry no emoji',()=>{
 });
 test('menu camera follows the tank window instead of a fixed offset',()=>{
  assert.match(code,/SP\.getBoundingClientRect\(\)/);assert.match(skin,/#heroSp\{display:block!important;flex:0 1 min\(27vh,240px\);min-height:118px\}/);
+});
+test('rank and credits sit on two lines so the developer name is never cut off',()=>{
+ assert.match(skin,/html body #rb2\.pill\{flex:none;display:flex!important;flex-direction:column;align-items:flex-end/);
+ assert.ok(code.includes("$('rb2').innerHTML='<b>★ '+rankOf().n+'</b><i>'+SV.kr.toLocaleString('tr-TR')+' kr</i>';"));
+});
+test('result screen has a two-column layout for landscape phones and the full map opens on the safe zone',()=>{
+ assert.match(code,/@media \(orientation:landscape\) and \(max-height:520px\)\{#rep \.c\{width:min\(780px,100%\);display:grid;/);
+ assert.ok(code.includes('const v=window.MAPVIEW&&window.MAPVIEW();if(v){vx=v.x;vz=v.z;s=clamp(Math.min(W,H)/(2*v.r),s0*.9,s0*40);clampView()}'));
+ assert.match(read('experience/battle.js'),/root\.MAPVIEW=\(\)=>\{if\(!B\|\|B\.over\)return null;/);
 });

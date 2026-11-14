@@ -3,7 +3,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='1.5.0', SAVE='hisar-operations-v1';
+const VERSION='1.6.0', SAVE='hisar-operations-v1';
 const safe=(fn,d)=>{try{return fn();}catch{return d;}}, clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(v)?v:a));
 const clean=t=>typeof t==='string'?t.slice(0,160).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9\s-]/g,' ').replace(/\s+/g,' ').trim():'';
 const ORDERS=Object.freeze({
@@ -32,18 +32,20 @@ function applyOrder(unit,code,target){
  if(code===10&&(!target||unit.convoy))return {ok:false,reason:'no-position'};
  if(unit.convoy){if(![1,2,8,9].includes(code))return {ok:false,reason:'unsupported'};if(code!==8)unit.waiting=code===2;return {ok:true};}
  if(code===1||code===9){unit.cmd='follow';unit.tgt=null;}
- if(code===2){unit.cmd='hold';unit.hold={x:unit.x,z:unit.z};unit.tgt=null;}
+ // Mevzideki tanka "burada bekle" denirse mevzide kalır.
+ if(code===2){unit.cmd='hold';if(!(unit.hold&&unit.hold.position&&unit.hold.in))unit.hold={x:unit.x,z:unit.z};unit.tgt=null;}
  if(code===3){unit.cmd='attack';unit.tgt=target;unit.fire=1;}
  if(code===4)unit.fire=1;
  // The legacy AI can fire in attack mode even with fire=0, so clear that mode too.
  if(code===5){unit.fire=0;unit.tgt=null;if(unit.cmd==='attack'){unit.cmd='hold';unit.hold={x:unit.x,z:unit.z};}}
  if(code===6){unit.cmd='disperse';unit.tgt=null;}
  if(code===7){unit.cmd='retreat';unit.fire=0;unit.tgt=null;}
- if(code===10){unit.cmd='hold';unit.hold={x:target.x,z:target.z,h:target.h||0,position:true};unit.tgt=null;}
+ // Mevziye arkadaki açık taraftan girilir: ilk hedef giriş noktasıdır; dolanma, içeri girme ve "mevzideyim" (hold.in) experience/field.js içinde yürür.
+ if(code===10){const h=target.h||0;unit.cmd='hold';unit.hold={x:target.x-Math.sin(h)*9.5,z:target.z-Math.cos(h)*9.5,h,position:true,stage:1,cx:target.x,cz:target.z};unit.tgt=null;}
  return {ok:true};
 }
 function reply(unit,code){
- if(code===8){const h=Math.round(clamp(unit.hp/(unit.mx||100),0,1)*100);return 'Komutanım, '+(unit.convoy?(unit.waiting?'bekliyorum':'yoldayım'):({follow:'takipteyim',hold:unit.hold&&unit.hold.position?'mevzideyim':'bekliyorum',attack:'oyun hedefindeyim',disperse:'aralık açıyorum',retreat:'geri geliyorum'}[unit.cmd]||'hazırım'))+'. Araç durumu yüzde '+h+'.';}
+ if(code===8){const h=Math.round(clamp(unit.hp/(unit.mx||100),0,1)*100);return 'Komutanım, '+(unit.convoy?(unit.waiting?'bekliyorum':'yoldayım'):({follow:'takipteyim',hold:unit.hold&&unit.hold.position?(unit.hold.in?'mevzideyim':'mevziye gidiyorum'):'bekliyorum',attack:'oyun hedefindeyim',disperse:'aralık açıyorum',retreat:'geri geliyorum'}[unit.cmd]||'hazırım'))+'. Araç durumu yüzde '+h+'.';}
  return 'Emredersiniz komutanım. '+(unit.convoy?(unit.waiting?'Konvoy bekliyor.':'Konvoy devam ediyor.'):ORDERS[code].reply);
 }
 const goal=(type,at,text,seconds=0,foes=null)=>Object.freeze({type,at,text,seconds,foes:foes?Object.freeze([...foes]):null});
@@ -72,7 +74,14 @@ function objectiveStep(g,previous,s,dt){
  const duration=g.seconds||.5;
  return {amount:Math.min(duration,amount),done:valid&&amount>=duration&&(g.type!=='defend'||s.enemies===0)};
 }
-const core=Object.freeze({VERSION,clean,parse,ORDERS,SCENARIOS,FOES,applyOrder,assignPositions,reply,objectiveStep});
+// Sessiz ekran: görünüm adı yazıları basılmaz (düğme zaten hangi görünüşte olduğunu gösterir). Görev sırasında "vardınız" ve
+// "rota yeniden hesaplanıyor" yazıları da basılmaz; dönüş uyarısı yalnız sesli verilir; görev kartında duran hedef metni ekranın ortasına
+// ikinci kez yazılmaz. Eğitimde hepsi görünür.
+const VIEW_NOTE=/^(DIŞ GÖRÜŞ|NİŞANGÂH|KABİN ·|KABİN İÇİ|SÜRÜCÜ MAHALLİ|TANK kontrolü|UÇANGÖZ kontrolü)/;
+function quietSay(text,st){const t=String(text||'');if(!st||st.tutorial)return false;return VIEW_NOTE.test(t)||(!!st.mission&&(/^📍 VARDINIZ/.test(t)||(!!st.goal&&t===st.goal)));}
+function quietRadio(text,st){const t=String(text||'');if(!st||st.tutorial||!st.mission||!/^Navigasyon:/.test(t))return '';
+ if(/metre sonra/.test(t))return 'voice';return /noktasına ulaştınız|Rota yeniden/.test(t)?'drop':'';}
+const core=Object.freeze({VERSION,clean,parse,ORDERS,SCENARIOS,FOES,applyOrder,assignPositions,reply,objectiveStep,quietSay,quietRadio});
 if(typeof module==='object'&&module.exports)module.exports=core;
 const doc=root.document;if(!doc||root.HisarOperations)return;
 let sim=0,queue=[],feed=[],history=[],selected='all',lastOrder=new Map(),versions=new Map(),serial=0,opened=false,active=null,preparing=null,finishing=false,interacting=false,microphone=null,micTimer=null,micEpoch=0,lastPaint=-1;
@@ -99,7 +108,7 @@ function issue(recipient,code){
  const token=recipient+'|'+code;if(sim-(lastOrder.get(token)??-99)<.6)return {ok:false,reason:'duplicate'};
  const target=code===3?safe(()=>root.designate(),null):null;
  if(code===3&&!target){warn('İşaretli oyun hedefi bulunamadı.');return {ok:false,reason:'no-target'};}
- const spots=code===10?assignPositions(chosen,safe(()=>root.HisarCrewOrders.core.POSITIONS,[]),safe(()=>({x:P.x,z:P.z,r:10}),null)):null;
+ const spots=code===10?assignPositions(chosen,safe(()=>root.HisarField.positions(),[]),safe(()=>({x:P.x,z:P.z,r:10}),null)):null;
  if(code===10&&!spots.size){warn('Boş mevzi yok.');return {ok:false,reason:'no-position'};}
  let accepted=[];for(const u of chosen){const result=applyOrder(u,code,code===10?spots.get(u):target);if(result.ok)accepted.push(u);}
  if(!accepted.length){warn('Bu araç seçilen komutu uygulayamıyor.');return {ok:false,reason:'unsupported'};}
@@ -137,6 +146,8 @@ function paintRoster(){if(!roster)return;const signature=units().map(u=>u.cs+':'
 function close(){opened=false;if(radioPanel)radioPanel.hidden=true;cancelMic();safe(()=>{cmdOpen=0;},null);if(returnFocus?.isConnected)safe(()=>returnFocus.focus({preventScroll:true}),null);returnFocus=null;}
 function toggle(){if(opened){close();return;}if(!playing())return;opened=true;returnFocus=doc.activeElement;radioPanel.hidden=false;safe(()=>{cmdOpen=1;cmdStep=1;},null);safe(()=>root.dispatchEvent(new root.Event('hisar:release-inputs')),null);paintRoster();roster.focus({preventScroll:true});}
 function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')return;root[name]=factory(root[name]);hooks[name]=true;}
+let objTick=0,objBottom=-1;
+const quietState=()=>({tutorial:safe(()=>!!TUT.on,false),mission:!!active&&!active.finished,goal:safe(()=>active.config.goals[active.step].text,'')});
 function point(x,z){
  for(let ring=0;ring<7;ring++)for(let j=0;j<(ring?16:1);j++){const a=j/16*Math.PI*2,px=clamp(x+Math.cos(a)*ring*5,-155,155),pz=clamp(z+Math.sin(a)*ring*5,-155,155);if(safe(()=>hAt(px,pz)>-.5&&!BLD.some(b=>!b.dead&&Math.hypot(b.x-px,b.z-pz)<(b.r||5)+8),false))return {x:px,z:pz};}
  return {x:0,z:0};
@@ -161,7 +172,8 @@ function enterGoal(){
  if(convoy){convoy.goal=-1;convoy.path=[];}
  // Oyun hedefleri aynı anda değil, tek tek çıkar: sahadaki vurulmadan sıradaki gelmez.
  if(g.foes){active.defenceSpawned=true;active.foes=[...g.foes];}
- warn(g.text);paintObjective();
+ // Hedef metni yalnız görev kartında durur; ekranın ortasına ikinci kez yazılmaz.
+ if(radioStatus)radioStatus.textContent=g.text;paintObjective();
 }
 function convoyStep(dt,g,p){if(!convoy||g.type!=='escort')return;
  if(convoy.goal!==active.step){const path=safe(()=>root.astar(convoy.x,convoy.z,p.x,p.z),null);convoy.path=Array.isArray(path)?path:[[convoy.x,convoy.z],[p.x,p.z]];convoy.goal=active.step;convoy.index=1;}
@@ -186,7 +198,7 @@ function finishMission(ok,text){if(!active||active.finished)return;finishing=tru
 function paintObjective(){if(!objectivePanel||!active)return;objectivePanel.hidden=!playing()||active.finished;if(objectivePanel.hidden)return;const g=active.config.goals[active.step],p=active.points[g.at];
  objectivePanel.querySelector('strong').textContent=active.config.title+' · '+(active.step+1)+'/'+active.config.goals.length;objectivePanel.querySelector('p').textContent=g.text;
  const percent=clamp(active.amount/(g.seconds||.5),0,1);objectivePanel.querySelector('progress').value=percent;
- objectivePanel.querySelector('small').textContent=Math.round(Math.hypot(P.x-p.x,P.z-p.z))+' oyun m · '+allies().length+' dost araç'+(g.seconds?' · '+Math.ceil(active.amount)+'/'+g.seconds+' sn':'')+(g.foes?' · Kalan hedef: '+(E.length+(active.foes?active.foes.length:0)):'')+(g.type==='escort'&&convoy?(convoy.waiting?' · İKMAL 1 bekliyor: telsizden Takip et de.':' · Konvoy yakındaysan ilerler.'):'');
+ objectivePanel.querySelector('small').textContent=Math.round(Math.hypot(P.x-p.x,P.z-p.z))+' m'+(g.foes?' · Kalan hedef: '+(E.length+(active.foes?active.foes.length:0)):'')+(g.type==='escort'&&convoy?(convoy.waiting?' · İKMAL 1 bekliyor: telsizden Takip et de.':' · Konvoy yakındaysan ilerler.'):'');
  const b=objectivePanel.querySelector('button');b.hidden=g.type!=='interact';b.disabled=mode!=='tank'||Math.hypot(P.x-p.x,P.z-p.z)>=14;
 }
 function debrief(a,ok){const parent=doc.querySelector('#rep .c')||doc.getElementById('mpBody')||doc.getElementById('mp');if(!parent)return;doc.getElementById('hr-debrief')?.remove();const box=doc.createElement('div');box.className='hr-card';box.id='hr-debrief';const h=doc.createElement('h3');h.textContent=ok?'GÖREV TAMAMLANDI':'YENİDEN DENE';const p=doc.createElement('p');p.textContent=a.config.title+' · '+Math.round(a.elapsed)+' saniye · '+allies().length+'/'+a.initial+' dost araç döndü · '+history.length+' telsiz emri';const b=doc.createElement('button');b.type='button';b.textContent=ok?'Sıradaki göreve geç':'Bu görevi yeniden oyna';const idx=SCENARIOS.findIndex(c=>c.id===a.id);b.onclick=()=>start(ok?(idx+1)%SCENARIOS.length:idx);box.append(h,p,b);parent.appendChild(box);}
@@ -196,6 +208,8 @@ function connect(){
  wrap('cmdApply',old=>function(who,c){const recipient=typeof who==='string'?who:who===0?'all':safe(()=>AL[who-1].cs,'missing');return issue(recipient,c);});
  wrap('cmdToggle',()=>toggle);wrap('cmdClose',old=>function(){close();return old.apply(this,arguments);});
  wrap('cmdKey',old=>function(n){if(opened&&ORDERS[n])return issue(selected,n);return old.apply(this,arguments);});
+ wrap('say',old=>function(t){if(quietSay(t,quietState()))return;return old.apply(this,arguments);});
+ wrap('radio',old=>function(t){const q=quietRadio(t,quietState());if(q==='drop')return;if(q==='voice'){safe(()=>{if(SV.radioV!==0)root.CREW.radio(String(t).replace(/^Navigasyon:\s*/,''));},null);return;}return old.apply(this,arguments);});
  wrap('initExtra',old=>function(){const prev=SV.form;try{if(preparing)SV.form=3;return old.apply(this,arguments);}finally{SV.form=prev;}});
  wrap('startMission',old=>function(){if(preparing){initMission(preparing);return;}return old.apply(this,arguments);});
  wrap('openMenu',old=>function(){close();interacting=false;if(objectivePanel)objectivePanel.hidden=true;return old.apply(this,arguments);});
@@ -237,5 +251,5 @@ function installUI(){if(!doc.body||radioPanel)return;const mpEl=doc.getElementBy
 }
 function leave(){close();interacting=false;queue=[];safe(()=>root.HisarRadioSound.stop(),null);}
 root.HisarOperations=Object.freeze({version:VERSION,core,issue,parse,start,toggle,close,listen,connect,diagnostics:()=>({version:VERSION,hooks:{...hooks},queued:queue.length,feed:feed.map(m=>({...m})),orders:history.map(h=>({...h})),microphone:!!microphone,selected,allies:allies().map(a=>({cs:a.cs,cmd:a.cmd,fire:a.fire,x:a.x,z:a.z})),mission:active?{id:active.id,foesLeft:E.length+(active.foes?active.foes.length:0),step:active.step,amount:active.amount,elapsed:active.elapsed,finished:active.finished,goal:active.config.goals[active.step]||null,points:active.points}:null,convoy:convoy?{x:convoy.x,z:convoy.z,waiting:convoy.waiting,path:convoy.path.length}:null})});
-connect();installUI();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{safe(()=>{for(const a of AL){if(a.dead||a.cmd!=='hold'||!a.hold||!a.hold.position)continue;if(Math.hypot(a.x-a.hold.x,a.z-a.hold.z)<2.6){let d=a.hold.h-a.h;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;a.h+=d*.08;}}},null);const rb=doc.getElementById('radio');if(rb)rb.style.pointerEvents=+rb.style.opacity>0?'auto':'none';const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
+connect();installUI();if(typeof FRAME_HOOKS!=='undefined')FRAME_HOOKS.push(()=>{if(objectivePanel&&!objectivePanel.hidden&&(++objTick&15)===0){const b=Math.round(objectivePanel.getBoundingClientRect().bottom);if(b!==objBottom){objBottom=b;doc.body.style.setProperty('--hrObjB',b+'px');}}const rb=doc.getElementById('radio');if(rb)rb.style.pointerEvents=+rb.style.opacity>0?'auto':'none';const b=doc.getElementById('hr-radio-entry');if(b)b.hidden=!playing()||!allies().length;if(objectivePanel&&!playing())objectivePanel.hidden=true;});doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});root.addEventListener('blur',leave);root.addEventListener('pagehide',leave);doc.addEventListener('visibilitychange',()=>{if(doc.hidden)leave();});
 })(typeof window!=='undefined'?window:globalThis);

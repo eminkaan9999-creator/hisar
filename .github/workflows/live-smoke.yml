@@ -34,7 +34,7 @@ jobs:
           const fs=require('node:fs'),crypto=require('node:crypto');
           const base='https://eminkaan9999-creator.github.io/hisar/';
           const expected=JSON.parse(fs.readFileSync('version.json','utf8')).v;
-          const paths=['index.html','version.json','sw.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-missions.js','experience/radio-sound.js','experience/simple-settings.js','assets/radio/ack.mp3'].filter(p=>fs.existsSync(p));
+          const paths=['index.html','version.json','sw.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-missions.js','experience/radio-sound.js','experience/simple-settings.js','experience/crew-orders.js','experience/field.js','assets/radio/ack.mp3'].filter(p=>fs.existsSync(p));
           const manifestPath='assets/radio/tr/manifest.json';
           const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
           if(fs.existsSync(manifestPath)){

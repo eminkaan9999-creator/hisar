@@ -72,7 +72,6 @@ body.hisar-crosshair-contrast #cross{filter:drop-shadow(0 1px 2px #000) drop-sha
  body #kmd .an.l{left:24%!important;right:auto!important}
  body #kmd .an.r{right:24%!important;left:auto!important}
  body #kmd .bd{inset:24% 0 0 0!important;border-radius:36px 36px 46px 46px/18px 18px 34px 34px!important;background:linear-gradient(180deg,#2d3237 0,#1d2024 46%,#121417 100%)!important}
- body #kmd .bd::before{content:"";position:absolute;left:50%;top:6%;width:84px;height:6px;transform:translateX(-50%);background:radial-gradient(circle,#a6ffb8 0 2.2px,transparent 2.8px) 0 0/17px 6px repeat-x;filter:drop-shadow(0 0 3px rgba(125,224,122,.8))}
  body #kmd .st{top:40%!important;bottom:auto!important;width:76px!important;height:76px!important;max-width:none!important;max-height:none!important}
  body #kmd .st.l{left:3%!important;right:auto!important}
  body #kmd .st.r{right:3%!important;left:auto!important}
@@ -90,22 +89,13 @@ body.hisar-crosshair-contrast #cross{filter:drop-shadow(0 1px 2px #000) drop-sha
  body #kmd .tk{left:26%!important;right:auto!important;top:58%!important;bottom:auto!important}
  body #kmd .c2{left:auto!important;right:26%!important;top:58%!important;bottom:auto!important}
  body #kmd .bomb{left:50%!important;right:auto!important;top:58%!important;bottom:auto!important;transform:translateX(-50%)!important;width:38px!important;height:38px!important;max-width:none!important;max-height:none!important}
- body #kmd .sc{left:4%!important;right:4%!important;top:70%!important;bottom:auto!important;height:28%!important}
 }
-/* Gimbal kamera: kumanda ekranında dronun altı canlı görünür; telemetri kenarlarda okunur kalır */
-body #kmd .sc canvas.gim{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:inherit;pointer-events:none;z-index:0}
-body #kmd .sc::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(90deg,rgba(3,8,5,.6),rgba(3,8,5,0) 32%,rgba(3,8,5,0) 68%,rgba(3,8,5,.6))}
-body #kmd .sc>span{position:relative;z-index:1;text-shadow:0 1px 2px #000,0 0 6px #000}
-body #kmd .sc>span:nth-child(odd){text-align:left}
-body #kmd .sc>span:nth-child(even){text-align:right}
 /* Yatay telefon düzeni: kumanda parçaları birbirine binmez; portre düzeni bu kurala dahil değildir */
 @media (min-aspect-ratio:1/1) and (max-height:500px){
  body #kmd{width:min(860px,calc(100vw - 16px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)))!important;height:clamp(140px,38vmin,156px)!important}
- body #kmd .lg{display:none!important}
  body #kmd .sh{top:5px!important;height:26px!important}
  body #kmd .st{top:36px!important;bottom:auto!important;width:56px!important;height:56px!important;max-width:none!important;max-height:none!important}
  body #kmd .st small{white-space:nowrap!important;font-size:8px!important;letter-spacing:0!important}
- body #kmd .sc{top:34px!important;bottom:52px!important;left:22%!important;right:22%!important;height:auto!important;font-size:11px!important;line-height:1.3!important}
  body #kmd .tk,body #kmd .c2{top:40px!important;bottom:auto!important}
  body #kmd .tk{left:17%!important;right:auto!important}
  body #kmd .c2{right:17%!important;left:auto!important}
@@ -242,28 +232,6 @@ html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
 @media (max-width:600px) and (orientation:portrait){
  html body #menu#menu #mp#mp .tabs{display:grid!important;width:100%!important;box-sizing:border-box!important;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr)!important;gap:2px!important;padding:4px!important}
  html body #menu#menu #mp#mp .tabs button{min-width:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:8px 1px!important;font-size:8.5px!important;overflow:hidden!important;letter-spacing:0!important;white-space:nowrap!important;min-height:48px!important}
- /* v76: dron kumandası büyüdü; düğmeler ve ekran daha büyük. Üstündeki öğeler --kmdH ile birlikte kayar */
- body{--kmdH:clamp(300px,46vh,400px)}
- body #kmd#kmd{height:var(--kmdH)!important}
- body #kmd#kmd .an{height:13%!important}
- body #kmd#kmd .bd{inset:12% 0 0 0!important}
- body #kmd#kmd .bd::before{top:1.5%!important}
- body #kmd#kmd .sh{top:15%!important;height:11%!important;width:22%!important;font-size:10.5px!important;border-radius:10px!important;margin:0!important}
- body #kmd#kmd .sh.l2{left:3%!important}
- body #kmd#kmd .sh.l1{left:26.5%!important}
- body #kmd#kmd .sh.r1{right:26.5%!important}
- body #kmd#kmd .sh.r2{right:3%!important}
- body #kmd#kmd .kz{top:28%!important;width:120px!important;height:7.2%!important;font-size:11px!important}
- body #kmd#kmd .st{top:37%!important;width:84px!important;height:84px!important}
- body #kmd#kmd .st small{font-size:8px!important;bottom:-13px!important}
- body #kmd#kmd .rd{width:46px!important;height:46px!important;font-size:10px!important;margin:0!important}
- body #kmd#kmd .h{left:27%!important;top:37%!important}
- body #kmd#kmd .ps{top:37%!important}
- body #kmd#kmd .c1{right:27%!important;top:37%!important}
- body #kmd#kmd .tk{left:27%!important;top:50.5%!important}
- body #kmd#kmd .c2{right:27%!important;top:50.5%!important}
- body #kmd#kmd .bomb{top:50.5%!important;width:50px!important;height:50px!important}
- body #kmd#kmd .sc{top:66.5%!important;height:31.5%!important;left:4%!important;right:4%!important;font-size:12px!important;line-height:1.45!important}
 }
 /* v77: sade menü — tek görev listesi, kısa kartlar, fazladan açıklama ve günlük görev kutusu yok */
 #tg #dly{display:none!important}
@@ -286,9 +254,6 @@ html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
  body #hr-objective#hr-objective{top:calc(64px + env(safe-area-inset-top,0px))!important}
  body #uZoom#uZoom{top:calc(170px + env(safe-area-inset-top,0px))!important}
  body #drvH#drvH{top:auto!important;bottom:calc(var(--pad,118px) + 240px + env(safe-area-inset-bottom,0px))!important}
- body #kmd#kmd .rd{width:38px!important;height:38px!important}
- body #kmd#kmd .bomb{width:40px!important;height:40px!important}
- body #kmd#kmd .st{width:72px!important;height:72px!important}
 }
 /* v79: kısa yatay telefon (667×375): bildirim, sürücü ipucu ve kumanda çubukları kendi alanında */
 @media (min-aspect-ratio:1/1) and (max-height:420px) and (max-width:760px){
@@ -300,20 +265,57 @@ html,body{overflow-x:hidden!important;overscroll-behavior-x:none}
 @media (min-aspect-ratio:1/1) and (max-height:500px){
  body #radio#radio#radio{white-space:normal!important;max-width:min(340px,calc(100vw - 460px))!important;max-height:62px!important;overflow:hidden!important;box-sizing:border-box!important}
 }
-/* v80: uzun dikey telefonda kumanda 410 px; düğmeler sıkıştırıldı, ekran yukarı doğru büyüdü (176 px) */
-@media (max-width:600px) and (orientation:portrait) and (min-height:750px){
- body{--kmdH:410px}
- body #kmd#kmd .an{height:50px!important}
- body #kmd#kmd .bd{inset:40px 0 0 0!important}
- body #kmd#kmd .sh{top:50px!important;height:36px!important}
- body #kmd#kmd .kz{top:92px!important;height:24px!important}
- body #kmd#kmd .st{top:122px!important;width:76px!important;height:76px!important}
- body #kmd#kmd .rd{width:44px!important;height:44px!important}
- body #kmd#kmd .h,body #kmd#kmd .ps,body #kmd#kmd .c1{top:122px!important}
- body #kmd#kmd .tk,body #kmd#kmd .c2,body #kmd#kmd .bomb{top:170px!important}
- body #kmd#kmd .bomb{width:46px!important;height:46px!important}
- body #kmd#kmd .sc{top:226px!important;bottom:8px!important;height:auto!important;font-size:13px!important}
-}
 /* v80: ipucu kutuları yalnız eğitimde görünür; bildirimler dokununca kapanır */
 body:not(.tut) #coach{display:none!important}
 #msg,#hg-notice{pointer-events:auto!important}
+/* v85: kumandada ekran yok ve kumanda alçaldı. Pil, gövdedeki beş ışıkla gösterilir (her ışık %20; son ışık kırmızı). */
+body #kmd#kmd .bd::before,body #kmd#kmd .bd::after{content:"";position:absolute;left:calc(50% - 42px);top:8px;width:84px;height:6px;transform:none;pointer-events:none}
+body #kmd#kmd .bd::before{background:radial-gradient(circle,#3b4147 0 2.2px,transparent 2.8px) 0 0/17px 6px repeat-x;filter:none}
+body #kmd#kmd .bd::after{width:calc(var(--bat5,5) * 17px);background:radial-gradient(circle,#a6ffb8 0 2.2px,transparent 2.8px) 0 0/17px 6px repeat-x;filter:drop-shadow(0 0 3px rgba(125,224,122,.8))}
+body #kmd#kmd.low .bd::after{background-image:radial-gradient(circle,#ff7a6a 0 2.2px,transparent 2.8px);filter:drop-shadow(0 0 3px rgba(255,90,70,.9))}
+@media (orientation:portrait) and (max-width:1100px){
+ body{--kmdH:214px}
+ body #kmd#kmd{height:var(--kmdH)!important;width:min(520px,98vw)!important}
+ body #kmd#kmd .gr{display:none!important}
+ body #kmd#kmd .an{top:0!important;height:34px!important;width:14px!important;border-radius:7px 7px 3px 3px!important;transform:none!important}
+ body #kmd#kmd .an.l{left:24%!important;right:auto!important}
+ body #kmd#kmd .an.r{right:24%!important;left:auto!important}
+ body #kmd#kmd .bd{inset:26px 0 0 0!important}
+ body #kmd#kmd .bd::before,body #kmd#kmd .bd::after{top:6px!important}
+ body #kmd#kmd .sh{top:40px!important;bottom:auto!important;height:36px!important;width:22%!important;font-size:10.5px!important;letter-spacing:0!important;padding:0 2px!important;margin:0!important;border-radius:10px!important;white-space:nowrap!important}
+ body #kmd#kmd .sh.l2{left:3%!important;right:auto!important}
+ body #kmd#kmd .sh.l1{left:26.5%!important;right:auto!important}
+ body #kmd#kmd .sh.r1{right:26.5%!important;left:auto!important}
+ body #kmd#kmd .sh.r2{right:3%!important;left:auto!important}
+ body #kmd#kmd .kz{top:82px!important;bottom:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:120px!important;height:24px!important;font-size:11px!important}
+ body #kmd#kmd .st{top:112px!important;bottom:auto!important;width:76px!important;height:76px!important;max-width:none!important;max-height:none!important}
+ body #kmd#kmd .st.l{left:3%!important;right:auto!important}
+ body #kmd#kmd .st.r{right:3%!important;left:auto!important}
+ body #kmd#kmd .st small{font-size:8px!important;bottom:-13px!important;letter-spacing:0!important;white-space:nowrap!important}
+ body #kmd#kmd .rd{width:44px!important;height:44px!important;font-size:10px!important;margin:0!important;padding:0!important;box-sizing:border-box!important;max-width:none!important;max-height:none!important}
+ body #kmd#kmd .h{left:27%!important;right:auto!important;top:112px!important;bottom:auto!important}
+ body #kmd#kmd .ps{left:50%!important;right:auto!important;top:112px!important;bottom:auto!important;transform:translateX(-50%)!important}
+ body #kmd#kmd .c1{left:auto!important;right:27%!important;top:112px!important;bottom:auto!important}
+ body #kmd#kmd .tk{left:27%!important;right:auto!important;top:160px!important;bottom:auto!important}
+ body #kmd#kmd .c2{left:auto!important;right:27%!important;top:160px!important;bottom:auto!important}
+ body #kmd#kmd .bomb{left:50%!important;right:auto!important;top:160px!important;bottom:auto!important;transform:translateX(-50%)!important;width:46px!important;height:46px!important;max-width:none!important;max-height:none!important}
+}
+@media (min-aspect-ratio:1/1) and (max-height:500px){
+ body #kmd#kmd{height:112px!important}
+ body #kmd#kmd .an{display:none!important}
+ body #kmd#kmd .kz{top:5px!important;height:24px!important}
+ body #kmd#kmd .tk{left:19%!important;right:auto!important;top:44px!important;bottom:auto!important}
+ body #kmd#kmd .c2{right:19%!important;left:auto!important;top:44px!important;bottom:auto!important}
+ body #kmd#kmd .h,body #kmd#kmd .ps,body #kmd#kmd .c1{top:44px!important;bottom:auto!important}
+ body #kmd#kmd .bomb{top:39px!important;bottom:auto!important}
+ body #kmd#kmd .bd::before,body #kmd#kmd .bd::after{top:auto!important;bottom:7px!important}
+}
+/* v85: görevlerde tek görev kartı vardır; eski GÖREV kutusu gizlenir. Yatayda kart yukarı, çentiğin dışına alınır; yaralanma kutusu kartın altına iner. */
+body.hr-mission-active #uInfo{display:none!important}
+@media (min-aspect-ratio:1/1) and (max-height:500px){
+ body #hr-objective#hr-objective{top:calc(62px + env(safe-area-inset-top,0px))!important;left:calc(12px + env(safe-area-inset-left,0px))!important;width:min(200px,calc(228px - env(safe-area-inset-left,0px)))!important}
+ body.hr-mission-active #crewS{top:calc(var(--hrObjB,136px) + 6px)!important}
+}
+@media (min-width:601px) and (min-height:501px){
+ body #hr-objective#hr-objective{top:96px!important}
+}

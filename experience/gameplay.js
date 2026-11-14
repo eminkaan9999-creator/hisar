@@ -71,7 +71,7 @@ function installHooks(){patchVoices();
  wrap('killE',old=>function(e){const was=safe(()=>E.includes(e),false);const r=old.apply(this,arguments);if(was&&!safe(()=>E.includes(e),false))stats.destroyed++;return r;});
  wrap('reset',old=>function(){for(const [t,a]of textureOriginal){t.anisotropy=a;t.needsUpdate=true;}textureOriginal.clear();seenTextures=new WeakSet();sim=0;dropAt=-1;velocity={x:0,z:0};stats={shots:0,drops:0,hits:0,destroyed:0,total:0};radioTimes.clear();clearLabels();const r=old.apply(this,arguments);stats.total=safe(()=>E.length,0);nextDetail=0;nextInfo=0;updatePresentation();return r;});
  wrap('endGame',old=>function(ok){const was=watch().playing;const r=old.apply(this,arguments);if(!was||watch().playing)return r;clearLabels();if(hud)hud.hidden=true;if(notice)notice.hidden=true;return r;});
- wrap('camUpdate',old=>function(){const r=old.apply(this,arguments),s=watch();if(s.playing&&s.drone&&!safe(()=>root.PHOTO?.on||root.BCAM?.on||root.mapOpen||kc.t>0,false)){if(opts.droneView==='fpv')DR.g.visible=false;else{DR.g.visible=true;DR.g.scale.setScalar(.58);}}return r;});
+ wrap('camUpdate',old=>function(){const r=old.apply(this,arguments),s=watch();if(s.playing&&s.drone&&!safe(()=>root.PHOTO?.on||root.BCAM?.on||root.mapOpen,false)){if(opts.droneView==='fpv')DR.g.visible=false;else{DR.g.visible=true;DR.g.scale.setScalar(.58);}}return r;});
  if(!patched.frame&&Array.isArray(safe(()=>FRAME_HOOKS,null))){FRAME_HOOKS.push(updatePresentation);patched.frame=true;}
 }
 function detail(){if(!opts.vehicleDetail||typeof R==='undefined')return;const max=clamp(safe(()=>R.capabilities.getMaxAnisotropy(),1),1,8,1);

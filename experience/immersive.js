@@ -54,8 +54,7 @@
         thermal: m === 'tank' ? (typeof SGT !== 'undefined' && !!SGT && SGT.m === 1) :
           (m === 'drone' && typeof DR !== 'undefined' && !!DR && !!DR.th),
         drone: m === 'drone' && typeof DR !== 'undefined' && !!DR && !!DR.on,
-        special: !!root.mapOpen || !!root.PHOTO?.on || !!root.BCAM?.on ||
-          (typeof kc !== 'undefined' && !!kc && kc.t > 0) };
+        special: !!root.mapOpen || !!root.PHOTO?.on || !!root.BCAM?.on };
     }, { mode: '', playing: false, view: -1, thermal: false, drone: false, special: true });
   }
   function refreshVoices() {

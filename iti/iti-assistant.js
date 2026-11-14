@@ -3,7 +3,7 @@
 (function(global){
   "use strict";
   const topics = [
-    {pattern:/yardım|neler yapabilirsin|merhaba/i,answer:"Ben İTİ, HİSAR eğitim asistanıyım. Eğitim hedeflerini açıklayabilir, oturum sonunda performansını değerlendirebilir ve gelişim önerileri sunabilirim."},
+    {pattern:/yardım|neler yapabilirsin|merhaba/i,answer:"Ben İTİ, ÇELİK BÖRÜ eğitim asistanıyım. Eğitim hedeflerini açıklayabilir, oturum sonunda performansını değerlendirebilir ve gelişim önerileri sunabilirim."},
     {pattern:/sürüş|kontrol|manevra/i,answer:"Sürüş eğitiminde kontrollü hız, dengeli yönlendirme ve güvenli duruşa odaklan. Simülasyon sonunda tamamlanan parkur ve hata sayısını karşılaştır."},
     {pattern:/uçangöz|drone|dron|uçuş/i,answer:"Uçuş eğitiminde arayüz hâkimiyeti, istikrarlı kontrol ve güvenli iniş performansını değerlendir. Gerçek uçuşlarda yerel kurallara uy."},
     {pattern:/puan|performans|değerlendir|sonuç/i,answer:"Değerlendirme için oturum verisi gerekir. evaluateSession({durationSeconds,objectivesCompleted,objectivesTotal,errors}) fonksiyonuyla eğitim puanını hesaplayabilirsin."},

@@ -64,7 +64,7 @@
  addEventListener('pointerdown',resumeAudio,true);addEventListener('keydown',resumeAudio,true);
  if(ready&&typeof openMenu==='function'){const original=openMenu;root.openMenu=function(){clearInputs();
   if(typeof document.exitPointerLock==='function')return original.apply(this,arguments);
-  if(game==='play')game='pause';const menu=document.getElementById('menu'),resume=document.getElementById('rs'),start=document.getElementById('go');if(menu)menu.style.display='flex';if(resume)resume.style.display=game==='pause'?'':'none';if(start)start.textContent=game==='pause'?'↻ YENİ GÖREV':'▶ BAŞLAT';
+  if(game==='play')game='pause';const menu=document.getElementById('menu'),resume=document.getElementById('rs'),start=document.getElementById('go');if(menu)menu.style.display='flex';if(resume)resume.style.display=game==='pause'?'':'none';if(start)start.textContent=game==='pause'?'YENİ GÖREV':'BAŞLAT';
  };}
  const textureOriginal=new WeakMap();let texturesChanged=0,lastQ=null,textureTimer=0;
  function textures(){if(!ready)return;const max=R.capabilities?.getMaxAnisotropy?.()||1;const level=textureLevel(typeof qlv==='string'?qlv:'orta',max);const seen=new Set();texturesChanged=0;
@@ -78,7 +78,7 @@
   const previousPosition=new THREE.Vector3(),previousRotation=new THREE.Quaternion(),original=camUpdate;
   root.camUpdate=function(){const now=performance.now(),dt=(now-cameraTime)/1000;cameraTime=now;const oldShake=typeof shake==='number'?shake:0;
    try{if(opts.reduceShake&&typeof shake==='number')shake=oldShake*.2;original.apply(this,arguments);}finally{if(typeof shake==='number')shake=oldShake;}
-   const eligible=opts.smoothCamera&&!reduceMotion.matches&&game==='play'&&mode==='tank'&&iv===0&&!root.mapOpen&&!root.PHOTO?.on&&!root.BCAM?.on&&!(typeof kc!=='undefined'&&kc.t>0);
+   const eligible=opts.smoothCamera&&!reduceMotion.matches&&game==='play'&&mode==='tank'&&iv===0&&!root.mapOpen&&!root.PHOTO?.on&&!root.BCAM?.on;
    const state=String(mode)+'|'+String(iv)+'|'+String(eligible);
    if(eligible&&state===cameraState&&dt>0&&dt<.25&&previousPosition.distanceToSquared(CAM.position)<2500){const a=alpha(dt);previousPosition.lerp(CAM.position,a);previousRotation.slerp(CAM.quaternion,a);CAM.position.copy(previousPosition);CAM.quaternion.copy(previousRotation);cameraFrames++;}
    else{previousPosition.copy(CAM.position);previousRotation.copy(CAM.quaternion);}cameraState=state;

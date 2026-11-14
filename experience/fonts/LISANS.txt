@@ -1,0 +1,15 @@
+HİSAR DAR yazı tipi
+===================
+
+hisar-dar-400.woff ve hisar-dar-700.woff dosyaları, "TeX Gyre Heros Cn" (Regular ve Bold)
+yazı tipinin Latin ve Türkçe harflerini içeren küçültülmüş alt kümesidir.
+
+Kaynak yazı tipi : TeX Gyre Heros Cn 2.004 — GUST e-foundry
+                   (B. Jackowski, J. M. Nowacki; URW++ Nimbus Sans L temel alınarak)
+                   http://www.gust.org.pl/projects/e-foundry/tex-gyre
+Lisans           : GUST Font License (GFL) — LaTeX Project Public License 1.3c ile uyumludur.
+                   http://www.gust.org.pl/fonts/licenses/GUST-FONT-LICENSE.txt
+
+Yapılan değişiklik: yalnız oyunda kullanılan karakterler bırakıldı, dosya WOFF biçimine çevrildi
+ve lisansın isteğine uyularak türetilmiş dosyalara yeni bir ad ("Hisar Dar") verildi.
+Harf çizimlerine dokunulmadı.

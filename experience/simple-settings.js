@@ -95,18 +95,16 @@
       const style = doc.createElement('style'); style.id = 'hs-style';
       style.textContent = `
       body.hisar-simple #hx-settings > :not(#hs-simple){display:none!important}
-      body.hisar-simple #ta > :not(#hs-settings-link){display:none!important}
       body.hisar-simple #hisar-fps{display:none!important}
-      #hs-simple{padding:4px 0;max-width:100%;color:#eaf5f1}
-      #hs-simple .hs-auto{margin:0 0 18px;padding:13px 14px;border:1px solid #41635b;border-radius:12px;background:#172d29;line-height:1.5}
-      #hs-simple .hs-auto strong{display:block;font-size:16px}
-      #hs-simple .hs-auto span{font-size:13px;color:#c2d5d0}
-      #hs-simple label{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:64px;border-bottom:1px solid #32494a;padding:8px 0}
-      #hs-simple select{width:142px;max-width:52%;min-height:44px;background:#12272b;color:#fff;border:1px solid #66877f;border-radius:9px;padding:8px;font:inherit}
-      #hs-simple input[type=checkbox]{width:24px;height:24px;accent-color:#8cdac2}
-      #hs-note{font-size:12px;color:#b8ceca;line-height:1.5;margin-top:18px}
-      #hs-simple :is(select,input):focus-visible{outline:3px solid #a5f4d7;outline-offset:4px}
-      #hs-settings-link{padding:18px;line-height:1.6}#hs-settings-link button{display:block;min-height:44px;margin-top:14px}
+      #hs-simple{padding:4px 0;max-width:100%;color:var(--kemik,#f3f5ec)}
+      #hs-simple .hs-auto{margin:0 0 14px;padding:11px 12px;border:1px solid var(--cizgi,#4a4f43);border-left:3px solid var(--yesil,#84c63c);border-radius:3px;background:rgba(0,0,0,.28);line-height:1.35}
+      #hs-simple .hs-auto strong{display:block;font-size:17px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+      #hs-simple .hs-auto span{font-size:14px;color:var(--kemik2,#bdc3b2)}
+      #hs-simple label{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:60px;border-bottom:1px solid var(--cizgi,#4a4f43);padding:8px 0;font-size:17px;font-weight:700}
+      #hs-simple select{width:150px;max-width:52%;min-height:44px;background:var(--zirh,#2b2e28);color:#fff;border:1px solid var(--cizgi,#4a4f43);border-radius:3px;padding:8px;font:inherit}
+      #hs-simple input[type=checkbox]{width:26px;height:26px;accent-color:var(--yesil,#84c63c)}
+      #hs-note{font-size:13.5px;color:var(--kemik2,#bdc3b2);line-height:1.4;margin-top:14px}
+      #hs-simple :is(select,input):focus-visible{outline:3px solid var(--sari,#f3c20f);outline-offset:4px}
       @media(max-width:360px){#hs-simple label{font-size:14px;gap:8px}#hs-simple select{width:122px}#hs-simple .hs-auto{padding:10px}}
       `;
       doc.head.appendChild(style);
@@ -125,13 +123,6 @@
     const entry = doc.getElementById('hisar-experience-entry'); if (entry) entry.textContent = 'AYARLAR';
     const title = doc.getElementById('hx-title'); if (title) title.textContent = 'Oyun Ayarları';
     const subtitle = doc.querySelector('#hisar-experience .hx-head .hx-muted'); if (subtitle) subtitle.textContent = 'Az ayar, doğrudan oyun. Açıkken oyun duraklatılır.';
-    const old = doc.getElementById('ta');
-    if (old && !doc.getElementById('hs-settings-link')) {
-      const link = doc.createElement('div'); link.id = 'hs-settings-link';
-      link.textContent = 'Grafikler cihazına göre otomatik ayarlanır.';
-      const button = doc.createElement('button'); button.type = 'button'; button.textContent = 'Ses, kumanda ve zorluk';
-      button.addEventListener('click', () => root.HisarExperience?.open('settings')); link.appendChild(button); old.prepend(link);
-    }
     graphics(); apply();
     return true;
   }
@@ -142,7 +133,7 @@
     safe(() => B.auto(true), null);
     root.perfAdapt = function (fps) {
       safe(() => B.auto(true), null);
-      const eligible = !doc.hidden && safe(() => game === 'play' && !root.mapOpen && !root.PHOTO?.on && !root.BCAM?.on && !(typeof kc !== 'undefined' && kc.t > 0), false);
+      const eligible = !doc.hidden && safe(() => game === 'play' && !root.mapOpen && !root.PHOTO?.on && !root.BCAM?.on, false);
       const change = auto.sample(fps, clock(), eligible, { quality: B.snapshot().quality, scale: safe(() => PRS, 1) });
       if (change) safe(() => { PRS = change.scale; lowN = 0; root.setQ(change.quality); changes++; }, null);
     };

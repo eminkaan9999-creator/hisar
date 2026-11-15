@@ -21,7 +21,7 @@
  @supports(height:100dvh){:root{--hisar-vh:100dvh}}
  #menu{height:var(--hisar-vh)!important;top:var(--hisar-vtop)!important;bottom:auto!important}
  #menu #mp{touch-action:pan-y;min-height:0;min-width:0;overflow-y:auto!important;overflow-x:hidden!important;max-height:calc(var(--hisar-vh) - 20px)!important;overscroll-behavior:contain;scroll-padding-bottom:100px}
- #menu .hd{min-width:0;gap:10px}#menu .hd h1{min-width:0;overflow-wrap:anywhere}#menu #rb2{white-space:normal;max-width:40%;overflow-wrap:anywhere}
+ #menu .hd{min-width:0;gap:10px}#menu .hd h1{min-width:0;overflow-wrap:anywhere}
  #menu .row button,#menu .up>span{min-width:0;overflow-wrap:anywhere}#menu .row button{white-space:normal}
  #menu .grid,#menu .grid3{grid-template-columns:repeat(2,minmax(0,1fr))}
  #menu .tabs{scroll-padding-inline:12px}#menu button:focus-visible{outline:3px solid #8cf0d9;outline-offset:2px}
@@ -34,7 +34,7 @@
  #hx-polish select{max-width:55%}#hx-polish-note{font-size:12px;color:#a9c4ce}
  body.hisar-comfort #go:after,body.hisar-comfort .logo{animation:none!important}
  @media(max-width:640px),(max-height:520px){#menu #mp{height:var(--hisar-vh)!important;max-height:var(--hisar-vh)!important}#menu .acts{position:sticky!important;bottom:0;flex-wrap:wrap;gap:8px}#menu .acts button{min-height:44px;min-width:0}#menu .tabs button{min-height:44px}#hisar-experience-entry{margin:8px auto;min-height:44px}}
- @media(max-width:360px){#menu .hd h1{font-size:15px!important}#menu .hd h1 small{letter-spacing:1px!important}#menu #rb2{font-size:10px;max-width:30%;padding:4px}#menu .hd .logo{width:42px!important;height:42px!important}#menu .row.grid3{grid-template-columns:repeat(2,minmax(0,1fr))!important}#menu #updBox{flex-wrap:wrap!important}#menu #updI{max-width:100%!important}#menu #ld .am2{gap:6px;padding:8px 6px}#menu #ld .am2 .st button{width:32px;height:40px}#menu #ld .am2 .tx b{font-size:12px}#menu #ld .am2 .tx small{white-space:normal}}
+ @media(max-width:360px){#menu .hd h1{font-size:15px!important}#menu .hd h1 small{letter-spacing:1px!important}#menu .hd .logo{width:42px!important;height:42px!important}#menu .row.grid3{grid-template-columns:repeat(2,minmax(0,1fr))!important}#menu #updBox{flex-wrap:wrap!important}#menu #updI{max-width:100%!important}#menu #ld .am2{gap:6px;padding:8px 6px}#menu #ld .am2 .st button{width:32px;height:40px}#menu #ld .am2 .tx b{font-size:12px}#menu #ld .am2 .tx small{white-space:normal}}
  @media(max-height:500px) and (orientation:landscape){#menu .hd .logo{width:36px!important;height:36px!important}#menu .hd h1{font-size:16px!important}#menu #mt{display:none}#menu #hisar-experience-entry{padding:6px;min-height:36px;margin:4px auto}#menu #updBox{margin:2px 0!important}#menu .row.grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}#menu .acts{padding-top:8px!important;padding-bottom:max(8px,env(safe-area-inset-bottom))!important}}
  @media(prefers-reduced-motion:reduce){#menu *,#hisar-experience *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
  `;

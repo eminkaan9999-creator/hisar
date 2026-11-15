@@ -6,7 +6,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='1.1.0',SAVE='celik-boru-savas-v1';
+const VERSION='1.1.1',SAVE='celik-boru-savas-v1';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(v)?v:a)),lerp=(a,b,t)=>a+(b-a)*t;
 const safe=(fn,d)=>{try{return fn();}catch{return d;}};
 
@@ -53,7 +53,8 @@ function placeSquads(count,ws,ok,rnd,player,minPlayer=380,minSquad=230){
 }
 const SQUAD_NAMES=Object.freeze(['PARS','KARTAL','ŞAHİN','BOZAYI','YILDIRIM','POYRAZ','KASIRGA','TİPİ','AKREP','ÇAKAL','SIRTLAN','ENGEREK','DOĞAN','ATMACA']);
 // Her rakip takım tek tip tank sürer; sıra karışıktır ki küçük savaşta da farklı tipler görülsün.
-const SQUAD_KINDS=Object.freeze(['t72','leo1','m60','leo2','m1','t72','altay','leo1','t72','leo2','m60','m1','t72','altay']);
+// Düşman takımları yalnız düşman tankı kullanır (T-72B). Altay, Leopard ve M60 Türk ordusunun tankıdır; düşmana verilmez.
+const SQUAD_KINDS=Object.freeze(['t72']);
 function makeSquads(points,size){return points.map((p,i)=>({id:i,name:SQUAD_NAMES[i%SQUAD_NAMES.length],kind:SQUAD_KINDS[i%SQUAD_KINDS.length],x:p.x,z:p.z,active:false,dead:false,wx:p.x,wz:p.z,wt:0,wn:false,tanks:Array.from({length:size},()=>({hp:1,e:null}))}));}
 const aliveTanks=s=>s.dead?0:s.tanks.reduce((n,t)=>n+(t.hp>0?1:0),0);
 const tanksLeft=list=>list.reduce((n,s)=>n+aliveTanks(s),0);
@@ -370,7 +371,7 @@ function connect(){
  wrap('eshot',old=>function(e){if(B&&!B.over&&e&&e.bt!=null)e.sp=B.time+SPOT_FIRE;return old.apply(this,arguments);});
  wrap('spotted',old=>function(e){if(old.apply(this,arguments))return true;if(!B||B.over||!e||e.bt==null)return false;
   return e.sp>B.time||safe(()=>AL.some(a=>!a.dead&&dist(a,e)<ALLY_RANGE),false);});
- wrap('openMenu',old=>function(){const r=old.apply(this,arguments);if(!safe(()=>TUT.on,false)&&safe(()=>mis!==MODE,false))safe(()=>root.setG(MODE),null);paintMenu();return r;});
+ wrap('openMenu',old=>function(){const r=old.apply(this,arguments);if(!hk()&&!safe(()=>TUT.on,false)&&safe(()=>mis!==MODE,false))safe(()=>root.setG(MODE),null);paintMenu();return r;});
  (root.MAPX=root.MAPX||[]).includes(drawMap)||root.MAPX.push(drawMap);
  // harita, güvenli alanın tamamı ve oyuncu birlikte görünecek ölçekte açılır
  root.MAPVIEW=()=>{if(!B||B.over)return null;const z=B.zone;if(z.state==='closed')return null;return {x:z.cx,z:z.cz,r:Math.min(WS*1.12,Math.max(z.r,Math.hypot(P.x-z.cx,P.z-z.cz)+40)*1.08)};};
@@ -403,10 +404,12 @@ body:not(.inplay) #bt-feed{display:none}
  doc.head.appendChild(style);
  card=doc.createElement('section');card.id='hr-objective';card.hidden=true;for(const t of ['strong','p','progress','small'])card.appendChild(doc.createElement(t));card.children[2].max=1;doc.body.appendChild(card);
  feedBox=doc.createElement('div');feedBox.id='bt-feed';feedBox.setAttribute('aria-live','polite');doc.body.appendChild(feedBox);
- paintMenu();safe(()=>{if(mis!=='egitim'||!TUT.on)root.setG(MODE);},null);
+ paintMenu();safe(()=>{if(!hk()&&(mis!=='egitim'||!TUT.on))root.setG(MODE);},null);
  doc.addEventListener('click',e=>{if(e.target&&e.target.closest&&e.target.closest('[data-f]'))root.setTimeout(paintMenu,0);},true);
 }
-function start(){safe(()=>root.setG(MODE),null);return safe(()=>{root.reset(typeof lvSel==='string'?lvSel:'normal');return !!B;},false);}
+// harekât seçiliyse menü onu açık tutar (experience/harekat.js)
+function hk(){return safe(()=>!!(root.HisarHarekat&&root.HisarHarekat.picked()),false);}
+function start(){safe(()=>root.HisarHarekat&&root.HisarHarekat.select(null,'savas'),null);safe(()=>root.setG(MODE),null);return safe(()=>{root.reset(typeof lvSel==='string'?lvSel:'normal');return !!B;},false);}
 // Savaş olayları (sandık, topçu): false kapatır, true açar; 'sandik' hemen bir sandık indirir, 'topcu' oyuncunun yakınında bir topçu bölgesi açar.
 function events(v){if(v==='sandik'){if(B&&!B.over)dropCrate();return !!(B&&B.crate);}if(v==='topcu'){if(B&&!B.over&&!B.red){B.redAt=0;B.force=true;}return !!B;}EV=v!==false;return EV;}
 // live: sürü modülü savaş durumunu okur; note: bildirim şeridine yazar; resupply: ikmal (sandık ve karargâh).

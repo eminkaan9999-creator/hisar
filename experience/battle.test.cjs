@@ -150,8 +150,8 @@ test('battle wiring: crate drops once per phase, the nearest rival goes for it, 
 });
 test('every rival team drives one tank type and the first teams differ from each other',()=>{
  const sq=b.makeSquads(Array.from({length:14},(_,i)=>({x:i*10,z:0})),4);
- assert.deepEqual(sq.slice(0,5).map(s=>s.kind),['t72','leo1','m60','leo2','m1']);assert.ok(sq.every(s=>b.SQUAD_KINDS.includes(s.kind)));
- assert.ok(new Set(sq.slice(0,4).map(s=>s.kind)).size===4,'four-team battle shows four different tanks');
+ assert.ok(sq.every(s=>s.kind==='t72'),'every rival team drives the enemy tank');assert.ok(!b.SQUAD_KINDS.some(k=>['altay','leo1','leo2','m60'].includes(k)),'Turkish tanks are never given to the enemy');
+ 
  const src=read('experience/battle.js'),page=read('index.html');
  assert.ok(src.includes("root.BT_KIND=s.kind;const e=safe(()=>root.addE('tank',x,z,{h:s.h||0}),null);root.BT_KIND=null;"));
  assert.ok(src.includes("B.tune.hp*safe(()=>TANKS[s.kind].st.arm||1,1);"),'armour follows the tank type');

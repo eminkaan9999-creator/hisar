@@ -5,7 +5,7 @@
  * kendiliğinden indirir, tanktaki cihaz tek tuşla (E) çevredeki bütün düşman dronlarını düşürür. Dost dronlara dokunmaz.
  */
 (function(root){'use strict';
-const VERSION='1.0.1';
+const VERSION='1.0.2';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -69,7 +69,7 @@ function buildBase(b){const T=root.THREE;if(!T)return null;const g=new T.Group()
  const grid=new T.Mesh(new T.CircleGeometry(2.4,20),new T.MeshBasicMaterial({color:0x2a2d27,wireframe:true,transparent:true,opacity:.75}));dish.add(grid);
  for(let i=0;i<6;i++){const s=new T.Mesh(new T.BoxGeometry(4.8,.07,.07),dark);s.rotation.z=i*Math.PI/6;dish.add(s);}
  const hub=new T.Mesh(new T.CylinderGeometry(.35,.35,.9,8),olive);hub.rotation.x=Math.PI/2;hub.position.z=.4;dish.add(hub);
- const flag=new T.Mesh(new T.PlaneGeometry(1.6,1),new T.MeshBasicMaterial({color:0x5cf0ff,side:T.DoubleSide}));flag.position.set(6.4,11.8,3.2);g.add(flag);
+ const ft=safe(()=>root.HisarSinir.flagTex(),null),flag=new T.Mesh(new T.PlaneGeometry(1.8,1.2),new T.MeshBasicMaterial({color:ft?0xffffff:0xe30a17,map:ft||null,side:T.DoubleSide}));flag.position.set(6.4,11.8,3.2);g.add(flag);
  g.scale.setScalar(1.35);g.traverse(o=>{if(o.isMesh&&o.material.isMeshLambertMaterial){o.castShadow=true;o.receiveShadow=true;}});g.userData.dish=dish;g.name='SR_KARARGAH';S.add(g);return g;}
 
 function reset(){if(W){if(W.base&&W.base.g)safe(()=>root.rm(W.base.g),null);}W=null;if(gfx){for(const k of ['own','foe'])for(const m of Object.values(gfx[k]))m.count=0;gfx.wave.visible=false;}paintUI();}

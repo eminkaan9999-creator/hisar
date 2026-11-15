@@ -10,17 +10,23 @@ const ok=n=>{checks.push(n);console.log('PASS',n);};const tick=(p,n,dt=.1)=>p.ev
 async function shot(p,n){await p.screenshot({path:path.join(out,n)});shots.push(n);}
 // Oyuncunun takımını en yakın canlı düşman takımının r metre uzağına koyar; takımın kimliğini döndürür.
 const goNear=(p,r,id)=>p.evaluate(({r,id})=>{const L=HisarBattle.diagnostics().squads.filter(q=>!q.dead&&(id==null||q.id===id)).sort((a,b)=>Math.hypot(a.x-P.x,a.z-P.z)-Math.hypot(b.x-P.x,b.z-P.z)),s=L[0];if(!s)return -1;
- const a=Math.atan2(-s.x,-s.z),c=v=>Math.max(-WS+20,Math.min(WS-20,v));P.x=c(s.x+Math.sin(a)*r);P.z=c(s.z+Math.cos(a)*r);AL.forEach((q,i)=>{q.x=c(P.x+Math.cos(a)*12*(i+1));q.z=c(P.z-Math.sin(a)*12*(i+1));});return s.id;},{r,id});
+ const a=Math.atan2(-s.x,-s.z),c=v=>Math.max(-WS+20,Math.min(WS-20,v));P.x=c(s.x+Math.sin(a)*r);P.z=c(s.z+Math.cos(a)*r);AL.forEach((q,i)=>{q.x=c(P.x+12*(i+1));q.z=c(P.z+riv(q.x)-riv(P.x));});return s.id;},{r,id}); // dost tanklar oyuncuyla duvarın aynı yanında
 const squad=(p,id)=>p.evaluate(id=>HisarBattle.diagnostics().squads.find(q=>q.id===id),id);
 // Oyuncunun takımını güvenli alanın (bir sonraki çemberin) ortasında tutarak süreyi ilerletir.
-// Düşman ateşi kapatılır (L.cd=0) ki ölçülen tek hasar alan hasarı olsun.
-const holdInZone=(p,seconds)=>p.evaluate(seconds=>{L.cd=0;for(let i=0;i<seconds*10&&game==='play';i++){const z=HisarBattle.diagnostics().zone;P.x=z.nx;P.z=z.nz;AL.forEach((q,k)=>{q.x=z.nx+8*(k+1);q.z=z.nz;});update(.1);}},seconds);
+// Düşman ateşi ve düşman dron sürüsü kapatılır (L.cd=0, L.dmg=0) ki ölçülen tek hasar alan hasarı olsun.
+const holdInZone=(p,seconds)=>p.evaluate(seconds=>{L.cd=0;const d0=L.dmg;L.dmg=0;for(let i=0;i<seconds*10&&game==='play';i++){const z=HisarBattle.diagnostics().zone;P.x=z.nx;P.z=z.nz;AL.forEach((q,k)=>{q.x=z.nx+8*(k+1);q.z=z.nz;});update(.1);}L.dmg=d0;},seconds);
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await chromium.launch({...(process.env.LOCAL_CHROMIUM?{executablePath:process.env.LOCAL_CHROMIUM}:{}),args:['--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader','--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required']});
 for(const mobile of [false,true]){const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1280,height:720},isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1});await context.addInitScript(()=>{const raf=requestAnimationFrame;let done=false;window.requestAnimationFrame=fn=>raf.call(window,t=>{if(!done){try{if(typeof setQ==='function'){setQ('dusuk');done=true;}}catch{}}fn(t);});if(!localStorage.getItem('m60v2'))localStorage.setItem('m60v2',JSON.stringify({xp:120,kr:500,U:{},best:{},form:3}));});const p=await context.newPage();p.setDefaultTimeout(60000);p.on('pageerror',e=>{errors.push(String(e.stack||e));console.log('PAGEERROR',String(e).slice(0,400));});
 const label=mobile?'mobile':'desktop';
 await p.goto('http://127.0.0.1:'+server.address().port+'/hisar/',{waitUntil:'domcontentloaded',timeout:120000});await p.waitForFunction(()=>window.HisarOperations&&window.HisarBattle&&window.HisarRadioSound&&window.HisarGameBridge?.snapshot().ready,{},{timeout:120000});await p.evaluate(()=>{HisarGameBridge.quality('dusuk');HisarGameBridge.auto(false);HisarBattle.events(false);});assert.equal(await p.evaluate(()=>APP_VER),GAME_V);ok(label+': build '+GAME_V+' and all modules ready');
 // ---- menü: görev listesi yok, tek kip var
 assert.equal(await p.locator('#tg .hr-op').count(),0);assert.equal(await p.locator('#tg [data-g]').count(),0);assert.equal(await p.locator('#hr-debrief').count(),0);assert.equal(await p.locator('#dlyT').count(),0);
+// harekât varsayılan kiptir: üç görev kartı; Son Takım ikinci kip
+assert.equal(await p.locator('#hkMode button.sel b').textContent(),'HAREKÂT');assert.equal(await p.locator('#hkCard .hk-op').count(),3);assert.equal(await p.evaluate(()=>mis),'harekat');
+assert.equal(await p.locator('#btCard').isVisible(),false);assert.equal(await p.locator('#rb2').count(),0,'rank badge removed');
+await p.locator('#hkCard [data-op="tepe"]').click();assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().sel),'tepe');assert.equal(await p.locator('#hkCard .hk-op.sel b').textContent(),'Tel Zeytun Tepesi');
+await p.locator('#hkMode [data-hm="savas"]').click();assert.equal(await p.evaluate(()=>mis),'savas');assert.equal(await p.locator('#hkCard').isVisible(),false);
+ok(label+': menu opens on Harekât with three mission cards; Son Takım is the second mode; no rank badge');
 assert.equal(await p.locator('#btCard h3').textContent(),'SON TAKIM');assert.equal(await p.locator('#btCard .bt-seg button').count(),3);assert.equal(await p.locator('#btCard .bt-seg button.sel b').textContent(),'TAKIM');assert.match(await p.locator('#btCard .bt-facts').textContent(),/4 rakip takım16 düşman tank/);
 // takım büyüklüğü ana karttan değişir ve kaydedilir
 await p.locator('#btCard [data-bf="1"]').click();assert.equal(await p.evaluate(()=>SV.form),1);assert.match(await p.locator('#btCard .bt-facts').textContent(),/7 rakip takım14 düşman tank/);await p.locator('#btCard [data-bf="3"]').click();assert.equal(await p.evaluate(()=>SV.form),3);assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('m60v2')).form),3);
@@ -53,7 +59,7 @@ if(!mobile){
  await calm();let id=await goNear(p,385);await tick(p,45);let s=await squad(p,id);
  assert.equal(s.active,true);assert.equal(s.field,4);assert.equal(s.alert,false);assert.equal(await p.evaluate(id=>E.filter(e=>e.bt===id).length,id),4);
  assert.ok(await p.evaluate(id=>{const arm=TANKS[HisarBattle.diagnostics().squads.find(q=>q.id===id).kind].st.arm;return E.filter(e=>e.bt===id).every(e=>Math.abs(e.mx-HPT.tank*2.2*arm)<1e-6&&e.hp===e.mx&&e.fr===230&&(e.conv||e.park));},id));ok('a team within 400 m takes the field as four real tanks and keeps marching, unaware of the player');
- assert.deepEqual(await p.evaluate(()=>HisarBattle.diagnostics().squads.map(q=>q.kind)),['t72','leo1','m60','leo2']);ok('each rival team drives its own tank type; armour follows the type');
+ assert.deepEqual(await p.evaluate(()=>HisarBattle.diagnostics().squads.map(q=>q.kind)),['t72','t72','t72','t72']);ok('rival teams drive the enemy T-72B (never a Turkish tank); armour follows the type');
  let fired=await p.evaluate(()=>{window.__shots=0;const es=window.eshot;window.eshot=function(e,x,y,z,sp,tgt){if(tgt!=='foe')__shots++;return es.apply(this,arguments);};return 0;});
  await tick(p,60);assert.equal(await p.evaluate(()=>__shots),0);ok('an unaware team does not open fire from beyond its sight range');
  await goNear(p,225,id);await tick(p,150);s=await squad(p,id);fired=await p.evaluate(()=>__shots);assert.equal(s.alert,true);assert.ok(fired>=2,'enemy opened fire: '+fired);ok('inside 250 m the team notices the player and opens fire from long range ('+fired+' shots in 15 s)');
@@ -89,9 +95,9 @@ if(!mobile){
  const got=await p.evaluate(()=>{const c=HisarBattle.diagnostics().crate;TA=TA.map(()=>1);P.hp=P.mx*.3;AL[0].hp=AL[0].mx*.2;P.x=c.x+4;P.z=c.z;for(let i=0;i<3;i++)update(.1);const d=HisarBattle.diagnostics();
   return {crate:d.crate,taken:d.taken,ta:TA.join(),ta0:TA0.join(),hp:P.hp/P.mx,al:AL[0].hp/AL[0].mx,vis:S.getObjectByName('BT_SANDIK').visible};});
  assert.equal(got.crate,null);assert.equal(got.taken,1);assert.equal(got.ta,got.ta0);assert.ok(Math.abs(got.hp-.8)<.03,'armour '+got.hp);assert.ok(Math.abs(got.al-.7)<.03,'ally armour '+got.al);assert.equal(got.vis,false);ok('driving onto the crate refills ammunition and repairs half the armour of the whole team');
- const rv=await p.evaluate(()=>{for(let n=0;n<8;n++){HisarBattle.events('sandik');const d=HisarBattle.diagnostics(),c=d.crate;if(c.rival==null)continue;const s0=d.squads.find(q=>q.id===c.rival);if(s0.active)continue;const d0=Math.hypot(s0.x-c.x,s0.z-c.z);if(d0<160)continue;
+ const rv=await p.evaluate(()=>{for(let n=0;n<30;n++){HisarBattle.events('sandik');const d=HisarBattle.diagnostics(),c=d.crate;if(c.rival==null)continue;const s0=d.squads.find(q=>q.id===c.rival);if(s0.active)continue;const d0=Math.hypot(s0.x-c.x,s0.z-c.z);if(d0<160)continue;
    for(let i=0;i<100;i++)update(.1);const s1=HisarBattle.diagnostics().squads.find(q=>q.id===c.rival);return {d0,d1:Math.hypot(s1.x-c.x,s1.z-c.z)};}return null;});
- assert.ok(rv,'a rival team was within reach of one of eight drops');assert.ok(rv.d1<rv.d0-40,'rival closed in: '+rv.d0+' -> '+rv.d1);ok('the nearest rival team heads for the crate ('+Math.round(rv.d0)+' m -> '+Math.round(rv.d1)+' m in 10 s)');
+ assert.ok(rv,'a rival team was within reach of one of thirty drops');assert.ok(rv.d1<rv.d0-40,'rival closed in: '+rv.d0+' -> '+rv.d1);ok('the nearest rival team heads for the crate ('+Math.round(rv.d0)+' m -> '+Math.round(rv.d1)+' m in 10 s)');
  // ---- topçu bölgesi: uyarı, işaretli mermi, isabet eden hasar alır
  const red=await p.evaluate(()=>{lvSel='kolay';HisarBattle.start();AL.forEach(a=>{a.fire=0;});HisarBattle.events('topcu');for(let i=0;i<2;i++)update(.1);const d=HisarBattle.diagnostics(),r=d.red;return {r,near:r&&Math.hypot(r.x-P.x,r.z-P.z),inside:r&&Math.hypot(r.x-d.zone.cx,r.z-d.zone.cz)<=d.zone.r};});
  assert.ok(red.r,'artillery zone opened');assert.equal(red.r.state,'warn');assert.ok(red.near<=161,'near the player: '+red.near);assert.equal(red.inside,true);
@@ -104,7 +110,11 @@ if(!mobile){
   const pending=q=>HisarBattle.diagnostics().shells.some(s=>s.x===q.x&&s.z===q.z); // mermi düşene kadar beklenir (süre kayan nokta yüzünden bir adım oynayabilir)
   P.x=r.x;P.z=r.z;away();let q=next();const st=d.red.state,inside=Math.hypot(q.x-r.x,q.z-r.z)<=r.r+.01,hp=P.hp,n0=__booms;for(let i=0;i<30&&game==='play'&&pending(q);i++){P.x=q.x;P.z=q.z;away();update(.1);}const after=P.hp,booms=__booms-n0;
   // dost tank başka bir merminin altında (oyuncu bölgenin dışında)
-  P.x=r.x+150;P.z=r.z;q=next();const ah=a.hp;for(let i=0;i<30&&game==='play'&&pending(q);i++){P.x=r.x+150;P.z=r.z;away();a.x=q.x;a.z=q.z;update(.1);}
+  P.x=r.x+150;P.z=r.z;q=next();
+  // bir binanın dibine düşen mermide dost tank binadan dışarı itilir: mermiyi boş bir yere taşı (hasar kuralı aynı)
+  const clear=(x,z)=>BLD.every(b=>b.dead||Math.hypot(b.x-x,b.z-z)>b.r+5),live=HisarBattle.live().shells.find(s=>s.x===q.x&&s.z===q.z);
+  if(live&&!clear(q.x,q.z)){for(let k=0;k<200;k++){const a2=k*.7,d2=(k%10)*7,x=r.x+Math.cos(a2)*d2,z=r.z+Math.sin(a2)*d2;if(Math.hypot(x-r.x,z-r.z)<=r.r-4&&clear(x,z)){live.x=x;live.z=z;q={...q,x,z};break;}}}
+  const ah=a.hp;for(let i=0;i<30&&game==='play'&&pending(q);i++){P.x=r.x+150;P.z=r.z;away();a.x=q.x;a.z=q.z;update(.1);}
   return {st,inside,hp,after,booms,ah,aafter:a.hp,game};});
  assert.equal(fire.st,'fire');assert.equal(fire.inside,true);assert.ok(fire.booms>=1,'shell landed');assert.ok(fire.after<fire.hp-5,'tank under the shell is hurt: '+fire.hp+' -> '+fire.after);assert.ok(fire.aafter<fire.ah,'ally under the shell is hurt');assert.equal(fire.game,'play');await p.waitForTimeout(500);await shot(p,'artillery.png');
  ok('each shell is marked on the ground, falls inside the zone and damages the tanks under it');
@@ -137,7 +147,7 @@ if(!mobile){
  assert.equal(real.dag,3);assert.ok(real.ot>800,'grass '+real.ot);assert.equal(real.oldGrass,false);assert.ok(real.dust>=3,'dust '+real.dust);
  if(real.sp)assert.deepEqual(real.sp,[2.2,1.5,1.15]);ok('three mountain ranges on the horizon, '+real.ot+' grass tufts around the camera, dust behind a moving tank, enemy gunners bracket');
  const hold=await p.evaluate(()=>{const s=HisarBattle.diagnostics().squads.find(q=>!q.dead),a=Math.atan2(-s.x,-s.z);P.x=s.x+Math.sin(a)*300;P.z=s.z+Math.cos(a)*300;for(let i=0;i<20;i++)update(.1);
-  const e=E.find(q=>q.bt===s.id);if(!e)return null;const ps=HisarField.positions(),p=ps.filter(q=>Math.hypot(q.x,q.z)>200).sort((u,v)=>Math.hypot(u.x-e.x,u.z-e.z)-Math.hypot(v.x-e.x,v.z-e.z))[0];
+  const e=E.find(q=>q.bt===s.id);if(!e)return null;const ps=HisarField.positions(),p=ps.filter(q=>Math.hypot(q.x,q.z)>200&&Math.abs(q.z-riv(q.x)+26)>230).sort((u,v)=>Math.hypot(u.x-e.x,u.z-e.z)-Math.hypot(v.x-e.x,v.z-e.z))[0];
   const put=()=>{P.x=p.x+Math.sin(p.h)*180;P.z=p.z+Math.cos(p.h)*180;};put();e.x=p.x+Math.cos(p.h)*45-Math.sin(p.h)*10;e.z=p.z-Math.sin(p.h)*45-Math.cos(p.h)*10;
   const at=o=>o._pos&&Math.hypot(o._pos.x-p.x,o._pos.z-p.z)<1,who=()=>E.find(o=>at(o)&&o._in);let k=0;for(;k<500;k++){put();e.conv=0;e.park=0;e.foe=null;update(.1);if(who())break;}for(let i=0;i<15;i++){put();update(.1);}const q=who(),inn={t:k/10,in:!!q,d:q?Math.hypot(q.x-p.x,q.z-p.z):99,sink:q?q._sink:0};
   for(let i=0;i<80;i++){P.x=p.x+Math.cos(p.h)*200;P.z=p.z-Math.sin(p.h)*200;update(.1);}return {inn,left:!E.some(at)};});
@@ -164,7 +174,47 @@ if(!mobile){
   const tg=E.filter(e=>e.bt===s.id);tg.forEach(e=>e.mark=1);const dc=DC,sc=score,n=HisarSwarm.launch(),k0=HisarSwarm.diagnostics().kills;for(let i=0;i<30;i++){put();update(.1);}const alt=Math.min(...HisarSwarm.diagnostics().own.map(d=>d.y-hAt(d.x,d.z)));
   for(let i=0;i<120;i++){put();update(.1);}const d=HisarSwarm.diagnostics();return {n,dc,dcAfter:DC,alt,kills:d.kills-k0,score:score-sc};});
  assert.equal(own.n,4);assert.equal(own.dcAfter,own.dc-4);assert.ok(own.alt>12);assert.ok(own.kills>=2,'kills '+own.kills);assert.ok(own.score>=200);ok('a four-drone swarm takes off, flies high and destroys two marked tanks (credited)');
- await p.evaluate(()=>HisarBattle.events(true));
+ // bundan sonraki denetimler olaylarsız (sandık, topçu, düşman dron sürüsü) koşar: ölçülen hasar yalnız alandan gelsin
+ await p.evaluate(()=>HisarBattle.events(false));
+
+ // ---- sınır: duvar, kapılar, kuleler, karakollar, devriye, bayraklar, okullar
+ const sn=await p.evaluate(()=>{const d=HisarSinir.diagnostics();return {d,wall:S.children.filter(o=>o.name==='SN_DUVAR').length,uni:S.children.filter(o=>o.name==='SN_UNIMOG').length,
+  hk:HisarSinir.flagTex()&&HisarSinir.flagTex().image.width,hq:!!S.getObjectByName('SR_KARARGAH')};});
+ assert.ok(sn.d.blocks>500&&sn.d.coils>1500,'wall blocks '+sn.d.blocks);assert.equal(sn.wall,3);assert.ok(sn.d.towers>=6);assert.equal(sn.d.posts.length,3);assert.ok(sn.d.schoolsAt.length>=3,'schools '+sn.d.schoolsAt.length);
+ assert.ok(sn.d.flags>=80,'house flags '+sn.d.flags);assert.ok(sn.d.poleFlags>=40);assert.ok(sn.d.soldiers>=12);assert.ok(sn.uni>=3&&sn.d.unimogs.length===sn.uni);
+ ok('border: '+sn.d.blocks+' wall blocks with razor wire, '+sn.d.towers+' watchtowers, three border posts, '+sn.d.soldiers+' soldiers, '+sn.uni+' Unimog patrols, '+sn.d.flags+' house flags, '+sn.d.schoolsAt.length+' schools');
+ const cross=await p.evaluate(()=>{const W=x=>riv(x)-26,go=(x)=>{P.x=x;P.z=W(x)-8;P.h=0;P.v=0;keys.w=true;for(let i=0;i<90;i++)update(.1);keys.w=false;return {z:P.z,wall:W(P.x)};};
+  const a=go(230),b=go(70),c=HisarSinir.diagnostics();return {a,b,blocked:c.crossBlocked,country:c.country};});
+ assert.ok(cross.a.z<cross.a.wall,'the wall stops the tank');assert.ok(cross.b.z>cross.b.wall+5,'the gate lets the tank through');assert.ok(cross.blocked>0);
+ ok('the tank cannot drive through the wall but passes the border gate into Syria');
+ const unim=await p.evaluate(()=>{const a=HisarSinir.diagnostics().unimogs.map(u=>u.x);for(let i=0;i<30;i++)update(.1);const b=HisarSinir.diagnostics().unimogs.map(u=>u.x);return a.map((x,i)=>Math.abs(b[i]-x));});
+ assert.ok(unim.every(d=>d>5),'patrols move '+unim);ok('Unimog patrols drive along the wall');
+ const civ=await p.evaluate(()=>{const b=BLD.find(q=>q.kind==='beton'&&!q.dead);const c0=HisarSinir.diagnostics().civil;impact({k:0},b.x+2,hAt(b.x,b.z)+1,b.z+2,null);return {c0,c1:HisarSinir.diagnostics().civil,hit:document.getElementById('hit').textContent};});
+ assert.equal(civ.c1,civ.c0+1);assert.match(civ.hit,/SİVİL YERLEŞİM/);ok('a shell landing in a village warns "Sivil yerleşim hedef alanında" (no penalty)');
+ // ---- ağır sürüş ve binaya çarpma
+ const drv=await p.evaluate(()=>{P.x=70;P.z=-200;P.h=Math.PI;P.v=0;P.w=0;keys.w=true;update(.1);for(let i=0;i<9;i++)update(.1);const v1=P.v;for(let i=0;i<120;i++)update(.1);const vmax=P.v;keys.w=false;
+  const b=BLD.find(q=>q.kind==='house'&&!q.dead&&q.hp>=3);const hp=b.hp,a=Math.atan2(b.x-70,b.z+200)+Math.PI;P.x=b.x+Math.sin(a)*(b.r+6);P.z=b.z+Math.cos(a)*(b.r+6);P.h=a+Math.PI;P.v=9;const r0=window.RAMMED|0;keys.w=true;for(let i=0;i<14;i++)update(.1);keys.w=false;
+  return {v1,vmax,hp,after:b.hp,dead:b.dead,ram:(window.RAMMED|0)-r0};});
+ assert.ok(drv.v1<3.6,'one second from rest: '+drv.v1);assert.ok(drv.vmax>8&&drv.vmax<12.8,'top speed '+drv.vmax);assert.ok(drv.ram>0&&(drv.dead||drv.after<drv.hp),'ramming damages the house');
+ ok('the tank is heavy: '+drv.v1.toFixed(1)+' m/s after one second, '+drv.vmax.toFixed(1)+' m/s top on the road; ramming a house damages it');
+ // ---- harekât: savunma, taarruz, baskın
+ await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
+ const g1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();for(let i=0;i<570;i++){P.x=70;P.z=40;update(.1);}const d1=HisarHarekat.diagnostics();const z0=d1.enemies.map(e=>e.z);for(let i=0;i<100;i++){P.x=70;P.z=40;update(.1);}const d2=HisarHarekat.diagnostics();
+  return {act:d0.active,op:d0.op,nav:d0.nav,en0:d0.enemies.length,wave:d1.wave,att:d1.enemies.filter(e=>e.role==='att').length,adv:d2.enemies.map((e,i)=>z0[i]-e.z),obj:document.getElementById('hk-obj').hidden,hr:document.getElementById('hr-objective').hidden};});
+ assert.equal(g1.act,true);assert.equal(g1.op,'gecit');assert.ok(g1.nav&&g1.nav.len>50);assert.equal(g1.en0,0);assert.equal(g1.wave,0);assert.equal(g1.att,2);assert.ok(g1.adv.every(d=>d>20),'the wave advances on the gate '+g1.adv);
+ assert.equal(g1.obj,false);assert.equal(g1.hr,true);ok('defence: a route is drawn, the first wave comes after the countdown and drives for the border gate');
+ const g2=await p.evaluate(()=>{E.filter(e=>e.hk).forEach(e=>killE(e));for(let i=0;i<320;i++){P.x=70;P.z=40;update(.1);}const d=HisarHarekat.diagnostics();const e=E.find(q=>q.hk&&q.hk.role==='att');e.x=70;e.z=riv(70)+44;for(let i=0;i<3;i++)update(.1);
+  return {wave:d.wave,lost:HisarHarekat.diagnostics().lost,game};});
+ assert.equal(g2.wave,1);assert.equal(g2.lost,true);assert.equal(g2.game,'over');ok('the second wave follows; an enemy reaching the gate loses the defence');
+ await p.evaluate(()=>{HisarHarekat.start('tepe');L.dmg=0;});await tick(p,1);
+ const t1=await p.evaluate(()=>{const o=HisarHarekat.core.OPS[1].obj;const d0=HisarHarekat.diagnostics();for(let i=0;i<200;i++){P.x=o.x;P.z=o.z-230;update(.1);}const d1=HisarHarekat.diagnostics();
+  const def=d1.enemies.filter(e=>e.role==='def');E.filter(e=>e.hk).forEach(e=>killE(e));let k=0;for(;k<200&&game==='play';k++){P.x=o.x;P.z=o.z;update(.1);}const d2=HisarHarekat.diagnostics();return {n:d0.enemies.length,kind:E.length,held:def.every(e=>e.post<12),won:d2.won,t:k/10,game,done:d2.done};});
+ assert.equal(t1.n,6);assert.equal(t1.held,true,'defenders stay in their positions');assert.equal(t1.won,true);assert.ok(t1.t>11&&t1.t<14);assert.equal(t1.game,'over');assert.equal(t1.done.tepe,1);
+ ok('attack: the hill is held by six enemies who stay in their positions; once cleared, holding the hilltop for 12 s takes it');
+ await p.evaluate(()=>{HisarHarekat.start('depo');L.dmg=0;});await tick(p,1);
+ const d1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();const dep=E.filter(e=>e.hk&&e.hk.role==='dep');const kinds=dep.map(e=>e.type).sort().join();dep.forEach(e=>killE(e));for(let i=0;i<5;i++)update(.1);return {kinds,won:HisarHarekat.diagnostics().won,tanks:d0.enemies.filter(e=>e.type==='tank').length};});
+ assert.equal(d1.kinds,'fuel,fuel,radar,truck,truck');assert.equal(d1.won,true);assert.equal(d1.tanks,2);ok('raid: destroying the five depot targets wins the raid');
+ await shot(p,label+'-harekat.png');
 
  // ---- güvenli alan: bekleme, daralma, dışarıda hasar
  await p.evaluate(()=>{HisarBattle.start();});await holdInZone(p,112);let z=await p.evaluate(()=>HisarBattle.diagnostics().zone);assert.equal(z.info.state,'shrink');assert.equal(z.info.phase,1);assert.equal(await p.evaluate(()=>P.hp),await p.evaluate(()=>P.mx));ok('after the waiting time the zone starts to shrink; inside it nobody is hurt');
@@ -183,7 +233,7 @@ if(!mobile){
  assert.equal(won.game,'over');assert.equal(won.res.ok,true);assert.equal(won.res.place,1);assert.equal(won.res.kills,16);assert.equal(won.h2,'ZAFER');assert.equal(won.pl,'1');assert.ok(won.kr>=kr1+16*100+won.res.kr);assert.equal(won.toast,false);assert.ok(won.save.games>=2&&won.save.wins>=1&&won.save.best===1);assert.equal(won.old,null);ok('destroying every enemy team wins: first place, rewards paid, record saved, no medal toast over the result');await p.waitForTimeout(700);await shot(p,'result-won.png');
  await p.locator('#rep [data-r="menu"]').click();assert.equal(await p.locator('#rep').isVisible(),false);assert.match(await p.locator('#btCard .bt-rec').textContent(),/zafer/);ok('menu shows the battle record after returning from the result screen');
  // ---- eski kipler ve görevler kodda yok; eğitim alanı duruyor
- assert.deepEqual(await p.evaluate(()=>Object.keys(MI).sort()),['egitim','savas']);assert.equal(await p.evaluate(()=>typeof window.spawn+typeof window.OBUS+typeof window.HisarKurulus+typeof window.STG+typeof window.DAILY+typeof window.EVRUN+typeof HisarOperations.start),'undefinedundefinedundefinedundefinedundefinedundefinedundefined');ok('old game modes and missions are removed from the game code');
+ assert.deepEqual(await p.evaluate(()=>Object.keys(MI).sort()),['egitim','harekat','savas']);assert.equal(await p.evaluate(()=>typeof window.spawn+typeof window.OBUS+typeof window.HisarKurulus+typeof window.STG+typeof window.DAILY+typeof window.EVRUN+typeof HisarOperations.start),'undefinedundefinedundefinedundefinedundefinedundefinedundefined');ok('old game modes are removed; training, Harekât and Son Takım remain');
  await p.evaluate(()=>{setG('egitim');reset('serbest');});assert.equal(await p.evaluate(()=>HisarBattle.diagnostics().active),false);assert.equal(await p.evaluate(()=>E.length),4);assert.equal(await p.evaluate(()=>L.rl),undefined);assert.equal(await p.evaluate(()=>Math.hypot(P.x,P.z)),0);await tick(p,5);assert.equal(await p.evaluate(()=>game),'play');assert.equal(await p.evaluate(()=>document.getElementById('hr-objective').hidden),true);ok('training area still gives practice targets, without battle rules');
 }else{
  for(const [w,h]of [[320,568],[844,390]]){await p.setViewportSize({width:w,height:h});if(!await p.locator('#hr-panel').isVisible())await p.evaluate(()=>HisarOperations.toggle());const b=await p.locator('#hr-panel').boundingBox();assert.ok(b.x>=0&&b.y>=0&&b.x+b.width<=w+1&&b.y+b.height<=h+1);ok('radio panel fits '+w+'x'+h);await p.evaluate(()=>HisarOperations.close());

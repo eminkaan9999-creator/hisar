@@ -25,7 +25,7 @@ test('menu has four icon tabs and no settings tab',()=>{
 });
 test('start button is the ember-coloured primary action; resume shows only while paused',()=>{
  assert.match(code,/<button id="go">BAŞLAT<\/button><button id="rs" style="display:none">DEVAM<\/button>/);
- assert.match(skin,/html body #go\{background:linear-gradient\(180deg,var\(--kor1\),var\(--kor2\)\)!important/);assert.match(skin,/--kor1:#ffc247;--kor2:#ff8a1e;/);
+ assert.match(skin,/html body #go\{background:linear-gradient\(180deg,var\(--kirmizi\),var\(--kirmizi2\)\)!important/);assert.match(skin,/--kirmizi:#d0172b;--kirmizi2:#9b0f1f;/);
  assert.match(skin,/#rs\[style\*="none"\]\{display:none!important\}/);
 });
 test('old duplicate resume buttons and the menu difficulty row are deleted, not hidden',()=>{
@@ -56,7 +56,7 @@ test('opening screen is part of the page itself, so a slow first load never show
  assert.ok(body.startsWith('<body>\n<div id="spl"><div class="art"></div><div class="tx"><h1>ÇELİK BÖRÜ</h1><small>GELİŞTİRİCİ · <b>EMİN KAAN BOYACI</b></small><small id="splV">YÜKLENİYOR</small><i></i></div></div>'),'splash is the first thing in the body');
  assert.ok(body.indexOf('id="spl"')<body.indexOf('<script'),'splash comes before any script');
  assert.doesNotMatch(head,/#spl\{[^}]*pointer-events:none/,'splash blocks taps while loading');assert.match(head,/#spl\.out\{opacity:0;pointer-events:none\}/);
- assert.ok(!code.includes("sp.id='spl'"),'no second, late splash');assert.ok(code.includes("const sp=document.getElementById('spl');if(sp){const v=document.getElementById('splV');if(v)v.textContent='SÜRÜM '+VER;"));
+ assert.ok(!code.includes("sp.id='spl'"),'no second, late splash');assert.ok(code.includes("const sp=document.getElementById('spl');if(sp){const v=document.getElementById('splV');if(v)v.textContent='HAZIRLANIYOR';"));
  assert.ok(code.includes('HisarGameBridge.snapshot().ready'),'splash waits until the game is ready');
  assert.ok(code.includes("HisarGameBridge.snapshot().ready&&window.HisarSimpleSettings&&document.getElementById('mpBody')"),'and until the last menu module has built the scroll box');
 });
@@ -78,8 +78,8 @@ test('phones render lighter: fast shadows, small shadow map, other tanks and tre
  assert.ok(m.includes("window.TREE_BLOB=!hi;"));assert.ok(m.includes("for(const a of AL)lite(a.g);for(const e of E)if(e.type==='tank'||e.type==='apc')lite(e.g)"));
  const t=code.slice(code.indexOf('// ===== m_trees ====='),code.indexOf('// ===== m_nature ====='));assert.ok(t.includes("if(force||DIRTY||Math.abs(cx-lcx)>20||Math.abs(cz-lcz)>20||"),'trees are repacked only when needed');
 });
-test('tank moves faster and allies keep up',()=>{
- assert.equal(code.split('*iy*16*(1+.07*SV.U.eng)*sp*dt').length-1,2);assert.ok(code.includes('P.h-=ix*1.7*(1+.06*SV.U.eng)'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));
+test('tank drives heavy (speed and turn ramp up), allies keep up',()=>{
+ assert.ok(code.includes('const DRV=Object.freeze({vf:12,vr:4.5,off:.8,acc:2.6,brk:6,turn:.95,tacc:2.4});'));assert.ok(code.includes('drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));
  assert.ok(code.includes('gg.index.updateRange.offset=0;gg.index.updateRange.count=o;gg.index.needsUpdate=true;'),'only the used part of the ground index is uploaded');
 });
 test('save can be backed up as a code and restored without losing progress',()=>{
@@ -93,9 +93,8 @@ test('menu camera follows the tank window instead of a fixed offset',()=>{
  assert.match(code,/SP\.getBoundingClientRect\(\)/);assert.match(skin,/html body #menu #heroSp\{display:block!important;flex:0 0 clamp\(104px,19vh,176px\);min-height:0\}/);
  assert.match(skin,/html body\[data-tab="g"\] #menu #heroSp\{flex:1 1 auto;min-height:150px\}/,'on the home tab the tank scene takes all free space');assert.ok(code.includes("document.body.dataset.tab=t;"));assert.ok(code.includes("document.body.dataset.tab='g';"));
 });
-test('player capsule shows rank, credits and progress to the next rank',()=>{
- assert.match(skin,/html body #rb2\.pill\{flex:none;display:grid!important;grid-template-columns:auto;justify-items:end;/);
- assert.ok(code.includes("$('rb2').innerHTML='<b>'+cur[1]+'</b><i>'+SV.kr.toLocaleString('tr-TR')+' kr</i><u><s style=\"width:'+pf.toFixed(0)+'%\"></s></u>'"));
+test('menu header has no rank badge (removed in build 94)',()=>{
+ assert.ok(!skin.includes('#rb2'));assert.ok(!code.includes("'rb2'"));assert.ok(!code.includes('id="rb2"'));
 });
 test('result screen has a two-column layout for landscape phones and the full map opens on the safe zone',()=>{
  assert.match(code,/@media \(orientation:landscape\) and \(max-height:520px\)\{#rep \.c\{width:min\(780px,100%\);display:grid;/);
@@ -103,7 +102,7 @@ test('result screen has a two-column layout for landscape phones and the full ma
  assert.match(read('experience/battle.js'),/root\.MAPVIEW=\(\)=>\{if\(!B\|\|B\.over\)return null;/);
 });
 test('menu is the "hangar" design: dark panels over the full-screen tank scene, floating tab bar',()=>{
- assert.match(skin,/:root\{--cam:rgba\(17,21,27,\.84\);--cam-koyu:rgba\(12,15,19,\.94\);/);
+ assert.match(skin,/:root\{--cam:rgba\(13,14,13,\.86\);--cam-koyu:rgba\(8,9,8,\.95\);/);
  assert.match(skin,/html body #mpBody>\.tabs\{position:fixed!important;z-index:8;left:calc\(var\(--kenar\) \+ env\(safe-area-inset-left,0px\)\);right:calc\(var\(--kenar\) \+ env\(safe-area-inset-right,0px\)\);bottom:calc\(10px \+ env\(safe-area-inset-bottom,0px\)\);/);
  assert.match(skin,/html body:not\(\[data-tab="g"\]\) #mpBody>section\{[^}]*background:var\(--cam-koyu\);/);
  assert.match(skin,/@media \(prefers-reduced-motion:reduce\)\{html body #go::after\{animation:none;display:none\}\}/,'the button shine respects reduced motion');

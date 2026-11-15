@@ -130,7 +130,7 @@ body:not(.inplay) #cross,body:not(.inplay) #mm,body:not(.inplay) #uMapB,body:not
    Tank sahnesi ekranın tamamındadır; arayüz onun üstünde yüzer. Paneller buzlu camdır (arkası bulanık), köşeler yuvarlaktır.
    Vurgu rengi kapak görselindeki gün batımından gelir: kehribardan turuncuya "kor". Kor yalnız ana eylem ve geçerli seçimdedir;
    yeşil "alınabilir / devam", gri-mavi ikincil yazıdır. ============ */
-:root{--cam:rgba(17,21,27,.84);--cam-koyu:rgba(12,15,19,.94);--yuzey:linear-gradient(180deg,rgba(30,36,45,.9),rgba(15,18,23,.93));--cam-cizgi:rgba(255,255,255,.13);--ince:rgba(255,255,255,.065);--kor1:#ffc247;--kor2:#ff8a1e;--kor-isik:rgba(255,146,38,.42);--sis:#a7afb8;--r1:18px;--r2:13px}
+:root{--cam:rgba(13,14,13,.86);--cam-koyu:rgba(8,9,8,.95);--yuzey:linear-gradient(180deg,rgba(30,31,29,.93),rgba(14,15,14,.96));--cam-cizgi:rgba(255,255,255,.12);--ince:rgba(255,255,255,.06);--kor1:#ffffff;--kor2:#d8d4cb;--kor-isik:rgba(255,255,255,.16);--sis:#a3a59e;--kirmizi:#d0172b;--kirmizi2:#9b0f1f;--r1:16px;--r2:12px}
 html body{--barT:56px;--tabH:60px;--goH:58px;--kenar:12px}
 html body #menu.ov{background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:0!important;gap:0!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;animation:none!important;text-align:left!important}
 /* sahnenin üstünde ve altında yumuşak karartma: yazılar okunur, tank açıkta kalır */
@@ -151,9 +151,6 @@ html body #mp .hd h1{display:block!important;flex:1 1 auto;min-width:0;margin:0!
 html body #mp .hd h1 small{display:none!important}
 html body #mp .hd h1 .dev{display:block!important;margin-top:0!important;padding:3px 0 1px;font:700 10.5px/1.1 var(--sf)!important;letter-spacing:.08em!important;color:var(--sis)!important;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body #mp .hd h1 .dev b{color:var(--kor1)!important;font-weight:700!important;letter-spacing:.08em!important}
-html body #rb2.pill{flex:none;display:grid!important;grid-template-columns:auto;justify-items:end;row-gap:4px;margin:0!important;padding:6px 10px 6px!important;border:1px solid var(--cam-cizgi)!important;border-radius:14px!important;background:var(--cam)!important;font:700 12.5px/1 var(--sf)!important;letter-spacing:.05em!important;color:#fff!important;white-space:nowrap}
-html body #rb2.pill b{font-weight:700;text-transform:uppercase}html body #rb2.pill i{font-style:normal;font-size:12.5px;color:var(--kor1);text-align:right}
-html body #rb2.pill u{justify-self:stretch;display:block;min-width:58px;height:3px;border-radius:2px;background:rgba(255,255,255,.16);overflow:hidden;text-decoration:none}html body #rb2.pill u s{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--kor1),var(--kor2))}
 /* ayarlar: üst şeritte yuvarlak cam dişli */
 html body #mp #hisar-experience-entry{position:fixed!important;z-index:9;top:calc(8px + env(safe-area-inset-top,0px));left:calc(var(--kenar) + env(safe-area-inset-left,0px));width:40px!important;max-width:none!important;min-height:0!important;height:40px!important;margin:0!important;padding:0!important;border:1px solid var(--cam-cizgi)!important;border-radius:50%!important;background:var(--cam)!important;color:#fff!important;font-size:0!important;line-height:0!important;box-shadow:none!important;display:grid!important;place-items:center;-webkit-clip-path:none!important;clip-path:none!important}
 html body #mp #hisar-experience-entry::before{content:"";display:block;width:21px;height:21px;margin:auto;background:currentColor;-webkit-mask:var(--ic-gear) center/contain no-repeat;mask:var(--ic-gear) center/contain no-repeat}
@@ -185,7 +182,7 @@ html body #mp .acts{position:fixed!important;z-index:7;left:0;right:0;top:auto!i
 html body #mp .acts button{position:relative;overflow:hidden;flex:1 1 0!important;min-width:0!important;height:var(--goH)!important;min-height:0!important;margin:0!important;padding:0 10px!important;border:0!important;border-radius:var(--r1)!important;-webkit-clip-path:none!important;clip-path:none!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:10px;font:700 24px/1 var(--sf)!important;letter-spacing:.1em!important;text-transform:uppercase;white-space:nowrap;cursor:pointer;touch-action:manipulation;transition:transform .08s}
 /* DEVAM yalnız oyun duraklatılmışken görünür */
 html body #mp .acts #rs[style*="none"]{display:none!important}
-html body #go{background:linear-gradient(180deg,var(--kor1),var(--kor2))!important;color:#1d1000!important;-webkit-text-fill-color:#1d1000!important;box-shadow:0 10px 28px var(--kor-isik),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -3px 0 rgba(140,60,0,.3)!important;text-shadow:none!important}
+html body #go{background:linear-gradient(180deg,var(--kirmizi),var(--kirmizi2))!important;color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 10px 28px rgba(208,23,43,.38),inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(60,0,8,.35)!important;text-shadow:0 1px 0 rgba(0,0,0,.25)!important}
 html body #go::before{content:"";flex:none;width:28px;height:22px;background:currentColor;-webkit-mask:var(--ic-chev) center/contain no-repeat;mask:var(--ic-chev) center/contain no-repeat}
 /* düğmenin üstünden ara ara geçen parıltı */
 html body #go::after{content:"";position:absolute;top:0;bottom:0;left:-45%;width:34%;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.55),rgba(255,255,255,0));transform:skewX(-18deg);animation:korParilti 4.4s ease-in-out infinite;pointer-events:none}
@@ -311,8 +308,6 @@ html body #tk kbd{min-width:28px;height:28px;box-sizing:border-box;padding:0 8px
  html body #mpBody>.tabs{right:calc(var(--panel) + var(--kenar) + env(safe-area-inset-right,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px))}
  html body #mpBody>.tabs button{gap:3px!important;font-size:10.5px!important;letter-spacing:.05em!important}
  html body #mpBody>.tabs button::before{width:22px;height:18px}
- html body #rb2.pill{grid-template-columns:auto auto;align-items:baseline;column-gap:9px;row-gap:4px;padding:6px 10px 5px!important}
- html body #rb2.pill u{grid-column:1/-1}
  html body #mp #updBox{right:auto;left:calc(var(--kenar) + env(safe-area-inset-left,0px))}
  html body #mp #updBox.away{display:flex!important}
  html body #mp .acts{left:auto;right:0;bottom:0!important;height:auto!important;width:calc(var(--panel) + env(safe-area-inset-right,0px))!important;padding:14px calc(var(--kenar) + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) var(--kenar)!important;background:linear-gradient(180deg,rgba(12,15,19,0) 0,#0c0f13 14px)!important}
@@ -391,3 +386,14 @@ html body #kmd#kmd .st i{background:radial-gradient(circle at 42% 34%,#8aa84e,#5
 html body #kmd#kmd .st small{font-family:var(--sf)!important;font-weight:800!important;letter-spacing:.06em!important;color:var(--kemik2)!important}
 html body #kmd#kmd .kz{font-family:var(--sf)!important;font-weight:800!important;letter-spacing:.08em!important;border-radius:3px!important}
 html body #kmd#kmd .an{background:#1a1c18!important;border:1px solid var(--cizgi)!important}
+
+/* v94: seçili sekme beyaz, kırmızı alt çizgi */
+html body #mpBody>.tabs button.sel{color:#fff!important;box-shadow:inset 0 -2px 0 var(--kirmizi),inset 0 0 0 1px rgba(255,255,255,.1)!important}
+/* v94: canlı menü: ana düğmede ışık süzülür, basınca içeri göçer; sekmeler basınca küçülür */
+@keyframes snSheen{0%{transform:translateX(-140%) skewX(-18deg)}55%,100%{transform:translateX(320%) skewX(-18deg)}}
+html body #go{position:relative;overflow:hidden;transition:transform .14s ease,filter .14s ease}
+html body #go::after{content:'';position:absolute;top:0;bottom:0;left:0;width:34%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:snSheen 3.4s ease-in-out infinite;pointer-events:none}
+html body #go:active{transform:scale(.97);filter:brightness(1.12)}
+html body #mpBody>.tabs button{transition:color .2s,background .2s,box-shadow .2s,transform .12s!important}
+html body #mpBody>.tabs button:active{transform:scale(.93)}
+@media (prefers-reduced-motion:reduce){html body #go::after{animation:none;display:none}}

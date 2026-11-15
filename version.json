@@ -1,18 +1,20 @@
 {
-  "v": 93,
+  "v": 94,
   "experience": "63.1",
-  "not": "Gerçeklik. Ufukta üç sıra dağ var, uzaktakilerin tepesi karlı; renkleri havaya ve günün saatine göre sise karışır. Harita kenarında arazi dağ eteğine yükselir. Bütün haritada dokulu ot öbekleri var. Binalar sıvalı, kiremitli, pencereleri çerçeveli, damlarında baca var. Köylerde iki katlı betonarme evler yükseliyor: damda demir filizi, su deposu, güneş enerjili su ısıtıcısı; bazıları çıplak tuğla. Hareket eden araç hızına göre toz kaldırır; yolda ve yağmurda az. Düşman nişancısı önce ayar atışı yapar, sonra düzeltir; 25 m yer değiştirirsen ayar baştan başlar. Düşman tankları da mevzi kullanır: sana bakan boş bir mevziye dolanıp arkadan girer, gövdesi siperde ateş eder, yanına dolaşınca çıkar.",
+  "not": "Harekât. Artık görev emriyle oynanıyor: haritanın kuzeyi Türkiye, güneyi Suriye; sınır nehir boyunca. Üç görev var: Sınır Kapısı Savunması (üç dalga taarruzu Taş Geçit'te durdur), Tel Zeytun Tepesi (sınırı geç, tepeyi ele geçir), Kafr Sadun Deposu (düşman ikmal deposunu imha et). Hedefe rota çizilir; düşman mevzisinde bekler, seni kovalamaz ve Türkiye'ye giremez. Başlangıç karakolunda ikmal yapılır. Sınır duvarı (beton blok, jiletli tel), sınır kapıları, nöbetçi kuleleri ve içlerinde nöbetçiler, üç sınır karakolu (gönderde büyük bayrak, kapı nöbetçileri selam verir), duvar boyunca devriye. Türkiye tarafındaki bütün evlerde Türk bayrağı; köylerde ilkokul ve bahçesinde bayrak. Sivil yerleşime düşen mermide uyarı. Tank artık ağır: yolda en çok 43 km/sa, yavaş hızlanır ve döner. Hızla çarpılan bina hasar alır, yıkılır.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",
   "operations": "2.0.0",
   "operationNotes": "Telsiz emirleri: on emir, düğmeyle ya da sesle; dost tanklar çağrı adıyla yanıt verir. Görevler kaldırıldı. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır.",
-  "battle": "1.1.0",
+  "battle": "1.1.1",
   "battleNotes": "Son Takım: 1,6 km harita, takım büyüklüğüne göre 4, 7 ya da 14 rakip takım, altı aşamalı güvenli alan, sıralama ve ödül. Her aşamada bir ikmal sandığı, arada bir topçu bölgesi. Rakipler yapay zekâdır; çok oyunculu değildir.",
   "previousReleaseNotes": "HİSAR Kuruluş: tek hikâye ve üç tam oyun alanı; özgün tanklar, kabinler, şantiye araçları, poligon hedefleri korunur. Ortak Uçangöz, araç/görüş kataloğu, yatay iki elli kontrol ve Türkçe Ahmet sesi. Alanlar geçişle yüklenir; kesintisiz tek arazi değildir.",
   "simpleSettings": "1.0.0",
   "radioVoice": "Microsoft Ahmet (tr-TR) Neural",
   "radioSpeed": 1,
-  "swarm": "1.0.1",
-  "realism": "1.0.0"
+  "swarm": "1.0.2",
+  "realism": "1.0.0",
+  "sinir": "1.0.0",
+  "harekat": "1.0.0"
 }

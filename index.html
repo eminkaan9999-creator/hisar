@@ -1315,7 +1315,7 @@ function drawOverlay(dr){
    brk(mid.x,mid.y,hw,hh,col,tg||lk?2.6:SADE?1.3:1.8);
    if(SADE&&!imp)continue;
    if(e.type==='inf'&&!imp&&d>85&&f>=1)continue;
-   full++;const bw=clamp(hw*1.5,40,110),tn=e.type==='truck'&&e.g.userData&&e.g.userData.tk?'TANKER':e.at?'TANKSAVAR':ENT[e.type],lab=tn+' · '+Math.round(d)+' m';ox.font='700 '+(sight?13:11.5)+'px "Chakra Petch",system-ui';const tw=Math.max(bw,ox.measureText(lab).width)+4;
+   full++;const bw=clamp(hw*1.5,40,110),tn=e.nm||(e.type==='truck'&&e.g.userData&&e.g.userData.tk?'TANKER':e.at?'TANKSAVAR':ENT[e.type]),lab=tn+' · '+Math.round(d)+' m';ox.font='700 '+(sight?13:11.5)+'px "Chakra Petch",system-ui';const tw=Math.max(bw,ox.measureText(lab).width)+4;
    let by=mid.y-hh-10;by=place(mid.x,by+6,tw,24)-6;
    hpBar(mid.x,by,bw,f,e._hv);tx(lab,mid.x,by-9,sight?13:11.5,tg?'#fff':'#ffd9d4');
    if(tg)tx('◈ HEDEF',mid.x,mid.y+hh+16,12,'#fff');else if(lk&&!(window.AA&&AA.on))tx(SADE?'◎ KİLİT':'◎ KİLİT · NİŞANDA',mid.x,mid.y+hh+16,11.5,'#7dff9a')}}
@@ -2739,8 +2739,8 @@ window.mkTank=function(id,en,dock){if(id==='m60'||!BUILD[id])return mkM60(en?0x8
  if(dock&&window.M60GEO){const D=M60GEO().dock,d=new THREE.Group();d.add(new THREE.Mesh(D.V,X.MV));d.add(new THREE.Mesh(D.L,typeof stM!=='undefined'?stM:X.ME));d.position.z=3.4-o.DOCK;g.add(d);
   const deck=o.MZ.ty-.04,hh=1.72-deck;if(hh>.02)for(const sx of[-1,1])for(const dz of[-.5,.5]){const p=new THREE.Mesh(new THREE.BoxGeometry(.08,hh,.08),X.MV);p.geometry.userData.sh=false;p.position.set(sx*.95,deck+hh/2,-o.DOCK+dz);g.add(p)}g.userData.dock=d}
  return g};
-// ---------- dusman tanklari: cogunlukla T-72B ----------
-const _mkE=window.mkE;window.mkE=function(t){if(t==='tank'&&Math.random()<.65)return mkTank('t72',1);return _mkE.apply(this,arguments)};
+// ---------- düşman tankları: savaşta takımın tipi (BT_KIND), eğitim alanında çoğunlukla T-72B ----------
+const _mkE=window.mkE;window.mkE=function(t){if(t==='tank'){const k=window.BT_KIND;if(k)return k==='m60'||!BUILD[k]?_mkE.apply(this,arguments):mkTank(k,1);if(Math.random()<.65)return mkTank('t72',1)}return _mkE.apply(this,arguments)};
 // ---------- oyuncu tankini degistir ----------
 const MZ0={...MZ};let DOCK0=DOCKD;
 function applyTank(id){if(!TK[id])id='m60';const P0=P.g,u0=P0.userData,o=TK[id];
@@ -4434,7 +4434,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=89,LOGO=window.HISAR_LOGO;
+const VER=90,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7253,6 +7253,6 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 
 <script src="experience/crew-orders.js?v=5"></script>
 <script src="experience/field.js?v=2"></script>
-<script src="experience/battle.js?v=3"></script>
+<script src="experience/battle.js?v=4"></script>
 </body>
 </html>

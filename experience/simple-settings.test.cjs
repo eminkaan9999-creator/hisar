@@ -35,7 +35,7 @@ test('settings show the last battle frame rate so a stutter report needs only a 
  assert.ok(src.includes('<p id="hs-diag"></p>'));assert.ok(src.includes("'Son savaş: saniyede ' + Math.round(perf.fps) + ' kare (en düşük ' + Math.round(perf.min) + ')"));assert.ok(src.includes('perf.n = 0; perf.min = 0;'),'measurement restarts with every battle');
  assert.ok(!src.includes('sonraki görevde'));});
 test('settings sheet credits the sky, ground textures and typeface where players can read it',()=>{const src=fs.readFileSync(require('node:path').join(__dirname,'simple-settings.js'),'utf8');
- assert.ok(src.includes('<p id="hs-credit">Gökyüzü fotoğrafları: Poly Haven (CC0) · Zemin dokuları: BabylonJS Assets (CC BY 4.0), OpenGameArt “dark grass” (CC BY 3.0) · Yazı tipi: TeX Gyre Heros Cn (GUST)</p>'));
+ assert.ok(src.includes('<p id="hs-credit">Gökyüzü fotoğrafları: Poly Haven (CC0) · Zemin dokuları: BabylonJS Assets (CC BY 4.0), OpenGameArt “dark grass” (CC BY 3.0) · Yazı tipleri: TeX Gyre Heros Cn (GUST), Chakra Petch (SIL OFL)</p>'));
  assert.ok(!fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8').includes('id="crd"'),'no hidden copy in the page');
 });
 

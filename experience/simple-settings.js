@@ -129,7 +129,7 @@
         '<label><span>Kumanda hassasiyeti</span><select data-simple="control" aria-label="Kumanda hassasiyeti"><option value="hassas">Yumuşak</option><option value="dengeli">Normal</option><option value="seri">Hızlı</option></select></label>' +
         '<label><span>Zorluk</span><select data-simple="difficulty" aria-label="Zorluk"><option value="kolay">Kolay</option><option value="normal">Normal</option><option value="zor">Zor</option><option value="serbest">Serbest sürüş</option></select></label>' +
         '<p id="hs-note">Zorluk seçimin bir sonraki savaşta uygulanır.</p><p id="hs-diag"></p>' +
-        '<p id="hs-credit">Gökyüzü fotoğrafları: Poly Haven (CC0) · Zemin dokuları: BabylonJS Assets (CC BY 4.0), OpenGameArt “dark grass” (CC BY 3.0) · Yazı tipi: TeX Gyre Heros Cn (GUST)</p>';
+        '<p id="hs-credit">Gökyüzü fotoğrafları: Poly Haven (CC0) · Zemin dokuları: BabylonJS Assets (CC BY 4.0), OpenGameArt “dark grass” (CC BY 3.0) · Yazı tipleri: TeX Gyre Heros Cn (GUST), Chakra Petch (SIL OFL)</p>';
       for (const input of panel.querySelectorAll('[data-simple]')) input.addEventListener('change', () => save({ [input.dataset.simple]: input.type === 'checkbox' ? input.checked : input.value }));
       parent.prepend(panel);
     }

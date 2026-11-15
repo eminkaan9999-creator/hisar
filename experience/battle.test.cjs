@@ -119,3 +119,48 @@ test('mission leftovers are deleted from the game, not hidden',()=>{
  for(const gone of ['const STG={q:','window.EVRUN','TOPÇU BASKINI','ÖNCELİKLİ HEDEF','KOMUTA TANKI','const shuf=','const ATP={','window.DAILY','görev bonusu','GERÇEK GÖREVE','karistirici\n{const sm=window.startMission'])assert.ok(!code.includes(gone),gone);
  assert.match(code,/window\.stagePending=\(\)=>false;/);assert.match(code,/window\.startMission=function\(\)\{mT=0;if\(mis==='egitim'\)practice\(\);radio\(MI\[mis\]\.r\)\};/);
 });
+// ---------- ikmal sandığı ve topçu bölgesi ----------
+test('supply crate lands inside the next circle, on usable ground and away from the player',()=>{
+ for(const seed of [3,17,91,404]){const rnd=seeded(seed),z=b.zoneInit(WS,rnd),me={x:z.nx,z:z.nz};
+  for(let n=0;n<40;n++){const p=b.dropPoint(z,()=>true,rnd,me,140,WS);assert.ok(p);
+   assert.ok(Math.hypot(p.x-z.nx,p.z-z.nz)<=z.nr*.85+1e-6,'inside the next circle');assert.ok(Math.hypot(p.x-me.x,p.z-me.z)>=70,'not on top of the player');
+   assert.ok(Math.abs(p.x)<=WS-60&&Math.abs(p.z)<=WS-60,'on the map even when the circle hangs over its edge');}}
+ assert.equal(b.dropPoint(b.zoneInit(WS,seeded(5)),()=>false,seeded(5),null,140,WS),null,'no usable ground → no crate');
+});
+test('artillery zone opens only while the safe zone is large and always inside it',()=>{
+ for(const seed of [2,29,311]){const rnd=seeded(seed),z=b.zoneInit(WS,rnd);b.zoneStep(z,150,WS,rnd);
+  for(const near of [null,{x:z.cx+z.r,z:z.cz},{x:z.cx,z:z.cz}]){const r=b.redPick(z,rnd,near,WS);assert.ok(r);assert.equal(r.r,b.RED.r);
+   assert.ok(Math.hypot(r.x-z.cx,r.z-z.cz)<=z.r-b.RED.r*.5+1e-6,'centre stays inside the safe zone');assert.ok(Math.abs(r.x)<=WS-b.RED.r*.5&&Math.abs(r.z)<=WS-b.RED.r*.5,'and on the map');
+   if(near&&Math.hypot(near.x-z.cx,near.z-z.cz)<z.r-200)assert.ok(Math.hypot(r.x-near.x,r.z-near.z)<=160+1e-6,'opens near the chosen team');}}
+ const small={state:'wait',cx:0,cz:0,r:b.RED.minZone-1},closed={state:'closed',cx:0,cz:0,r:500};
+ assert.equal(b.redPick(small,seeded(1),null),null);assert.equal(b.redPick(closed,seeded(1),null),null);
+});
+test('artillery shells fall inside the marked zone and leave time to move away',()=>{
+ const rnd=seeded(77),red={x:120,z:-40,r:b.RED.r};for(let i=0;i<200;i++){const s=b.redShell(red,rnd);assert.ok(Math.hypot(s.x-red.x,s.z-red.z)<=red.r+1e-6);}
+ assert.ok(b.RED.warn>=8,'warning is long enough to drive out');assert.ok(b.RED.fall>=1.5,'each shell is marked before it lands');assert.ok(b.RED.blast<=10);
+});
+test('battle wiring: crate drops once per phase, the nearest rival goes for it, artillery hurts every side',()=>{const src=read('experience/battle.js');
+ assert.ok(src.includes("if(EV&&z.state==='wait'&&z.i<PHASES.length-1&&B.dropPhase<z.i&&z.t>12){B.dropPhase=z.i;dropCrate();}"));
+ assert.ok(src.includes("function events(v){if(v==='sandik'){if(B&&!B.over)dropCrate();return !!(B&&B.crate);}if(v==='topcu'){if(B&&!B.over&&!B.red){B.redAt=0;B.force=true;}return !!B;}EV=v!==false;return EV;}"),'events can be switched off and forced for checks');
+ assert.ok(src.includes("if(B.crate&&B.crate.rival===s){s.wx=B.crate.x;s.wz=B.crate.z;}"));
+ assert.ok(src.includes("TA=TA0.slice();DC=3+SV.U.drn;ammo=AMX();"),'crate refills like the supply point');
+ assert.ok(src.includes("root.hitP(1.5,{x:q.x,y:hAt(q.x,q.z)+1,z:q.z})"));assert.ok(src.includes("e.hp-=e.mx*.4;e.sn=e.hp;if(e.hp<=0)quietKill(e);"),'enemy tanks in the blast are hit too, without credit');
+ assert.ok(src.includes("if(inRed(e)){e.park=0;e.conv=1;e.ch=Math.atan2(e.x-B.red.x,e.z-B.red.z);continue;}"),'tanks drive out of the artillery zone');
+ assert.ok(src.includes("buildWall();buildCrate();prebuild();"),'crate mesh is built before the battle, not during it');
+});
+test('every rival team drives one tank type and the first teams differ from each other',()=>{
+ const sq=b.makeSquads(Array.from({length:14},(_,i)=>({x:i*10,z:0})),4);
+ assert.deepEqual(sq.slice(0,5).map(s=>s.kind),['t72','leo1','m60','leo2','m1']);assert.ok(sq.every(s=>b.SQUAD_KINDS.includes(s.kind)));
+ assert.ok(new Set(sq.slice(0,4).map(s=>s.kind)).size===4,'four-team battle shows four different tanks');
+ const src=read('experience/battle.js'),page=read('index.html');
+ assert.ok(src.includes("root.BT_KIND=s.kind;const e=safe(()=>root.addE('tank',x,z,{h:s.h||0}),null);root.BT_KIND=null;"));
+ assert.ok(src.includes("B.tune.hp*safe(()=>TANKS[s.kind].st.arm||1,1);"),'armour follows the tank type');
+ assert.ok(src.includes("e.nm=safe(()=>TANKS[s.kind].n.toLocaleUpperCase('tr-TR'),'')||undefined;"));assert.ok(page.includes("tn=e.nm||(e.type==='truck'"),'target label shows the tank type');
+ assert.ok(page.includes("const k=window.BT_KIND;if(k)return k==='m60'||!BUILD[k]?_mkE.apply(this,arguments):mkTank(k,1);"));
+ for(const k of new Set(b.SQUAD_KINDS))assert.ok(page.includes(' '+k+":{n:'"),'tank type '+k+' exists in the garage list');
+});
+test('an enemy that fires, or is in range of a friendly tank, is shown even beyond the engine\'s 120 m sight',()=>{const src=read('experience/battle.js');
+ assert.ok(src.includes("wrap('eshot',old=>function(e){if(B&&!B.over&&e&&e.bt!=null)e.sp=B.time+SPOT_FIRE;return old.apply(this,arguments);});"));
+ assert.ok(src.includes("return e.sp>B.time||safe(()=>AL.some(a=>!a.dead&&dist(a,e)<ALLY_RANGE),false);});"));assert.match(src,/SPOT_FIRE=6;/);
+});
+

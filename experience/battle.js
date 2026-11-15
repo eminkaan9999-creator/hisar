@@ -245,12 +245,16 @@ function paintCard(out){if(!card||!B)return;const z=B.zone,inf=zoneInfo(z),[st,p
  p.textContent=out>0?'ALANIN DIŞINDASIN · '+Math.round(out)+' m':inf.state==='wait'?'Daralmaya '+clock(inf.left):inf.state==='shrink'?'Alan daralıyor · '+clock(inf.left):'Alan kapandı';
  card.classList.toggle('dis',out>0);pr.value=inf.state==='closed'?1:1-inf.left/inf.span;
  sm.textContent=(teamsLeft(B.squads)+1)+' takım · '+enemiesLeft()+' düşman tank';}
-function paintMenu(){const box=doc.getElementById('btCard');if(!box)return;const pl=plan(safe(()=>SV.form|0,0)),m=Math.round(TOTAL_TIME/60);
- const names={1:'TEK TANK',2:'KISIM · 2 TANK',4:'TAKIM · 4 TANK'};box.replaceChildren();
- const h=doc.createElement('h3');h.textContent='SON TAKIM';const p=doc.createElement('p');p.textContent='Takımlar büyük haritaya dağılır. Güvenli alan aşama aşama daralır; dışında kalan hasar alır. Son kalan takım kazanır.';
- const row=doc.createElement('div');row.className='bt-facts';for(const [k,v] of [['Senin takımın',names[pl.size]],['Rakip',pl.squads+' takım · '+pl.tanks+' tank'],['Süre','yaklaşık '+m+' dk'],['Harita','1,6 km × 1,6 km']]){const d=doc.createElement('div'),b=doc.createElement('b'),s=doc.createElement('span');s.textContent=k;b.textContent=v;d.append(s,b);row.appendChild(d);}
- box.append(h,p,row);
- if(stats.games){const r=doc.createElement('p');r.className='bt-rec';r.textContent=stats.games+' savaş · '+(stats.wins|0)+' zafer · en iyi sıralama '+(stats.best||'—')+(stats.last?' · son: '+stats.last.place+'/'+stats.last.teams:'');box.appendChild(r);}}
+function paintMenu(){const box=doc.getElementById('btCard');if(!box)return;const form=safe(()=>SV.form|0,0),pl=plan(form),m=Math.round(TOTAL_TIME/60);
+ const el=(tag,cls,text)=>{const e=doc.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;};box.replaceChildren();
+ const top=el('div','bt-top');top.append(el('h3',null,'SON TAKIM'),el('span','bt-time','≈ '+m+' dk'));
+ // takım büyüklüğü doğrudan ana ekrandan seçilir
+ const seg=el('div','bt-seg');seg.setAttribute('role','group');seg.setAttribute('aria-label','Takım büyüklüğü');
+ for(const [k,n,sub] of [[0,'TEK','1 tank'],[1,'KISIM','2 tank'],[3,'TAKIM','4 tank']]){const b=el('button',form===k?'sel':null);b.type='button';b.dataset.bf=k;b.setAttribute('aria-pressed',String(form===k));b.append(el('b',null,n),el('small',null,sub));seg.appendChild(b);}
+ const facts=el('div','bt-facts');for(const t of [pl.squads+' rakip takım',pl.tanks+' düşman tank','1,6 km harita'])facts.appendChild(el('span',null,t));
+ box.append(top,el('p',null,'Güvenli alan daralır; dışında kalan hasar alır. Son kalan takım kazanır.'),seg,facts);
+ if(stats.games)box.appendChild(el('p','bt-rec',stats.games+' savaş · '+(stats.wins|0)+' zafer · en iyi sıralama '+(stats.best||'—')+(stats.last?' · son: '+stats.last.place+'/'+stats.last.teams:'')));
+ box.onclick=e=>{const b=e.target&&e.target.closest&&e.target.closest('[data-bf]');if(!b)return;safe(()=>{SV.form=+b.dataset.bf;root.save();if(typeof root.ldRender==='function')root.ldRender();},null);paintMenu();};}
 
 function drawMini(){if(!B||B.over||typeof mmx==='undefined')return;const z=B.zone,W=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W,Z=y=>((y-O.z)/MMR+.5)*W,k=W/MMR;
  mmx.save();mmx.lineWidth=2;if(z.state!=='closed'){mmx.strokeStyle='rgba(120,190,255,.95)';mmx.beginPath();mmx.arc(X(z.cx),Z(z.cz),Math.max(1,z.r*k),0,7);mmx.stroke();
@@ -287,14 +291,18 @@ function installUI(){if(!doc.body||card)return;
 #bt-feed p{margin:0;padding:5px 9px;background:rgba(22,24,20,.86);border-right:3px solid var(--cizgi,#4a4f43);color:var(--kemik,#f3f5ec);font:700 12.5px/1.2 var(--sf,system-ui);letter-spacing:.02em;text-align:right;transition:opacity .5s}
 #bt-feed p[data-k=iyi]{border-right-color:var(--yesil,#84c63c)}#bt-feed p.out{opacity:0}
 body:not(.inplay) #bt-feed{display:none}
-#btCard{background:var(--zirh,#2b2e28);border:1px solid var(--cizgi,#4a4f43);border-left:3px solid var(--sari,#f3c20f);border-radius:3px;padding:12px 12px 10px}
-#btCard h3{margin:0 0 6px!important;padding:0!important;border:0!important;font:700 22px/1 var(--sf,system-ui)!important;letter-spacing:.07em!important;color:#fff!important}#btCard h3:after{display:none}
-#btCard p{margin:0 0 10px;font:400 15px/1.35 var(--sf,system-ui);color:var(--kemik,#f3f5ec)}
-#btCard .bt-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-#btCard .bt-facts div{background:rgba(0,0,0,.28);padding:7px 9px;min-width:0}
-#btCard .bt-facts span{display:block;font:700 11.5px/1 var(--sf,system-ui);letter-spacing:.07em;color:var(--kemik2,#bdc3b2);text-transform:uppercase}
-#btCard .bt-facts b{display:block;margin-top:4px;font:700 16px/1.1 var(--sf,system-ui);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#btCard .bt-rec{margin:10px 0 0;font:700 13px/1.2 var(--sf,system-ui);color:var(--sari,#f3c20f)}`;
+#btCard{background:var(--yuzey,linear-gradient(180deg,rgba(30,36,45,.9),rgba(15,18,23,.93)));border:1px solid var(--cam-cizgi,rgba(255,255,255,.13));border-radius:var(--r1,18px);padding:14px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.35)}
+#btCard .bt-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#btCard h3{margin:0!important;padding:0!important;border:0!important;font:700 26px/1 var(--sf,system-ui)!important;letter-spacing:.05em!important;color:#fff!important}#btCard h3:before,#btCard h3:after{display:none!important}
+#btCard .bt-time{flex:none;padding:5px 9px;border-radius:999px;background:rgba(255,170,50,.13);border:1px solid rgba(255,176,60,.4);font:700 13px/1 var(--sf,system-ui);letter-spacing:.05em;color:var(--kor1,#ffc247)}
+#btCard p{margin:7px 0 12px;font:400 14.5px/1.35 var(--sf,system-ui);color:var(--sis,#a7afb8)}
+#btCard .bt-seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px;background:rgba(0,0,0,.36);border:1px solid var(--ince,rgba(255,255,255,.065));border-radius:15px}
+#btCard .bt-seg button{min-width:0;min-height:48px;margin:0;padding:4px 2px;border:0;border-radius:12px;background:none;color:var(--sis,#a7afb8);-webkit-text-fill-color:currentColor;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;touch-action:manipulation}
+#btCard .bt-seg b{font:700 16px/1 var(--sf,system-ui);letter-spacing:.06em}#btCard .bt-seg small{font:700 11.5px/1 var(--sf,system-ui);letter-spacing:.05em;opacity:.85}
+#btCard .bt-seg button.sel{background:linear-gradient(180deg,var(--kor1,#ffc247),var(--kor2,#ff8a1e));color:#1d1000;box-shadow:0 6px 16px var(--kor-isik,rgba(255,146,38,.42)),inset 0 1px 0 rgba(255,255,255,.5)}
+#btCard .bt-facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+#btCard .bt-facts span{padding:6px 10px;border-radius:999px;background:var(--ince,rgba(255,255,255,.065));border:1px solid var(--ince,rgba(255,255,255,.065));font:700 12.5px/1 var(--sf,system-ui);letter-spacing:.03em;color:#e8ebef;white-space:nowrap}
+#btCard .bt-rec{margin:10px 0 0;font:700 12.5px/1.2 var(--sf,system-ui);letter-spacing:.02em;color:var(--kor1,#ffc247)}`;
  doc.head.appendChild(style);
  card=doc.createElement('section');card.id='hr-objective';card.hidden=true;for(const t of ['strong','p','progress','small'])card.appendChild(doc.createElement(t));card.children[2].max=1;doc.body.appendChild(card);
  feedBox=doc.createElement('div');feedBox.id='bt-feed';feedBox.setAttribute('aria-live','polite');doc.body.appendChild(feedBox);

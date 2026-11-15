@@ -115,6 +115,7 @@
       #hs-simple input[type=checkbox]{width:26px;height:26px;accent-color:var(--yesil,#84c63c)}
       #hs-note{font-size:13.5px;color:var(--kemik2,#bdc3b2);line-height:1.4;margin-top:14px}
       #hs-diag{font-size:12.5px;color:var(--kemik2,#bdc3b2);line-height:1.4;margin-top:8px;opacity:.8}
+      #hs-credit{font-size:11.5px;color:var(--kemik2,#bdc3b2);line-height:1.4;margin:14px 0 0;opacity:.7}
       #hs-simple :is(select,input):focus-visible{outline:3px solid var(--sari,#f3c20f);outline-offset:4px}
       @media(max-width:360px){#hs-simple label{font-size:14px;gap:8px}#hs-simple select{width:122px}#hs-simple .hs-auto{padding:10px}}
       `;
@@ -127,7 +128,8 @@
         '<label><span>Ses</span><input type="checkbox" data-simple="sound" aria-label="Oyun sesi"></label>' +
         '<label><span>Kumanda hassasiyeti</span><select data-simple="control" aria-label="Kumanda hassasiyeti"><option value="hassas">Yumuşak</option><option value="dengeli">Normal</option><option value="seri">Hızlı</option></select></label>' +
         '<label><span>Zorluk</span><select data-simple="difficulty" aria-label="Zorluk"><option value="kolay">Kolay</option><option value="normal">Normal</option><option value="zor">Zor</option><option value="serbest">Serbest sürüş</option></select></label>' +
-        '<p id="hs-note">Zorluk seçimin bir sonraki savaşta uygulanır.</p><p id="hs-diag"></p>';
+        '<p id="hs-note">Zorluk seçimin bir sonraki savaşta uygulanır.</p><p id="hs-diag"></p>' +
+        '<p id="hs-credit">Gökyüzü fotoğrafları: Poly Haven (CC0) · Zemin dokuları: BabylonJS Assets (CC BY 4.0), OpenGameArt “dark grass” (CC BY 3.0) · Yazı tipi: TeX Gyre Heros Cn (GUST)</p>';
       for (const input of panel.querySelectorAll('[data-simple]')) input.addEventListener('change', () => save({ [input.dataset.simple]: input.type === 'checkbox' ? input.checked : input.value }));
       parent.prepend(panel);
     }

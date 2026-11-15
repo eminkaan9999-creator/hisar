@@ -3,13 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1a1c18"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ÇELİK BÖRÜ">
+<meta name="theme-color" content="#0b0e12"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ÇELİK BÖRÜ">
 <link rel="manifest" href="manifest.webmanifest?v=86"><link rel="icon" href="favicon-32.png?v=86"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=86"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ÇELİK BÖRÜ</title>
 <!-- v3: ses, gölge, arazi, hava, FPV, hasar bölgeleri, görevler -->
 <style>
-:root{--fg:#e6efd8;--ac:#8fbf4d;--bg:#10150f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme: dark){:root{--fg:#e6efd8;--ac:#8fbf4d;--bg:#10150f}}
+:root{--fg:#e6efd8;--ac:#8fbf4d;--bg:#10150f}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
 canvas{display:block;touch-action:none}
 #hud div,#hud button{position:fixed}
@@ -59,7 +58,6 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 .ov section{display:none;width:100%}.ov section.on{display:block}
 .ov h3{margin:10px 0 2px;font-size:12px;opacity:.65;letter-spacing:2px}
 .ov button{padding:10px 14px;font-size:14px}
-.kl{text-align:left;font-size:13px;line-height:1.7;opacity:.92}
 #dmg{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 35%,rgba(200,0,0,.75) 100%);opacity:0}
 .up{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:14px}
 
@@ -91,8 +89,6 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 .ov .row.grid button small{display:block;font-size:11.5px;font-weight:500;opacity:.65;margin-top:3px;line-height:1.3}
 .ov section p{max-width:none;margin:8px 2px 0;font-size:12.5px;line-height:1.5;opacity:.7;text-align:left}
 #gd{padding:10px 12px;margin:10px 0 0;background:rgba(0,0,0,.25);border-left:3px solid var(--am);border-radius:6px;opacity:.9!important}
-.kl{background:rgba(0,0,0,.2);border:1px solid var(--ln);border-radius:12px;padding:12px 14px;line-height:1.85}
-.kl b{color:var(--am)}
 .up{padding:10px 14px;margin-bottom:8px;background:rgba(255,255,255,.05);border:1px solid var(--ln);border-radius:12px}
 .up button{background:linear-gradient(145deg,var(--am),var(--am2));color:#1a1204;border:0;border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer}
 .up b{color:var(--am);font-size:12px;letter-spacing:1px}
@@ -138,7 +134,7 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
 <link rel="preload" href="assets/brand/celik-boru.jpg" as="image">
 <link rel="preload" href="experience/fonts/hisar-dar-700.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="experience/fonts/hisar-dar-400.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="experience/skin.css?v=3">
+<link rel="stylesheet" href="experience/skin.css?v=4">
 
 <style id="spl-style">
 #spl{position:fixed;inset:0;z-index:100;overflow:hidden;background:#12140f;transition:opacity .6s;font-family:var(--sf,system-ui,sans-serif)}#spl.out{opacity:0;pointer-events:none}
@@ -172,7 +168,7 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
 <div id="scope"><svg viewBox="-100 -100 200 200" fill="none" stroke="#0b0b0b" stroke-width=".7"><path d="M-96 0H-7M7 0H96M0 -96V-7M0 7V96"/><path d="M-70 -2V2M-50 -2V2M-30 -2V2M-10 -2V2M10 -2V2M30 -2V2M50 -2V2M70 -2V2M-2 -70H2M-2 -50H2M-2 -30H2M-2 -10H2" /><path d="M-8 14H8M-12 24H12M-16 34H16M-20 44H20M-24 54H24"/><circle r="1.1" fill="#0b0b0b"/></svg><div id="scn"></div></div>
 <div id="dmg"></div>
 <div id="menu" class="ov"><div id="mp">
- <div class="hd"><div class="logo">🪖</div><h1>ÇELİK BÖRÜ</h1><div id="rb2" class="pill"></div></div>
+ <div class="hd"><div class="logo"></div><h1>ÇELİK BÖRÜ</h1><div id="rb2" class="pill"></div></div>
  <p id="mt">M60A3 tankınla ilerle, birliğini yönet, Uçangözü kaldır ve düşman hedeflerini vur. Tüm ayarlar bu menüde.</p>
  <div class="tabs"><button data-t="g">Savaş</button><button data-t="u">Garaj</button><button data-t="k">Kontroller</button></div>
  <section id="tg">
@@ -186,15 +182,7 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
   <h3>SES</h3>
   <div class="row"><button data-s="1">Açık</button><button data-s="0">Kapalı</button></div>
  </section>
- <section id="tk"><div class="kl">
-  <b>Tank:</b> ↑↓ ileri-geri · ←→ dönüş · fare nişan (önce tıkla) · Boşluk/sol tık ateş · 1-2-3 mermi (AP, HEAT, duman)<br>
-  <b>Uçangöz:</b> C/Tab tank⇄Uçangöz · oklar uç · E/Q yüksel-alçal · Boşluk bomba · H ısı kamerası · F nişandaki hedefi işaretle · M en yakın hedefi işaretle · X kamikaze dalışı · R Uçangözü tanka geri çağır (otomatik iner ve şarj olur)<br>
-  <b>Şarj istasyonu:</b> Tankın arkasındaki platform: Uçangöz burada durur ve şarj olur (ışık: kırmızı=havada, sarı=şarjda, yeşil=dolu). R ile otomatik iner.<br>
-  <b>İkmal:</b> Mavi ikmal aracının yanına git: mermi, Uçangöz ve zırh yenilenir. Düşman Uçangözlerini top mermisi yakınından geçerek düşürürsün. Garaj sekmesinde kredi ile yükseltme al.<br>
-  <b>Görüş:</b> V ile dış → nişangâh (fare tekerleği yakınlaştırır) → kabin içi (namlu, kama, mermi rafı, nişancı koltuğu). Her görüşten ateş edebilirsin.<br>
-  <b>Genel:</b> N hava · P/Esc menü<br>
-  <b>Telefon:</b> sol yarıyı sürükle: hareket · sağ yarıyı sürükle: bak · butonlar sağ altta
- </div></section>
+ <section id="tk"></section>
  <section id="tu"><div id="upl"></div></section>
  <div class="acts"><button id="go">BAŞLAT</button><button id="rs" style="display:none">DEVAM</button></div>
  <div class="ft">P / Esc ile menüyü istediğin zaman aç</div>
@@ -1048,7 +1036,7 @@ function tab(t){for(const x of['g','a','b','u','k'])$('t'+x).className=x===t?'on
 document.querySelector('.tabs').insertAdjacentHTML('afterbegin','');
 document.querySelector('.tabs button[data-t="u"]').insertAdjacentHTML('beforebegin','<button data-t="b">Birlik</button>');
 document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>tab(b.dataset.t));
-document.querySelector('#tu').insertAdjacentHTML('beforebegin','<section id="tb"><h3>BİRLİK</h3><div class="row grid3"><button data-f="0"><b>Tek tank</b><small>1 tank · sadece sen</small></button><button data-f="1"><b>Kısım</b><small>2 tank · sen + 1 müttefik</small></button><button data-f="3"><b>Takım</b><small>4 tank · sen + 3 müttefik</small></button></div><p id="fdesc"></p><h3>MÜHİMMAT YÜKLEMESİ</h3><div id="ld"></div><div class="row" style="margin-top:8px"><button data-pre="0">Dengeli</button><button data-pre="1">Zırh avı</button><button data-pre="2">Piyade / yapı</button></div></section>');
+document.querySelector('#tu').insertAdjacentHTML('beforebegin','<section id="tb"><h3>BİRLİK</h3><div class="row grid3"><button data-f="0"><b>Tek</b><small>1 tank</small></button><button data-f="1"><b>Kısım</b><small>2 tank</small></button><button data-f="3"><b>Takım</b><small>4 tank</small></button></div><p id="fdesc"></p><h3>MÜHİMMAT YÜKLEMESİ</h3><div id="ld"></div><div class="row" style="margin-top:8px"><button data-pre="0">Dengeli</button><button data-pre="1">Zırh avı</button><button data-pre="2">Piyade / yapı</button></div></section>');
 const capN=()=>63+8*SV.U.cap;
 const AMN=[['APDS · Zırh delici','Tank, zırhlı araç, topçu'],['HEAT · Çok amaçlı','Tank, bunker, bina'],['WP · Beyaz fosfor','Duman perdesi + yangın etkisi · piyade, hafif araç'],['HEP · Plastik patlayıcı','Bina, bunker, piyade']],PRE=[[26,16,7,14],[37,13,4,9],[10,17,6,30]];
 const FD={0:'Yalnız hareket edersin. Telsiz komutu yok.',1:'Kısım: seninle birlikte 2 tank. KAPLAN 1-2 yanında gelir.',3:'Takım: 4 tank. KAPLAN 1-2, 1-3 ve 1-4 birliğinde, tek tek ya da topluca komut verebilirsin (T).'};
@@ -1249,7 +1237,8 @@ let gG='t';
 document.head.insertAdjacentHTML('beforeend','<style>#gsub{margin:2px 0 10px}#gsub small{opacity:.6;font-weight:600;margin-left:4px}#gtl{display:flex;align-items:center;gap:10px;margin:0 2px 10px}#gtl b{font-size:15px;letter-spacing:.5px}#gtl span{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--am);padding:4px 10px;border:1px solid var(--am);border-radius:999px;background:rgba(242,177,52,.1)}.uc{display:grid;grid-template-columns:40px minmax(0,1fr) auto;column-gap:11px;align-items:center;padding:10px 10px 10px 11px;margin-bottom:6px;background:var(--zirh,#2b2e28);border:1px solid var(--cizgi,#4a4f43);border-left:3px solid var(--cizgi,#4a4f43);border-radius:4px}.uc.ok{border-left-color:var(--yesil,#84c63c)}.uc.mx{border-left-color:var(--sari,#f3c20f)}.uc .ui,#dBody .ui{width:40px;height:40px;display:grid;place-items:center;background:rgba(0,0,0,.32);border-radius:3px;color:var(--sari,#f3c20f)}.uc .ui svg,#dBody .ui svg{width:24px;height:24px;display:block}.uc .ut{min-width:0}.uc .ut b{display:block;font:700 16px/1.15 var(--sf,system-ui);color:#fff;letter-spacing:.02em}.uc .ut small{display:block;margin:2px 0 6px;font:400 13px/1.3 var(--sf,system-ui);color:var(--kemik2,#bdc3b2)}.uc .lv{display:flex;flex-wrap:wrap;align-items:center;gap:5px 9px}.uc .pips{display:flex;gap:3px}.uc .pips i{width:15px;height:6px;background:rgba(255,255,255,.16)}.uc .pips i.on{background:var(--sari,#f3c20f)}.uc .ef{font:700 12.5px/1.25 var(--sf,system-ui);color:var(--kemik2,#bdc3b2)}.uc .ef s{text-decoration:none}.uc .ef em{font-style:normal;color:var(--sari,#f3c20f)}.uc button{min-width:74px;min-height:42px;padding:8px 10px;border:0;border-radius:3px;font:700 15px/1 var(--sf,system-ui);letter-spacing:.03em;background:#3a3d35;color:var(--kemik2,#bdc3b2);-webkit-text-fill-color:currentColor;white-space:nowrap;touch-action:manipulation}.uc.ok button{background:linear-gradient(180deg,#84c63c,#5d9a22);color:#fff}.uc.mx button{background:none;border:1px solid var(--sari,#f3c20f);color:var(--sari,#f3c20f);opacity:1}.uc.bought{animation:selp .4s}.uc.no{animation:nope .35s}@keyframes nope{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}</style>');
 $('upl').insertAdjacentHTML('beforebegin','<div class="tabs" id="gsub"></div><div id="gtl"></div>');
 function lvlSum(g){let a=0,m=0;for(const u of UPX)if(u.g===g){a+=SV.U[u.k]|0;m+=u.max}return[a,m]}
-function renderGar(){$('rb2').innerHTML='<b>★ '+rankOf().n+'</b><i>'+SV.kr.toLocaleString('tr-TR')+' kr</i>';
+function renderGar(){{let cur=RANKS[0],nx=null;for(let i=0;i<RANKS.length;i++)if(SV.xp>=RANKS[i][0]){cur=RANKS[i];nx=RANKS[i+1]||null}const pf=nx?clamp((SV.xp-cur[0])/(nx[0]-cur[0])*100,0,100):100;
+ $('rb2').innerHTML='<b>'+cur[1]+'</b><i>'+SV.kr.toLocaleString('tr-TR')+' kr</i><u><s style="width:'+pf.toFixed(0)+'%"></s></u>'}
  $('gsub').innerHTML=[['t','Tank'],['d','Uçangöz'],['b','Birlik']].map(([k,n])=>{const[a,m]=lvlSum(k);return'<button data-gs="'+k+'" class="'+(k===gG?'sel':'')+'">'+n+'<small>'+a+'/'+m+'</small></button>'}).join('');
  $('gsub').querySelectorAll('[data-gs]').forEach(b=>b.onclick=()=>{gG=b.dataset.gs;renderGar()});
  const[sa,sm]=lvlSum(gG);$('gtl').innerHTML='<b>'+({t:'M60A3 PATTON',d:'UÇANGÖZ FPV',b:'BİRLİK TANKLARI'})[gG]+'</b><span>SEVİYE '+(1+sa)+' · '+sa+'/'+sm+'</span>';
@@ -2405,17 +2394,6 @@ window.drawScope=function(o,W,H,lockE){
  if(!matchMedia('(pointer:coarse)').matches&&cx-rx>190){const lx=(cx-rx)/2,ly=cy-60;o.textAlign='center';o.font='800 13px system-ui,sans-serif';o.fillStyle='#f2b134';o.fillText(MODES[m],lx,ly);o.font='600 11.5px system-ui,sans-serif';o.fillStyle='rgba(235,240,225,.7)';
    ['Y  görüş değiştir','U  BLK / WHT HOT','I  WFOV / NFOV','L  lazer mesafe','Tekerlek  yakınlaştır','V  görünüm'].forEach((q,i)=>o.fillText(q,lx,ly+22+i*17))}
  o.restore()};
-// ---- Kontroller sekmesi (guncel)
-{const kl=document.querySelector('#tk .kl');if(kl)kl.innerHTML=
- '<b>Tank:</b> W/S veya ↑↓ ileri-geri · A/D veya ←→ dönüş · fare: kule ve top (önce ekrana tıkla) · Boşluk / sol tık: ateş · 1 APDS · 2 HEAT · 3 HEP · 4 WP<br>'+
- '<b>Görüş (V):</b> dış görüş → nişangâh → kabin içi → sürücü mahalli (direksiyon, vites, göstergeler)<br>'+
- '<b>Nişangâh:</b> Y görüş değiştir (TTS gündüz · TTS termal · M105D teleskop) · U BLK/WHT HOT · I WFOV/NFOV · L lazer mesafe ölçer (M21 serbest atışta ilave yükselişi kendisi verir) · tekerlek yakınlaştırır<br>'+
- '<b>Kabin içi:</b> J istasyon (nişancı · komutan · doldurucu · kapak açık) · K parça adları (açık kaynaklara göre yer ve görevleri) · Shift + fare serbest bakış<br>'+
- '<b>Uçangöz:</b> C/Tab tank⇄Uçangöz · WASD/oklar uç · E/Q yüksel-alçal · Boşluk bomba · H ısı kamerası · F nişandaki hedefi işaretle · M en yakını işaretle · X kamikaze · R tanka geri çağır (platforma iner, şarj olur)<br>'+
- '<b>M85 uçaksavar:</b> Z aç/kapa · fare ile nişan (kule sabit kalır) · sol tık / Boşluk basılı tut: ateş · helikopter, düşman Uçangöz, kamyon, piyade ve MG mevzisini vurur · sarı ◇ önleme işareti · aşırı ısınırsa bekle<br>'+
- '<b>Birlik ve harita:</b> T telsiz / atış emirleri · G harita · B ikmal navigasyonu<br>'+
- '<b>Genel:</b> N hava durumu · P/Esc menü<br>'+
- '<b>Telefon:</b> sol halka ile sür · sağ yarıyı sürükleyerek nişan al · ATEŞ, nişangâh ve görüş düğmeleri sağ altta; nişangâhta sol sütunda TERMAL / BLK-WHT / FOV / LAZER'}
 })();
 
 
@@ -2666,18 +2644,18 @@ function lights(V,E,s,x,y,z){V.box(.16,.14,.1,s*x,y,z,STL);E.cyl(.055,.055,.03,s
 function tail(V,E,s,x,y,z){V.box(.14,.12,.05,s*x,y,z,STL);E.box(.1,.07,.02,s*x,y,z-.03,TAIL)}
 // ---------- TANK TANIMLARI ----------
 const TK={
- m60:{n:'M60A3 Patton',u:'ABD',y:1978,cap:'105 mm M68',tons:'51 t',crew:4,price:0,flag:'🇺🇸',st:{arm:1,spd:1,rel:1,dmg:1},d:'TTS termal nişangâhlı, güvenilir Soğuk Savaş tankı. Bu oyunun detaylı kabinli tankı.'},
- leo1:{n:'Leopard 1A5',u:'Almanya',y:1987,cap:'105 mm L7A3',tons:'42 t',crew:4,price:1500,flag:'🇩🇪',st:{arm:.82,spd:1.28,rel:.95,dmg:1},d:'Hızlı ve çevik; ince zırhını hareketle telafi eder. Özel: en hızlı dönen tank.',
+ m60:{n:'M60A3 Patton',u:'ABD',y:1978,cap:'105 mm M68',tons:'51 t',crew:4,price:0,st:{arm:1,spd:1,rel:1,dmg:1},d:'TTS termal nişangâhlı, güvenilir Soğuk Savaş tankı. Bu oyunun detaylı kabinli tankı.'},
+ leo1:{n:'Leopard 1A5',u:'Almanya',y:1987,cap:'105 mm L7A3',tons:'42 t',crew:4,price:1500,st:{arm:.82,spd:1.28,rel:.95,dmg:1},d:'Hızlı ve çevik; ince zırhını hareketle telafi eder. Özel: en hızlı dönen tank.',
   hc:'#5d6a45',pal:['#3f4a2e','#6d5b3f','#262a20'],MZ:{ty:1.56,tz:.05,gy:.42,z:1.05,d:5.3},TKX:1.33,TKW:.28,ANT:[.7,2.3,-1.35],DOCK:3.35,wheel:{r:.34,list:[2.3,1.55,.8,.05,-.7,-1.45,-2.2]},idl:[3.0,.62,.3],spr:[-2.95,.72,.32]},
- t72:{n:'T-72B',u:'SSCB',y:1985,cap:'125 mm 2A46M',tons:'45 t',crew:3,price:2500,flag:'☭',st:{arm:1.12,spd:.98,rel:.86,dmg:1.25},d:'Alçak siluet, otomatik yükleyici, reaktif zırh. Özel: en hızlı dolum; ama yandan vurulursa karuseldeki cephane infilak edebilir. Düşman birlikleri de bunu kullanır.',
+ t72:{n:'T-72B',u:'SSCB',y:1985,cap:'125 mm 2A46M',tons:'45 t',crew:3,price:2500,st:{arm:1.12,spd:.98,rel:.86,dmg:1.25},d:'Alçak siluet, otomatik yükleyici, reaktif zırh. Özel: en hızlı dolum; ama yandan vurulursa karuseldeki cephane infilak edebilir. Düşman birlikleri de bunu kullanır.',
   hc:'#56613c',pal:['#465030','#626c45'],MZ:{ty:1.45,tz:.35,gy:.3,z:1.05,d:5.6},TKX:1.38,TKW:.29,ANT:[-.3,2.2,-1.15],DOCK:3.25,wheel:{r:.4,list:[2.25,1.45,.65,-.15,-.95,-1.75]},idl:[2.95,.62,.3],spr:[-2.75,.7,.32]},
- leo2:{n:'Leopard 2A4',u:'Almanya',y:1985,cap:'120 mm Rh-120 L/44',tons:'55 t',crew:4,price:4000,flag:'🇩🇪',st:{arm:1.36,spd:1.17,rel:.9,dmg:1.35},d:'Düz dik ön zırhlı kule, güçlü 120 mm top, 1500 bg motor. Özel: stabilize top, hareket halinde en isabetli atış.',
+ leo2:{n:'Leopard 2A4',u:'Almanya',y:1985,cap:'120 mm Rh-120 L/44',tons:'55 t',crew:4,price:4000,st:{arm:1.36,spd:1.17,rel:.9,dmg:1.35},d:'Düz dik ön zırhlı kule, güçlü 120 mm top, 1500 bg motor. Özel: stabilize top, hareket halinde en isabetli atış.',
   hc:'#4b5638',pal:['#2c2a24','#6b5638','#3b4a2c'],big:1,MZ:{ty:1.62,tz:-.05,gy:.42,z:1.6,d:5.1},TKX:1.56,TKW:.32,ANT:[.85,2.4,-1.65],DOCK:3.55,wheel:{r:.35,list:[2.55,1.8,1.05,.3,-.45,-1.2,-1.95]},idl:[3.25,.66,.3],spr:[-2.95,.72,.32],skirt:1},
- m1:{n:'M1A2 Abrams',u:'ABD',y:1992,cap:'120 mm M256 L/44',tons:'62 t',crew:4,price:5000,flag:'🇺🇸',st:{arm:1.52,spd:1.22,rel:.95,dmg:1.35},d:'Gaz türbinli, kompozit zırhlı, komutan bağımsız termal görüşlü. Özel: türbinle en yüksek hız; ama yakıtı çok çabuk biter.',
+ m1:{n:'M1A2 Abrams',u:'ABD',y:1992,cap:'120 mm M256 L/44',tons:'62 t',crew:4,price:5000,st:{arm:1.52,spd:1.22,rel:.95,dmg:1.35},d:'Gaz türbinli, kompozit zırhlı, komutan bağımsız termal görüşlü. Özel: türbinle en yüksek hız; ama yakıtı çok çabuk biter.',
   hc:'#b9a77a',pal:['#a8966a','#c4b48a'],MZ:{ty:1.58,tz:-.1,gy:.36,z:1.75,d:5.1},TKX:1.6,TKW:.32,ANT:[.9,2.3,-1.65],DOCK:3.6,wheel:{r:.32,list:[2.6,1.85,1.1,.35,-.4,-1.15,-1.9]},idl:[3.3,.7,.3],spr:[-3.05,.78,.33],skirt:1},
- altay:{n:'Altay',u:'Türkiye',y:2023,cap:'120 mm L/55 MKE',tons:'65 t',crew:4,price:6000,flag:'🇹🇷',st:{arm:1.58,spd:1.16,rel:.86,dmg:1.42},d:'Yerli ana muharebe tankı: modüler zırh, uzun namlulu 120 mm top. Özel: SARP silahı piyadeye ve Uçangözlere kendisi ateş eder; AKKOR roketleri havada vurur.',
+ altay:{n:'Altay',u:'Türkiye',y:2023,cap:'120 mm L/55 MKE',tons:'65 t',crew:4,price:6000,st:{arm:1.58,spd:1.16,rel:.86,dmg:1.42},d:'Yerli ana muharebe tankı: modüler zırh, uzun namlulu 120 mm top. Özel: SARP silahı piyadeye ve Uçangözlere kendisi ateş eder; AKKOR roketleri havada vurur.',
   hc:'#56643f',pal:['#3c4630','#7a6a48','#2b2e25'],big:1,MZ:{ty:1.64,tz:-.1,gy:.4,z:1.75,d:6.2},TKX:1.62,TKW:.33,ANT:[.9,2.35,-1.85],DOCK:3.55,wheel:{r:.35,list:[2.6,1.85,1.1,.35,-.4,-1.15,-1.9]},idl:[3.3,.68,.3],spr:[-3.0,.74,.33],skirt:1},
- acv:{n:'ACV-15 ZMA',u:'Türkiye',y:1992,cap:'25 mm otomatik top + TOW',tons:'14 t',crew:3,price:1200,flag:'🇹🇷',st:{arm:.55,spd:1.45,rel:1,dmg:1},d:'Paletli zırhlı muharebe aracı: hafif, çok hızlı ve yüzebilir. 25 mm seri ateşli top (APDS / HEI) ve TOW tanksavar füzesi. Özel: arkadan 4 kişilik piyade timi indirir, timle birlikte çarpışır.',
+ acv:{n:'ACV-15 ZMA',u:'Türkiye',y:1992,cap:'25 mm otomatik top + TOW',tons:'14 t',crew:3,price:1200,st:{arm:.55,spd:1.45,rel:1,dmg:1},d:'Paletli zırhlı muharebe aracı: hafif, çok hızlı ve yüzebilir. 25 mm seri ateşli top (APDS / HEI) ve TOW tanksavar füzesi. Özel: arkadan 4 kişilik piyade timi indirir, timle birlikte çarpışır.',
   hc:'#5b6943',pal:['#3f4a2e','#6d5b3f','#262a20'],MZ:{ty:1.85,tz:.4,gy:.25,z:.55,d:2.3},TKX:1.2,TKW:.22,ANT:[-.4,2.2,-.4],DOCK:2.25,wheel:{r:.3,list:[1.75,.95,.15,-.65,-1.45]},idl:[-2.45,.55,.28],spr:[2.3,.62,.3]}};
 window.TANKS=TK;
 // ---------- modeller ----------
@@ -2789,7 +2767,7 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
 '#galV .sp{position:absolute;right:12px;top:10px;font:700 11px/1.5 system-ui;color:#e7f1d8;text-align:right;text-shadow:0 1px 3px #000}'+
 '#galS{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 14px;margin:0 2px 10px}#galS div{font:700 11px system-ui;color:#cfdcb8}#galS i{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:3px;overflow:hidden}#galS i s{display:block;height:100%;background:linear-gradient(90deg,#7de07a,#ffd27a)}'+
 '#galD{font-size:12.5px;opacity:.85;margin:0 2px 10px;line-height:1.45}#galA{display:flex;gap:8px;margin-bottom:12px}#galA button{flex:1;padding:12px;border-radius:12px;border:0;font:900 14px system-ui;letter-spacing:.5px;cursor:pointer}#galA .buy{background:linear-gradient(180deg,#ffd27a,#e48a1e);color:#1d1406}#galA .sel{background:linear-gradient(180deg,#7de07a,#3f9a3c);color:#0d1a0b}#galA .own{background:rgba(255,255,255,.1);color:#e7f1d8}#galA button[disabled]{opacity:.45}'+
-'#galL{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}#galL button{text-align:left;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(214,236,190,.18);color:#eef5e2;cursor:pointer}#galL button.cur{border-color:#ffd27a;box-shadow:0 0 0 1px #ffd27a inset}#galL b{display:block;font-size:13.5px}#galL small{display:block;font-size:11px;opacity:.7;margin-top:2px}#galL em{float:right;font-style:normal;font-size:11px;font-weight:800;color:#ffd27a}#galL em.ok{color:#7de07a}'+
+'#galL{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}#galL button{text-align:left;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(214,236,190,.18);color:#eef5e2;cursor:pointer}#galL button.cur{border-color:#ffd27a;box-shadow:0 0 0 1px #ffd27a inset}#galL b{display:block;font-size:13.5px}#galL small{display:block;font-size:11px;opacity:.7;margin-top:2px}#galL em{font-style:normal;font-size:11px;font-weight:800;color:#ffd27a}#galL em.ok{color:#7de07a}'+
 '</style>');
 const tu_=document.getElementById('tu');const gal=document.createElement('div');gal.id='gal';
 gal.innerHTML='<div id="galV"><canvas></canvas><div class="nm"></div><div class="sp"></div></div><div id="galS"></div><div id="galD"></div><div id="galA"></div><div id="galL"></div>';
@@ -2802,12 +2780,12 @@ function galTabs(){const gs=document.getElementById('gsub');if(!gs)return;if(!gs
 const _rg=window.renderGar;window.renderGar=function(){_rg.apply(this,arguments);galTabs();gal.classList.toggle('on',!!galOn);['gtl','upl'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=galOn?'none':''});if(galOn)galRender()};
 function bar(v,mx){return'<i><s style="width:'+Math.round(clamp(v/mx,0,1)*100)+'%"></s></i>'}
 function galRender(){const o=TK[pick],own=SV.tanks.includes(pick),cur=SV.tank===pick;
- gal.querySelector('.nm').innerHTML=o.n+'<small>'+o.flag+' '+o.u.toUpperCase()+' · '+o.y+'</small>';gal.querySelector('.sp').innerHTML=o.cap+'<br>'+o.tons+' · '+o.crew+' mürettebat';
+ gal.querySelector('.nm').innerHTML=o.n+'<small>'+o.u.toLocaleUpperCase('tr-TR')+' · '+o.y+'</small>';gal.querySelector('.sp').innerHTML=o.cap+'<br>'+o.tons+' · '+o.crew+' mürettebat';
  document.getElementById('galS').innerHTML='<div>ZIRH'+bar(o.st.arm,1.6)+'</div><div>HIZ'+bar(o.st.spd,1.3)+'</div><div>ATEŞ GÜCÜ'+bar(o.st.dmg,1.45)+'</div><div>YÜKLEME HIZI'+bar(1/o.st.rel,1/.84)+'</div>';
  document.getElementById('galD').textContent=o.d;
- const A=document.getElementById('galA');A.innerHTML=cur?'<button class="own" disabled>✔ KULLANILIYOR</button>':own?'<button class="sel" data-x="sel">SEÇ · BU TANKLA SAVAŞ</button>':'<button class="buy" data-x="buy"'+(SV.kr<o.price?' disabled':'')+'>SATIN AL · '+o.price.toLocaleString('tr-TR')+' kr</button>'+(SV.kr<o.price?'<button class="own" disabled>'+(o.price-SV.kr).toLocaleString('tr-TR')+' kr eksik</button>':'');
+ const A=document.getElementById('galA');A.innerHTML=cur?'<button class="own" disabled>KULLANILIYOR</button>':own?'<button class="sel" data-x="sel">SEÇ · BU TANKLA SAVAŞ</button>':'<button class="buy" data-x="buy"'+(SV.kr<o.price?' disabled':'')+'>SATIN AL · '+o.price.toLocaleString('tr-TR')+' kr</button>'+(SV.kr<o.price?'<button class="own" disabled>'+(o.price-SV.kr).toLocaleString('tr-TR')+' kr eksik</button>':'');
  A.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{if(b.dataset.x==='buy'){if(SV.kr<o.price)return;SV.kr-=o.price;SV.tanks.push(pick);applyTank(pick);save();if(typeof sndBip==='function')sndBip()}else{applyTank(pick);save()}renderGar()});
- document.getElementById('galL').innerHTML=Object.keys(TK).map(k=>{const q=TK[k],ow=SV.tanks.includes(k);return'<button data-k="'+k+'" class="'+(k===pick?'cur':'')+'"><em class="'+(ow?'ok':'')+'">'+(SV.tank===k?'✔ SEÇİLİ':ow?'SENİN':q.price.toLocaleString('tr-TR')+' kr')+'</em><b>'+q.flag+' '+q.n+'</b><small>'+q.cap+'</small></button>'}).join('');
+ document.getElementById('galL').innerHTML=Object.keys(TK).map(k=>{const q=TK[k],ow=SV.tanks.includes(k);return'<button data-k="'+k+'" class="'+(k===pick?'cur':'')+'"><b>'+q.n+'</b><em class="'+(ow?'ok':'')+'">'+(SV.tank===k?'SEÇİLİ':ow?'SENİN':q.price.toLocaleString('tr-TR')+' kr')+'</em><small>'+q.u+' · '+q.cap+'</small></button>'}).join('');
  document.getElementById('galL').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{pick=b.dataset.k;galRender();prevSet(pick)});prevSet(pick)}
 // 3B onizleme (ayri kucuk sahne)
 let PR=null,PS,PC,PM=null,pid='';
@@ -3665,7 +3643,14 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
 '#rep .md{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}#rep .md span{display:inline-flex;align-items:center;gap:6px;padding:5px 9px 5px 7px;background:rgba(243,194,15,.12);border:1px solid rgba(243,194,15,.5);border-radius:3px;font-size:13.5px;font-weight:700}#rep .md i{flex:none;width:16px;height:16px;color:#f3c20f}'+
 '#rep .bt{display:flex;gap:8px;margin-top:16px}#rep .bt button{flex:1;min-height:48px;padding:12px;border-radius:3px;border:0;font:700 17px/1 var(--sf,system-ui);letter-spacing:.07em;cursor:pointer;touch-action:manipulation}#rep .bt .a{background:linear-gradient(180deg,#84c63c,#5d9a22);color:#fff}#rep .bt .b{background:#2b2e28;color:#f3f5ec;border:1px solid #4a4f43}'+
 '@media (orientation:landscape) and (max-height:520px){#rep .c{width:min(780px,100%);display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.5fr);column-gap:18px;align-items:start;padding:14px 16px}#rep h2{grid-column:1;grid-row:1;font-size:26px}#rep .pl{grid-column:1;grid-row:2;margin:8px 0 0}#rep .pl b{font-size:52px}#rep .sub{grid-column:1;grid-row:3;margin:6px 0 8px}#rep .md{grid-column:1;grid-row:4;margin-top:0;justify-content:center}#rep .g{grid-column:2;grid-row:1/span 3}#rep .rk{grid-column:2;grid-row:4;margin-top:10px}#rep .bt{grid-column:2;grid-row:5;margin-top:12px}}'+
-'#rb2{cursor:pointer}#prof,#prof *{box-sizing:border-box}#prof .c{width:100%}#prof .ml div{min-width:0}#prof .ml{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;margin-top:10px}#prof .ml div{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(214,236,190,.14)}#prof .ml div.no{opacity:.42;filter:grayscale(1)}#prof .ml i{flex:none;width:24px;height:24px;color:#f3c20f;font-style:normal}#prof .bk{display:flex;gap:8px;margin-top:14px}#prof .bk button,#prof .bkb button{flex:1;min-height:44px;padding:9px 8px;border-radius:3px;border:1px solid #4a4f43;background:#2b2e28;color:#f3f5ec;-webkit-text-fill-color:currentColor;font:700 14.5px/1 var(--sf,system-ui);letter-spacing:.05em;touch-action:manipulation}#prof .bkb{margin-top:8px}#prof .bkb[hidden]{display:none}#prof .bkb textarea{display:block;width:100%;min-height:74px;padding:8px;border-radius:3px;border:1px solid #4a4f43;background:#12140f;color:#f3f5ec;font:13px/1.35 ui-monospace,Menlo,monospace;word-break:break-all;resize:vertical}#prof .bkb button{display:block;width:100%;margin-top:6px;background:linear-gradient(180deg,#84c63c,#5d9a22);border:0;color:#fff}#prof .bkm{margin:8px 0 0;font:600 13.5px/1.35 var(--sf,system-ui);color:#f3c20f}#prof .bkm:empty{display:none}#prof .ml b{display:block;font-size:12.5px}#prof .ml small{display:block;font-size:10.5px;opacity:.7;line-height:1.3}'+
+'#rb2{cursor:pointer}#rep2{position:fixed;inset:0;z-index:34;display:none;align-items:center;justify-content:center;background:rgba(5,7,9,.78);padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));box-sizing:border-box;overflow:auto;font-family:var(--sf,system-ui);color:#eef2f5}'+
+'#prof{width:min(560px,100%);margin:auto 0}#prof,#prof *{box-sizing:border-box}#prof .c{width:100%;padding:16px}'+
+'#prof .ph{display:flex;align-items:center;gap:12px}#prof .ph img{flex:none;width:56px;height:56px;border-radius:14px}#prof .ph div{flex:1;min-width:0}#prof .ph b{display:block;font:700 24px/1.05 var(--sf,system-ui);letter-spacing:.05em;color:#fff}#prof .ph small{display:block;margin-top:4px;font:400 13.5px/1.2 var(--sf,system-ui);color:#a7afb8}'+
+'#prof .ph button{flex:none;width:44px;height:44px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.065);color:#fff;-webkit-text-fill-color:#fff;font:700 18px/1 var(--sf,system-ui);cursor:pointer;touch-action:manipulation}'+
+'#prof .pr{margin:14px 0 0;font:700 13.5px/1.2 var(--sf,system-ui);letter-spacing:.02em}#prof .pr u{display:block;height:7px;margin-top:7px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden;text-decoration:none}#prof .pr u s{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#ffc247,#ff8a1e)}'+
+'#prof .ps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px;text-align:center;font:400 12.5px/1.2 var(--sf,system-ui);color:#a7afb8}#prof .ps div{padding:9px 4px;border-radius:13px;background:rgba(255,255,255,.065)}#prof .ps b{display:block;margin-bottom:3px;font:700 19px/1 var(--sf,system-ui);color:#fff}'+
+'#prof h3{margin:16px 2px 0;font:700 13px/1 var(--sf,system-ui);letter-spacing:.14em;text-transform:uppercase;color:#a7afb8}'+
+'#prof .ml div{min-width:0}#prof .ml{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;margin-top:10px}#prof .ml div{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(214,236,190,.14)}#prof .ml div.no{opacity:.42;filter:grayscale(1)}#prof .ml i{flex:none;width:24px;height:24px;color:#f3c20f;font-style:normal}#prof .bk{display:flex;gap:8px;margin-top:14px}#prof .bk button,#prof .bkb button{flex:1;min-height:44px;padding:9px 8px;border-radius:3px;border:1px solid #4a4f43;background:#2b2e28;color:#f3f5ec;-webkit-text-fill-color:currentColor;font:700 14.5px/1 var(--sf,system-ui);letter-spacing:.05em;touch-action:manipulation}#prof .bkb{margin-top:8px}#prof .bkb[hidden]{display:none}#prof .bkb textarea{display:block;width:100%;min-height:74px;padding:8px;border-radius:3px;border:1px solid #4a4f43;background:#12140f;color:#f3f5ec;font:13px/1.35 ui-monospace,Menlo,monospace;word-break:break-all;resize:vertical}#prof .bkb button{display:block;width:100%;margin-top:6px;background:linear-gradient(180deg,#84c63c,#5d9a22);border:0;color:#fff}#prof .bkm{margin:8px 0 0;font:600 13.5px/1.35 var(--sf,system-ui);color:#f3c20f}#prof .bkm:empty{display:none}#prof .ml b{display:block;font-size:12.5px}#prof .ml small{display:block;font-size:10.5px;opacity:.7;line-height:1.3}'+
 '</style>');
 const mt=document.createElement('div');mt.id='medT';document.body.appendChild(mt);let mq=[],mBusy=0;
 function showMed(m){if(game!=='play')return;mq.push(m);if(!mBusy)nextMed()}
@@ -3706,15 +3691,13 @@ const _eg=window.endGame;window.endGame=function(ok,txt){const was=game==='play'
  if(window.CREW)setTimeout(()=>CREW.say(ok?'Savaş kazanıldı. İyi iş çıkardınız.':'Tank kaybedildi.',2,'end',1),300);
  return r};
 // ---- profil karti (rutbe rozetine dokun)
-const prof=document.createElement('div');prof.id='prof';prof.className='';prof.style.cssText='';document.body.appendChild(prof);prof.id='rep2';
-prof.setAttribute('style','position:fixed;inset:0;z-index:34;display:none;align-items:center;justify-content:center;background:rgba(4,6,3,.82);padding:12px;box-sizing:border-box;overflow:auto;font-family:system-ui,-apple-system,sans-serif;color:#eef5e2');
+const prof=document.createElement('div');prof.id='rep2';document.body.appendChild(prof);
 function openProf(){const{cur,nx}=nextRank(),pf=nx?Math.min(100,(SV.xp-cur[0])/(nx[0]-cur[0])*100):100,T=SV.tot,got=MED.filter(m=>SV.med[m.id]).length;
- prof.innerHTML='<div id="prof" style="width:min(560px,100%);margin:auto 0"><div class="c" style="border-radius:20px;background:linear-gradient(180deg,#1d2618,#11160f);border:1px solid rgba(214,236,190,.25);padding:18px">'+
-  '<div style="display:flex;align-items:center;gap:12px"><img src="'+(window.HISAR_LOGO||'')+'" style="width:58px;height:58px"><div style="flex:1"><div style="font:900 20px system-ui">'+cur[1].toUpperCase()+'</div><div style="font-size:12px;opacity:.75">'+SV.xp+' XP · '+SV.kr.toLocaleString('tr-TR')+' kredi · '+got+'/'+MED.length+' madalya</div></div><button data-x style="border:0;border-radius:999px;padding:9px 14px;background:rgba(255,255,255,.1);color:#fff;font:800 13px system-ui">✕</button></div>'+
-  '<div style="margin:12px 0 4px;font-size:12px;font-weight:700">'+(nx?'Sonraki rütbe: '+nx[1]+' · '+(nx[0]-SV.xp)+' XP kaldı':'En yüksek rütbedesin')+'</div><div style="height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden"><div style="height:100%;width:'+pf+'%;background:linear-gradient(90deg,#7de07a,#ffd27a)"></div></div>'+
-  '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;font-size:11px;text-align:center">'+
-  [['Tank imhası',T.tk],['Zafer',T.win],['Savaş',T.mis],['İsabet',T.shots?Math.round(T.hits/T.shots*100)+'%':'—'],['En uzak',T.longest+' m'],['Sürülen',T.km.toFixed(1)+' km']].map(q=>'<div style="padding:8px 4px;border-radius:10px;background:rgba(255,255,255,.05)"><b style="display:block;font-size:16px">'+q[1]+'</b>'+q[0]+'</div>').join('')+'</div>'+
-  '<div style="margin-top:14px;font:800 11px system-ui;letter-spacing:2px;color:#ffd27a">MADALYALAR</div><div class="ml">'+MED.map(m=>'<div class="'+(SV.med[m.id]?'':'no')+'"><i>'+m.ic+'</i><span><b>'+m.n+'</b><small>'+m.d+' · '+m.kr+' kr</small></span></div>').join('')+'</div>'+
+ prof.innerHTML='<div id="prof"><div class="c">'+
+  '<div class="ph"><img src="'+(window.HISAR_LOGO||'')+'" alt=""><div><b>'+cur[1].toLocaleUpperCase('tr-TR')+'</b><small>'+SV.xp+' XP · '+SV.kr.toLocaleString('tr-TR')+' kredi · '+got+'/'+MED.length+' madalya</small></div><button data-x aria-label="Kapat">✕</button></div>'+
+  '<div class="pr">'+(nx?'Sonraki rütbe: '+nx[1]+' · '+(nx[0]-SV.xp)+' XP kaldı':'En yüksek rütbedesin')+'<u><s style="width:'+pf+'%"></s></u></div>'+
+  '<div class="ps">'+[['Tank imhası',T.tk],['Zafer',T.win],['Savaş',T.mis],['İsabet',T.shots?Math.round(T.hits/T.shots*100)+'%':'—'],['En uzak',T.longest+' m'],['Sürülen',T.km.toFixed(1)+' km']].map(q=>'<div><b>'+q[1]+'</b>'+q[0]+'</div>').join('')+'</div>'+
+  '<h3>Madalyalar</h3><div class="ml">'+MED.map(m=>'<div class="'+(SV.med[m.id]?'':'no')+'"><i>'+m.ic+'</i><span><b>'+m.n+'</b><small>'+m.d+' · '+m.kr+' kr</small></span></div>').join('')+'</div>'+
   '<div class="bk"><button data-bk="copy">KAYDI YEDEKLE</button><button data-bk="open">YEDEK KODU GİR</button></div><div class="bkb" hidden><textarea rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Yedek kodunu buraya yapıştır"></textarea><button data-bk="load">GERİ YÜKLE</button></div><p class="bkm" role="status"></p></div></div>';
  prof.style.display='flex';prof.querySelector('[data-x]').onclick=()=>prof.style.display='none';prof.onclick=e=>{if(e.target===prof)prof.style.display='none'};
  const box=prof.querySelector('.bkb'),ta=box.querySelector('textarea'),msg=prof.querySelector('.bkm');
@@ -3918,8 +3901,6 @@ const ICS='<path d="M5 17a4 4 0 01.5-8 5.5 5.5 0 0110.6-1.6A4.2 4.2 0 0119 17z"/
 (window.CTX_XP=window.CTX_XP||[]).push(()=>{const o=[];if(mode!=='tank')return o;
  if(SG.n>0&&(performance.now()-SG.lastHit<9000||P.hp<P.mx*.45))o.push({k:'smk'+SG.n,t:'☁ SİS AT · '+SG.n,c:'p',f:popSmoke});
  if(wx==='gece'&&iv!==1)o.push({k:'nv'+(NV.on?1:0),t:NV.on?'◉ GECE GÖRÜŞÜ KAPAT':'◉ GECE GÖRÜŞ',c:NV.on?'':'p',f:nvToggle});return o});
-// ---------------- kontroller metni ----------------
-const kl=document.querySelector('#tk .kl');if(kl)kl.insertAdjacentHTML('beforeend','<br><b>Sis atarı:</b> B (2 salvo, ikmalde dolar) · <b>Gece görüş:</b> Q (yalnız gece) · <b>Hava:</b> N (Akşam eklendi) · Rüzgâr dumanı, yağmuru ve Uçangözü sürükler');
 // kayitli hava
 if(SV.wx&&WX[SV.wx]&&SV.wx!==wx)setW(SV.wx);
 })();
@@ -4024,7 +4005,6 @@ function show(b){if(lastURL)URL.revokeObjectURL(lastURL);const url=lastURL=URL.c
 // cark
 const ICP='<path d="M3.5 8h3.2l1.8-2.5h7l1.8 2.5h3.2v11h-17z"/><circle cx="12" cy="13.2" r="3.6"/>';
 (window.WHEEL_XP=window.WHEEL_XP||[]).push(c=>[{id:'ph',t:'FOTO',d:'Oyunu dondur, fotoğraf çek',ic:ICP,act:enter}]);
-const kl=document.querySelector('#tk .kl');if(kl)kl.insertAdjacentHTML('beforeend','<br><b>Foto modu:</b> O (ya da çarktan FOTO) · sürükle döndür, tekerlek yakınlaştır, Boşluk çek, F filtre, Esc çık');
 // guvenlik: menu acilirsa foto modundan cik
 FRAME_HOOKS.push(()=>{if(PH.on&&game!=='photo'){PH.on=0;document.body.classList.remove('photo');lab()}if(PH.on&&PH.tgt!=='t')tgtPos()});
 })();
@@ -4454,7 +4434,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=88,LOGO=window.HISAR_LOGO;
+const VER=89,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4464,18 +4444,40 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
 '</style>');
 // menu logosu
 const lg=document.querySelector('#menu .hd .logo');if(lg&&LOGO)lg.innerHTML='<img alt="ÇELİK BÖRÜ" src="'+LOGO+'">';
-// acilis ekrani: sayfada sabit durur (ilk cizimden itibaren gorunur); oyun hazir olunca kalkar
+// acilis ekrani: sayfada sabit durur (ilk cizimden itibaren gorunur); oyun hazir olunca kalkar.
+// Menünün kaydırma kutusunu ve ayar düğmesini en son yüklenen modüller kurar; onlar gelmeden menü gösterilirse yarım düzen görünür.
 {const sp=document.getElementById('spl');if(sp){const v=document.getElementById('splV');if(v)v.textContent='SÜRÜM '+VER;const t0=performance.now();let done=false;
  const hide=()=>{if(done)return;done=true;setTimeout(()=>{sp.classList.add('out');setTimeout(()=>sp.remove(),700)},Math.max(0,1400-(performance.now()-t0)))};
- const ready=()=>{try{return !!(window.HisarBattle&&window.HisarGameBridge&&HisarGameBridge.snapshot().ready)}catch(e){return false}};
+ const ready=()=>{try{return !!(window.HisarBattle&&window.HisarGameBridge&&HisarGameBridge.snapshot().ready&&window.HisarSimpleSettings&&document.getElementById('mpBody'))}catch(e){return false}};
  const iv=setInterval(()=>{if(ready()){clearInterval(iv);hide()}},120);setTimeout(()=>{clearInterval(iv);hide()},9000)}}
 // GUNCELLE: menunun ortasinda
 const mt=document.getElementById('mt');const box=document.createElement('div');box.id='updBox';
 box.innerHTML='<button id="updB"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7"/></svg><span>GÜNCELLE</span></button><div id="updI">Sürüm <b>'+VER+'</b> · en son sürümü yüklemek için dokun</div>';
 if(mt)mt.parentNode.insertBefore(box,mt.nextSibling);
 // içerik kaydırılınca düğme çekilir (yazıların üstüne binmesin); sekme değişince liste başa döner
-document.addEventListener('scroll',e=>{const t=e.target;if(t&&t.id==='mpBody')box.classList.toggle('away',t.scrollTop>24)},true);
-{const tb=window.tab;if(typeof tb==='function')window.tab=function(){const r=tb.apply(this,arguments);const b=document.getElementById('mpBody');if(b)b.scrollTop=0;box.classList.remove('away');return r}}
+document.addEventListener('scroll',e=>{const t=e.target;if(t&&t.id==='mpBody'){const k=t.scrollTop>24;box.classList.toggle('away',k);document.body.classList.toggle('kaydi',k)}},true);
+{const tb=window.tab;if(typeof tb==='function')window.tab=function(t){const r=tb.apply(this,arguments);document.body.dataset.tab=t;const b=document.getElementById('mpBody');if(b)b.scrollTop=0;box.classList.remove('away');document.body.classList.remove('kaydi');return r}}
+document.body.dataset.tab='g';
+// ---- Kontroller sekmesi: dokunmatik düğmeler ve klavye tuşları; açılışta cihaza uyan liste seçilir
+{const tk=document.getElementById('tk');if(tk){
+ const ic=d=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
+ const DOK=[
+  ['<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M10.2 6.6L12 4.8l1.8 1.8M10.2 17.4l1.8 1.8 1.8-1.8"/>','Sol halka','Tankı sür'],
+  ['<path d="M3 12h18M6.5 8.5L3 12l3.5 3.5M17.5 8.5L21 12l-3.5 3.5"/>','Ekranı sürükle','Kuleyi ve topu çevir'],
+  ['<path d="M12 2.6c2 1.9 3 4.3 3 6.9V18H9V9.5c0-2.6 1-5 3-6.9zM7.6 21.2h8.8M9 13.2h6"/>','Ateş','Basılı tutarsan top doldukça atar'],
+  ['<circle cx="12" cy="12" r="7.4"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>','Nişan','Nişangâhı açar, kaydırıcı büyütür'],
+  ['<path d="M2 12s3.6-6.4 10-6.4S22 12 22 12s-3.6 6.4-10 6.4S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/>','Görüş','Dış, nişangâh, kabin ve sürücü'],
+  ['<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/><path d="M12 3v6.4M12 14.6V21M4.2 7.5l5.5 3.2M14.3 13.3l5.5 3.2M19.8 7.5l-5.5 3.2M9.7 13.3l-5.5 3.2"/>','Çark','Mermi türü, sis, gece görüş, foto'],
+  ['<rect x="7.5" y="8" width="9" height="13" rx="2"/><path d="M10 8V3M10.4 12h3.2M10.4 16h3.2"/>','Telsiz','Birliğine emir ver'],
+  ['<path d="M3 6.5l6-2.2 6 2.2 6-2.2v13.2l-6 2.2-6-2.2-6 2.2zM9 4.3v13.2M15 6.5v13.2"/>','Küçük harita','Dokununca büyük harita açılır'],
+  ['<circle cx="5.6" cy="5.6" r="2.6"/><circle cx="18.4" cy="5.6" r="2.6"/><circle cx="5.6" cy="18.4" r="2.6"/><circle cx="18.4" cy="18.4" r="2.6"/><path d="M7.6 7.6l8.8 8.8M16.4 7.6l-8.8 8.8"/>','Uçangöz','Kaldır, gözetle, hedef işaretle']];
+ const TUS=[['Sür',['W','A','S','D']],['Nişan al',['Fare']],['Ateş',['Boşluk']],['Mermi türü',['1','2','3','4']],['Görüş',['V']],['Uçangöz',['C']],['Telsiz',['T']],['Harita',['G']],['Sis',['B']],['Gece görüş',['Q']],['M85 uçaksavar',['Z']],['Hava',['N']],['Foto',['O']],['Menü',['P']]];
+ tk.innerHTML='<div class="kseg"><button type="button" data-k="d">Dokunmatik</button><button type="button" data-k="k">Klavye</button></div>'+
+  '<div class="klist" data-k="d">'+DOK.map(r=>'<div class="kr">'+ic(r[0])+'<div><b>'+r[1]+'</b><span>'+r[2]+'</span></div></div>').join('')+'</div>'+
+  '<div class="klist" data-k="k">'+TUS.map(r=>'<div class="kk"><b>'+r[0]+'</b><span>'+r[1].map(k=>'<kbd>'+k+'</kbd>').join('')+'</span></div>').join('')+'</div>';
+ const sec=k=>{tk.dataset.k=k;tk.querySelectorAll('.kseg button').forEach(b=>b.classList.toggle('sel',b.dataset.k===k))};
+ tk.querySelector('.kseg').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)sec(b.dataset.k)});
+ sec(document.body.classList.contains('tc')||matchMedia('(pointer:coarse)').matches?'d':'k')}}
 const btn=box.querySelector('#updB'),inf=box.querySelector('#updI');
 async function update(){btn.classList.add('spin');btn.querySelector('span').textContent='GÜNCELLENİYOR…';
  try{if('serviceWorker' in navigator){const rs=(await navigator.serviceWorker.getRegistrations()).filter(r=>!/\/poligon\//.test(r.scope));for(const r of rs){try{await r.update()}catch(e){}try{await r.unregister()}catch(e){}}}}catch(e){}
@@ -4522,7 +4524,7 @@ const ORD=[0,1,3,2],COL=['#9aa3ad','#e8822a','#e8e8e8','#e8c23a'],NM=['APDS · Z
 const capN=()=>63+8*SV.U.cap;
 window.ldRender=function(){const el=document.getElementById('ld');if(!el)return;const tot=SV.load.reduce((a,b)=>a+b,0),cap=capN();
  el.innerHTML=ORD.map((i,n)=>'<div class="am2"><i style="background:'+COL[i]+'"></i><div class="tx"><b>'+(n+1)+' · '+NM[i]+'</b><small>'+DS[i]+'</small></div><div class="st"><button data-ld="'+i+':-2">−</button><span>'+SV.load[i]+'</span><button data-ld="'+i+':2">+</button></div></div>').join('')+
-  '<div class="tot">Toplam: <b style="color:#ffd27a">'+tot+' / '+cap+'</b> mermi · ikmal noktası bu miktara kadar doldurur<u><s style="width:'+Math.min(100,tot/cap*100)+'%"></s></u></div>';
+  '<div class="tot">Toplam <b>'+tot+' / '+cap+'</b> mermi<u><s style="width:'+Math.min(100,tot/cap*100)+'%"></s></u></div>';
  el.querySelectorAll('[data-ld]').forEach(b=>b.onclick=()=>{const[i,d]=b.dataset.ld.split(':').map(Number);const t=SV.load.reduce((a,b)=>a+b,0);let k=d>0?Math.min(d,cap-t):Math.max(d,-SV.load[i]);if(!k)return;SV.load[i]+=k;save();ldRender()});
  document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('sel',+b.dataset.f===SV.form));const fd=document.getElementById('fdesc');if(fd)fd.textContent={0:'Yalnız hareket edersin.',1:'Kısım: seninle birlikte 2 tank. KAPLAN 1-2 yanında gelir.',3:'Takım: 4 tank. KAPLAN 1-2, 1-3 ve 1-4; tek tek ya da topluca komut verebilirsin (T).'}[SV.form]||''};
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{SV.form=+b.dataset.f;save();ldRender()});
@@ -5280,8 +5282,6 @@ function patchGround(){const m=gr.material;const U={tG:{value:TX.t_cim},tK:{valu
  m.customProgramCacheKey=()=>'phg';m.needsUpdate=true;
  if(typeof rocks!=='undefined'&&rocks.material){const rm=rocks.material;const rt=TX.t_tas.clone();rt.needsUpdate=true;rt.repeat.set(1.6,1.6);rt.wrapS=rt.wrapT=THREE.RepeatWrapping;rm.map=rt;rm.color.setRGB(.82,.8,.76);rm.needsUpdate=true}
  if(typeof gm!=='undefined'&&gm.material){gm.material.color&&gm.material.color.setRGB(.78,.78,.62)}}
-// ---------- krediler (ayarlar) ----------
-setTimeout(()=>{const ta=document.getElementById('ta');if(ta&&!document.getElementById('crd'))ta.insertAdjacentHTML('beforeend','<p id="crd" style="opacity:.6;font-size:11px">Gökyüzü fotoğrafları: Poly Haven (CC0). Zemin dokuları: BabylonJS Assets (CC BY 4.0), OpenGameArt "dark grass" (CC BY 3.0).</p>')},1500);
 })();
 
 
@@ -6524,9 +6524,10 @@ const spdNow=()=>Math.abs(window.SUSP?SUSP.fw:(window.__spd||0));
 const clock=(x,z)=>{try{if(typeof clk==='function')return clk(x,z)}catch(e){}const b=angd(Math.atan2(x-P.x,z-P.z),P.h);let c=Math.round(-b/(PI/6));c=((c%12)+12)%12;return c===0?12:c};
 window.TKIND=KIND();
 // ---------------- 0) garaj: yeni donanimlar ----------------
-try{UPX.push({k:'aps',g:'t',ic:'🛰️',n:'Aktif koruma (AKKOR)',d:'Gelen roketi havada vurup patlatır. İkmalde yeniden dolar. Altay\'da hazır gelir.',max:2,cost:[400,700],e:l=>l*2+' önleyici'},
- {k:'dzr',g:'t',ic:'🚜',n:'Dozer bıçağı',d:'Dururken önüne toprak sırt kazar; gövde siperde kalır, önden gelen hasar azalır.',max:1,cost:[350],e:()=>'siper kazma'},
- {k:'net',g:'t',ic:'🌿',n:'Kamuflaj ağı',d:'Durunca tankın üstüne örtülür; ateş etmedikçe düşman seni ancak yakından fark eder.',max:1,cost:[250],e:()=>'kamuflaj'});
+try{const cz=d=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="'+d+'"/></svg>';
+ UPX.push({k:'aps',g:'t',ic:cz('M3 18a9 9 0 0118 0h-3a6 6 0 00-12 0zM11 2h2v5h-2zM9.4 8h5.2L12 12zM2 19.5h20v2H2z'),n:'Aktif koruma (AKKOR)',d:'Gelen roketi havada vurup patlatır. İkmalde yeniden dolar. Altay\'da hazır gelir.',max:2,cost:[400,700],e:l=>l*2+' önleyici'},
+ {k:'dzr',g:'t',ic:cz('M2 19h20v2H2zM4 17V6c3.6 0 6 2.6 6 7v4zM11 12.5h7.5L21 17H11zM13 8h4.5v3.5H13z'),n:'Dozer bıçağı',d:'Dururken önüne toprak sırt kazar; gövde siperde kalır, önden gelen hasar azalır.',max:1,cost:[350],e:()=>'siper kazma'},
+ {k:'net',g:'t',ic:cz('M4.6 20.8L3.2 19.4 5 17.6C5 10 10 5 20.5 3.5 19 14 14 19 6.4 19zM9 15.5c3-1 5.2-3.2 6.6-6.2C12.2 10.8 10 13 9 15.5z'),n:'Kamuflaj ağı',d:'Durunca tankın üstüne örtülür; ateş etmedikçe düşman seni ancak yakından fark eder.',max:1,cost:[250],e:()=>'kamuflaj'});
  for(const u of UPX)SV.U[u.k]=SV.U[u.k]|0;renderGar()}catch(e){}
 // ---------------- 1) YAKIT ----------------
 const FR={m60:[.012,.13],leo1:[.012,.12],t72:[.011,.12],leo2:[.013,.14],m1:[.06,.36],altay:[.013,.14]};
@@ -7236,6 +7237,14 @@ try{frame()}catch(e){}
 window.DRNX={apply,geos,mat};
 })();
 
+
+// ===== m_govde =====
+// ============ MENÜ GÖVDESİ: üst çubuk, sekmeler ve bölümler tek kaydırma kutusunda toplanır; BAŞLAT çubuğu dışında kalır ============
+// Kutuyu sayfanın kendi betiği kurar: sonradan yüklenen modüller gecikse de menü düzeni tamdır.
+(function(){const mp=document.getElementById('mp');if(!mp||document.getElementById('mpBody'))return;
+const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.children])if(!ch.classList.contains('acts'))b.appendChild(ch);mp.insertBefore(b,mp.firstChild);
+})();
+
 </script>
 <!-- HISAR EXPERIENCE v1 -->
 <script defer src="experience/core.js?v=63"></script>
@@ -7244,6 +7253,6 @@ window.DRNX={apply,geos,mat};
 
 <script src="experience/crew-orders.js?v=5"></script>
 <script src="experience/field.js?v=2"></script>
-<script src="experience/battle.js?v=2"></script>
+<script src="experience/battle.js?v=3"></script>
 </body>
 </html>

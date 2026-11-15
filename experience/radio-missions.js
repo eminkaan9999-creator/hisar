@@ -129,7 +129,7 @@ function connect(){
  wrap('update',old=>function(dt){const running=playing()&&!doc.hidden;const r=old.apply(this,arguments);if(running&&playing()){dt=clamp(dt,0,.1);sim+=dt;pump();if(opened&&((sim*4|0)!==((sim-dt)*4|0)))paintRoster();}return r;});
 }
 function el(tag,text){const n=doc.createElement(tag);if(text)n.textContent=text;return n;}
-function installUI(){if(!doc.body||radioPanel)return;const mpEl=doc.getElementById('mp');if(mpEl&&!doc.getElementById('mpBody')){const body=el('div');body.id='mpBody';for(const ch of [...mpEl.children])if(!ch.classList.contains('acts'))body.appendChild(ch);mpEl.insertBefore(body,mpEl.firstChild);}
+function installUI(){if(!doc.body||radioPanel)return;
  const entry=el('button','TELSİZ');entry.id='hr-radio-entry';entry.type='button';entry.hidden=true;entry.onclick=toggle;doc.body.appendChild(entry);
  const style=el('style');style.id='hr-style';style.textContent=`
 #hr-radio-entry{position:fixed;right:12px;top:120px;z-index:22;min-height:44px;display:flex;align-items:center;gap:7px;background:rgba(38,50,24,.92);color:#fff;border:1.5px solid rgba(178,212,110,.6);border-radius:7px;font:800 15px/1 var(--sf,system-ui);letter-spacing:.06em;padding:8px 11px;box-shadow:0 3px 10px rgba(0,0,0,.4)}#hr-radio-entry::before{content:"";width:17px;height:20px;flex:none;background:currentColor;-webkit-mask:var(--ic-radio) center/contain no-repeat;mask:var(--ic-radio) center/contain no-repeat}#hr-radio-entry[hidden]{display:none!important}

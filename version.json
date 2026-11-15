@@ -1,7 +1,7 @@
 {
-  "v": 88,
+  "v": 89,
   "experience": "63.1",
-  "not": "Akıcılık ve hız. Tank daha hızlı sürülür ve döner; dost ve düşman tanklar da hızlandı. Gölgeler hafifledi, ağaçlar yalnız gerektiğinde yeniden dizilir, düşman tankları savaş başında hazırlanır: oyun içindeki takılmalar azalır. Yavaş bağlantıda açılış ekranı ilk andan görünür; yarım yüklenmiş menü çıkmaz. Garajdaki geliştirme kartları yeniden düzenlendi, yazılar sığıyor, simgeler çizim. Profil kartından kaydını kodla yedekleyip başka kurulumda geri yükleyebilirsin. Ayarlarda son savaşın kare hızı yazar.",
+  "not": "Yeni menü. Tank sahnesi bütün ekranı kaplar; kartlar, alttaki sekme çubuğu ve BAŞLAT düğmesi yenilendi. Takım büyüklüğü ana ekrandan seçilir. Kontroller sekmesi kısa bir listeye dönüştü: dokunmatik düğmeler ve klavye tuşları ayrı. Ayarlar, profil ve savaş sonu pencereleri aynı görünümde. Yatay tutuşta menü sağda panel olarak açılır. Oyun görüntüsü artık çentiğin ve alt çizginin altına kadar uzanır; dikey tutuşta nişan ve işaretler görüntüyle tam hizalıdır. Garajda bayrak simgeleri yerine ülke adı yazar.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",

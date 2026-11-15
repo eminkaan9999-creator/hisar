@@ -216,7 +216,9 @@ function nearVil(x,z,r){for(const v of FLAT)if(Math.hypot(x-v[0],z-v[1])<r)retur
 function hr(x,z){const r=Math.hypot(x,z),f=clamp((r-12)/30,0,1);let h=(Math.sin(x*.021)*Math.cos(z*.017)*5+Math.sin(x*.047+z*.031)*2.2+Math.cos(z*.062-x*.019)*1.3)*f;
  if(r>230){const k=sm(r,230,480)*sm(Math.abs(z-riv(x)),20,150);h+=(Math.sin(x*.0061+1.7)*Math.cos(z*.0053-.6)*9+Math.sin((x+z)*.0037+.4)*5+4)*k;
   // merkezin dışında bataklık çukuru kalmaz: alçak yerler sığ çanağa döner (su yalnız nehirdedir)
-  if(h<.5){const q=sm(r,230,400);h+=((.5-(.5-h)*.1)-h)*q}}return h}
+  if(h<.5){const q=sm(r,230,400);h+=((.5-(.5-h)*.1)-h)*q}}
+ // oynanan alanın dışında arazi dağ eteğine doğru yükselir (ufuktaki dağlara bağlanır)
+ const e=Math.max(Math.abs(x),Math.abs(z));if(e>WS+10)h+=sm(e,WS+10,WS+420)*(55+22*Math.sin(x*.0042+1.3)*Math.cos(z*.0037-.4)+9*Math.sin((x-z)*.011));return h}
 const FH=FLAT.map(v=>hr(v[0],v[1]));
 function fordK(x){let m=1;for(const f of FORDS){const d=Math.abs(x-f);if(d<14){const k=sm(d,6,14);if(k<m)m=k}}return m}
 function hAt(x,z){let h=hr(x,z);for(let i=0;i<FLAT.length;i++){const v=FLAT[i],dx=x-v[0];if(dx>40||dx<-40)continue;const dz=z-v[1];if(dz>40||dz<-40)continue;const k=1-sm(Math.hypot(dx,dz),22,40);if(k>0)h+=(FH[i]-h)*k}
@@ -324,28 +326,50 @@ function mkTruck(){const g=new THREE.Group(),G=M(0x4f6b3a),K=M(0x1a1a1a);
 const HAML=[];
 const BX=(function(){
  let sd=9172031;const r=(a,b)=>{sd=sd+0x6D2B79F5|0;let t=Math.imul(sd^sd>>>15,1|sd);t=t+Math.imul(t^t>>>7,61|t)^t;return a+((t^t>>>14)>>>0)/4294967296*(b-a)};
- const CAP={w:700,r:1300,d:7000,t:1600},box=new THREE.BoxGeometry(1,1,1);
- const mk=(n,c,sh)=>{const m=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:c}),n);m.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(n*3).fill(1),3);m.count=0;m.castShadow=sh;m.receiveShadow=true;m.frustumCulled=false;S.add(m);return m};
- const IM={w:mk(CAP.w,0xffffff,true),r:mk(CAP.r,0xffffff,true),d:mk(CAP.d,0xffffff,false),t:mk(CAP.t,0xffffff,true)};
+ const CAP={w:900,r:1300,d:11000,t:9000},box=new THREE.BoxGeometry(1,1,1);
+ const ctex=(W,H,draw)=>{const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');draw(g,W,H);const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t};
+ const nz=(g,W,H,n,a,sz)=>{for(let i=0;i<n;i++){const v=200+Math.random()*55|0;g.fillStyle='rgba('+v+','+v+','+(v-8)+','+a+')';g.fillRect(Math.random()*W,Math.random()*H,Math.random()*sz+1,Math.random()*sz+1)}};
+ // sıva: lekeli yüzey, altta toprak sıçrağı, pencere altlarından inen yağmur izleri
+ const TXW=ctex(128,128,(g,W,H)=>{g.fillStyle='#f2efe8';g.fillRect(0,0,W,H);nz(g,W,H,900,.35,4);for(let i=0;i<14;i++){g.fillStyle='rgba(120,110,95,'+(.04+Math.random()*.06)+')';g.fillRect(Math.random()*W,Math.random()*H*.6,2+Math.random()*3,20+Math.random()*40)}
+  const gr=g.createLinearGradient(0,H,0,H*.78);gr.addColorStop(0,'rgba(95,82,62,.55)');gr.addColorStop(1,'rgba(95,82,62,0)');g.fillStyle=gr;g.fillRect(0,H*.78,W,H*.22)});
+ // kiremit: mahya boyunca sıralar, her sırada kayık kiremit
+ const TXR=ctex(128,128,(g,W,H)=>{g.fillStyle='#e8e2dc';g.fillRect(0,0,W,H);for(let r=0;r<10;r++){const y=r*H/10;g.fillStyle='rgba(60,40,30,.35)';g.fillRect(0,y,W,2);for(let k=0;k<12;k++){const x=(k+(r%2)*.5)*W/12;g.fillStyle='rgba(60,40,30,.22)';g.fillRect(x,y,1.5,H/10);g.fillStyle='rgba(255,255,255,'+(.05+Math.random()*.12)+')';g.fillRect(x+2,y+3,W/12-5,H/10-6)}}});
+ // beton ve taban: kaba yüzey, kalıp izleri
+ const TXT=ctex(128,128,(g,W,H)=>{g.fillStyle='#ebe9e4';g.fillRect(0,0,W,H);nz(g,W,H,1400,.4,3);g.fillStyle='rgba(90,85,78,.18)';for(let y=16;y<H;y+=32)g.fillRect(0,y,W,1.5)});
+ const MAP={w:TXW,r:TXR,t:TXT};
+ const mk=(n,c,sh,k)=>{const m=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:c,map:MAP[k]||null}),n);m.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(n*3).fill(1),3);m.count=0;m.castShadow=sh;m.receiveShadow=true;m.frustumCulled=false;S.add(m);return m};
+ const IM={w:mk(CAP.w,0xffffff,true,'w'),r:mk(CAP.r,0xffffff,true,'r'),d:mk(CAP.d,0xffffff,false),t:mk(CAP.t,0xffffff,true,'t')};
  const _m=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3(),_c=new THREE.Color(),RU=new THREE.Color(0x2c2823);
  const TREE=[];for(const o of S.children)if(o.isGroup&&o.children.length===4&&o.children[0].geometry&&o.children[0].geometry.type==='CylinderGeometry')TREE.push({x:o.position.x,z:o.position.z});
  const ANIM=[];
  function sync(){const c=this;c.g.updateMatrix();for(const p of c.parts){const im=IM[p.k];im.setMatrixAt(p.i,_m.multiplyMatrices(c.g.matrix,p.m));_c.setHex(p.c);if(c.dead)_c.lerp(RU,.8);im.setColorAt(p.i,_c);im.instanceMatrix.needsUpdate=true;im.instanceColor.needsUpdate=true}}
  function part(b,k,x,y,z,sx,sy,sz,rx,col){const im=IM[k];if(im.count>=CAP[k])return;const i=im.count++;_e.set(rx||0,0,0);_q.setFromEuler(_e);_p.set(x,y,z);_s.set(sx,sy,sz);b.parts.push({k,i,m:new THREE.Matrix4().compose(_p,_q,_s),c:col})}
- const DARK=0x1f2a33,PL=0x77716a;
+ const DARK=0x1f2a33,PL=0x77716a,FR=0xe9e5dc;
+ // pencere: açık çerçeve, koyu cam, altta denizlik. nx/nz: yüzün dışa bakan yönü
+ function win(b,x,y,z,w,h,side){if(side){part(b,'t',x-Math.sign(x)*.01,y,z,.1,h+.24,w+.24,0,FR);part(b,'d',x,y,z,.12,h,w,0,DARK);part(b,'t',x+Math.sign(x)*.05,y-h/2-.08,z,.18,.08,w+.3,0,0xcfcac0)}
+  else{part(b,'t',x,y,z-Math.sign(z)*.01,w+.24,h+.24,.1,0,FR);part(b,'d',x,y,z,w,h,.12,0,DARK);part(b,'t',x,y-h/2-.08,z+Math.sign(z)*.05,w+.3,.08,.18,0,0xcfcac0)}}
  const WALL=[0xd9cfb8,0xcfc3a8,0xe0d8c8,0xbfb59a,0xe6dcc6,0xc9b48f,0xd8c7a0,0xb8b2a6],ROOF=[0x9a4a30,0x8a3f2a,0xa85a36,0x6d5a50,0x7a3a2a];
  const pick=a=>a[Math.floor(r(0,a.length))%a.length];
  function house(b,w,d,h,shop){const wc=pick(WALL),rc=pick(ROOF),a=.45;
   part(b,'t',0,-.8,0,w+.4,3,d+.4,0,PL);part(b,'w',0,h/2+.7,0,w,h,d,0,wc);
   for(const q of[-1,1])part(b,'r',0,h+.8+(d/4)*Math.tan(a),q*d/4,w+.8,.22,d/2/Math.cos(a)+.5,q*a,rc);
   part(b,'r',0,h+.8+(d/2)*Math.tan(a),0,w+.6,.25,.35,0,rc);
-  part(b,'d',-w*.2,1.75,d/2+.03,1.1,2.1,.12,0,0x4a3020);for(const x of[w*.12,w*.34])part(b,'d',x,2.5,d/2+.03,.9,.9,.12,0,DARK);
-  part(b,'d',0,2.5,-d/2-.03,.9,.9,.12,0,DARK);for(const s of[-1,1])part(b,'d',s*(w/2+.03),2.5,0,.12,.9,.9,0,DARK);
+  part(b,'d',-w*.2,1.75,d/2+.03,1.1,2.1,.12,0,0x4a3020);part(b,'t',-w*.2,2.92,d/2+.25,1.5,.1,.6,0,0xbdb8ae);for(const x of[w*.12,w*.34])win(b,x,2.5,d/2+.03,.9,1,0);
+  win(b,0,2.5,-d/2-.03,.9,1,0);for(const s of[-1,1])win(b,s*(w/2+.03),2.5,0,.9,1,1);
+  part(b,'t',w*.26,h+.8+(d/4)*Math.tan(a)+.7,d*.12,.6,1.7,.6,0,0xa59c90);
   if(shop)part(b,'t',w*.1,2.9,d/2+.8,w*.75,.12,1.6,.18,pick([0xb33a2e,0x2f7a4a,0x2c5f8f]));
   return h+.8+(d/2)*Math.tan(a)}
  function apt(b,w,d,fl){const wc=pick(WALL),H=3*fl;part(b,'t',0,-.6,0,w+.4,2.4,d+.4,0,PL);part(b,'w',0,H/2+.6,0,w,H,d,0,wc);part(b,'t',0,H+.8,0,w+.4,.4,d+.4,0,0x8a857c);
-  const n=Math.max(2,Math.floor((w-1)/2.6));for(let f=0;f<fl;f++)for(let i=0;i<n;i++){const x=-w/2+(i+.5)*w/n,y=.6+1.8+3*f;if(!(f===0&&i===Math.floor(n/2)))part(b,'d',x,y,d/2+.03,1.1,1.2,.12,0,DARK);part(b,'d',x,y,-d/2-.03,1.1,1.2,.12,0,DARK)}
+  const n=Math.max(2,Math.floor((w-1)/2.6));for(let f=0;f<fl;f++)for(let i=0;i<n;i++){const x=-w/2+(i+.5)*w/n,y=.6+1.8+3*f;if(!(f===0&&i===Math.floor(n/2)))win(b,x,y,d/2+.03,1.1,1.2,0);win(b,x,y,-d/2-.03,1.1,1.2,0)}
   part(b,'d',-w/2+(Math.floor(n/2)+.5)*w/n,1.75,d/2+.03,1.5,2.3,.12,0,0x3a2a1a);for(let f=1;f<fl;f++)part(b,'t',0,.6+3*f,d/2+.55,w*.5,.12,1,0,0x8a857c);return H+1}
+ function beton(b,w,d){const brick=r(0,1)<.3,wc=brick?pick([0xb06a4a,0xa65f42,0xb87355]):pick(WALL),H=5.8;part(b,'t',0,-.7,0,w+.4,2.8,d+.4,0,PL);part(b,'w',0,H/2+.7,0,w,H,d,0,wc);
+  part(b,'t',0,.7+3,0,w+.12,.22,d+.12,0,0xbab5ab);part(b,'t',0,H+.85,0,w+.3,.3,d+.3,0,0xa7a299);
+  for(let f=0;f<2;f++){const y=2.3+3*f;for(const x of[-w*.3,w*.3])win(b,x,y,d/2+.03,1,1.15,0);win(b,0,y,-d/2-.03,1,1.15,0);for(const s of[-1,1])win(b,s*(w/2+.03),y,0,1,1.15,1)}
+  part(b,'d',0,1.75,d/2+.03,1.2,2.2,.12,0,0x4a3020);part(b,'t',0,3.85,d/2+.7,w*.55,.15,1.4,0,0xb8b3a8);part(b,'t',0,4.35,d/2+1.35,w*.55,.9,.06,0,0x6e6a64);
+  for(const[x,z]of[[-1,-1],[1,-1],[-1,1],[1,1]])for(const o of[0,.25])part(b,'d',x*(w/2-.2-o),H+1.6,z*(d/2-.2),.05,1.4,.05,0,0x5a3a2a);
+  part(b,'d',-w*.25,H+1.6,-d*.15,1.2,1.2,1.2,0,0x1b1b1b);
+  if(r(0,1)<.55){part(b,'d',w*.18,H+1.6,d*.12,1.9,.08,1.3,-.6,0x1f3550);part(b,'t',w*.18,H+2.15,d*.12-.6,2,.45,.45,0,0xe0e0e0)}
+  return H+1.2}
  function barn(b,w,d){const wc=pick([0x7a3a2a,0x6b4a2e,0x8a5a3a]),a=.62,h=4.2;part(b,'t',0,-.8,0,w+.4,3,d+.4,0,PL);part(b,'w',0,h/2+.7,0,w,h,d,0,wc);
   for(const q of[-1,1])part(b,'r',0,h+.8+(d/4)*Math.tan(a),q*d/4,w+.6,.2,d/2/Math.cos(a)+.4,q*a,0x5d5f5c);part(b,'d',0,2.3,d/2+.03,3.2,3.2,.12,0,0x3a2a1a);return h+.8+(d/2)*Math.tan(a)}
  function shed(b,w,d){part(b,'t',0,-.8,0,w+.3,3,d+.3,0,PL);part(b,'w',0,2.1,0,w,2.8,d,0,pick([0x8d9396,0x7d8a7a,0xa59a82]));part(b,'r',0,3.65,0,w+.5,.15,d+.7,.12,0x6f7275);part(b,'d',w*.2,1.8,d/2+.03,1.6,2.2,.12,0,0x30383c);return 3.8}
@@ -356,20 +380,20 @@ const BX=(function(){
   for(const b of BLD)if(Math.hypot(b.x-x,b.z-z)<b.r+rad+3)return false;for(const t of TREE)if(Math.hypot(t.x-x,t.z-z)<rad+3)return false;for(const c of COV)if(Math.hypot(c.x-x,c.z-z)<c.r+rad+2)return false;
   return Math.hypot(x-SUP.x,z-SUP.z)>rad+20};
  function put(kind,x,z,rot){const w=kind==='apt'?r(9,13):kind==='barn'?r(8,11):kind==='shed'?r(4,6):r(6,9),d=kind==='apt'?r(7,9):kind==='barn'?r(6,8):kind==='shed'?r(3.5,5):r(5,7),rad=Math.hypot(w,d)/2;
-  if(!ok(x,z,rad))return null;const b={x,z,r:rad,hp:kind==='apt'?7:kind==='shed'?2:3,h:0,g:new THREE.Group(),dead:0,parts:[],kind,sync};b.hp0=b.hp;b.g.position.set(x,hAt(x,z),z);b.g.rotation.y=rot;
-  b.h=kind==='apt'?apt(b,w,d,r(0,1)<.5?2:3):kind==='barn'?barn(b,w,d):kind==='shed'?shed(b,w,d):house(b,w,d,3,kind==='shop');
+  if(!ok(x,z,rad))return null;const b={x,z,r:rad,hp:kind==='apt'?7:kind==='beton'?5:kind==='shed'?2:3,h:0,g:new THREE.Group(),dead:0,parts:[],kind,sync};b.hp0=b.hp;b.g.position.set(x,hAt(x,z),z);b.g.rotation.y=rot;
+  b.h=kind==='apt'?apt(b,w,d,r(0,1)<.5?2:3):kind==='beton'?beton(b,w,d):kind==='barn'?barn(b,w,d):kind==='shed'?shed(b,w,d):house(b,w,d,3,kind==='shop');
   if(kind==='house'&&r(0,1)<.35)wallRing(x,z,rot,w+5,d+6);sync.call(b);BLD.push(b);return b}
  const face=(x,z,tx,tz)=>Math.atan2(tx-x,tz-z);
  // 1) köyler dışa doğru büyür: ön yüz köy merkezine bakar
  VILS.forEach((v,vi)=>{const n=vi<2?7:11;let made=0;for(let k=0;k<n*6&&made<n;k++){const a=r(0,6.283),dd=r(28,64),x=v[0]+Math.cos(a)*dd,z=v[1]+Math.sin(a)*dd,q=r(0,1);
-  const kind=vi%4===0&&q<.3?'apt':q<.12?'shop':q<.24?'shed':q<.3?'barn':'house';if(put(kind,x,z,face(x,z,v[0],v[1])+r(-.15,.15)))made++}});
+  const kind=vi%4===0&&q<.3?'apt':q<.12?'shop':q<.24?'shed':q<.3?'barn':q<.6?'beton':'house';if(put(kind,x,z,face(x,z,v[0],v[1])+r(-.15,.15)))made++}});
  // 2) yol kenarında mezralar: yollar boyunca köylerden uzak noktalar
  const HN=['Kuyucak','Yenice','Çamlık','Ortaköy','Bağlar','Dikmen','Kayacık','Pınarbaşı','Yazlık','Gürpınar','Kocaoba','Sarıkaya'];
  const far=(x,z,m)=>VILS.every(v=>Math.hypot(v[0]-x,v[1]-z)>m)&&HAML.every(h=>Math.hypot(h.x-x,h.z-z)>m);
  for(const rd of WROADS){const p=rd.pts;for(let i=0;i<p.length-1&&HAML.length<HN.length;i++){const ax=p[i][0],az=p[i][1],dx=p[i+1][0]-ax,dz=p[i+1][1]-az,L=Math.hypot(dx,dz);
   for(let s=40;s<L-40&&HAML.length<HN.length;s+=70){const cx=ax+dx/L*s,cz=az+dz/L*s;if(!far(cx,cz,190)||Math.abs(cz-riv(cx))<70||Math.hypot(cx,cz)<200)continue;
    const nx=-dz/L,nz=dx/L;let made=0;for(let k=0;k<40&&made<6;k++){const side=k%2?1:-1,along=r(-40,40),off=side*(rd.w/2+r(9,22)),x=cx+dx/L*along+nx*off,z=cz+dz/L*along+nz*off,q=r(0,1);
-    const kind=q<.12?'barn':q<.28?'shed':q<.38?'shop':'house';if(put(kind,x,z,face(x,z,x-nx*off,z-nz*off)+r(-.1,.1)))made++}
+    const kind=q<.12?'barn':q<.28?'shed':q<.38?'shop':q<.62?'beton':'house';if(put(kind,x,z,face(x,z,x-nx*off,z-nz*off)+r(-.1,.1)))made++}
    if(made>=3)HAML.push({x:cx,z:cz,n:HN[HAML.length]})}}}
  // 3) çiftlikler: yola yakın, köylerden uzak; ev, ahır ve bir iki depo
  for(let k=0,farms=0;k<900&&farms<22;k++){const x=r(-WS+60,WS-60),z=r(-WS+60,WS-60);if(!far(x,z,140)||!roadNear(x,z,90)||roadNear(x,z,16))continue;const rot=r(0,6.283);
@@ -4495,7 +4519,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=92,LOGO=window.HISAR_LOGO;
+const VER=93,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7313,8 +7337,9 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script defer src="experience/ui.js?v=63"></script>
 
 <script src="experience/crew-orders.js?v=5"></script>
-<script src="experience/field.js?v=3"></script>
+<script src="experience/field.js?v=4"></script>
 <script src="experience/battle.js?v=5"></script>
-<script src="experience/swarm.js?v=1"></script>
+<script src="experience/swarm.js?v=2"></script>
+<script src="experience/realism.js?v=1"></script>
 </body>
 </html>

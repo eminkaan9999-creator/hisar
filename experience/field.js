@@ -128,7 +128,13 @@ function insideRing(p,x,z){const l=toLocal(p,x,z);return Math.abs(l.x)<3.5&&l.z>
 function exitStep(p,ex,dt){ex.lz-=6*dt;ex.lx*=1-Math.min(1,dt*2.5);ex.h+=norm(p.h-ex.h)*Math.min(1,dt*3);const w=toWorld(p,ex.lx,ex.lz);return {x:w.x,z:w.z,h:ex.h,done:ex.lz<=-9.9};}
 // Mevzide siper önü ve yanları korur; arkadan gelen isabet korunmaz.
 function covered(pos,from,at){if(!pos)return false;if(!from||from.x==null||!at)return true;const dx=from.x-at.x,dz=from.z-at.z,l=Math.hypot(dx,dz)||1;return (dx*Math.sin(pos.h)+dz*Math.cos(pos.h))/l>-.3;}
-const core=Object.freeze({separate,segDist,segPoint,keepAway,vnoise,terrainY,ROADS,ANCHORS,roadDist,clearAhead,findPositions,PATH,BLOCKS,nearest,surface,spoil,toWorld,toLocal,blocksOf,entryOf,inPosition,approach,PLUG,plugPush,insideRing,exitStep,covered});
+// ---------- düşman tankları da mevzi kullanır ----------
+// Oyuncuya 70–300 m uzaktaki, önü oyuncuya dönük boş bir mevzi 110 m içindeyse düşman tankı oraya dolanır ve arkadan girer.
+const EN=Object.freeze({reach:110,near:70,far:300,face:.55,leave:.15,every:1});
+function faces(p,x,z){const dx=x-p.x,dz=z-p.z,l=Math.hypot(dx,dz)||1;return (dx*Math.sin(p.h)+dz*Math.cos(p.h))/l;}
+function pickFor(e,pl,list,taken){let best=null,bd=Infinity;for(const p of list||[]){const de=Math.hypot(p.x-e.x,p.z-e.z);if(de>EN.reach||de>=bd)continue;const dp=Math.hypot(p.x-pl.x,p.z-pl.z);
+  if(dp<EN.near||dp>EN.far||faces(p,pl.x,pl.z)<EN.face)continue;if(taken&&taken(p))continue;bd=de;best=p;}return best;}
+const core=Object.freeze({EN,faces,pickFor,separate,segDist,segPoint,keepAway,vnoise,terrainY,ROADS,ANCHORS,roadDist,clearAhead,findPositions,PATH,BLOCKS,nearest,surface,spoil,toWorld,toLocal,blocksOf,entryOf,inPosition,approach,PLUG,plugPush,insideRing,exitStep,covered});
 if(typeof module==='object'&&module.exports)module.exports=core;
 
 // ---------- oyun içi ----------
@@ -200,8 +206,21 @@ function settle(dt){const near=positions.find(p=>{const c=toWorld(p,PLUG[0],PLUG
    if(insideRing(p,a.x,a.z)){const l=toLocal(p,a.x,a.z);a._exit={p,lx:l.x,lz:l.z,h:a.h};break;}if(plugPush(p,a,p===near?0:dt*4)){place(a);pushes++;}}
   a._sink=inside?Math.min(.35,(a._sink||0)+dt*.7):Math.max(0,(a._sink||0)-dt*1.4);if(a._sink>0&&a.g)a.g.position.y-=a._sink;}
  // Düşman araçları mevziye giremez; sabit hedefler (korugan, top, hava savunma) toprağın içine denk gelmişse bir kez kenara alınır.
+ enemyPositions(dt);
  for(const e of E){if(!SOLID.has(e.type))continue;const moving=MOVING.has(e.type);if(!moving&&e._fieldOk)continue;e._fieldOk=1;
-  for(const p of positions){if(Math.hypot(e.x-p.x,e.z-p.z)>14)continue;if(plugPush(p,e,moving&&p!==near?dt*4:0)){place(e);if(!moving&&e.g&&e.g.position)e.g.position.y=hAt(e.x,e.z);pushes++;}}}}
+  if(e._exit){const p=e._exit.p,x=exitStep(p,e._exit,dt);e.x=x.x;e.z=x.z;e.h=x.h;place(e);if(x.done)e._exit=null;continue;}
+  for(const p of positions){if(p===e._pos||Math.hypot(e.x-p.x,e.z-p.z)>14)continue;if(plugPush(p,e,moving&&p!==near?dt*4:0)){place(e);if(!moving&&e.g&&e.g.position)e.g.position.y=hAt(e.x,e.z);pushes++;}}
+  e._sink=e._in?Math.min(.35,(e._sink||0)+dt*.7):Math.max(0,(e._sink||0)-dt*1.4);if(e._sink>0&&e.g&&e.g.position)e.g.position.y-=e._sink;}}
+let enT=0,enIn=0;
+const claimed=p=>safe(()=>AL.some(a=>!a.dead&&a.hold&&a.hold.position&&Math.hypot(a.hold.cx-p.x,a.hold.cz-p.z)<.5),false)||E.some(o=>o._pos===p);
+function release(e){const p=e._pos;e._pos=null;e._in=false;e.hd=null;if(p&&insideRing(p,e.x,e.z)){const l=toLocal(p,e.x,e.z);e._exit={p,lx:l.x,lz:l.z,h:e.h};}}
+// Yalnız "Son Takım" savaşında; eğitim alanının hedefleri yerinde kalır. Mevzi oyuncuya bakmaz olunca ya da düşman geri çekilince tank geri geri çıkar.
+function enemyPositions(dt){if(safe(()=>mis!=='savas',true))return;enT-=dt;const assign=enT<=0;if(assign)enT=EN.every;let n=0;
+ for(const e of E){if(e.type!=='tank'||!(e.hp>0))continue;const p=e._pos;
+  if(p){const d=Math.hypot(P.x-p.x,P.z-p.z);if(e.rt>0||e.immob||e.conv||e.foe||faces(p,P.x,P.z)<EN.leave||d>EN.far+40||d<40){release(e);continue;}
+   const t=approach(p,e);e.hd={x:t.x,z:t.z};e._in=t.stage===2&&Math.hypot(e.x-p.x,e.z-p.z)<2.6;if(e._in){e.h+=norm(p.h-e.h)*Math.min(1,dt*2);n++;}continue;}
+  if(!assign||e.immob||e.conv||e.rt>0||e.foe||e.hd||e._exit)continue;if(Math.hypot(P.x-e.x,P.z-e.z)>EN.far+80)continue;
+  const best=pickFor(e,P,positions,claimed);if(best){e._pos=best;e._in=false;}}enIn=n;}
 // Hedef olmayan şeyler de vurulur: dost tank, ağaç, kaya ve toprak siper mermiyi durdurur ve patlama olur.
 function shellWorld(){for(const s of shells){const q=s.m.position,ax=s._px===undefined?q.x:s._px,az=s._pz===undefined?q.z:s._pz;s._px=q.x;s._pz=q.z;if(s.life<=0)continue;
   let hit=null;
@@ -223,5 +242,5 @@ safe(()=>{const up=root.update;if(typeof up!=='function'||up.hisarField)return;c
 // Mevziler menüdeyken kurulur ki oyunun ilk karesi takılmasın; olmadıysa ilk oyun adımı kurar.
 (function early(n){root.setTimeout(()=>{if(positions)return;if(safe(()=>typeof hAt==='function'&&!!S&&!!root.TREES&&root.TREES.length>0&&BLD.length>0,false))build();else if(n<20)early(n+1);},n?1500:2500);})(0);
 root.HisarField=Object.freeze({core,positions:()=>{safe(build,null);return (positions||[]).map(p=>({x:p.x,z:p.z,h:p.h,clear:p.clear}));},
- diagnostics:()=>({pushes,worldHits,lastHit,positions:positions?positions.length:0,pending:wideQ?wideQ.length:-1,anchors:wideN,wideMs:Math.round(wideSum),wideMax:Math.round(wideMax),coverHits,sink,buildMs,tris})});
+ diagnostics:()=>({enemiesIn:enIn,enemiesBound:safe(()=>E.filter(e=>e._pos).length,0),pushes,worldHits,lastHit,positions:positions?positions.length:0,pending:wideQ?wideQ.length:-1,anchors:wideN,wideMs:Math.round(wideSum),wideMax:Math.round(wideMax),coverHits,sink,buildMs,tris})});
 })(typeof window!=='undefined'?window:globalThis);

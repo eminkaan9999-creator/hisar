@@ -4,7 +4,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8'),code=html.replace(/data:[a-z]+\/[-a-z0-9+.]+;base64,[A-Za-z0-9+/=]+/g,'data:,');
 const w=code.slice(code.indexOf('// ---- YERLEŞİM 2.0'),code.indexOf('function mkRoad(pts,w){'));
 test('new buildings are drawn as four instanced meshes, not one object each',()=>{assert.ok(w.length>1000);
- assert.ok(w.includes('const IM={w:mk(CAP.w,0xffffff,true),r:mk(CAP.r,0xffffff,true),d:mk(CAP.d,0xffffff,false),t:mk(CAP.t,0xffffff,true)};'));
+ assert.ok(w.includes("const IM={w:mk(CAP.w,0xffffff,true,'w'),r:mk(CAP.r,0xffffff,true,'r'),d:mk(CAP.d,0xffffff,false),t:mk(CAP.t,0xffffff,true,'t')};"));
  assert.doesNotMatch(w,/new THREE\.Mesh\(/,'no single meshes per building');});
 test('every new building joins the game building list so collision, shells, collapse, routes and positions see it',()=>{
  assert.ok(w.includes('sync.call(b);BLD.push(b);return b}'));assert.ok(code.includes('function collapse(c){c.dead=1;c.g.scale.y=.28;if(c.parts){c.sync();BX.anim(c)}'));

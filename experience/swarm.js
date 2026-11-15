@@ -5,7 +5,7 @@
  * kendiliğinden indirir, tanktaki cihaz tek tuşla (E) çevredeki bütün düşman dronlarını düşürür. Dost dronlara dokunmaz.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.0.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -214,7 +214,7 @@ function diagnostics(){return {version:VERSION,active:!!W,hooks:{...hooks},mode:
  base:W&&W.base?{x:W.base.x,z:W.base.z,hp:W.base.hp,cd:W.base.cd,sup:W.base.sup}:null,
  own:W?W.list.filter(d=>d.side==='own').map(d=>({x:d.x,y:d.y,z:d.z,st:d.st})):[],foe:W?W.list.filter(d=>d.side==='foe').map(d=>({x:d.x,y:d.y,z:d.z,st:d.st,tg:d.tg&&d.tg.k,sw:d.sw})):[]};}
 // Denetim için: düşman sürüsünü hemen gönderir (hedef 'p' oyuncu, 'b' karargâh).
-function spawnFoe(k,n,r){if(!W)return 0;const tg=k==='b'?{k:'b',x:W.base.x,z:W.base.z}:{k:'p'},c=k==='b'?W.base:P,a=rnd()*7,o={x:c.x+Math.sin(a)*(r||300),z:c.z+Math.cos(a)*(r||300)},id=++W.swarms,y=safe(()=>hAt(o.x,o.z),0)+3;
+function spawnFoe(k,n,r){if(!W)return 0;const tg=k==='b'?{k:'b',x:W.base.x,z:W.base.z}:{k:'p'},c=k==='b'?W.base:P,a=k==='b'||!W.base?rnd()*7:Math.atan2(P.x-W.base.x,P.z-W.base.z)+(rnd()-.5)*2.2,o={x:c.x+Math.sin(a)*(r||300),z:c.z+Math.cos(a)*(r||300)},id=++W.swarms,y=safe(()=>hAt(o.x,o.z),0)+3;
  for(let i=0;i<(n||4);i++)W.list.push({side:'foe',sw:id,x:o.x+(rnd()-.5)*8,y,z:o.z+(rnd()-.5)*8,h:0,vy:0,st:'climb',t:0,a:0,tg});return id;}
 root.HisarSwarm=Object.freeze({version:VERSION,core,connect,launch,order,fire:fireTank,spawnFoe,diagnostics});
 connect();doc.addEventListener('hisar:ui-ready',connect);

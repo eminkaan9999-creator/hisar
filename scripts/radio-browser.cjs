@@ -128,6 +128,22 @@ if(!mobile){
   for(let i=0;i<34;i++){P.x+=Math.sin(q.h)*.45;P.z+=Math.cos(q.h)*.45;update(.1);}const near=COV.filter(c=>c.pos&&Math.hypot(c.x-q.x,c.z-q.z)<12).length;return {d:Math.hypot(P.x-q.x,P.z-q.z),sink:HisarField.diagnostics().sink,near};});
  assert.ok(inPos.d<3.5,'drove in: '+inPos.d);assert.ok(inPos.sink>.2);assert.ok(inPos.near>=4);ok('driving into a roadside position from the open rear settles the tank hull-down behind the earth wall');
 
+ // ---- gerçeklik: dağlar, ot, toz, ayar atışı, düşmanın mevziye girmesi
+ const real=await p.evaluate(()=>{HisarRealism.grass();const d0=HisarRealism.diagnostics();const dag=S.children.filter(o=>o.name==='DAG').length,ot=S.getObjectByName('GR_OT');
+  const sd=HisarRealism.diagnostics().dust;let sx=0,sz=-300;for(let t=0;t<400;t++){const x=-600+(t%20)*60,z=-650+Math.floor(t/20)*60;let okp=true;for(let k=0;k<45;k+=5)if(hAt(x,z+k)<.2||roadNear(x,z+k,3))okp=false;if(okp){sx=x;sz=z;break;}}
+  P.x=sx;P.z=sz;for(let i=0;i<30;i++){P.z+=1.4;update(.1);camUpdate();}const dust=HisarRealism.diagnostics().dust-sd;
+  const e=E.find(q=>q.type==='tank');let sp=null;if(e){e._br=null;sp=[];for(let i=0;i<3;i++){eshot(e,P.x,2,P.z,80,'p');sp.push(HisarRealism.diagnostics().spread);}}
+  return {dag,ot:ot?ot.count:0,dust,sp,oldGrass:gm.visible};});
+ assert.equal(real.dag,3);assert.ok(real.ot>800,'grass '+real.ot);assert.equal(real.oldGrass,false);assert.ok(real.dust>=3,'dust '+real.dust);
+ if(real.sp)assert.deepEqual(real.sp,[2.2,1.5,1.15]);ok('three mountain ranges on the horizon, '+real.ot+' grass tufts around the camera, dust behind a moving tank, enemy gunners bracket');
+ const hold=await p.evaluate(()=>{const s=HisarBattle.diagnostics().squads.find(q=>!q.dead),a=Math.atan2(-s.x,-s.z);P.x=s.x+Math.sin(a)*300;P.z=s.z+Math.cos(a)*300;for(let i=0;i<20;i++)update(.1);
+  const e=E.find(q=>q.bt===s.id);if(!e)return null;const ps=HisarField.positions(),p=ps.filter(q=>Math.hypot(q.x,q.z)>200).sort((u,v)=>Math.hypot(u.x-e.x,u.z-e.z)-Math.hypot(v.x-e.x,v.z-e.z))[0];
+  const put=()=>{P.x=p.x+Math.sin(p.h)*180;P.z=p.z+Math.cos(p.h)*180;};put();e.x=p.x+Math.cos(p.h)*45-Math.sin(p.h)*10;e.z=p.z-Math.sin(p.h)*45-Math.cos(p.h)*10;
+  const at=o=>o._pos&&Math.hypot(o._pos.x-p.x,o._pos.z-p.z)<1,who=()=>E.find(o=>at(o)&&o._in);let k=0;for(;k<500;k++){put();e.conv=0;e.park=0;e.foe=null;update(.1);if(who())break;}for(let i=0;i<15;i++){put();update(.1);}const q=who(),inn={t:k/10,in:!!q,d:q?Math.hypot(q.x-p.x,q.z-p.z):99,sink:q?q._sink:0};
+  for(let i=0;i<80;i++){P.x=p.x+Math.cos(p.h)*200;P.z=p.z-Math.sin(p.h)*200;update(.1);}return {inn,left:!E.some(at)};});
+ assert.ok(hold,'an enemy tank took the field');assert.equal(hold.inn.in,true);assert.ok(hold.inn.d<3);assert.ok(hold.inn.sink>.3);assert.equal(hold.left,true);
+ ok('an engaged enemy tank drives round into a position facing the player ('+hold.inn.t+' s), sits hull-down, and pulls out when flanked');
+
  // ---- sürü dron ve mikrodalga dron savar
  await p.evaluate(()=>{HisarBattle.events(false);lvSel='normal';HisarBattle.start();L.dmg=0;});await tick(p,1);
  const sr0=await p.evaluate(()=>{const d=HisarSwarm.diagnostics();return {v:HisarSwarm.version,base:!!d.base&&!!S.getObjectByName('SR_KARARGAH'),dc:DC,dcx:DCX(),btn:!document.getElementById('abE').hidden,box:document.querySelectorAll('#sr-box button').length};});

@@ -1,5 +1,6 @@
-/* HİSAR arazi 1.1: araçlar iç içe geçmez; oyuncu mermisi dost tanka, ağaca, kayaya ve toprak sipere çarpar;
- * tank mevzileri (yığılmış toprak siper) oyun açılırken düz, atış alanı açık yerlere kurulur. Kurgusal oyun mekaniğidir.
+/* HİSAR arazi 1.2: araçlar iç içe geçmez; oyuncu mermisi dost tanka, ağaca, kayaya ve toprak sipere çarpar;
+ * tank mevzileri (yığılmış toprak siper) oyun açılırken düz, atış alanı açık yerlere kurulur: önce merkezde, sonra bütün haritada
+ * yol boylarına, köy kenarlarına ve tepelere. Kurgusal oyun mekaniğidir.
  */
 (function(root){
 'use strict';
@@ -45,7 +46,7 @@ function findPositions(env,opts){
  const anchors=env.anchors||ANCHORS,trees=env.trees||[],rocks=env.rocks||[],blds=env.blds||[],avoid=env.avoid||[],roughMax=Math.max(o.flat,o.flatMax);
  // Çapalara uzaklığı (inner, outer] aralığında olan uygun hücreler.
  const collect=(inner,outer)=>{const cells=[];
-  for(let x=-o.span;x<=o.span;x+=o.step)for(let z=-o.span;z<=o.span;z+=o.step){
+  const cx=o.cx||0,cz=o.cz||0;for(let x=cx-o.span;x<=cx+o.span;x+=o.step)for(let z=cz-o.span;z<=cz+o.span;z+=o.step){
    let near=Infinity;for(const a of anchors)near=Math.min(near,Math.hypot(a[0]-x,a[1]-z));if(near<o.anchor||near<=inner||near>outer)continue;
    if(env.river&&Math.abs(z-env.river(x))<o.river)continue;
    if(roadDist(x,z,env.roads)<o.road)continue;
@@ -56,7 +57,7 @@ function findPositions(env,opts){
    if(trees.some(t=>Math.hypot(t.x-x,t.z-z)<o.tree))continue;
    if(avoid.some(a=>Math.hypot(a.x-x,a.z-z)<a.r))continue;
    // Tercih: üsten dışarı bakmak. Önü kapalıysa ya da önü yükseliyorsa en yakın uygun yöne döner; üsse doğru bakan mevzi kurulmaz.
-   const out=Math.atan2(x,z),g0=env.ground(x,z);let best=null;
+   const ff=o.faceFrom||[0,0],out=Math.atan2(x-ff[0],z-ff[1]),g0=env.ground(x,z);let best=null;
    for(const d of o.turns){const h=out+d;if(env.ground(x+Math.sin(h)*6.2,z+Math.cos(h)*6.2)-g0>o.rise)continue;
     const c=clearAhead(x,z,h,env);if(!best||c>best.c)best={h,c};if(c>=o.wantClear){best={h,c};break;}}
    if(!best||best.c<o.minClear)continue;
@@ -137,7 +138,7 @@ let positions=null,pushes=0,worldHits=0,lastHit='',lastFF=0,coverHits=0,coverNot
 const MOVING=new Set(['tank','apc','truck']),SOLID=new Set(['tank','apc','truck','aa','arty','bunker']);
 let rockList=null;
 function rocksOf(){if(rockList)return rockList;rockList=[];safe(()=>{const m=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();for(let i=0;i<rocks.count;i++){rocks.getMatrixAt(i,m);m.decompose(p,q,sc);rockList.push({x:p.x,y:p.y,z:p.z,r:Math.max(.6,sc.x*.95)});}},null);return rockList;}
-function envNow(){return {ground:hAt,river:safe(()=>typeof riv==='function'?riv:null,null),trees:(root.TREES||[]).map(t=>({x:t.x,z:t.z})),rocks:rocksOf().map(r=>({x:r.x,z:r.z,r:r.r})),
+function envNow(){return {roads:safe(()=>WROADS.map(r=>[r.pts,r.w]),null)||undefined,ground:hAt,river:safe(()=>typeof riv==='function'?riv:null,null),trees:(root.TREES||[]).map(t=>({x:t.x,z:t.z})),rocks:rocksOf().map(r=>({x:r.x,z:r.z,r:r.r})),
  blds:safe(()=>BLD.filter(b=>!b.dead).map(b=>({x:b.x,z:b.z,r:b.r})),[]),avoid:safe(()=>[{x:SUP.x,z:SUP.z,r:22}],[])};}
 // Toprak siper tek parça bir yüzeydir: araziye oturur, sırtı inişli çıkışlıdır, kenarı çimene karışarak biter.
 const X0=-10,Z0=-10,ST=.5,NX=41,NZ=45;let nearGrid=null;
@@ -148,13 +149,37 @@ function earthMesh(p,mat,seed){const heaps=spoil(seed),pos=[],uv=[],col=[],al=[]
  for(let j=0;j<NZ-1;j++)for(let i=0;i<NX-1;i++){const a=j*NX+i,b=a+NX,c=b+1,d=a+1;if(al[a]+al[b]+al[c]+al[d]<.02)continue;idx.push(a,b,d,b,c,d);}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(col,4));g.setIndex(idx);g.computeVertexNormals();
  tris+=idx.length/3;const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;m.userData.position=1;return m;}
+let earthMat=null;
+function dig(f,pi){const p={x:f.x,z:f.z,h:f.h,clear:f.clear};p.m=earthMesh(p,earthMat,pi*97+13);S.add(p.m);p.blocks=blocksOf(p);
+ // Oyunun kendi siper listesi: çarpışma, mermi, görüş ve rota bu listeye bakar.
+ safe(()=>{for(const b of p.blocks)COV.push({x:b.x,z:b.z,r:b.r,h:b.h,pos:1});},null);positions.push(p);return p;}
 function build(){if(positions)return;positions=[];const t0=performance.now();
- safe(()=>{const found=findPositions(envNow()),base=safe(()=>root.DOZER.mat,null),earth=base?base.clone():new THREE.MeshLambertMaterial({color:0x6a5338});
-  earth.color=new THREE.Color(0xc2ad8e);earth.vertexColors=true;earth.transparent=true;earth.depthWrite=true;earth.polygonOffset=true;earth.polygonOffsetFactor=-2;earth.polygonOffsetUnits=-2;
-  found.forEach((f,pi)=>{const p={x:f.x,z:f.z,h:f.h,clear:f.clear};S.add(earthMesh(p,earth,pi*97+13));p.blocks=blocksOf(p);
-   // Oyunun kendi siper listesi: çarpışma, mermi, görüş ve rota bu listeye bakar.
-   safe(()=>{for(const b of p.blocks)COV.push({x:b.x,z:b.z,r:b.r,h:b.h,pos:1});},null);positions.push(p);});
- },null);buildMs=Math.round(performance.now()-t0);}
+ safe(()=>{const base=safe(()=>root.DOZER.mat,null);earthMat=base?base.clone():new THREE.MeshLambertMaterial({color:0x6a5338});
+  earthMat.color=new THREE.Color(0xc2ad8e);earthMat.vertexColors=true;earthMat.transparent=true;earthMat.depthWrite=true;earthMat.polygonOffset=true;earthMat.polygonOffsetFactor=-2;earthMat.polygonOffsetUnits=-2;
+  findPositions(envNow()).forEach(dig);
+ },null);buildMs=Math.round(performance.now()-t0);safe(wide,null);}
+// ---------- bütün harita: yol boyları, köy kenarları, tepeler ----------
+// Her çapanın çevresinde (en çok 70 m) iki mevzi aranır; mevziler birbirinden en az 45 m uzak durur ve çapadan dışarı bakar.
+// Yük telefonu takmasın diye çapalar küçük parçalar halinde, kareler arasında işlenir.
+function anchorsWide(){const out=[],add=(x,z,k)=>{if(Math.abs(x)>WS-60||Math.abs(z)>WS-60)return;if(Math.hypot(x,z)<150)return;if(out.some(a=>Math.hypot(a[0]-x,a[1]-z)<90))return;out.push([x,z,k]);};
+ safe(()=>{for(const v of VILS)add(v[0],v[1],'köy');},null);safe(()=>{for(const m of HAML)add(m.x,m.z,'köy');},null);
+ safe(()=>{for(const r of WROADS){const p=r.pts;for(let i=0;i<p.length-1;i++){const ax=p[i][0],az=p[i][1],dx=p[i+1][0]-ax,dz=p[i+1][1]-az,L=Math.hypot(dx,dz);for(let t=60;t<L;t+=140)add(ax+dx/L*t,az+dz/L*t,'yol');}}},null);
+ safe(()=>{for(let x=-WS+80;x<=WS-80;x+=80)for(let z=-WS+80;z<=WS-80;z+=80){const h=hAt(x,z);let top=h>2;for(const[dx,dz]of[[30,0],[-30,0],[0,30],[0,-30]])if(hAt(x+dx,z+dz)>h-1)top=false;if(top)add(x,z,'tepe');}},null);
+ return out;}
+let wideQ=null,wideN=0,wideMax=0,wideSum=0;
+function wide(){if(wideQ)return;wideQ=anchorsWide();wideN=wideQ.length;const env0=envNow(),near=(L,a,R)=>L.filter(o=>Math.hypot(o.x-a[0],o.z-a[1])<R);
+ const step=()=>{const t0=performance.now();while(wideQ.length&&performance.now()-t0<14){const a=wideQ.shift(),ta=performance.now();safe(()=>{
+   const env={roads:env0.roads,ground:hAt,river:env0.river,trees:near(env0.trees,a,150),rocks:near(env0.rocks,a,150),blds:near(env0.blds,a,150),anchors:[[a[0],a[1]]],
+    avoid:env0.avoid.concat(positions.map(p=>({x:p.x,z:p.z,r:45})))};
+   findPositions(env,{cx:a[0],cz:a[1],span:70,step:4,faceFrom:[a[0],a[1]],anchor:a[2]==='tepe'?0:16,reach:70,reachMax:0,min:1,max:2,perAnchor:2,gap:45}).forEach(f=>dig(f,positions.length));},null);const dt=performance.now()-ta;wideSum+=dt;wideMax=Math.max(wideMax,dt);}
+  if(wideQ.length)root.setTimeout(step,30);};
+ root.setTimeout(step,30);}
+// Büyük haritada mevziler: açık tarafı arkaya bakan kahverengi yay.
+function drawMap(c,SX,SY,sc){if(!positions)return;c.save();c.strokeStyle='#c79a5a';c.lineWidth=3;c.lineCap='round';for(const p of positions){const x=SX(p.x),y=SY(p.z),r=Math.max(4,7*sc),a=Math.atan2(Math.cos(p.h),Math.sin(p.h));c.beginPath();c.arc(x,y,r,a-1.25,a+1.25);c.stroke();}c.restore();}
+safe(()=>{(root.MAPX=root.MAPX||[]).includes(drawMap)||root.MAPX.push(drawMap);},null);
+// Uzaktaki mevziler çizilmez (sis 420 m'de kapanır).
+let cullT=0;
+function cull(dt){cullT-=dt;if(cullT>0||!positions)return;cullT=.5;const c=safe(()=>CAM.position,null);if(!c)return;for(const p of positions)if(p.m)p.m.visible=Math.hypot(p.x-c.x,p.z-c.z)<440;}
 // Araç–araç ayrımı ve dost tankın oyuncudan uzak tutulması. Mevzideki dost tank yerinden itilmez. (Araç–siper çarpışmasını oyunun kendi itme işlevi yapar.)
 function collide(){const list=[],refs=[],add=(o,r,fixed,w)=>{list.push({x:o.x,z:o.z,r,fixed,w});refs.push(o);};
  const dugIn=a=>!!(a.hold&&a.hold.position&&a.hold.in)||!!a._exit;
@@ -194,9 +219,9 @@ safe(()=>{const hp=root.hitP;if(typeof hp!=='function'||hp.hisarField)return;con
 safe(()=>{const ha=root.hitAl;if(typeof ha!=='function'||ha.hisarField)return;const w=function(a,k){if(a&&a.hold&&a.hold.position&&a.hold.in)return ha.call(this,a,k*.5);return ha.apply(this,arguments);};w.hisarField=true;root.hitAl=w;},null);
 // Her oyun adımından sonra çalışır (dokunuş beklemez).
 safe(()=>{const up=root.update;if(typeof up!=='function'||up.hisarField)return;const w=function(dt){const r=up.apply(this,arguments);
-  safe(()=>{if(game!=='play')return;build();shellWorld();collide();settle(Math.min(.1,+dt||0));},null);return r;};w.hisarField=true;root.update=w;},null);
+  safe(()=>{cull(Math.min(.1,+dt||0));if(game!=='play')return;build();shellWorld();collide();settle(Math.min(.1,+dt||0));},null);return r;};w.hisarField=true;root.update=w;},null);
 // Mevziler menüdeyken kurulur ki oyunun ilk karesi takılmasın; olmadıysa ilk oyun adımı kurar.
 (function early(n){root.setTimeout(()=>{if(positions)return;if(safe(()=>typeof hAt==='function'&&!!S&&!!root.TREES&&root.TREES.length>0&&BLD.length>0,false))build();else if(n<20)early(n+1);},n?1500:2500);})(0);
 root.HisarField=Object.freeze({core,positions:()=>{safe(build,null);return (positions||[]).map(p=>({x:p.x,z:p.z,h:p.h,clear:p.clear}));},
- diagnostics:()=>({pushes,worldHits,lastHit,positions:positions?positions.length:0,coverHits,sink,buildMs,tris})});
+ diagnostics:()=>({pushes,worldHits,lastHit,positions:positions?positions.length:0,pending:wideQ?wideQ.length:-1,anchors:wideN,wideMs:Math.round(wideSum),wideMax:Math.round(wideMax),coverHits,sink,buildMs,tris})});
 })(typeof window!=='undefined'?window:globalThis);

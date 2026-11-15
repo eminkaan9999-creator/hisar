@@ -1,7 +1,7 @@
 {
-  "v": 91,
+  "v": 92,
   "experience": "63.1",
-  "not": "Sürü dron ve dron savar. Uçangöz yedeği dokuza çıktı (garajdaki her yükseltme iki ekler). Telsizdeki SÜRÜ DRON bölümünden ya da Y tuşuyla dört dron birden kalkar: işaretli ya da görünen tanklara ikişer dalar, hedef yoksa tankın üstünde dolaşıp gelen düşman dronlarını çarparak düşürür; geri çağrılınca yedeğe döner. Rakip takımlar da sürü gönderir. Başlangıç noktanın arkasında karargâh kurulur: oradaki mikrodalga dron savar 330 m içine giren düşman dronlarını kendiliğinden indirir, karargâh ikmal noktasıdır. Tanktaki dron savar tek tuşla (SAVAR düğmesi ya da E) 200 m içindeki bütün düşman dronlarını düşürür, sonra 18 saniyede dolar; dost dronlara dokunmaz.",
+  "not": "Harita yeniden düzenlendi. Köyler büyüdü; yol kenarlarında on iki yeni mezra, kırsalda yirmiden fazla çiftlik var: haritada 362 bina (ev, apartman, dükkân, ahır, depo). Binalar mermiyle yıkılır, yeni savaşta yeniden kurulur. Tank mevzileri yalnız merkezde değil bütün haritada: yol boylarında, köy kenarlarında ve tepelerde 117 mevzi. Arkadan girilir; içindeki tank toprağa gömülür, önden gelen mermiden korunur. Büyük haritada kahverengi yaylarla gösterilir; telsizden 'Mevzilen' diyen dost tank en yakın mevziye girer. Binalar ve mevziler telefonu yormayacak biçimde çizilir: uzaktaki mevziler çizilmez, binalar dört toplu çizimdir.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",

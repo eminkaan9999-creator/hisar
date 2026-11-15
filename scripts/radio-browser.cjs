@@ -114,6 +114,20 @@ if(!mobile){
  await p.evaluate(()=>{HisarBattle.events(true);lvSel='normal';HisarBattle.start();L.dmg=0;});await tick(p,135);const auto=await p.evaluate(()=>{const d=HisarBattle.diagnostics();return {ev:d.events,crate:!!d.crate||d.taken>0,redIn:d.redIn};});
  assert.equal(auto.ev,true);assert.equal(auto.crate,true);assert.ok(auto.redIn>50&&auto.redIn<90,'first artillery in '+auto.redIn+' s');ok('with events on, the first crate drops by itself early in the battle and artillery is scheduled');await p.evaluate(()=>HisarBattle.events(false));
 
+ // ---- harita: yeni binalar ve bütün haritaya yayılan mevziler
+ const world=await p.evaluate(()=>{const inst=BLD.filter(b=>b.parts),b=inst.find(q=>q.kind==='house'),i=b.parts[0].i,k=b.parts[0].k,col=()=>{const c=new THREE.Color();BX.IM[k].getColorAt(i,c);return c.r+c.g+c.b;},c0=col();
+  b.hp=1;bldHit(b.x,b.z,1,5);for(let n=0;n<20;n++)update(.1);const dead=b.dead,c1=col();return {n:BLD.length,inst:inst.length,ham:HAML.length,dead,darker:c1<c0*.5,id:BLD.indexOf(b)};});
+ assert.ok(world.n>=330,'buildings '+world.n);assert.ok(world.inst>=240);assert.equal(world.ham,12);assert.equal(world.dead,1);assert.equal(world.darker,true);ok('the map has '+world.n+' buildings and twelve hamlets; a new building collapses into rubble when shelled');
+ await p.evaluate(()=>{lvSel='normal';HisarBattle.start();HisarBattle.events(false);L.dmg=0;});const back=await p.evaluate(id=>{const b=BLD[id],c=new THREE.Color();BX.IM[b.parts[0].k].getColorAt(b.parts[0].i,c);return {dead:b.dead,sum:c.r+c.g+c.b};},world.id);
+ assert.equal(back.dead,0);assert.ok(back.sum>1);ok('a new battle rebuilds the collapsed building');
+ const pos=await p.evaluate(()=>new Promise(res=>{const t0=performance.now(),w=()=>{const d=HisarField.diagnostics();if(d.pending===0||performance.now()-t0>150000){const ps=HisarField.positions();
+   res({d,n:ps.length,far:ps.filter(q=>Math.hypot(q.x,q.z)>300).length,gap:Math.min(...ps.map((a,i)=>Math.min(...ps.filter((_,j)=>j!==i).map(c=>Math.hypot(a.x-c.x,a.z-c.z))))),bld:Math.min(...ps.map(a=>Math.min(...BLD.map(b=>Math.hypot(a.x-b.x,a.z-b.z)-b.r))))});}else setTimeout(w,500);};w();}));
+ assert.equal(pos.d.pending,0);assert.ok(pos.n>=60,'positions '+pos.n);assert.ok(pos.far>=40);assert.ok(pos.gap>=20);assert.ok(pos.bld>=10,'keeps clear of buildings '+pos.bld);assert.ok(pos.d.wideMax<250,'slice '+pos.d.wideMax+' ms');
+ ok(pos.n+' tank positions across the map (roadsides, village edges, hilltops), none on top of a building');
+ const inPos=await p.evaluate(()=>{const ps=HisarField.positions(),q=ps.find(o=>Math.hypot(o.x,o.z)>300);P.x=q.x-Math.sin(q.h)*14;P.z=q.z-Math.cos(q.h)*14;P.h=q.h;P.th=q.h;yaw=q.h;
+  for(let i=0;i<34;i++){P.x+=Math.sin(q.h)*.45;P.z+=Math.cos(q.h)*.45;update(.1);}const near=COV.filter(c=>c.pos&&Math.hypot(c.x-q.x,c.z-q.z)<12).length;return {d:Math.hypot(P.x-q.x,P.z-q.z),sink:HisarField.diagnostics().sink,near};});
+ assert.ok(inPos.d<3.5,'drove in: '+inPos.d);assert.ok(inPos.sink>.2);assert.ok(inPos.near>=4);ok('driving into a roadside position from the open rear settles the tank hull-down behind the earth wall');
+
  // ---- sürü dron ve mikrodalga dron savar
  await p.evaluate(()=>{HisarBattle.events(false);lvSel='normal';HisarBattle.start();L.dmg=0;});await tick(p,1);
  const sr0=await p.evaluate(()=>{const d=HisarSwarm.diagnostics();return {v:HisarSwarm.version,base:!!d.base&&!!S.getObjectByName('SR_KARARGAH'),dc:DC,dcx:DCX(),btn:!document.getElementById('abE').hidden,box:document.querySelectorAll('#sr-box button').length};});

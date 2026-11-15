@@ -118,3 +118,12 @@ test('remote has no screen and crew file no longer carries terrain code',()=>{co
  assert.doesNotMatch(html,/data-v="alt"|data-v="bat"|canvas class="gim"|gimbalFrame/);assert.doesNotMatch(css,/#kmd[^{]*\.sc\b|canvas\.gim/);assert.match(html,/experience\/field\.js\?v=/);assert.doesNotMatch(cr,/POSITIONS|separate|keepAway/);
  const sw=fs.readFileSync(__dirname+'/../sw.js','utf8');assert.match(sw,/'experience\/field\.js'/);});
 test('armoured carriers no longer unload extra infantry',()=>{const src=fs.readFileSync(__dirname+'/../index.html','utf8');assert.doesNotMatch(src,/dismount\(/);});
+test('positions can be searched around any point and face away from it (used for roadsides, villages and hilltops)',()=>{const env=flat();
+ const ps=field.findPositions(Object.assign({},env,{anchors:[[400,-300]]}),{cx:400,cz:-300,span:70,step:4,faceFrom:[400,-300],anchor:16,reach:70,reachMax:0,min:1,max:2,perAnchor:2,gap:45});
+ assert.equal(ps.length,2);for(const p of ps){assert.ok(Math.hypot(p.x-400,p.z+300)<=70+1e-9);const out=Math.atan2(p.x-400,p.z+300);assert.ok(Math.abs(Math.atan2(Math.sin(p.h-out),Math.cos(p.h-out)))<1.6,'faces away from the anchor');}
+ assert.ok(Math.hypot(ps[0].x-ps[1].x,ps[0].z-ps[1].z)>=45);
+ const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'field.js'),'utf8');
+ assert.ok(src.includes("for(let t=60;t<L;t+=140)add(ax+dx/L*t,az+dz/L*t,'yol');"),'roadside anchors every 140 m');assert.ok(src.includes("p.m.visible=Math.hypot(p.x-c.x,p.z-c.z)<440;"),'far positions are not drawn');
+ assert.ok(src.includes('while(wideQ.length&&performance.now()-t0<14)'),'built in small slices between frames');
+});
+

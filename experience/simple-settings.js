@@ -15,8 +15,8 @@
   // Hysteresis, start/resume grace and a long upgrade window prevent quality oscillation.
   function governor(maxLevel = 2) {
     maxLevel = Math.max(0, Math.min(2, Number.isInteger(maxLevel) ? maxLevel : 1));
-    let low = 0, high = 0, until = 0, activeBefore = false, last = -Infinity, upAfter = 0;
-    function reset(at = 0) { low = high = 0; until = at + 8000; upAfter = at + 30000; activeBefore = false; last = -Infinity; }
+    let low = 0, high = 0, until = 0, activeBefore = false, last = -Infinity, upAfter = 0, soft = 0, cap = 0, softRef = null, softStuck = false;
+    function reset(at = 0) { low = high = soft = cap = 0; until = at + 8000; upAfter = at + 30000; activeBefore = false; last = -Infinity; }
     function sample(fps, at, active, current) {
       if (!Number.isFinite(at) || at < 0 || at <= last) return null;
       last = at;
@@ -28,11 +28,20 @@
       const scale = Number.isFinite(current.scale) ? Math.min(1, Math.max(.6, current.scale)) : 1;
       low = fps < 28 ? low + 1 : 0;
       high = fps > 56 ? high + 1 : 0;
+      // 28–45 kare/sn: oynanır ama akıcı değil. Bir kademe düşürülür; düşürme kazanç getirmediyse
+      // ya da kare hızı 30'a sabitlenmişse (düşük güç kipi) daha fazla düşürülmez.
+      soft = fps >= 28 && fps < 45 ? soft + 1 : 0;
+      cap = Math.abs(fps - 30) < 1.2 ? cap + 1 : 0;
       let change = null;
       if (low >= 2) {
         if (i > 0) change = { quality: levels[i - 1], scale };
         else if (scale > .6) change = { quality: 'dusuk', scale: Math.max(.6, Math.round((scale - .1) * 100) / 100) };
-        low = high = 0; until = at + 12000; upAfter = at + 90000;
+        low = high = soft = 0; until = at + 12000; upAfter = at + 90000;
+      } else if (soft >= 3 && !softStuck && cap < 2) {
+        if (softRef !== null && fps < softRef + 3) softStuck = true;
+        else if (i > 0) { change = { quality: levels[i - 1], scale }; softRef = fps; }
+        else softStuck = true;
+        low = high = soft = 0; until = at + 12000; upAfter = at + 90000;
       } else if (high >= 12 && at >= upAfter) {
         if (scale < 1) change = { quality: levels[i], scale: Math.min(1, Math.round((scale + .1) * 100) / 100) };
         else if (i < maxLevel) change = { quality: levels[i + 1], scale: 1 };
@@ -50,6 +59,7 @@
   const clock = () => root.performance?.now?.() ?? Date.now();
   let settings = normalize(safe(() => JSON.parse(root.localStorage.getItem(KEY) || 'null'), null));
   let storageOK = true, changes = 0, initialized = false;
+  const perf = { fps: 0, min: 0, n: 0 };
   const auto = governor(safe(() => root.matchMedia('(pointer:coarse)').matches, true) ? 1 : 2);
   auto.reset(clock());
   function graphics() {
@@ -85,7 +95,7 @@
     try { root.localStorage.setItem(KEY, JSON.stringify(settings)); storageOK = true; } catch { storageOK = false; }
     apply();
     const msg = doc.getElementById('hs-note');
-    if (msg) msg.textContent = storageOK ? 'Zorluk seçimin bir sonraki görevde uygulanır.' : 'Tercihler bu oturumda geçerli. Oyun kayıtların korunuyor.';
+    if (msg) msg.textContent = storageOK ? 'Zorluk seçimin bir sonraki savaşta uygulanır.' : 'Tercihler bu oturumda geçerli. Oyun kayıtların korunuyor.';
     return { ...settings };
   }
   function install() {
@@ -104,6 +114,7 @@
       #hs-simple select{width:150px;max-width:52%;min-height:44px;background:var(--zirh,#2b2e28);color:#fff;border:1px solid var(--cizgi,#4a4f43);border-radius:3px;padding:8px;font:inherit}
       #hs-simple input[type=checkbox]{width:26px;height:26px;accent-color:var(--yesil,#84c63c)}
       #hs-note{font-size:13.5px;color:var(--kemik2,#bdc3b2);line-height:1.4;margin-top:14px}
+      #hs-diag{font-size:12.5px;color:var(--kemik2,#bdc3b2);line-height:1.4;margin-top:8px;opacity:.8}
       #hs-simple :is(select,input):focus-visible{outline:3px solid var(--sari,#f3c20f);outline-offset:4px}
       @media(max-width:360px){#hs-simple label{font-size:14px;gap:8px}#hs-simple select{width:122px}#hs-simple .hs-auto{padding:10px}}
       `;
@@ -116,7 +127,7 @@
         '<label><span>Ses</span><input type="checkbox" data-simple="sound" aria-label="Oyun sesi"></label>' +
         '<label><span>Kumanda hassasiyeti</span><select data-simple="control" aria-label="Kumanda hassasiyeti"><option value="hassas">Yumuşak</option><option value="dengeli">Normal</option><option value="seri">Hızlı</option></select></label>' +
         '<label><span>Zorluk</span><select data-simple="difficulty" aria-label="Zorluk"><option value="kolay">Kolay</option><option value="normal">Normal</option><option value="zor">Zor</option><option value="serbest">Serbest sürüş</option></select></label>' +
-        '<p id="hs-note">Zorluk seçimin bir sonraki görevde uygulanır.</p>';
+        '<p id="hs-note">Zorluk seçimin bir sonraki savaşta uygulanır.</p><p id="hs-diag"></p>';
       for (const input of panel.querySelectorAll('[data-simple]')) input.addEventListener('change', () => save({ [input.dataset.simple]: input.type === 'checkbox' ? input.checked : input.value }));
       parent.prepend(panel);
     }
@@ -134,18 +145,27 @@
     root.perfAdapt = function (fps) {
       safe(() => B.auto(true), null);
       const eligible = !doc.hidden && safe(() => game === 'play' && !root.mapOpen && !root.PHOTO?.on && !root.BCAM?.on, false);
+      if (eligible && Number.isFinite(fps) && fps > 0) { perf.fps = fps; perf.min = perf.n ? Math.min(perf.min, fps) : fps; perf.n++; }
+      paintDiag();
       const change = auto.sample(fps, clock(), eligible, { quality: B.snapshot().quality, scale: safe(() => PRS, 1) });
       if (change) safe(() => { PRS = change.scale; lowN = 0; root.setQ(change.quality); changes++; }, null);
     };
     if (typeof root.reset === 'function') {
       const previous = root.reset;
-      root.reset = function () { auto.reset(clock()); return previous.apply(this, arguments); };
+      root.reset = function () { auto.reset(clock()); perf.n = 0; perf.min = 0; return previous.apply(this, arguments); };
     }
     return true;
   }
+  // Son savaşın ölçümü: saniyedeki kare, en düşük değer, grafik düzeyi ve çözünürlük ölçeği.
+  function diagText() {
+    const q = safe(() => B.snapshot().quality, '') || '—', pr = safe(() => R.getPixelRatio(), 0), names = { dusuk:'düşük', orta:'orta', yuksek:'yüksek' };
+    if (!perf.n) return 'Kare hızı savaş sırasında ölçülür.';
+    return 'Son savaş: saniyede ' + Math.round(perf.fps) + ' kare (en düşük ' + Math.round(perf.min) + ') · grafik ' + (names[q] || q) + ' · ölçek ' + (pr ? pr.toFixed(1).replace('.', ',') : '—');
+  }
+  function paintDiag() { const el = doc.getElementById('hs-diag'); if (el) el.textContent = diagText(); }
   function resetSampling() { auto.reset(clock()); safe(() => { fpsA = 0; fpsN = 0; lowN = 0; }, null); }
   root.HisarSimpleSettings = Object.freeze({ version:VERSION, save, install, getSettings:()=>({...settings}),
-    diagnostics:()=>({ version:VERSION, automatic:!!B?.snapshot?.().auto, quality:B?.snapshot?.().quality, adjustments:changes, ready:initialized, storageOK, preferences:{...settings} }) });
+    diagnostics:()=>({ version:VERSION, automatic:!!B?.snapshot?.().auto, quality:B?.snapshot?.().quality, adjustments:changes, ready:initialized, storageOK, preferences:{...settings}, perf:{...perf}, text:diagText() }) });
   const boot = () => { setupAutomatic(); install(); };
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', boot, { once:true }); else boot();
   doc.addEventListener('hisar:ui-ready', boot);

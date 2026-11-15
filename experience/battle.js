@@ -89,7 +89,7 @@ const doc=root.document;if(!doc||root.HisarBattle)return;
 const MODE='savas',ACTIVATE=400,SLEEP=560,ALERT=250,FOE=210,CLASH=110;
 // Savaş dengesi: uzak menzil, ağır vuruş, yavaş dolum. sp düşman hızı (m/sn), cd düşman dolumu (sn), dmg isabet başına hasar,
 // hp düşman tankının dayanıklılık katsayısı. Oyuncunun dolumu RELOAD, dost tankların görüş menzili ALLY_RANGE ile uzar.
-const TUNE=Object.freeze({kolay:{sp:5.5,cd:5.6,dmg:12,hp:1.8},normal:{sp:6.5,cd:4.2,dmg:22,hp:2.2},zor:{sp:7.5,cd:3.2,dmg:30,hp:2.6},serbest:{sp:5.5,cd:0,dmg:0,hp:1.8}});
+const TUNE=Object.freeze({kolay:{sp:7,cd:5.6,dmg:12,hp:1.8},normal:{sp:8.5,cd:4.2,dmg:22,hp:2.2},zor:{sp:10,cd:3.2,dmg:30,hp:2.6},serbest:{sp:7,cd:0,dmg:0,hp:1.8}});
 const RELOAD=3,ALLY_RANGE=190,FIRE_RANGE=230,SHELL_SPEED=80,SHELL_LIFE=3.2;
 const hooks={},stats=safe(()=>JSON.parse(root.localStorage.getItem(SAVE)||'{}'),{})||{};
 let B=null,card=null,feedBox=null,wall=null,finishing=false,cardBottom=0;
@@ -123,13 +123,13 @@ function begin(){
  safe(()=>{AL.forEach((a,i)=>{const side=i===0?1:i===1?-1:0,back=i===2?16:9,x=sp.x+Math.cos(h)*side*13-Math.sin(h)*back,z=sp.z-Math.sin(h)*side*13-Math.cos(h)*back;a.x=x;a.z=z;a.h=h;a.g.position.set(x,hAt(x,z),z);a.g.rotation.y=h;a.cmd='follow';a.fire=1;});},null);
  const zone=zoneInit(ws,rnd),pts=placeSquads(pl.squads,ws,okSpot,rnd,sp,ACTIVATE+40),squads=makeSquads(pts,pl.size);
  B={plan:pl,tune,zone,squads,teams:squads.length+1,start:sp,time:0,kills:0,over:false,lastPhase:0,lastState:'wait',hits:[],tick:0,slow:0,paint:0,warn:0,drive:0};
- doc.body.classList.add('hr-mission-active');if(card)card.hidden=false;buildWall();
+ doc.body.classList.add('hr-mission-active');if(card)card.hidden=false;buildWall();prebuild();
  const near=nearName(sp.x,sp.z);feed('Başlangıç: '+(near||'açık arazi')+' · '+B.teams+' takım sahada');
  safe(()=>root.radio('Komuta: '+B.teams+' takım sahada. Güvenli alan daralacak; son kalan takım kazanır.'),null);
  safe(()=>root.groundCull(true),null);
 }
 function cleanup(){if(wall){safe(()=>S.remove(wall),null);safe(()=>{wall.geometry.dispose();wall.material.map&&wall.material.map.dispose();wall.material.dispose();},null);wall=null;}
- if(B)for(const s of B.squads)for(const t of s.tanks)if(t.pool){safe(()=>S.remove(t.pool.g),null);t.pool=null;}
+ if(B)for(const s of B.squads)for(const t of s.tanks)if(t.pool){safe(()=>root.rm(t.pool.g),null);t.pool=null;} // saklanan tankların örgüleri de bırakılır
  B=null;doc.body.classList.remove('hr-mission-active');if(card)card.hidden=true;if(feedBox)feedBox.replaceChildren();}
 function buildWall(){if(!root.THREE||typeof S==='undefined')return;
  const c=doc.createElement('canvas');c.width=64;c.height=256;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,0,256);
@@ -142,13 +142,17 @@ function placeWall(){if(!wall||!B)return;const z=B.zone,r=Math.max(.5,z.r);wall.
  wall.material.map.repeat.x=Math.max(8,Math.round(r*2*Math.PI/14));}
 
 // ---------- takımların sahaya çıkması ve sahadan çekilmesi ----------
+function build(s,x,z){const e=safe(()=>root.addE('tank',x,z,{h:s.h||0}),null);if(!e)return null;
+ e.bt=s.id;e.mx=safe(()=>HPT.tank,100)*B.tune.hp;e.pr=110+rnd()*60;e.fr=FIRE_RANGE;e.bs=SHELL_SPEED;e.bl=SHELL_LIFE;return e;}
+// Bütün düşman tankları savaş başında kurulup saklanır: oyun sırasında tank kurmak kareyi takıyordu.
+function prebuild(){for(const s of B.squads)for(const t of s.tanks){const e=build(s,s.x,s.z);if(!e)continue;e.g.visible=false;safe(()=>{E=E.filter(o=>o!==e);},null);t.pool=e;}
+ safe(()=>R.compile(S,CAM),null);}
 function wake(s){const z=B.zone;s.active=true;s.alert=0;s.far=0;s.near=1e9;s.h=Math.atan2(z.nx-s.x,z.nz-s.z)||0;for(const t of s.tanks)if(t.hp>0)t.q=true;}
 // Karede en çok bir tank kurulur; dört tank aynı anda kurulunca görüntü takılmasın.
 function spawnOne(){for(const s of B.squads){if(!s.active||s.dead)continue;const i=s.tanks.findIndex(t=>t.q);if(i<0)continue;
   const t=s.tanks[i],o=slot(i,s.h),x=clamp(s.x+o.x,-WS+25,WS-25),z=clamp(s.z+o.z,-WS+25,WS-25);let e=t.pool;t.q=false;
   if(e){t.pool=null;e.x=x;e.z=z;e.h=s.h;e.g.visible=true;safe(()=>{e.g.position.set(x,hAt(x,z),z);e.g.rotation.y=s.h;E.push(e);},null);}
-  else{e=safe(()=>root.addE('tank',x,z,{h:s.h}),null);if(!e){t.hp=0;return;}
-   e.bt=s.id;e.mx=safe(()=>HPT.tank,100)*B.tune.hp;e.pr=110+rnd()*60;e.fr=FIRE_RANGE;e.bs=SHELL_SPEED;e.bl=SHELL_LIFE;}
+  else{e=build(s,x,z);if(!e){t.hp=0;return;}}
   e.hp=e.mx*t.hp;e.sn=e.hp;e.cd=1.5+rnd()*3;e.fc=1+rnd()*3;e.foe=null;e.conv=0;e.park=1;t.near=1e9;t.e=e;return;}}
 function sleep(s){for(const t of s.tanks){const e=t.e;t.q=false;if(!e)continue;
   if(inField(e)){t.hp=clamp(e.hp/e.mx,.01,1);e.g.visible=false;e.foe=null;safe(()=>{E=E.filter(o=>o!==e);},null);t.pool=e;}t.e=null;}
@@ -219,7 +223,7 @@ function step(dt){
    if(within(s,ACTIVATE)||(within(s,SLEEP-40)&&B.squads.some(o=>o!==s&&o.active&&!o.dead&&dist(o,s)<FOE+30)))wake(s);}}
  // sahada olmayan takımlar: yürüyüş, alan dışı hasar ve kendi aralarında çatışma
  B.slow+=dt;if(B.slow>=1){const d=B.slow;B.slow=0;const idle=B.squads.filter(s=>!s.dead&&!s.active);
-  for(const s of idle){driftSquad(s,z,d,rnd,6,ws-40);const o=outsideBy(z,s.x,s.z);if(o>0)for(const t of s.tanks)if(t.hp>0)t.hp=Math.max(0,t.hp-zoneDamage(z,o,d)/100);if(aliveTanks(s)===0)squadDown(s,false);}
+  for(const s of idle){driftSquad(s,z,d,rnd,B.tune.sp*.9,ws-40);const o=outsideBy(z,s.x,s.z);if(o>0)for(const t of s.tanks)if(t.hp>0)t.hp=Math.max(0,t.hp-zoneDamage(z,o,d)/100);if(aliveTanks(s)===0)squadDown(s,false);}
   for(let i=0;i<idle.length;i++)for(let j=i+1;j<idle.length;j++){const a=idle[i],b=idle[j];if(a.dead||b.dead||dist(a,b)>CLASH)continue;
    clashStep(a,b,d,rnd);if(a.dead)squadDown(a,false);if(b.dead)squadDown(b,false);}}
  // bitiş: düşman tankı kalmadıysa son takım oyuncudur

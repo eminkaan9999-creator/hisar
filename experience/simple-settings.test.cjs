@@ -24,3 +24,13 @@ test('all detailed settings panels are hidden; only simple controls shown',()=>{
 test('settings open only from the gear button: no settings tab, old section hidden by the theme',()=>{const html=fs.readFileSync(__dirname+'/../index.html','utf8'),skin=fs.readFileSync(__dirname+'/skin.css','utf8');assert.doesNotMatch(html,/<button data-t="a"/);assert.match(skin,/html body #ta\{display:none!important\}/);assert.match(skin,/#hisar-experience-entry::before\{[^}]*--ic-gear/);});
 test('save/progress keys are not written',()=>{const s=fs.readFileSync(__dirname+'/simple-settings.js','utf8');assert.doesNotMatch(s,/setItem\(['"](?:m60v2|hisar-operations-v1|hisar-story-v1)/);assert.doesNotMatch(s,/localStorage\.(clear|removeItem)/);});
 test('new automatic module is loaded and cached',()=>{assert.match(fs.readFileSync(__dirname+'/polish.js','utf8'),/load\('simple-settings'/);assert.match(fs.readFileSync(__dirname+'/../sw.js','utf8'),/'experience\/simple-settings.js'/);});
+// 28–45 kare/sn bandı: akıcı olmayan ama yavaş da sayılmayan aygıtlar
+const feed=(g,fps,from,n,cur)=>{const out=[];let c=cur;for(let i=0;i<n;i++){const r=g.sample(fps,from+i*2100,true,c);if(r){out.push(r);c=r;}}return out;};
+test('choppy but playable frame rate lowers graphics one step',()=>{const g=governor();g.reset(0);const ch=feed(g,38,0,12,{quality:'orta',scale:1});assert.deepEqual(ch,[{quality:'dusuk',scale:1}]);});
+test('a frame rate locked at 30 (low power mode) is left alone',()=>{const g=governor();g.reset(0);assert.deepEqual(feed(g,30.2,0,40,{quality:'orta',scale:1}),[]);});
+test('a step that brought no gain is not followed by another',()=>{const g=governor(2);g.reset(0);const ch=feed(g,40,0,60,{quality:'yuksek',scale:1});assert.deepEqual(ch,[{quality:'orta',scale:1}]);});
+test('smooth play is never touched by the choppy rule',()=>{const g=governor();g.reset(0);assert.deepEqual(feed(g,50,0,30,{quality:'orta',scale:1}),[]);});
+test('the choppy rule never lowers the render scale',()=>{const g=governor();g.reset(0);assert.deepEqual(feed(g,36,0,40,{quality:'dusuk',scale:1}),[]);});
+test('settings show the last battle frame rate so a stutter report needs only a screenshot',()=>{const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'simple-settings.js'),'utf8');
+ assert.ok(src.includes('<p id="hs-diag"></p>'));assert.ok(src.includes("'Son savaş: saniyede ' + Math.round(perf.fps) + ' kare (en düşük ' + Math.round(perf.min) + ')"));assert.ok(src.includes('perf.n = 0; perf.min = 0;'),'measurement restarts with every battle');
+ assert.ok(!src.includes('sonraki görevde'));});

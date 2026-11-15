@@ -103,7 +103,7 @@ test('enemy losses not caused by the player give no score, credits, medals or pr
  assert.match(battle,/function quietKill\(e\)\{e\.nc=1;/);
 });
 test('battle tuning covers every difficulty and squads never start inside the wake-up range',()=>{
- assert.match(battle,/const TUNE=Object\.freeze\(\{kolay:\{[^}]+\},normal:\{sp:6\.5,cd:4\.2,dmg:22,hp:2\.2\},zor:\{[^}]+\},serbest:\{[^}]+\}\}\)/);
+ assert.match(battle,/const TUNE=Object\.freeze\(\{kolay:\{[^}]+\},normal:\{sp:8\.5,cd:4\.2,dmg:22,hp:2\.2\},zor:\{[^}]+\},serbest:\{[^}]+\}\}\)/);
  assert.match(battle,/const MODE='savas',ACTIVATE=400,SLEEP=560,ALERT=250,FOE=210,CLASH=110;/);assert.ok(battle.includes('placeSquads(pl.squads,ws,okSpot,rnd,sp,ACTIVATE+40)'));
  assert.ok(battle.includes('L=Object.assign({},LV[key]||LV.normal,{sp:tune.sp,cd:tune.cd,dmg:tune.dmg,rl:RELOAD,ar:ALLY_RANGE});'));
 });

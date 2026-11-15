@@ -50,9 +50,38 @@ test('icons and cover art are real images of the expected size',()=>{
  assert.deepEqual(png('icon-192.png'),[192,192]);assert.deepEqual(png('icon-512.png'),[512,512]);assert.deepEqual(png('icon-maskable-512.png'),[512,512]);assert.deepEqual(png('apple-touch-icon.png'),[180,180]);assert.deepEqual(png('favicon-32.png'),[32,32]);
  const j=fs.readFileSync(path.join(root,'assets/brand/celik-boru.jpg'));assert.equal(j[0],0xff);assert.equal(j[1],0xd8);assert.ok(j.length>40000&&j.length<400000);
 });
-test('opening screen shows the cover art, the name and the developer',()=>{
- assert.match(code,/sp\.id='spl';sp\.innerHTML='<div class="art"><\/div><div class="tx"><h1>ÇELİK BÖRÜ<\/h1><small>GELİŞTİRİCİ · <b>EMİN KAAN BOYACI<\/b><\/small>/);
- assert.match(code,/#spl \.art\{[^}]*url\(assets\/brand\/celik-boru\.jpg\)/);
+test('opening screen is part of the page itself, so a slow first load never shows the bare engine',()=>{
+ const head=code.slice(0,code.indexOf('</head>')),body=code.slice(code.indexOf('<body>'));
+ assert.match(head,/<style id="spl-style">\n#spl\{position:fixed;inset:0;z-index:100;/);assert.match(head,/#spl \.art\{[^}]*url\(assets\/brand\/celik-boru\.jpg\)/);
+ assert.ok(body.startsWith('<body>\n<div id="spl"><div class="art"></div><div class="tx"><h1>ÇELİK BÖRÜ</h1><small>GELİŞTİRİCİ · <b>EMİN KAAN BOYACI</b></small><small id="splV">YÜKLENİYOR</small><i></i></div></div>'),'splash is the first thing in the body');
+ assert.ok(body.indexOf('id="spl"')<body.indexOf('<script'),'splash comes before any script');
+ assert.doesNotMatch(head,/#spl\{[^}]*pointer-events:none/,'splash blocks taps while loading');assert.match(head,/#spl\.out\{opacity:0;pointer-events:none\}/);
+ assert.ok(!code.includes("sp.id='spl'"),'no second, late splash');assert.ok(code.includes("const sp=document.getElementById('spl');if(sp){const v=document.getElementById('splV');if(v)v.textContent='SÜRÜM '+VER;"));
+ assert.ok(code.includes('HisarGameBridge.snapshot().ready'),'splash waits until the game is ready');
+});
+test('garage upgrade cards have their own layout and drawn icons',()=>{
+ const g=code.slice(code.indexOf('// ===== m_garage ====='),code.indexOf('// ===== m_ovl ====='));
+ assert.ok(g.includes('<div class="ut"><b>'),'text block uses its own class');assert.ok(!g.includes('class="ub"'),'not the in-game button class');assert.ok(!code.includes('.uc .ub'));
+ assert.match(g,/\.uc\{display:grid;grid-template-columns:40px minmax\(0,1fr\) auto;/);assert.doesNotMatch(g,/\p{Extended_Pictographic}/u);
+ assert.equal((g.match(/\{k:'\w+',g:'[tdb]',ic:'M/g)||[]).length,17,'every upgrade has a drawn icon');
+ for(const gone of ['ALINABİLİR','id="rk"','REKORLAR','id="rcd"',"getElementById('gkr')",'const UPG='])assert.ok(!code.includes(gone),gone);
+ const d=code.slice(code.indexOf('// ===== m_drone2 ====='),code.indexOf('// ===== m_units2 ====='));assert.doesNotMatch(d.slice(0,d.indexOf('function bodyUI')),/ic:'\p{Extended_Pictographic}/u);assert.ok(d.includes('#dBody button{display:grid;grid-template-columns:40px minmax(0,1fr) auto;'));
+});
+test('update button steps aside when the menu is scrolled',()=>{
+ assert.ok(code.includes("if(t&&t.id==='mpBody')box.classList.toggle('away',t.scrollTop>24)"));assert.match(skin,/html body #mp #updBox\.away\{display:none!important\}/);
+});
+test('phones render lighter: fast shadows, small shadow map, other tanks and trees use blob shadows',()=>{
+ const m=code.slice(code.indexOf('// ---------------- MOBIL KALITE'),code.indexOf('// ===== m_armor ====='));
+ assert.ok(m.includes('const sz=hi?2048:1024;'));assert.ok(m.includes('R.shadowMap.type=THREE.PCFShadowMap'));assert.ok(m.includes("R.shadowMap.autoUpdate=false;FRAME_HOOKS.push(()=>{fr++;if(qlv==='yuksek'||(fr&1))R.shadowMap.needsUpdate=true})"));
+ assert.ok(m.includes("window.TREE_BLOB=!hi;"));assert.ok(m.includes("for(const a of AL)lite(a.g);for(const e of E)if(e.type==='tank'||e.type==='apc')lite(e.g)"));
+ const t=code.slice(code.indexOf('// ===== m_trees ====='),code.indexOf('// ===== m_nature ====='));assert.ok(t.includes("if(force||DIRTY||Math.abs(cx-lcx)>20||Math.abs(cz-lcz)>20||"),'trees are repacked only when needed');
+});
+test('tank moves faster and allies keep up',()=>{
+ assert.equal(code.split('*iy*16*(1+.07*SV.U.eng)*sp*dt').length-1,2);assert.ok(code.includes('P.h-=ix*1.7*(1+.06*SV.U.eng)'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));
+ assert.ok(code.includes('gg.index.updateRange.offset=0;gg.index.updateRange.count=o;gg.index.needsUpdate=true;'),'only the used part of the ground index is uploaded');
+});
+test('save can be backed up as a code and restored without losing progress',()=>{
+ for(const part of ["const BKEYS=['m60v2','celik-boru-savas-v1'];","function backupCode(){","function restoreCode(text){","window.HISAR_BACKUP={code:backupCode,restore:restoreCode,merge:mergeMax};",'data-bk="copy">KAYDI YEDEKLE','data-bk="open">YEDEK KODU GİR'])assert.ok(code.includes(part),part);
 });
 test('map header is plain text and garage tabs carry no emoji',()=>{
  assert.match(code,/<div id="fmT"><b>HARİTA<\/b><small><\/small><\/div>/);

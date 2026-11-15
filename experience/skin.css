@@ -148,6 +148,7 @@ html body #mp #hisar-experience-entry::before{content:"";display:block;width:22p
 /* güncelle: sahnenin sağ üstünde sarı küçük plaka */
 html body #mp #updBox{position:fixed!important;z-index:7;top:calc(var(--barT) + 8px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));margin:0!important;display:flex!important}
 html body #mp #updBox>*:not(button){display:none!important}
+html body #mp #updBox.away{display:none!important}
 html body #updB{-webkit-clip-path:none!important;clip-path:none!important;border-radius:3px!important;background:linear-gradient(180deg,#ffd84a,#e0ad00)!important;color:#1b1500!important;-webkit-text-fill-color:#1b1500!important;border:0!important;box-shadow:0 3px 10px rgba(0,0,0,.45)!important;font:800 13px/1 var(--sf)!important;letter-spacing:.06em!important;padding:8px 10px!important;min-height:0!important;display:flex!important;align-items:center;gap:6px}
 html body #updB svg{width:14px!important;height:14px!important}
 /* tank sahnesinin göründüğü pencere */
@@ -223,11 +224,6 @@ html body #menu #galL button small{font:600 12px/1.2 var(--sf)!important;color:v
 html body #menu #galL button em{font:800 12px/1 var(--sf)!important;letter-spacing:.05em;color:var(--sari)!important;font-style:normal}
 html body #menu #galL button em.ok{color:var(--yesil)!important}
 html body #menu #galL button.cur{border-color:var(--sari)!important;box-shadow:inset 0 0 0 1px var(--sari)!important;background:linear-gradient(180deg,#4b6426,#34471a)!important}
-html body #menu #rk{border-radius:3px!important;border:1px solid var(--cizgi)!important;border-left:3px solid var(--sari)!important;background:rgba(0,0,0,.3)!important;font:800 14px/1 var(--sf)!important;letter-spacing:.06em!important;padding:9px 11px!important}
-html body #menu #rk:after{display:none!important}
-html body #menu #gkr{border-radius:3px!important;border:1px solid var(--cizgi)!important;background:var(--zirh)!important}
-html body #menu #gkr b{font:800 24px/1 var(--sf)!important;color:var(--sari)!important}
-html body #menu #gkr span{font:600 13px/1.35 var(--sf)!important;color:var(--kemik2)!important}
 html body #menu #gsub.tabs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important}
 html body #menu #gsub.tabs button{min-width:0;display:flex!important;flex-direction:column;align-items:center;gap:3px;padding:9px 4px!important;border-radius:3px!important;background:var(--zirh)!important;border:1px solid var(--cizgi)!important;color:var(--kemik)!important;opacity:1!important;font:800 14px/1.1 var(--sf)!important;letter-spacing:.04em!important;text-transform:uppercase;box-shadow:none!important}
 html body #menu #gsub.tabs button small{display:block;margin:0;font:700 11.5px/1 var(--sf)!important;color:var(--kemik2)!important}
@@ -249,6 +245,7 @@ html body #menu .kl b{color:var(--sari)!important;font-weight:800!important;lett
  html body #mpBody>.tabs{right:calc(200px + env(safe-area-inset-right,0px));padding-right:0!important}
  html body #mpBody>.tabs button{flex-direction:row!important;gap:7px!important;font-size:14px!important;letter-spacing:.03em!important}
  html body #mp #updBox{right:auto;left:calc(10px + env(safe-area-inset-left,0px))}
+ html body #mp #updBox.away{display:flex!important}
  html body #mp .acts{left:auto;right:0;bottom:0!important;width:calc(200px + env(safe-area-inset-right,0px))!important;height:calc(var(--barB) + env(safe-area-inset-bottom,0px));padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) 0!important;background:#191b16!important;border-top:1px solid var(--cizgi);display:block!important}
  html body #mp .acts #go{width:100%!important;height:var(--barB)!important;border-radius:0!important;font-size:22px!important}
  html body #mp .acts #rs{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(100% + 10px);width:180px!important;height:46px!important;font-size:20px!important}

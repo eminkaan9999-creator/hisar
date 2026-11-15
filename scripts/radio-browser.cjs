@@ -114,6 +114,28 @@ if(!mobile){
  await p.evaluate(()=>{HisarBattle.events(true);lvSel='normal';HisarBattle.start();L.dmg=0;});await tick(p,135);const auto=await p.evaluate(()=>{const d=HisarBattle.diagnostics();return {ev:d.events,crate:!!d.crate||d.taken>0,redIn:d.redIn};});
  assert.equal(auto.ev,true);assert.equal(auto.crate,true);assert.ok(auto.redIn>50&&auto.redIn<90,'first artillery in '+auto.redIn+' s');ok('with events on, the first crate drops by itself early in the battle and artillery is scheduled');await p.evaluate(()=>HisarBattle.events(false));
 
+ // ---- sürü dron ve mikrodalga dron savar
+ await p.evaluate(()=>{HisarBattle.events(false);lvSel='normal';HisarBattle.start();L.dmg=0;});await tick(p,1);
+ const sr0=await p.evaluate(()=>{const d=HisarSwarm.diagnostics();return {v:HisarSwarm.version,base:!!d.base&&!!S.getObjectByName('SR_KARARGAH'),dc:DC,dcx:DCX(),btn:!document.getElementById('abE').hidden,box:document.querySelectorAll('#sr-box button').length};});
+ assert.equal(sr0.base,true);assert.equal(sr0.dc,sr0.dcx);assert.ok(sr0.dcx>=9);assert.equal(sr0.btn,true);assert.equal(sr0.box,5);ok('battle sets up a headquarters with a drone jammer, nine spare drones, a jammer button and a swarm section in the radio');
+ // karargâhtan uzakta: düşman sürüsü tanka gelir, E tuşu düşürür
+ const far=`(()=>{const b=HisarSwarm.diagnostics().base,a=Math.atan2(-b.x,-b.z),put=()=>{P.x=b.x+Math.sin(a)*560;P.z=b.z+Math.cos(a)*560;AL.forEach((q,i)=>{q.x=P.x+60+12*i;q.z=P.z+60;q.cmd='hold';q.hold={x:q.x,z:q.z};});};return put;})()`;
+ const jam=await p.evaluate(far=>{const put=eval(far);put();for(let i=0;i<5;i++)update(.1);HisarSwarm.spawnFoe('p',4,240);for(let i=0;i<40;i++){put();update(.1);}
+  const d=HisarSwarm.diagnostics();window.__put=put;return {up:d.foe.filter(q=>q.st!=='fall').length,near:d.foe.every(q=>Math.hypot(q.x-P.x,q.z-P.z)<200),warn:document.getElementById('abE').classList.contains('warn')};},far);
+ assert.equal(jam.up,4);assert.equal(jam.near,true);assert.equal(jam.warn,true);
+ await p.keyboard.press('e');const jam2=await p.evaluate(()=>{for(let i=0;i<3;i++){__put();update(.1);}const d=HisarSwarm.diagnostics();return {up:d.foe.filter(q=>q.st!=='fall').length,cd:d.tankCd,downed:d.downed};});
+ assert.equal(jam2.up,0);assert.ok(jam2.cd>15);assert.ok(jam2.downed>=4);ok('an enemy swarm heads for the tank; one press of E brings the whole swarm down and the jammer recharges');
+ const hurt=await p.evaluate(()=>{L.dmg=22;const hp=P.hp;HisarSwarm.spawnFoe('p',2,150);for(let i=0;i<120&&HisarSwarm.diagnostics().foe.some(q=>q.st!=='fall');i++){__put();E.forEach(e=>{e.cd=99;});update(.1);}L.dmg=0;return {hp,after:P.hp,game};});
+ assert.ok(hurt.after<hurt.hp-15&&hurt.after>hurt.hp-60,'two drones while the jammer charges: '+hurt.hp+' -> '+hurt.after);assert.equal(hurt.game,'play');ok('while the jammer recharges, diving drones hit the tank');
+ const hq=await p.evaluate(()=>{HisarSwarm.spawnFoe('b',5,420);let k=0;for(;k<200&&HisarSwarm.diagnostics().foe.some(q=>q.st!=='fall');k++){__put();update(.1);}const d=HisarSwarm.diagnostics();return {t:k/10,hp:d.base.hp,up:d.foe.filter(q=>q.st!=='fall').length};});
+ assert.equal(hq.up,0);assert.equal(hq.hp,100);assert.ok(hq.t<20);ok('a swarm sent at the headquarters is brought down automatically before it arrives ('+hq.t+' s)');
+ // oyuncunun sürüsü: dört dron kalkar, işaretli tanklara ikişer dalar
+ const own=await p.evaluate(()=>{const s=HisarBattle.diagnostics().squads.find(q=>!q.dead),a=Math.atan2(-s.x,-s.z),put=()=>{P.x=s.x+Math.sin(a)*170;P.z=s.z+Math.cos(a)*170;};put();for(let i=0;i<20;i++){put();update(.1);}
+  const tg=E.filter(e=>e.bt===s.id);tg.forEach(e=>e.mark=1);const dc=DC,sc=score,n=HisarSwarm.launch(),k0=HisarSwarm.diagnostics().kills;for(let i=0;i<30;i++){put();update(.1);}const alt=Math.min(...HisarSwarm.diagnostics().own.map(d=>d.y-hAt(d.x,d.z)));
+  for(let i=0;i<120;i++){put();update(.1);}const d=HisarSwarm.diagnostics();return {n,dc,dcAfter:DC,alt,kills:d.kills-k0,score:score-sc};});
+ assert.equal(own.n,4);assert.equal(own.dcAfter,own.dc-4);assert.ok(own.alt>12);assert.ok(own.kills>=2,'kills '+own.kills);assert.ok(own.score>=200);ok('a four-drone swarm takes off, flies high and destroys two marked tanks (credited)');
+ await p.evaluate(()=>HisarBattle.events(true));
+
  // ---- güvenli alan: bekleme, daralma, dışarıda hasar
  await p.evaluate(()=>{HisarBattle.start();});await holdInZone(p,112);let z=await p.evaluate(()=>HisarBattle.diagnostics().zone);assert.equal(z.info.state,'shrink');assert.equal(z.info.phase,1);assert.equal(await p.evaluate(()=>P.hp),await p.evaluate(()=>P.mx));ok('after the waiting time the zone starts to shrink; inside it nobody is hurt');
  await holdInZone(p,82);z=await p.evaluate(()=>HisarBattle.diagnostics().zone);assert.equal(z.info.phase,2);assert.ok(z.r<650&&z.r>600,'first circle radius '+z.r);

@@ -460,8 +460,10 @@ const RANKS=[[0,'Er'],[200,'Onbaşı'],[500,'Çavuş'],[1000,'Astsubay'],[2000,'
 function AMX(){return 8+2*SV.U.mag}
 function rankOf(){let r=RANKS[0];for(const q of RANKS)if(SV.xp>=q[0])r=q;return{n:r[1]}}
 function renderGar(){$('rb2').textContent='★ '+rankOf().n+' · '+SV.kr+' kr'} // garajın tamamını m_garage çizer
-let TA0=[22,14,6,12];let iv=0,zm=25,dk=1,chg=100,TA=TA0.slice(),DC=3,tP=0,supT=0,edT=45;
-function initExtra(){iv=0;dk=1;chg=100;TA=TA0.slice();DC=3+SV.U.drn;tP=0;supT=0;edT=rnd(35,55);shake=0;dmgA=0;
+let TA0=[22,14,6,12];let iv=0,zm=25,dk=1,chg=100,TA=TA0.slice(),DC=9,tP=0,supT=0,edT=45;
+// yedek Uçangöz sayısı: dokuz, garajdaki her yükseltme iki tane ekler (sürü tek seferde dört tane kaldırır)
+function DCX(){return 9+2*((SV.U&&SV.U.drn)|0)}
+function initExtra(){iv=0;dk=1;chg=100;TA=TA0.slice();DC=DCX();tP=0;supT=0;edT=rnd(35,55);shake=0;dmgA=0;
  for(const d of ED)S.remove(d.g);ED.length=0;for(const q of inc)S.remove(q.rg);inc.length=0;for(const b of abul)S.remove(b.m);abul.length=0;for(const a of AL)S.remove(a.g);AL.length=0;
  for(const b of BLD)if(b.dead){b.dead=0;b.hp=b.hp0;b.g.scale.set(1,1,1);b.g.traverse(o=>{if(o.mat0)o.material=o.mat0})}
  const n=1+SV.U.aly;for(let i=0;i<n;i++){const g=mkM60(0x4a5a38,0);g.rotation.order='YXZ';const x=P.x+(i?16:-16),z=P.z-10;g.position.set(x,hAt(x,z),z);S.add(shad(g));AL.push({g,x,z,h:0,tu:0,cd:rnd(1,3)})}}
@@ -473,7 +475,7 @@ function kamikaze(){if(game!=='play'||!DR.on||mode!=='drone'||DR.fall)return;DR.
 function extraUp(dt){
  tP+=dt;supT-=dt;if(dk&&chg<100)chg=Math.min(100,chg+(Math.hypot(P.x-SUP.x,P.z-SUP.z)<13?30:12)*dt);
  if(supT<=0&&mode==='tank'&&Math.hypot(P.x-SUP.x,P.z-SUP.z)<13){
-  if(!dk||chg<100||TA.some((v,i)=>v<TA0[i])||DC<3+SV.U.drn||P.hp<P.mx||ammo<8||P.dz.trk<100||P.dz.tur<100||P.dz.eng<100){if(!DR.on){dk=1;chg=100}TA=TA0.slice();DC=3+SV.U.drn;ammo=8;P.hp=Math.min(P.mx,P.hp+P.mx*.5);P.dz={trk:100,tur:100,eng:100};supT=20;say('✚ İKMAL TAMAMLANDI',2);radio('İkmal: mühimmat ve Uçangözler dolduruldu, zırh onarıldı.');sndBip()}}
+  if(!dk||chg<100||TA.some((v,i)=>v<TA0[i])||DC<DCX()||P.hp<P.mx||ammo<8||P.dz.trk<100||P.dz.tur<100||P.dz.eng<100){if(!DR.on){dk=1;chg=100}TA=TA0.slice();DC=DCX();ammo=8;P.hp=Math.min(P.mx,P.hp+P.mx*.5);P.dz={trk:100,tur:100,eng:100};supT=20;say('✚ İKMAL TAMAMLANDI',2);radio('İkmal: mühimmat ve Uçangözler dolduruldu, zırh onarıldı.');sndBip()}}
  // muttefikler
  const psn=Math.sin(P.h),pcs=Math.cos(P.h);
  for(let i=0;i<AL.length;i++){const a=AL[i],side=(i%2?1:-1)*16,ox=P.x-9*psn+side*pcs,oz=P.z-9*pcs-side*psn,dx=ox-a.x,dz=oz-a.z,d=Math.hypot(dx,dz);let mv=0;
@@ -954,7 +956,7 @@ try{SV.form=1;SV.load=[26,16,7,14];const j=JSON.parse(localStorage.getItem('m60v
 let lastRep=0,cmdTgt=null;
 function radioCS(a,t){radio(a.cs+': '+t)}
 const pickL=a=>a[Math.random()*a.length|0];
-function initExtra(){iv=0;dk=1;chg=100;TA0=SV.load.slice();TA=TA0.slice();DC=3+SV.U.drn;tP=0;supT=0;edT=rnd(35,55);shake=0;dmgA=0;cmdTgt=null;lastRep=0;
+function initExtra(){iv=0;dk=1;chg=100;TA0=SV.load.slice();TA=TA0.slice();DC=DCX();tP=0;supT=0;edT=rnd(35,55);shake=0;dmgA=0;cmdTgt=null;lastRep=0;
  for(const d of ED)S.remove(d.g);ED.length=0;for(const q of inc)S.remove(q.rg);inc.length=0;for(const b of abul)rm(b.m);abul.length=0;for(const a of AL)S.remove(a.g);AL.length=0;
  for(const b of BLD)if(b.dead){b.dead=0;b.hp=b.hp0;b.g.scale.set(1,1,1);b.g.traverse(o=>{if(o.mat0)o.material=o.mat0})}
  const n=SV.form;for(let i=0;i<n;i++){const g=mkM60(0x4a5a38,0);g.rotation.order='YXZ';const sl=SLOT[i],x=P.x+sl[0]*1.2,z=P.z+sl[1]*1.2;g.position.set(x,hAt(x,z),z);S.add(shad(g));AL.push({g,x,z,h:0,tu:0,cd:rnd(1,3),hp:100*(1+.25*SV.U.aly),mx:100*(1+.25*SV.U.aly),cs:CSN[i+1],cmd:'follow',fire:1,tgt:null,idx:i,dead:0,seen:new Set()})}
@@ -997,7 +999,7 @@ $('btns').insertAdjacentHTML('beforeend','<button id="bcm">TELSİZ</button>');$(
 function extraUp(dt){
  tP+=dt;supT-=dt;if(SV.U.rep&&P.hp>0&&P.hp<P.mx)P.hp=Math.min(P.mx,P.hp+.5*SV.U.rep*dt);if(dk&&chg<100)chg=Math.min(100,chg+(Math.hypot(P.x-SUP.x,P.z-SUP.z)<13?25:7)*dt);
  if(supT<=0&&mode==='tank'&&Math.hypot(P.x-SUP.x,P.z-SUP.z)<13){
-  if(!dk||chg<100||TA.some((v,i)=>v<TA0[i])||DC<3+SV.U.drn||P.hp<P.mx||ammo<AMX()||P.dz.trk<100||P.dz.tur<100||P.dz.eng<100){if(!DR.on){dk=1;chg=100}TA=TA0.slice();DC=3+SV.U.drn;ammo=AMX();P.hp=Math.min(P.mx,P.hp+P.mx*.5);P.dz={trk:100,tur:100,eng:100};for(const a of AL)if(!a.dead)a.hp=Math.min(a.mx,a.hp+a.mx*.5);supT=20;say('İKMAL TAMAMLANDI',2);radio('İkmal: mühimmat ve Uçangözler dolduruldu, zırh onarıldı.');sndBip()}}
+  if(!dk||chg<100||TA.some((v,i)=>v<TA0[i])||DC<DCX()||P.hp<P.mx||ammo<AMX()||P.dz.trk<100||P.dz.tur<100||P.dz.eng<100){if(!DR.on){dk=1;chg=100}TA=TA0.slice();DC=DCX();ammo=AMX();P.hp=Math.min(P.mx,P.hp+P.mx*.5);P.dz={trk:100,tur:100,eng:100};for(const a of AL)if(!a.dead)a.hp=Math.min(a.mx,a.hp+a.mx*.5);supT=20;say('İKMAL TAMAMLANDI',2);radio('İkmal: mühimmat ve Uçangözler dolduruldu, zırh onarıldı.');sndBip()}}
  const psn=Math.sin(P.h),pcs=Math.cos(P.h);
  for(let i=AL.length-1;i>=0;i--)if(AL[i].dead)AL.splice(i,1);
  AL.forEach((a,i)=>{const sl=SLOT[a.idx],sp=a.cmd==='disperse'?2.4:1;let ox=P.x-(sl[1]*sp)*-1*psn*-1,oz=0;
@@ -1223,7 +1225,7 @@ const UPX=[
  {k:'cap',g:'t',ic:'M3 4h18v4H3zm1 6h16v10H4zm5 2.5v2h6v-2z',n:'Mühimmat deposu',d:'Birlik sekmesindeki mermi yükleme sınırı artar.',max:3,cost:[100,200,350],e:l=>(60+8*l)+' mermi kapasite'},
  {k:'rep',g:'t',ic:'M21.5 6.5a5.5 5.5 0 0 1-7.4 5.2l-7.5 7.9a2.1 2.1 0 0 1-3-3l7.8-7.5A5.5 5.5 0 0 1 16.600 1.600l-3.100 3.100.800 2.900 2.900.800 3.100-3.100c.800.300 1.200.700 1.200 1.200z',n:'Hasar kontrol',d:'Zırh savaşta yavaşça kendini onarır.',max:3,cost:[120,250,450],e:l=>'+'+(l*.5).toFixed(1)+' can/sn onarım'},
  {k:'bat',g:'d',ic:'M2 7h17v10H2zm18 3h2v4h-2zM4 9v6h9V9z',n:'Pil kapasitesi',d:'Uçangöz daha uzun süre uçar.',max:4,cost:[80,160,300,500],e:l=>'+'+l*25+'% uçuş süresi'},
- {k:'drn',g:'d',ic:'M5.5 2.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm13 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm-13 13a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm13 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM12 7.5l4.5 4.5-4.5 4.5L7.5 12z',n:'Yedek Uçangöz',d:'Tankta daha fazla yedek Uçangöz taşınır.',max:3,cost:[150,300,500],e:l=>(3+l)+' yedek'},
+ {k:'drn',g:'d',ic:'M5.5 2.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm13 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm-13 13a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm13 0a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM12 7.5l4.5 4.5-4.5 4.5L7.5 12z',n:'Yedek Uçangöz',d:'Tankta daha fazla yedek Uçangöz taşınır; sürü için de kullanılır.',max:3,cost:[150,300,500],e:l=>(9+2*l)+' yedek'},
  {k:'dsp',g:'d',ic:'M13.5 1.5L4 14h6.5L9 22.5 20 9.500h-6.500z',n:'Motor ve pervane',d:'Daha hızlı uçuş.',max:4,cost:[100,200,350,550],e:l=>'+'+l*8+'% hız'},
  {k:'bmb',g:'d',ic:'M9 2h6l-.8 4.2c3 1.400 4.800 4.300 4.800 7.800a7 7 0 0 1-14 0c0-3.500 1.800-6.400 4.800-7.800z',n:'Savaş başlığı',d:'Daha güçlü ve daha geniş patlama.',max:4,cost:[150,300,500,800],e:l=>'+'+l*15+'% hasar · +'+l*6+'% çap'},
  {k:'mag',g:'d',ic:'M6.5 3a3.500 3.500 0 1 1 0 7 3.500 3.500 0 0 1 0-7zm11 0a3.500 3.500 0 1 1 0 7 3.500 3.500 0 0 1 0-7zM12 13a3.500 3.500 0 1 1 0 7 3.500 3.500 0 0 1 0-7z',n:'Bomba şarjörü',d:'Daha fazla bomba taşınır.',max:3,cost:[100,200,350],e:l=>(8+2*l)+' bomba'},
@@ -4434,7 +4436,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=90,LOGO=window.HISAR_LOGO;
+const VER=91,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7253,6 +7255,7 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 
 <script src="experience/crew-orders.js?v=5"></script>
 <script src="experience/field.js?v=2"></script>
-<script src="experience/battle.js?v=4"></script>
+<script src="experience/battle.js?v=5"></script>
+<script src="experience/swarm.js?v=1"></script>
 </body>
 </html>

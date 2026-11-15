@@ -1,0 +1,28 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
+const c=require('./swarm.js');
+
+test('swarm module loads after the battle module and is precached',()=>{const html=read('index.html'),w=read('sw.js');
+ assert.ok(html.indexOf('<script src="experience/battle.js?v=')<html.indexOf('<script src="experience/swarm.js?v='));
+ assert.ok(w.includes("'experience/battle.js','experience/swarm.js'"));assert.ok(read('.github/workflows/live-smoke.yml').includes("'experience/swarm.js'"));
+});
+test('drones steer toward a point without overshooting',()=>{const d={x:0,y:10,z:0};const left=c.steer(d,30,10,40,20,1);assert.ok(Math.abs(Math.hypot(d.x,d.z)-20)<1e-9);assert.ok(Math.abs(left-30)<1e-9);
+ const e={x:0,y:0,z:0};assert.equal(c.steer(e,3,0,4,100,1),0);assert.deepEqual([e.x,e.z],[3,4]);});
+test('a swarm dives on targets in pairs, nearest first, so two hits destroy one tank',()=>{const t=[{x:300,z:0,id:'b'},{x:100,z:0,id:'a'},{x:500,z:0,id:'c'}];
+ assert.deepEqual(c.assign(t,4,{x:0,z:0}).map(q=>q.id),['a','a','b','b']);assert.deepEqual(c.assign(t.slice(0,1),4,{x:0,z:0}).map(q=>q.id),['b','b','b','b']);
+ assert.deepEqual(c.assign([],4,{x:0,z:0}),[]);assert.ok(c.OWN.dmg*2>=1,'two drones are enough for one tank');});
+test('microwave pulse downs only enemy drones inside its range',()=>{const L=[{side:'foe',x:100,z:0,st:'cruise'},{side:'foe',x:250,z:0,st:'dive'},{side:'own',x:50,z:0,st:'guard'},{side:'foe',x:20,z:0,st:'fall'}];
+ const hit=c.pulse(L,0,0,200);assert.equal(hit.length,1);assert.equal(L[0].st,'fall');assert.equal(L[1].st,'dive');assert.equal(L[2].st,'guard');
+ assert.ok(c.MW.base.r>c.MW.tank.r,'headquarters device reaches farther');assert.ok(c.MW.tank.cd>c.MW.base.cd);});
+test('enemy swarm size follows difficulty; free mode sends none',()=>{assert.deepEqual(['kolay','normal','zor','serbest'].map(c.swarmSize),[3,4,5,0]);assert.equal(c.swarmSize('bilinmez'),4);});
+test('headquarters stands behind the start point on usable ground',()=>{const sp={x:300,z:400},b=c.basePoint(sp,()=>true);const h=Math.atan2(-sp.x,-sp.z);
+ assert.ok(Math.abs(Math.hypot(b.x-sp.x,b.z-sp.z)-32)<1e-9);assert.ok(Math.hypot(b.x,b.z)>Math.hypot(sp.x,sp.z),'farther from the map centre than the start');
+ const b2=c.basePoint(sp,(x,z)=>Math.hypot(x-sp.x,z-sp.z)>40);assert.ok(Math.hypot(b2.x-sp.x,b2.z-sp.z)>40);});
+test('more spare drones: nine plus two per garage upgrade, used by the swarm and refilled at supply',()=>{const html=read('index.html'),b=read('experience/battle.js');
+ assert.ok(html.includes('function DCX(){return 9+2*((SV.U&&SV.U.drn)|0)}'));assert.ok(!html.includes('DC=3+SV.U.drn'));assert.ok(html.includes("e:l=>(9+2*l)+' yedek'"));
+ assert.ok(b.includes('TA=TA0.slice();DC=root.DCX();'));assert.ok(b.includes('live:()=>B&&!B.over?B:null,eventsOn:()=>EV,note:(t,k)=>feed(t,k),resupply,'));});
+test('keys and radio: Y launches, E fires the tank device, radio has a swarm section',()=>{const s=read('experience/swarm.js');
+ assert.ok(s.includes("if(k==='e'){fireTank();e.preventDefault();}else if(k==='y'){launch();e.preventDefault();}"));
+ assert.ok(s.includes('<h4>SÜRÜ DRON</h4>'));assert.ok(s.includes("cmds.insertAdjacentElement('afterend',box)"));
+ assert.doesNotMatch(s,/\p{Extended_Pictographic}/u);assert.doesNotMatch(s,/localStorage/,'no save of its own');});

@@ -184,7 +184,7 @@ function dropCrate(){const p=dropPoint(B.zone,okSpot,rnd,P,140,WS);if(!p)return;
  safe(()=>root.radio('Komuta: İkmal sandığı atıldı, haritada turuncu işaretli.'),null);}
 function crateGone(){B.crate=null;if(crateG)crateG.visible=false;}
 // Sandığı alan: mühimmat ve Uçangöz dolar, zırh yarı yarıya onarılır (ikmal noktasıyla aynı).
-function resupply(){safe(()=>{TA=TA0.slice();DC=3+SV.U.drn;ammo=AMX();if(!DR.on){dk=1;chg=100;}P.hp=Math.min(P.mx,P.hp+P.mx*.5);P.dz={trk:100,tur:100,eng:100};
+function resupply(){safe(()=>{TA=TA0.slice();DC=root.DCX();ammo=AMX();if(!DR.on){dk=1;chg=100;}P.hp=Math.min(P.mx,P.hp+P.mx*.5);P.dz={trk:100,tur:100,eng:100};
   for(const a of AL)if(!a.dead)a.hp=Math.min(a.mx,a.hp+a.mx*.5);},null);}
 function stepCrate(dt){const c=B.crate;if(!c)return;c.t+=dt;
  if(c.fall>0){c.fall=Math.max(0,c.fall-dt*9);if(crateG){crateG.position.y=c.y+c.fall;if(c.fall<=0)crateG.userData.chute.visible=false;}return;}
@@ -409,7 +409,8 @@ body:not(.inplay) #bt-feed{display:none}
 function start(){safe(()=>root.setG(MODE),null);return safe(()=>{root.reset(typeof lvSel==='string'?lvSel:'normal');return !!B;},false);}
 // Savaş olayları (sandık, topçu): false kapatır, true açar; 'sandik' hemen bir sandık indirir, 'topcu' oyuncunun yakınında bir topçu bölgesi açar.
 function events(v){if(v==='sandik'){if(B&&!B.over)dropCrate();return !!(B&&B.crate);}if(v==='topcu'){if(B&&!B.over&&!B.red){B.redAt=0;B.force=true;}return !!B;}EV=v!==false;return EV;}
-root.HisarBattle=Object.freeze({version:VERSION,core,start,connect,events,diagnostics:()=>({version:VERSION,events:EV,hooks:{...hooks},active:!!B&&!B.over,result:B&&B.result||null,zone:B?{...B.zone,info:zoneInfo(B.zone)}:null,crate:B&&B.crate?{x:B.crate.x,z:B.crate.z,fall:B.crate.fall,rival:B.crate.rival?B.crate.rival.id:null}:null,taken:B?B.taken:0,
+// live: sürü modülü savaş durumunu okur; note: bildirim şeridine yazar; resupply: ikmal (sandık ve karargâh).
+root.HisarBattle=Object.freeze({version:VERSION,core,start,connect,events,live:()=>B&&!B.over?B:null,eventsOn:()=>EV,note:(t,k)=>feed(t,k),resupply,diagnostics:()=>({version:VERSION,events:EV,hooks:{...hooks},active:!!B&&!B.over,result:B&&B.result||null,zone:B?{...B.zone,info:zoneInfo(B.zone)}:null,crate:B&&B.crate?{x:B.crate.x,z:B.crate.z,fall:B.crate.fall,rival:B.crate.rival?B.crate.rival.id:null}:null,taken:B?B.taken:0,
  red:B&&B.red?{x:B.red.x,z:B.red.z,r:B.red.r,state:B.red.state,t:B.red.t}:null,redIn:B?B.redAt:0,shells:B?B.shells.map(q=>({x:q.x,z:q.z,t:q.t})):[],teams:B?teamsLeft(B.squads)+1:0,enemies:enemiesLeft(),kills:B?B.kills:0,
  squads:B?B.squads.map(s=>({id:s.id,name:s.name,kind:s.kind,x:Math.round(s.x),z:Math.round(s.z),active:s.active,dead:s.dead,alert:s.alert>0,alive:aliveTanks(s),field:s.tanks.filter(t=>t.e&&inField(t.e)).length,duel:s.tanks.filter(t=>t.e&&t.e.foe).length})):[],plan:B?B.plan:null,tune:B?B.tune:null,start:B?B.start:null,time:B?B.time:0,stats:{...stats}})});
 connect();installUI();doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});

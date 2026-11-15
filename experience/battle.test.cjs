@@ -143,7 +143,7 @@ test('battle wiring: crate drops once per phase, the nearest rival goes for it, 
  assert.ok(src.includes("if(EV&&z.state==='wait'&&z.i<PHASES.length-1&&B.dropPhase<z.i&&z.t>12){B.dropPhase=z.i;dropCrate();}"));
  assert.ok(src.includes("function events(v){if(v==='sandik'){if(B&&!B.over)dropCrate();return !!(B&&B.crate);}if(v==='topcu'){if(B&&!B.over&&!B.red){B.redAt=0;B.force=true;}return !!B;}EV=v!==false;return EV;}"),'events can be switched off and forced for checks');
  assert.ok(src.includes("if(B.crate&&B.crate.rival===s){s.wx=B.crate.x;s.wz=B.crate.z;}"));
- assert.ok(src.includes("TA=TA0.slice();DC=3+SV.U.drn;ammo=AMX();"),'crate refills like the supply point');
+ assert.ok(src.includes("TA=TA0.slice();DC=root.DCX();ammo=AMX();"),'crate refills like the supply point');
  assert.ok(src.includes("root.hitP(1.5,{x:q.x,y:hAt(q.x,q.z)+1,z:q.z})"));assert.ok(src.includes("e.hp-=e.mx*.4;e.sn=e.hp;if(e.hp<=0)quietKill(e);"),'enemy tanks in the blast are hit too, without credit');
  assert.ok(src.includes("if(inRed(e)){e.park=0;e.conv=1;e.ch=Math.atan2(e.x-B.red.x,e.z-B.red.z);continue;}"),'tanks drive out of the artillery zone');
  assert.ok(src.includes("buildWall();buildCrate();prebuild();"),'crate mesh is built before the battle, not during it');

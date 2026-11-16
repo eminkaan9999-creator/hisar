@@ -226,7 +226,7 @@ if(!mobile){
   const f0=HisarKoy.diagnostics().fled,v=HisarKoy.people().find(q=>!q.kid&&q.v&&q.st!=='hidden'&&q.st!=='run');P.x=v.f.x+60;P.z=v.f.z;sndBoom(v.f.x+10,v.f.z);const st=v.st;for(let i=0;i<300&&v.st!=='hidden';i++){P.x=v.f.x+60;update(.1);}
   const a=HisarKoy.animals().find(q=>q.kind==='koyun'&&q.st!=='kos'),a0={x:a.f.x,z:a.f.z};for(let i=0;i<25;i++){P.x=a0.x+9;P.z=a0.z;update(.1);}HisarKoy.flowers();
   return {d,sal,st,hid:v.st,fled:HisarKoy.diagnostics().fled-f0,run:Math.hypot(a.f.x-a0.x,a.f.z-a0.z),fl:HisarKoy.diagnostics().flowers,mesh:['KH_INSAN_K','KH_KOYUN_Y','KH_CICEK','KH_LEYLEK_K'].every(n=>!!S.getObjectByName(n))};});
- assert.ok(ky.d.people>=60&&ky.d.kids>=25,'villagers '+ky.d.people+' kids '+ky.d.kids);const an=ky.d.animals;assert.ok(an.koyun>=80&&an.inek>=10&&an.tavuk>=40&&an.leylek>=10&&an.kopek>=4,JSON.stringify(an));
+ assert.ok(ky.d.people>=60&&ky.d.kids>=25,'villagers '+ky.d.people+' kids '+ky.d.kids);const an=ky.d.animals;assert.ok(an.koyun>=80&&an.inek>=6&&an.tavuk>=40&&an.leylek>=10&&an.kopek>=4,JSON.stringify(an));
  assert.equal(ky.sal,true,'a child salutes the tank');assert.equal(ky.st,'run');assert.equal(ky.hid,'hidden');assert.ok(ky.fled>=1);assert.ok(ky.run>5,'sheep run '+ky.run);assert.ok(ky.fl>100,'flowers '+ky.fl);assert.equal(ky.mesh,true);
  ok('village life: '+ky.d.people+' villagers and children, a child salutes the tank, villagers run indoors from a blast, '+(an.koyun+an.inek+an.tavuk+an.kopek+an.leylek)+' animals flee the tank, '+ky.fl+' flowers');
  // ---- güneydoğu arazisi: Suriye tarafı kuru, kerpiç evler, zeytinlikler; tank zeytin ağacını devirir

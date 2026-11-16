@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.3';
+const VERSION='1.0.4';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -66,14 +66,14 @@ const SKIN=[0xc99a78,0xb98a68,0xd8aa88,0xa87a58];
 // Parça: g kutu/küre, u üst parça, p eklem (üst parçaya göre), j eklem adı, o parça merkezi (ekleme göre), s boyut, c renk anahtarı
 const RIG=[
  {g:'b',u:-1,p:[0,.92,0],j:'G',o:[0,0,0],s:[.34,.16,.22],c:'alt'},
- {g:'b',u:0,p:[.1,-.03,0],j:'LL',o:[0,-.43,0],s:[.15,.86,.17],c:'alt'},{g:'b',u:0,p:[-.1,-.03,0],j:'LR',o:[0,-.43,0],s:[.15,.86,.17],c:'alt'},
+ {g:'c',u:0,p:[.1,-.03,0],j:'LL',o:[0,-.43,0],s:[.16,.86,.17],c:'alt'},{g:'c',u:0,p:[-.1,-.03,0],j:'LR',o:[0,-.43,0],s:[.16,.86,.17],c:'alt'},
  {g:'b',u:1,p:[0,-.86,0],o:[0,-.03,.05],s:[.15,.1,.28],c:'bot'},{g:'b',u:2,p:[0,-.86,0],o:[0,-.03,.05],s:[.15,.1,.28],c:'bot'},
  {g:'b',u:0,p:[0,.06,0],j:'T',o:[0,.3,0],s:[.42,.6,.25],c:'ust'},
  {g:'b',u:5,p:[0,0,0],o:[0,.33,.01],s:[.46,.46,.3],c:'yel',only:'asker'},
  {g:'s',u:5,p:[0,.62,0],j:'H',o:[0,.12,.01],s:[.21,.25,.23],c:'ten'},
  {g:'s',u:7,p:[0,0,0],o:[0,.19,-.01],s:[.28,.19,.3],c:'kask',only:'asker'},
- {g:'b',u:5,p:[.27,.56,0],j:'UL',o:[0,-.15,0],s:[.11,.32,.12],c:'ust'},{g:'b',u:9,p:[0,-.3,0],j:'FL',o:[0,-.14,0],s:[.1,.3,.11],c:'ust'},{g:'s',u:10,p:[0,-.3,0],o:[0,-.04,0],s:[.08,.09,.08],c:'ten'},
- {g:'b',u:5,p:[-.27,.56,0],j:'UR',o:[0,-.15,0],s:[.11,.32,.12],c:'ust'},{g:'b',u:12,p:[0,-.3,0],j:'FR',o:[0,-.14,0],s:[.1,.3,.11],c:'ust'},{g:'s',u:13,p:[0,-.3,0],o:[0,-.04,0],s:[.08,.09,.08],c:'ten'},
+ {g:'c',u:5,p:[.27,.56,0],j:'UL',o:[0,-.15,0],s:[.12,.32,.12],c:'ust'},{g:'c',u:9,p:[0,-.3,0],j:'FL',o:[0,-.14,0],s:[.1,.3,.1],c:'ust'},{g:'s',u:10,p:[0,-.3,0],o:[0,-.04,0],s:[.08,.09,.08],c:'ten'},
+ {g:'c',u:5,p:[-.27,.56,0],j:'UR',o:[0,-.15,0],s:[.12,.32,.12],c:'ust'},{g:'c',u:12,p:[0,-.3,0],j:'FR',o:[0,-.14,0],s:[.1,.3,.1],c:'ust'},{g:'s',u:13,p:[0,-.3,0],o:[0,-.04,0],s:[.08,.09,.08],c:'ten'},
  {g:'b',u:13,p:[0,-.27,0],o:[.24,0,.02],s:[.86,.07,.05],c:'tufek',only:'asker',rz:-.35},
  // siviller: başörtüsü ve uzun etek (kadın), kasket (yaşlı adam), okul çantası (çocuk), saç (kız çocuk)
  {g:'s',u:7,p:[0,0,0],o:[0,.12,-.025],s:[.28,.31,.3],c:'bas',only:'kadin'},{g:'b',u:0,p:[0,0,0],o:[0,-.4,0],s:[.46,.84,.34],c:'etek',only:'kadin|kiz'},
@@ -87,19 +87,19 @@ function camoMap(){if(camoTex)return camoTex;const c=doc.createElement('canvas')
  camoTex=new T.CanvasTexture(c);camoTex.magFilter=T.NearestFilter;camoTex.wrapS=camoTex.wrapT=T.RepeatWrapping;return camoTex;}
 function Crowd(cap,rig,poseFn,tag){rig=rig||RIG;poseFn=poseFn||pose;tag=tag||'SN_FIG';const box=new T.BoxGeometry(1,1,1),sph=new T.SphereGeometry(.5,10,8),mat=new T.MeshLambertMaterial({color:0xffffff});
  const mk=(geo,n,name)=>{const m=new T.InstancedMesh(geo,mat,n);m.instanceColor=new T.InstancedBufferAttribute(new Float32Array(n*3).fill(1),3);m.count=0;m.frustumCulled=false;m.name=name;S.add(m);return m;};
- const nb=rig.filter(q=>q.g==='b').length,ns=rig.length-nb,B=mk(box,cap*nb,tag+'_K'),Sp=mk(sph,cap*ns,tag+'_Y'),cm=new T.MeshLambertMaterial({color:0xffffff,map:camoMap()}),BC=mk(box,cap*4,tag+'_KK'),SC=mk(sph,cap,tag+'_KY');BC.material=cm;SC.material=cm;const caps=new Map([[B,cap*nb],[Sp,cap*ns],[BC,cap*4],[SC,cap]]);const figs=[],m4=new T.Matrix4(),tmp=new T.Matrix4(),eu=new T.Euler(),col=new T.Color(),F=[],zero=new T.Matrix4().makeScale(0,0,0),t2=new T.Matrix4(),V=new T.Vector3();
+ const nb=rig.filter(q=>q.g==='b').length,nc=rig.filter(q=>q.g==='c').length,ns=rig.length-nb-nc,cyl=new T.CylinderGeometry(.5,.5,1,10),Cy=mk(cyl,Math.max(1,cap*nc),tag+'_S'),B=mk(box,cap*nb,tag+'_K'),Sp=mk(sph,cap*ns,tag+'_Y'),cm=new T.MeshLambertMaterial({color:0xffffff,map:camoMap()}),BC=mk(box,cap*4,tag+'_KK'),SC=mk(sph,cap,tag+'_KY');const CC=mk(cyl,cap*6,tag+'_KS');BC.material=cm;SC.material=cm;CC.material=cm;const caps=new Map([[B,cap*nb],[Sp,cap*ns],[BC,cap*4],[SC,cap],[Cy,cap*nc],[CC,cap*6]]);const figs=[],m4=new T.Matrix4(),tmp=new T.Matrix4(),eu=new T.Euler(),col=new T.Color(),F=[],zero=new T.Matrix4().makeScale(0,0,0),t2=new T.Matrix4(),V=new T.Vector3();
  for(let i=0;i<rig.length;i++)F.push(new T.Matrix4());
  function add(kind,colors,o){const f={kind,x:o.x,y:o.y,z:o.z,yaw:o.yaw||0,sc:o.sc||1,act:o.act||'dur',t:Math.random()*6,look:0,idx:[],vis:true,live:true};
-  for(let i=0;i<rig.length;i++){const q=rig[i];if(q.only&&!q.only.split('|').includes(kind)){f.idx.push(null);continue;}const cam=kind==='asker'&&colors.camo!==false&&CAMO_PARTS.has(q.c);let m=q.g==='b'?(cam?BC:B):(cam?SC:Sp);if(m.count>=caps.get(m)){m=q.g==='b'?B:Sp;if(m.count>=caps.get(m)){f.idx.push(null);continue;}}const k=m.count++;
-   col.setHex(m===BC||m===SC?0xffffff:q.c==='ten'?SKIN[figs.length%SKIN.length]:(colors[q.c]!=null?colors[q.c]:0x808080));m.setColorAt(k,col);f.idx.push([m,k]);}
-  B.instanceColor.needsUpdate=Sp.instanceColor.needsUpdate=BC.instanceColor.needsUpdate=SC.instanceColor.needsUpdate=true;figs.push(f);return f;}
+  for(let i=0;i<rig.length;i++){const q=rig[i];if(q.only&&!q.only.split('|').includes(kind)){f.idx.push(null);continue;}const cam=kind==='asker'&&colors.camo!==false&&CAMO_PARTS.has(q.c);let m=q.g==='b'?(cam?BC:B):q.g==='c'?(cam?CC:Cy):(cam?SC:Sp);if(m.count>=caps.get(m)){m=q.g==='b'?B:q.g==='c'?Cy:Sp;if(m.count>=caps.get(m)){f.idx.push(null);continue;}}const k=m.count++;
+   col.setHex(m===BC||m===SC||m===CC?0xffffff:q.c==='ten'?SKIN[figs.length%SKIN.length]:(colors[q.c]!=null?colors[q.c]:0x808080));m.setColorAt(k,col);f.idx.push([m,k]);}
+  B.instanceColor.needsUpdate=Sp.instanceColor.needsUpdate=BC.instanceColor.needsUpdate=SC.instanceColor.needsUpdate=Cy.instanceColor.needsUpdate=CC.instanceColor.needsUpdate=true;figs.push(f);return f;}
  function draw(f){const P=poseFn(f.act,f.t,{look:f.look,f});const base=m4.makeRotationY(f.yaw).setPosition(f.x,f.y+(P.GY||0),f.z);if(f.sc!==1)base.scale(V.set(f.sc,f.sc,f.sc));
   for(let i=0;i<rig.length;i++){const q=rig[i],a=q.j&&P[q.j];const parent=q.u<0?base:F[q.u];F[i].copy(parent).multiply(t2.makeTranslation(q.p[0],q.p[1],q.p[2]));
    if(a){eu.set(a[0],a[1],a[2]);F[i].multiply(t2.makeRotationFromEuler(eu));}
    const id=f.idx[i];if(!id)continue;const M=tmp.copy(F[i]).multiply(t2.makeTranslation(q.o[0],q.o[1],q.o[2]));if(q.rz)M.multiply(t2.makeRotationZ(q.rz));M.scale(V.set(q.s[0],q.s[1],q.s[2]));id[0].setMatrixAt(id[1],M);}}
  function hide(f){for(const id of f.idx)if(id)id[0].setMatrixAt(id[1],zero);}
  function frame(cx,cz,range){let n=0;for(const f of figs){const near=f.live&&Math.hypot(f.x-cx,f.z-cz)<range;if(near){draw(f);n++;f.vis=true;}else if(f.vis){hide(f);f.vis=false;}}
-  B.instanceMatrix.needsUpdate=Sp.instanceMatrix.needsUpdate=BC.instanceMatrix.needsUpdate=SC.instanceMatrix.needsUpdate=true;return n;}
+  B.instanceMatrix.needsUpdate=Sp.instanceMatrix.needsUpdate=BC.instanceMatrix.needsUpdate=SC.instanceMatrix.needsUpdate=Cy.instanceMatrix.needsUpdate=CC.instanceMatrix.needsUpdate=true;return n;}
  return {add,frame,figs,draw,hide};}
 
 // ---------- sınır yapıları ----------

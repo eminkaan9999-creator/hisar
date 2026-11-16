@@ -144,13 +144,14 @@ if(!mobile){
  assert.ok(inPos.d<3.5,'drove in: '+inPos.d);assert.ok(inPos.sink>.2);assert.ok(inPos.near>=4);ok('driving into a roadside position from the open rear settles the tank hull-down behind the earth wall');
 
  // ---- gerçeklik: dağlar, ot, toz, ayar atışı, düşmanın mevziye girmesi
- const real=await p.evaluate(()=>{HisarRealism.grass();const d0=HisarRealism.diagnostics();const dag=S.children.filter(o=>o.name==='DAG').length,ot=S.getObjectByName('GR_OT');
+ const real=await p.evaluate(()=>{const quality=qlv;let lowGrass,highGrass;try{qlv='dusuk';HisarRealism.grass();lowGrass=HisarRealism.diagnostics().grass;qlv='yuksek';HisarRealism.grass();highGrass=HisarRealism.diagnostics().grass;}finally{qlv=quality;HisarRealism.grass();}const dag=S.children.filter(o=>o.name==='DAG').length;
   const sd=HisarRealism.diagnostics().dust;let sx=0,sz=-300;for(let t=0;t<400;t++){const x=-600+(t%20)*60,z=-650+Math.floor(t/20)*60;let okp=true;for(let k=0;k<45;k+=5)if(hAt(x,z+k)<.2||roadNear(x,z+k,3))okp=false;if(okp){sx=x;sz=z;break;}}
   P.x=sx;P.z=sz;for(let i=0;i<30;i++){P.z+=1.4;update(.1);camUpdate();}const dust=HisarRealism.diagnostics().dust-sd;
   const e=E.find(q=>q.type==='tank');let sp=null;if(e){e._br=null;sp=[];for(let i=0;i<3;i++){eshot(e,P.x,2,P.z,80,'p');sp.push(HisarRealism.diagnostics().spread);}}
-  return {dag,ot:ot?ot.count:0,dust,sp,oldGrass:gm.visible};});
- assert.equal(real.dag,3);assert.ok(real.ot>800,'grass '+real.ot);assert.equal(real.oldGrass,false);assert.ok(real.dust>=3,'dust '+real.dust);
- if(real.sp)assert.deepEqual(real.sp,[2.2,1.5,1.15]);ok('three mountain ranges on the horizon, '+real.ot+' grass tufts around the camera, dust behind a moving tank, enemy gunners bracket');
+  return {dag,lowGrass,highGrass,dust,sp,oldGrass:gm.visible};});
+ // Compare the same camera position before the dust scenario moves it. Low quality deliberately thins grass.
+ assert.equal(real.dag,3);assert.ok(real.highGrass>800,'high-quality grass '+real.highGrass);assert.ok(real.lowGrass>0&&real.lowGrass<real.highGrass,'low/high grass '+real.lowGrass+'/'+real.highGrass);assert.equal(real.oldGrass,false);assert.ok(real.dust>=3,'dust '+real.dust);
+ if(real.sp)assert.deepEqual(real.sp,[2.2,1.5,1.15]);ok('three mountain ranges, grass density responds to quality ('+real.lowGrass+'/'+real.highGrass+'), dust behind a moving tank, enemy gunners bracket');
  const hold=await p.evaluate(()=>{const s=HisarBattle.diagnostics().squads.find(q=>!q.dead),a=Math.atan2(-s.x,-s.z);P.x=s.x+Math.sin(a)*300;P.z=s.z+Math.cos(a)*300;for(let i=0;i<20;i++)update(.1);
   const e=E.find(q=>q.bt===s.id);if(!e)return null;const cands=HisarField.positions().filter(q=>Math.hypot(q.x,q.z)>200&&Math.abs(q.z-riv(q.x)+26)>230).sort((u,v)=>Math.hypot(u.x-e.x,u.z-e.z)-Math.hypot(v.x-e.x,v.z-e.z)).slice(0,3);
   /* rastgele seçilen mevzinin yolu kapalı olabilir (bahçe, yıkıntı): en yakın üç mevzi sırayla denenir */let p=null,k=0,at=null,who=null,put=null;for(const c of cands){p=c;

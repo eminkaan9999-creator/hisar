@@ -7,7 +7,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.0.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 // ---------- çekirdek ----------
@@ -17,11 +17,11 @@ const GLASS=0x1d2730,TIRE=0x181818,RIM=0x8a8d90,CHR=0x7a7d80;
 function wheel(out,x,y,z,r,w){out.push({t:'c',s:[r,r,w],p:[x,y,z],r:[0,0,Math.PI/2],c:TIRE});out.push({t:'c',s:[r*.55,r*.55,w+.02],p:[x,y,z],r:[0,0,Math.PI/2],c:RIM});}
 function veh(kind,col){const o=[],b=(s,p,c,r)=>o.push({t:'b',s,p,r:r||[0,0,0],c});
  if(kind==='sedan'){b([1.7,.62,4.3],[0,.62,0],col);b([1.56,.5,2.1],[0,1.18,-.2],col);b([1.6,.36,2.14],[0,1.16,-.2],GLASS);
-  b([1.52,.05,.72],[0,1.17,1.08],GLASS,[.78,0,0]);b([1.52,.05,.66],[0,1.17,-1.47],GLASS,[-.8,0,0]);b([1.72,.18,.14],[0,.42,2.18],CHR);b([1.72,.18,.14],[0,.42,-2.18],CHR);
+  b([1.52,.05,.72],[0,1.17,1.08],GLASS,[.78,0,0]);b([1.52,.05,.66],[0,1.17,-1.47],GLASS,[-.8,0,0]);b([1.66,.1,1.2],[0,.95,1.55],col,[.06,0,0]);b([1.66,.1,.85],[0,.95,-1.75],col,[-.05,0,0]);b([1.2,.2,.04],[0,.66,2.16],0x1a1a1a);b([.5,.12,.03],[0,.42,2.26],0xeeeeee);b([.5,.12,.03],[0,.42,-2.26],0xeeeeee);for(const s of[-1,1]){b([.02,.48,.02],[s*.86,.66,.05],0x2a2a2a);b([.16,.1,.08],[s*.92,1.0,.8],col);for(const z of[1.35,-1.35])b([.06,.16,.86],[s*.86,.72,z],0x2e2e2e,[0,0,0]);}b([1.72,.18,.14],[0,.42,2.18],CHR);b([1.72,.18,.14],[0,.42,-2.18],CHR);
   for(const s of[-1,1]){b([.3,.12,.04],[s*.6,.72,2.16],0xf2f0e0);b([.3,.12,.04],[s*.6,.72,-2.16],0xb3201c);for(const z of[1.35,-1.35])wheel(o,s*.78,.31,z,.31,.2);}}
  else if(kind==='pikap'){b([1.8,.72,5.2],[0,.82,0],col);b([1.74,.72,2.3],[0,1.55,.95],col);b([1.78,.42,2.34],[0,1.6,.95],GLASS);
   b([1.8,.08,2.6],[0,1.2,-1.25],0x3a3a36);for(const s of[-1,1])b([.08,.45,2.6],[s*.86,1.42,-1.25],col);b([1.8,.45,.08],[0,1.42,-2.55],col);
-  b([1.84,.2,.16],[0,.55,2.62],CHR);for(const s of[-1,1]){b([.32,.14,.04],[s*.62,.98,2.6],0xf2f0e0);for(const z of[1.6,-1.5])wheel(o,s*.82,.38,z,.38,.26);}}
+  b([1.84,.2,.16],[0,.55,2.62],CHR);b([1.3,.35,.04],[0,.95,2.61],0x1a1a1a);b([.5,.12,.03],[0,.55,2.71],0xeeeeee);for(const s of[-1,1]){b([.18,.12,.08],[s*.95,1.65,1.95],col);b([.02,.6,.02],[s*.9,.95,.8],0x2a2a2a);}for(const s of[-1,1]){b([.32,.14,.04],[s*.62,.98,2.6],0xf2f0e0);for(const z of[1.6,-1.5])wheel(o,s*.82,.38,z,.38,.26);}}
  else if(kind==='traktor'){b([.82,.72,1.7],[0,1.12,.75],col);b([.9,.12,1.8],[0,1.5,.75],col);b([.86,.06,.06],[0,.92,1.62],0x2a2a2a);b([1.05,.62,1.05],[0,1.0,-.55],0x3b3b38);
   b([.5,.55,.45],[0,1.45,-.7],0x2a2a2a);for(const[x,z]of[[-.62,-1.05],[.62,-1.05],[-.62,.05],[.62,.05]])b([.07,1.25,.07],[x,2.12,z],0x2a2a2a);b([1.4,.07,1.25],[0,2.76,-.5],col);
   o.push({t:'c',s:[.05,.06,1.1],p:[.32,2.0,1.35],r:[0,0,0],c:0x2a2a2a});
@@ -70,7 +70,7 @@ function kit(kind,u){if(kind==='sedan')return [{parts:veh('sedan',pick(PAL.sedan
 function buildParked(T){const items=[];
  for(const b of safe(()=>BLD,[])){if(b.dead||!b.w||!b.kind)continue;const tr=b.z<RV(b.x)-40,sy=b.z>RV(b.x)+40;if(!tr&&!sy)continue;if(!['house','beton','shop','barn','kerpic'].includes(b.kind))continue;
   const u=hash(b.x,b.z,1);if(tr?u>.5:u>.22)continue;const v=hash(b.x,b.z,2),kind=sy?'eski':b.kind==='barn'?'traktor':v<.45?'sedan':v<.75?'pikap':'traktor';
-  const side=hash(b.x,b.z,3)<.5?1:-1,c=Math.cos(b.rot||0),s=Math.sin(b.rot||0),lx=side*(b.w/2+2.3),lz=b.d*.1,x=b.x+lx*c+lz*s,z=b.z-lx*s+lz*c,h=(b.rot||0)+(hash(b.x,b.z,4)<.5?0:Math.PI);
+  const side=hash(b.x,b.z,3)<.5?1:-1,c=Math.cos(b.rot||0),s=Math.sin(b.rot||0),lx=side*(b.w/2+4.4)/* avlu duvarının dışında */,lz=b.d*.1,x=b.x+lx*c+lz*s,z=b.z-lx*s+lz*c,h=(b.rot||0)+(hash(b.x,b.z,4)<.5?0:Math.PI);
   if(!freeSpot(x,z,3.2,b))continue;const y=safe(()=>hAt(x,z),0);const k=kit(kind,hash(b.x,b.z,5));
   const car={x,z,h,r:kind==='traktor'?3:2.6,kind,parked:true,items:[],y};for(const p of k){const ox=x+Math.sin(h)*p.dz,oz=z+Math.cos(h)*p.dz;const m=new T.Matrix4().compose(new T.Vector3(ox,safe(()=>hAt(ox,oz),y),oz),new T.Quaternion().setFromEuler(new T.Euler(0,h,0)),new T.Vector3(1,1,1));items.push({parts:p.parts,m,car});car.items.push(items.length-1);}
   CARS.push(car);}

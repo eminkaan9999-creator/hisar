@@ -79,7 +79,7 @@ test('phones render lighter: fast shadows, small shadow map, other tanks and tre
  const t=code.slice(code.indexOf('// ===== m_trees ====='),code.indexOf('// ===== m_nature ====='));assert.ok(t.includes("if(force||DIRTY||Math.abs(cx-lcx)>20||Math.abs(cz-lcz)>20||"),'trees are repacked only when needed');
 });
 test('tank drives heavy (speed and turn ramp up), allies keep up',()=>{
- assert.ok(code.includes('const DRV=Object.freeze({vf:12,vr:4.5,off:.8,acc:2.6,brk:6,turn:.95,tacc:2.4});'));assert.ok(code.includes('drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));
+ assert.ok(code.includes('const DRV=Object.freeze({vf:12,vr:4.5,off:.8,acc:3.4,brk:9,turn:1.05,tacc:7});'));assert.ok(code.includes('drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));
  assert.ok(code.includes('gg.index.updateRange.offset=0;gg.index.updateRange.count=o;gg.index.needsUpdate=true;'),'only the used part of the ground index is uploaded');
 });
 test('save can be backed up as a code and restored without losing progress',()=>{

@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -61,7 +61,7 @@ const RV=x=>safe(()=>riv(x),120),WZ=x=>RV(x)-26,TR=(x,z)=>z<WZ(x)-4;
 const HOUSE={house:1,beton:1,apt:1,shop:1};
 const pick=a=>a[Math.floor(Math.random()*a.length)%a.length];
 function door(h){const r=h.rot||0;return {x:h.x+Math.sin(r)*((h.d||6)/2+1.6),z:h.z+Math.cos(r)*((h.d||6)/2+1.6)};}
-function clearAt(x,z,m){return safe(()=>BLD.every(q=>q.dead||Math.hypot(q.x-x,q.z-z)>q.r+m),true)&&!safe(()=>roadNear(x,z,2),false)&&safe(()=>hAt(x,z)>-.6,true)&&Math.abs(z-RV(x))>40;}
+function clearAt(x,z,m){return safe(()=>BLD.every(q=>q.dead||Math.hypot(q.x-x,q.z-z)>q.r+m),true)&&safe(()=>COV.every(c=>Math.hypot(c.x-x,c.z-z)>c.r+m),true)&&safe(()=>root.HisarField.positions().every(q=>Math.hypot(q.x-x,q.z-z)>m+12),true)&&!safe(()=>roadNear(x,z,2),false)&&safe(()=>hAt(x,z)>-.6,true)&&Math.abs(z-RV(x))>40;}
 const CLOTH={adam:{alt:[0x3b3a38,0x4a4237,0x2f3a4a],ust:[0x7a6a55,0x5d6a7a,0x8a7a62,0x4f5a46],bot:[0x2a2620],kasket:[0x3a3530,0x4a4038]},
  genc:{alt:[0x2f3f5f,0x3a3a3a],ust:[0xb8b2a6,0x9a3a30,0x2f6a8a,0x5a7a3a],bot:[0xdddddd,0x2a2a2a]},
  kadin:{alt:[0x3a3a40],ust:[0x7a4a5a,0x4a6a7a,0x8a6a3a,0x5a4a6a],etek:[0x6a3a4a,0x3a4a6a,0x5a5a3a,0x7a5a4a],bas:[0xf2f0ea,0xd8c27a,0x9a5a6a,0x6a8aaa],bot:[0x2a2620]},
@@ -104,7 +104,27 @@ function flowerStep(force){if(!FL)return;const c=safe(()=>CAM.position,null);if(
  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const f=flower(i,j);if(!f)continue;if(low&&(i+j)%2)continue;const dx=f.x-c.x,dz=f.z-c.z;if(dx*dx+dz*dz>R*R||n[f.k]>=1400)continue;
   const h=safe(()=>hAt(f.x,f.z),0);if(h<-.5||Math.abs(f.z-RV(f.x))<22||safe(()=>roadNear(f.x,f.z,1),false))continue;o.position.set(f.x,h-.03,f.z);o.rotation.set(0,f.r,0);o.scale.set(f.s,f.s,f.s);o.updateMatrix();FL[f.k].setMatrixAt(n[f.k]++,o.matrix);}
  FL.forEach((m,k)=>{m.count=n[k];m.instanceMatrix.needsUpdate=true;});stat.flowers=n.reduce((a,b2)=>a+b2,0);}
-function build(){if(built||!root.THREE||typeof S==='undefined'||typeof BLD==='undefined'||!root.HisarSinir)return;T=root.THREE;if(!buildFolk())return;built=true;buildAnimals();buildFlowers();}
+// ---------- köy meydanı: cami ve minare, çeşme; Suriye tarafında savaşın izleri ----------
+let CAMI=[],RUIN=[],WRECK=null;
+function spot(v,dmin,dmax,m){for(let k=0;k<40;k++){const a=k*.9+dmin*.1,d=dmin+(k%8)*(dmax-dmin)/8,x=v.x+Math.cos(a)*d,z=v.z+Math.sin(a)*d;if(clearAt(x,z,m))return {x,z,rot:Math.atan2(v.x-x,v.z-z)};}return null;}
+function buildSquare(){const vs=villages().filter(v=>v.hs.length>=7).slice(0,7),stone=new T.MeshLambertMaterial({color:0xe9e4d6}),lead=new T.MeshLambertMaterial({color:0x8d9399}),dark=new T.MeshLambertMaterial({color:0x3a3d40});
+ for(const v of vs){const s=spot(v,20,60,9);if(!s)continue;const b=safe(()=>BX.make(s.x,s.z,s.rot,6.5,7,'cami',(b,part,win)=>{part('t',0,-.5,0,10.6,2,10.6,0,0x8a857a);part('w',0,3,0,10,6,10,0,0xece6d6);part('t',0,6.1,0,10.3,.25,10.3,0,0xd8d2c2);
+  for(const x of[-3,0,3]){win(x,3.4,5.03,1.1,2.2,0);win(x,3.4,-5.03,1.1,2.2,0);}part('d',0,1.6,5.03,1.8,3,.12,0,0x5a3a22);return 6.3;}),null);if(!b)continue;
+  const g=new T.Group(),y=safe(()=>hAt(s.x,s.z),0);g.position.set(s.x,y,s.z);g.rotation.y=s.rot;
+  const dome=new T.Mesh(new T.SphereGeometry(4.3,20,10,0,Math.PI*2,0,Math.PI/2),lead);dome.position.y=6.2;g.add(dome);const fin=new T.Mesh(new T.CylinderGeometry(.06,.06,1.4,6),dark);fin.position.y=11.2;g.add(fin);
+  const mn=new T.Mesh(new T.CylinderGeometry(.75,.9,22,12),stone);mn.position.set(5.6,11,-5.6);g.add(mn);const ser=new T.Mesh(new T.CylinderGeometry(1.25,1.1,.5,14),stone);ser.position.set(5.6,17.5,-5.6);g.add(ser);
+  const cap=new T.Mesh(new T.ConeGeometry(.8,3.6,12),lead);cap.position.set(5.6,23.8,-5.6);g.add(cap);g.name='KH_CAMI';S.add(g);CAMI.push({b,g});
+  const c=spot(v,6,22,4);if(c)safe(()=>BX.make(c.x,c.z,c.rot,1.6,999,'cesme',(b,part)=>{part('t',0,.8,0,2.6,1.6,1,0,0xcfc7b4);part('t',0,1.7,.5,1.8,.15,.6,0,0x9a9284);part('t',0,.2,.9,2.4,.4,.8,0,0x8a8274);return 1.8;}),null);}
+ // Suriye tarafı: evlerin bir bölümü savaşta yıkılmış, yollarda yanmış araçlar
+ const south=safe(()=>BLD.filter(q=>q.parts&&HOUSE[q.kind]&&!TR(q.x,q.z)),[]);south.forEach((q,i)=>{if((i*7)%10<4)RUIN.push(q);});ruin();
+ const roads=safe(()=>WROADS,[]),pts=[];for(const r of roads)for(let i=1;i<r.pts.length;i++){const a=r.pts[i-1],b=r.pts[i],x=(a[0]+b[0])/2,z=(a[1]+b[1])/2;if(!TR(x,z)&&Math.abs(z-RV(x))>50)pts.push([x+6,z,Math.atan2(b[0]-a[0],b[1]-a[1])]);}
+ WRECK=new T.InstancedMesh(new T.BoxGeometry(1,1,1),new T.MeshLambertMaterial({color:0x1d1b19}),pts.length*2);const o=new T.Object3D();let n=0;
+ for(const[x,z,h]of pts){const y=safe(()=>hAt(x,z),0);o.position.set(x,y+.7,z);o.rotation.set(.06,h+.4,.1);o.scale.set(2,1.2,4.6);o.updateMatrix();WRECK.setMatrixAt(n++,o.matrix);o.position.set(x,y+1.55,z-.3);o.scale.set(1.8,.7,2.2);o.updateMatrix();WRECK.setMatrixAt(n++,o.matrix);}
+ WRECK.count=n;WRECK.frustumCulled=false;WRECK.name='KH_ENKAZ';S.add(WRECK);stat.mosques=CAMI.length;stat.ruins=RUIN.length;stat.wrecks=pts.length;}
+// yıkık evler her yeni savaşta da yıkık kalır (sessiz: toz ve ses yok)
+function ruin(){for(const q of RUIN){q.ruin=1;q.dead=1;q.hp=0;q.g.scale.y=.28;if(q.sync)q.sync();}}
+function squareStep(){for(const c of CAMI)c.g.visible=!c.b.dead;}
+function build(){if(built||!root.THREE||typeof S==='undefined'||typeof BLD==='undefined'||!root.HisarSinir)return;T=root.THREE;if(!buildFolk())return;built=true;buildAnimals();buildFlowers();safe(buildSquare,null);}
 // ---------- davranış ----------
 function threats(){const out=[];safe(()=>{if(mode==='tank'&&game==='play')out.push(P);},null);for(const a of safe(()=>AL,[]))if(!a.dead)out.push(a);return out;}
 function moveTo(f,tx,tz,sp,dt){const dx=tx-f.x,dz=tz-f.z,d=Math.hypot(dx,dz);if(d<.3)return true;const s=Math.min(d,sp*dt);f.x+=dx/d*s;f.z+=dz/d*s;let a=Math.atan2(dx,dz)-f.yaw;while(a>Math.PI)a-=6.283;while(a<-Math.PI)a+=6.283;f.yaw+=a*Math.min(1,dt*6);return false;}
@@ -139,12 +159,12 @@ function animalStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);fo
 function boomNear(x,z){for(const p of P_){if(p.st==='hidden'||p.st==='home'||p.kind==='coban')continue;if(Math.hypot(p.f.x-x,p.f.z-z)<140){p.st='run';p.hold=0;p.to=nearestDoor(p);}}
  for(const a of A_){if(a.st==='sky')continue;if(Math.hypot(a.f.x-x,a.f.z-z)<90){const e=flee(a.f.x,a.f.z,x,z);a.tx=a.f.x+e.x*25;a.tz=a.f.z+e.z*25;a.st='kos';}}}
 function reset(){for(const p of P_){if(p.v&&p.v.school&&p.kid){p.st='home';p.t=Math.random()*25;p.f.live=false;}else if(p.st==='hidden'||p.st==='run'){p.st='idle';p.f.live=true;p.t=1;}p.hold=0;}}
-function frame(dt){if(!built)build();if(!built)return;const c=safe(()=>CAM.position,null);if(!c)return;folk.frame(c.x,c.z,230);for(const k in beasts)beasts[k].frame(c.x,c.z,k==='leylek'?420:220);flowerStep(false);}
+function frame(dt){if(!built)build();if(!built)return;squareStep();const c=safe(()=>CAM.position,null);if(!c)return;folk.frame(c.x,c.z,230);for(const k in beasts)beasts[k].frame(c.x,c.z,k==='leylek'?420:220);flowerStep(false);}
 function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')return;root[name]=factory(root[name]);hooks[name]=true;}
 function connect(){build();
  wrap('update',old=>function(dt){const r=old.apply(this,arguments);const d=clamp(+dt||0,0,.1);clock+=d;if(built)safe(()=>{peopleStep(d);animalStep(d);},null);return r;});
  wrap('sndBoom',old=>function(x,z){safe(()=>boomNear(x,z),null);return old.apply(this,arguments);});
- wrap('startMission',old=>function(){safe(reset,null);return old.apply(this,arguments);});
+ wrap('startMission',old=>function(){safe(reset,null);const r=old.apply(this,arguments);safe(ruin,null);return r;});
  if(!hooks.frame&&typeof FRAME_HOOKS!=='undefined'){hooks.frame=true;FRAME_HOOKS.push(dt=>safe(()=>frame(dt),null));}}
 function diagnostics(){return {version:VERSION,built,hooks:{...hooks},...stat,animals:{...stat.animals},
  kidsOut:P_.filter(p=>p.kid&&p.f.live).map(p=>({x:Math.round(p.f.x),z:Math.round(p.f.z),act:p.f.act,st:p.st})).slice(0,40)};}

@@ -145,7 +145,7 @@ const MOVING=new Set(['tank','apc','truck']),SOLID=new Set(['tank','apc','truck'
 let rockList=null;
 function rocksOf(){if(rockList)return rockList;rockList=[];safe(()=>{const m=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();for(let i=0;i<rocks.count;i++){rocks.getMatrixAt(i,m);m.decompose(p,q,sc);rockList.push({x:p.x,y:p.y,z:p.z,r:Math.max(.6,sc.x*.95)});}},null);return rockList;}
 function envNow(){return {roads:safe(()=>WROADS.map(r=>[r.pts,r.w]),null)||undefined,ground:hAt,river:safe(()=>typeof riv==='function'?riv:null,null),trees:(root.TREES||[]).map(t=>({x:t.x,z:t.z})),rocks:rocksOf().map(r=>({x:r.x,z:r.z,r:r.r})),
- blds:safe(()=>BLD.filter(b=>!b.dead).map(b=>({x:b.x,z:b.z,r:b.r})),[]),avoid:safe(()=>[{x:SUP.x,z:SUP.z,r:22}],[])};}
+ blds:safe(()=>BLD.filter(b=>!b.dead||b.ruin).map(b=>({x:b.x,z:b.z,r:b.r})),[]),avoid:safe(()=>[{x:SUP.x,z:SUP.z,r:22}],[])};}
 // Toprak siper tek parça bir yüzeydir: araziye oturur, sırtı inişli çıkışlıdır, kenarı çimene karışarak biter.
 const X0=-10,Z0=-10,ST=.5,NX=41,NZ=45;let nearGrid=null;
 function earthMesh(p,mat,seed){const heaps=spoil(seed),pos=[],uv=[],col=[],al=[],idx=[];
@@ -177,7 +177,7 @@ function anchorsWide(){const out=[],add=(x,z,k)=>{if(Math.abs(x)>WS-60||Math.abs
  safe(()=>{for(let x=-WS+80;x<=WS-80;x+=80)for(let z=-WS+80;z<=WS-80;z+=80){const h=hAt(x,z);let top=h>2;for(const[dx,dz]of[[30,0],[-30,0],[0,30],[0,-30]])if(hAt(x+dx,z+dz)>h-1)top=false;if(top)add(x,z,'tepe');}},null);
  return out;}
 let wideQ=null,wideN=0,wideMax=0,wideSum=0;
-function wide(){if(wideQ)return;wideQ=anchorsWide();wideN=wideQ.length;const env0=envNow(),near=(L,a,R)=>L.filter(o=>Math.hypot(o.x-a[0],o.z-a[1])<R);
+function wide(){if(wideQ)return;wideQ=anchorsWide();wideN=wideQ.length;const env0=envNow();/* binalar her dilimde yeniden okunur: sonradan kurulan cami, okul, karakol da gözetilir */Object.defineProperty(env0,'blds',{get:()=>safe(()=>BLD.filter(b=>!b.dead||b.ruin).map(b=>({x:b.x,z:b.z,r:b.r})),[])});const near=(L,a,R)=>L.filter(o=>Math.hypot(o.x-a[0],o.z-a[1])<R);
  const step=()=>{const t0=performance.now();while(wideQ.length&&performance.now()-t0<14){const a=wideQ.shift(),ta=performance.now();safe(()=>{
    const env={roads:env0.roads,ground:hAt,river:env0.river,trees:near(env0.trees,a,150),rocks:near(env0.rocks,a,150),blds:near(env0.blds,a,150),anchors:[[a[0],a[1]]],
     avoid:env0.avoid.concat(positions.map(p=>({x:p.x,z:p.z,r:45})))};

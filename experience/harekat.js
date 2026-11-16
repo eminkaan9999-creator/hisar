@@ -8,7 +8,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='1.1.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -20,13 +20,13 @@ const OPS=Object.freeze([
   emir:'Suriye tarafından Taş Geçit sınır kapısına zırhlı taarruz bekleniyor. Duvarın gerisindeki mevzine gir, üç dalgayı kapıya varmadan durdur.',
   waves:[{at:55,u:['apc','tank']},{at:30,u:['tank','apc','tank']},{at:30,u:['tank','tank','apc','tank']}],spawn:[[70,720],[30,700],[110,700]],
   via:[[62,28],[70,84],[70,160],[70,420],[70,720]]}),
- Object.freeze({id:'tepe',n:'Tel Zeytun Tepesi',tur:'TAARRUZ',ford:-560,start:{x:-548,z:20,h:Math.PI},obj:{x:-540,z:680,r:45,n:'Tel Zeytun Tepesi'},
+ Object.freeze({id:'tepe',n:'Tel Zeytun Tepesi',tur:'TAARRUZ',ford:-560,start:{x:-548,z:20,h:0},obj:{x:-540,z:680,r:45,n:'Tel Zeytun Tepesi'},
   emir:'Batı Geçidi\'nden sınırı geç. Yol üstündeki düşman karakolunu aş, tepedeki tank mevzilerini temizle ve tepeyi tut.',
-  outpost:{x:-588,z:290,u:['bunker','apc']},guard:{u:['tank','tank','tank','apc'],r:58},
+  outpost:{x:-588,z:290,u:['bunker','apc','inf','inf']},guard:{u:['tank','tank','tank','apc','inf','inf','inf'],r:58},
   via:[[-548,20],[-560,90],[-560,170],[-600,300],[-610,420],[-560,560],[-540,680]]}),
- Object.freeze({id:'depo',n:'Kafr Sadun Deposu',tur:'BASKIN',ford:400,start:{x:392,z:40,h:Math.PI},obj:{x:430,z:480,r:60,n:'Kafr Sadun İkmal Deposu'},
+ Object.freeze({id:'depo',n:'Kafr Sadun Deposu',tur:'BASKIN',ford:400,start:{x:392,z:40,h:0},obj:{x:430,z:480,r:60,n:'Kafr Sadun İkmal Deposu'},
   emir:'Söğüt Geçidi\'nden sınırı geç. Kafr Sadun\'un doğusundaki düşman ikmal deposunu (yakıt, kamyon, radar) imha et. Köyde sivil var: ateşine dikkat et.',
-  depot:['fuel','fuel','truck','truck','radar'],guard:{u:['tank','tank','aa'],r:46},
+  depot:['fuel','fuel','truck','truck','radar'],guard:{u:['tank','tank','aa','inf','inf','inf'],r:46},
   via:[[392,40],[400,108],[400,250],[400,400],[430,480]]})]);
 // zorluk: düşmanın yeniden dolum süresi (sn), isabet hasarı, dayanıklılık çarpanı
 const TUNE=Object.freeze({kolay:{cd:6,dmg:12,hp:1.8},normal:{cd:4.6,dmg:18,hp:2.2},zor:{cd:3.4,dmg:26,hp:2.6},serbest:{cd:6,dmg:0,hp:1.8}});
@@ -60,7 +60,7 @@ function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[k
  P.x=o.start.x;P.z=o.start.z;P.h=o.start.h;P.th=o.start.h;P.v=P.w=0;safe(()=>{yaw=o.start.h;},null);
  safe(()=>{AL.forEach((a,i)=>{const s=i%2?1:-1,b=10+8*Math.floor(i/2),x=o.start.x+Math.cos(o.start.h)*s*11-Math.sin(o.start.h)*b,z=o.start.z-Math.sin(o.start.h)*s*11-Math.cos(o.start.h)*b;a.x=x;a.z=z;a.h=o.start.h;a.g.position.set(x,hAt(x,z),z);a.g.rotation.y=o.start.h;a.cmd='follow';a.fire=1;});},null);
  H.post=safe(()=>root.HisarSinir.posts().find(p=>p.f===o.ford),null);
- if(o.outpost){const q=o.outpost;q.u.forEach((t,i)=>mk(t,q.x+(i?14:0),q.z+(i?-6:0),{role:'def',post:{x:q.x+(i?14:0),z:q.z+(i?-6:0)},h:Math.PI}));}
+ if(o.outpost){const q=o.outpost;q.u.forEach((t,i)=>{const x=q.x+(i?(i%2?1:-1)*(6+i*5):0),z=q.z-(i?7:0);mk(t,x,z,{role:'def',post:{x,z},h:Math.PI});});}
  if(o.guard){const g=o.guard,ps=posts(o.obj,o.start,g.u.length,g.r);g.u.forEach((t,i)=>{const p=ps[i];mk(t,p.x,p.z,{role:'def',post:p,h:p.h});});}
  if(o.depot){o.depot.forEach((t,i)=>{const a=i/o.depot.length*Math.PI*2,x=o.obj.x+Math.cos(a)*18,z=o.obj.z+Math.sin(a)*14;const e=mk(t,x,z,{role:'dep',post:{x,z},h:a});if(e){e.park=1;e.fr=0;}});}
  buildBeam(o.obj);doc.body.classList.add('hk-active','hr-mission-active');safe(()=>{MI[MODE].t=o.n.toLocaleUpperCase('tr-TR');},null);if(card)card.hidden=false;
@@ -93,6 +93,8 @@ function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op,en=
  // başlangıç karakolunda ikmal
  const base=H.post?H.post.door:o.start;if(dist(P,base)<BASE_R){H.sup+=dt;if(H.sup>1){H.sup=0;let did=false;safe(()=>{if(ammo<AMX()){ammo++;did=true;}if(TA&&TA0)for(let i=0;i<TA.length;i++)if(TA[i]<TA0[i]){TA[i]++;did=true;}if(P.hp<P.mx){P.hp=Math.min(P.mx,P.hp+4);did=true;}},null);
    if(did&&H.last!=='sup'){H.last='sup';safe(()=>root.say('KARAKOLDA İKMAL',1.5),null);}}}else if(H.last==='sup')H.last='';
+ // düşman piyadesi mevzisinden 35 m'den fazla uzaklaşmaz (oyuncuyu haritada kovalamaz)
+ for(const e of en)if(e.type==='inf'&&e.hk.post){const dx=e.x-e.hk.post.x,dz=e.z-e.hk.post.z,d=Math.hypot(dx,dz);if(d>35){e.x=e.hk.post.x+dx/d*35;e.z=e.hk.post.z+dz/d*35;}}
  if((H.paintT=(H.paintT||0)+dt)>.25){H.paintT=0;paint();}}
 function win(t){if(!H)return;H.won=true;ST.done[H.op.id]=1;store(ST);safe(()=>root.stopNav(),null);safe(()=>root.endGame(1,t),null);}
 function lose(t){if(!H)return;H.lost=true;safe(()=>root.stopNav(),null);safe(()=>root.endGame(0,t),null);}

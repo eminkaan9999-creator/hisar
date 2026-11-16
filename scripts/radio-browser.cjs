@@ -125,7 +125,7 @@ if(!mobile){
  assert.equal(auto.ev,true);assert.equal(auto.crate,true);assert.ok(auto.redIn>50&&auto.redIn<90,'first artillery in '+auto.redIn+' s');ok('with events on, the first crate drops by itself early in the battle and artillery is scheduled');await p.evaluate(()=>HisarBattle.events(false));
 
  // ---- harita: yeni binalar ve bütün haritaya yayılan mevziler
- const world=await p.evaluate(()=>{const inst=BLD.filter(b=>b.parts),b=inst.find(q=>q.kind==='house'),i=b.parts[0].i,k=b.parts[0].k,col=()=>{const c=new THREE.Color();BX.IM[k].getColorAt(i,c);return c.r+c.g+c.b;},c0=col();
+ const world=await p.evaluate(()=>{const inst=BLD.filter(b=>b.parts),b=inst.find(q=>q.kind==='house'&&!q.dead),i=b.parts[0].i,k=b.parts[0].k,col=()=>{const c=new THREE.Color();BX.IM[k].getColorAt(i,c);return c.r+c.g+c.b;},c0=col();
   b.hp=1;bldHit(b.x,b.z,1,5);for(let n=0;n<20;n++)update(.1);const dead=b.dead,c1=col();return {n:BLD.length,inst:inst.length,ham:HAML.length,dead,darker:c1<c0*.5,id:BLD.indexOf(b)};});
  assert.ok(world.n>=330,'buildings '+world.n);assert.ok(world.inst>=240);assert.equal(world.ham,12);assert.equal(world.dead,1);assert.equal(world.darker,true);ok('the map has '+world.n+' buildings and twelve hamlets; a new building collapses into rubble when shelled');
  await p.evaluate(()=>{lvSel='normal';HisarBattle.start();HisarBattle.events(false);L.dmg=0;});const back=await p.evaluate(id=>{const b=BLD[id],c=new THREE.Color();BX.IM[b.parts[0].k].getColorAt(b.parts[0].i,c);return {dead:b.dead,sum:c.r+c.g+c.b};},world.id);
@@ -195,7 +195,7 @@ if(!mobile){
  const drv=await p.evaluate(()=>{P.x=70;P.z=-200;P.h=Math.PI;P.v=0;P.w=0;keys.w=true;update(.1);for(let i=0;i<9;i++)update(.1);const v1=P.v;for(let i=0;i<120;i++)update(.1);const vmax=P.v;keys.w=false;
   const b=BLD.find(q=>q.kind==='house'&&!q.dead&&q.hp>=3);const hp=b.hp,a=Math.atan2(b.x-70,b.z+200)+Math.PI;P.x=b.x+Math.sin(a)*(b.r+6);P.z=b.z+Math.cos(a)*(b.r+6);P.h=a+Math.PI;P.v=9;const r0=window.RAMMED|0;keys.w=true;for(let i=0;i<14;i++)update(.1);keys.w=false;
   return {v1,vmax,hp,after:b.hp,dead:b.dead,ram:(window.RAMMED|0)-r0};});
- assert.ok(drv.v1<3.6,'one second from rest: '+drv.v1);assert.ok(drv.vmax>8&&drv.vmax<12.8,'top speed '+drv.vmax);assert.ok(drv.ram>0&&(drv.dead||drv.after<drv.hp),'ramming damages the house');
+ assert.ok(drv.v1<4.4,'one second from rest: '+drv.v1);assert.ok(drv.vmax>8&&drv.vmax<12.8,'top speed '+drv.vmax);assert.ok(drv.ram>0&&(drv.dead||drv.after<drv.hp),'ramming damages the house');
  ok('the tank is heavy: '+drv.v1.toFixed(1)+' m/s after one second, '+drv.vmax.toFixed(1)+' m/s top on the road; ramming a house damages it');
  // ---- atış hissi, kovan, erkek ses, gerçek küçük harita, çarpışmalar
  await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,2);
@@ -235,12 +235,22 @@ if(!mobile){
  assert.equal(g2.wave,1);assert.equal(g2.lost,true);assert.equal(g2.game,'over');ok('the second wave follows; an enemy reaching the gate loses the defence');
  await p.evaluate(()=>{HisarHarekat.start('tepe');L.dmg=0;});await tick(p,1);
  const t1=await p.evaluate(()=>{const o=HisarHarekat.core.OPS[1].obj;const d0=HisarHarekat.diagnostics();for(let i=0;i<200;i++){P.x=o.x;P.z=o.z-230;update(.1);}const d1=HisarHarekat.diagnostics();
-  const def=d1.enemies.filter(e=>e.role==='def');E.filter(e=>e.hk).forEach(e=>killE(e));let k=0;for(;k<200&&game==='play';k++){P.x=o.x;P.z=o.z;update(.1);}const d2=HisarHarekat.diagnostics();return {n:d0.enemies.length,kind:E.length,held:def.every(e=>e.post<12),won:d2.won,t:k/10,game,done:d2.done};});
- assert.equal(t1.n,6);assert.equal(t1.held,true,'defenders stay in their positions');assert.equal(t1.won,true);assert.ok(t1.t>11&&t1.t<14);assert.equal(t1.game,'over');assert.equal(t1.done.tepe,1);
- ok('attack: the hill is held by six enemies who stay in their positions; once cleared, holding the hilltop for 12 s takes it');
+  const def=d1.enemies.filter(e=>e.role==='def'&&e.type!=='inf');E.filter(e=>e.hk).forEach(e=>killE(e));let k=0;for(;k<200&&game==='play';k++){P.x=o.x;P.z=o.z;update(.1);}const d2=HisarHarekat.diagnostics();return {n:d0.enemies.length,kind:E.length,held:def.every(e=>e.post<12),won:d2.won,t:k/10,game,done:d2.done};});
+ assert.ok(t1.n>=10,'hill garrison '+t1.n);assert.equal(t1.held,true,'defenders stay in their positions');assert.equal(t1.won,true);assert.ok(t1.t>11&&t1.t<14);assert.equal(t1.game,'over');assert.equal(t1.done.tepe,1);
+ ok('attack: the hill is held by eleven enemies (tanks, armour, infantry) who stay in their positions; once cleared, holding the hilltop for 12 s takes it');
  await p.evaluate(()=>{HisarHarekat.start('depo');L.dmg=0;});await tick(p,1);
  const d1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();const dep=E.filter(e=>e.hk&&e.hk.role==='dep');const kinds=dep.map(e=>e.type).sort().join();dep.forEach(e=>killE(e));for(let i=0;i<5;i++)update(.1);return {kinds,won:HisarHarekat.diagnostics().won,tanks:d0.enemies.filter(e=>e.type==='tank').length};});
  assert.equal(d1.kinds,'fuel,fuel,radar,truck,truck');assert.equal(d1.won,true);assert.equal(d1.tanks,2);ok('raid: destroying the five depot targets wins the raid');
+ // ---- hava desteği (T129, TB2, F-16), dost piyade ve araçlar, hızlı menü
+ await p.evaluate(()=>{HisarHarekat.start('tepe');L.dmg=0;});await tick(p,1);
+ const ds=await p.evaluate(()=>{const d0=HisarDestek.diagnostics(),q=HisarHarekat.core.OPS[1].outpost;P.x=q.x+20;P.z=q.z-150;E.filter(e=>e.hk).forEach(e=>{e.spT=1e9;});const e0=E.filter(e=>e.hk&&e.hp>0).length;
+  HisarDestek.call('heli');HisarDestek.call('tb2');HisarDestek.call('jet');const r1=HisarDestek.diagnostics().ready;for(let i=0;i<450;i++){P.x=q.x+20;P.z=q.z-150;update(.1);}const d=HisarDestek.diagnostics();
+  return {d0,r1,d,e0,e1:E.filter(e=>e.hk&&e.hp>0).length,heli:!!S.getObjectByName('DS_T129'),jet:!!S.getObjectByName('DS_F16'),box:!!document.querySelector('#ds-box [data-ds=heli]')};});
+ assert.ok(ds.d0.forces&&ds.d0.forces.on&&ds.d0.forces.men===12&&ds.d0.forces.veh.length===2,JSON.stringify(ds.d0.forces));assert.ok(ds.r1.heli>100&&ds.r1.tb2>60&&ds.r1.jet>100,JSON.stringify(ds.r1));
+ assert.ok(ds.d.missiles>=3,'missiles '+ds.d.missiles);assert.ok(ds.e1<ds.e0,'support destroys enemies '+ds.e0+' -> '+ds.e1);assert.ok(ds.d.infShots+ds.d.vehShots>5);assert.ok(ds.heli&&ds.jet&&ds.box);assert.ok(ds.d.parked>=6);
+ ok('air support: T129, TB2 and F-16 called from the radio strike seen targets ('+ds.e0+' -> '+ds.e1+'); two infantry squads and Kirpi/ACV-15 fight alongside; vehicles parked at border posts');
+ await p.evaluate(()=>{openMenu();});await p.waitForTimeout(2500);const mn=await p.evaluate(()=>{const d=HisarMenu.diagnostics();document.getElementById('menu').style.display='none';return d;});
+ assert.equal(mn.menu,true);assert.ok(mn.orbit>0&&mn.hooks.render,'menu throttles drawing and orbits the camera '+JSON.stringify(mn));ok('menu background is drawn at most 15 fps with a slow camera orbit');
  await shot(p,label+'-harekat.png');
 
  // ---- güvenli alan: bekleme, daralma, dışarıda hasar

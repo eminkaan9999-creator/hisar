@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert'),fs=require('fs');
 const c=require('./harekat.js'),html=fs.readFileSync(__dirname+'/../index.html','utf8'),src=fs.readFileSync(__dirname+'/harekat.js','utf8'),bt=fs.readFileSync(__dirname+'/battle.js','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');
 const riv=x=>120+Math.sin((x+60)*.03)*15;
-test('four missions: defence, attack, raid, counter-battery; every start is in Türkiye and every objective in Syria',()=>{assert.deepEqual(c.OPS.map(o=>o.tur),['SAVUNMA','TAARRUZ','BASKIN','KARŞI BATARYA']);
+test('four missions: defence, attack, raid, counter-battery; every start is in Türkiye and every objective in Syria',()=>{assert.deepEqual(c.OPS.map(o=>o.tur),['SAVUNMA','TAARRUZ','GECE BASKINI','KARŞI BATARYA']);
  for(const o of c.OPS){assert.ok(o.start.z<riv(o.start.x)-26,o.id+' starts in Türkiye');assert.ok(o.obj.z>riv(o.obj.x),o.id+' objective is in Syria');assert.ok(o.emir.length>40);}
  assert.equal(c.OPS[0].waves.length,3);assert.deepEqual(c.OPS[2].depot.slice().sort(),['fuel','fuel','radar','truck','truck']);});
 test('capture fills only when the area is clear and the tank is inside',()=>{let k=0;k=c.capture(k,1,true,false);assert.equal(k,0);k=c.capture(k,5,true,true);assert.equal(k,5);k=c.capture(k,2,false,true);assert.equal(k,4);k=c.capture(k,20,true,true);assert.equal(k,c.HOLD);});
@@ -19,3 +19,6 @@ test('counter-battery: three guns shell a Turkish village; each silenced gun slo
  assert.ok(b.shell.z<riv(b.shell.x)-26,'the shelled village is in Türkiye');assert.deepEqual(b.phases.map(q=>q.k),['reach','near','final']);assert.match(c.forces(b),/3 obüs/);
  assert.equal(c.salvoGap(20,3,.5),20);assert.equal(c.salvoGap(20,1,.5),60);assert.equal(c.salvoGap(20,0,.5),Infinity);
  for(const [a,d] of [[0,0],[.3,1],[.9,.5]]){const q=c.shellPoint(b.shell,a,d),r=Math.hypot(q.x-b.shell.x,q.z-b.shell.z);assert.ok(r>=24&&r<=90+1e-9,'r '+r);assert.ok(q.z<riv(q.x)-26,'lands in Türkiye');}});
+test('the depot raid is fought at night: night vision on, shorter enemy sight and fire range, weather restored afterwards',()=>{const d=c.OPS[2];assert.equal(d.wx,'gece');assert.ok(c.NIGHT>0&&c.NIGHT<1);
+ assert.ok(src.includes("if(w==='gece')nv.on=1;"));assert.ok(src.includes('SV.wx=wx0;save();'),'the saved weather choice is kept');assert.ok(src.includes('function cleanup(){sky(null);'));assert.ok(src.includes("if(H.op.wx==='gece'&&e.fr)e.fr=Math.round(e.fr*NIGHT);"));
+ for(const o of c.OPS)if(o.id!=='depo')assert.equal(o.wx,undefined);});

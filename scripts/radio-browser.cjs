@@ -151,9 +151,10 @@ if(!mobile){
  assert.equal(real.dag,3);assert.ok(real.ot>800,'grass '+real.ot);assert.equal(real.oldGrass,false);assert.ok(real.dust>=3,'dust '+real.dust);
  if(real.sp)assert.deepEqual(real.sp,[2.2,1.5,1.15]);ok('three mountain ranges on the horizon, '+real.ot+' grass tufts around the camera, dust behind a moving tank, enemy gunners bracket');
  const hold=await p.evaluate(()=>{const s=HisarBattle.diagnostics().squads.find(q=>!q.dead),a=Math.atan2(-s.x,-s.z);P.x=s.x+Math.sin(a)*300;P.z=s.z+Math.cos(a)*300;for(let i=0;i<20;i++)update(.1);
-  const e=E.find(q=>q.bt===s.id);if(!e)return null;const ps=HisarField.positions(),p=ps.filter(q=>Math.hypot(q.x,q.z)>200&&Math.abs(q.z-riv(q.x)+26)>230).sort((u,v)=>Math.hypot(u.x-e.x,u.z-e.z)-Math.hypot(v.x-e.x,v.z-e.z))[0];
-  const put=()=>{P.x=p.x+Math.sin(p.h)*180;P.z=p.z+Math.cos(p.h)*180;};put();e.x=p.x+Math.cos(p.h)*45-Math.sin(p.h)*10;e.z=p.z-Math.sin(p.h)*45-Math.cos(p.h)*10;
-  const at=o=>o._pos&&Math.hypot(o._pos.x-p.x,o._pos.z-p.z)<1,who=()=>E.find(o=>at(o)&&o._in);let k=0;for(;k<500;k++){put();e.conv=0;e.park=0;e.foe=null;update(.1);if(who())break;}for(let i=0;i<15;i++){put();update(.1);}const q=who(),inn={t:k/10,in:!!q,d:q?Math.hypot(q.x-p.x,q.z-p.z):99,sink:q?q._sink:0};
+  const e=E.find(q=>q.bt===s.id);if(!e)return null;const cands=HisarField.positions().filter(q=>Math.hypot(q.x,q.z)>200&&Math.abs(q.z-riv(q.x)+26)>230).sort((u,v)=>Math.hypot(u.x-e.x,u.z-e.z)-Math.hypot(v.x-e.x,v.z-e.z)).slice(0,3);
+  /* rastgele seçilen mevzinin yolu kapalı olabilir (bahçe, yıkıntı): en yakın üç mevzi sırayla denenir */let p=null,k=0,at=null,who=null,put=null;for(const c of cands){p=c;
+  put=()=>{P.x=p.x+Math.sin(p.h)*180;P.z=p.z+Math.cos(p.h)*180;};put();e.x=p.x+Math.cos(p.h)*45-Math.sin(p.h)*10;e.z=p.z-Math.sin(p.h)*45-Math.cos(p.h)*10;
+  at=o=>o._pos&&Math.hypot(o._pos.x-p.x,o._pos.z-p.z)<1;who=()=>E.find(o=>at(o)&&o._in);for(k=0;k<500;k++){put();e.conv=0;e.park=0;e.foe=null;update(.1);if(who())break;}if(who())break;}for(let i=0;i<15;i++){put();update(.1);}const q=who(),inn={t:k/10,in:!!q,d:q?Math.hypot(q.x-p.x,q.z-p.z):99,sink:q?q._sink:0};
   for(let i=0;i<80;i++){P.x=p.x+Math.cos(p.h)*200;P.z=p.z-Math.sin(p.h)*200;update(.1);}return {inn,left:!E.some(at)};});
  assert.ok(hold,'an enemy tank took the field');assert.equal(hold.inn.in,true);assert.ok(hold.inn.d<3);assert.ok(hold.inn.sink>.3);assert.equal(hold.left,true);
  ok('an engaged enemy tank drives round into a position facing the player ('+hold.inn.t+' s), sits hull-down, and pulls out when flanked');
@@ -250,13 +251,13 @@ if(!mobile){
  assert.ok(t1.n>=10,'hill garrison '+t1.n);assert.equal(t1.held,true,'defenders stay in their positions');assert.equal(t1.won,true);assert.ok(t1.t>11&&t1.t<14);assert.equal(t1.game,'over');assert.equal(t1.done.tepe,1);assert.equal(t1.ph0,0);assert.equal(t1.ph1,1,'crossing the ford completes the first step');assert.ok(t1.stars>=1&&t1.best.tepe>=1,'stars '+t1.stars);
  ok('attack: the hill is held by eleven enemies (tanks, armour, infantry) who stay in their positions; once cleared, holding the hilltop for 12 s takes it');
  await p.evaluate(()=>{HisarHarekat.start('depo');L.dmg=0;});await tick(p,1);
- const d1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();const dep=E.filter(e=>e.hk&&e.hk.role==='dep');const kinds=dep.map(e=>e.type).sort().join();dep.forEach(e=>killE(e));for(let i=0;i<5;i++)update(.1);return {kinds,won:HisarHarekat.diagnostics().won,tanks:d0.enemies.filter(e=>e.type==='tank').length};});
- assert.equal(d1.kinds,'fuel,fuel,radar,truck,truck');assert.equal(d1.won,true);assert.equal(d1.tanks,2);ok('raid: destroying the five depot targets wins the raid');
+ const d1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();const night=wx==='gece'&&!!NVG.on,nw=[wx,NVG.on,SV.wx,game,mis];const dep=E.filter(e=>e.hk&&e.hk.role==='dep');const kinds=dep.map(e=>e.type).sort().join();dep.forEach(e=>killE(e));for(let i=0;i<5;i++)update(.1);const fr=Math.max(...E.filter(e=>e.hk&&e.type==='tank').map(e=>e.fr),0);return {nw,kinds,won:HisarHarekat.diagnostics().won,tanks:d0.enemies.filter(e=>e.type==='tank').length,night,fr};});
+ assert.equal(d1.kinds,'fuel,fuel,radar,truck,truck');assert.equal(d1.night,true,'night raid with night vision '+JSON.stringify(d1.nw));assert.ok(d1.fr>0&&d1.fr<300,'shorter fire range at night '+d1.fr);assert.equal(d1.won,true);assert.equal(d1.tanks,2);ok('raid: destroying the five depot targets wins the raid');
   await p.evaluate(()=>{HisarHarekat.start('batarya');L.dmg=0;});await tick(p,1);
   const b1=await p.evaluate(()=>{const o=HisarHarekat.core.OPS[3],d0=HisarHarekat.diagnostics();let k=0;for(;k<450&&HisarHarekat.diagnostics().hits<2;k++){P.x=o.start.x;P.z=o.start.z;update(.1);}const d1=HisarHarekat.diagnostics();
    const g=E.filter(e=>e.hk&&e.hk.bat&&e.hp>0);killE(g[0]);killE(g[1]);for(let i=0;i<3;i++)update(.1);const gap=HisarHarekat.diagnostics().shT;killE(g[2]);for(let i=0;i<3;i++)update(.1);const d2=HisarHarekat.diagnostics();
-   return {guns:d0.batLeft,arty:d0.enemies.filter(e=>e.type==='arty').length,t:k/10,hits:d1.hits,gap,won:d2.won,game,best:d2.best.batarya||0};});
-  assert.equal(b1.arty,3);assert.equal(b1.hits,2,'shells land on the village '+b1.t);assert.ok(b1.t<45,"t "+b1.t);assert.ok(b1.gap===null||b1.gap>0);assert.equal(b1.won,true);assert.equal(b1.game,'over');assert.ok(b1.best>=1);
+   return {day:!NVG.on,guns:d0.batLeft,arty:d0.enemies.filter(e=>e.type==='arty').length,t:k/10,hits:d1.hits,gap,won:d2.won,game,best:d2.best.batarya||0};});
+  assert.equal(b1.day,true,'the weather returns after the night raid');assert.equal(b1.arty,3);assert.equal(b1.hits,2,'shells land on the village '+b1.t);assert.ok(b1.t<45,"t "+b1.t);assert.ok(b1.gap===null||b1.gap>0);assert.equal(b1.won,true);assert.equal(b1.game,'over');assert.ok(b1.best>=1);
   ok('counter-battery: three enemy howitzers shell Taşlıdere until they are silenced; destroying them wins the mission');
  // ---- hava desteği (T129, TB2, F-16), dost piyade ve araçlar, hızlı menü
  await p.evaluate(()=>{HisarHarekat.start('tepe');L.dmg=0;});await tick(p,1);

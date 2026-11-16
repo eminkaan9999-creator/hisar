@@ -18,18 +18,18 @@ const holdInZone=(p,seconds)=>p.evaluate(seconds=>{L.cd=0;const d0=L.dmg;L.dmg=0
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await chromium.launch({...(process.env.LOCAL_CHROMIUM?{executablePath:process.env.LOCAL_CHROMIUM}:{}),args:['--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader','--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required']});
 for(const mobile of [false,true]){const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1280,height:720},isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1});await context.addInitScript(()=>{const raf=requestAnimationFrame;let done=false;window.requestAnimationFrame=fn=>raf.call(window,t=>{if(!done){try{if(typeof setQ==='function'){setQ('dusuk');done=true;}}catch{}}fn(t);});if(!localStorage.getItem('m60v2'))localStorage.setItem('m60v2',JSON.stringify({xp:120,kr:500,U:{},best:{},form:3}));});const p=await context.newPage();p.setDefaultTimeout(60000);p.on('pageerror',e=>{errors.push(String(e.stack||e));console.log('PAGEERROR',String(e).slice(0,400));});
 const label=mobile?'mobile':'desktop';
-await p.goto('http://127.0.0.1:'+server.address().port+'/hisar/',{waitUntil:'domcontentloaded',timeout:120000});await p.waitForFunction(()=>window.HisarOperations&&window.HisarBattle&&window.HisarRadioSound&&window.HisarGameBridge?.snapshot().ready,{},{timeout:120000});await p.evaluate(()=>{HisarGameBridge.quality('dusuk');HisarGameBridge.auto(false);HisarBattle.events(false);});assert.equal(await p.evaluate(()=>APP_VER),GAME_V);ok(label+': build '+GAME_V+' and all modules ready');
+await p.goto('http://127.0.0.1:'+server.address().port+'/hisar/',{waitUntil:'domcontentloaded',timeout:120000});await p.waitForFunction(()=>window.HisarOperations&&window.HisarBattle&&window.HisarRadioSound&&window.HisarGameBridge?.snapshot().ready,{},{timeout:120000});await p.evaluate(()=>{HisarGameBridge.quality('dusuk');HisarGameBridge.auto(false);HisarBattle.events(false);});assert.equal(await p.evaluate(()=>APP_VER),GAME_V);assert.deepEqual(await p.evaluate(()=>HisarOrtam.diagnostics().hooks),{update:true,openMenu:true},'border soundscape');ok(label+': build '+GAME_V+' and all modules ready');
 // ---- menü: görev listesi yok, tek kip var
 assert.equal(await p.locator('#tg .hr-op').count(),0);assert.equal(await p.locator('#tg [data-g]').count(),0);assert.equal(await p.locator('#hr-debrief').count(),0);assert.equal(await p.locator('#dlyT').count(),0);
 // harekât varsayılan kiptir: üç görev kartı; Son Takım ikinci kip
-assert.equal(await p.locator('#hkMode button.sel b').textContent(),'HAREKÂT');assert.equal(await p.locator('#hkCard .hk-op').count(),3);assert.equal(await p.evaluate(()=>mis),'harekat');
+assert.equal(await p.locator('#hkMode button.sel b').textContent(),'HAREKÂT');assert.equal(await p.locator('#hkCard .hk-op').count(),4);assert.equal(await p.evaluate(()=>mis),'harekat');
 assert.equal(await p.locator('#btCard').isVisible(),false);assert.equal(await p.locator('#rb2').count(),0,'rank badge removed');
 await p.locator('#hkCard [data-op="tepe"]').click();assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().sel),'tepe');assert.equal(await p.locator('#hkCard .hk-op.sel b').textContent(),'Tel Zeytun Tepesi');
 await p.locator('#go').click();assert.equal(await p.locator('#hk-brief').isVisible(),true,'BAŞLAT opens the operation order');assert.match(await p.locator('#hk-brief').textContent(),/HAREKÂT EMRİ.*DURUM.*GÖREV.*İCRA.*DESTEK/);
 assert.equal(await p.locator('#hk-brief .hk-bs ol li').count(),3);await p.locator('#hk-brief .hk-back').click();assert.equal(await p.locator('#hk-brief').isVisible(),false);assert.notEqual(await p.evaluate(()=>game),'play');
 ok(label+': BAŞLAT opens the operation order (map, situation, mission, execution steps, support); Geri returns to the menu');
 await p.locator('#hkMode [data-hm="savas"]').click();assert.equal(await p.evaluate(()=>mis),'savas');assert.equal(await p.locator('#hkCard').isVisible(),false);
-ok(label+': menu opens on Harekât with three mission cards; Son Takım is the second mode; no rank badge');
+ok(label+': menu opens on Harekât with four mission cards; Son Takım is the second mode; no rank badge');
 assert.equal(await p.locator('#btCard h3').textContent(),'SON TAKIM');assert.equal(await p.locator('#btCard .bt-seg button').count(),3);assert.equal(await p.locator('#btCard .bt-seg button.sel b').textContent(),'TAKIM');assert.match(await p.locator('#btCard .bt-facts').textContent(),/4 rakip takım16 düşman tank/);
 // takım büyüklüğü ana karttan değişir ve kaydedilir
 await p.locator('#btCard [data-bf="1"]').click();assert.equal(await p.evaluate(()=>SV.form),1);assert.match(await p.locator('#btCard .bt-facts').textContent(),/7 rakip takım14 düşman tank/);await p.locator('#btCard [data-bf="3"]').click();assert.equal(await p.evaluate(()=>SV.form),3);assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('m60v2')).form),3);
@@ -206,7 +206,7 @@ if(!mobile){
  // mürettebat "Ateş!" der, top konuşma bitince ateşlenir (crew-orders.js): bir an beklenir
  const a0=await p.evaluate(()=>{const a=HisarAtis.diagnostics();cd=0;ammo=Math.max(ammo,3);mode='tank';fire();return a;});await p.waitForFunction(s=>HisarAtis.diagnostics().shots>s,a0.shots,{timeout:8000});
  const fx=await p.evaluate(a0=>{update(.05);const a1=HisarAtis.diagnostics();HisarAtis.eject(3);for(let i=0;i<25;i++)update(.1);const a2=HisarAtis.diagnostics();
-  mmDraw();const h=HisarHarita.diagnostics();return {shots:a1.shots-a0.shots,smoke:a1.smoke-a0.smoke,rock:Math.abs(a1.rock.a)+Math.abs(a1.rock.v),cas:a2.live,v:typeof trVoice==='function',h,
+  mmDraw();const h=HisarHarita.diagnostics();return {shots:a1.shots-a0.shots,smoke:a1.smoke-a0.smoke,rock:a1.peak,cas:a2.live,v:typeof trVoice==='function',h,
    kovan:!!S.getObjectByName('AT_KOVAN')};},a0);
  assert.equal(fx.shots,1);assert.ok(fx.smoke>=10);assert.ok(fx.rock>.1,'hull rocks');assert.ok(fx.cas>=3&&fx.kovan);assert.equal(fx.v,true);assert.equal(fx.h.size,264);assert.ok(fx.h.draws>0&&fx.h.hidpi);
  ok('firing rocks the hull with a smoke ring; machine-gun casings fly out; the mini map is a sharp terrain map with roads and buildings');
@@ -252,6 +252,12 @@ if(!mobile){
  await p.evaluate(()=>{HisarHarekat.start('depo');L.dmg=0;});await tick(p,1);
  const d1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();const dep=E.filter(e=>e.hk&&e.hk.role==='dep');const kinds=dep.map(e=>e.type).sort().join();dep.forEach(e=>killE(e));for(let i=0;i<5;i++)update(.1);return {kinds,won:HisarHarekat.diagnostics().won,tanks:d0.enemies.filter(e=>e.type==='tank').length};});
  assert.equal(d1.kinds,'fuel,fuel,radar,truck,truck');assert.equal(d1.won,true);assert.equal(d1.tanks,2);ok('raid: destroying the five depot targets wins the raid');
+  await p.evaluate(()=>{HisarHarekat.start('batarya');L.dmg=0;});await tick(p,1);
+  const b1=await p.evaluate(()=>{const o=HisarHarekat.core.OPS[3],d0=HisarHarekat.diagnostics();let k=0;for(;k<450&&HisarHarekat.diagnostics().hits<2;k++){P.x=o.start.x;P.z=o.start.z;update(.1);}const d1=HisarHarekat.diagnostics();
+   const g=E.filter(e=>e.hk&&e.hk.bat&&e.hp>0);killE(g[0]);killE(g[1]);for(let i=0;i<3;i++)update(.1);const gap=HisarHarekat.diagnostics().shT;killE(g[2]);for(let i=0;i<3;i++)update(.1);const d2=HisarHarekat.diagnostics();
+   return {guns:d0.batLeft,arty:d0.enemies.filter(e=>e.type==='arty').length,t:k/10,hits:d1.hits,gap,won:d2.won,game,best:d2.best.batarya||0};});
+  assert.equal(b1.arty,3);assert.equal(b1.hits,2,'shells land on the village '+b1.t);assert.ok(b1.t<45,"t "+b1.t);assert.ok(b1.gap===null||b1.gap>0);assert.equal(b1.won,true);assert.equal(b1.game,'over');assert.ok(b1.best>=1);
+  ok('counter-battery: three enemy howitzers shell Taşlıdere until they are silenced; destroying them wins the mission');
  // ---- hava desteği (T129, TB2, F-16), dost piyade ve araçlar, hızlı menü
  await p.evaluate(()=>{HisarHarekat.start('tepe');L.dmg=0;});await tick(p,1);
  const ds=await p.evaluate(()=>{const d0=HisarDestek.diagnostics(),q=HisarHarekat.core.OPS[1].outpost;P.x=q.x+20;P.z=q.z-150;E.filter(e=>e.hk).forEach(e=>{e.spT=1e9;});const e0=E.filter(e=>e.hk&&e.hp>0).length;

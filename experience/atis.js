@@ -6,7 +6,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.0.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -27,14 +27,14 @@ if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
 // ---------- oyun ----------
-const hooks={},stat={shots:0,casings:0,live:0,smoke:0,voice:null,male:false};const rock={a:0,v:0};let cas=null,aaAmmo=null,T=null;
+const hooks={},stat={shots:0,casings:0,live:0,smoke:0,voice:null,male:false,peak:0};const rock={a:0,v:0},roll={a:0,v:0};let cas=null,aaAmmo=null,T=null;
 function voice(){const p=voicePick(safe(()=>root.speechSynthesis.getVoices(),[]));stat.voice=p.voice?p.voice.name:null;stat.male=p.male;return p;}
 root.trVoice=voice;
 // ana top
 function muzzle(){const a=safe(()=>P.th,0),el=safe(()=>root.gel(),0),ce=Math.cos(el),M=safe(()=>MZ,{tz:0,z:.5,d:6.4,y:1.95});const r=M.tz+M.z+M.d*ce;
  return {x:P.x+Math.sin(a)*r,y:safe(()=>hAt(P.x,P.z),0)+M.y+M.d*Math.sin(el),z:P.z+Math.cos(a)*r,dx:Math.sin(a)*ce,dy:Math.sin(el),dz:Math.cos(a)*ce};}
 function gunBlast(){const fx=root.FXP||null,m=muzzle(),q=safe(()=>root.FXQ||1,1);stat.shots++;
- rock.v+=ROCK.kick*Math.cos(safe(()=>P.th-P.h,0));safe(()=>{P.rec=1;},null);safe(()=>{shake=Math.max(shake,.5);},null);
+ const rel=safe(()=>P.th-P.h,0);rock.v+=ROCK.kick*Math.cos(rel);roll.v+=ROCK.kick*.8*Math.sin(rel);stat.peak=Math.abs(rock.v)+Math.abs(roll.v);safe(()=>{P.rec=1;},null);safe(()=>{shake=Math.max(shake,.5);},null);
  if(fx&&fx.puff){const n=Math.round(26*q);
   for(let i=0;i<n;i++){const a=i/n*Math.PI*2,s=2+Math.random()*3,ux=-m.dz,uz=m.dx;// halka: namlu doğrultusuna dik
    fx.puff(m.x+m.dx*1.2,m.y,m.z+m.dz*1.2,m.dx*(6+Math.random()*8)+ux*Math.cos(a)*s,Math.sin(a)*s*.7+.6,m.dz*(6+Math.random()*8)+uz*Math.cos(a)*s,3.5+Math.random()*2,1.6,8+Math.random()*5,0xf2efe8,0xa9a69e,.78,1.3);stat.smoke++;}
@@ -61,9 +61,9 @@ function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')retur
 function connect(){
  wrap('fire',old=>function(){const n0=safe(()=>shells.length,0);const r=old.apply(this,arguments);if(safe(()=>mode==='tank'&&!(root.AA&&AA.on)&&shells.length>n0,false))safe(gunBlast,null);return r;});
  wrap('update',old=>function(dt){const r=old.apply(this,arguments);const d=clamp(+dt||0,0,.1);
-  safe(()=>{rockStep(rock,d);if(Math.abs(rock.a)>1e-4&&P.g)P.g.rotation.x+=rock.a;},null);
+  safe(()=>{rockStep(rock,d);rockStep(roll,d);if(Math.abs(rock.a)>1e-4&&P.g)P.g.rotation.x+=rock.a;if(Math.abs(roll.a)>1e-4&&P.g)P.g.rotation.z+=roll.a;},null);
   safe(()=>{const a=root.AA&&AA.ammo;if(typeof a==='number'){if(aaAmmo!=null&&a<aaAmmo)ejectAA(Math.min(4,aaAmmo-a));aaAmmo=a;}},null);safe(()=>casStep(d),null);return r;});
  safe(()=>{if(root.speechSynthesis&&root.speechSynthesis.addEventListener&&!hooks.voices){hooks.voices=true;root.speechSynthesis.addEventListener('voiceschanged',()=>{voice();safe(()=>root.pickVoice(),null);});}},null);voice();safe(()=>root.pickVoice(),null);}
-root.HisarAtis=Object.freeze({version:VERSION,core,connect,blast:()=>gunBlast(),eject:n=>ejectAA(n||1),diagnostics:()=>({version:VERSION,hooks:{...hooks},...stat,rock:{...rock}})});
+root.HisarAtis=Object.freeze({version:VERSION,core,connect,blast:()=>gunBlast(),eject:n=>ejectAA(n||1),diagnostics:()=>({version:VERSION,hooks:{...hooks},...stat,rock:{...rock},roll:{...roll}})});
 connect();doc.addEventListener('hisar:ui-ready',connect);
 })(typeof window!=='undefined'?window:globalThis);

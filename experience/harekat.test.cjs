@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert'),fs=require('fs');
 const c=require('./harekat.js'),html=fs.readFileSync(__dirname+'/../index.html','utf8'),src=fs.readFileSync(__dirname+'/harekat.js','utf8'),bt=fs.readFileSync(__dirname+'/battle.js','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8');
 const riv=x=>120+Math.sin((x+60)*.03)*15;
-test('three missions: defence, attack, raid; every start is in Türkiye and every objective in Syria',()=>{assert.deepEqual(c.OPS.map(o=>o.tur),['SAVUNMA','TAARRUZ','BASKIN']);
+test('four missions: defence, attack, raid, counter-battery; every start is in Türkiye and every objective in Syria',()=>{assert.deepEqual(c.OPS.map(o=>o.tur),['SAVUNMA','TAARRUZ','BASKIN','KARŞI BATARYA']);
  for(const o of c.OPS){assert.ok(o.start.z<riv(o.start.x)-26,o.id+' starts in Türkiye');assert.ok(o.obj.z>riv(o.obj.x),o.id+' objective is in Syria');assert.ok(o.emir.length>40);}
  assert.equal(c.OPS[0].waves.length,3);assert.deepEqual(c.OPS[2].depot.slice().sort(),['fuel','fuel','radar','truck','truck']);});
 test('capture fills only when the area is clear and the tank is inside',()=>{let k=0;k=c.capture(k,1,true,false);assert.equal(k,0);k=c.capture(k,5,true,true);assert.equal(k,5);k=c.capture(k,2,false,true);assert.equal(k,4);k=c.capture(k,20,true,true);assert.equal(k,c.HOLD);});
@@ -15,3 +15,7 @@ test('operation steps: cross, clear, take; stars for health and time',()=>{const
  assert.equal(c.phaseDone(t.phases[0],{x:-560,z:180},[]),true);assert.equal(c.phaseDone(t.phases[1],{x:0,z:0},[{x:-580,z:300}]),false);assert.equal(c.phaseDone(t.phases[1],{x:0,z:0},[]),true);assert.equal(c.phaseDone(t.phases[2],{x:-540,z:680},[]),false);
  assert.equal(c.stars(t,{won:false}),0);assert.equal(c.stars(t,{won:true,hp:.3,t:900}),1);assert.equal(c.stars(t,{won:true,hp:.9,t:300}),3);assert.equal(c.stars(c.OPS[0],{won:true,hp:.9,allies:true}),3);
  assert.match(c.forces(t),/^3 T-72, 2 BMP, 3 piyade timi, 2 Kornet timi, 1 sığınak$/);});
+test('counter-battery: three guns shell a Turkish village; each silenced gun slows the fire; shells land around the village',()=>{const b=c.OPS[3];assert.equal(b.id,'batarya');assert.deepEqual(b.battery,['arty','arty','arty']);
+ assert.ok(b.shell.z<riv(b.shell.x)-26,'the shelled village is in Türkiye');assert.deepEqual(b.phases.map(q=>q.k),['reach','near','final']);assert.match(c.forces(b),/3 obüs/);
+ assert.equal(c.salvoGap(20,3,.5),20);assert.equal(c.salvoGap(20,1,.5),60);assert.equal(c.salvoGap(20,0,.5),Infinity);
+ for(const [a,d] of [[0,0],[.3,1],[.9,.5]]){const q=c.shellPoint(b.shell,a,d),r=Math.hypot(q.x-b.shell.x,q.z-b.shell.z);assert.ok(r>=24&&r<=90+1e-9,'r '+r);assert.ok(q.z<riv(q.x)-26,'lands in Türkiye');}});

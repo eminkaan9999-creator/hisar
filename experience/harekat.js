@@ -4,11 +4,12 @@
  * - Sınır Kapısı Savunması: üç dalga taarruzu Taş Geçit'te durdur.
  * - Tel Zeytun Tepesi: sınırı geç, karakolu aş, tepedeki mevziyi temizle ve tepeyi tut.
  * - Kafr Sadun Deposu: köyün dışındaki düşman ikmal deposunu imha et.
+ * - Umm Celal Bataryası: Taşlıdere köyünü döven düşman obüslerini bul ve sustur; batarya yaşadıkça köye mermi düşer.
  * Başlangıç karakolunda ikmal (cephane ve onarım) yapılır. Rastgele sandık, topçu ya da güvenli alan yoktur.
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.2.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='1.3.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -30,7 +31,12 @@ const OPS=Object.freeze([
   emir:'Söğüt Geçidi\'nden sınırı geç. Kafr Sadun\'un doğusundaki düşman ikmal deposunu (yakıt, kamyon, radar) imha et. Köyde sivil var: ateşine dikkat et.',
   depot:['fuel','fuel','truck','truck','radar'],guard:{u:['tank','tank','aa','kornet','inf','inf'],r:46},
   phases:[{n:'Söğüt Geçidi\'ni geç',k:'reach',x:400,z:200,r:30},{n:'Depoyu 400 m\'den gözetle',k:'near',x:430,z:480,r:400},{n:'Depoyu imha et',k:'final'}],par:360,
-  via:[[392,40],[400,108],[400,250],[400,400],[430,480]]})]);
+  via:[[392,40],[400,108],[400,250],[400,400],[430,480]]}),
+ Object.freeze({id:'batarya',n:'Umm Celal Bataryası',tur:'KARŞI BATARYA',ford:660,start:{x:650,z:30,h:0},obj:{x:690,z:640,r:55,n:'Umm Celal Topçu Bataryası'},
+  emir:'Sınır ötesindeki düşman obüs bataryası Taşlıdere köyünü dövüyor. Doğu Geçidi\'nden geç, bataryayı tespit et ve sustur. Batarya ateşte kaldıkça köye mermi düşer.',
+  battery:['arty','arty','arty'],guard:{u:['tank','apc','kornet','inf','aa'],r:62},shell:{x:480,z:20,n:'Taşlıdere',every:20,fly:6},
+  phases:[{n:'Doğu Geçidi\'ni geç',k:'reach',x:660,z:185,r:30},{n:'Bataryayı 350 m\'den tespit et',k:'near',x:690,z:640,r:350},{n:'Üç obüsü sustur',k:'final'}],par:420,
+  via:[[650,30],[660,100],[660,185],[650,360],[640,520],[690,640]]})]);
 // zorluk: düşmanın yeniden dolum süresi (sn), isabet hasarı, dayanıklılık çarpanı
 const TUNE=Object.freeze({kolay:{cd:6,dmg:12,hp:1.8},normal:{cd:4.6,dmg:18,hp:2.2},zor:{cd:3.4,dmg:26,hp:2.6},serbest:{cd:6,dmg:0,hp:1.8}});
 const HOLD=12,FIRE_RANGE=360,SEEN=300,LEASH=80,BASE_R=32;
@@ -45,12 +51,15 @@ function halt(st,dt,rnd){st.t-=dt;if(st.t<=0){st.stop=!st.stop;st.t=st.stop?4+rn
 function phaseDone(ph,p,enemies){if(!ph||ph.k==='final')return false;const d=Math.hypot(p.x-ph.x,p.z-ph.z);if(ph.k==='reach'||ph.k==='near')return d<ph.r;if(ph.k==='clear')return !enemies.some(e=>Math.hypot(e.x-ph.x,e.z-ph.z)<ph.r);return false;}
 // Değerlendirme: görev tamam (1), tank sağlığı yarıdan fazla (2), hedef sürede bitti ya da dost kayıp yok (3)
 function stars(o,r){let n=r.won?1:0;if(!n)return 0;if(r.hp>=.5)n++;if(o.par?r.t<=o.par:r.allies)n++;return n;}
+// Düşman bataryası: susan her obüs atış aralığını uzatır; mermi köyün çevresine (35–90 m, sınırın aksi yönünde) düşer
+function salvoGap(every,left,r){return left>0?every*(3/left)*(.8+r*.4):Infinity;}
+function shellPoint(v,a,d){d=35+d*55;a=Math.PI*(1+a);return {x:v.x+Math.cos(a)*d,z:v.z+Math.sin(a)*d*.7};}
 // Düşman tahmini: görev emrinde yazan kuvvet
-const UNIT={tank:'T-72',apc:'BMP',inf:'piyade timi',kornet:'Kornet timi',aa:'uçaksavar',bunker:'sığınak',fuel:'yakıt tankeri',truck:'kamyon',radar:'radar'};
-function forces(o){const c={};const add=t=>{c[t]=(c[t]||0)+1;};(o.outpost?o.outpost.u:[]).forEach(add);(o.guard?o.guard.u:[]).forEach(add);(o.depot||[]).forEach(add);(o.waves||[]).forEach(w=>w.u.forEach(add));
+const UNIT={tank:'T-72',apc:'BMP',inf:'piyade timi',kornet:'Kornet timi',aa:'uçaksavar',bunker:'sığınak',arty:'obüs',fuel:'yakıt tankeri',truck:'kamyon',radar:'radar'};
+function forces(o){const c={};const add=t=>{c[t]=(c[t]||0)+1;};(o.outpost?o.outpost.u:[]).forEach(add);(o.guard?o.guard.u:[]).forEach(add);(o.depot||[]).forEach(add);(o.battery||[]).forEach(add);(o.waves||[]).forEach(w=>w.u.forEach(add));
  return Object.keys(UNIT).filter(k=>c[k]).map(k=>c[k]+' '+UNIT[k]).join(', ');}
 function posts(o,from,n,r){const a=Math.atan2(from.x-o.x,from.z-o.z),out=[];for(let i=0;i<n;i++){const k=n>1?(i/(n-1)-.5)*1.6:0;out.push({x:o.x+Math.sin(a+k)*r,z:o.z+Math.cos(a+k)*r,h:a+k});}return out;}
-const core=Object.freeze({VERSION,MODE,OPS,TUNE,HOLD,capture,waveDue,halt,posts,phaseDone,stars,forces});
+const core=Object.freeze({VERSION,MODE,OPS,TUNE,HOLD,capture,waveDue,halt,posts,phaseDone,stars,forces,salvoGap,shellPoint});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
@@ -73,6 +82,7 @@ function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[k
  H.post=safe(()=>root.HisarSinir.posts().find(p=>p.f===o.ford),null);
  if(o.outpost){const q=o.outpost;q.u.forEach((t,i)=>{const x=q.x+(i?(i%2?1:-1)*(6+i*5):0),z=q.z-(i?7:0);mk(t,x,z,{role:'def',post:{x,z},h:Math.PI});});}
  if(o.guard){const g=o.guard,ps=posts(o.obj,o.start,g.u.length,g.r);g.u.forEach((t,i)=>{const p=ps[i];mk(t,p.x,p.z,{role:'def',post:p,h:p.h});});}
+ if(o.battery){o.battery.forEach((t,i)=>{const x=o.obj.x+(i-1)*16,z=o.obj.z+8+Math.abs(i-1)*5;const e=mk(t,x,z,{role:'def',bat:1,post:{x,z},h:Math.PI});if(e)e.nm='OBÜS';});H.shT=8;H.inc=[];H.hits=0;}
  if(o.depot){o.depot.forEach((t,i)=>{const a=i/o.depot.length*Math.PI*2,x=o.obj.x+Math.cos(a)*18,z=o.obj.z+Math.sin(a)*14;const e=mk(t,x,z,{role:'dep',post:{x,z},h:a});if(e){e.park=1;e.fr=0;}});}
  buildBeam(o.obj);doc.body.classList.add('hk-active','hr-mission-active');safe(()=>{MI[MODE].t=o.n.toLocaleUpperCase('tr-TR');},null);if(card)card.hidden=false;
  navTo();
@@ -101,6 +111,7 @@ function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op,en=
   if(H.wave>=o.waves.length-1&&att.length===0&&H.wave>=0&&!H.pendingSpawn)return win('Taş Geçit tutuldu. Taarruz sınırda durduruldu.');
   const gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};if(att.some(e=>dist(e,gate)<40))return lose('Düşman sınır kapısına dayandı.');}
  if(o.guard&&!o.depot){const near=en.filter(e=>dist(e,o.obj)<200).length,inside=dist(P,o.obj)<o.obj.r;H.cap=capture(H.cap,dt,inside,near===0);if(H.cap>=HOLD)return win(o.obj.n+' ele geçirildi.');}
+ if(o.battery){const guns=en.filter(e=>e.hk.bat);H.batLeft=guns.length;if(!guns.length)return win('Batarya susturuldu. '+o.shell.n+'\'ye ateş kesildi.');shelling(dt,o,guns);}
  if(o.depot){const left=en.filter(e=>e.hk.role==='dep').length;H.depLeft=left;if(left===0)return win('Kafr Sadun deposu imha edildi.');}
  // ara hedefler: sırayla; biri tamamlanınca rota bir sonrakine döner
  const ph=o.phases&&o.phases[H.ph];if(phaseDone(ph,P,en)){H.ph++;const nx=o.phases[H.ph];safe(()=>root.radio('Komuta: Ara hedef tamam: '+ph.n+'.'+(nx?' Sıradaki: '+nx.n+'.':'')),null);safe(()=>root.say('ARA HEDEF TAMAM',1.6),null);navTo();}
@@ -110,6 +121,10 @@ function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op,en=
  // düşman piyadesi mevzisinden 35 m'den fazla uzaklaşmaz (oyuncuyu haritada kovalamaz)
  for(const e of en)if(e.type==='inf'&&e.hk.post){const dx=e.x-e.hk.post.x,dz=e.z-e.hk.post.z,d=Math.hypot(dx,dz);if(d>35){e.x=e.hk.post.x+dx/d*35;e.z=e.hk.post.z+dz/d*35;}}
  if((H.paintT=(H.paintT||0)+dt)>.25){H.paintT=0;paint();}}
+// Batarya köyü döver: atış sesi bataryadan gelir, mermi uçuştan sonra köyün çevresine düşer
+function shelling(dt,o,guns){H.shT-=dt;if(H.shT<=0){const g=guns[Math.floor(rnd()*guns.length)];H.shT=salvoGap(o.shell.every,guns.length,rnd());safe(()=>root.sndBoom(g.x,g.z),null);
+  H.inc.push(Object.assign({t:o.shell.fly},shellPoint(o.shell,rnd(),rnd())));if(H.hits%3===0)safe(()=>root.radio('Karakol: '+o.shell.n+'\'ye topçu mermisi düşüyor! Bataryayı susturun!'),null);}
+ for(const q of H.inc){q.t-=dt;if(q.t<=0){q.done=1;H.hits++;safe(()=>root.bigBoom(q.x,q.z,5),null);}}H.inc=H.inc.filter(q=>!q.done);}
 function win(t){if(!H)return;H.won=true;const o=H.op,n=stars(o,{won:true,hp:safe(()=>P.hp/P.mx,1),t:H.t,allies:safe(()=>AL.filter(a=>!a.dead).length,0)>=H.al0});H.stars=n;
  ST.done[o.id]=1;ST.stars[o.id]=Math.max(ST.stars[o.id]||0,n);store(ST);safe(()=>root.stopNav(),null);safe(()=>root.endGame(1,t+' '+'★'.repeat(n)+'☆'.repeat(3-n)),null);}
 function lose(t){if(!H)return;H.lost=true;safe(()=>root.stopNav(),null);safe(()=>root.endGame(0,t),null);}
@@ -118,7 +133,8 @@ function paint(){if(!card||!H)return;const o=H.op,[s,p,pr,sm,ol]=card.children;p
  if(o.waves){const att=enemies().filter(e=>e.hk.role==='att').length;if(att){p.textContent=(H.wave+1)+'. dalga: '+att+' araç kapıya ilerliyor';pr.value=1-att/Math.max(1,H.waveLeft||att);}
   else{const nx=o.waves[H.wave+1];p.textContent=nx?'Mevzine gir · '+(H.wave+2)+'. dalga '+Math.max(0,Math.ceil(nx.at-H.waveT))+' sn':'Bölgeyi tut';pr.value=nx?H.waveT/nx.at:1;}
   sm.textContent='Dalga '+Math.max(0,H.wave+1)+'/'+o.waves.length+' · kapıya '+Math.round(dist(P,o.obj))+' m';}
-  const cph=o.phases&&o.phases[H.ph];if(cph&&cph.k!=='final'&&!o.waves){p.textContent=cph.n;pr.value=H.ph/(o.phases.length-1);sm.textContent='Ara hedef '+Math.round(Math.hypot(P.x-cph.x,P.z-cph.z))+' m · son hedef '+d+' m';}
+  const cph=o.phases&&o.phases[H.ph];if(cph&&cph.k!=='final'&&!o.waves){p.textContent=cph.n;pr.value=H.ph/(o.phases.length-1);sm.textContent='Ara hedef '+Math.round(Math.hypot(P.x-cph.x,P.z-cph.z))+' m · son hedef '+d+' m'+(o.battery?' · köye düşen '+(H.hits||0):'');}
+ else if(o.battery){p.textContent='Bataryayı sustur · '+(H.batLeft??o.battery.length)+' obüs ateşte';pr.value=1-(H.batLeft??o.battery.length)/o.battery.length;sm.textContent='Hedef '+d+' m · köye düşen '+(H.hits||0)+' mermi';}
  else if(o.depot){p.textContent='Depoyu imha et · '+(H.depLeft??o.depot.length)+' hedef kaldı';pr.value=1-(H.depLeft??o.depot.length)/o.depot.length;sm.textContent='Hedef '+d+' m';}
  else if(!o.waves){const near=enemies().filter(e=>dist(e,o.obj)<200).length;p.textContent=near?'Tepedeki mevzileri temizle · '+near+' düşman':H.cap>0?'Tepeyi tut · '+Math.ceil(HOLD-H.cap)+' sn':'Tepeye çık';pr.value=near?0:H.cap/HOLD;sm.textContent='Hedef '+d+' m';}}
 function paintPhases(ol){if(!ol||!H)return;const o=H.op,ph=o.phases||[];if(ol.childElementCount!==ph.length){ol.replaceChildren(...ph.map(q=>{const li=doc.createElement('li');li.textContent=q.n;return li;}));}
@@ -136,8 +152,9 @@ function previewDraw(c,o,big){const g=c.getContext('2d'),W=c.width,Hh=c.height,w
 g.strokeStyle='rgba(0,0,0,.45)';g.lineWidth=5;g.beginPath();o.via.forEach((p,i)=>i?g.lineTo(X(p[0]),Z(p[1])):g.moveTo(X(p[0]),Z(p[1])));g.stroke();
  g.strokeStyle='#ffc247';g.lineWidth=2.5;g.beginPath();o.via.forEach((p,i)=>i?g.lineTo(X(p[0]),Z(p[1])):g.moveTo(X(p[0]),Z(p[1])));g.stroke();
  g.fillStyle='#8fd14f';g.beginPath();g.arc(X(o.start.x),Z(o.start.z),4.5,0,7);g.fill();
- if(big){const ds=[];if(o.outpost)ds.push(o.outpost);if(o.guard)posts(o.obj,o.start,o.guard.u.length,o.guard.r).forEach(q=>ds.push(q));if(o.waves)o.spawn.forEach(q=>ds.push({x:q[0],z:q[1]}));
+ if(big){const ds=[];if(o.outpost)ds.push(o.outpost);if(o.guard)posts(o.obj,o.start,o.guard.u.length,o.guard.r).forEach(q=>ds.push(q));if(o.waves)o.spawn.forEach(q=>ds.push({x:q[0],z:q[1]}));if(o.battery)ds.push({x:o.obj.x,z:o.obj.z+8});
   g.fillStyle='#e5463a';g.strokeStyle='#2a0806';g.lineWidth=1.5;for(const q of ds){const x=X(q.x),y=Z(q.z);g.beginPath();g.moveTo(x,y-7);g.lineTo(x+6,y);g.lineTo(x,y+7);g.lineTo(x-6,y);g.closePath();g.fill();g.stroke();}
+   if(o.shell){const x=X(o.shell.x),y=Z(o.shell.z);g.strokeStyle='#ff8a2a';g.lineWidth=2;for(const r of[7,12]){g.beginPath();g.arc(x,y,r,0,7);g.stroke();}}
   g.font='800 14px system-ui';g.textAlign='center';g.textBaseline='middle';(o.phases||[]).forEach((q,i)=>{if(q.k==='final')return;const x=X(q.x),y=Z(q.z);g.fillStyle='#fff';g.beginPath();g.arc(x,y,10,0,7);g.fill();g.fillStyle='#111';g.fillText(String(i+1),x,y+1);});g.textBaseline='alphabetic';}
  g.strokeStyle='#ffc247';g.lineWidth=2;g.beginPath();g.arc(X(o.obj.x),Z(o.obj.z),6,0,7);g.stroke();g.fillStyle='#ffc247';g.beginPath();g.arc(X(o.obj.x),Z(o.obj.z),2.2,0,7);g.fill();}
 function routeKm(o){let s=0;for(let i=1;i<o.via.length;i++)s+=Math.hypot(o.via[i][0]-o.via[i-1][0],o.via[i][1]-o.via[i-1][1]);return (s/1000).toFixed(1).replace('.',',')+' km';}
@@ -162,10 +179,11 @@ function installUI(){if(!doc.body||card)return;const st=doc.createElement('style
 #hkCard{display:flex;flex-direction:column;gap:8px}#hkCard[hidden]{display:none!important}
 .hk-op{display:grid;grid-template-columns:88px 1fr;gap:12px;align-items:stretch;width:100%;margin:0;padding:8px;text-align:left;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(26,27,25,.92),rgba(14,15,14,.95));color:#e8ece2;-webkit-text-fill-color:currentColor;cursor:pointer;touch-action:manipulation}
 .hk-op{transition:transform .16s ease,border-color .25s,box-shadow .25s,background .25s}.hk-op:active{transform:scale(.985)}
-#hkCard.hk-anim .hk-op{animation:hkIn .5s cubic-bezier(.2,.85,.25,1) both}#hkCard.hk-anim .hk-op:nth-child(2){animation-delay:.07s}#hkCard.hk-anim .hk-op:nth-child(3){animation-delay:.14s}
+#hkCard.hk-anim .hk-op{animation:hkIn .5s cubic-bezier(.2,.85,.25,1) both}#hkCard.hk-anim .hk-op:nth-child(2){animation-delay:.07s}#hkCard.hk-anim .hk-op:nth-child(3){animation-delay:.14s}#hkCard.hk-anim .hk-op:nth-child(4){animation-delay:.21s}
 @keyframes hkIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
 .hk-op.sel canvas{box-shadow:0 0 0 2px #d0172b}
 @media (prefers-reduced-motion:reduce){#hkCard.hk-anim .hk-op{animation:none}#hkMode::before{transition:none}}
+ @media (orientation:landscape) and (max-height:520px){html #hkCard .hk-op{grid-template-columns:60px 1fr!important;gap:10px!important;padding:6px 8px!important;min-height:0!important}html #hkCard .hk-op canvas{width:60px!important;height:60px!important}html #hkCard .hk-op p{display:none!important}html #hkCard .hk-op b{font-size:15px!important}html #hkCard{gap:6px!important}}
 .hk-op canvas{width:88px;height:88px;border-radius:9px;border:1px solid rgba(255,255,255,.1)}
 .hk-op.sel{border-color:rgba(255,255,255,.85);box-shadow:inset 3px 0 0 #d0172b,0 10px 26px rgba(0,0,0,.4);background:linear-gradient(180deg,rgba(40,41,38,.96),rgba(20,21,19,.97))}
 .hk-tx{min-width:0;display:flex;flex-direction:column;gap:4px}.hk-top{display:flex;gap:6px;align-items:center}
@@ -221,7 +239,7 @@ function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t
 function select(id,mode){if(mode)ST.mode=mode;if(id&&OPS.some(o=>o.id===id))ST.sel=id;store(ST);safe(()=>root.setG(ST.mode),null);paintMenu();return ST.sel;}
 function start(id){select(id,MODE);return safe(()=>{root.reset(typeof lvSel==='string'?lvSel:'normal');return !!H;},false);}
 function diagnostics(){const en=enemies();return {version:VERSION,hooks:{...hooks},mode:ST.mode,sel:ST.sel,done:{...ST.done},active:!!H,op:H?H.op.id:null,t:H?H.t:0,won:H?H.won:false,lost:H?H.lost:false,
- wave:H?H.wave:-1,cap:H?H.cap:0,ph:H?H.ph:0,stars:H?H.stars||0:0,best:{...ST.stars},depLeft:H?H.depLeft:null,enemies:en.map(e=>({type:e.type,role:e.hk.role,x:Math.round(e.x),z:Math.round(e.z),hp:Math.round(e.hp),post:e.hk.post?Math.round(dist(e,e.hk.post)):null,i:e.hk.i})),
+ wave:H?H.wave:-1,cap:H?H.cap:0,ph:H?H.ph:0,stars:H?H.stars||0:0,best:{...ST.stars},depLeft:H?H.depLeft:null,batLeft:H?H.batLeft??null:null,hits:H?H.hits||0:0,inc:H&&H.inc?H.inc.length:0,shT:H?H.shT??null:null,enemies:en.map(e=>({type:e.type,role:e.hk.role,x:Math.round(e.x),z:Math.round(e.z),hp:Math.round(e.hp),post:e.hk.post?Math.round(dist(e,e.hk.post)):null,i:e.hk.i})),
  nav:safe(()=>NAV.on?{to:NAV.to.n,len:Math.round(NAV.len)}:null,null)};}
 root.HisarHarekat=Object.freeze({version:VERSION,core,start,select,picked,brief:()=>{showBrief();return !!brief&&!brief.hidden;},connect,diagnostics,step:dt=>step(dt)});
 connect();installUI();doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});

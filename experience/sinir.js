@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.1';
+const VERSION='1.0.2';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -119,7 +119,8 @@ function mkUnimog(){const g=new T.Group(),M=c=>new T.MeshLambertMaterial({color:
  g.userData.wheels=wheels;return g;}
 let UNI=[];
 function unimogs(){const f=FD().slice().sort((a,b)=>a-b),ws=W(),segs=[];let a=-ws+20;for(const x of f){if(x-a>120)segs.push([a,x-18]);a=x+18;}if(ws-20-a>120)segs.push([a,ws-20]);
- segs.filter((q,i)=>i%2===0||segs.length<4).slice(0,4).forEach((sg,i)=>{const g=mkUnimog();g.name='SN_UNIMOG';S.add(g);UNI.push({g,a:sg[0],b:sg[1],x:sg[0]+(sg[1]-sg[0])*(.2+.5*(i%2)),dir:i%2?-1:1,v:7,yaw:0,stop:0});});}
+ segs.filter((q,i)=>i%2===0||segs.length<4).slice(0,4).forEach((sg,i)=>{const g=mkUnimog();g.name='SN_UNIMOG';S.add(g);UNI.push({g,a:sg[0],b:sg[1],x:sg[0]+(sg[1]-sg[0])*(.2+.5*(i%2)),dir:i%2?-1:1,v:7,yaw:0,stop:0});});
+ /* devriye araçları kurulur kurulmaz yollarına yerleşir (menüde dünya merkezinde, tankın üstünde görünmesinler) */unimogStep(1);}
 function unimogStep(dt){for(const u of UNI){const ahead={x:u.x+u.dir*9,z:wallZ(RV,u.x+u.dir*9)-WALL.road};const blockP=safe(()=>Math.hypot(P.x-ahead.x,P.z-ahead.z)<8,false);
   const v=blockP?0:u.v;u.x+=u.dir*v*dt;if(u.x>u.b){u.x=u.b;u.dir=-1;}if(u.x<u.a){u.x=u.a;u.dir=1;}const z=wallZ(RV,u.x)-WALL.road,dz=wallZ(RV,u.x+u.dir)-wallZ(RV,u.x);
   const ty=Math.atan2(u.dir,dz);let d=ty-u.yaw;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;u.yaw+=d*Math.min(1,dt*2.2);

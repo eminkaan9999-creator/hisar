@@ -1,7 +1,7 @@
 {
-  "v": 98,
+  "v": 99,
   "experience": "63.1",
-  "not": "Görev emri ve ara hedefler. Göreve çıkmadan önce harita üzerinde görev emri açılır: durum, görev, icra adımları ve destek. Taarruz ve baskın görevleri artık aşama aşama ilerler (geçidi geç, yol üstündeki karakolu temizle, tepeyi tut); rota ve göstergeler o anki ara hedefe yönelir. Görev sonunda süre ve hasara göre bir ile üç yıldız verilir, en iyi derece görev kartında görünür. Telsiz bildirimi ve kısa iletiler yatay ekranda görev kartının üstüne binmez.",
+  "not": "Yeni görev: Umm Celal Bataryası. Sınır ötesindeki üç düşman obüsü Taşlıdere köyünü dövüyor; Doğu Geçidi'nden geç, bataryayı tespit et ve sustur. Batarya ateşte kaldıkça köye mermi düşer, susan her obüs ateşi seyreltir. Görev emri ekranı, ara hedefler ve yıldız değerlendirmesi bu görevde de var. Sınır hattına ses manzarası eklendi: güneyden uzak topçu gümbürtüsü ve makineli tüfek taramaları (sınırı geçince sıklaşır), gece cırcır böcekleri. Yandan atışta tank gövdesi yana yalpalar.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",
@@ -15,13 +15,14 @@
   "radioSpeed": 1,
   "swarm": "1.0.2",
   "realism": "1.1.0",
-  "sinir": "1.0.1",
-  "harekat": "1.2.0",
-  "atis": "1.0.0",
+  "sinir": "1.0.2",
+  "harekat": "1.3.0",
+  "atis": "1.0.1",
   "harita": "1.1.0",
   "carpisma": "1.0.0",
   "koy": "1.1.0",
   "destek": "1.1.0",
   "menu": "1.0.0",
-  "arazi": "1.0.0"
+  "arazi": "1.0.0",
+  "ortam": "1.0.0"
 }

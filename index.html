@@ -303,7 +303,7 @@ function ramB(){const v=Math.abs(P.v||0);if(v<2.5)return;const now=performance.n
   if(c.hp<=0)collapse(c);else P.v*=-.15;window.RAMMED=(window.RAMMED|0)+1;break}}
 function bldHit(x,z,r,n){for(const c of BLD){if(c.dead||c.hp>900)continue;if(Math.hypot(c.x-x,c.z-z)<r+c.r*.8){c.hp-=n;if(c.hp<=0)collapse(c)}}}
 function pushOut(o,m){for(const c of BLD){if(c.dead)continue;const dx=o.x-c.x,dz=o.z-c.z,d=Math.hypot(dx,dz),mm=c.r+m;if(d<mm){o.x=c.x+(d?dx/d:1)*mm;o.z=c.z+(d?dz/d:0)*mm}}
- for(const c of COV){const dx=o.x-c.x,dz=o.z-c.z,d=Math.hypot(dx,dz),mm=c.r*.85+m;if(d<mm){o.x=c.x+(d?dx/d:1)*mm;o.z=c.z+(d?dz/d:0)*mm}}}
+ for(const c of COV){if(c.pos&&c.h<.5)continue;const dx=o.x-c.x,dz=o.z-c.z,d=Math.hypot(dx,dz),mm=c.r*.85+m;if(d<mm){o.x=c.x+(d?dx/d:1)*mm;o.z=c.z+(d?dz/d:0)*mm}}} // ezilmiş mevzi setinin üstünden geçilir
 function blockedAt(p){for(const c of BLD){if(c.dead)continue;if(Math.hypot(p.x-c.x,p.z-c.z)<c.r&&p.y<hAt(c.x,c.z)+c.h)return c}
  for(const c of COV){if(Math.hypot(p.x-c.x,p.z-c.z)<c.r&&p.y<hAt(c.x,c.z)+c.h)return c}return null}
 function mkHouse(w,d,h,col){const g=new THREE.Group(),W=M(col),RF=M(0x9a4a30),a=.45;
@@ -699,7 +699,7 @@ function markAim(){if(game!=='play')return;if(!(DR.on&&mode==='drone')){say('İ�
 function markNearest(){if(game!=='play')return;const o=mode==='drone'&&DR.on?DR:P;let b=null,bd=1e9;for(const e of E){if(e.mark)continue;const k=Math.hypot(e.x-o.x,e.z-o.z);if(k<bd&&spotted(e)){bd=k;b=e}}if(b)toggleMark(b);else say('Görünen yeni hedef yok',1.2)}
 const mmx=$('mm').getContext('2d');
 const MMR=440,mmO=()=>mode==='drone'&&DR.on?DR:P;
-function mmDraw(){const W=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W,Z=z=>((z-O.z)/MMR+.5)*W;mmx.clearRect(0,0,W,W);mmx.fillStyle='rgba(30,50,25,.55)';mmx.fillRect(0,0,W,W);
+function mmDraw(){const W=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W,Z=z=>((z-O.z)/MMR+.5)*W;mmx.clearRect(0,0,W,W);if(window.MMBG)MMBG(mmx,O,W);else{mmx.fillStyle='rgba(30,50,25,.55)';mmx.fillRect(0,0,W,W)}
  for(const e of E){if(!spotted(e))continue;const x=X(e.x),y=Z(e.z);mmx.fillStyle=e.type==='bridge'?'#e8a030':'#ff4a3a';
   if(e.type==='bridge')mmx.fillRect(x-2,y-6,4,12);else if(e.type==='aa'){mmx.beginPath();mmx.moveTo(x,y-4);mmx.lineTo(x+4,y+3);mmx.lineTo(x-4,y+3);mmx.fill()}else if(e.type==='inf')mmx.fillRect(x-1.5,y-1.5,3,3);else mmx.fillRect(x-3,y-3,6,6);
   if(e.mark){mmx.strokeStyle='#ffe040';mmx.lineWidth=2;mmx.beginPath();mmx.arc(x,y,7,0,7);mmx.stroke()}}
@@ -3629,7 +3629,8 @@ const ldx=(k,d)=>{try{const j=JSON.parse(localStorage.getItem('m60v2')||'null');
 SV.voice=ldx('voice',1);SV.radioV=ldx('radioV',1);SV.hap=ldx('hap',1);SV.bcam=ldx('bcam',1);
 // ---------- konusma ----------
 const SS=window.speechSynthesis;let VOICE=null,primed=false,last={},talk=0,talkT=0,lastSaid={},radioT=0;const Q=[];
-function pickVoice(){if(!SS)return;const vs=SS.getVoices()||[];VOICE=vs.find(v=>/^tr/i.test(v.lang)&&/yelda|emel|filiz|google|cem/i.test(v.name))||vs.find(v=>/^tr/i.test(v.lang))||null}
+// erkek ses: experience/atis.js trVoice() Türkçe erkek sesi seçer; yoksa var olan Türkçe ses kalın okunur
+let VMALE=false;function pickVoice(){if(!SS)return;const p=window.trVoice?window.trVoice():null;if(p){VOICE=p.voice;VMALE=p.male;return}const vs=SS.getVoices()||[];VOICE=vs.find(v=>/^tr/i.test(v.lang))||null}
 if(SS){pickVoice();try{SS.onvoiceschanged=pickVoice}catch(e){}}
 // iPhone: sessiz moddayken de ses cikar; ses baglami her dokunusta uyanir
 try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
@@ -3643,7 +3644,7 @@ let NB=null;function sq(on){try{if(typeof AC==='undefined'||!AC||!sndOn)return;i
  s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t);s.stop(t+.26);const o=AC.createOscillator(),og=AC.createGain();o.type='square';o.frequency.value=on?1250:900;og.gain.setValueAtTime(.05,t);og.gain.exponentialRampToValueAtTime(.001,t+.05);o.connect(og);og.connect(AC.destination);o.start(t);o.stop(t+.06)}catch(e){}}
 const norm=t=>String(t).toLowerCase().replace(/[^a-zçğıöşü0-9 ]/g,'').replace(/\s+/g,' ').trim();
 function clean(t){return String(t).replace(/[\u{1F300}-\u{1FAFF}☀-➿⬀-⯿️]/gu,'').replace(/\([^)]*\)/g,'').replace(/·/g,',').replace(/\bMG\b/g,'makineli').replace(/\bmg\b/g,'makineli').replace(/\bAPDS\b/g,'a pe de es').replace(/\bHEAT\b/g,'hit').replace(/\bHEP\b/g,'hep').replace(/\bWP\b/g,'beyaz fosfor').replace(/\bM85\b/g,'em seksen beş').replace(/aşama (\d+)\/(\d+)/gi,'aşama $1, toplam $2').replace(/(\d+)\/(\d+)/g,'$1 bölü $2').replace(/×\s?(\d+)/g,' $1 tane').replace(/(\d+)\s?m\b/g,'$1 metre').replace(/(\d+)\s?sn\b/g,'$1 saniye').replace(/%(\d+)/g,'yüzde $1').replace(/\s+/g,' ').trim()}
-function utter(it){try{const u=new SpeechSynthesisUtterance(clean(it.t));u.lang='tr-TR';if(VOICE)u.voice=VOICE;u.rate=it.r?1.12:1.18;u.pitch=it.r?.82:.95;u.volume=1;
+function utter(it){try{const u=new SpeechSynthesisUtterance(clean(it.t));u.lang='tr-TR';if(VOICE)u.voice=VOICE;u.rate=it.r?1.08:1.12;u.pitch=VMALE?(it.r?.85:.92):(it.r?.5:.56);u.volume=1;
   const done=()=>{if(it.r)sq(0);talk=0;setTimeout(next,it.r?140:60)};u.onend=done;u.onerror=done;if(it.r)sq(1);talk=1;talkT=performance.now()+1800+it.t.length*95;SS.speak(u)}catch(e){talk=0}}
 function next(){if(talk)return;const it=Q.shift();if(it)utter(it)}
 setInterval(()=>{if(talk&&performance.now()>talkT){talk=0;next()}},500);
@@ -4533,7 +4534,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=94,LOGO=window.HISAR_LOGO;
+const VER=95,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7350,12 +7351,16 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script defer src="experience/bridge.js?v=63"></script>
 <script defer src="experience/ui.js?v=63"></script>
 
-<script src="experience/crew-orders.js?v=5"></script>
-<script src="experience/field.js?v=4"></script>
+<script src="experience/crew-orders.js?v=6"></script>
+<script src="experience/field.js?v=5"></script>
 <script src="experience/battle.js?v=6"></script>
 <script src="experience/swarm.js?v=3"></script>
 <script src="experience/realism.js?v=1"></script>
-<script src="experience/sinir.js?v=1"></script>
+<script src="experience/sinir.js?v=2"></script>
 <script src="experience/harekat.js?v=1"></script>
+<script src="experience/atis.js?v=1"></script>
+<script src="experience/harita.js?v=1"></script>
+<script src="experience/carpisma.js?v=1"></script>
+<script src="experience/koy.js?v=1"></script>
 </body>
 </html>

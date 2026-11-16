@@ -17,7 +17,7 @@ const voiceOn=()=>safe(()=>SV.voice!==0,true)&&!!root.speechSynthesis&&typeof ro
 // Bir cümleyi söyler; bitince (ya da en geç maxMs sonra) cb çalışır. Ses kapalıysa kısa bir bekleme yeter.
 function sayThen(text,cb,maxMs){let done=false;const fin=()=>{if(done)return;done=true;cb();};
  if(!voiceOn()){root.setTimeout(fin,220);return;}
- safe(()=>{const u=new root.SpeechSynthesisUtterance(text.replace(/\b(APDS|HEAT|HEP)\b/g,m=>SPOKEN[m]));u.lang='tr-TR';u.rate=1.25;u.pitch=.9;u.onend=fin;u.onerror=fin;root.speechSynthesis.cancel();root.speechSynthesis.speak(u);},null);
+ safe(()=>{const u=new root.SpeechSynthesisUtterance(text.replace(/\b(APDS|HEAT|HEP)\b/g,m=>SPOKEN[m]));u.lang='tr-TR';const vp=safe(()=>root.trVoice(),null);if(vp&&vp.voice)u.voice=vp.voice;u.rate=1.18;u.pitch=vp?vp.pitch:.56;u.onend=fin;u.onerror=fin;root.speechSynthesis.cancel();root.speechSynthesis.speak(u);},null);
  root.setTimeout(fin,maxMs);}
 function state(){return safe(()=>({playing:game==='play',tank:mode==='tank',aa:!!(root.AA&&AA.on),ready:cd<=0&&(typeof TA==='undefined'||typeof st!=='number'||TA[st]>0),pending}),null);}
 function install(){if(installed||typeof root.fire!=='function')return;installed=true;inner=root.fire;

@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.0.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -74,24 +74,28 @@ const RIG=[
  {g:'s',u:7,p:[0,0,0],o:[0,.19,-.01],s:[.28,.19,.3],c:'kask',only:'asker'},
  {g:'b',u:5,p:[.27,.56,0],j:'UL',o:[0,-.15,0],s:[.11,.32,.12],c:'ust'},{g:'b',u:9,p:[0,-.3,0],j:'FL',o:[0,-.14,0],s:[.1,.3,.11],c:'ust'},{g:'s',u:10,p:[0,-.3,0],o:[0,-.04,0],s:[.08,.09,.08],c:'ten'},
  {g:'b',u:5,p:[-.27,.56,0],j:'UR',o:[0,-.15,0],s:[.11,.32,.12],c:'ust'},{g:'b',u:12,p:[0,-.3,0],j:'FR',o:[0,-.14,0],s:[.1,.3,.11],c:'ust'},{g:'s',u:13,p:[0,-.3,0],o:[0,-.04,0],s:[.08,.09,.08],c:'ten'},
- {g:'b',u:13,p:[0,-.27,0],o:[.24,0,.02],s:[.86,.07,.05],c:'tufek',only:'asker',rz:-.35}];
+ {g:'b',u:13,p:[0,-.27,0],o:[.24,0,.02],s:[.86,.07,.05],c:'tufek',only:'asker',rz:-.35},
+ // siviller: başörtüsü ve uzun etek (kadın), kasket (yaşlı adam), okul çantası (çocuk), saç (kız çocuk)
+ {g:'s',u:7,p:[0,0,0],o:[0,.12,-.025],s:[.28,.31,.3],c:'bas',only:'kadin'},{g:'b',u:0,p:[0,0,0],o:[0,-.4,0],s:[.46,.84,.34],c:'etek',only:'kadin|kiz'},
+ {g:'b',u:7,p:[0,0,0],o:[0,.2,.025],s:[.25,.07,.28],c:'kasket',only:'adam'},{g:'b',u:5,p:[0,0,0],o:[0,.34,-.2],s:[.34,.4,.16],c:'canta',only:'cocuk|kiz'},
+ {g:'s',u:7,p:[0,0,0],o:[0,.06,-.07],s:[.24,.28,.22],c:'sac',only:'kiz|cocuk'}];
 const ASKER={alt:0x4e5636,bot:0x2a2620,ust:0x5d6640,yel:0x46502f,kask:0x4a5233,tufek:0x1d1f1c};
-function Crowd(cap){const box=new T.BoxGeometry(1,1,1),sph=new T.SphereGeometry(.5,10,8),mat=new T.MeshLambertMaterial({color:0xffffff});
+function Crowd(cap,rig,poseFn,tag){rig=rig||RIG;poseFn=poseFn||pose;tag=tag||'SN_FIG';const box=new T.BoxGeometry(1,1,1),sph=new T.SphereGeometry(.5,10,8),mat=new T.MeshLambertMaterial({color:0xffffff});
  const mk=(geo,n,name)=>{const m=new T.InstancedMesh(geo,mat,n);m.instanceColor=new T.InstancedBufferAttribute(new Float32Array(n*3).fill(1),3);m.count=0;m.frustumCulled=false;m.name=name;S.add(m);return m;};
- const B=mk(box,cap*13,'SN_FIG_K'),Sp=mk(sph,cap*4,'SN_FIG_Y'),figs=[],m4=new T.Matrix4(),tmp=new T.Matrix4(),eu=new T.Euler(),col=new T.Color(),F=[],zero=new T.Matrix4().makeScale(0,0,0),t2=new T.Matrix4(),V=new T.Vector3();
- for(let i=0;i<RIG.length;i++)F.push(new T.Matrix4());
+ const nb=rig.filter(q=>q.g==='b').length,ns=rig.length-nb,B=mk(box,cap*nb,tag+'_K'),Sp=mk(sph,cap*ns,tag+'_Y'),figs=[],m4=new T.Matrix4(),tmp=new T.Matrix4(),eu=new T.Euler(),col=new T.Color(),F=[],zero=new T.Matrix4().makeScale(0,0,0),t2=new T.Matrix4(),V=new T.Vector3();
+ for(let i=0;i<rig.length;i++)F.push(new T.Matrix4());
  function add(kind,colors,o){const f={kind,x:o.x,y:o.y,z:o.z,yaw:o.yaw||0,sc:o.sc||1,act:o.act||'dur',t:Math.random()*6,look:0,idx:[],vis:true,live:true};
-  for(let i=0;i<RIG.length;i++){const q=RIG[i];if(q.only&&q.only!==kind){f.idx.push(null);continue;}const m=q.g==='b'?B:Sp;if(m.count>=(q.g==='b'?cap*13:cap*4)){f.idx.push(null);continue;}const k=m.count++;
+  for(let i=0;i<rig.length;i++){const q=rig[i];if(q.only&&!q.only.split('|').includes(kind)){f.idx.push(null);continue;}const m=q.g==='b'?B:Sp;if(m.count>=(q.g==='b'?cap*nb:cap*ns)){f.idx.push(null);continue;}const k=m.count++;
    col.setHex(q.c==='ten'?SKIN[figs.length%SKIN.length]:(colors[q.c]!=null?colors[q.c]:0x808080));m.setColorAt(k,col);f.idx.push([m,k]);}
   B.instanceColor.needsUpdate=Sp.instanceColor.needsUpdate=true;figs.push(f);return f;}
- function draw(f){const P=pose(f.act,f.t,{look:f.look});const base=m4.makeRotationY(f.yaw).setPosition(f.x,f.y+(P.GY||0),f.z);if(f.sc!==1)base.scale(V.set(f.sc,f.sc,f.sc));
-  for(let i=0;i<RIG.length;i++){const q=RIG[i],a=q.j&&P[q.j];const parent=q.u<0?base:F[q.u];F[i].copy(parent).multiply(t2.makeTranslation(q.p[0],q.p[1],q.p[2]));
+ function draw(f){const P=poseFn(f.act,f.t,{look:f.look,f});const base=m4.makeRotationY(f.yaw).setPosition(f.x,f.y+(P.GY||0),f.z);if(f.sc!==1)base.scale(V.set(f.sc,f.sc,f.sc));
+  for(let i=0;i<rig.length;i++){const q=rig[i],a=q.j&&P[q.j];const parent=q.u<0?base:F[q.u];F[i].copy(parent).multiply(t2.makeTranslation(q.p[0],q.p[1],q.p[2]));
    if(a){eu.set(a[0],a[1],a[2]);F[i].multiply(t2.makeRotationFromEuler(eu));}
    const id=f.idx[i];if(!id)continue;const M=tmp.copy(F[i]).multiply(t2.makeTranslation(q.o[0],q.o[1],q.o[2]));if(q.rz)M.multiply(t2.makeRotationZ(q.rz));M.scale(V.set(q.s[0],q.s[1],q.s[2]));id[0].setMatrixAt(id[1],M);}}
  function hide(f){for(const id of f.idx)if(id)id[0].setMatrixAt(id[1],zero);}
  function frame(cx,cz,range){let n=0;for(const f of figs){const near=f.live&&Math.hypot(f.x-cx,f.z-cz)<range;if(near){draw(f);n++;f.vis=true;}else if(f.vis){hide(f);f.vis=false;}}
   B.instanceMatrix.needsUpdate=Sp.instanceMatrix.needsUpdate=true;return n;}
- return {add,frame,figs};}
+ return {add,frame,figs,draw,hide};}
 
 // ---------- sınır yapıları ----------
 function buildWall(){const fords=FD(),ws=W(),xs=[];for(let x=-ws+4;x<=ws-4;x+=WALL.block)if(!atGate(fords,x))xs.push(x);
@@ -122,7 +126,7 @@ function unimogStep(dt){for(const u of UNI){const ahead={x:u.x+u.dir*9,z:wallZ(R
   const y=safe(()=>hAt(u.x,z),0);u.g.position.set(u.x,y,z);u.g.rotation.y=u.yaw;for(const w of u.g.userData.wheels)w.rotation.x+=v*dt/.55;u.z=z;}}
 // Ülke göstergesi: oyunda ekranın üstünde bulunduğun ülke ve sınıra uzaklık
 let chip=null;
-function chipStep(){if(!doc.body)return;if(!chip){chip=doc.createElement('div');chip.id='sn-ulke';const st=doc.createElement('style');st.textContent=`#sn-ulke{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);transform:translateX(-50%);z-index:12;display:flex;align-items:center;gap:8px;padding:5px 11px 5px 6px;border-radius:6px;background:rgba(12,13,12,.78);border:1px solid rgba(255,255,255,.12);color:#f4f2ec;font:800 13px/1 var(--sf,system-ui);letter-spacing:.1em;pointer-events:none;white-space:nowrap}
+function chipStep(){if(!doc.body)return;if(!chip){chip=doc.createElement('div');chip.id='sn-ulke';const st=doc.createElement('style');st.textContent=`#sn-ulke{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:12;display:flex;align-items:center;gap:8px;padding:5px 11px 5px 6px;border-radius:6px;background:rgba(12,13,12,.78);border:1px solid rgba(255,255,255,.12);color:#f4f2ec;font:800 13px/1 var(--sf,system-ui);letter-spacing:.1em;pointer-events:none;white-space:nowrap}
 #sn-ulke img{width:27px;height:18px;border-radius:2px;display:block}#sn-ulke small{font:700 11.5px/1 var(--sf,system-ui);letter-spacing:.04em;color:#b9bbb3}#sn-ulke.sy{border-color:rgba(226,74,59,.7)}#sn-ulke.sy img{display:none}
 body:not(.inplay) #sn-ulke{display:none}`;doc.head.appendChild(st);const im=doc.createElement('img');im.alt='';const c=doc.createElement('canvas');c.width=60;c.height=40;drawFlag(c,60,40);im.src=c.toDataURL();
   chip.append(im,doc.createElement('b'),doc.createElement('small'));doc.body.appendChild(chip);}
@@ -147,7 +151,7 @@ function karakol(f,flags,crowdAdd){const s=postSpot(f);if(!s)return null;const r
   part('d',0,1.75,d/2+.03,1.6,2.3,.12,0,0x2e3a2a);part('t',0,3.1,d/2+.9,3.4,.15,1.8,0,0xbdb8ae);part('t',0,4.6,d/2+.06,5.2,.8,.08,0,0x1d3d7a);return H+1;});
  if(!b)return null;const c=Math.cos(rot),sn=Math.sin(rot),L=(lx,lz)=>({x:s.x+lx*c+lz*sn,z:s.z-lx*sn+lz*c});
  // kum torbası siperi (önde iki kanat) ve bayrak gönderi
- for(const[lx,lz,w,ry]of[[-6,9,6,0],[6,9,6,0],[-10,6,4,1.57]]){const q=L(lx,lz);make(q.x,q.z,rot+ry,1.4,999,'torba',(b,part)=>{for(let i=0;i<3;i++)part('t',0,.25+i*.36,0,w-i*.25,.36,.7,0,i%2?0x9a8a62:0x8b7c57);return 1.1;});}
+ for(const[lx,lz,w,ry]of[[-6,9,6,0],[6,9,6,0],[-10,6,4,1.57]]){const q=L(lx,lz);make(q.x,q.z,rot+ry,1.4,3,'torba',(b,part)=>{for(let i=0;i<3;i++)part('t',0,.25+i*.36,0,w-i*.25,.36,.7,0,i%2?0x9a8a62:0x8b7c57);return 1.1;});}
  const fp=L(0,13);make(fp.x,fp.z,0,.5,999,'gonder',(b,part)=>{part('t',0,7,0,.14,14,.14,0,0xe8e8e8);part('t',0,.3,0,1.2,.6,1.2,0,0xb5b1a8);return 14;});
  flags.push({x:fp.x,z:fp.z,y:hAt(fp.x,fp.z)+13.9,h:rot,s:4.2,big:1});
  for(const lx of[-2.4,2.4]){const q=L(lx,7.2);crowdAdd({x:q.x,z:q.z,yaw:rot,act:'nobet',gate:1});}
@@ -248,6 +252,6 @@ function drawMini(){if(typeof mmx==='undefined'||typeof mmO!=='function')return;
  mmx.save();mmx.strokeStyle='rgba(235,60,50,.9)';mmx.lineWidth=1.6;mmx.setLineDash([4,3]);mmx.beginPath();let f=true;for(let x=O.x-MMR;x<=O.x+MMR;x+=6){const X0=X(x),Y0=Z(wallZ(RV,x));if(f){mmx.moveTo(X0,Y0);f=false;}else mmx.lineTo(X0,Y0);}mmx.stroke();mmx.restore();}
 function diagnostics(){return {version:VERSION,built,hooks:{...hooks},...stat,posts:POSTS.map(p=>({x:Math.round(p.x),z:Math.round(p.z),f:p.f})),towersAt:TW.map(t=>Math.round(t.x)),
  unimogs:UNI.map(u=>({x:Math.round(u.x),z:Math.round(u.z),dir:u.dir})),schoolsAt:SCH.map(s=>({x:Math.round(s.x),z:Math.round(s.z),name:s.name})),sentries:SOLD.filter(f=>f.home.gate).map(f=>({x:f.x,z:f.z,act:f.act})),patrols:SOLD.filter(f=>f.pat).map(f=>({x:f.x,z:f.z,act:f.act}))};}
-root.HisarSinir=Object.freeze({version:VERSION,core,flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd});
+root.HisarSinir=Object.freeze({version:VERSION,core,fig:()=>({Crowd:(...a)=>{T=T||root.THREE;return Crowd(...a);},RIG,pose,SKIN}),flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd});
 connect();doc.addEventListener('hisar:ui-ready',connect);
 })(typeof window!=='undefined'?window:globalThis);

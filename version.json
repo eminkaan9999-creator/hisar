@@ -1,7 +1,7 @@
 {
-  "v": 94,
+  "v": 95,
   "experience": "63.1",
-  "not": "Harekât. Artık görev emriyle oynanıyor: haritanın kuzeyi Türkiye, güneyi Suriye; sınır nehir boyunca. Üç görev var: Sınır Kapısı Savunması (üç dalga taarruzu Taş Geçit'te durdur), Tel Zeytun Tepesi (sınırı geç, tepeyi ele geçir), Kafr Sadun Deposu (düşman ikmal deposunu imha et). Hedefe rota çizilir; düşman mevzisinde bekler, seni kovalamaz ve Türkiye'ye giremez. Başlangıç karakolunda ikmal yapılır. Sınır duvarı (beton blok, jiletli tel), sınır kapıları, nöbetçi kuleleri ve içlerinde nöbetçiler, üç sınır karakolu (gönderde büyük bayrak, kapı nöbetçileri selam verir), duvar boyunca devriye. Türkiye tarafındaki bütün evlerde Türk bayrağı; köylerde ilkokul ve bahçesinde bayrak. Sivil yerleşime düşen mermide uyarı. Tank artık ağır: yolda en çok 43 km/sa, yavaş hızlanır ve döner. Hızla çarpılan bina hasar alır, yıkılır.",
+  "not": "Köy hayatı, atış ve çarpışma. Türkiye tarafındaki köylerde başörtülü kadınlar, kasketli yaşlılar ve gençler evler arasında yürür, tank geçince el sallar, yakına mermi düşünce evlerine kaçar. Çantalı çocuklar evden okula yürür; tankı görünce durup asker selamı verir. Çobanı ve kangalıyla koyun sürüleri, ahır önünde inekler, tavuklar, köylerin üstünde süzülen leylekler; tank yaklaşınca kaçışırlar. Yerde gelincik, papatya, sarı ve mor çiçek öbekleri. Ana top ateşlenince gövde geri sarsılır, namludan alev ve duman halkası çıkar, toz kalkar; ses yankılı ve güçlü. Uçaksavardan boş kovan fırlar. Tank çarptığı ağacı devirir, mevzi setini ezip üstünden geçer, kamyonu ezer, kum torbalarını yıkar, suda su sıçratır. Küçük harita gerçek arazi haritası: gölgeli arazi, yollar, binalar, sınır ve Suriye tarafı. Mürettebat ve telsiz erkek sesi.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",
@@ -15,6 +15,10 @@
   "radioSpeed": 1,
   "swarm": "1.0.2",
   "realism": "1.0.0",
-  "sinir": "1.0.0",
-  "harekat": "1.0.0"
+  "sinir": "1.0.1",
+  "harekat": "1.0.0",
+  "atis": "1.0.0",
+  "harita": "1.0.0",
+  "carpisma": "1.0.0",
+  "koy": "1.0.0"
 }

@@ -197,6 +197,33 @@ if(!mobile){
   return {v1,vmax,hp,after:b.hp,dead:b.dead,ram:(window.RAMMED|0)-r0};});
  assert.ok(drv.v1<3.6,'one second from rest: '+drv.v1);assert.ok(drv.vmax>8&&drv.vmax<12.8,'top speed '+drv.vmax);assert.ok(drv.ram>0&&(drv.dead||drv.after<drv.hp),'ramming damages the house');
  ok('the tank is heavy: '+drv.v1.toFixed(1)+' m/s after one second, '+drv.vmax.toFixed(1)+' m/s top on the road; ramming a house damages it');
+ // ---- atış hissi, kovan, erkek ses, gerçek küçük harita, çarpışmalar
+ await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,2);
+ // mürettebat "Ateş!" der, top konuşma bitince ateşlenir (crew-orders.js): bir an beklenir
+ const a0=await p.evaluate(()=>{const a=HisarAtis.diagnostics();cd=0;ammo=Math.max(ammo,3);mode='tank';fire();return a;});await p.waitForFunction(s=>HisarAtis.diagnostics().shots>s,a0.shots,{timeout:8000});
+ const fx=await p.evaluate(a0=>{update(.05);const a1=HisarAtis.diagnostics();HisarAtis.eject(3);for(let i=0;i<25;i++)update(.1);const a2=HisarAtis.diagnostics();
+  mmDraw();const h=HisarHarita.diagnostics();return {shots:a1.shots-a0.shots,smoke:a1.smoke-a0.smoke,rock:Math.abs(a1.rock.a)+Math.abs(a1.rock.v),cas:a2.live,v:typeof trVoice==='function',h,
+   kovan:!!S.getObjectByName('AT_KOVAN')};},a0);
+ assert.equal(fx.shots,1);assert.ok(fx.smoke>=10);assert.ok(fx.rock>.1,'hull rocks');assert.ok(fx.cas>=3&&fx.kovan);assert.equal(fx.v,true);assert.equal(fx.h.size,264);assert.ok(fx.h.draws>0&&fx.h.hidpi);
+ ok('firing rocks the hull with a smoke ring; machine-gun casings fly out; the mini map is a sharp terrain map with roads and buildings');
+ const cr=await p.evaluate(()=>{const t=HisarCarpisma.trees().find(q=>!q.down&&Math.abs(q.x)<WS-60&&Math.abs(q.z-riv(q.x))>60&&BLD.every(b=>Math.hypot(b.x-q.x,b.z-q.z)>b.r+14));
+  P.x=t.x;P.z=t.z-14;P.h=0;P.v=0;keys.w=true;let k=0;for(;k<80&&!HisarCarpisma.trees().find(q=>q.x===t.x&&q.z===t.z).down;k++){P.x=t.x;update(.1);}keys.w=false;
+  const fell=HisarCarpisma.trees().find(q=>q.x===t.x&&q.z===t.z).down;
+  const fp=HisarField.positions().find(q=>Math.abs(q.z-riv(q.x)+26)>60&&BLD.every(b=>b.dead||Math.hypot(b.x-q.x,b.z-q.z)>b.r+28)&&COV.some(k=>k.pos&&k.h>.6&&Math.hypot(k.x-q.x,k.z-q.z)<20)),c=COV.filter(k=>k.pos&&Math.hypot(k.x-fp.x,k.z-fp.z)<20).sort((a,b)=>b.h-a.h)[0],h0=c.h;{const a=Math.atan2(c.x-fp.x,c.z-fp.z);P.x=c.x+Math.sin(a)*7;P.z=c.z+Math.cos(a)*7;P.h=a+Math.PI;P.v=6;keys.w=true;for(let i=0;i<25;i++)update(.1);keys.w=false;}
+  const tr=addE('truck',P.x+16,P.z);P.h=Math.PI/2;P.v=8;keys.w=true;for(let i=0;i<40&&E.includes(tr);i++){P.z=tr.z;update(.1);}keys.w=false;
+  return {fell,k,h0,h1:c.h,truck:!E.includes(tr),d:HisarCarpisma.diagnostics()};});
+ assert.equal(cr.fell,true,'tree falls');assert.ok(cr.h1<cr.h0*.7,'berm flattened '+cr.h0+' -> '+cr.h1);assert.equal(cr.truck,true,'truck crushed');
+ ok('the tank fells a tree, flattens a position berm and crushes a truck');
+ // ---- köy hayatı: köylüler, selam veren çocuklar, saklanma, hayvanlar, çiçekler
+ const ky=await p.evaluate(()=>{const d=HisarKoy.diagnostics(),s=HisarSinir.schools()[0],kids=HisarKoy.people().filter(q=>q.kid&&q.v&&q.v.school===s);mode='tank';
+  const k=kids[0];k.st='walk';k.f.live=true;k.f.x=s.gate.x+20;k.f.z=s.gate.z;k.path=[{x:s.door.x,z:s.door.z}];k.cool=0;k.hold=0;P.x=k.f.x+12;P.z=k.f.z;P.v=0;
+  let sal=false;for(let i=0;i<10;i++){P.x=k.f.x+12;P.z=k.f.z;update(.1);if(k.f.act==='selam')sal=true;}
+  const f0=HisarKoy.diagnostics().fled,v=HisarKoy.people().find(q=>!q.kid&&q.v&&q.st!=='hidden'&&q.st!=='run');P.x=v.f.x+60;P.z=v.f.z;sndBoom(v.f.x+10,v.f.z);const st=v.st;for(let i=0;i<300&&v.st!=='hidden';i++){P.x=v.f.x+60;update(.1);}
+  const a=HisarKoy.animals().find(q=>q.kind==='koyun'&&q.st!=='kos'),a0={x:a.f.x,z:a.f.z};for(let i=0;i<25;i++){P.x=a0.x+9;P.z=a0.z;update(.1);}HisarKoy.flowers();
+  return {d,sal,st,hid:v.st,fled:HisarKoy.diagnostics().fled-f0,run:Math.hypot(a.f.x-a0.x,a.f.z-a0.z),fl:HisarKoy.diagnostics().flowers,mesh:['KH_INSAN_K','KH_KOYUN_Y','KH_CICEK','KH_LEYLEK_K'].every(n=>!!S.getObjectByName(n))};});
+ assert.ok(ky.d.people>=60&&ky.d.kids>=25,'villagers '+ky.d.people+' kids '+ky.d.kids);const an=ky.d.animals;assert.ok(an.koyun>=80&&an.inek>=10&&an.tavuk>=40&&an.leylek>=10&&an.kopek>=4,JSON.stringify(an));
+ assert.equal(ky.sal,true,'a child salutes the tank');assert.equal(ky.st,'run');assert.equal(ky.hid,'hidden');assert.ok(ky.fled>=1);assert.ok(ky.run>5,'sheep run '+ky.run);assert.ok(ky.fl>100,'flowers '+ky.fl);assert.equal(ky.mesh,true);
+ ok('village life: '+ky.d.people+' villagers and children, a child salutes the tank, villagers run indoors from a blast, '+(an.koyun+an.inek+an.tavuk+an.kopek+an.leylek)+' animals flee the tank, '+ky.fl+' flowers');
  // ---- harekât: savunma, taarruz, baskın
  await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
  const g1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();for(let i=0;i<570;i++){P.x=70;P.z=40;update(.1);}const d1=HisarHarekat.diagnostics();const z0=d1.enemies.map(e=>e.z);for(let i=0;i<100;i++){P.x=70;P.z=40;update(.1);}const d2=HisarHarekat.diagnostics();

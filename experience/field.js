@@ -158,7 +158,11 @@ function earthMesh(p,mat,seed){const heaps=spoil(seed),pos=[],uv=[],col=[],al=[]
 let earthMat=null;
 function dig(f,pi){const p={x:f.x,z:f.z,h:f.h,clear:f.clear};p.m=earthMesh(p,earthMat,pi*97+13);S.add(p.m);p.blocks=blocksOf(p);
  // Oyunun kendi siper listesi: çarpışma, mermi, görüş ve rota bu listeye bakar.
- safe(()=>{for(const b of p.blocks)COV.push({x:b.x,z:b.z,r:b.r,h:b.h,pos:1});},null);positions.push(p);return p;}
+ p.cov=[];safe(()=>{for(const b of p.blocks){const c={x:b.x,z:b.z,r:b.r,h:b.h,pos:1};COV.push(c);p.cov.push(c);}},null);p.h0=p.cov.map(c=>c.h);p.crush=1;positions.push(p);return p;}
+// Ezilme: tank toprak setin üstünden geçince set alçalır (siper yüksekliği ve görünüş); yeni savaşta yeniden kazılır.
+function crush(x,z,r){let n=0;for(const p of positions||[]){const dc=Math.hypot(p.x-x,p.z-z);if(dc>40||dc<4.5)continue;/* mevzinin çukurundaki tank kendi setini ezmez */for(const c of p.cov||[]){if(Math.hypot(c.x-x,c.z-z)<c.r+(r||2.5)&&c.h>.35){c.h=Math.max(.3,c.h*.55);n++;}}
+ if(n){const k=Math.max(.25,Math.min(...p.cov.map((c,i)=>c.h/(p.h0[i]||1))));if(p.m)p.m.scale.y=k;p.crush=k;}}return n;}
+function uncrush(){for(const p of positions||[]){if(!p.cov)continue;p.cov.forEach((c,i)=>{c.h=p.h0[i];});if(p.m)p.m.scale.y=1;p.crush=1;}}
 function build(){if(positions)return;positions=[];const t0=performance.now();
  safe(()=>{const base=safe(()=>root.DOZER.mat,null);earthMat=base?base.clone():new THREE.MeshLambertMaterial({color:0x6a5338});
   earthMat.color=new THREE.Color(0xc2ad8e);earthMat.vertexColors=true;earthMat.transparent=true;earthMat.depthWrite=true;earthMat.polygonOffset=true;earthMat.polygonOffsetFactor=-2;earthMat.polygonOffsetUnits=-2;
@@ -203,13 +207,13 @@ function settle(dt){const near=positions.find(p=>{const c=toWorld(p,PLUG[0],PLUG
   // Başka emir alan tank mevziden geri geri çıkar; emirsiz hiçbir tank mevzinin içine giremez.
   if(a._exit){const p=a._exit.p,e=exitStep(p,a._exit,dt);a.x=e.x;a.z=e.z;a.h=e.h;place(a);pushes++;if(e.done)a._exit=null;}
   else for(const p of positions){if(p===mine||Math.hypot(a.x-p.x,a.z-p.z)>14)continue;
-   if(insideRing(p,a.x,a.z)){const l=toLocal(p,a.x,a.z);a._exit={p,lx:l.x,lz:l.z,h:a.h};break;}if(plugPush(p,a,p===near?0:dt*4)){place(a);pushes++;}}
+   if(insideRing(p,a.x,a.z)){const l=toLocal(p,a.x,a.z);a._exit={p,lx:l.x,lz:l.z,h:a.h};break;}if(p.crush>.5&&plugPush(p,a,p===near?0:dt*4)){place(a);pushes++;}}
   a._sink=inside?Math.min(.35,(a._sink||0)+dt*.7):Math.max(0,(a._sink||0)-dt*1.4);if(a._sink>0&&a.g)a.g.position.y-=a._sink;}
  // Düşman araçları mevziye giremez; sabit hedefler (korugan, top, hava savunma) toprağın içine denk gelmişse bir kez kenara alınır.
  enemyPositions(dt);
  for(const e of E){if(!SOLID.has(e.type))continue;const moving=MOVING.has(e.type);if(!moving&&e._fieldOk)continue;e._fieldOk=1;
   if(e._exit){const p=e._exit.p,x=exitStep(p,e._exit,dt);e.x=x.x;e.z=x.z;e.h=x.h;place(e);if(x.done)e._exit=null;continue;}
-  for(const p of positions){if(p===e._pos||Math.hypot(e.x-p.x,e.z-p.z)>14)continue;if(plugPush(p,e,moving&&p!==near?dt*4:0)){place(e);if(!moving&&e.g&&e.g.position)e.g.position.y=hAt(e.x,e.z);pushes++;}}
+  for(const p of positions){if(p===e._pos||Math.hypot(e.x-p.x,e.z-p.z)>14)continue;if(p.crush>.5&&plugPush(p,e,moving&&p!==near?dt*4:0)){place(e);if(!moving&&e.g&&e.g.position)e.g.position.y=hAt(e.x,e.z);pushes++;}}
   e._sink=e._in?Math.min(.35,(e._sink||0)+dt*.7):Math.max(0,(e._sink||0)-dt*1.4);if(e._sink>0&&e.g&&e.g.position)e.g.position.y-=e._sink;}}
 let enT=0,enIn=0;
 const claimed=p=>safe(()=>AL.some(a=>!a.dead&&a.hold&&a.hold.position&&Math.hypot(a.hold.cx-p.x,a.hold.cz-p.z)<.5),false)||E.some(o=>o._pos===p);
@@ -241,6 +245,6 @@ safe(()=>{const up=root.update;if(typeof up!=='function'||up.hisarField)return;c
   safe(()=>{cull(Math.min(.1,+dt||0));if(game!=='play')return;build();shellWorld();collide();settle(Math.min(.1,+dt||0));},null);return r;};w.hisarField=true;root.update=w;},null);
 // Mevziler menüdeyken kurulur ki oyunun ilk karesi takılmasın; olmadıysa ilk oyun adımı kurar.
 (function early(n){root.setTimeout(()=>{if(positions)return;if(safe(()=>typeof hAt==='function'&&!!S&&!!root.TREES&&root.TREES.length>0&&BLD.length>0,false))build();else if(n<20)early(n+1);},n?1500:2500);})(0);
-root.HisarField=Object.freeze({core,positions:()=>{safe(build,null);return (positions||[]).map(p=>({x:p.x,z:p.z,h:p.h,clear:p.clear}));},
+root.HisarField=Object.freeze({core,crush,uncrush,positions:()=>{safe(build,null);return (positions||[]).map(p=>({x:p.x,z:p.z,h:p.h,clear:p.clear}));},
  diagnostics:()=>({enemiesIn:enIn,enemiesBound:safe(()=>E.filter(e=>e._pos).length,0),pushes,worldHits,lastHit,positions:positions?positions.length:0,pending:wideQ?wideQ.length:-1,anchors:wideN,wideMs:Math.round(wideSum),wideMax:Math.round(wideMax),coverHits,sink,buildMs,tris})});
 })(typeof window!=='undefined'?window:globalThis);

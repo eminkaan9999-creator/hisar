@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.4.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='1.5.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -24,22 +24,22 @@ const OPS=Object.freeze([
   via:[[62,28],[70,84],[70,160],[70,420],[70,720]]}),
  Object.freeze({id:'tepe',n:'Tel Zeytun Tepesi',tur:'TAARRUZ',ford:-560,start:{x:-548,z:20,h:0},obj:{x:-540,z:680,r:45,n:'Tel Zeytun Tepesi'},
   emir:'Batı Geçidi\'nden sınırı geç. Yol üstündeki düşman karakolunu aş, tepedeki tank mevzilerini temizle ve tepeyi tut.',
-  outpost:{x:-588,z:290,u:['bunker','apc','inf','inf']},guard:{u:['tank','tank','tank','apc','kornet','inf','kornet'],r:58},
+  outpost:{x:-588,z:290,u:['bunker','apc','inf','inf']},guard:{u:['tank','tank','tank','apc','kornet','inf','kornet'],r:58},qrf:{at:1,u:['tank','apc'],from:[-640,520]},
   phases:[{n:'Batı Geçidi\'ni geç',k:'reach',x:-560,z:178,r:30},{n:'Yol üstündeki düşman karakolunu temizle',k:'clear',x:-588,z:290,r:90},{n:'Tepeyi temizle ve 12 sn tut',k:'final'}],par:420,
   via:[[-548,20],[-560,90],[-560,170],[-600,300],[-610,420],[-560,560],[-540,680]]}),
  Object.freeze({id:'depo',n:'Kafr Sadun Deposu',tur:'GECE BASKINI',wx:'gece',ford:400,start:{x:392,z:40,h:0},obj:{x:430,z:480,r:60,n:'Kafr Sadun İkmal Deposu'},
   emir:'Karanlıkta, gece görüşüyle Söğüt Geçidi\'nden sınırı geç. Kafr Sadun\'un doğusundaki düşman ikmal deposunu (yakıt, kamyon, radar) imha et. Köyde sivil var: ateşine dikkat et.',
-  depot:['fuel','fuel','truck','truck','radar'],guard:{u:['tank','tank','aa','kornet','inf','inf'],r:46},
+  depot:['fuel','fuel','truck','truck','radar'],guard:{u:['tank','tank','aa','kornet','inf','inf'],r:46},qrf:{at:1,u:['tank','apc'],from:[500,600]},
   phases:[{n:'Söğüt Geçidi\'ni geç',k:'reach',x:400,z:200,r:30},{n:'Depoyu 400 m\'den gözetle',k:'near',x:430,z:480,r:400},{n:'Depoyu imha et',k:'final'}],par:360,
   via:[[392,40],[400,108],[400,250],[400,400],[430,480]]}),
  Object.freeze({id:'batarya',n:'Umm Celal Bataryası',tur:'KARŞI BATARYA',ford:660,start:{x:650,z:30,h:0},obj:{x:690,z:640,r:55,n:'Umm Celal Topçu Bataryası'},
   emir:'Sınır ötesindeki düşman obüs bataryası Taşlıdere köyünü dövüyor. Doğu Geçidi\'nden geç, bataryayı tespit et ve sustur. Batarya ateşte kaldıkça köye mermi düşer.',
-  battery:['arty','arty','arty'],guard:{u:['tank','apc','kornet','inf','aa'],r:62},shell:{x:480,z:20,n:'Taşlıdere',every:20,fly:6},
+  battery:['arty','arty','arty'],guard:{u:['tank','apc','kornet','inf','aa'],r:62},qrf:{at:1,u:['tank','tank','apc'],from:[740,500]},shell:{x:480,z:20,n:'Taşlıdere',every:20,fly:6},
   phases:[{n:'Doğu Geçidi\'ni geç',k:'reach',x:660,z:185,r:30},{n:'Bataryayı 350 m\'den tespit et',k:'near',x:690,z:640,r:350},{n:'Üç obüsü sustur',k:'final'}],par:420,
   via:[[650,30],[660,100],[660,185],[650,360],[640,520],[690,640]]})]);
 // zorluk: düşmanın yeniden dolum süresi (sn), isabet hasarı, dayanıklılık çarpanı
 const TUNE=Object.freeze({kolay:{cd:6,dmg:12,hp:1.8},normal:{cd:4.6,dmg:18,hp:2.2},zor:{cd:3.4,dmg:26,hp:2.6},serbest:{cd:6,dmg:0,hp:1.8}});
-const HOLD=12,FIRE_RANGE=360,SEEN=300,NIGHT=.6,LEASH=80,BASE_R=32;
+const HOLD=12,QRF_STOP=170,FIRE_RANGE=360,SEEN=300,NIGHT=.6,LEASH=80,BASE_R=32;
 // Ele geçirme: hedef çevresinde düşman kalmamışsa ve oyuncu içerideyse sayaç ilerler, çıkınca yavaşça geri iner.
 function capture(c,dt,inside,clear){if(!clear)return Math.max(0,c-dt*.5);return inside?Math.min(HOLD,c+dt):Math.max(0,c-dt*.5);}
 // Saldırı dalgaları: önceki dalga bitince bir sonrakinin sayacı başlar.
@@ -56,7 +56,7 @@ function salvoGap(every,left,r){return left>0?every*(3/left)*(.8+r*.4):Infinity;
 function shellPoint(v,a,d){d=35+d*55;a=Math.PI*(1+a);return {x:v.x+Math.cos(a)*d,z:v.z+Math.sin(a)*d*.7};}
 // Düşman tahmini: görev emrinde yazan kuvvet
 const UNIT={tank:'T-72',apc:'BMP',inf:'piyade timi',kornet:'Kornet timi',aa:'uçaksavar',bunker:'sığınak',arty:'obüs',fuel:'yakıt tankeri',truck:'kamyon',radar:'radar'};
-function forces(o){const c={};const add=t=>{c[t]=(c[t]||0)+1;};(o.outpost?o.outpost.u:[]).forEach(add);(o.guard?o.guard.u:[]).forEach(add);(o.depot||[]).forEach(add);(o.battery||[]).forEach(add);(o.waves||[]).forEach(w=>w.u.forEach(add));
+function forces(o){const c={};const add=t=>{c[t]=(c[t]||0)+1;};(o.outpost?o.outpost.u:[]).forEach(add);(o.guard?o.guard.u:[]).forEach(add);(o.depot||[]).forEach(add);(o.battery||[]).forEach(add);(o.qrf?o.qrf.u:[]).forEach(add);(o.waves||[]).forEach(w=>w.u.forEach(add));
  return Object.keys(UNIT).filter(k=>c[k]).map(k=>c[k]+' '+UNIT[k]).join(', ');}
 function posts(o,from,n,r){const a=Math.atan2(from.x-o.x,from.z-o.z),out=[];for(let i=0;i<n;i++){const k=n>1?(i/(n-1)-.5)*1.6:0;out.push({x:o.x+Math.sin(a+k)*r,z:o.z+Math.cos(a+k)*r,h:a+k});}return out;}
 const core=Object.freeze({VERSION,MODE,OPS,TUNE,HOLD,NIGHT,capture,waveDue,halt,posts,phaseDone,stars,forces,salvoGap,shellPoint});
@@ -101,10 +101,16 @@ function buildBeam(o){if(!root.THREE)return;const T=root.THREE,g=new T.Group(),y
 function enemies(){return safe(()=>E.filter(e=>e.hk&&e.hp>0),[]);}
 function control(){if(!H)return;for(const e of enemies()){const k=e.hk;
   if(k.role==='def'){if(e.rt>0&&dist(e,k.post)>LEASH)e.rt=0;if(!(e.rt>0)){e.hd={x:k.post.x,z:k.post.z};e.hdT=1e9;e.hdV=1e9;}}
+  else if(k.role==='qrf'){if(!(clock<k.next)){k.path=safe(()=>root.astar(e.x,e.z,P.x,P.z),null)||[[e.x,e.z],[P.x,P.z]];k.i=1;k.next=clock+8;}const w=k.path[k.i];
+   if(w&&Math.hypot(w[0]-e.x,w[1]-e.z)<10&&k.i<k.path.length-1)k.i++;const stop=!w||dist(e,P)<QRF_STOP;e.hd=stop?{x:e.x,z:e.z}:{x:w[0],z:w[1]};e.hdT=1e9;e.hdV=1e9;e.rt=0;}
   else if(k.role==='att'){const w=k.path&&k.path[k.i];if(!w){e.hd={x:e.x,z:e.z};e.hdT=1e9;e.hdV=1e9;continue;}
    if(Math.hypot(w[0]-e.x,w[1]-e.z)<10&&k.i<k.path.length-1)k.i++;let st=H.halts.get(e);if(!st){st={t:8+rnd()*6,stop:false};H.halts.set(e,st);}
    const near=Math.min(dist(e,P),...safe(()=>AL.filter(a=>!a.dead).map(a=>dist(e,a)),[]),1e9)<FIRE_RANGE;const stop=near&&halt(st,.05,rnd);
    e.hd=stop?{x:e.x,z:e.z}:{x:w[0],z:w[1]};e.hdT=1e9;e.hdV=1e9;e.rt=0;}}}
+// Karşı taarruz: oyuncu sınırı geçince düşman yedeği (tank ve BMP) mevzisinden çıkıp oyuncunun üstüne yürür
+function spawnQRF(q){H.qrfOn=true;q.u.forEach((t,i)=>{const x=q.from[0]+(i-(q.u.length-1)/2)*14,z=q.from[1]+(i%2)*10;const e=mk(t,x,z,{role:'qrf',i:1,h:Math.PI});if(e)e.cd=3+rnd()*3;});
+ const n=c=>q.u.filter(t=>t===c).length,parts=[n('tank')?n('tank')+' T-72':'',n('apc')?n('apc')+' BMP':''].filter(Boolean).join(' ve ');
+ safe(()=>root.radio('Komuta: Düşman karşı taarruzu! '+parts+' güneyden üstünüze geliyor. Mevzi alın, topla karşılayın.'),null);safe(()=>root.say('KARŞI TAARRUZ',1.8),null);}
 function spawnWave(w){const o=H.op,gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};w.u.forEach((t,i)=>{const s=o.spawn[i%o.spawn.length],x=s[0]+(rnd()-.5)*20,z=s[1]+(rnd()-.5)*20;
   const path=safe(()=>root.astar(x,z,gate.x,gate.z),null)||[[x,z],[gate.x,gate.z]];const e=mk(t,x,z,{role:'att',path,i:1,h:Math.PI});if(e){e.cd=4+rnd()*3;}});
  H.waveLeft=w.u.length;safe(()=>root.radio('Komuta: '+(H.wave+1)+'. dalga sınıra yaklaşıyor! '+w.u.length+' araç.'),null);}
@@ -116,6 +122,7 @@ function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op,en=
  if(o.guard&&!o.depot){const near=en.filter(e=>dist(e,o.obj)<200).length,inside=dist(P,o.obj)<o.obj.r;H.cap=capture(H.cap,dt,inside,near===0);if(H.cap>=HOLD)return win(o.obj.n+' ele geçirildi.');}
  if(o.battery){const guns=en.filter(e=>e.hk.bat);H.batLeft=guns.length;if(!guns.length)return win('Batarya susturuldu. '+o.shell.n+'\'ye ateş kesildi.');shelling(dt,o,guns);}
  if(o.depot){const left=en.filter(e=>e.hk.role==='dep').length;H.depLeft=left;if(left===0)return win('Kafr Sadun deposu imha edildi.');}
+ if(o.qrf&&!H.qrfOn&&H.ph>=o.qrf.at)spawnQRF(o.qrf);
  // ara hedefler: sırayla; biri tamamlanınca rota bir sonrakine döner
  const ph=o.phases&&o.phases[H.ph];if(phaseDone(ph,P,en)){H.ph++;const nx=o.phases[H.ph];safe(()=>root.radio('Komuta: Ara hedef tamam: '+ph.n+'.'+(nx?' Sıradaki: '+nx.n+'.':'')),null);safe(()=>root.say('ARA HEDEF TAMAM',1.6),null);navTo();}
  // başlangıç karakolunda ikmal
@@ -230,6 +237,8 @@ function drawMini(){if(!H||typeof mmx==='undefined')return;const W=132,O=mmO(),X
  mmx.save();mmx.fillStyle='#ffc247';mmx.strokeStyle='#1d1000';mmx.lineWidth=1.5;mmx.beginPath();mmx.moveTo(x,y-6);mmx.lineTo(x+5,y);mmx.lineTo(x,y+6);mmx.lineTo(x-5,y);mmx.closePath();mmx.fill();mmx.stroke();mmx.restore();}
 function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t:'Görevi tamamla',r:'Görev emri telsizde.',w:'Görev tamamlandı'};},null);
  wrap('startMission',old=>function(){const r=old.apply(this,arguments);if(safe(()=>mis===MODE,false))begin();else cleanup();return r;});
+ /* görevlerde düşman helikopteri ve dronu yok: muharebe yerde, tank topuyla */
+ wrap('spawnHeli',old=>function(){if(playing())return;return old.apply(this,arguments);});wrap('spawnED',old=>function(){if(playing())return;return old.apply(this,arguments);});
  wrap('stagePending',old=>function(){return !!(H&&!H.won&&!H.lost)||old.apply(this,arguments);});
  wrap('update',old=>function(dt){if(playing()&&H)safe(control,null);const r=old.apply(this,arguments);if(playing()&&H&&!doc.hidden)safe(()=>step(clamp(+dt||0,0,.1)),null);return r;});
  wrap('spotted',old=>function(e){if(old.apply(this,arguments))return true;if(!H||!e||!e.hk)return false;if(e.spT>clock)return true;const sn=H.op.wx==='gece'?SEEN*NIGHT:SEEN;if(dist(e,P)<sn)return true;return safe(()=>AL.some(a=>!a.dead&&dist(a,e)<sn*.8),false);});

@@ -4,8 +4,8 @@ test('air support only hits targets someone has seen; the nearest seen target is
 test('every support asset has a ready time and the helicopter, drone and jet are distinct',()=>{assert.deepEqual(Object.keys(d.SUP),['heli','tb2','topcu','jet']);for(const k in d.SUP)assert.ok(d.SUP[k].cd>=60);assert.equal(d.ready(10,4.2),6);assert.equal(d.ready(3,9),0);
  const o=d.orbitPt({x:0,z:0},100,0);assert.deepEqual(o,{x:100,z:0});});
 test('infantry squads advance ahead of the tank towards the objective, side by side',()=>{const a=d.squadSlot(0,0,0,500,0,6,32,9),b=d.squadSlot(0,0,0,500,5,6,32,9);assert.ok(Math.abs(a.z-32)<1e-9&&Math.abs(b.z-32)<1e-9);assert.ok(Math.abs(a.x-b.x-45)<1e-9||Math.abs(b.x-a.x-45)<1e-9);});
-test('menu draws the background at 15 frames per second and orbits the tank',()=>{assert.equal(m.shouldDraw(true,1000,990),false);assert.equal(m.shouldDraw(true,1100,1000),true);assert.equal(m.shouldDraw(false,1000,999),true);
- const o=m.orbit(0,0,0,0);assert.ok(Math.abs(Math.hypot(o.x,o.z)-m.ORBIT.r)<1e-9);});
+test('menu draws the background at 15 frames per second from a fixed camera (no spinning)',()=>{assert.equal(m.shouldDraw(true,1000,990),false);assert.equal(m.shouldDraw(true,1100,1000),true);assert.equal(m.shouldDraw(false,1000,999),true);
+ const o=m.orbit(0,0,0,0),o2=m.orbit(0,0,0,60);assert.ok(Math.abs(Math.hypot(o.x,o.z)-m.ORBIT.r)<1e-9);assert.equal(m.ORBIT.w,0);assert.deepEqual(o,o2);});
 test('support and menu modules load after village life and are precached; textures are files, not inline',()=>{let i=html.indexOf('experience/koy.js?v=');for(const k of['destek','menu']){const j=html.indexOf('experience/'+k+'.js?v=');assert.ok(j>i,k);i=j;assert.ok(sw.includes("'experience/"+k+".js'"));}
  assert.ok(html.length<2500000,'index.html is light: '+html.length);assert.ok(!/data:image\/jpeg;base64,[A-Za-z0-9+/=]{20000,}/.test(html));for(const t of['sky_gunduz','t_cim','m60x_col'])assert.ok(sw.includes("'assets/tex/"+t+".jpg?v=96'"),t);
  for(const k of["'T129 ATAK'","'Bayraktar TB2'","'F-16'","ATAK 1: Bölgeye giriyorum","YAKIN ATIŞ"])assert.ok(src.includes(k),k);});

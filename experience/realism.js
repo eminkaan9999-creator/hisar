@@ -6,7 +6,7 @@
  * - Dağlar: ufukta üç sıra dağ, uzak sıranın tepeleri karlı; renkleri havaya ve günün saatine göre sise karışır.
  */
 (function(root){'use strict';
-const VERSION='1.1.0';
+const VERSION='1.1.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -55,10 +55,10 @@ function dustStep(dt){const fx=root.FXP||root.FX||null;if(!fx||!fx.puff)return;c
 const GR=95,GN=7000;
 function bladeTex(T){const c=doc.createElement('canvas');c.width=128;c.height=128;const g=c.getContext('2d');g.clearRect(0,0,128,128);
  for(let i=0;i<26;i++){const x=8+Math.random()*112,h=55+Math.random()*70,lean=(Math.random()-.5)*36,w=2.2+Math.random()*2.4,l=60+Math.random()*50|0;
-  const gr=g.createLinearGradient(0,128,0,128-h);gr.addColorStop(0,'rgb('+(l+48)+','+(l+64)+','+(l*.5+12|0)+')');gr.addColorStop(1,'rgb('+(l+112)+','+(l+118)+','+(l*.55+28|0)+')');g.fillStyle=gr;
+  const gr=g.createLinearGradient(0,128,0,128-h);gr.addColorStop(0,'rgb('+(l*.55+22|0)+','+(l*.62+30|0)+','+(l*.3+14|0)+')');gr.addColorStop(1,'rgb('+(l+58)+','+(l+62)+','+(l*.5+30|0)+')');/* doğal, soluk zeytin-saman tonu (fosforlu yeşil değil) */g.fillStyle=gr;
   g.beginPath();g.moveTo(x-w,128);g.quadraticCurveTo(x+lean*.3,128-h*.6,x+lean,128-h);g.quadraticCurveTo(x+lean*.3+w*.3,128-h*.6,x+w,128);g.closePath();g.fill();}
  const t=new T.CanvasTexture(c);t.anisotropy=2;return t;}
-function clumpGeo(T){const pos=[],uv=[],nor=[],idx=[],W=.75,H=.85;for(let k=0;k<3;k++){const a=k*Math.PI/3,cx=Math.cos(a)*W,cz=Math.sin(a)*W,b=pos.length/3;
+function clumpGeo(T){const pos=[],uv=[],nor=[],idx=[],W=.75,H=.62;for(let k=0;k<3;k++){const a=k*Math.PI/3,cx=Math.cos(a)*W,cz=Math.sin(a)*W,b=pos.length/3;
   pos.push(-cx,0,-cz, cx,0,cz, cx,H,cz, -cx,H,-cz);uv.push(0,0,1,0,1,1,0,1);for(let i=0;i<4;i++)nor.push(0,1,0);idx.push(b,b+1,b+2,b,b+2,b+3);}
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('normal',new T.Float32BufferAttribute(nor,3));g.setIndex(idx);return g;}
 function buildGrass(){if(grass||!root.THREE||typeof S==='undefined')return;const T=root.THREE;
@@ -71,7 +71,7 @@ function grassStep(force){if(!grass)buildGrass();if(!grass)return;const c=safe((
   if(Math.abs(t.x)>WS+40||Math.abs(t.z)>WS+40)continue;const h=hAt(t.x,t.z);if(h<-.6||Math.abs(t.z-riv(t.x))<21)continue;if(roadNear(t.x,t.z,.8))continue;
   o.position.set(t.x,h-.04,t.z);o.rotation.set(0,t.r,0);o.scale.set(t.s,t.s*(.75+t.c*.8),t.s);o.updateMatrix();m.setMatrixAt(n,o.matrix);
   // Suriye tarafı kuru: saman sarısı ve seyrek; Türkiye tarafı yaz sonu yeşili
-  const sy=t.z>riv(t.x)+10;if(sy&&t.c<.38){continue;}if(sy)col.setRGB(1.04+t.c*.08,.9+t.c*.06,.6+t.c*.08);else col.setRGB(.86+t.c*.14,.84+t.c*.14,.62+t.c*.18);m.setColorAt(n,col);n++;}
+  const sy=t.z>riv(t.x)+10;if(sy&&t.c<.38){continue;}if(sy)col.setRGB(1.04+t.c*.08,.9+t.c*.06,.6+t.c*.08);else col.setRGB(.8+t.c*.12,.8+t.c*.12,.66+t.c*.14);m.setColorAt(n,col);n++;}
  m.count=n;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;stat.grass=n;}
 
 // dağlar: ufukta üç sıra; kamerayı izler (çok uzaktaki dağ yaklaşınca büyümez), sisten etkilenmez, rengi o anki sis rengine göre

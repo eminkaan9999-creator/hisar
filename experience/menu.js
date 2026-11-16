@@ -1,16 +1,16 @@
 /* ÇELİK BÖRÜ karargâh menüsü 1.0 — menü hızlı ve sinematik.
  * - Menü açıkken arka plandaki 3B sahne saniyede 15 kare çizilir (oyunda tam hız). Dokunuşlar ve sekme geçişleri bekletilmez,
  *   telefon ısınmaz.
- * - Arka planda kamera tankın çevresinde yavaşça döner (sinematik görünüş); kenarlarda karartma.
+ * - Arka planda kamera tankı sabit, üç çeyrek önden gösterir (dönen kamera düşük kare hızında takılıyordu); kenarlarda karartma.
  * - Ağır dünya kurulumları (sınır, köy hayatı) menü göründükten sonra boş anlarda yapılır; açılış beklemez.
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.0.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 // ---------- çekirdek ----------
-const MENU_FPS=15,ORBIT=Object.freeze({r:12.5,h:3.6,w:.09,look:1.6});
+const MENU_FPS=15,ORBIT=Object.freeze({r:11.5,h:2.8,w:0,look:1.5});
 // Kare kısıcı: menüde en az 1000/fps ms arayla çiz
 const shouldDraw=(menu,now,last,fps)=>!menu||now-last>=1000/(fps||MENU_FPS)-1;
 // Yörünge kamerası: tankın çevresinde t saniyede açı

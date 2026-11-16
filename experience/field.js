@@ -148,21 +148,25 @@ function envNow(){return {roads:safe(()=>WROADS.map(r=>[r.pts,r.w]),null)||undef
  blds:safe(()=>BLD.filter(b=>!b.dead||b.ruin).map(b=>({x:b.x,z:b.z,r:b.r})),[]),avoid:safe(()=>[{x:SUP.x,z:SUP.z,r:22}],[])};}
 // Toprak siper tek parça bir yüzeydir: araziye oturur, sırtı inişli çıkışlıdır, kenarı çimene karışarak biter.
 const X0=-10,Z0=-10,ST=.5,NX=41,NZ=45;let nearGrid=null;
-function earthMesh(p,mat,seed){const heaps=spoil(seed),pos=[],uv=[],col=[],al=[],idx=[];
+function earthMesh(p,mat,seed){const heaps=spoil(seed),pos=[],uv=[],col=[],al=[],idx=[],gr=[];
  if(!nearGrid){nearGrid=[];for(let j=0;j<NZ;j++)for(let i=0;i<NX;i++)nearGrid.push(nearest(X0+i*ST,Z0+j*ST));}
  for(let j=0;j<NZ;j++)for(let i=0;i<NX;i++){const lx=X0+i*ST,lz=Z0+j*ST,s=surface(lx,lz,seed,heaps,nearGrid[j*NX+i]),w=toWorld(p,lx,lz);
-  pos.push(w.x,terrainY(hAt,w.x,w.z)+.045+s.b,w.z);uv.push(w.x*.23,w.z*.23);col.push(s.c,s.c,s.c,s.a);al.push(s.a);}
+  const gy=terrainY(hAt,w.x,w.z)+.045;gr.push(gy);pos.push(w.x,gy+s.b,w.z);uv.push(w.x*.23,w.z*.23);col.push(s.c,s.c,s.c,s.a);al.push(s.a);}
  for(let j=0;j<NZ-1;j++)for(let i=0;i<NX-1;i++){const a=j*NX+i,b=a+NX,c=b+1,d=a+1;if(al[a]+al[b]+al[c]+al[d]<.02)continue;idx.push(a,b,d,b,c,d);}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(col,4));g.setIndex(idx);g.computeVertexNormals();
- tris+=idx.length/3;const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;m.userData.position=1;return m;}
+ tris+=idx.length/3;const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;m.userData.position=1;m.userData.gr=Float32Array.from(gr);m.userData.y0=Float32Array.from(pos.filter((_,i)=>i%3===1));return m;}
 let earthMat=null;
 function dig(f,pi){const p={x:f.x,z:f.z,h:f.h,clear:f.clear};p.m=earthMesh(p,earthMat,pi*97+13);S.add(p.m);p.blocks=blocksOf(p);
  // Oyunun kendi siper listesi: çarpışma, mermi, görüş ve rota bu listeye bakar.
  p.cov=[];safe(()=>{for(const b of p.blocks){const c={x:b.x,z:b.z,r:b.r,h:b.h,pos:1};COV.push(c);p.cov.push(c);}},null);p.h0=p.cov.map(c=>c.h);p.crush=1;positions.push(p);return p;}
 // Ezilme: tank toprak setin üstünden geçince set alçalır (siper yüksekliği ve görünüş); yeni savaşta yeniden kazılır.
 function crush(x,z,r){let n=0;for(const p of positions||[]){const dc=Math.hypot(p.x-x,p.z-z);if(dc>40||dc<4.5)continue;/* mevzinin çukurundaki tank kendi setini ezmez */for(const c of p.cov||[]){if(Math.hypot(c.x-x,c.z-z)<c.r+(r||2.5)&&c.h>.35){c.h=Math.max(.3,c.h*.55);n++;}}
- if(n){const k=Math.max(.25,Math.min(...p.cov.map((c,i)=>c.h/(p.h0[i]||1))));if(p.m)p.m.scale.y=k;p.crush=k;}}return n;}
-function uncrush(){for(const p of positions||[]){if(!p.cov)continue;p.cov.forEach((c,i)=>{c.h=p.h0[i];});if(p.m)p.m.scale.y=1;p.crush=1;}}
+ if(n){const k=Math.max(.25,Math.min(...p.cov.map((c,i)=>c.h/(p.h0[i]||1))));dent(p.m,x,z,(r||2.5)+1);p.crush=k;}}return n;}
+// Ezilme yereldir: yalnız paletin bastığı yerde set yarıya iner (eskiden bütün mesh ölçeklenip toprağın altına giriyor, set tümden kayboluyordu)
+function dent(m,x,z,r){if(!m||!m.userData.gr)return;const a=m.geometry.attributes.position,g=m.userData.gr,y0=m.userData.y0;let ch=false;
+ for(let i=0;i<a.count;i++){const d=Math.hypot(a.getX(i)-x,a.getZ(i)-z);if(d>r)continue;const b=a.getY(i)-g[i],lo=(y0[i]-g[i])*.35,f=.55+.45*(d/r);const nb=Math.max(lo,b*f);if(nb<b-1e-3){a.setY(i,g[i]+nb);ch=true;}}
+ if(ch){a.needsUpdate=true;m.geometry.computeVertexNormals();}}
+function uncrush(){for(const p of positions||[]){if(!p.cov)continue;p.cov.forEach((c,i)=>{c.h=p.h0[i];});const m=p.m;if(m&&m.userData.y0&&p.crush<1){const a=m.geometry.attributes.position;for(let i=0;i<a.count;i++)a.setY(i,m.userData.y0[i]);a.needsUpdate=true;m.geometry.computeVertexNormals();}p.crush=1;}}
 function build(){if(positions)return;positions=[];const t0=performance.now();
  safe(()=>{const base=safe(()=>root.DOZER.mat,null);earthMat=base?base.clone():new THREE.MeshLambertMaterial({color:0x6a5338});
   earthMat.color=new THREE.Color(0xc2ad8e);earthMat.vertexColors=true;earthMat.transparent=true;earthMat.depthWrite=true;earthMat.polygonOffset=true;earthMat.polygonOffsetFactor=-2;earthMat.polygonOffsetUnits=-2;

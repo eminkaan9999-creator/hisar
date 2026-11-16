@@ -8,6 +8,10 @@ test('capture fills only when the area is clear and the tank is inside',()=>{let
 test('defence posts face the approach; attackers halt to fire',()=>{const p=c.posts({x:0,z:0},{x:0,z:-100},3,50);assert.equal(p.length,3);for(const q of p)assert.ok(q.z<0&&Math.abs(Math.hypot(q.x,q.z)-50)<1e-9);
  const st={t:0,stop:false};const r=()=>.5;assert.equal(c.halt(st,.1,r),true);assert.ok(st.t>3);});
 test('enemies never chase across the map and never get Turkish tanks',()=>{assert.ok(src.includes("e.pr=1e6;"));assert.ok(src.includes("if(tank)root.BT_KIND='t72';"));assert.ok(bt.includes("const SQUAD_KINDS=Object.freeze(['t72']);"));
- assert.ok(src.includes("safe(()=>root.startNav({x:o.obj.x,z:o.obj.z,n:o.obj.n,id:'hk'}),null);"),'route to the objective');assert.ok(!src.includes('dropCrate'),'no random crates in missions');});
+ assert.ok(src.includes("safe(()=>root.startNav({x:t.x,z:t.z,n:t.n,id:'hk'}),null);"),'route to the next step and the objective');assert.ok(!src.includes('dropCrate'),'no random crates in missions');});
 test('loaded after the border, precached, default mode',()=>{assert.ok(html.indexOf('experience/sinir.js?v=')<html.indexOf('experience/harekat.js?v='));assert.ok(sw.includes("'experience/harekat.js'"));
- assert.ok(src.includes("let ST=Object.assign({mode:MODE,sel:'gecit',done:{}},load());"));});
+ assert.ok(src.includes("let ST=Object.assign({mode:MODE,sel:'gecit',done:{},stars:{}},load());"));});
+test('operation steps: cross, clear, take; stars for health and time',()=>{const t=c.OPS[1];assert.deepEqual(t.phases.map(q=>q.k),['reach','clear','final']);
+ assert.equal(c.phaseDone(t.phases[0],{x:-560,z:180},[]),true);assert.equal(c.phaseDone(t.phases[1],{x:0,z:0},[{x:-580,z:300}]),false);assert.equal(c.phaseDone(t.phases[1],{x:0,z:0},[]),true);assert.equal(c.phaseDone(t.phases[2],{x:-540,z:680},[]),false);
+ assert.equal(c.stars(t,{won:false}),0);assert.equal(c.stars(t,{won:true,hp:.3,t:900}),1);assert.equal(c.stars(t,{won:true,hp:.9,t:300}),3);assert.equal(c.stars(c.OPS[0],{won:true,hp:.9,allies:true}),3);
+ assert.match(c.forces(t),/^3 T-72, 2 BMP, 3 piyade timi, 2 Kornet timi, 1 sığınak$/);});

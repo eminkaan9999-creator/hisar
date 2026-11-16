@@ -1,7 +1,7 @@
 {
-  "v": 106,
+  "v": 107,
   "experience": "63.1",
-  "not": "Köy araçları ayrıntılandı: otomobilde ön ve arka cam, kaput ve bagaj eğimi, ızgara, plaka, yan aynalar, kapı çizgileri ve çamurluk karartısı; pikapta ızgara, plaka, aynalar. Park araçları artık avlu duvarının dışında duruyor, duvarın içinden geçmiyor.",
+  "not": "Modelleme yöntemi değişti. Arabalar artık üst üste kutu değil: gerçek yan görünüşten çıkarılmış, kenarları yuvarlatılmış kaporta, çamurluk boşlukları, ayrı yan camlar, ön ve arka cam, jantlı tekerlekler. Evlerin duvarlarına boyalı cephe geldi: taş sıraları, söveli ve demir parmaklıklı pencereler, denizlik altı akıntı lekeleri, su basmanı; Suriye tarafında yıpranmış sıvalı cepheler. Türkiye'de köy yolları boyunca elektrik direkleri ve sarkan teller (tank çarparsa devrilir); Suriye'de çökmüş şebeke, mermi çukurları ve ufukta duman sütunları.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",
@@ -25,5 +25,6 @@
   "menu": "1.0.1",
   "arazi": "1.1.0",
   "ortam": "1.0.0",
-  "sivil": "1.0.1"
+  "sivil": "1.1.0",
+  "cevre": "1.0.0"
 }

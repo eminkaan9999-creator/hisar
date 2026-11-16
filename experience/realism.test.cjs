@@ -26,4 +26,4 @@ test('enemy tanks take a free position that faces the player, 70-300 m from him 
  assert.ok(src.includes("if(e.rt>0||e.immob||e.conv||e.foe||faces(p,P.x,P.z)<EN.leave||d>EN.far+40||d<40){release(e);continue;}"),'leaves when flanked');});
 test('village houses include two-storey concrete ones with rebar, water tank and solar heater; walls and roofs are textured',()=>{const h=read('index.html');
  assert.ok(h.includes('function beton(b,w,d){'));assert.ok(h.includes("part(b,'d',-w*.25,H+1.6,-d*.15,1.2,1.2,1.2,0,0x1b1b1b);"));
- assert.ok(h.includes("const MAP={w:TXW,r:TXR,t:TXT,s:TXS};"));assert.ok(h.includes('function tasev(b,w,d){'),'Kilis stone house');assert.ok(h.includes('function win(b,x,y,z,w,h,side){'));});
+ assert.ok(h.includes("const MAP={w:TXW,r:TXR,t:TXT,s:TXS,f:TXF,g:TXG};"));assert.ok(h.includes('function paintFacade(g,W,H,syr){'),'painted facades with windows');assert.ok(h.includes('function tasev(b,w,d){'),'Kilis stone house');assert.ok(h.includes('function win(b,x,y,z,w,h,side){'));});

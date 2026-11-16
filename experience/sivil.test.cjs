@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert'),fs=require('fs');
 const v=require('./sivil.js'),html=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8'),src=fs.readFileSync(__dirname+'/sivil.js','utf8');
-const box=(ps)=>{let x0=1e9,x1=-1e9,y1=-1e9,z0=1e9,z1=-1e9;for(const p of ps){const h=p.t==='b'?p.s.map(q=>q/2):p.r[2]?[p.s[2]/2,p.s[0],p.s[0]]:[p.s[0],p.s[2]/2,p.s[0]];x0=Math.min(x0,p.p[0]-h[0]);x1=Math.max(x1,p.p[0]+h[0]);y1=Math.max(y1,p.p[1]+h[1]);z0=Math.min(z0,p.p[2]-h[2]);z1=Math.max(z1,p.p[2]+h[2]);}return {w:x1-x0,h:y1,l:z1-z0};};
+const box=(ps)=>{let x0=1e9,x1=-1e9,y1=-1e9,z0=1e9,z1=-1e9;for(const p of ps){if(p.t==='x'){for(const q of p.pr){z0=Math.min(z0,q[0]);z1=Math.max(z1,q[0]);y1=Math.max(y1,q[1]);}x0=Math.min(x0,-p.w/2);x1=Math.max(x1,p.w/2);continue;}const h=p.t==='b'?p.s.map(q=>q/2):p.r[2]?[p.s[2]/2,p.s[0],p.s[0]]:[p.s[0],p.s[2]/2,p.s[0]];x0=Math.min(x0,p.p[0]-h[0]);x1=Math.max(x1,p.p[0]+h[0]);y1=Math.max(y1,p.p[1]+h[1]);z0=Math.min(z0,p.p[2]-h[2]);z1=Math.max(z1,p.p[2]+h[2]);}return {w:x1-x0,h:y1,l:z1-z0};};
 test('vehicles have real-world sizes: car about 4.3 m, pickup about 5.2 m, tractor with big rear wheels',()=>{const s=box(v.veh('sedan',1)),p=box(v.veh('pikap',1)),t=v.veh('traktor',1);
  assert.ok(s.l>4.1&&s.l<4.6&&s.w>1.6&&s.w<2.05&&s.h>1.3&&s.h<1.6,JSON.stringify(s));assert.ok(p.l>5&&p.l<5.6&&p.h>1.7&&p.h<2.1,JSON.stringify(p));
  const wheels=t.filter(q=>q.t==='c'&&q.c===0x181818).map(q=>q.s[0]).sort();assert.equal(wheels.length,4);assert.ok(wheels[3]>1.6*wheels[0],'rear wheels larger');});
@@ -9,3 +9,6 @@ test('traffic drives the road both ways, keeps to its lane and stops for a tank 
  const car={x:0,z:0,h:0};assert.equal(v.blocked(car,[{x:0,z:10}],16,4.5),true);assert.equal(v.blocked(car,[{x:0,z:-10}],16,4.5),false);assert.equal(v.blocked(car,[{x:3.4,z:6}],9,2.2),false);});
 test('no brands or logos; crushed and burnt cars; loaded after the soundscape and precached',()=>{assert.ok(!/logo|Tofaş|Ford|Toyota|Fiat|Renault|Massey|New Holland/i.test(src.replace(/marka ya da arma yok/,'')));
  assert.ok(src.includes('function crush(c)')&&src.includes('function burn(c)'));assert.ok(html.indexOf('experience/ortam.js?v=')<html.indexOf('experience/sivil.js?v='));assert.ok(sw.includes("'experience/sivil.js'"));});
+test('car bodies are extruded side silhouettes with wheel arches and bevelled edges, not stacked boxes',()=>{const s=v.veh('sedan',1),body=s.find(q=>q.t==='x'&&q.bv>0);assert.ok(body&&body.pr.length>25);
+ const arch=body.pr.filter(q=>Math.abs(Math.hypot(q[0]-1.32,q[1]-.3)-.37)<1e-9);assert.equal(arch.length,9,'front wheel arch is a half circle');assert.equal(s.filter(q=>q.t==='x'&&q.c===0x1d2730).length,2,'side windows');
+ const pr=v.profile([[0,0],[0,1],[4,1],[4,0]],[3,1],.4);assert.equal(pr.length,4+18);assert.ok(src.includes('new T.ExtrudeGeometry'));});

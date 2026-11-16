@@ -112,12 +112,13 @@ if(!mobile){
   const next=()=>{for(let i=0;i<60&&game==='play';i++){update(.1);d=HisarBattle.diagnostics();const q=d.shells.find(s=>s.t>1.2);if(q)return q;}return null;};
   // oyuncu bir merminin altında (dost tanklar uzakta)
   const pending=q=>HisarBattle.diagnostics().shells.some(s=>s.x===q.x&&s.z===q.z); // mermi düşene kadar beklenir (süre kayan nokta yüzünden bir adım oynayabilir)
-  P.x=r.x;P.z=r.z;away();let q=next();const st=d.red.state,inside=Math.hypot(q.x-r.x,q.z-r.z)<=r.r+.01,hp=P.hp,n0=__booms;for(let i=0;i<30&&game==='play'&&pending(q);i++){P.x=q.x;P.z=q.z;away();update(.1);}const after=P.hp,booms=__booms-n0;
+  // bir binanın ya da avlu duvarının dibine düşen mermide tank dışarı itilir: mermiyi boş bir yere taşı (hasar kuralı aynı)
+  const clear=(x,z)=>BLD.every(b=>b.dead||Math.hypot(b.x-x,b.z-z)>b.r+7)&&COV.every(c=>Math.hypot(c.x-x,c.z-z)>c.r+5),move=q=>{const live=HisarBattle.live().shells.find(s=>s.x===q.x&&s.z===q.z);if(!live||clear(q.x,q.z))return q;
+   for(let k=0;k<400;k++){const a2=k*.7,d2=(k%14)*5,x=r.x+Math.cos(a2)*d2,z=r.z+Math.sin(a2)*d2;if(Math.hypot(x-r.x,z-r.z)<=r.r-4&&clear(x,z)){live.x=x;live.z=z;return {...q,x,z};}}return q;};
+  P.x=r.x;P.z=r.z;away();let q=move(next());const st=d.red.state,inside=Math.hypot(q.x-r.x,q.z-r.z)<=r.r+.01,hp=P.hp,n0=__booms;for(let i=0;i<30&&game==='play'&&pending(q);i++){P.x=q.x;P.z=q.z;away();update(.1);}const after=P.hp,booms=__booms-n0;
   // dost tank başka bir merminin altında (oyuncu bölgenin dışında)
   P.x=r.x+150;P.z=r.z;q=next();
-  // bir binanın dibine düşen mermide dost tank binadan dışarı itilir: mermiyi boş bir yere taşı (hasar kuralı aynı)
-  const clear=(x,z)=>BLD.every(b=>b.dead||Math.hypot(b.x-x,b.z-z)>b.r+5),live=HisarBattle.live().shells.find(s=>s.x===q.x&&s.z===q.z);
-  if(live&&!clear(q.x,q.z)){for(let k=0;k<200;k++){const a2=k*.7,d2=(k%10)*7,x=r.x+Math.cos(a2)*d2,z=r.z+Math.sin(a2)*d2;if(Math.hypot(x-r.x,z-r.z)<=r.r-4&&clear(x,z)){live.x=x;live.z=z;q={...q,x,z};break;}}}
+  q=move(q);
   const ah=a.hp;for(let i=0;i<30&&game==='play'&&pending(q);i++){P.x=r.x+150;P.z=r.z;away();a.x=q.x;a.z=q.z;update(.1);}
   return {st,inside,hp,after,booms,ah,aafter:a.hp,game};});
  assert.equal(fire.st,'fire');assert.equal(fire.inside,true);assert.ok(fire.booms>=1,'shell landed');assert.ok(fire.after<fire.hp-5,'tank under the shell is hurt: '+fire.hp+' -> '+fire.after);assert.ok(fire.aafter<fire.ah,'ally under the shell is hurt');assert.equal(fire.game,'play');await p.waitForTimeout(500);await shot(p,'artillery.png');
@@ -240,9 +241,11 @@ if(!mobile){
   await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
   const sv=await p.evaluate(()=>{const m0=HisarSivil.cars().find(q=>!q.parked);const x0=m0.x,z0=m0.z;for(let i=0;i<30;i++){P.x=-700;P.z=-700;update(.1);}const m1=HisarSivil.cars().find(q=>!q.parked&&q.kind===m0.kind);
    const c=HisarSivil.cars().find(q=>q.parked);P.x=c.x-1.5;P.z=c.z;for(let i=0;i<6;i++){P.x+=.5;update(.1);}const cs=HisarSivil.cars().filter(q=>!q.parked&&!q.dead);bigBoom(cs[0].x,cs[0].z,5);update(.1);
-   return {d:HisarSivil.diagnostics(),moved:Math.hypot(m1.x-x0,m1.z-z0),a:HisarArazi.diagnostics()};});
+   const pl=HisarCevre.poles().find(q=>q.wired&&!q.down);P.x=pl.x-1.5;P.z=pl.z;for(let i=0;i<6;i++){P.x+=.5;update(.1);}const pd=HisarCevre.poles().find(q=>q.x===pl.x&&q.z===pl.z);
+   return {d:HisarSivil.diagnostics(),moved:Math.hypot(m1.x-x0,m1.z-z0),a:HisarArazi.diagnostics(),c:HisarCevre.diagnostics(),pole:[pd.down,pd.wired],sy:HisarCevre.poles().filter(q=>q.sy&&q.wired).length,fac:BLD.filter(b=>b.parts&&b.parts.some(q=>q.k==='f')).length};});
+  assert.ok(sv.c.poles>=60&&sv.c.spans>=30&&sv.c.craters>=20&&sv.c.columns>=3,JSON.stringify(sv.c));assert.deepEqual(sv.pole,[true,false],'a tank fells the pole and its wires drop');assert.equal(sv.sy,0,'no live wires in Syria');assert.ok(sv.fac>=20,'stone houses have painted facades '+sv.fac);
   assert.ok(sv.d.parked>=40&&sv.d.moving>=3,JSON.stringify(sv.d));assert.ok(sv.moved>5,'traffic drives '+sv.moved);assert.ok(sv.d.crushed>=1&&sv.d.burned>=1);assert.ok(sv.a.rocks>=300&&sv.a.hay>=1,JSON.stringify(sv.a));
-  ok('village life on wheels: '+sv.d.parked+' parked cars, pickups and tractors, '+sv.d.moving+' vehicles driving the village roads; a tank crushes a car, a shell burns one; '+sv.a.rocks+' limestone rocks, haystacks by the barns');
+  ok('village life on wheels: '+sv.d.parked+' parked cars, pickups and tractors, '+sv.d.moving+' vehicles driving the village roads; a tank crushes a car, a shell burns one; '+sv.a.rocks+' limestone rocks, haystacks by the barns; '+sv.c.poles+' power poles with sagging wires in Türkiye, a dead grid and shell craters in Syria, smoke on the horizon');
  // ---- harekât: savunma, taarruz, baskın
  await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
  const g1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();for(let i=0;i<570;i++){P.x=70;P.z=40;update(.1);}const d1=HisarHarekat.diagnostics();const z0=d1.enemies.map(e=>e.z);for(let i=0;i<100;i++){P.x=70;P.z=40;update(.1);}const d2=HisarHarekat.diagnostics();

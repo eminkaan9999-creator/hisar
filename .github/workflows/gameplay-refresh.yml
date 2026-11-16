@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: '22'
       - name: Apply source-guarded integration
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/gameplay-refresh-20261110'
         run: node scripts/gameplay-integrate.cjs
       - name: Preserve tested source snapshot and provenance
         run: |
@@ -45,12 +46,15 @@ jobs:
           set -o pipefail
           node --test experience/*.test.cjs 2>&1 | tee gameplay-reports/unit-tests.tap
       - name: Parse original game scripts
-        run: node scripts/experience-integrate.cjs
+        run: |
+          node -e "require('./scripts/experience-integrate.cjs').check(require('node:fs').readFileSync('index.html','utf8'))"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then git diff --exit-code; fi
       - name: Test gameplay update in original WebGL game
         run: |
           npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
-          node scripts/gameplay-browser.cjs
+          node scripts/radio-browser.cjs
+          node scripts/simple-browser.cjs
       - name: Commit verified integration to development branch only
         if: github.event_name == 'push' && github.ref == 'refs/heads/feature/gameplay-refresh-20261110'
         env:
@@ -73,5 +77,8 @@ jobs:
         if: always()
         with:
           name: gameplay-refresh-results
-          path: gameplay-reports/
+          path: |
+            gameplay-reports/
+            radio-reports/
+            simple-reports/
           retention-days: 3

@@ -21,12 +21,13 @@ jobs:
         with:
           node-version: '22'
       - name: Source-guarded integration
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/gameplay-refresh-20261110'
         run: |
-          mkdir -p radio-reports
           node scripts/radio-integrate.cjs
           node scripts/radio-fixes.cjs
       - name: Build offline synthetic Turkish male radio fallback
         run: |
+          mkdir -p radio-reports
           if [ ! -s assets/radio/ack.mp3 ]; then
             sudo apt-get update -qq
             sudo apt-get install -y espeak ffmpeg
@@ -39,15 +40,16 @@ jobs:
         run: |
           set -o pipefail
           node --test experience/*.test.cjs 2>&1 | tee radio-reports/unit-tests.tap
-          node scripts/experience-integrate.cjs
+          node -e "require('./scripts/experience-integrate.cjs').check(require('node:fs').readFileSync('index.html','utf8'))"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then git diff --exit-code; fi
       - name: Install original-game browser test tooling
         run: |
           npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Radio, six mission outcomes and mobile UI in original game
+      - name: Radio, current game modes and mobile UI in original game
         run: node scripts/radio-browser.cjs
-      - name: Previous gameplay regression in real WebGL
-        run: node scripts/gameplay-browser.cjs
+      - name: Settings and offline regression in real WebGL
+        run: node scripts/simple-browser.cjs
       - name: Commit only verified integration to development branch
         if: github.event_name == 'push' && github.ref == 'refs/heads/feature/gameplay-refresh-20261110'
         env:
@@ -86,5 +88,5 @@ jobs:
           name: radio-operations-results
           path: |
             radio-reports/
-            gameplay-reports/browser-results.json
+            simple-reports/
           retention-days: 7

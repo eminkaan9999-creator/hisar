@@ -8,18 +8,22 @@ panel.innerHTML='<h2>Barkod ve raf araçları</h2><p class="hint">Kamera taramas
 const sections=document.querySelectorAll('main section');
 sections[0].before(panel);
 const video=$('#scan-video'), status=$('#scan-status'), start=$('#scan-start'), stop=$('#scan-stop');
-let stream=null,active=false,raf=null;
+let stream=null,active=false,raf=null,generation=0;
 const setStatus=s=>{status.textContent=s;};
-function end(){active=false;if(raf)cancelAnimationFrame(raf);raf=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}video.srcObject=null;video.hidden=true;start.disabled=false;stop.disabled=true;}
+function end(){generation++;active=false;if(raf)cancelAnimationFrame(raf);raf=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}video.srcObject=null;video.hidden=true;start.disabled=false;stop.disabled=true;}
 stop.addEventListener('click',()=>{end();setStatus('Kamera kapatıldı.');});
 window.addEventListener('pagehide',end);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){end();setStatus('Kamera duraklatıldı. Yeniden taramak için kamerayı açın.');}});
 start.addEventListener('click',async()=>{
+ if(start.disabled)return;
  if(!navigator.mediaDevices?.getUserMedia||typeof BarcodeDetector==='undefined'){setStatus('Bu tarayıcıda barkod taraması desteklenmiyor. Barkodu elle girebilirsiniz.');return;}
  let detector;try{detector=new BarcodeDetector({formats:['ean_13','ean_8','code_128','upc_a','upc_e']});}catch{setStatus('Barkod okuyucu başlatılamadı. Barkodu elle girebilirsiniz.');return;}
- try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});video.srcObject=stream;video.hidden=false;await video.play();active=true;start.disabled=true;stop.disabled=false;setStatus('Barkodu kameranın önünde sabit tutun.');}
- catch{end();setStatus('Kamera açılamadı. Tarayıcı izinlerini kontrol edin veya barkodu elle girin.');return;}
+ const session=++generation;const current=()=>session===generation;
+ start.disabled=true;stop.disabled=false;setStatus('Kamera açılıyor…');
+ try{const opened=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});if(!current()){opened.getTracks().forEach(t=>t.stop());return;}stream=opened;video.srcObject=stream;video.hidden=false;await video.play();if(!current())return;active=true;setStatus('Barkodu kameranın önünde sabit tutun.');}
+ catch{if(current()){end();setStatus('Kamera açılamadı. Tarayıcı izinlerini kontrol edin veya barkodu elle girin.');}return;}
  let busy=false;
- const scan=async()=>{if(!active)return;if(!busy&&video.readyState>=2){busy=true;try{const codes=await detector.detect(video);const code=codes.find(x=>/^\d{8,32}$/.test(x.rawValue));if(code){field.value=code.rawValue;field.dispatchEvent(new Event('input',{bubbles:true}));end();setStatus('Barkod okundu: '+code.rawValue+'. Ürün bilgilerini kontrol edin.');field.focus();return;}}catch{}finally{busy=false;}}if(active)raf=requestAnimationFrame(scan);};
+ const scan=async()=>{if(!active||!current())return;if(!busy&&video.readyState>=2){busy=true;try{const codes=await detector.detect(video);if(!active||!current())return;const code=codes.find(x=>/^\d{8,32}$/.test(x.rawValue));if(code){field.value=code.rawValue;field.dispatchEvent(new Event('input',{bubbles:true}));end();setStatus('Barkod okundu: '+code.rawValue+'. Ürün bilgilerini kontrol edin.');field.focus();return;}}catch{}finally{busy=false;}}if(active&&current())raf=requestAnimationFrame(scan);};
  raf=requestAnimationFrame(scan);
 });
 $('#print-shelf').addEventListener('click',()=>{

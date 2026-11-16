@@ -11,7 +11,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -96,10 +96,10 @@ function topcuStep(dt){if(!A)return;const s=SUP.topcu;A.t+=dt;if(A.t<A.next)retu
  shell(A.x+(Math.random()-.5)*s.spread*2,A.z+(Math.random()-.5)*s.spread*2,s.dmg,s.blast);A.left--;A.next=A.t+s.every;if(A.left<=0){A=null;say('FIRTINA: Tesir atışı bitti.');}}
 // ---------- dost kuvvetler ----------
 const KIND={piyade:1};
-function mkVeh(kind){const g=new T.Group(),c=kind==='kirpi'?0x6b6a4e:0x5a6246;const mt=M(c);
- if(kind==='kirpi'){bx(g,2.5,1.2,6.2,c,0,1.3,0,mt);bx(g,2.4,1.3,3.4,c,0,2.55,-.6,mt);bx(g,2.2,.7,.08,0x1f2a33,0,2.7,1.13);bx(g,.5,.5,.8,0x2a2c26,0,3.45,-.4);bx(g,.08,.08,1.2,0x1a1a1a,0,3.55,.3);}
+// Kirpi'nin gövdesi kullanıcının gönderdiği 3B modeldir (hat.js giydirir); ACV-15 kodla kurulur.
+function mkVeh(kind){const g=new T.Group(),c=0x5a6246,mt=M(c);
+ if(kind==='kirpi')safe(()=>root.HisarHat.dress(g,'kirpi'),null);
  else{bx(g,2.6,1.4,5.2,c,0,1.15,0,mt);bx(g,2.5,.7,3.6,c,0,2.15,-.4,mt);bx(g,.7,.5,.9,0x2a2c26,.4,2.75,.8);bx(g,.08,.08,1.3,0x1a1a1a,.4,2.8,1.5);for(const s of[-1,1])bx(g,.45,.9,5.4,0x1c1c1a,s*1.32,.55,0);}
- if(kind==='kirpi'){const wg=new T.CylinderGeometry(.6,.6,.45,12);wg.rotateZ(Math.PI/2);const wm=M(0x1b1b1b);for(const[x,z]of[[-1.2,2],[1.2,2],[-1.2,-2],[1.2,-2]]){const w=new T.Mesh(wg,wm);w.position.set(x,.6,z);g.add(w);}}
  g.name='DS_'+kind.toUpperCase();S.add(g);return g;}
 function tracer(a,b){const fx=root.FXP;if(!fx||!fx.puff)return;const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz)||1;for(let i=0;i<3;i++){const k=Math.random()*.8+.1;fx.puff(a.x+dx*k,a.y+(b.y-a.y)*k,a.z+dz*k,dx/d*200,0,dz/d*200,.08,.15,.2,0xffd27a,0xff9a30,.95,.1);}
  fx.puff(a.x+dx/d*.6,a.y,a.z+dz/d*.6,0,.3,0,.3,.15,.5,0xfff0b0,0xaaaaaa,.7,1);}

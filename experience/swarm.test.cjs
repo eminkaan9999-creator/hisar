@@ -22,7 +22,8 @@ test('headquarters stands behind the start point on usable ground',()=>{const sp
 test('more spare drones: nine plus two per garage upgrade, used by the swarm and refilled at supply',()=>{const html=read('index.html'),b=read('experience/battle.js');
  assert.ok(html.includes('function DCX(){return 9+2*((SV.U&&SV.U.drn)|0)}'));assert.ok(!html.includes('DC=3+SV.U.drn'));assert.ok(html.includes("e:l=>(9+2*l)+' yedek'"));
  assert.ok(b.includes('TA=TA0.slice();DC=root.DCX();'));assert.ok(b.includes('live:()=>B&&!B.over?B:null,eventsOn:()=>EV,note:(t,k)=>feed(t,k),resupply,'));});
-test('keys and radio: Y launches, E fires the tank device, radio has a swarm section',()=>{const s=read('experience/swarm.js');
- assert.ok(s.includes("if(k==='e'){fireTank();e.preventDefault();}else if(k==='y'){launch();e.preventDefault();}"));
+test('Y launches the swarm; the tank device fires by itself and reports the kills; no jammer button or key; radio has a swarm section',()=>{const s=read('experience/swarm.js');
+ assert.ok(s.includes("if(k==='y'){launch();e.preventDefault();}"));assert.ok(!/abE|fireTank|k==='e'/.test(s),'no manual trigger left');assert.ok(c.MW.tank.auto<c.MW.tank.r,'fires once the whole swarm is inside the range');
+ assert.ok(s.includes("W.tankCd=MW.tank.cd;const n=zap(P.x,P.z,MW.tank.r,'EJDERHA');safe(()=>root.say('EJDERHA · '+n+' İHA DÜŞÜRÜLDÜ',2.2),null);return n;}"));assert.ok(s.includes(" autoTank();paintUI();}"));
  assert.ok(s.includes('<h4>SÜRÜ DRON</h4>'));assert.ok(s.includes("cmds.insertAdjacentElement('afterend',box)"));
  assert.doesNotMatch(s,/\p{Extended_Pictographic}/u);assert.doesNotMatch(s,/localStorage/,'no save of its own');});

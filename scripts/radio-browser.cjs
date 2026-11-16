@@ -161,19 +161,18 @@ if(!mobile){
  assert.ok(hold,'an enemy tank took the field');assert.equal(hold.inn.in,true);assert.ok(hold.inn.d<3);assert.ok(hold.inn.sink>.3);assert.equal(hold.left,true);
  ok('an engaged enemy tank drives round into a position facing the player ('+hold.inn.t+' s), sits hull-down, and pulls out when flanked');
 
- // ---- sürü dron ve mikrodalga dron savar
+ // ---- sürü dron ve EJDERHA (Son Takım): tanktaki ve karargâhtaki cihaz kendiliğinden düşürür
  await p.evaluate(()=>{HisarBattle.events(false);lvSel='normal';HisarBattle.start();L.dmg=0;});await tick(p,1);
- const sr0=await p.evaluate(()=>{const d=HisarSwarm.diagnostics();return {v:HisarSwarm.version,base:!!d.base&&!!S.getObjectByName('SR_KARARGAH'),dc:DC,dcx:DCX(),btn:!document.getElementById('abE').hidden,box:document.querySelectorAll('#sr-box button').length};});
- assert.equal(sr0.base,true);assert.equal(sr0.dc,sr0.dcx);assert.ok(sr0.dcx>=9);assert.equal(sr0.btn,true);assert.equal(sr0.box,5);ok('battle sets up a headquarters with a drone jammer, nine spare drones, a jammer button and a swarm section in the radio');
- // karargâhtan uzakta: düşman sürüsü tanka gelir, E tuşu düşürür
+ const sr0=await p.evaluate(()=>{const d=HisarSwarm.diagnostics();return {v:HisarSwarm.version,base:!!d.base&&!!S.getObjectByName('SR_KARARGAH'),dc:DC,dcx:DCX(),btn:!!document.getElementById('abE'),box:document.querySelectorAll('#sr-box button').length};});
+ assert.equal(sr0.base,true);assert.equal(sr0.dc,sr0.dcx);assert.ok(sr0.dcx>=9);assert.equal(sr0.btn,false,'no jammer button: the device is automatic');assert.equal(sr0.box,5);ok('battle sets up a headquarters with an EJDERHA device, nine spare drones and a swarm section in the radio; there is no jammer button');
+ // karargâhtan uzakta: düşman sürüsü tanka gelir, tanktaki cihaz kendiliğinden düşürür
  const far=`(()=>{const b=HisarSwarm.diagnostics().base,a=Math.atan2(-b.x,-b.z),put=()=>{P.x=b.x+Math.sin(a)*560;P.z=b.z+Math.cos(a)*560;AL.forEach((q,i)=>{q.x=P.x+60+12*i;q.z=P.z+60;q.cmd='hold';q.hold={x:q.x,z:q.z};});};return put;})()`;
- const jam=await p.evaluate(far=>{const put=eval(far);put();for(let i=0;i<5;i++)update(.1);HisarSwarm.spawnFoe('p',4,240);for(let i=0;i<40;i++){put();update(.1);}
-  const d=HisarSwarm.diagnostics();window.__put=put;return {up:d.foe.filter(q=>q.st!=='fall').length,near:d.foe.every(q=>Math.hypot(q.x-P.x,q.z-P.z)<200),warn:document.getElementById('abE').classList.contains('warn')};},far);
- assert.equal(jam.up,4);assert.equal(jam.near,true);assert.equal(jam.warn,true);
- await p.keyboard.press('e');const jam2=await p.evaluate(()=>{for(let i=0;i<3;i++){__put();update(.1);}const d=HisarSwarm.diagnostics();return {up:d.foe.filter(q=>q.st!=='fall').length,cd:d.tankCd,downed:d.downed};});
- assert.equal(jam2.up,0);assert.ok(jam2.cd>15);assert.ok(jam2.downed>=4);ok('an enemy swarm heads for the tank; one press of E brings the whole swarm down and the jammer recharges');
+ const jam=await p.evaluate(far=>{const put=eval(far);put();for(let i=0;i<5;i++)update(.1);const hp=P.hp,d0=HisarSwarm.diagnostics().downed;HisarSwarm.spawnFoe('p',4,240);let far0=0,k=0;for(;k<80;k++){put();update(.1);const f=HisarSwarm.diagnostics().foe;if(k===3)far0=f.filter(q=>q.st!=='fall').length;if(!f.some(q=>q.st!=='fall'))break;}
+  const d=HisarSwarm.diagnostics();window.__put=put;return {far0,t:k/10,up:d.foe.filter(q=>q.st!=='fall').length,cd:d.tankCd,downed:d.downed-d0,hp:[hp,P.hp],msg:document.getElementById('msg').textContent};},far);
+ assert.equal(jam.far0,4,'the swarm is in the air');assert.equal(jam.up,0);assert.ok(jam.cd>15,'the device recharges '+jam.cd);assert.ok(jam.downed>=4);assert.equal(jam.hp[1],jam.hp[0],'no drone reached the tank');assert.match(jam.msg,/EJDERHA · 4 İHA DÜŞÜRÜLDÜ/);
+ ok('an enemy swarm heads for the tank; EJDERHA brings the whole swarm down by itself after '+jam.t+' s, says so on screen and recharges');
  const hurt=await p.evaluate(()=>{L.dmg=22;const hp=P.hp;HisarSwarm.spawnFoe('p',2,150);for(let i=0;i<120&&HisarSwarm.diagnostics().foe.some(q=>q.st!=='fall');i++){__put();E.forEach(e=>{e.cd=99;});update(.1);}L.dmg=0;return {hp,after:P.hp,game};});
- assert.ok(hurt.after<hurt.hp-15&&hurt.after>hurt.hp-60,'two drones while the jammer charges: '+hurt.hp+' -> '+hurt.after);assert.equal(hurt.game,'play');ok('while the jammer recharges, diving drones hit the tank');
+ assert.ok(hurt.after<hurt.hp-15&&hurt.after>hurt.hp-60,'two drones while the jammer charges: '+hurt.hp+' -> '+hurt.after);assert.equal(hurt.game,'play');ok('while the device recharges, diving drones hit the tank');
  const hq=await p.evaluate(()=>{HisarSwarm.spawnFoe('b',5,420);let k=0;for(;k<200&&HisarSwarm.diagnostics().foe.some(q=>q.st!=='fall');k++){__put();update(.1);}const d=HisarSwarm.diagnostics();return {t:k/10,hp:d.base.hp,up:d.foe.filter(q=>q.st!=='fall').length};});
  assert.equal(hq.up,0);assert.equal(hq.hp,100);assert.ok(hq.t<20);ok('a swarm sent at the headquarters is brought down automatically before it arrives ('+hq.t+' s)');
  // oyuncunun sürüsü: dört dron kalkar, işaretli tanklara ikişer dalar
@@ -185,17 +184,22 @@ if(!mobile){
  await p.evaluate(()=>HisarBattle.events(false));
 
  // ---- sınır: duvar, kapılar, kuleler, karakollar, devriye, bayraklar, okullar
- const sn=await p.evaluate(()=>{const d=HisarSinir.diagnostics();return {d,wall:S.children.filter(o=>o.name==='SN_DUVAR').length,uni:S.children.filter(o=>o.name==='SN_UNIMOG').length,
+ await p.waitForFunction(()=>/^(hazır|hata)/.test(HisarHat.diagnostics().state),null,{timeout:90000});
+ const sn=await p.evaluate(()=>{const d=HisarSinir.diagnostics();return {d,w:HisarSinir.wall(),old:S.children.filter(o=>o.name==='SN_DUVAR').length,lv:S.children.filter(o=>/^SN_DUVAR_MODEL_/.test(o.name)).length,
+  kirpi:S.children.filter(o=>o.name==='SN_KIRPI').map(g=>g.children.filter(c=>c.name==='MD_YAKIN'||c.name==='MD_UZAK').length),ht:HisarHat.diagnostics(),tw:HisarHat.towers().length,
+  boxes:BLD.filter(b=>b.kind==='kule').every(b=>b.parts.every(q=>q.m.elements[0]===0&&q.m.elements[5]===0)),cars:S.children.filter(o=>o.name==='HT_ZIRHLI').length,
   hk:HisarSinir.flagTex()&&HisarSinir.flagTex().image.width,hq:!!S.getObjectByName('SR_KARARGAH')};});
- assert.ok(sn.d.blocks>500&&sn.d.coils>1500,'wall blocks '+sn.d.blocks);assert.equal(sn.wall,3);assert.ok(sn.d.towers>=6);assert.equal(sn.d.posts.length,3);assert.ok(sn.d.schoolsAt.length>=3,'schools '+sn.d.schoolsAt.length);
- assert.ok(sn.d.flags>=80,'house flags '+sn.d.flags);assert.ok(sn.d.poleFlags>=40);assert.ok(sn.d.soldiers>=12);assert.ok(sn.uni>=3&&sn.d.unimogs.length===sn.uni);
- ok('border: '+sn.d.blocks+' wall blocks with razor wire, '+sn.d.towers+' watchtowers, three border posts, '+sn.d.soldiers+' soldiers, '+sn.uni+' Unimog patrols, '+sn.d.flags+' house flags, '+sn.d.schoolsAt.length+' schools');
+ assert.equal(sn.ht.state,'hazır',JSON.stringify(sn.ht));assert.equal(sn.old,0,'the block wall gives way to the supplied model');assert.equal(sn.lv,3,'three wall detail levels');
+ assert.ok(sn.w&&sn.w.segs>200&&sn.w.counts.reduce((a,b)=>a+b,0)===sn.w.segs&&sn.w.counts[0]<=6&&sn.w.counts[1]<=12&&sn.w.old===false,JSON.stringify(sn.w));
+ assert.ok(sn.d.towers>=6&&sn.tw===sn.d.towers&&sn.boxes,'every watchtower wears the tower model');assert.equal(sn.d.posts.length,3);assert.ok(sn.d.schoolsAt.length>=3,'schools '+sn.d.schoolsAt.length);assert.ok(sn.cars>=4&&sn.ht.cars===sn.cars,'armoured cars at the gates '+sn.cars);
+ assert.ok(sn.d.flags>=80,'house flags '+sn.d.flags);assert.ok(sn.d.poleFlags>=40);assert.ok(sn.d.soldiers>=12);assert.ok(sn.kirpi.length>=3&&sn.kirpi.every(n=>n===2)&&sn.d.kirpis.length===sn.kirpi.length,'Kirpi patrols wear the model '+sn.kirpi);
+ ok('border from the supplied models: '+sn.w.segs+' wall sections with razor wire ('+sn.w.counts.join('/')+' detailed/light/card), '+sn.d.towers+' concrete watchtowers, '+sn.cars+' armoured cars at the gates, '+sn.kirpi.length+' Kirpi patrols; three border posts, '+sn.d.soldiers+' soldiers, '+sn.d.flags+' house flags, '+sn.d.schoolsAt.length+' schools');
  const cross=await p.evaluate(()=>{const W=x=>riv(x)-26,go=(x)=>{P.x=x;P.z=W(x)-8;P.h=0;P.v=0;keys.w=true;for(let i=0;i<90;i++)update(.1);keys.w=false;return {z:P.z,wall:W(P.x)};};
   const a=go(230),b=go(70),c=HisarSinir.diagnostics();return {a,b,blocked:c.crossBlocked,country:c.country};});
  assert.ok(cross.a.z<cross.a.wall,'the wall stops the tank');assert.ok(cross.b.z>cross.b.wall+5,'the gate lets the tank through');assert.ok(cross.blocked>0);
  ok('the tank cannot drive through the wall but passes the border gate into Syria');
- const unim=await p.evaluate(()=>{const a=HisarSinir.diagnostics().unimogs.map(u=>u.x);for(let i=0;i<30;i++)update(.1);const b=HisarSinir.diagnostics().unimogs.map(u=>u.x);return a.map((x,i)=>Math.abs(b[i]-x));});
- assert.ok(unim.filter(d=>d>5).length>=Math.max(1,unim.length-1),'patrols move '+unim); // biri tam o anda geri dönüyor ya da tankın önünde duruyor olabilirok('Unimog patrols drive along the wall');
+ const unim=await p.evaluate(()=>{const a=HisarSinir.diagnostics().kirpis.map(u=>u.x);for(let i=0;i<30;i++)update(.1);const b=HisarSinir.diagnostics().kirpis.map(u=>u.x);return a.map((x,i)=>Math.abs(b[i]-x));});
+ assert.ok(unim.filter(d=>d>5).length>=Math.max(1,unim.length-1),'patrols move '+unim); // biri tam o anda geri dönüyor ya da tankın önünde duruyor olabilirok('Kirpi patrols drive along the wall');
  const civ=await p.evaluate(()=>{const b=BLD.find(q=>q.kind==='beton'&&!q.dead);const c0=HisarSinir.diagnostics().civil;impact({k:0},b.x+2,hAt(b.x,b.z)+1,b.z+2,null);return {c0,c1:HisarSinir.diagnostics().civil,hit:document.getElementById('hit').textContent};});
  assert.equal(civ.c1,civ.c0+1);assert.match(civ.hit,/SİVİL YERLEŞİM/);ok('a shell landing in a village warns "Sivil yerleşim hedef alanında" (no penalty)');
  // ---- ağır sürüş ve binaya çarpma
@@ -240,13 +244,43 @@ if(!mobile){
  ok('south-east border terrain: '+az.d.trees+' olive trees in '+az.d.groves+' groves, '+az.k+' flat-roofed mud-brick houses in Syria, no pines south of the border; the tank fells an olive tree');
   // ---- sivil hayat: park araçları, köy trafiği, ezilme ve yanma; tarlalar, kireç taşı kayalar, saman yığınları
   await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
+  await p.waitForFunction(()=>[HisarMahalle.diagnostics().state,HisarSivil.diagnostics().state,HisarMilitan.diagnostics().state,HisarMilitan.diagnostics().asker,HisarAgac.diagnostics().state,HisarHat.diagnostics().state,HisarEjderha.diagnostics().state].every(q=>/^(hazır|hata)/.test(q)),null,{timeout:90000});
+  const md=await p.evaluate(async()=>{const fr=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const c=COV.find(q=>q.mah);P.x=c.x;P.z=c.z;update(.1);const out=Math.hypot(P.x-c.x,P.z-c.z);
+   const car=HisarSivil.cars().find(q=>q.parked&&q.kind==='pikap');P.x=car.x+9;P.z=car.z;for(let i=0;i<3;i++)update(.1);await fr();await fr();const sv=HisarSivil.diagnostics();
+   const tr=TREES.find(t=>!t.st);P.x=tr.x+7;P.z=tr.z;for(let i=0;i<3;i++)update(.1);await fr();await fr();const forest=TREEX.model(),gt=HisarArazi.trees()[0];P.x=gt.x+7;P.z=gt.z;for(let i=0;i<3;i++)update(.1);await fr();update(.1);const grove=HisarArazi.model();
+   const sen=HisarSinir.diagnostics().sentries[0];P.x=sen.x+10;P.z=sen.z-10;for(let i=0;i<3;i++)update(.1);await fr();await fr();const bust=[HisarSinir.crowd().model(),HisarSinir.crowd().modelFar()];
+   const inf=mkInf();S.add(inf);inf.position.set(P.x+6,hAt(P.x+6,P.z),P.z);await fr();await fr();const tor=inf.userData.tor.children.filter(o=>o.isMesh&&o.visible);S.remove(inf);await fr();
+   return {m:HisarMahalle.diagnostics(),sites:HisarMahalle.sites().map(q=>q.sy),out,r:c.r,sv,ml:HisarMilitan.diagnostics(),ag:HisarAgac.diagnostics(),forest,grove,bust,hasBust:!!inf.userData.bust,legs:inf.userData.LL.hip.children.some(o=>o.isMesh&&o.visible),torso:tor.length,torsoName:tor[0]&&tor[0].name,md:HisarModel.diagnostics(),old:S.children.filter(o=>o.name==='SV_PARK'||o.name==='SV_YOL').length};});
+  assert.equal(md.m.state,'hazır',JSON.stringify(md.m));assert.ok(md.m.sites>=3&&md.sites.includes(true)&&md.m.blockers>=200,JSON.stringify(md.m));assert.ok(md.out>md.r*.8,'a tank cannot drive through the houses '+md.out);
+  assert.equal(md.sv.state,'hazır',JSON.stringify(md.sv));assert.ok(md.sv.hi>=1&&md.sv.hi<=3,'the nearest cars use the detailed model '+md.sv.hi);assert.ok(md.sv.hi+md.sv.mid+md.sv.far>=4,'the rest use the light model');assert.equal(md.sv.trucks,2);assert.equal(md.old,0,'coded car bodies are gone');
+  assert.equal(md.ml.state,'hazır');assert.equal(md.ml.asker,'hazır',JSON.stringify(md.ml));assert.equal(md.ml.busts,3);assert.equal(md.hasBust,true);assert.equal(md.legs,true);assert.equal(md.torso,1,'only the bust is drawn above the waist');assert.equal(md.torsoName,'ML_BUST');
+  assert.ok(md.bust[0]>=1&&md.bust[0]<=8,'Turkish soldiers near the camera wear the detailed bust '+md.bust);assert.equal(md.ag.state,'hazır',JSON.stringify(md.ag));assert.ok(md.ag.forest&&md.ag.groves);
+  assert.ok(md.forest.length===3&&md.forest[0]>=1&&md.forest[0]<=3&&md.forest[1]<=14&&md.forest[2]>=10,'forest trees in three detail levels '+md.forest);assert.ok(md.grove.length===3&&md.grove[0]<=2&&md.grove[1]<=8&&md.grove[0]+md.grove[1]>=1,'grove trees in three detail levels '+md.grove);assert.equal(md.md.failed,0);
+  ok('supplied 3D models: '+md.m.sites+' old quarters block tanks; '+md.sv.parked+' pickups and tractors plus '+md.sv.trucks+' troop trucks drawn from the models ('+md.sv.hi+' detailed, the rest light); olive trees in three levels (forest '+md.forest.join('/')+', groves '+md.grove.join('/')+'); enemy infantry wear the fighter busts on animated legs, our soldiers the Turkish soldier bust ('+md.bust.join(' detailed, ')+' light)');
   const sv=await p.evaluate(()=>{const m0=HisarSivil.cars().find(q=>!q.parked);const x0=m0.x,z0=m0.z;for(let i=0;i<30;i++){P.x=-700;P.z=-700;update(.1);}const m1=HisarSivil.cars().find(q=>!q.parked&&q.kind===m0.kind);
    const c=HisarSivil.cars().find(q=>q.parked);P.x=c.x-1.5;P.z=c.z;for(let i=0;i<6;i++){P.x+=.5;update(.1);}const cs=HisarSivil.cars().filter(q=>!q.parked&&!q.dead);bigBoom(cs[0].x,cs[0].z,5);update(.1);
-   const pl=HisarCevre.poles().find(q=>q.wired&&!q.down);P.x=pl.x-1.5;P.z=pl.z;for(let i=0;i<6;i++){P.x+=.5;update(.1);}const pd=HisarCevre.poles().find(q=>q.x===pl.x&&q.z===pl.z);
+   const pl=HisarCevre.poles().find(q=>q.wired&&!q.down&&!COV.some(c=>Math.hypot(c.x-q.x,c.z-q.z)<c.r+8)&&!BLD.some(b=>!b.dead&&Math.hypot(b.x-q.x,b.z-q.z)<b.r+8));P.x=pl.x-1.5;P.z=pl.z;for(let i=0;i<6;i++){P.x+=.5;update(.1);}const pd=HisarCevre.poles().find(q=>q.x===pl.x&&q.z===pl.z);
    return {d:HisarSivil.diagnostics(),moved:Math.hypot(m1.x-x0,m1.z-z0),a:HisarArazi.diagnostics(),c:HisarCevre.diagnostics(),pole:[pd.down,pd.wired],sy:HisarCevre.poles().filter(q=>q.sy&&q.wired).length,fac:BLD.filter(b=>b.parts&&b.parts.some(q=>q.k==='f')).length};});
-  assert.ok(sv.c.poles>=60&&sv.c.spans>=30&&sv.c.craters>=20&&sv.c.columns>=3,JSON.stringify(sv.c));assert.deepEqual(sv.pole,[true,false],'a tank fells the pole and its wires drop');assert.equal(sv.sy,0,'no live wires in Syria');assert.ok(sv.fac>=20,'stone houses have painted facades '+sv.fac);
+  assert.ok(sv.c.poles>=60&&sv.c.spans>=30&&sv.c.craters>=20&&sv.c.columns>=3,JSON.stringify(sv.c));assert.deepEqual(sv.pole,[true,false],'a tank fells the pole and its wires drop '+JSON.stringify(sv.pole));assert.equal(sv.sy,0,'no live wires in Syria');assert.ok(sv.fac>=20,'stone houses have painted facades '+sv.fac);
   assert.ok(sv.d.parked>=40&&sv.d.moving>=3,JSON.stringify(sv.d));assert.ok(sv.moved>5,'traffic drives '+sv.moved);assert.ok(sv.d.crushed>=1&&sv.d.burned>=1);assert.ok(sv.a.rocks>=300&&sv.a.hay>=1,JSON.stringify(sv.a));
   ok('village life on wheels: '+sv.d.parked+' parked cars, pickups and tractors, '+sv.d.moving+' vehicles driving the village roads; a tank crushes a car, a shell burns one; '+sv.a.rocks+' limestone rocks, haystacks by the barns; '+sv.c.poles+' power poles with sagging wires in Türkiye, a dead grid and shell craters in Syria, smoke on the horizon');
+  // ---- EJDERHA: karakolların yanında antenli araç, ara sıra gelen dron sürüsü, kendiliğinden darbe, küçük pencere
+  const ej=await p.evaluate(async()=>{const fr=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));HisarHarekat.start('tepe');L.dmg=0;update(.1);const d0=HisarEjderha.diagnostics(),hp0=P.hp,E0=HisarEjderha.core.EJ;
+   let n=0;while(!HisarEjderha.event()&&n++<900)update(.1);const e0=HisarEjderha.event(),wait=n*.1;if(!e0)return {d0,e0,wait};const px=P.x,pz=P.z,far=Math.hypot(e0.c.x-px,e0.c.z-pz);
+   const bi=HisarEjderha.sites().findIndex(q=>q.busy),a0=HisarEjderha.sites().map(q=>q.dish);let k=0;while(HisarEjderha.event()&&HisarEjderha.event().st==='gel'&&k++<200)update(.05);const e1=HisarEjderha.event(),d1=HisarEjderha.diagnostics(),sb=HisarEjderha.sites()[bi]||{};
+   const turn={bi,dish:sb.dish,want:bi<0?null:HisarEjderha.core.aim(Math.atan2(e1.c.x-sb.x,e1.c.z-sb.z),sb.yaw,E0.bore,E0.slew),scan:HisarEjderha.sites().map((q,i)=>i===bi?0:Math.abs(q.dish-a0[i])),lim:E0.slew};await fr();await fr();await fr();
+   const card=document.getElementById('ej-pip'),r=card?card.getBoundingClientRect():{width:0,left:0,top:0,right:0,bottom:0},pip={shown:!!card&&!card.hidden,txt:card?card.textContent:'',frames:HisarEjderha.diagnostics().pipFrames,w:r.width,in:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,
+    over:[...document.querySelectorAll('#ui button,#uAb button,#sn-ulke')].filter(b=>{const q=b.getBoundingClientRect();return q.width>0&&q.left<r.right&&q.right>r.left&&q.top<r.bottom&&q.bottom>r.top;}).length};
+   for(let i=0;i<40;i++)update(.05);const e2=HisarEjderha.event();for(let i=0;i<300&&HisarEjderha.event();i++)update(.05);const d2=HisarEjderha.diagnostics();await fr();await fr();
+   return {d0,e0,wait,far,e1,d1,turn,pip,e2,d2,hp:[hp0,P.hp],sites:HisarEjderha.sites(),turk:HisarEjderha.sites().every(s=>s.z<riv(s.x)-26),cov:COV.filter(c=>c.ej).length,arac:S.children.filter(o=>o.name==='EJ_ARAC').length,
+    gone:!document.getElementById('ej-pip')||document.getElementById('ej-pip').hidden,range:[E0.first,E0.every,E0.swarm],left:HisarEjderha.diagnostics().left};});
+  assert.equal(ej.d0.state,'hazır',JSON.stringify(ej.d0));assert.ok(ej.d0.sites>=2&&ej.d0.left===4&&ej.d0.timer>=ej.range[0][0]-.2&&ej.d0.timer<=ej.range[0][1],JSON.stringify(ej.d0));
+  assert.ok(ej.e0,'a drone swarm comes on its own');assert.ok(Math.abs(ej.wait-ej.d0.timer)<1,'now and then: first swarm after '+ej.wait+' s');assert.ok(ej.e0.n>=ej.range[2][0]&&ej.e0.n<=ej.range[2][1]&&ej.e0.flying===ej.e0.n&&ej.far>300,'swarm of '+ej.e0.n+' at '+ej.far);
+  assert.ok(ej.turn.bi>=0&&Math.abs(ej.turn.dish-ej.turn.want)<.06&&Math.abs(ej.turn.dish)<=ej.turn.lim+1e-6,'the dish turns to the swarm '+JSON.stringify(ej.turn));assert.ok(ej.turn.scan.some(v=>v>.01),'idle dishes keep scanning '+ej.turn.scan);
+  assert.equal(ej.e1.st,'dus','the system fires by itself, no input');assert.equal(ej.d1.events,ej.d0.events+1);assert.ok(ej.pip.shown&&/EJDERHA/.test(ej.pip.txt)&&ej.pip.txt.includes(ej.e0.n+' İHA düşürüldü')&&ej.pip.frames>=1&&ej.pip.w>150&&ej.pip.in&&ej.pip.over===0,JSON.stringify(ej.pip));
+  assert.equal(ej.e2.flying,0,'every drone is hit within two seconds');assert.equal(ej.d2.downed-ej.d0.downed,ej.e0.n);assert.equal(ej.d2.active,false);assert.equal(ej.left,3);assert.ok(ej.d2.timer>=ej.range[1][0]-15&&ej.d2.timer<=ej.range[1][1],'next swarm in '+ej.d2.timer);
+  assert.deepEqual(ej.hp[1],ej.hp[0],'the tank takes no damage');assert.ok(ej.gone,'the small window closes');assert.ok(ej.turk&&ej.cov===ej.sites.length&&ej.arac===ej.sites.length,'vehicles stand in Türkiye and block the tank');
+  ok('EJDERHA: '+ej.sites.length+' antenna vehicles from the supplied model stand by the border posts; a swarm of '+ej.e0.n+' drones came after '+Math.round(ej.wait)+' s, the nearest vehicle turned its dish to it and the system downed all of them by itself; a small window showed the pulse and the falling drones with "EJDERHA · '+ej.e0.n+' İHA düşürüldü"; the tank took no damage');
  // ---- harekât: savunma, taarruz, baskın
  await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
  const g1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();for(let i=0;i<570;i++){P.x=70;P.z=40;update(.1);}const d1=HisarHarekat.diagnostics();const z0=d1.enemies.map(e=>e.z);for(let i=0;i<100;i++){P.x=70;P.z=40;update(.1);}const d2=HisarHarekat.diagnostics();

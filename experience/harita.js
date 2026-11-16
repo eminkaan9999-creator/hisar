@@ -4,7 +4,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 // ---------- çekirdek ----------
@@ -29,6 +29,8 @@ function bg(g,o,W){const R=safe(()=>MMR,440),ws=safe(()=>WS,800),X=x=>((x-o.x)/R
  // binalar
  let nb=0;g.fillStyle='#3b3833';for(const b of safe(()=>BLD,[])){if(b.dead)continue;const x=X(b.x),y=Z(b.z);if(x<-8||y<-8||x>W+8||y>W+8)continue;nb++;
   if(b.w){g.save();g.translate(x,y);g.rotate(-(b.rot||0));g.fillRect(-b.w*k/2,-b.d*k/2,Math.max(1.4,b.w*k),Math.max(1.4,b.d*k));g.restore();}else{const s=Math.max(1.4,b.r*k*1.2);g.fillRect(x-s/2,y-s/2,s,s);}}stat.buildings=nb;
+ // eski mahalleler (3B model): sık dokulu yapı adası
+ for(const q of safe(()=>root.HisarMahalle.sites(),[])){const x=X(q.x),y=Z(q.z),w=58*k;if(x<-w||y<-w||x>W+w||y>W+w)continue;g.save();g.translate(x,y);g.rotate(-q.rot);g.fillStyle='#6b5d4c';g.fillRect(-w/2,-w/2,w,w*.62);g.fillRect(-w*.05,-w/2,w*.55,w*.9);g.restore();}
  // sınır duvarı
  g.strokeStyle='#d8262c';g.lineWidth=1.8;g.setLineDash([3,2]);g.beginPath();let f=true;for(let x=o.x-R/2-8;x<=o.x+R/2+8;x+=6){const p=[X(x),Z(wz(x))];if(f){g.moveTo(p[0],p[1]);f=false;}else g.lineTo(p[0],p[1]);}g.stroke();g.setLineDash([]);
  // köy adları ve ülke adları (okunaklı, koyu yazı)

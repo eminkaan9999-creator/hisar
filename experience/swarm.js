@@ -1,11 +1,11 @@
-/* ÇELİK BÖRÜ sürü 1.0 — sürü dronlar ve mikrodalga dron savar ("Son Takım" savaşında).
+/* ÇELİK BÖRÜ sürü 1.1 — sürü dronlar ve EJDERHA İHA savunması ("Son Takım" savaşında).
  * Oyuncu telsizden ya da Y tuşuyla tek seferde dört dronluk bir sürü kaldırır; sürü işaretli ya da görünen düşmana dalar,
  * hedef yoksa tankın üstünde dolaşıp gelen düşman dronlarını çarparak düşürür.
- * Rakip takımlar da sürü gönderir. Karşılığı mikrodalga dron savardır: karargâhtaki cihaz menzile giren düşman dronlarını
- * kendiliğinden indirir, tanktaki cihaz tek tuşla (E) çevredeki bütün düşman dronlarını düşürür. Dost dronlara dokunmaz.
+ * Rakip takımlar da sürü gönderir. Karşılığı EJDERHA'dır (elektromanyetik İHA savunması): karargâhtaki ve tanktaki cihaz menzile giren
+ * düşman dronlarını kendiliğinden indirir, oyuncu bir şey yapmaz; kaç İHA düştüğü ekranda bildirilir. Dost dronlara dokunmaz.
  */
 (function(root){'use strict';
-const VERSION='1.0.2';
+const VERSION='1.1.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -19,8 +19,9 @@ const OWN=Object.freeze({n:4,alt:30,sp:26,dive:34,hit:4,dmg:.55,range:600,life:1
 // cap aynı anda havadaki en çok sürü, dmgP oyuncuya ve dosta isabet başına hasar katsayısı, dmgBase karargâha verdiği hasar.
 const FOE=Object.freeze({alt:28,sp:22,dive:30,hit:4,life:110,range:520,cool:[55,85],first:[45,70],cap:2,dmgP:.9,dmgBase:14,
  size:Object.freeze({kolay:3,normal:4,zor:5,serbest:0})});
-// MW: mikrodalga dron savar. tank: menzil ve dolum (sn); base: karargâhtaki cihaz; hp karargâhın dayanıklılığı.
-const MW=Object.freeze({tank:Object.freeze({r:200,cd:18}),base:Object.freeze({r:330,cd:5}),hp:100,supply:60});
+// MW: EJDERHA. tank: menzil, dolum (sn) ve kendiliğinden ateşleme uzaklığı (auto: sürünün tamamı menzile girsin diye menzilden kısa);
+// base: karargâhtaki cihaz; hp karargâhın dayanıklılığı.
+const MW=Object.freeze({tank:Object.freeze({r:200,cd:18,auto:150}),base:Object.freeze({r:330,cd:5}),hp:100,supply:60});
 const POOL=16;
 
 // ---------- çekirdek (sınanabilir, oyundan bağımsız) ----------
@@ -112,8 +113,8 @@ function foeLaunch(s,o,n){const ts=foeTargets(o);if(!ts.length)return false;let 
  const id=++W.swarms,y=safe(()=>hAt(o.x,o.z),0)+3;for(let i=0;i<n;i++)W.list.push({side:'foe',sw:id,x:o.x+(rnd()-.5)*8,y:y+rnd()*2,z:o.z+(rnd()-.5)*8,h:0,vy:0,st:'climb',t:0,a:rnd()*7,tg:pick,from:s.name});
  const at=pick.k==='b'?'karargâha':pick.k==='a'?'dost tanka':'sana';
  note(s.name+' takımı '+n+' dronluk sürü gönderdi · '+at,'kotu');
- if(pick.k==='b')safe(()=>root.radio('Karargâh: dron sürüsü geliyor, dron savar devrede.'),null);
- else{safe(()=>root.say('DÜŞMAN DRON SÜRÜSÜ · '+(safe(()=>document.body.classList.contains('tc'),false)?'DRON SAVAR':'E: DRON SAVAR'),2.4),null);safe(()=>root.radio('Telsiz: Düşman dron sürüsü geliyor, '+n+' dron! Dron savarı hazırla.'),null);}
+ if(pick.k==='b')safe(()=>root.radio('Karargâh: dron sürüsü geliyor, EJDERHA devrede.'),null);
+ else{safe(()=>root.say('DÜŞMAN DRON SÜRÜSÜ · EJDERHA DEVREDE',2.4),null);safe(()=>root.radio('Telsiz: Düşman dron sürüsü geliyor, '+n+' dron! EJDERHA devrede.'),null);}
  return true;}
 function stepFoeLaunch(){const Bv=W.B,key=safe(()=>lvKey,'normal'),n=swarmSize(key);if(!n||safe(()=>!(L.dmg>0),false))return;
  const up=new Set(W.list.filter(d=>d.side==='foe'&&d.st!=='fall'&&d.st!=='gone').map(d=>d.sw));if(up.size>=FOE.cap)return;
@@ -125,7 +126,7 @@ function foeAim(d){const t=d.tg;if(!t)return null;if(t.k==='p')return {x:P.x,z:P
 function foeHit(d){const t=d.tg;explode(d,true);
  if(t.k==='p'){if(dist(d,P)<FOE.hit+3)safe(()=>root.hitP(FOE.dmgP,{x:d.x,y:d.y,z:d.z}),null);}
  else if(t.k==='a'){if(!t.a.dead&&dist(d,t.a)<FOE.hit+3)safe(()=>root.hitAl(t.a,FOE.dmgP),null);}
- else if(t.k==='b'){const b=W.base;if(b.hp>0){b.hp=Math.max(0,b.hp-FOE.dmgBase);if(b.hp<=0){note('Karargâh vuruldu · dron savar devre dışı','kotu');safe(()=>root.radio('Karargâh: dron savar vuruldu, devre dışıyız!'),null);if(b.g&&b.g.userData.dish)b.g.userData.dish.rotation.z=.5;}}}}
+ else if(t.k==='b'){const b=W.base;if(b.hp>0){b.hp=Math.max(0,b.hp-FOE.dmgBase);if(b.hp<=0){note('Karargâh vuruldu · EJDERHA devre dışı','kotu');safe(()=>root.radio('Karargâh: EJDERHA vuruldu, devre dışıyız!'),null);if(b.g&&b.g.userData.dish)b.g.userData.dish.rotation.z=.5;}}}}
 function stepFoe(d,dt){d.t+=dt;const gy=safe(()=>hAt(d.x,d.z),0);
  if(d.st==='fall'){d.vy-=9.8*dt;d.y+=d.vy*dt;d.a+=dt*9;if(d.y<=gy+.3){d.y=gy+.3;d.st='gone';safe(()=>root.boom(d.x,d.y,d.z,.8),null);}return;}
  if(d.t>FOE.life){d.st='fall';d.vy=0;return;}
@@ -137,15 +138,16 @@ function stepFoe(d,dt){d.t+=dt;const gy=safe(()=>hAt(d.x,d.z),0);
  // dost tanklar dalıştaki dronu makineliyle düşürmeye çalışır
  safe(()=>{for(const a of AL)if(!a.dead&&dist(a,d)<45&&rnd()<dt*.35){d.st='fall';d.vy=0;W.downed++;break;}},null);}
 
-// ---------- mikrodalga dron savar ----------
+// ---------- EJDERHA ----------
 function wave(x,z,r){if(!gfx)return;const w=gfx.wave;w.position.set(x,safe(()=>hAt(x,z),0),z);w.visible=true;gfx.wt=0;gfx.wr=r;w.scale.setScalar(2);w.material.opacity=.5;}
 function zap(x,z,r,who){const hit=pulse(W.list,x,z,r);wave(x,z,r);safe(()=>{root.sndBip();root.setTimeout(()=>root.sndBip(),120);},null);
- if(hit.length){W.downed+=hit.length;note(who+' '+hit.length+' dron düşürdü','iyi');}return hit.length;}
-function fireTank(){if(!W||!playing()||safe(()=>mode!=='tank',true))return -1;if(W.tankCd>0){safe(()=>root.say('Dron savar doluyor · '+Math.ceil(W.tankCd)+' sn',1.2),null);return -1;}
- W.tankCd=MW.tank.cd;const n=zap(P.x,P.z,MW.tank.r,'Dron savar');safe(()=>root.say(n?'DRON SAVAR · '+n+' DRON DÜŞTÜ':'DRON SAVAR · menzilde dron yok',1.6),null);paintUI();return n;}
+ if(hit.length){W.downed+=hit.length;note(who+' '+hit.length+' İHA düşürdü','iyi');}return hit.length;}
+// Tanktaki cihaz kendiliğinden çalışır: dolmuşsa ve düşman dronu yeterince yaklaşmışsa darbeyi atar, kaç İHA düştüğünü ekrana yazar
+function autoTank(){if(W.tankCd>0||safe(()=>mode!=='tank',true))return 0;if(!W.list.some(d=>d.side==='foe'&&d.st!=='fall'&&d.st!=='gone'&&dist(d,P)<=MW.tank.auto))return 0;
+ W.tankCd=MW.tank.cd;const n=zap(P.x,P.z,MW.tank.r,'EJDERHA');safe(()=>root.say('EJDERHA · '+n+' İHA DÜŞÜRÜLDÜ',2.2),null);return n;}
 function stepBase(dt){const b=W.base;if(!b||b.hp<=0)return;b.cd=Math.max(0,b.cd-dt);b.sup=Math.max(0,b.sup-dt);
  if(b.g&&b.g.userData.dish)b.g.userData.dish.parent.rotation.y+=dt*(b.cd>MW.base.cd-1?3:.5);
- if(b.cd<=0&&W.list.some(d=>d.side==='foe'&&d.st!=='fall'&&d.st!=='gone'&&dist(d,b)<=MW.base.r)){b.cd=MW.base.cd;zap(b.x,b.z,MW.base.r,'Karargâh dron savarı');}
+ if(b.cd<=0&&W.list.some(d=>d.side==='foe'&&d.st!=='fall'&&d.st!=='gone'&&dist(d,b)<=MW.base.r)){b.cd=MW.base.cd;zap(b.x,b.z,MW.base.r,'Karargâh EJDERHA');}
  // karargâh ikmal noktasıdır
  if(b.sup<=0&&dist(P,b)<16&&safe(()=>mode==='tank',false)){b.sup=MW.supply;safe(()=>root.HisarBattle.resupply(),null);note('Karargâhta ikmal · mühimmat ve Uçangözler doldu, zırh onarıldı','iyi');safe(()=>root.say('İKMAL TAMAM',1.8),null);}}
 
@@ -155,8 +157,7 @@ function step(dt){const Bv=live();if(!Bv||Bv.over){if(W)reset();return;}if(!W||W
  for(const d of W.list)if(d.side==='own')stepOwn(d,dt);else stepFoe(d,dt);
  W.list=W.list.filter(d=>d.st!=='gone');
  if(gfx){const w=gfx.wave;if(w.visible){gfx.wt+=dt;const k=Math.min(1,gfx.wt/.6);w.scale.setScalar(2+(gfx.wr-2)*k);w.material.opacity=.5*(1-k);if(k>=1)w.visible=false;}}
- const near=W.list.some(d=>d.side==='foe'&&d.st!=='fall'&&dist(d,P)<400);if(ui)ui.btn.classList.toggle('warn',near&&W.tankCd<=0);
- paintUI();}
+ autoTank();paintUI();}
 function draw(){if(!gfx)return;const m=gfx._m,q=gfx._q,e=gfx._e,s=gfx._s,p=gfx._p,t=performance.now()/1000;
  for(const side of ['own','foe']){const g=gfx[side];let n=0;if(W)for(const d of W.list){if(d.side!==side||n>=POOL)continue;
    const tilt=d.st==='fall'?d.a:d.st==='dive'?.6:.15;e.set(tilt,d.h,d.st==='fall'?d.a*.7:0,'YXZ');q.setFromEuler(e);p.set(d.x,d.y,d.z);m.compose(p,q,s);
@@ -174,28 +175,20 @@ function drawMap(c,SX,SY,s){if(!W)return;const b=W.base;c.save();
  for(const d of W.list){if(d.st==='fall')continue;c.fillStyle=d.side==='own'?'#5cf0ff':'#ff3b2a';c.beginPath();c.arc(SX(d.x),SY(d.z),3,0,7);c.fill();}
  c.restore();}
 
-// ---------- arayüz: dron savar düğmesi ve telsizdeki sürü bölümü ----------
-const IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 13.5v8M9 21.5h6"/><path d="M5.2 6.8a9.6 9.6 0 0 0 13.6 13.6M8.4 9.9a5.2 5.2 0 0 0 5.7 5.7"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M15 3.2l1.6 2.6M19.2 6.4l2.4 1.8"/></svg>';
-function installUI(){if(ui||!doc.body)return;const ab=doc.getElementById('uAb');if(!ab)return;
+// ---------- arayüz: telsizdeki sürü bölümü ----------
+function installUI(){if(ui||!doc.body)return;
  const st=doc.createElement('style');st.id='sr-style';st.textContent=`
-#abE[hidden]{display:none!important}#abE.warn{animation:srUyari .8s ease-in-out infinite}#abE.cd{opacity:.62}
-body.tc #abE b{display:none}
-@keyframes srUyari{50%{box-shadow:0 0 0 5px rgba(92,240,255,.55),0 0 22px rgba(92,240,255,.75)}}
-@media (prefers-reduced-motion:reduce){#abE.warn{animation:none;box-shadow:0 0 0 4px rgba(92,240,255,.6)}}
 #sr-box{margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--cizgi,#4a4f43)}#sr-box h4{margin:0 0 8px;font:800 14px/1 var(--sf,system-ui);letter-spacing:.08em;color:#fff}
 #sr-box .sr-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#sr-box .sr-row button{text-align:left;font-size:14.5px}#sr-box .sr-row button.on{border-color:#5cf0ff;box-shadow:inset 0 0 0 1px #5cf0ff}
 #sr-box #sr-up{grid-column:1/-1;background:linear-gradient(180deg,#3d6f7a,#25474f);border-color:#5cf0ff;text-align:center;font-weight:800;letter-spacing:.05em}
 #sr-box p{margin:8px 0 12px;font:600 13.5px/1.3 var(--sf,system-ui);color:var(--kemik2,#bdc3b2)}`;doc.head.appendChild(st);
- const btn=doc.createElement('button');btn.id='abE';btn.className='ab g1';btn.type='button';btn.title='Dron savar (E)';btn.hidden=true;btn.innerHTML=IC+'<b>E</b><small>SAVAR</small><i><s></s></i>';
- btn.addEventListener('click',e=>{e.stopPropagation();fireTank();});ab.insertBefore(btn,ab.firstChild);
- ui={btn,box:null};mountBox();}
+ ui={box:null};mountBox();}
 function mountBox(){if(!ui||ui.box)return;const panel=doc.getElementById('hr-panel'),cmds=panel&&panel.querySelector('.hr-orders');if(!cmds)return;
  const box=doc.createElement('div');box.id='sr-box';box.innerHTML='<h4>SÜRÜ DRON</h4><div class="sr-row"><button type="button" id="sr-up">SÜRÜ KALDIR · 4 DRON (Y)</button><button type="button" data-sr="attack">Hedefe saldır</button><button type="button" data-sr="guard">Tankı koru</button><button type="button" data-sr="home">Geri çağır</button><button type="button" data-sr="auto">Kendi seçsin</button></div><p id="sr-st"></p>';
  cmds.insertAdjacentElement('afterend',box);box.querySelector('#sr-up').onclick=()=>launch();
  for(const b of box.querySelectorAll('[data-sr]'))b.onclick=()=>order(b.dataset.sr);ui.box=box;}
 let paintT=0;
-function paintUI(){if(!ui){installUI();if(!ui)return;}if(!ui.box)mountBox();const on=!!W&&playing()&&safe(()=>mode==='tank',false);ui.btn.hidden=!on;
- if(on){const k=W.tankCd>0?W.tankCd/MW.tank.cd:0;ui.btn.classList.toggle('cd',k>0);const s=ui.btn.querySelector('s');if(s)s.style.width=Math.round((1-k)*100)+'%';const sm=ui.btn.querySelector('small'),t=k>0?Math.ceil(W.tankCd)+' sn':'SAVAR';if(sm.textContent!==t)sm.textContent=t;}
+function paintUI(){if(!ui){installUI();if(!ui)return;}if(!ui.box)mountBox();
  const now=performance.now();if(now-paintT<250)return;paintT=now;
  if(ui.box){ui.box.hidden=!W;if(W){const up=W.list.filter(d=>d.side==='own').length,f=W.list.filter(d=>d.side==='foe'&&d.st!=='fall').length,dc=safe(()=>DC,0);
    ui.box.querySelector('#sr-up').disabled=dc<1;for(const b of ui.box.querySelectorAll('[data-sr]'))b.classList.toggle('on',b.dataset.sr===W.mode);
@@ -208,7 +201,7 @@ function connect(){
  wrap('mmDraw',old=>function(){const r=old.apply(this,arguments);if(playing())drawMini();return r;});
  (root.MAPX=root.MAPX||[]).includes(drawMap)||root.MAPX.push(drawMap);
  if(!hooked){hooked=true;root.addEventListener('keydown',e=>{if(e.repeat||!playing()||e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;const k=(e.key||'').toLowerCase();
-   if(k==='e'){fireTank();e.preventDefault();}else if(k==='y'){launch();e.preventDefault();}});}
+   if(k==='y'){launch();e.preventDefault();}});}
  installUI();}
 function diagnostics(){return {version:VERSION,active:!!W,hooks:{...hooks},mode:W?W.mode:null,tankCd:W?W.tankCd:0,kills:W?W.kills:0,downed:W?W.downed:0,
  base:W&&W.base?{x:W.base.x,z:W.base.z,hp:W.base.hp,cd:W.base.cd,sup:W.base.sup}:null,
@@ -216,6 +209,6 @@ function diagnostics(){return {version:VERSION,active:!!W,hooks:{...hooks},mode:
 // Denetim için: düşman sürüsünü hemen gönderir (hedef 'p' oyuncu, 'b' karargâh).
 function spawnFoe(k,n,r){if(!W)return 0;const tg=k==='b'?{k:'b',x:W.base.x,z:W.base.z}:{k:'p'},c=k==='b'?W.base:P,a=k==='b'||!W.base?rnd()*7:Math.atan2(P.x-W.base.x,P.z-W.base.z)+(rnd()-.5)*2.2,o={x:c.x+Math.sin(a)*(r||300),z:c.z+Math.cos(a)*(r||300)},id=++W.swarms,y=safe(()=>hAt(o.x,o.z),0)+3;
  for(let i=0;i<(n||4);i++)W.list.push({side:'foe',sw:id,x:o.x+(rnd()-.5)*8,y,z:o.z+(rnd()-.5)*8,h:0,vy:0,st:'climb',t:0,a:0,tg});return id;}
-root.HisarSwarm=Object.freeze({version:VERSION,core,connect,launch,order,fire:fireTank,spawnFoe,diagnostics});
+root.HisarSwarm=Object.freeze({version:VERSION,core,connect,launch,order,spawnFoe,diagnostics});
 connect();doc.addEventListener('hisar:ui-ready',connect);
 })(typeof window!=='undefined'?window:globalThis);

@@ -4604,7 +4604,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=107,LOGO=window.HISAR_LOGO;
+const VER=108,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -5921,27 +5921,37 @@ const _m=new THREE.Matrix4(),_z=new THREE.Matrix4().makeScale(0,0,0);
 // Paket yalnız kamera 20 m yer değiştirince ya da bir ağaç parçalanınca yenilenir; her karede yalnız yakındaki
 // (rüzgârda sallanan) ve devrilmekte olan ağaçların yuvası güncellenir.
 const TRR=440*440,NRR=150*150,_n=[0,0,0,0,0,0],NEAR=[],_tc=[0,0,0,0,0,0];let DIRTY=1,lcx=1e9,lcz=1e9,BLOB=null;
+// Gönderilen 3B ağaç modeli (TREEX.setModel): bütün ağaçlar bu modelle çizilir. Düzeyler yakından uzağa verilir ({geo,mat,r,max,card}):
+// kameraya en yakın ağaçlar ayrıntılı örgüyle, sonrakiler hafif örgüyle, uzaktakiler modelin yandan resmini taşıyan çapraz kartla çizilir.
+// Kütük, devrilme ve leke gölge aynı kalır; iğne/yaprak kartlı eski türler çizilmez.
+let OV=null;
+function setModel(levels){if(OV||!levels||!levels.length)return false;const lv=levels.map((L,i)=>{const max=Math.min(TR.length,L.max||TR.length),m=mk(L.geo,L.mat,max);m.count=0;m.visible=false;m.name='TR_MODEL_'+i;if(L.card){m.castShadow=false;m.receiveShadow=false}return{m,r2:L.r*L.r,max,n:0}});
+ OV={lv,ord:[]};DIRTY=1;sync(true);return true}
 function matOf(i){const g=TR[i].g;return _m.compose(g.position,g.quaternion,g.scale).multiply(VM[i])}
 // leke gölge: telefonlarda ağaçlar gerçek gölge atmaz (window.TREE_BLOB), altlarına tek çizimle koyu leke konur
 function lekeGolge(){if(BLOB)return BLOB;const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,3,32,32,31);gr.addColorStop(0,'rgba(0,0,0,.42)');gr.addColorStop(.55,'rgba(0,0,0,.26)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
  const g=new THREE.PlaneGeometry(1,1);g.rotateX(-Math.PI/2);g.userData.sh=true;BLOB=new THREE.InstancedMesh(g,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}),TR.length);BLOB.count=0;BLOB.frustumCulled=false;BLOB.renderOrder=1;BLOB.userData.blob=1;S.add(BLOB);return BLOB}
 const _bp=new THREE.Vector3(),_bq=new THREE.Quaternion(),_bs=new THREE.Vector3(),_bm=new THREE.Matrix4();
-function pack(){const cx=CAM.position.x,cz=CAM.position.z;lcx=cx;lcz=cz;DIRTY=0;_n.fill(0);NEAR.length=0;let ns=0,nb=0;const B=window.TREE_BLOB?lekeGolge():null;
+function pack(){const cx=CAM.position.x,cz=CAM.position.z;lcx=cx;lcz=cz;DIRTY=0;_n.fill(0);NEAR.length=0;let ns=0,nb=0;const B=window.TREE_BLOB?lekeGolge():null;if(OV){for(const L of OV.lv)L.n=0;OV.ord.length=0}
  for(let i=0;i<TR.length;i++){const t=TR[i],q=IT[i],dx=t.x-cx,dz=t.z-cz,d2=dx*dx+dz*dz;q.k=-1;q.nr=0;if(d2>TRR)continue;matOf(i);
-  if(q.cv){const k=_n[q.v]++,a=IMO[q.v],b=IMC[q.v];q.k=k;a.setMatrixAt(k,_m);b.setMatrixAt(k,_m);a.setColorAt(k,TC[i]);b.setColorAt(k,TC[i]);if(d2<NRR||t.st===1){q.nr=1;NEAR.push(i)}
+  if(q.cv){if(OV){q.d2=d2;OV.ord.push(i)}else{const k=_n[q.v]++,a=IMO[q.v],b=IMC[q.v];q.k=k;a.setMatrixAt(k,_m);b.setMatrixAt(k,_m);a.setColorAt(k,TC[i]);b.setColorAt(k,TC[i])}if(d2<NRR||t.st===1){q.nr=1;NEAR.push(i)}
    if(B&&!t.st){const r=4.2*t.s;_bp.set(t.x,t.g.position.y+.09,t.z);_bs.set(r,1,r);B.setMatrixAt(nb++,_bm.compose(_bp,_bq,_bs))}}
   else IMS.setMatrixAt(ns++,_m)}
  for(let v=0;v<IMO.length;v++){const a=IMO[v],b=IMC[v],n=_n[v];a.count=b.count=n;a.visible=b.visible=n>0;a.instanceMatrix.needsUpdate=b.instanceMatrix.needsUpdate=true;a.instanceColor.needsUpdate=b.instanceColor.needsUpdate=true}
  IMS.count=ns;IMS.visible=ns>0;IMS.instanceMatrix.needsUpdate=true;
+ if(OV){/* en yakından başlayarak düzeylere dağıt: dolan düzeyin sıradaki ağacı bir sonrakine düşer */OV.ord.sort((a,b)=>IT[a].d2-IT[b].d2);
+  for(const i of OV.ord){const q=IT[i];let a=null;for(const L of OV.lv)if(q.d2<L.r2&&L.n<L.max){a=L;break}if(!a){q.k=-1;continue}matOf(i);q.k=a.n++;q.m=a.m;a.m.setMatrixAt(q.k,_m);a.m.setColorAt(q.k,TC[i])}
+  for(const L of OV.lv){const m=L.m;m.count=L.n;m.visible=L.n>0;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true}}
  if(BLOB){BLOB.count=B?nb:0;BLOB.visible=!!B&&nb>0;BLOB.instanceMatrix.needsUpdate=true}}
 function sync(force){const cx=CAM.position.x,cz=CAM.position.z;
- if(force||DIRTY||Math.abs(cx-lcx)>20||Math.abs(cz-lcz)>20||!!window.TREE_BLOB!==!!(BLOB&&BLOB.visible)&&_n.some(n=>n>0)){pack();return}
+ const mv=OV?8:20;if(force||DIRTY||Math.abs(cx-lcx)>mv||Math.abs(cz-lcz)>mv||!!window.TREE_BLOB!==!!(BLOB&&BLOB.visible)&&_n.some(n=>n>0)){pack();return}
  for(let i=0;i<TR.length;i++)if(TR[i].st===1&&!IT[i].nr&&IT[i].k>=0){IT[i].nr=1;NEAR.push(i);DIRTY=1} // devrilmeye başlayan ağaç: leke gölgesi kalksın diye paket yenilenir
- _tc.fill(0);for(const i of NEAR){const q=IT[i];if(q.k<0||!q.cv)continue;matOf(i);IMO[q.v].setMatrixAt(q.k,_m);IMC[q.v].setMatrixAt(q.k,_m);_tc[q.v]=1}
+ _tc.fill(0);let ov=0;for(const i of NEAR){const q=IT[i];if(q.k<0||!q.cv)continue;matOf(i);if(OV){q.m.setMatrixAt(q.k,_m);ov=1}else{IMO[q.v].setMatrixAt(q.k,_m);IMC[q.v].setMatrixAt(q.k,_m);_tc[q.v]=1}}
+ if(ov)for(const L of OV.lv)L.m.instanceMatrix.needsUpdate=true;
  for(let v=0;v<IMO.length;v++)if(_tc[v]){IMO[v].instanceMatrix.needsUpdate=true;IMC[v].instanceMatrix.needsUpdate=true}}
 sync(true);
 FRAME_HOOKS.push(dr=>{U.uT.value+=dr||0;const W=window.WIND,ws=W?Math.min(1,(W.s||0)/9):.25;U.uW.value+=(.18+.9*ws-U.uW.value)*Math.min(1,(dr||0)*2);sync()});
-window.TREEX={U,IMO,IMC,IMS,AT,CNT,sync:()=>sync(true)};
+window.TREEX={U,IMO,IMC,IMS,AT,CNT,sync:()=>sync(true),setModel,model:()=>OV?OV.lv.map(L=>L.m.count):null};
 })();
 
 
@@ -7432,16 +7442,16 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script src="experience/crew-orders.js?v=6"></script>
 <script src="experience/field.js?v=7"></script>
 <script src="experience/battle.js?v=6"></script>
-<script src="experience/swarm.js?v=3"></script>
+<script src="experience/swarm.js?v=4"></script>
 <script src="experience/realism.js?v=4"></script>
-<script src="experience/sinir.js?v=7"></script>
+<script src="experience/sinir.js?v=8"></script>
 <script src="experience/harekat.js?v=7"></script>
 <script src="experience/atis.js?v=2"></script>
-<script src="experience/harita.js?v=2"></script>
+<script src="experience/harita.js?v=3"></script>
 <script src="experience/carpisma.js?v=2"></script>
 <script src="experience/koy.js?v=3"></script>
-<script src="experience/destek.js?v=2"></script>
+<script src="experience/destek.js?v=3"></script>
 <script src="experience/menu.js?v=2"></script>
-<script src="experience/arazi.js?v=2"></script><script src="experience/ortam.js?v=1"></script><script src="experience/sivil.js?v=3"></script><script src="experience/cevre.js?v=1"></script>
+<script src="experience/arazi.js?v=3"></script><script src="experience/ortam.js?v=1"></script><script src="experience/model.js?v=1"></script><script src="experience/sivil.js?v=4"></script><script src="experience/cevre.js?v=1"></script><script src="experience/mahalle.js?v=1"></script><script src="experience/militan.js?v=1"></script><script src="experience/agac.js?v=1"></script><script src="experience/hat.js?v=1"></script><script src="experience/ejderha.js?v=1"></script>
 </body>
 </html>

@@ -76,7 +76,7 @@ test('phones render lighter: fast shadows, small shadow map, other tanks and tre
  const m=code.slice(code.indexOf('// ---------------- MOBIL KALITE'),code.indexOf('// ===== m_armor ====='));
  assert.ok(m.includes('const sz=hi?2048:1024;'));assert.ok(m.includes('R.shadowMap.type=THREE.PCFShadowMap'));assert.ok(m.includes("R.shadowMap.autoUpdate=false;FRAME_HOOKS.push(()=>{fr++;if(qlv==='yuksek'||(fr&1))R.shadowMap.needsUpdate=true})"));
  assert.ok(m.includes("window.TREE_BLOB=!hi;"));assert.ok(m.includes("for(const a of AL)lite(a.g);for(const e of E)if(e.type==='tank'||e.type==='apc')lite(e.g)"));
- const t=code.slice(code.indexOf('// ===== m_trees ====='),code.indexOf('// ===== m_nature ====='));assert.ok(t.includes("if(force||DIRTY||Math.abs(cx-lcx)>20||Math.abs(cz-lcz)>20||"),'trees are repacked only when needed');
+ const t=code.slice(code.indexOf('// ===== m_trees ====='),code.indexOf('// ===== m_nature ====='));assert.ok(t.includes("const mv=OV?8:20;if(force||DIRTY||Math.abs(cx-lcx)>mv||Math.abs(cz-lcz)>mv||"),'trees are repacked only when needed');
 });
 test('tank drives heavy (speed and turn ramp up), allies keep up',()=>{
  assert.ok(code.includes('const DRV=Object.freeze({vf:12,vr:4.5,off:.8,acc:3.4,brk:9,turn:1.05,tacc:7});'));assert.ok(code.includes('drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));

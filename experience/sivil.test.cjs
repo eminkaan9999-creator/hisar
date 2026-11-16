@@ -1,0 +1,11 @@
+const test=require('node:test'),assert=require('node:assert'),fs=require('fs');
+const v=require('./sivil.js'),html=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8'),src=fs.readFileSync(__dirname+'/sivil.js','utf8');
+const box=(ps)=>{let x0=1e9,x1=-1e9,y1=-1e9,z0=1e9,z1=-1e9;for(const p of ps){const h=p.t==='b'?p.s.map(q=>q/2):p.r[2]?[p.s[2]/2,p.s[0],p.s[0]]:[p.s[0],p.s[2]/2,p.s[0]];x0=Math.min(x0,p.p[0]-h[0]);x1=Math.max(x1,p.p[0]+h[0]);y1=Math.max(y1,p.p[1]+h[1]);z0=Math.min(z0,p.p[2]-h[2]);z1=Math.max(z1,p.p[2]+h[2]);}return {w:x1-x0,h:y1,l:z1-z0};};
+test('vehicles have real-world sizes: car about 4.3 m, pickup about 5.2 m, tractor with big rear wheels',()=>{const s=box(v.veh('sedan',1)),p=box(v.veh('pikap',1)),t=v.veh('traktor',1);
+ assert.ok(s.l>4.1&&s.l<4.6&&s.w>1.6&&s.w<1.95&&s.h>1.3&&s.h<1.6,JSON.stringify(s));assert.ok(p.l>5&&p.l<5.6&&p.h>1.7&&p.h<2.1,JSON.stringify(p));
+ const wheels=t.filter(q=>q.t==='c'&&q.c===0x181818).map(q=>q.s[0]).sort();assert.equal(wheels.length,4);assert.ok(wheels[3]>1.6*wheels[0],'rear wheels larger');});
+test('traffic drives the road both ways, keeps to its lane and stops for a tank ahead but not for oncoming traffic',()=>{const p=[[0,0],[0,100]];const a=v.along(p,30),b=v.along(p,170);
+ assert.deepEqual([a.z,a.back],[30,false]);assert.ok(Math.abs(b.z-30)<1e-9&&b.back);const l1=v.lane(a,1.7),l2=v.lane(b,1.7);assert.ok(Math.abs(l1.x-l2.x)>3);
+ const car={x:0,z:0,h:0};assert.equal(v.blocked(car,[{x:0,z:10}],16,4.5),true);assert.equal(v.blocked(car,[{x:0,z:-10}],16,4.5),false);assert.equal(v.blocked(car,[{x:3.4,z:6}],9,2.2),false);});
+test('no brands or logos; crushed and burnt cars; loaded after the soundscape and precached',()=>{assert.ok(!/logo|Tofaş|Ford|Toyota|Fiat|Renault|Massey|New Holland/i.test(src.replace(/marka ya da arma yok/,'')));
+ assert.ok(src.includes('function crush(c)')&&src.includes('function burn(c)'));assert.ok(html.indexOf('experience/ortam.js?v=')<html.indexOf('experience/sivil.js?v='));assert.ok(sw.includes("'experience/sivil.js'"));});

@@ -5,7 +5,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 // ---------- çekirdek ----------
@@ -16,7 +16,7 @@ function hash(a,b){let h=Math.imul(a|0,374761393)+Math.imul(b|0,668265263)|0;h=M
 const core=Object.freeze({VERSION,GROVE,grove,hash});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
-const hooks={},stat={groves:0,trees:0,felled:0};let built=false,TR=null,CR=null,list=[];
+const hooks={},stat={groves:0,trees:0,felled:0,rocks:0,hay:0};let built=false,TR=null,CR=null,list=[];
 const RV=x=>safe(()=>riv(x),120);
 function free(x,z){if(Math.abs(x)>safe(()=>WS,800)-12||Math.abs(z)>safe(()=>WS,800)-12)return false;if(Math.abs(z-RV(x))<36)return false;if(safe(()=>hAt(x,z),0)<-.5)return false;if(safe(()=>roadNear(x,z,3),true))return false;
  if(safe(()=>BLD.some(b=>!b.dead&&Math.hypot(b.x-x,b.z-z)<b.r+4),false))return false;if(safe(()=>COV.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+3),false))return false;return true;}
@@ -27,7 +27,20 @@ function build(){if(built||!root.THREE||typeof S==='undefined'||typeof BLD==='un
  const n=pts.length,tg=new T.CylinderGeometry(.16,.26,1.5,6);tg.translate(0,.75,0);const cg=new T.IcosahedronGeometry(1.3,1);cg.scale(1.15,.72,1.15);cg.translate(0,2.2,0);
  TR=new T.InstancedMesh(tg,new T.MeshLambertMaterial({color:0x5a4a38}),n);CR=new T.InstancedMesh(cg,new T.MeshLambertMaterial({color:0xffffff}),n);CR.instanceColor=new T.InstancedBufferAttribute(new Float32Array(n*3),3);
  const o=new T.Object3D(),col=new T.Color();pts.forEach((p,i)=>{p.i=i;p.y=safe(()=>hAt(p.x,p.z),0);put(p,o,0);col.setHex(p.c<.55?0x7d8a5c:p.c<.85?0x6f7d50:0x8a8f62);CR.setColorAt(i,col);});
- for(const m of[TR,CR]){m.frustumCulled=false;m.castShadow=true;m.name='AR_ZEYTIN';m.instanceMatrix.needsUpdate=true;S.add(m);}CR.instanceColor.needsUpdate=true;list=pts;stat.trees=n;}
+ for(const m of[TR,CR]){m.frustumCulled=false;m.castShadow=true;m.name='AR_ZEYTIN';m.instanceMatrix.needsUpdate=true;S.add(m);}CR.instanceColor.needsUpdate=true;list=pts;stat.trees=n;rocks(T);hay(T);}
+// Kireç taşı kayalar: Türkiye tarafında tarla kenarlarında ve yamaçlarda krem-gri, Suriye tarafında daha koyu ve seyrek; yarı gömülü
+function rocks(T){const ws=safe(()=>WS,800)-20,pts=[];for(let i=0;pts.length<520&&i<6000;i++){const x=(hash(i,21)*2-1)*ws,z=(hash(i,22)*2-1)*ws;const sy=z>RV(x)+40;if(sy&&hash(i,23)<.6)continue;if(Math.abs(z-RV(x)+26)<22||!free(x,z))continue;if(safe(()=>root.HisarSinir.posts().some(q=>Math.hypot(q.x-x,q.z-z)<35),false))continue;
+  pts.push({x,z,sy,s:.6+hash(i,24)*1.6,h:.35+hash(i,25)*.45,r:hash(i,26)*6.283,t:hash(i,27)});}
+ const g=new T.IcosahedronGeometry(1,0),m=new T.InstancedMesh(g,new T.MeshLambertMaterial({color:0xffffff,flatShading:true}),pts.length),o=new T.Object3D(),c=new T.Color();m.instanceColor=new T.InstancedBufferAttribute(new Float32Array(pts.length*3),3);
+ pts.forEach((p,i)=>{o.position.set(p.x,safe(()=>hAt(p.x,p.z),0)-p.s*.25,p.z);o.rotation.set(p.t*.6,p.r,p.t*.4);o.scale.set(p.s*(1+p.t*.6),p.s*p.h,p.s);o.updateMatrix();m.setMatrixAt(i,o.matrix);
+  c.setHex(p.sy?(p.t<.5?0x9a9080:0x847a6a):(p.t<.33?0xd9d0bc:p.t<.66?0xc8bfa9:0xb5ad99));m.setColorAt(i,c);});
+ m.castShadow=true;m.receiveShadow=true;m.frustumCulled=false;m.name='AR_KAYA';S.add(m);stat.rocks=pts.length;}
+// Saman yığınları (Türkiye köyleri): ahırların yanında kubbe biçimli, üstü kararmış saman; balya istifi
+function hay(T){const pts=[];for(const b of safe(()=>BLD,[])){if(b.dead||b.kind!=='barn'||b.z>RV(b.x)-40)continue;const n=1+Math.floor(hash(b.x|0,b.z|0)*3);
+  for(let k=0;k<n;k++){const a=(b.rot||0)+1.2+k*.9,d=(b.r||5)+4+k*2.5,x=b.x+Math.sin(a)*d,z=b.z+Math.cos(a)*d;if(free(x,z))pts.push({x,z,s:1.5+hash(k,b.x|0)*.9});}}
+ if(!pts.length)return;const g=new T.SphereGeometry(1,12,8,0,Math.PI*2,0,Math.PI/2),m=new T.InstancedMesh(g,new T.MeshLambertMaterial({color:0xc9a95a}),pts.length),o=new T.Object3D();
+ pts.forEach((p,i)=>{o.position.set(p.x,safe(()=>hAt(p.x,p.z),0)-.1,p.z);o.rotation.set(0,hash(i,31)*6.28,0);o.scale.set(p.s*1.3,p.s*1.6,p.s*1.3);o.updateMatrix();m.setMatrixAt(i,o.matrix);});
+ m.castShadow=true;m.receiveShadow=true;m.frustumCulled=false;m.name='AR_SAMAN';S.add(m);stat.hay=pts.length;}
 function put(p,o,tilt){o.position.set(p.x,p.y-.05,p.z);o.rotation.set(0,p.r,0);if(tilt){o.rotateOnWorldAxis(new root.THREE.Vector3(p.ax,0,p.az),tilt);}o.scale.set(p.s,p.s,p.s);o.updateMatrix();TR.setMatrixAt(p.i,o.matrix);CR.setMatrixAt(p.i,o.matrix);}
 // tank bahçeye girerse ağacı devirir
 const prev=new WeakMap();

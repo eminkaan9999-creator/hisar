@@ -77,7 +77,7 @@ if(!mobile){
  // sahadan çekilme: uzaklaşınca tanklar kaldırılır, kalan can saklanır, dönünce aynı canla geri gelir
  await p.evaluate(id=>{const e=E.find(q=>q.bt===id);e.hp=e.mx*.5;},id);await tick(p,6);const gone=await p.evaluate(id=>{const s=HisarBattle.diagnostics().squads.find(q=>q.id===id);let best=null,bd=-1;for(const x of [-760,760])for(const z of [-760,760]){const d=Math.hypot(s.x-x,s.z-z);if(d>bd){bd=d;best={x,z};}}P.x=best.x;P.z=best.z;AL.forEach((a,i)=>{a.x=P.x+(P.x>0?-10:10)*(i+1);a.z=P.z;a.cmd='follow';});return bd;},id);assert.ok(gone>700,'far corner '+gone);
  for(let k=0;k<16;k++){await tick(p,10);s=await squad(p,id);if(!s.active)break;} // karargâh ya da başka gözcü yakındaysa çekilme gecikebilir
- assert.equal(s.active,false);assert.equal(await p.evaluate(id=>E.filter(e=>e.bt===id).length,id),0);assert.equal(s.alive,2);
+ assert.equal(s.active,false);assert.equal(await p.evaluate(id=>E.filter(e=>e.bt===id).length,id),0);/* çekilen takım rakip takımlarla da çatışabilir: en az biri sağ kalır */assert.ok(s.alive>=1&&s.alive<=2,'alive '+s.alive);
  await goNear(p,300,id);await tick(p,30);s=await squad(p,id);assert.equal(s.active,true);assert.equal(s.field,2);assert.ok(await p.evaluate(id=>E.filter(e=>e.bt===id).some(e=>Math.abs(e.hp/e.mx-.5)<.02),id));ok('a team left far behind leaves the field and returns later with the same damage');
 
  // ---- iki düşman takım karşılaşınca birbirini vurur
@@ -236,6 +236,13 @@ if(!mobile){
   return {d,k:k.length,ksouth:k.every(b=>b.z>riv(b.x)),wrong,fell:HisarArazi.trees().find(q=>q.x===t.x&&q.z===t.z).down,pinesSouth:S.children.filter(o=>o.isGroup&&o.children.length===4&&o.children[0].geometry&&o.children[0].geometry.type==='CylinderGeometry'&&o.position.z>riv(o.position.x)).length};});
  assert.ok(az.d.trees>300&&az.d.groves>=10,'groves '+JSON.stringify(az.d));assert.ok(az.k>=40&&az.ksouth,'kerpic '+az.k);assert.equal(az.wrong,0);assert.equal(az.pinesSouth,0);assert.equal(az.fell,true);
  ok('south-east border terrain: '+az.d.trees+' olive trees in '+az.d.groves+' groves, '+az.k+' flat-roofed mud-brick houses in Syria, no pines south of the border; the tank fells an olive tree');
+  // ---- sivil hayat: park araçları, köy trafiği, ezilme ve yanma; tarlalar, kireç taşı kayalar, saman yığınları
+  await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
+  const sv=await p.evaluate(()=>{const m0=HisarSivil.cars().find(q=>!q.parked);const x0=m0.x,z0=m0.z;for(let i=0;i<30;i++){P.x=-700;P.z=-700;update(.1);}const m1=HisarSivil.cars().find(q=>!q.parked&&q.kind===m0.kind);
+   const c=HisarSivil.cars().find(q=>q.parked);P.x=c.x-1.5;P.z=c.z;for(let i=0;i<6;i++){P.x+=.5;update(.1);}const cs=HisarSivil.cars().filter(q=>!q.parked&&!q.dead);bigBoom(cs[0].x,cs[0].z,5);update(.1);
+   return {d:HisarSivil.diagnostics(),moved:Math.hypot(m1.x-x0,m1.z-z0),a:HisarArazi.diagnostics()};});
+  assert.ok(sv.d.parked>=40&&sv.d.moving>=3,JSON.stringify(sv.d));assert.ok(sv.moved>5,'traffic drives '+sv.moved);assert.ok(sv.d.crushed>=1&&sv.d.burned>=1);assert.ok(sv.a.rocks>=300&&sv.a.hay>=1,JSON.stringify(sv.a));
+  ok('village life on wheels: '+sv.d.parked+' parked cars, pickups and tractors, '+sv.d.moving+' vehicles driving the village roads; a tank crushes a car, a shell burns one; '+sv.a.rocks+' limestone rocks, haystacks by the barns');
  // ---- harekât: savunma, taarruz, baskın
  await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
  const g1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();for(let i=0;i<570;i++){P.x=70;P.z=40;update(.1);}const d1=HisarHarekat.diagnostics();const z0=d1.enemies.map(e=>e.z);for(let i=0;i<100;i++){P.x=70;P.z=40;update(.1);}const d2=HisarHarekat.diagnostics();

@@ -4586,7 +4586,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=102,LOGO=window.HISAR_LOGO;
+const VER=103,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -5432,9 +5432,14 @@ function patchGround(){const m=gr.material;const U={tG:{value:TX.t_cim},tK:{valu
   vec4 w0=vSW;w0.y+=w0.x*(.35+.6*sy);w0.z+=w0.x*.25*sy;w0.x*=(.65-.6*sy);
   vec4 w=w0;w.x*=.6+dot(cG,vec3(.6));w.y*=.6+dot(cK,vec3(.6));w.z*=.6+dot(cT,vec3(.6));w.w*=.5+dot(cR,vec3(.8));w=pow(max(w,vec4(0.)),vec4(1.6));w/=(w.x+w.y+w.z+w.w+1e-4);
   vec3 col=cG*w.x+cK*w.y+cT*w.z+cR*w.w;col*=(.62+.36*mac);col*=1.-.38*vWet;
+  // Türkiye tarafında tarlalar (Kilis ovası): sürülmüş kırmızı-kahve toprak ve saman sarısı anız, sürüm izleri; aralarda doğal sınır şeridi
+  vec2 fp=vec2(wp.x*.96+wp.y*.28,-wp.x*.28+wp.y*.96);vec2 fq=fp/vec2(74.,48.),cl=floor(fq),fr=fract(fq);float hs=fract(sin(dot(cl,vec2(12.9898,78.233)))*43758.5453);
+  float ed=smoothstep(0.,.05,fr.x)*smoothstep(1.,.95,fr.x)*smoothstep(0.,.07,fr.y)*smoothstep(1.,.93,fr.y);float fu=.5+.5*sin(fp.y*2.4+hs*6.);
+  vec3 plow=vec3(.5,.35,.24)*(.78+.3*fu)*(.82+.36*mac),stub=vec3(.76,.66,.44)*(.86+.18*fu)*(.9+.2*mac);
+  float fm=(1.-sy)*(1.-w.w)*(1.-vWet)*ed*step(.38,hs);col=mix(col,hs<.66?plow:stub,fm*.82);
   float lu=dot(col,vec3(.333));col=mix(col,vec3(lu)*vec3(1.16,1.02,.8),.35+.4*sy);
   diffuseColor.rgb*=col;`)};
- m.customProgramCacheKey=()=>'phg2';m.needsUpdate=true;
+ m.customProgramCacheKey=()=>'phg3';m.needsUpdate=true;
  if(typeof rocks!=='undefined'&&rocks.material){const rm=rocks.material;const rt=TX.t_tas.clone();rt.needsUpdate=true;rt.repeat.set(1.6,1.6);rt.wrapS=rt.wrapT=THREE.RepeatWrapping;rm.map=rt;rm.color.setRGB(.82,.8,.76);rm.needsUpdate=true}
  if(typeof gm!=='undefined'&&gm.material){gm.material.color&&gm.material.color.setRGB(.78,.78,.62)}}
 })();
@@ -7411,7 +7416,7 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script src="experience/battle.js?v=6"></script>
 <script src="experience/swarm.js?v=3"></script>
 <script src="experience/realism.js?v=3"></script>
-<script src="experience/sinir.js?v=5"></script>
+<script src="experience/sinir.js?v=6"></script>
 <script src="experience/harekat.js?v=7"></script>
 <script src="experience/atis.js?v=2"></script>
 <script src="experience/harita.js?v=2"></script>
@@ -7419,6 +7424,6 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script src="experience/koy.js?v=3"></script>
 <script src="experience/destek.js?v=2"></script>
 <script src="experience/menu.js?v=2"></script>
-<script src="experience/arazi.js?v=1"></script><script src="experience/ortam.js?v=1"></script>
+<script src="experience/arazi.js?v=2"></script><script src="experience/ortam.js?v=1"></script><script src="experience/sivil.js?v=1"></script>
 </body>
 </html>

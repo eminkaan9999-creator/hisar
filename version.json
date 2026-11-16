@@ -1,7 +1,7 @@
 {
-  "v": 102,
+  "v": 103,
   "experience": "63.1",
-  "not": "Sınır köyleri gerçek bölge mimarisine çekildi. Türkiye tarafındaki evlerin çoğu artık Kilis–Antep taş evi: kesme kireç taşı duvar, düz dam ve korkuluk, dama çıkan dış merdiven, damda güneş enerjili su ısıtıcısı, kara su deposu, çanak anten ve soba borusu; çoğunun önünde taş avlu duvarı. Kiremitli evler azaldı. Köy meydanlarındaki evler de aynı biçimde; Suriye tarafında sıvalı briket ve kerpiç, düz dam, su deposu ve çanak anten.",
+  "not": "Sınır boyu yaşıyor. Köylerde evlerin yanında park hâlinde otomobil, çift kabin pikap ve traktör (römorklu, kimi saman balyalı); Türkiye içindeki köy yollarında ağır giden trafik, tank önüne çıkınca duruyor. Tank üstünden geçerse araç ezilir, yakınına mermi düşerse yanar. Türkiye tarafı Kilis ovası gibi: sürülmüş kırmızı-kahve tarlalar, saman sarısı anız ve sürüm izleri; yamaçlarda kireç taşı kayalar, ahırların yanında saman yığınları. Askerler TSK dijital kamuflajında.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",
@@ -15,7 +15,7 @@
   "radioSpeed": 1,
   "swarm": "1.0.2",
   "realism": "1.1.1",
-  "sinir": "1.0.2",
+  "sinir": "1.0.3",
   "harekat": "1.5.0",
   "atis": "1.0.1",
   "harita": "1.1.0",
@@ -23,6 +23,7 @@
   "koy": "1.1.0",
   "destek": "1.1.0",
   "menu": "1.0.1",
-  "arazi": "1.0.0",
-  "ortam": "1.0.0"
+  "arazi": "1.1.0",
+  "ortam": "1.0.0",
+  "sivil": "1.0.0"
 }

@@ -6,7 +6,7 @@
  * - Dağlar: ufukta üç sıra dağ, uzak sıranın tepeleri karlı; renkleri havaya ve günün saatine göre sise karışır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -70,12 +70,14 @@ function grassStep(force){if(!grass)buildGrass();if(!grass)return;const c=safe((
  for(let j=j0;j<=j1&&n<GN;j++)for(let i=i0;i<=i1&&n<GN;i++){const t=tuft(i,j);if(!t)continue;if(low&&t.c>.45)continue;const dx=t.x-c.x,dz=t.z-c.z;if(dx*dx+dz*dz>GR*GR)continue;
   if(Math.abs(t.x)>WS+40||Math.abs(t.z)>WS+40)continue;const h=hAt(t.x,t.z);if(h<-.6||Math.abs(t.z-riv(t.x))<21)continue;if(roadNear(t.x,t.z,.8))continue;
   o.position.set(t.x,h-.04,t.z);o.rotation.set(0,t.r,0);o.scale.set(t.s,t.s*(.75+t.c*.8),t.s);o.updateMatrix();m.setMatrixAt(n,o.matrix);
-  col.setRGB(.86+t.c*.14,.84+t.c*.14,.62+t.c*.18);m.setColorAt(n,col);n++;}
+  // Suriye tarafı kuru: saman sarısı ve seyrek; Türkiye tarafı yaz sonu yeşili
+  const sy=t.z>riv(t.x)+10;if(sy&&t.c<.38){continue;}if(sy)col.setRGB(1.04+t.c*.08,.9+t.c*.06,.6+t.c*.08);else col.setRGB(.86+t.c*.14,.84+t.c*.14,.62+t.c*.18);m.setColorAt(n,col);n++;}
  m.count=n;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;stat.grass=n;}
 
 // dağlar: ufukta üç sıra; kamerayı izler (çok uzaktaki dağ yaklaşınca büyümez), sisten etkilenmez, rengi o anki sis rengine göre
 // havaya karışır. Eteği sis rengindedir: sisle kapanan uzak zemine dikişsiz bağlanır. Uzak sıranın tepeleri karlıdır.
-const RANGES=Object.freeze([{r:440,lo:55,hi:118,haze:.62,seed:3.1,snow:.72,rock:0x6c7480},{r:425,lo:34,hi:78,haze:.45,seed:7.7,snow:2,rock:0x5d6a5a},{r:410,lo:16,hi:42,haze:.3,seed:1.9,snow:2,rock:0x56604a}]);
+// Güneydoğu ufku: karsız, çıplak, kahverengi kireçtaşı sırtları
+const RANGES=Object.freeze([{r:440,lo:40,hi:86,haze:.62,seed:3.1,snow:9,rock:0x8a7a64},{r:425,lo:26,hi:58,haze:.45,seed:7.7,snow:9,rock:0x7f6f58},{r:410,lo:12,hi:32,haze:.3,seed:1.9,snow:9,rock:0x75684f}]);
 function ridge(a,R){const s=R.seed;let h=.5+.22*Math.sin(a*3+s)+.16*Math.sin(a*7.3+s*2.1)+.09*Math.sin(a*17+s*3.7)+.05*Math.sin(a*41+s)+.03*Math.sin(a*97+s*5);
  h=Math.max(0,h);h=h*h*1.4;return R.lo+(R.hi-R.lo)*Math.min(1.2,h);}
 let mtn=null,mtnFog=-1;

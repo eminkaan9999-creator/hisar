@@ -261,7 +261,8 @@ const M=c=>new THREE.MeshLambertMaterial({color:c});
 {const TG=new THREE.CylinderGeometry(.3,.4,3,6),CG=[0,1,2].map(j=>new THREE.ConeGeometry(2.6-j*.6,3.4,8)),TM=M(0x5a3d22),GM=[0x2f5a2a,0x356431,0x3d6e36,0x2a5030].map(M);
  const wood=(x,z)=>Math.sin(x*.011+1.3)*Math.cos(z*.013-.7)+.5*Math.sin((x-z)*.021);
  let made=0;for(let n=0;n<9000&&made<520;n++){const x=wrnd(-WS+10,WS-10),z=wrnd(-WS+10,WS-10),inner=Math.abs(x)<190&&Math.abs(z)<190;if(!inner&&wood(x,z)<wrnd(.15,.6))continue;if(inner&&wrnd(0,1)>.55)continue;
-  if(Math.hypot(x,z)<18||hAt(x,z)<-.8||nearVil(x,z,30)||roadNear(x,z,4))continue;const t=new THREE.Group();
+  if(Math.hypot(x,z)<18||hAt(x,z)<-.8||nearVil(x,z,30)||roadNear(x,z,4))continue;if(z>riv(x)-70)continue; // Suriye tarafında ve nehir boyunda çam yok (zeytinlik: experience/arazi.js)
+  const t=new THREE.Group();
   const k=new THREE.Mesh(TG,TM);k.position.y=1.5;k.castShadow=true;t.add(k);const gc=GM[made%4];for(let j=0;j<3;j++){const l=new THREE.Mesh(CG[j],gc);l.position.y=3.4+j*1.9;l.castShadow=true;t.add(l)}t.position.set(x,hAt(x,z),z);const s=wrnd(.8,1.5);t.scale.set(s,s,s);S.add(t);made++}}
 // model yardimcilari
 function bx(p,w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);p.add(o);return o}
@@ -391,9 +392,15 @@ const BX=(function(){
   let mn=1e9,mx=-1e9;for(const[dx,dz]of[[-rad,-rad],[rad,-rad],[-rad,rad],[rad,rad],[0,0]]){const h=hAt(x+dx,z+dz);mn=Math.min(mn,h);mx=Math.max(mx,h)}if(mx-mn>2)return false;
   for(const b of BLD)if(Math.hypot(b.x-x,b.z-z)<b.r+rad+3)return false;for(const t of TREE)if(Math.hypot(t.x-x,t.z-z)<rad+3)return false;for(const c of COV)if(Math.hypot(c.x-x,c.z-z)<c.r+rad+2)return false;
   return Math.hypot(x-SUP.x,z-SUP.z)>rad+20};
- function put(kind,x,z,rot){const w=kind==='apt'?r(9,13):kind==='barn'?r(8,11):kind==='shed'?r(4,6):r(6,9),d=kind==='apt'?r(7,9):kind==='barn'?r(6,8):kind==='shed'?r(3.5,5):r(5,7),rad=Math.hypot(w,d)/2;
+ // Suriye tarafı: kiremitli ev ve betonarme yerine düz damlı kerpiç ya da sıvasız briket ev, önünde avlu duvarı
+ function kerpic(b,w,d){const wc=pick([0xb89b74,0xa98c66,0xc2a780,0x9c968a,0xb3a58c]),H=3.3;part(b,'t',0,-.7,0,w+.3,2.4,d+.3,0,PL);part(b,'w',0,H/2+.5,0,w,H,d,0,wc);
+  part(b,'t',0,H+.62,0,w+.15,.24,d+.15,0,0x8f8574);for(const[x,z,sw,sd]of[[0,d/2,w,.18],[0,-d/2,w,.18],[w/2,0,.18,d],[-w/2,0,.18,d]])part(b,'w',x,H+.95,z,sw+.05,.5,sd+.05,0,wc);
+  for(const x of[-w*.28,w*.28])win(b,x,2.1,d/2+.03,.8,.8,0);win(b,0,2.1,-d/2-.03,.8,.8,0);part(b,'d',0,1.45,d/2+.03,1,2,.12,0,0x3d4a52);
+  part(b,'d',w*.25,H+1.45,-d*.2,1.1,1,1.1,0,0x2a2a2a);const fz=d/2+3.2,c=wc;part(b,'w',-w/2-.1,.9,d/2+1.6,.3,1.8,3.2,0,c);part(b,'w',w/2+.1,.9,d/2+1.6,.3,1.8,3.2,0,c);
+  part(b,'w',-w*.3-.6,.9,fz,w*.4,1.8,.3,0,c);part(b,'w',w*.3+.6,.9,fz,w*.4,1.8,.3,0,c);return H+1.2}
+ function put(kind,x,z,rot){if((kind==='house'||kind==='beton'||kind==='barn')&&z>riv(x)+20)kind='kerpic';const w=kind==='apt'?r(9,13):kind==='barn'?r(8,11):kind==='shed'?r(4,6):r(6,9),d=kind==='apt'?r(7,9):kind==='barn'?r(6,8):kind==='shed'?r(3.5,5):r(5,7),rad=Math.hypot(w,d)/2;
   if(!ok(x,z,rad))return null;const b={x,z,r:rad,hp:kind==='apt'?7:kind==='beton'?5:kind==='shed'?2:3,h:0,g:new THREE.Group(),dead:0,parts:[],kind,sync};b.hp0=b.hp;b.g.position.set(x,hAt(x,z),z);b.g.rotation.y=rot;
-  b.w=w;b.d=d;b.rot=rot;b.h=kind==='apt'?apt(b,w,d,r(0,1)<.5?2:3):kind==='beton'?beton(b,w,d):kind==='barn'?barn(b,w,d):kind==='shed'?shed(b,w,d):house(b,w,d,3,kind==='shop');
+  b.w=w;b.d=d;b.rot=rot;b.h=kind==='apt'?apt(b,w,d,r(0,1)<.5?2:3):kind==='kerpic'?kerpic(b,w,d):kind==='beton'?beton(b,w,d):kind==='barn'?barn(b,w,d):kind==='shed'?shed(b,w,d):house(b,w,d,3,kind==='shop');
   if(kind==='house'&&r(0,1)<.35)wallRing(x,z,rot,w+5,d+6);sync.call(b);BLD.push(b);return b}
  const face=(x,z,tx,tz)=>Math.atan2(tx-x,tz-z);
  // 1) köyler dışa doğru büyür: ön yüz köy merkezine bakar
@@ -1242,14 +1249,16 @@ function pois(){const L2=POI0.slice();if(WP)L2.push(WP);return L2}
 const GRIDM=100,GRIDN=2*WS/GRIDM,gridRef=(x,z)=>String.fromCharCode(65+clamp(Math.floor((x+WS)/GRIDM),0,GRIDN-1))+(clamp(Math.floor((z+WS)/GRIDM),0,GRIDN-1)+1);
 function poiName(x,z){let b=null,bd=1e9;for(const p of POI0){const d=Math.hypot(p.x-x,p.z-z);if(d<bd){bd=d;b=p}}return bd<40?b.n:gridRef(x,z)+' karesi'}
 // ---- arazi taban haritasi (golgeli, kot egrili)
-const BMR=400,BMS=2*WS/BMR,BM=document.createElement('canvas');BM.width=BM.height=BMR;
+const BMR=560,BMS=2*WS/BMR,BM=document.createElement('canvas');BM.width=BM.height=BMR;
 (function(){const c=BM.getContext('2d'),im=c.createImageData(BMR,BMR),D=im.data;
  for(let j=0;j<BMR;j++)for(let i=0;i<BMR;i++){const x=-WS+(i+.5)*BMS,z=-WS+(j+.5)*BMS,h=hAt(x,z),hs=hAt(x+3,z+3),hn=hAt(x-3,z-3);let r,g,b;
-  if(Math.abs(z-riv(x))<15&&h<-1.5){const t=clamp((-h-1.5)/2,0,1);r=70-t*22;g=138-t*30;b=190-t*26}
-  else if(h<-1.2){r=78;g=116;b=82}
-  else{const t=clamp(h/7+.25,0,1);r=96+t*88;g=138+t*14-t*18;b=84+t*18}
-  const sh=clamp(1+(hs-hn)*.2,.62,1.32);r*=sh;g*=sh;b*=sh;
-  const ci=Math.floor(h/1.6)!==Math.floor(hAt(x+BMS,z)/1.6)||Math.floor(h/1.6)!==Math.floor(hAt(x,z+BMS)/1.6);if(ci&&h>-1.2){r*=.88;g*=.9;b*=.88}
+  // topoğrafik harita: Türkiye tarafı açık yeşil-gri, Suriye tarafı kum rengi; hafif gölge, 2 m'de bir eş yükselti çizgisi, 10 m'de koyu çizgi
+  const sy=clamp((z-(riv(x)-26))/40+.5,0,1);
+  if(Math.abs(z-riv(x))<15&&h<-1.5){const t=clamp((-h-1.5)/2,0,1);r=96-t*30;g=160-t*34;b=214-t*24}
+  else if(h<-1.2){r=170;g=196;b=170}
+  else{const t=clamp(h/14,0,1);r=200+sy*30+t*12;g=208+sy*6+t*6;b=180-sy*6-t*10}
+  const sh=clamp(1+(hs-hn)*.06,.86,1.1);r*=sh;g*=sh;b*=sh;
+  if(h>-1.2){const c2=Math.floor(h/2),c10=Math.floor(h/10),hx=hAt(x+BMS,z),hz=hAt(x,z+BMS);if(c10!==Math.floor(hx/10)||c10!==Math.floor(hz/10)){r*=.62;g*=.56;b*=.48}else if(c2!==Math.floor(hx/2)||c2!==Math.floor(hz/2)){r*=.84;g*=.8;b*=.74}}
   const k=(j*BMR+i)*4;D[k]=r;D[k+1]=g;D[k+2]=b;D[k+3]=255}
  c.putImageData(im,0,0)})();
 // ---- A* rota
@@ -4494,17 +4503,17 @@ function select(p){sel=p;const d=Math.round(Math.hypot(p.x-P.x,p.z-P.z)),g=gridR
 function buildList(){list.innerHTML=pois().map((p,i)=>'<button data-i="'+i+'"><i style="background:'+p.c+'">'+p.ic+'</i><span>'+p.n+'<small>'+p.k+' · '+Math.round(Math.hypot(p.x-P.x,p.z-P.z))+' m · '+gridRef(p.x,p.z)+'</small></span></button>').join('');
  list.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const p=pois()[+b.dataset.i];vx=p.x;vz=p.z;s=Math.max(s,s0*8);clampView();select(p);list.classList.remove('open')})}
 // ---- cizim
-function draw(){if(!window.mapOpen)return;const c=cx;c.setTransform(DPR,0,0,DPR,0,0);c.fillStyle='#0b0f0a';c.fillRect(0,0,W,H);
+function draw(){if(!window.mapOpen)return;const c=cx;c.setTransform(DPR,0,0,DPR,0,0);c.fillStyle='#1a1c18';c.fillRect(0,0,W,H);
  c.imageSmoothingEnabled=true;c.drawImage(BM,SX(-WS),SY(-WS),2*WS*s,2*WS*s);
  // kareler
- c.strokeStyle='rgba(255,255,255,.18)';c.lineWidth=1;c.font='700 11px system-ui';c.fillStyle='rgba(255,255,255,.75)';c.textAlign='center';
+ c.strokeStyle='rgba(40,40,30,.22)';c.lineWidth=1;c.font='700 12px system-ui';c.fillStyle='rgba(30,30,24,.8)';c.textAlign='center';
  for(let k=0;k<=GRIDN;k++){const v=-WS+k*GRIDM,x=SX(v),y=SY(v);c.beginPath();c.moveTo(x,SY(-WS));c.lineTo(x,SY(WS));c.moveTo(SX(-WS),y);c.lineTo(SX(WS),y);c.stroke();
   if(k<GRIDN){c.fillText(String.fromCharCode(65+k),SX(v+GRIDM/2),Math.max(14,SY(-WS)+14));c.fillText(String(k+1),Math.max(12,SX(-WS)+10),SY(v+GRIDM/2)+4)}}
  // yollar
  for(const r of ROADS){c.strokeStyle='rgba(0,0,0,.45)';c.lineWidth=Math.max(3,r.w*s)+2;c.lineCap='round';c.lineJoin='round';c.beginPath();r.pts.forEach((p,i)=>i?c.lineTo(SX(p[0]),SY(p[1])):c.moveTo(SX(p[0]),SY(p[1])));c.stroke();c.strokeStyle=r.c;c.lineWidth=Math.max(2,r.w*s);c.stroke()}
  if(window.MAPX)for(const f of window.MAPX)try{f(c,SX,SY,s)}catch(e){}
  // binalar
- for(const b of BLD){const r=Math.max(2.5,b.r*.8*s);c.fillStyle=b.dead?'#3a3530':b.occ?'#c0392b':'#cbb89a';c.fillRect(SX(b.x)-r,SY(b.z)-r,r*2,r*2);c.strokeStyle='rgba(0,0,0,.5)';c.strokeRect(SX(b.x)-r,SY(b.z)-r,r*2,r*2)}
+ for(const b of BLD){const r=Math.max(2.5,b.r*.8*s);c.fillStyle=b.dead?'#8a7f70':b.occ?'#c0392b':'#4a4843';c.fillRect(SX(b.x)-r,SY(b.z)-r,r*2,r*2);c.strokeStyle='rgba(0,0,0,.35)';c.strokeRect(SX(b.x)-r,SY(b.z)-r,r*2,r*2)}
  // rota
  if(NAV.on&&NAV.path.length){c.strokeStyle='#4a90ff';c.lineWidth=4;c.setLineDash([10,6]);c.beginPath();c.moveTo(SX(P.x),SY(P.z));for(let i=NAV.i;i<NAV.path.length;i++)c.lineTo(SX(NAV.path[i][0]),SY(NAV.path[i][1]));c.stroke();c.setLineDash([])}
  // yer adlari
@@ -4534,7 +4543,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=96,LOGO=window.HISAR_LOGO;
+const VER=97,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -5376,10 +5385,13 @@ function patchGround(){const m=gr.material;const U={tG:{value:TX.t_cim},tK:{valu
   vec2 wp=vWP.xz;vec3 cG=texture2D(tG,wp/6.5).rgb,cK=texture2D(tK,wp/7.).rgb,cT=texture2D(tT,wp/9.).rgb,cR=texture2D(tR,wp/6.).rgb;
   vec3 cG2=texture2D(tG,wp/23.+.37).rgb;cG=mix(cG,cG2,.45);
   float mac=dot(texture2D(tT,wp/71.).rgb,vec3(.333));
-  vec4 w=vSW;w.x*=.6+dot(cG,vec3(.6));w.y*=.6+dot(cK,vec3(.6));w.z*=.6+dot(cT,vec3(.6));w.w*=.5+dot(cR,vec3(.8));w=pow(max(w,vec4(0.)),vec4(1.6));w/=(w.x+w.y+w.z+w.w+1e-4);
+  float sy=smoothstep(-30.,70.,vWP.z-(94.+sin((vWP.x+60.)*.03)*15.)); // 0 Türkiye, 1 Suriye (sınırın güneyi)
+  vec4 w0=vSW;w0.y+=w0.x*(.35+.6*sy);w0.z+=w0.x*.25*sy;w0.x*=(.65-.6*sy);
+  vec4 w=w0;w.x*=.6+dot(cG,vec3(.6));w.y*=.6+dot(cK,vec3(.6));w.z*=.6+dot(cT,vec3(.6));w.w*=.5+dot(cR,vec3(.8));w=pow(max(w,vec4(0.)),vec4(1.6));w/=(w.x+w.y+w.z+w.w+1e-4);
   vec3 col=cG*w.x+cK*w.y+cT*w.z+cR*w.w;col*=(.62+.36*mac);col*=1.-.38*vWet;
+  float lu=dot(col,vec3(.333));col=mix(col,vec3(lu)*vec3(1.16,1.02,.8),.35+.4*sy);
   diffuseColor.rgb*=col;`)};
- m.customProgramCacheKey=()=>'phg';m.needsUpdate=true;
+ m.customProgramCacheKey=()=>'phg2';m.needsUpdate=true;
  if(typeof rocks!=='undefined'&&rocks.material){const rm=rocks.material;const rt=TX.t_tas.clone();rt.needsUpdate=true;rt.repeat.set(1.6,1.6);rt.wrapS=rt.wrapT=THREE.RepeatWrapping;rm.map=rt;rm.color.setRGB(.82,.8,.76);rm.needsUpdate=true}
  if(typeof gm!=='undefined'&&gm.material){gm.material.color&&gm.material.color.setRGB(.78,.78,.62)}}
 })();
@@ -7355,14 +7367,15 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script src="experience/field.js?v=6"></script>
 <script src="experience/battle.js?v=6"></script>
 <script src="experience/swarm.js?v=3"></script>
-<script src="experience/realism.js?v=1"></script>
-<script src="experience/sinir.js?v=2"></script>
-<script src="experience/harekat.js?v=2"></script>
+<script src="experience/realism.js?v=2"></script>
+<script src="experience/sinir.js?v=4"></script>
+<script src="experience/harekat.js?v=3"></script>
 <script src="experience/atis.js?v=1"></script>
-<script src="experience/harita.js?v=1"></script>
+<script src="experience/harita.js?v=2"></script>
 <script src="experience/carpisma.js?v=2"></script>
-<script src="experience/koy.js?v=2"></script>
-<script src="experience/destek.js?v=1"></script>
+<script src="experience/koy.js?v=3"></script>
+<script src="experience/destek.js?v=2"></script>
 <script src="experience/menu.js?v=1"></script>
+<script src="experience/arazi.js?v=1"></script>
 </body>
 </html>

@@ -205,7 +205,7 @@ function soldierStep(dt){const sp=1.35;for(const f of SOLD){f.t+=dt*(f.pat?5.2:1
   else if(f.home.tower){f.look=Math.sin(clock*.25+f.home.x)*.9;}
   else if(f.home.gate){const d=safe(()=>Math.hypot(P.x-f.x,P.z-f.z),99);f.act=d<26&&safe(()=>game==='play',false)?'selam':'nobet';}}}
 // ---------- sivil yerleşim uyarısı ----------
-const CIVIL={house:1,beton:1,apt:1,shop:1,barn:1,shed:1,okul:1};
+const CIVIL={house:1,beton:1,apt:1,shop:1,barn:1,shed:1,okul:1,kerpic:1};
 function civilNear(x,z,r){for(const b of BLD){if(b.dead||!CIVIL[b.kind])continue;if(Math.hypot(b.x-x,b.z-z)<b.r+(r||12))return b;}return null;}
 let civT=0;
 function warnCivil(){const now=performance.now();if(now-civT<4000)return;civT=now;stat.civil++;safe(()=>root.CREW.say('Sivil yerleşim hedef alanında!',2,'sivil',4),null);
@@ -244,9 +244,9 @@ function connect(){build();
 function drawMap(c,SX,SY,s){c.save();c.strokeStyle='rgba(235,60,50,.95)';c.lineWidth=3;c.setLineDash([12,6]);c.beginPath();const ws=W();let first=true;
  for(let x=-ws;x<=ws;x+=10){const X=SX(x),Y=SY(wallZ(RV,x));if(first){c.moveTo(X,Y);first=false;}else c.lineTo(X,Y);}c.stroke();c.setLineDash([]);
  const font=(safe(()=>getComputedStyle(doc.body).getPropertyValue('--sf'),'')||'system-ui');c.textAlign='center';
- c.font='800 '+Math.max(14,Math.round(26*s*4))+'px '+font;c.fillStyle='rgba(255,255,255,.75)';c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=4;
+ c.font='800 '+Math.max(14,Math.round(26*s*4))+'px '+font;c.fillStyle='rgba(160,30,24,.8)';c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=4;
  for(const[t,z]of[['TÜRKİYE',-ws*.45],['SURİYE',ws*.62]]){c.strokeText(t,SX(0),SY(z));c.fillText(t,SX(0),SY(z));}
- c.font='700 12px '+font;for(const p of POSTS){c.fillStyle='#e30a17';c.fillRect(SX(p.x)-6,SY(p.z)-6,12,12);c.fillStyle='#fff';c.fillText('KARAKOL',SX(p.x),SY(p.z)-10);}
+ c.font='700 12px '+font;for(const p of POSTS){c.fillStyle='#e30a17';c.fillRect(SX(p.x)-6,SY(p.z)-6,12,12);c.lineWidth=3;c.strokeStyle='rgba(255,255,255,.85)';c.strokeText('KARAKOL',SX(p.x),SY(p.z)-10);c.fillStyle='#24221e';c.fillText('KARAKOL',SX(p.x),SY(p.z)-10);}
  for(const k of SCH){c.fillStyle='#ffd34a';c.beginPath();c.arc(SX(k.x),SY(k.z),5,0,7);c.fill();}c.restore();}
 function drawMini(){if(typeof mmx==='undefined'||typeof mmO!=='function')return;const W2=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W2,Z=z=>((z-O.z)/MMR+.5)*W2;
  mmx.save();mmx.strokeStyle='rgba(235,60,50,.9)';mmx.lineWidth=1.6;mmx.setLineDash([4,3]);mmx.beginPath();let f=true;for(let x=O.x-MMR;x<=O.x+MMR;x+=6){const X0=X(x),Y0=Z(wallZ(RV,x));if(f){mmx.moveTo(X0,Y0);f=false;}else mmx.lineTo(X0,Y0);}mmx.stroke();mmx.restore();}

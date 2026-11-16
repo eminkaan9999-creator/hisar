@@ -3,6 +3,7 @@
  * - T129 ATAK: kuzeyden gelir, hedef bölgenin çevresinde döner, tanka UMTAS füzesi, zırhlı araca ve piyadeye Cirit roketi atar, sonra döner.
  * - Bayraktar TB2: yüksekten döner, iki MAM-L akıllı mühimmatı en yakın görülen hedefe bırakır.
  * - F-16: hedefe 8 saniyede gelir, alçak geçişle iki bomba bırakır; tank 150 m'den yakınsa "yakın atış" uyarısı.
+ * - T-155 Fırtına: önce bir ayar atışı, düzeltmeden sonra altı mermilik tesir atışı.
  * Dost kuvvetler (harekât görevlerinde):
  * - İki piyade timi tankın önünde ilerler; düşman görülünce diz çöküp ateş eder (iz mermili), yakına mermi düşerse siper alır.
  * - Kirpi ve ACV-15 kolda tankın arkasından gelir; üstlerindeki makineli tüfekle ateş eder.
@@ -10,7 +11,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -18,6 +19,7 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const SUP=Object.freeze({
  heli:{n:'T129 ATAK',cd:150,stay:30,alt:55,r:220,sp:60,every:5,umtas:240,cirit:90,range:900},
  tb2:{n:'Bayraktar TB2',cd:100,stay:22,alt:320,r:380,sp:45,shots:2,every:6,dmg:240},
+ topcu:{n:'T-155 Fırtına',cd:120,ayar:6,tof:9,rounds:6,every:1.1,spread:22,dmg:160,blast:11},
  jet:{n:'F-16',cd:180,eta:8,alt:120,sp:220,dmg:420,blast:26,close:150}});
 const INF=Object.freeze({ahead:32,spread:9,range:240,every:[1.6,2.6],dmgInf:34,dmgVeh:3,speed:2.4});
 // Hedef seçimi: oyuncuya en yakın görülen düşman (kilitli hedef varsa o)
@@ -33,8 +35,8 @@ if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
 // ---------- oyun ----------
-const hooks={},stat={calls:{heli:0,tb2:0,jet:0},missiles:0,hits:0,kills:0,infShots:0,infDown:0,vehShots:0,parked:0};
-let T=null,clock=0,H=null,D=null,J=null,missiles=[],cdEnd={heli:0,tb2:0,jet:0},ui=null,forces=null;
+const hooks={},stat={calls:{heli:0,tb2:0,jet:0,topcu:0},missiles:0,hits:0,kills:0,infShots:0,infDown:0,vehShots:0,parked:0};
+let T=null,clock=0,H=null,D=null,J=null,A=null,missiles=[],cdEnd={heli:0,tb2:0,jet:0,topcu:0},ui=null,forces=null;
 const playing=()=>safe(()=>game==='play',false);
 // destek yalnız görülen (gözetlenen ya da ateş ederek kendini belli eden) hedefe atar
 const enemies=()=>safe(()=>E.filter(e=>e.hp>0),[]).map(e=>{e.seen=safe(()=>spotted(e),false);return e;});
@@ -84,6 +86,14 @@ function jetStep(dt){if(!J||!J.on)return;const s=SUP.jet;J.t+=dt;if(J.t<s.eta-3)
  if(k>9){J.on=false;J.g.visible=false;}}
 function jetSound(){const A=safe(()=>AC,null);if(!A)return;const out=safe(()=>MG,null)||A.destination,t=A.currentTime,n=Math.floor(A.sampleRate*3),b=A.createBuffer(1,n,A.sampleRate),d=b.getChannelData(0);
  for(let i=0;i<n;i++){const u=i/n;d[i]=(Math.random()*2-1)*Math.sin(Math.PI*u)**2;}const s=A.createBufferSource(),f=A.createBiquadFilter(),g=A.createGain();s.buffer=b;f.type='lowpass';f.frequency.setValueAtTime(600,t);f.frequency.linearRampToValueAtTime(2400,t+1.5);f.frequency.linearRampToValueAtTime(300,t+3);g.gain.value=.9;s.connect(f);f.connect(g);g.connect(out);s.start(t);}
+// ---------- topçu: T-155 Fırtına ateş desteği (önce ayar atışı, sonra tesir) ----------
+function callTopcu(){const now=clock;if(now<cdEnd.topcu)return say('Komuta: Batarya hazırlanıyor, '+ready(cdEnd.topcu,now)+' sn.');const t=pickTarget(enemies(),P.x,P.z,1400);
+ if(!t)return say('Komuta: Görülen hedef yok, topçu beklemede.');A={t:0,x:t.x,z:t.z,ph:'ayar',left:SUP.topcu.rounds,next:SUP.topcu.tof,near:Math.hypot(t.x-P.x,t.z-P.z)<120};cdEnd.topcu=now+SUP.topcu.cd;stat.calls.topcu++;
+ say('FIRTINA: Ateş isteği alındı. Ayar atışı yolda, uçuş '+SUP.topcu.tof+' saniye.'+(A.near?' YAKIN ATIŞ!':''));}
+function shell(x,z,dmg,blast){safe(()=>root.bigBoom(x,z,blast>10?7:5),null);for(const e of enemies()){const d=Math.hypot(e.x-x,e.z-z);if(d<blast){const was=e.hp;safe(()=>root.hurt(e,dmg*(1-d/blast*.7)),null);stat.hits++;if(was>0&&e.hp<=0)stat.kills++;}}}
+function topcuStep(dt){if(!A)return;const s=SUP.topcu;A.t+=dt;if(A.t<A.next)return;
+ if(A.ph==='ayar'){const ox=(Math.random()-.5)*60,oz=(Math.random()-.5)*60;shell(A.x+ox,A.z+oz,s.dmg*.6,s.blast);A.ph='tesir';A.next=A.t+s.ayar;say('FIRTINA: Ayar atışı düştü, düzeltildi. Tesir atışı geliyor!');return;}
+ shell(A.x+(Math.random()-.5)*s.spread*2,A.z+(Math.random()-.5)*s.spread*2,s.dmg,s.blast);A.left--;A.next=A.t+s.every;if(A.left<=0){A=null;say('FIRTINA: Tesir atışı bitti.');}}
 // ---------- dost kuvvetler ----------
 const KIND={piyade:1};
 function mkVeh(kind){const g=new T.Group(),c=kind==='kirpi'?0x6b6a4e:0x5a6246;const mt=M(c);
@@ -122,21 +132,21 @@ function boomNear(x,z){if(!forces||!forces.on)return;for(const m of forces.men){
 // ---------- telsiz paneli ----------
 function mountUI(){if(ui)return;const panel=doc.getElementById('hr-panel'),cmds=panel&&panel.querySelector('.hr-orders');if(!cmds)return;
  const st=doc.createElement('style');st.textContent=`#ds-box{margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--cizgi,#4a4f43)}#ds-box h4{margin:0 0 8px;font:800 14px/1 var(--sf,system-ui);letter-spacing:.08em;color:#fff}
-#ds-box .ds-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#ds-box button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;min-height:52px}#ds-box button b{font:800 14px/1.1 var(--sf,system-ui)}#ds-box button small{font:600 11.5px/1 var(--sf,system-ui);color:#b9bdb2}
+#ds-box .ds-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#ds-box button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;min-height:52px}#ds-box button b{font:800 14px/1.1 var(--sf,system-ui)}#ds-box button small{font:600 11.5px/1 var(--sf,system-ui);color:#b9bdb2}
 #ds-box button.cd{opacity:.55}`;doc.head.appendChild(st);
- const box=doc.createElement('div');box.id='ds-box';box.innerHTML='<h4>HAVA DESTEĞİ</h4><div class="ds-row"><button type="button" data-ds="heli"><b>T129 ATAK</b><small>Helikopter</small></button><button type="button" data-ds="tb2"><b>TB2</b><small>Akıllı mühimmat</small></button><button type="button" data-ds="jet"><b>F-16</b><small>Bomba</small></button></div>';
+ const box=doc.createElement('div');box.id='ds-box';box.innerHTML='<h4>HAVA DESTEĞİ</h4><div class="ds-row"><button type="button" data-ds="heli"><b>T129 ATAK</b><small>Helikopter</small></button><button type="button" data-ds="tb2"><b>TB2</b><small>Akıllı mühimmat</small></button><button type="button" data-ds="jet"><b>F-16</b><small>Bomba</small></button><button type="button" data-ds="topcu"><b>FIRTINA</b><small>Topçu</small></button></div>';
  cmds.parentNode.insertBefore(box,cmds.nextSibling);box.onclick=e=>{const b=e.target.closest('[data-ds]');if(!b)return;call(b.dataset.ds);};ui={box};}
-function paintUI(){if(!ui)mountUI();if(!ui)return;for(const b of ui.box.querySelectorAll('[data-ds]')){const k=b.dataset.ds,r=ready(cdEnd[k],clock);b.classList.toggle('cd',r>0);b.querySelector('small').textContent=r>0?r+' sn':{heli:'Helikopter',tb2:'Akıllı mühimmat',jet:'Bomba'}[k];}}
-function call(k){if(!playing())return;T=T||root.THREE;if(k==='heli')callHeli();if(k==='tb2')callTB2();if(k==='jet')callJet();paintUI();}
-function reset(){cdEnd={heli:0,tb2:0,jet:0};clock=0;for(const q of missiles){S.remove(q.m);}missiles=[];if(H){H.on=false;H.g.visible=false;}if(D){D.on=false;D.g.visible=false;}if(J){J.on=false;J.g.visible=false;}
+function paintUI(){if(!ui)mountUI();if(!ui)return;for(const b of ui.box.querySelectorAll('[data-ds]')){const k=b.dataset.ds,r=ready(cdEnd[k],clock);b.classList.toggle('cd',r>0);b.querySelector('small').textContent=r>0?r+' sn':{heli:'Helikopter',tb2:'Akıllı mühimmat',jet:'Bomba',topcu:'Topçu'}[k];}}
+function call(k){if(!playing())return;T=T||root.THREE;if(k==='heli')callHeli();if(k==='tb2')callTB2();if(k==='jet')callJet();if(k==='topcu')callTopcu();paintUI();}
+function reset(){cdEnd={heli:0,tb2:0,jet:0,topcu:0};A=null;clock=0;for(const q of missiles){S.remove(q.m);}missiles=[];if(H){H.on=false;H.g.visible=false;}if(D){D.on=false;D.g.visible=false;}if(J){J.on=false;J.g.visible=false;}
  forcesOn(safe(()=>mis==='harekat',false));}
 function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')return;root[name]=factory(root[name]);hooks[name]=true;}
 function connect(){T=root.THREE||null;mountUI();
- wrap('update',old=>function(dt){const r=old.apply(this,arguments);if(playing()){const d=clamp(+dt||0,0,.1);clock+=d;safe(()=>{heliStep(d);tb2Step(d);jetStep(d);missileStep(d);forcesStep(d);},null);if((stat.pt=(stat.pt||0)+d)>.5){stat.pt=0;paintUI();}}return r;});
+ wrap('update',old=>function(dt){const r=old.apply(this,arguments);if(playing()){const d=clamp(+dt||0,0,.1);clock+=d;safe(()=>{heliStep(d);tb2Step(d);jetStep(d);topcuStep(d);missileStep(d);forcesStep(d);},null);if((stat.pt=(stat.pt||0)+d)>.5){stat.pt=0;paintUI();}}return r;});
  wrap('startMission',old=>function(){const r=old.apply(this,arguments);safe(reset,null);return r;});
  wrap('sndBoom',old=>function(x,z){safe(()=>boomNear(x,z),null);return old.apply(this,arguments);});
  if(!hooks.frame&&typeof FRAME_HOOKS!=='undefined'){hooks.frame=true;FRAME_HOOKS.push(()=>safe(()=>{if(forces&&forces.on){const c=CAM.position;forces.crowd.frame(c.x,c.z,320);}},null));}}
-function diagnostics(){return {version:VERSION,hooks:{...hooks},...stat,calls:{...stat.calls},ready:{heli:ready(cdEnd.heli,clock),tb2:ready(cdEnd.tb2,clock),jet:ready(cdEnd.jet,clock)},
+function diagnostics(){return {version:VERSION,hooks:{...hooks},...stat,calls:{...stat.calls},ready:{heli:ready(cdEnd.heli,clock),tb2:ready(cdEnd.tb2,clock),jet:ready(cdEnd.jet,clock),topcu:ready(cdEnd.topcu,clock)},topcu:A?{ph:A.ph,left:A.left}:null,
  heli:H&&H.on?{ph:H.ph,x:Math.round(H.x),z:Math.round(H.z),y:Math.round(H.y)}:null,tb2:!!(D&&D.on),jet:!!(J&&J.on),missilesLive:missiles.length,
  forces:forces?{on:forces.on,men:forces.men.filter(m=>m.hp>0&&m.f.live).length,acts:forces.men.map(m=>m.f.act).join(','),veh:forces.veh.map(v=>({x:Math.round(v.x),z:Math.round(v.z)}))}:null};}
 root.HisarDestek=Object.freeze({version:VERSION,core,connect,call,diagnostics});

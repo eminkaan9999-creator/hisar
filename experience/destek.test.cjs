@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert'),fs=require('fs');
 const d=require('./destek.js'),m=require('./menu.js'),html=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8'),src=fs.readFileSync(__dirname+'/destek.js','utf8');
 test('air support only hits targets someone has seen; the nearest seen target is chosen',()=>{const L=[{x:100,z:0,hp:5,seen:true},{x:50,z:0,hp:5,seen:false},{x:300,z:0,hp:5,seen:true},{x:20,z:0,hp:0,seen:true}];assert.equal(d.pickTarget(L,0,0,900),L[0]);assert.equal(d.pickTarget([L[1]],0,0),null);});
-test('every support asset has a ready time and the helicopter, drone and jet are distinct',()=>{assert.deepEqual(Object.keys(d.SUP),['heli','tb2','jet']);for(const k in d.SUP)assert.ok(d.SUP[k].cd>=60);assert.equal(d.ready(10,4.2),6);assert.equal(d.ready(3,9),0);
+test('every support asset has a ready time and the helicopter, drone and jet are distinct',()=>{assert.deepEqual(Object.keys(d.SUP),['heli','tb2','topcu','jet']);for(const k in d.SUP)assert.ok(d.SUP[k].cd>=60);assert.equal(d.ready(10,4.2),6);assert.equal(d.ready(3,9),0);
  const o=d.orbitPt({x:0,z:0},100,0);assert.deepEqual(o,{x:100,z:0});});
 test('infantry squads advance ahead of the tank towards the objective, side by side',()=>{const a=d.squadSlot(0,0,0,500,0,6,32,9),b=d.squadSlot(0,0,0,500,5,6,32,9);assert.ok(Math.abs(a.z-32)<1e-9&&Math.abs(b.z-32)<1e-9);assert.ok(Math.abs(a.x-b.x-45)<1e-9||Math.abs(b.x-a.x-45)<1e-9);});
 test('menu draws the background at 15 frames per second and orbits the tank',()=>{assert.equal(m.shouldDraw(true,1000,990),false);assert.equal(m.shouldDraw(true,1100,1000),true);assert.equal(m.shouldDraw(false,1000,999),true);

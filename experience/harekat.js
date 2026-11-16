@@ -22,11 +22,11 @@ const OPS=Object.freeze([
   via:[[62,28],[70,84],[70,160],[70,420],[70,720]]}),
  Object.freeze({id:'tepe',n:'Tel Zeytun Tepesi',tur:'TAARRUZ',ford:-560,start:{x:-548,z:20,h:0},obj:{x:-540,z:680,r:45,n:'Tel Zeytun Tepesi'},
   emir:'Batı Geçidi\'nden sınırı geç. Yol üstündeki düşman karakolunu aş, tepedeki tank mevzilerini temizle ve tepeyi tut.',
-  outpost:{x:-588,z:290,u:['bunker','apc','inf','inf']},guard:{u:['tank','tank','tank','apc','inf','inf','inf'],r:58},
+  outpost:{x:-588,z:290,u:['bunker','apc','inf','inf']},guard:{u:['tank','tank','tank','apc','kornet','inf','kornet'],r:58},
   via:[[-548,20],[-560,90],[-560,170],[-600,300],[-610,420],[-560,560],[-540,680]]}),
  Object.freeze({id:'depo',n:'Kafr Sadun Deposu',tur:'BASKIN',ford:400,start:{x:392,z:40,h:0},obj:{x:430,z:480,r:60,n:'Kafr Sadun İkmal Deposu'},
   emir:'Söğüt Geçidi\'nden sınırı geç. Kafr Sadun\'un doğusundaki düşman ikmal deposunu (yakıt, kamyon, radar) imha et. Köyde sivil var: ateşine dikkat et.',
-  depot:['fuel','fuel','truck','truck','radar'],guard:{u:['tank','tank','aa','inf','inf','inf'],r:46},
+  depot:['fuel','fuel','truck','truck','radar'],guard:{u:['tank','tank','aa','kornet','inf','inf'],r:46},
   via:[[392,40],[400,108],[400,250],[400,400],[430,480]]})]);
 // zorluk: düşmanın yeniden dolum süresi (sn), isabet hasarı, dayanıklılık çarpanı
 const TUNE=Object.freeze({kolay:{cd:6,dmg:12,hp:1.8},normal:{cd:4.6,dmg:18,hp:2.2},zor:{cd:3.4,dmg:26,hp:2.6},serbest:{cd:6,dmg:0,hp:1.8}});
@@ -51,9 +51,9 @@ let ST=Object.assign({mode:MODE,sel:'gecit',done:{}},load());
 const picked=()=>ST.mode===MODE;
 const op=()=>OPS.find(o=>o.id===ST.sel)||OPS[0];
 const playing=()=>safe(()=>game==='play'&&mis===MODE,false);
-function mk(type,x,z,o){const tank=type==='tank';if(tank)root.BT_KIND='t72';const e=safe(()=>root.addE(type,x,z,{h:o.h||0}),null);root.BT_KIND=null;if(!e)return null;
+function mk(type,x,z,o){const kornet=type==='kornet';if(kornet)type='inf';const tank=type==='tank';if(tank)root.BT_KIND='t72';const e=safe(()=>root.addE(type,x,z,{h:o.h||0}),null);root.BT_KIND=null;if(!e)return null;
  const tune=H.tune;e.hk=Object.assign({role:'def'},o);e.pr=1e6;e.fr=type==='apc'?220:type==='bunker'?160:FIRE_RANGE;e.bs=80;e.bl=4.5;
- if(tank){e.mx=safe(()=>HPT.tank,100)*tune.hp;e.nm='T-72';}else e.mx=safe(()=>HPT[type],80)*(type==='apc'?1.4:1);e.hp=e.mx;e.sn=e.hp;e.cd=2+rnd()*3;e.h=o.h||0;return e;}
+ if(tank){e.mx=safe(()=>HPT.tank,100)*tune.hp;e.nm='T-72';}else e.mx=safe(()=>HPT[type],80)*(type==='apc'?1.4:1);e.hp=e.mx;e.sn=e.hp;e.cd=2+rnd()*3;e.h=o.h||0;if(kornet){e.at=1;e.nm='KORNET';}return e;}
 function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[key]||TUNE.normal;
  safe(()=>{L=Object.assign({},LV[key]||LV.normal,{sp:5,cd:tune.cd,dmg:tune.dmg,rl:3,ar:190});},null);
  H={op:o,tune,t:0,won:false,lost:false,wave:-1,waveT:0,cap:0,phase:'go',kills:0,sup:0,last:'',halts:new WeakMap(),post:null};

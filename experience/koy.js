@@ -58,7 +58,7 @@ const RIGS={
 const hooks={},stat={people:0,kids:0,adults:0,saluting:0,salutes:0,waves:0,hidden:0,animals:{},flowers:0,frebuild:0,fled:0};
 let built=false,T=null,folk=null,beasts={},P_=[],A_=[],FL=null,fgx=1e9,fgz=1e9,clock=0,sayT=-1e9;
 const RV=x=>safe(()=>riv(x),120),WZ=x=>RV(x)-26,TR=(x,z)=>z<WZ(x)-4;
-const HOUSE={house:1,beton:1,apt:1,shop:1};
+const HOUSE={house:1,beton:1,apt:1,shop:1,kerpic:1};
 const pick=a=>a[Math.floor(Math.random()*a.length)%a.length];
 function door(h){const r=h.rot||0;return {x:h.x+Math.sin(r)*((h.d||6)/2+1.6),z:h.z+Math.cos(r)*((h.d||6)/2+1.6)};}
 function clearAt(x,z,m){return safe(()=>BLD.every(q=>q.dead||Math.hypot(q.x-x,q.z-z)>q.r+m),true)&&safe(()=>COV.every(c=>Math.hypot(c.x-x,c.z-z)>c.r+m),true)&&safe(()=>root.HisarField.positions().every(q=>Math.hypot(q.x-x,q.z-z)>m+12),true)&&!safe(()=>roadNear(x,z,2),false)&&safe(()=>hAt(x,z)>-.6,true)&&Math.abs(z-RV(x))>40;}

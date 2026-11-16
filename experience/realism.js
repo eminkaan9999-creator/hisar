@@ -6,7 +6,7 @@
  * - Dağlar: ufukta üç sıra dağ, uzak sıranın tepeleri karlı; renkleri havaya ve günün saatine göre sise karışır.
  */
 (function(root){'use strict';
-const VERSION='1.1.1';
+const VERSION='1.1.2';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -61,6 +61,9 @@ function bladeTex(T){const c=doc.createElement('canvas');c.width=128;c.height=12
 function clumpGeo(T){const pos=[],uv=[],nor=[],idx=[],W=.75,H=.62;for(let k=0;k<3;k++){const a=k*Math.PI/3,cx=Math.cos(a)*W,cz=Math.sin(a)*W,b=pos.length/3;
   pos.push(-cx,0,-cz, cx,0,cz, cx,H,cz, -cx,H,-cz);uv.push(0,0,1,0,1,1,0,1);for(let i=0;i<4;i++)nor.push(0,1,0);idx.push(b,b+1,b+2,b,b+2,b+3);}
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('normal',new T.Float32BufferAttribute(nor,3));g.setIndex(idx);return g;}
+// Zemindeki tarla deseniyle aynı hesap (index.html zemin gölgelendiricisi): sürülmüş tarla ve anızda ot tutamı olmaz
+function inField(x,z){const fx=(x*.96+z*.28)/74,fz=(-x*.28+z*.96)/48,cx=Math.floor(fx),cz=Math.floor(fz),rx=fx-cx,rz=fz-cz,v=Math.sin(cx*12.9898+cz*78.233)*43758.5453,hs=v-Math.floor(v);
+ return hs>=.38&&rx>.06&&rx<.94&&rz>.08&&rz<.92;}
 function buildGrass(){if(grass||!root.THREE||typeof S==='undefined')return;const T=root.THREE;
  const m=new T.InstancedMesh(clumpGeo(T),new T.MeshLambertMaterial({color:0xffffff,map:bladeTex(T),alphaTest:.45,side:T.DoubleSide}),GN);m.instanceColor=new T.InstancedBufferAttribute(new Float32Array(GN*3).fill(1),3);m.count=0;m.frustumCulled=false;m.name='GR_OT';S.add(m);
  safe(()=>{gm.visible=false;},null);// eski koni otlar yerine
@@ -71,7 +74,7 @@ function grassStep(force){if(!grass)buildGrass();if(!grass)return;const c=safe((
   if(Math.abs(t.x)>WS+40||Math.abs(t.z)>WS+40)continue;const h=hAt(t.x,t.z);if(h<-.6||Math.abs(t.z-riv(t.x))<21)continue;if(roadNear(t.x,t.z,.8))continue;
   o.position.set(t.x,h-.04,t.z);o.rotation.set(0,t.r,0);o.scale.set(t.s,t.s*(.75+t.c*.8),t.s);o.updateMatrix();m.setMatrixAt(n,o.matrix);
   // Suriye tarafı kuru: saman sarısı ve seyrek; Türkiye tarafı yaz sonu yeşili
-  const sy=t.z>riv(t.x)+10;if(sy&&t.c<.38){continue;}if(sy)col.setRGB(1.04+t.c*.08,.9+t.c*.06,.6+t.c*.08);else col.setRGB(.8+t.c*.12,.8+t.c*.12,.66+t.c*.14);m.setColorAt(n,col);n++;}
+  const sy=t.z>riv(t.x)+10;if(sy&&t.c<.38){continue;}if(!sy&&t.z<riv(t.x)-30&&inField(t.x,t.z)&&t.c<.85)continue;if(sy)col.setRGB(1.04+t.c*.08,.9+t.c*.06,.6+t.c*.08);else col.setRGB(1+t.c*.12,1+t.c*.1,.8+t.c*.14);m.setColorAt(n,col);n++;}
  m.count=n;m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;stat.grass=n;}
 
 // dağlar: ufukta üç sıra; kamerayı izler (çok uzaktaki dağ yaklaşınca büyümez), sisten etkilenmez, rengi o anki sis rengine göre

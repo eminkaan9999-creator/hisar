@@ -29,6 +29,7 @@ const ok=name=>{checks.push(name);console.log('PASS',name);};
  assert.equal(await p.locator('#tg').evaluate(e=>getComputedStyle(e).opacity),'1');
  if(mobile&&h>w){const ys=await p.locator('#mp .tabs [role="tab"]').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));assert.ok(Math.max(...ys)-Math.min(...ys)<1,'portrait tabs share one row');}
  ok('headquarters controls fit '+w+'x'+h);}
+ await require('./interface-browser-checks.cjs').menu(p,{mobile,label,out,ok});
  assert.equal(await p.evaluate(()=>HisarExperience.getSettings().quality),'mevcut');assert.equal(await p.evaluate(()=>HisarExperience.getSettings().cinematic),false);ok(label+': old manual graphics preference cannot disable automatic settings');
  await p.locator('#hisar-experience-entry').click();assert.equal(await p.locator('#hisar-experience').evaluate(e=>e.open),true);
  assert.equal(await p.locator('#hx-settings input:visible,#hx-settings select:visible').count(),3);ok(label+': exactly three visible player settings');
@@ -51,8 +52,10 @@ const ok=name=>{checks.push(name);console.log('PASS',name);};
  await p.keyboard.press('p');assert.equal(await p.evaluate(()=>game),'pause');assert.equal(await p.locator('#cm-return').isVisible(),true);
  await p.locator('#cm-return').click();assert.equal(await p.evaluate(()=>game),'play');assert.equal(await p.evaluate(()=>mis),'savas');assert.equal(await p.locator('#menu').isVisible(),false);ok('headquarters return resumes the same battle and closes its parent overlay');
  await p.keyboard.press('F2');assert.equal(await p.evaluate(()=>game),'pause');await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>game),'play');ok('simple settings pause and resume active gameplay');
+ await require('./interface-browser-checks.cjs').active(p,{ok});
  }
  if(mobile)await require('./modern-browser-checks.cjs')(p,{mobile,label,out,ok});
+ await require('./interface-browser-checks.cjs').result(p,{label,out,ok});
  await p.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;});const cache=fs.readFileSync('sw.js','utf8').match(/const CACHE='([^']+)'/)[1];await p.waitForFunction(async name=>{const c=await caches.open(name);return !!await c.match(new URL('experience/simple-settings.js',location.href));},cache,{timeout:90000});ok(label+': automatic settings module is precached for offline play');
  await p.evaluate(()=>HisarSimpleSettings.install());assert.equal(await p.locator('#hs-simple').count(),1);ok(label+': repeated initialization creates no duplicate panels');
  await c.close();}

@@ -2,7 +2,7 @@
  * No game progress, weapon rules, mission records or personal data are modified. */
 (function (root) {
   'use strict';
-  const VERSION = '1.0.0', KEY = 'hisar-simple-settings-v1';
+  const VERSION = '1.0.1', KEY = 'hisar-simple-settings-v1';
   const levels = ['dusuk', 'orta', 'yuksek'];
   const safe = (fn, fallback) => { try { return fn(); } catch { return fallback; } };
   function normalize(v) {
@@ -133,7 +133,7 @@
       for (const input of panel.querySelectorAll('[data-simple]')) input.addEventListener('change', () => save({ [input.dataset.simple]: input.type === 'checkbox' ? input.checked : input.value }));
       parent.prepend(panel);
     }
-    const entry = doc.getElementById('hisar-experience-entry'); if (entry) entry.textContent = 'AYARLAR';
+    const entry = doc.getElementById('hisar-experience-entry'); if (entry && !entry.querySelector('svg')) entry.textContent = 'AYARLAR';
     const title = doc.getElementById('hx-title'); if (title) title.textContent = 'Oyun Ayarları';
     const subtitle = doc.querySelector('#hisar-experience .hx-head .hx-muted'); if (subtitle) subtitle.textContent = 'Az ayar, doğrudan oyun. Açıkken oyun duraklatılır.';
     graphics(); apply();

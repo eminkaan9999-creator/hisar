@@ -1,7 +1,7 @@
 {
-  "v": 115,
+  "v": 116,
   "experience": "63.1",
-  "not": "İlk Işık kontrol noktaları: mevziye varışta ve temizlenen dalgalar arasında tank, mühimmat ve hayatta kalan dostlar kaydedilir; uygulama yeniden açıldığında kontrol noktasından devam edilebilir. Yol ve arazide farklı, dengeli süspansiyon; atışta gövde tepkisi; gerçek mermi kaynağına göre isabet yönü ve hasarlı parça bilgisi. İkmal kamyonu eğimde gövdesini iki yönde yatırır; yakın araçlar gölge alır, uzak modellerin gölge çizimi azaltılır. v114 sürüş, dokunma, güncelleme ve kayıt düzeltmeleri korunur. Kontrol noktası şu aşamada yalnız İlk Işık içindir. Bekleyen mürettebat ateş emri duraklatma, araç değişimi ve yeni görevde iptal edilir; eski emir sonradan kendiliğinden ateş edemez.",
+  "not": "HİSAR 360 yaklaşımıyla sadeleştirilmiş modern komuta merkezi: dört net bölüm, tutarlı simgeler, büyük dokunma alanları, seçili görev vitrini, kayıtlar ve başarılar erişimi. Ayarlar, harekât emri, telsiz ve sonuç ekranlarında ortak görünüm. Klavyeyle sekme gezinme; kapatılabilir görev ve yedek ekranları; ayar perdesine dokunarak güvenli dönüş. v115 görevleri, kontrol noktaları, XP, kredi ve mevcut araçlar korunur.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Şafak Hattı, önceki harekâtlar ve Son Takım korunur. İlk Işık kontrol noktaları kalıcı görev başarılarından ayrı saklanır.",
@@ -10,7 +10,7 @@
   "battle": "1.1.1",
   "battleNotes": "Son Takım: 1,6 km harita, takım büyüklüğüne göre 4, 7 ya da 14 rakip takım, altı aşamalı güvenli alan, sıralama ve ödül. Her aşamada bir ikmal sandığı, arada bir topçu bölgesi. Rakipler yapay zekâdır; çok oyunculu değildir.",
   "previousReleaseNotes": "HİSAR Kuruluş: tek hikâye ve üç tam oyun alanı; özgün tanklar, kabinler, şantiye araçları, poligon hedefleri korunur. Ortak Uçangöz, araç/görüş kataloğu, yatay iki elli kontrol ve Türkçe Ahmet sesi. Alanlar geçişle yüklenir; kesintisiz tek arazi değildir.",
-  "simpleSettings": "1.0.0",
+  "simpleSettings": "1.0.1",
   "radioVoice": "Microsoft Ahmet (tr-TR) Neural",
   "radioSpeed": 1,
   "swarm": "1.1.0",
@@ -33,10 +33,11 @@
   "agac": "1.0.0",
   "hat": "1.0.0",
   "ejderha": "1.0.0",
-  "commandMenu": "1.0.2",
+  "commandMenu": "1.1.0",
   "safak": "1.1.0",
   "modern": "1.1.0",
   "checkpoint": "1.0.0",
   "tank-feel": "1.0.0",
-  "crew-orders": "1.4.0"
+  "crew-orders": "1.4.0",
+  "interface": "1.0.0"
 }

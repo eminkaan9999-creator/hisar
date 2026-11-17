@@ -10,6 +10,7 @@ function closeLayers(){
  if(root.WHEEL&&root.WHEEL.open)safe(()=>root.WHEEL.hide(false),null);
  safe(()=>root.HisarExperience.close(),null);
  const brief=by('hk-brief');if(brief)brief.hidden=true;
+ const profile=by('rep2');if(profile)profile.style.display='none';
  release();
 }
 function refresh(){
@@ -41,9 +42,11 @@ function connect(){
 }
 function escape(e){
  if(e.key!=='Escape'||e.repeat)return;
- const brief=by('hk-brief'),radio=by('hr-panel'),settings=by('hisar-experience');
- if(brief&&!brief.hidden)brief.hidden=true;
- else if(settings&&settings.open)safe(()=>root.HisarExperience.close(),null);
+ const brief=by('hk-brief'),radio=by('hr-panel'),settings=by('hisar-experience'),profile=by('rep2'),result=by('rep');
+ if(settings&&settings.open)safe(()=>root.HisarExperience.close(),null);
+ else if(brief&&!brief.hidden){const back=safe(()=>brief.querySelector('.hk-back'),null);if(back)back.click();else brief.hidden=true;}
+ else if(result&&result.classList.contains('on')){const back=safe(()=>result.querySelector('[data-r="menu"]'),null);if(back)back.click();else result.classList.remove('on');}
+ else if(profile&&profile.style.display==='flex'){const back=safe(()=>profile.querySelector('[data-x]'),null);if(back)back.click();else profile.style.display='none';}
  else if(radio&&!radio.hidden)safe(()=>root.HisarOperations.close(),null);
  else if(root.WHEEL&&root.WHEEL.open)safe(()=>root.WHEEL.hide(false),null);
  else if(root.mapOpen)safe(()=>root.toggleMap(),null);
@@ -87,7 +90,7 @@ function install(){
  if(root.MutationObserver){const observer=new root.MutationObserver(refresh);observer.observe(by('menu'),{attributes:true,attributeFilter:['style']});}
  refresh();boot();let attempts=0;const timer=root.setInterval(()=>{if(boot()||++attempts>=24)root.clearInterval(timer);},250);
 }
-root.HisarCommandMenu=Object.freeze({version:'1.0.2',staticBackground:true,connect,install,closeLayers,refresh,escape,diagnostics:()=>({installed,hooks:{...hooks}})});
+root.HisarCommandMenu=Object.freeze({version:'1.1.0',staticBackground:true,connect,install,closeLayers,refresh,escape,diagnostics:()=>({installed,hooks:{...hooks}})});
 root.addEventListener('keydown',escape,true);doc.addEventListener('hisar:ui-ready',install);
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',install);else install();
 connect();

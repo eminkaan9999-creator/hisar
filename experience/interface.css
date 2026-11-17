@@ -1,0 +1,298 @@
+/* v116 — quiet navy surfaces, consistent controls, no backdrop blur or animated scene. */
+html body.ci-modern{--ci-bg:#0a1221;--ci-panel:#101e32;--ci-raised:#162940;--ci-line:#2c415c;--ci-text:#edf4ff;--ci-muted:#a8bdd5;--ci-accent:#8ccaff;--ci-font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color-scheme:dark}
+html body.ci-modern svg{flex-shrink:0}
+html body.ci-modern :is(#cm-tools,#ci-brand-mark,#ci-brief-close,#ci-result-close,.ci-backup-close) svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+html body.ci-modern.command-ui #menu{background:radial-gradient(ellipse at 80% 0,#182e49 0,transparent 48%),#0a1221!important}
+html body.ci-modern.command-ui #menu #mp{width:min(1320px,calc(100% - 36px))!important;height:calc(100dvh - 32px)!important;max-height:calc(100dvh - 32px)!important;margin:auto!important;background:#0e192b!important;border:1px solid #253a54!important;border-radius:24px!important;box-shadow:0 24px 80px #0005!important;font-family:var(--ci-font)!important}
+html body.ci-modern.command-ui #menu #mp>#mpBody{grid-template-columns:176px minmax(0,1fr)!important;grid-template-rows:auto auto minmax(0,1fr)!important;gap:18px 28px!important;padding:24px 28px 12px!important}
+html body.ci-modern.command-ui #menu #cm-header{grid-row:1!important;grid-column:1/-1!important;min-width:0;gap:14px;padding-bottom:20px;border-color:#23374e}
+html body.ci-modern.command-ui #menu #cm-brand{position:relative;flex:1;min-width:0;border:0;padding:0 0 0 54px!important}
+html body.ci-modern.command-ui #menu #ci-brand-mark{position:absolute;left:0;top:0;display:grid;place-items:center;width:40px;height:46px;border:1px solid #365b7b;border-radius:13px;background:linear-gradient(145deg,#264b6d,#13283d);color:#a6d9ff}
+html body.ci-modern.command-ui #menu #ci-brand-mark svg{width:26px;height:29px}
+html body.ci-modern.command-ui #menu #cm-context{font:600 9px/1.3 var(--ci-font)!important;letter-spacing:.16em;color:#8faac7;margin-bottom:5px}
+html body.ci-modern.command-ui #menu #cm-brand .hd h1{font:750 25px/1.2 var(--ci-font)!important;letter-spacing:.015em!important;color:#f0f6ff!important}
+html body.ci-modern.command-ui #menu #cm-tools{display:flex;flex-wrap:nowrap;gap:8px}
+html body.ci-modern.command-ui #menu #cm-tools button{display:inline-flex!important;align-items:center;gap:8px;min-height:44px!important;min-width:44px!important;padding:10px 13px!important;border:1px solid #304963!important;border-radius:12px!important;background:#14253b!important;color:#deedff!important;-webkit-text-fill-color:currentColor!important;font:600 12px/1.2 var(--ci-font)!important;letter-spacing:0!important;box-shadow:none!important}
+html body.ci-modern.command-ui #menu #cm-tools button:hover{background:#1c3450!important;border-color:#50779b!important}
+html body.ci-modern.command-ui #menu #cm-tools #ci-profile{background:#102236!important;color:#bfd7f0!important}
+html body.ci-modern.command-ui #menu #ci-record-value{white-space:nowrap;font-size:11px;font-variant-numeric:tabular-nums}
+html body.ci-modern.command-ui #menu #cm-tools #ci-profile:disabled{opacity:.55;cursor:default}
+html body.ci-modern.command-ui[data-ci-paused=true] #menu #updBox{display:none!important}
+html body.ci-modern.command-ui #menu #mt{grid-column:2!important;grid-row:2!important;margin:0!important;font:500 12px/1.5 var(--ci-font)!important;letter-spacing:0!important;color:#8fa9c4!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs{grid-column:1!important;grid-row:2/span 2!important;display:flex!important;flex-direction:column!important;gap:6px!important;align-self:start!important;width:100%!important;padding:7px!important;margin:0!important;border:1px solid #243a52!important;border-radius:16px!important;background:#111f32!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button{position:relative!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;width:100%!important;min-height:50px!important;padding:12px!important;border:1px solid transparent!important;border-radius:11px!important;background:transparent!important;color:#92abc5!important;-webkit-text-fill-color:currentColor!important;font:600 13px/1.2 var(--ci-font)!important;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button::before,html body.ci-modern.command-ui #menu #mpBody>.tabs button::after{display:none!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button svg{display:block!important;width:20px!important;height:20px!important;stroke-width:1.6!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button.sel{border-color:#3d6485!important;background:#203e5c!important;color:#e6f4ff!important;box-shadow:none!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button:hover{background:#192e47!important}
+html body.ci-modern.command-ui #menu #mpBody>section,html body.ci-modern.command-ui:not([data-tab=g]) #menu #mpBody>section{grid-column:2!important;grid-row:3!important;min-width:0!important;min-height:0!important;width:100%!important;padding:0 3px 10px 0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;overflow-x:hidden!important;overflow-y:auto!important;scrollbar-width:thin;scrollbar-color:#365470 transparent;scroll-padding:12px}
+html body.ci-modern.command-ui #menu #mp>.acts{gap:12px!important;padding:14px 28px!important;border-color:#263b52!important;background:#101f33!important}
+html body.ci-modern.command-ui #menu .acts>button{min-height:50px!important;min-width:220px!important;padding:14px 24px!important;border-radius:13px!important;font:700 14px/1.2 var(--ci-font)!important;letter-spacing:0!important;text-transform:none!important}
+html body.ci-modern.command-ui #menu #go{border:1px solid #a9daff!important;background:#96cefa!important;color:#0b2239!important;-webkit-text-fill-color:#0b2239!important;box-shadow:0 4px 14px #071f3933!important}
+html body.ci-modern.command-ui #menu #go::before{display:none!important}
+html body.ci-modern.command-ui #menu #go::after{position:static!important;display:inline!important;content:'↗'!important;margin-left:14px;font-size:19px;animation:none!important;background:none!important;transform:none!important}
+html body.ci-modern.command-ui #menu #go:disabled{opacity:.4!important}
+html body.ci-modern.command-ui #menu #rs{border-color:#8ccaff!important;background:#8ccaff!important;color:#0d2740!important;-webkit-text-fill-color:#0d2740!important}
+html body.ci-modern.command-ui[data-ci-paused=true] #menu #go{border-color:#3a5774!important;background:#152b44!important;color:#d7eaff!important;-webkit-text-fill-color:#d7eaff!important;box-shadow:none!important}
+html body.ci-modern.command-ui #menu button{font-family:var(--ci-font)!important;transition:background-color .14s,border-color .14s,color .14s!important;touch-action:manipulation;animation:none!important}
+html body.ci-modern.command-ui #menu button:focus-visible,html body.ci-modern :is(#hisar-experience,#hk-brief,#rep,#rep2,#hr-panel) :is(button,select,textarea,input):focus-visible{outline:2px solid #9cd5ff!important;outline-offset:3px!important}
+html body.ci-modern.command-ui #menu button:active{filter:brightness(1.12)}
+html body.ci-modern.command-ui #menu #sf-campaign{position:relative;isolation:isolate;min-height:210px;margin:0 0 16px!important;padding:22px!important;overflow:hidden;border:1px solid #365675;border-radius:20px;background:linear-gradient(90deg,#152d49 15%,#132b43ef 50%,#10243e55),url('../assets/brand/celik-boru.jpg') right 56%/cover no-repeat!important}
+html body.ci-modern #sf-campaign .sf-heading{display:flex!important;flex-wrap:wrap;align-items:center;gap:7px 12px!important}
+html body.ci-modern #sf-campaign .sf-heading>small{flex-basis:100%;font:600 9px/1.2 var(--ci-font)!important;letter-spacing:.13em!important;color:#b6d6f2}
+html body.ci-modern #sf-campaign #sf-title{font:600 13px/1.3 var(--ci-font)!important;letter-spacing:0;color:#aacae7}
+html body.ci-modern #sf-campaign #sf-progress{font:600 10px/1.3 var(--ci-font)!important;letter-spacing:0;padding:5px 8px;border:1px solid #4c698644;border-radius:8px;background:#10263cbf;color:#d0e6fc}
+html body.ci-modern #sf-campaign #ci-mission{margin:10px 0 7px;font:750 clamp(25px,3vw,34px)/1.12 var(--ci-font);letter-spacing:-.035em;color:#f5f9ff}
+html body.ci-modern #sf-campaign #sf-summary{max-width:68%;font:400 12px/1.6 var(--ci-font)!important;color:#b9cfe4!important;margin:8px 0 14px!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical;overflow:hidden}
+html body.ci-modern.command-ui #menu .sf-campaign-actions{gap:8px!important}
+html body.ci-modern.command-ui #menu .sf-campaign-actions button{flex:none;min-height:42px!important;padding:10px 12px!important;border:1px solid #527397!important;border-radius:11px!important;background:#172f49df!important;color:#e5f3ff!important;-webkit-text-fill-color:currentColor!important;font:600 11px/1.3 var(--ci-font)!important;letter-spacing:0!important}
+html body.ci-modern.command-ui #menu #sf-resume{border-color:#6dbaa8!important;background:#183e3d!important;color:#d4fff0!important}
+html body.ci-modern #sf-checkpoint-note{max-width:80%;font:400 11px/1.5 var(--ci-font)!important;color:#c1ddd7!important}
+html body.ci-modern.command-ui #menu #hkMode{padding:5px!important;gap:5px!important;margin:0 0 12px!important;border:1px solid #2a4059!important;border-radius:14px!important;background:#0b1728!important}
+html body.ci-modern.command-ui #menu #hkMode button{min-height:48px!important;gap:4px!important;border-radius:9px!important;color:#8fa8c3!important;-webkit-text-fill-color:currentColor!important}
+html body.ci-modern.command-ui #menu #hkMode button.sel{background:#203b57!important;color:#e6f3ff!important}
+html body.ci-modern.command-ui #menu #hkMode b{font:650 12px/1.2 var(--ci-font)!important;letter-spacing:.025em!important}
+html body.ci-modern.command-ui #menu #hkMode small{font:400 10px/1.2 var(--ci-font)!important;letter-spacing:0!important}
+html body.ci-modern.command-ui #menu #hkCard{gap:10px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op{position:relative!important;grid-template-columns:62px minmax(0,1fr)!important;align-items:center!important;gap:14px!important;min-height:116px!important;padding:14px!important;border:1px solid #2d425c!important;border-radius:15px!important;background:#13243a!important;box-shadow:none!important;transform:none!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op.sel{border-color:#6fa7d3!important;background:#1a344e!important;box-shadow:inset 0 0 0 1px #6fa7d333!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op.sel::after{position:absolute;right:10px;top:9px;display:grid;place-items:center;width:16px;height:16px;border-radius:50%;content:'✓';font:700 10px/1 var(--ci-font);color:#092037;background:#a8d8fa}
+html body.ci-modern.command-ui #menu #hkCard .hk-op canvas{width:62px!important;height:62px!important;border:1px solid #58738b!important;border-radius:11px!important;box-shadow:none!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op .hk-tx{gap:5px!important;min-width:0!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op b{font:650 17px/1.2 var(--ci-font)!important;letter-spacing:-.02em!important;color:#eaf4ff!important;padding-right:12px}
+html body.ci-modern.command-ui #menu #hkCard .hk-op p{font:400 11px/1.4 var(--ci-font)!important;color:#aac1d8!important;-webkit-line-clamp:1!important;margin:0!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op small{font:500 10px/1.2 var(--ci-font)!important;color:#9fbdd5!important;letter-spacing:0!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-tur{padding:0!important;font:600 8px/1.35 var(--ci-font)!important;letter-spacing:.055em!important;color:#a7c8e7!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-st{font:600 10px/1 var(--ci-font);color:#efcf91;white-space:nowrap}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) h3{margin:12px 0;font:650 11px/1.4 var(--ci-font)!important;letter-spacing:.06em;color:#bad1e8}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) :is(button,select){border-radius:12px!important;min-height:44px!important;border-color:#344e69!important;background:#162a42!important;color:#d7e9fc!important;-webkit-text-fill-color:currentColor!important;font:500 13px/1.3 var(--ci-font)!important;letter-spacing:0!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) button.sel{border-color:#82bbeb!important;background:#244968!important;color:#f2f9ff!important;box-shadow:none!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) :is(p,small){font-family:var(--ci-font)!important;color:#a9bed4!important;letter-spacing:0!important;line-height:1.5!important}
+html body.ci-modern.command-ui #menu #galV{border:1px solid #2e4965!important;border-radius:18px!important;background:#101f32!important;overflow:hidden}
+html body.ci-modern.command-ui #menu :is(#galD,#galA,#upl>div){border-color:#2f4660!important;border-radius:15px!important;background:#12243a!important}
+html body.ci-modern.command-ui #menu #galL{gap:8px!important}
+html body.ci-modern.command-ui #menu #galL button{padding:13px!important;border-radius:13px!important}
+html body.ci-modern.command-ui #menu #galS button{min-height:42px!important}
+html body.ci-modern.command-ui #menu #tk .kseg{padding:5px!important;border:1px solid #2c435e!important;border-radius:14px!important;background:#0b192b!important;gap:6px!important}
+html body.ci-modern.command-ui #menu #tk .klist{border-radius:16px!important;border-color:#304b64!important;background:#12243a!important}
+html body.ci-modern.command-ui #menu #tk .krow{border-color:#29425c!important}
+html body.ci-modern.command-ui #menu #tk kbd{border-radius:7px!important;background:#233d58!important;border-color:#4b6b89!important;box-shadow:0 2px 0 #081627!important;color:#e9f5ff!important;font:600 11px/1.2 var(--ci-font)!important}
+/* Sheets share their type, corners and controls; close actions remain outside the scroller. */
+html body.ci-modern #hisar-experience{width:min(660px,calc(100% - 24px))!important;max-height:calc(100dvh - 24px)!important;padding:22px!important;border:1px solid #37516e!important;border-radius:24px!important;background:#101e32!important;color:#eaf3ff!important;font:500 14px/1.5 var(--ci-font)!important;box-shadow:0 28px 100px #0009!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.ci-modern #hisar-experience::backdrop{background:#030b18cc}
+html body.ci-modern #hisar-experience .hx-head{padding:4px 0 14px!important;gap:14px!important;background:#101e32!important}
+html body.ci-modern #hisar-experience .hx-mark{font:600 9px/1.3 var(--ci-font);letter-spacing:.16em;color:#a4ccef}
+html body.ci-modern #hisar-experience h2{font:700 24px/1.25 var(--ci-font);letter-spacing:-.03em;color:#f2f7ff}
+html body.ci-modern #hisar-experience .hx-muted{color:#a7bdd4!important;font-size:12px!important}
+html body.ci-modern #hisar-experience :is(button,select){min-height:44px!important;border:1px solid #3b5772!important;border-radius:12px!important;background:#182f48!important;color:#e1f1ff!important;font:600 13px/1.3 var(--ci-font)!important;letter-spacing:0!important}
+html body.ci-modern #hisar-experience #hx-close{min-width:44px!important;width:44px!important;height:44px!important;padding:8px!important;border-radius:13px!important;flex:none}
+html body.ci-modern #hisar-experience nav{padding:5px;border:1px solid #29435e;border-radius:14px;background:#0b182a;gap:6px;margin:8px 0 18px}
+html body.ci-modern #hisar-experience nav button{border-color:transparent!important;background:none!important}
+html body.ci-modern #hisar-experience nav button[aria-pressed=true]{background:#244762!important;color:#eff8ff!important}
+html body.ci-modern #hs-simple .hs-auto{padding:14px 16px;background:#162d45;border:1px solid #355876;border-radius:14px;color:#deeeff}
+html body.ci-modern #hs-simple .hs-auto strong{font:650 15px/1.35 var(--ci-font);text-transform:none;letter-spacing:0}
+html body.ci-modern #hs-simple .hs-auto span{font:400 12px/1.6 var(--ci-font);color:#aec9e3}
+html body.ci-modern #hs-simple label{min-height:66px;border-color:#29425c;font:600 13px/1.4 var(--ci-font);gap:12px}
+html body.ci-modern #hs-simple select{font-size:16px!important;width:156px;max-width:56%;border-radius:11px!important}
+html body.ci-modern #hs-simple input[type=checkbox]{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:46px;height:28px;margin:0;border:1px solid #57738f;border-radius:999px;background:#2d435e;cursor:pointer}
+html body.ci-modern #hs-simple input[type=checkbox]::after{position:absolute;left:3px;top:3px;content:'';width:20px;height:20px;border-radius:50%;background:#d4e1ee;transition:transform .14s}
+html body.ci-modern #hs-simple input[type=checkbox]:checked{background:#8bcafa;border-color:#9cd6ff}
+html body.ci-modern #hs-simple input[type=checkbox]:checked::after{transform:translateX(18px);background:#102a42}
+html body.ci-modern #hisar-experience :is(.hx-card,.hx-notice){background:#152b43!important;border:1px solid #2f4c68!important;border-radius:14px!important}
+html body.ci-modern #hisar-experience :is(#hs-note,#hs-diag,#hs-credit){font-family:var(--ci-font);color:#9fb8d1}
+html body.ci-modern #hk-brief{inset:12px!important;width:min(1200px,calc(100% - 24px))!important;height:calc(100dvh - 24px)!important;max-height:calc(100dvh - 24px)!important;margin:auto!important;padding:20px!important;border:1px solid #3a5571!important;border-radius:24px!important;background:#0d1b2d!important;color:#eff6ff!important;font-family:var(--ci-font)!important;box-shadow:0 20px 100px #0009!important}
+html body.ci-modern #hk-brief header{flex:none;min-height:44px;gap:12px;border-color:#2a435e;padding:0 0 12px}
+html body.ci-modern #hk-brief header .hk-tur{font:600 9px/1.4 var(--ci-font);letter-spacing:.05em;padding:6px 9px;border:1px solid #375b7a;border-radius:8px;background:#1c3a54;color:#c3e1f8}
+html body.ci-modern #hk-brief h2{font:600 10px/1.4 var(--ci-font);letter-spacing:.06em;color:#8faac5}
+html body.ci-modern #hk-brief header>b{flex:1;min-width:0;overflow-wrap:anywhere;font:700 20px/1.3 var(--ci-font);letter-spacing:-.02em;color:#edf6ff}
+html body.ci-modern #ci-brief-close,html body.ci-modern #ci-result-close,html body.ci-modern .ci-backup-close{flex:none;display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:10px;border:1px solid #405d79;border-radius:13px;background:#19324b;color:#e2f2ff;cursor:pointer}
+html body.ci-modern #ci-brief-close{margin-left:auto}
+html body.ci-modern #hk-brief .hk-bbody{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:18px;flex:1;min-height:0;overflow:hidden}
+html body.ci-modern #hk-brief .hk-bbody>canvas{width:100%!important;height:auto!important;max-width:100%!important;max-height:100%!important;aspect-ratio:1;object-fit:contain;align-self:start;border:1px solid #3a536c;border-radius:16px}
+html body.ci-modern #hk-brief .hk-bt{min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding-right:4px}
+html body.ci-modern #hk-brief .hk-bs{margin:0 0 10px;padding:14px 16px;border:1px solid #2c4761;border-radius:14px;background:#142a42}
+html body.ci-modern #hk-brief .hk-bs h3{margin:0 0 8px;font:650 10px/1.4 var(--ci-font);letter-spacing:.08em;color:#9ac9ed}
+html body.ci-modern #hk-brief .hk-bs :is(p,li){font:400 13px/1.65 var(--ci-font)!important;color:#c5d7e9}
+html body.ci-modern #hk-brief .hk-bs p{margin:0}
+html body.ci-modern #hk-brief .hk-bb{flex:none;gap:10px;padding-top:12px;border-top:1px solid #29445d}
+html body.ci-modern #hk-brief .hk-bb button{min-height:48px!important;padding:12px 22px;border:1px solid #456784;border-radius:12px;font:650 13px/1.3 var(--ci-font);letter-spacing:0;background:#1a334c;color:#dcedfc}
+html body.ci-modern #hk-brief .hk-bb .hk-go{background:#99d0fa;color:#102b43;-webkit-text-fill-color:#102b43;border-color:#aedcfe}
+html body.ci-modern :is(#rep,#rep2){background:#050d1bd9!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.ci-modern #rep2{z-index:58!important}
+html body.ci-modern :is(#rep .c,#prof .c){position:relative;border:1px solid #395573!important;border-radius:24px!important;background:#102137!important;color:#e8f4ff!important;padding:24px!important;font-family:var(--ci-font)!important;box-shadow:0 24px 80px #0008!important}
+html body.ci-modern #ci-result-close{position:absolute;right:12px;top:12px}
+html body.ci-modern :is(#rep,#prof) :is(h2,b,strong){font-family:var(--ci-font)!important;letter-spacing:-.02em!important}
+html body.ci-modern :is(#rep .g>div,#prof .ps>div){border:1px solid #304b66!important;border-radius:14px!important;background:#182f48!important}
+html body.ci-modern :is(#rep,#prof) :is(small,p,.sub,.pr){font-family:var(--ci-font)!important;color:#acc5de!important;letter-spacing:0!important;line-height:1.5}
+html body.ci-modern :is(#rep,#prof) :is(.bt button,.bk button,[data-bk=load]){min-height:46px!important;padding:12px 16px;border:1px solid #50789c!important;border-radius:12px!important;background:#1b3c59!important;color:#e3f2ff!important;-webkit-text-fill-color:currentColor!important;font:650 12px/1.4 var(--ci-font)!important}
+html body.ci-modern #rep .bt button.a{background:#8fcafa!important;color:#112d45!important;-webkit-text-fill-color:#112d45!important}
+html body.ci-modern #prof .ph{position:sticky;top:-24px;z-index:2;padding:10px 0;background:#102137}
+html body.ci-modern #prof .ph button{border-color:#45627e;background:#1b354f}
+html body.ci-modern #prof .ml>div{border-color:#2c4660;border-radius:12px}
+html body.ci-modern #prof .bkb{position:relative;padding-top:54px}
+html body.ci-modern #prof .ci-backup-close{position:absolute;right:0;top:4px}
+html body.ci-modern #prof textarea{box-sizing:border-box;max-width:100%;font:400 16px/1.45 var(--ci-font);border:1px solid #4d7395;border-radius:12px;background:#0c1a2b;color:#e0edfc}
+html body.ci-modern #hr-panel{border-color:#4b6d8d!important;border-radius:20px!important;background:#102237!important;color:#e5f3ff!important;font-family:var(--ci-font)!important;box-shadow:0 12px 45px #0006!important}
+html body.ci-modern #hr-panel :is(button,select){min-height:44px;border-color:#426382!important;border-radius:11px!important;background:#1a3650!important;color:#e0f0ff!important;font-family:var(--ci-font)!important}
+html body.ci-modern #hr-panel select{font-size:16px}
+/* Touch targets stay in the native layout; only the visual language changes. */
+html body.ci-modern #ui .g1,html body.ci-modern #ui :is(.ab,.am),html body.ci-modern #ctx button,html body.ci-modern #hr-radio-entry,html body.ci-modern #vbar .r{border:1px solid #88a9c4b3!important;border-radius:14px!important;background:#102840e8!important;color:#e5f4ff!important;-webkit-text-fill-color:currentColor!important;box-shadow:0 3px 10px #03101c44!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.ci-modern #ui .ub{font-family:var(--ci-font)!important;font-size:11px!important}
+html body.ci-modern #ui .ub svg{width:20px!important;height:20px!important}
+html body.ci-modern #ui :is(.am,.ab).on{border-color:#a6dcff!important;box-shadow:inset 0 0 0 1px #a6dcff!important}
+html body.ci-modern #uMenu{border-radius:14px!important;width:44px!important;height:44px!important}
+html body.ci-modern #uPad{border:1.5px solid #9bc8e7b3!important;background:radial-gradient(circle,#17344b88 0,#0b1c2c9c 70%)!important;box-shadow:inset 0 0 0 7px #6e9fc412,0 3px 12px #07142555!important}
+html body.ci-modern #uPad svg{color:#d0e7f8bb!important}
+html body.ci-modern #uKnob{border:1px solid #c3e7ff!important;background:linear-gradient(145deg,#b0dcf3,#4c82a6)!important;box-shadow:0 2px 8px #0006!important}
+html body.ci-modern #uFire{border:2px solid #acdcff!important;background:radial-gradient(circle at 35% 20%,#416782,#1a384f 74%)!important;box-shadow:inset 0 0 0 5px #0c243666,0 4px 15px #0006!important;color:#f2faff!important}
+html body.ci-modern #uFire::after{color:#d4eaff!important;font-weight:650!important;letter-spacing:.08em!important}
+html body.ci-modern #uFire b{font-family:var(--ci-font)!important}
+html body.ci-modern #vbar button{font:600 10px/1.2 var(--ci-font)!important;border-radius:9px!important;letter-spacing:0!important}
+html body.ci-modern #vbar button.on{background:#365b77!important;color:#f2fbff!important}
+html body.ci-modern #sf-hud{border-color:#7da1bb9c!important;border-radius:16px!important;background:#10243be8!important;font-family:var(--ci-font)!important;box-shadow:0 4px 15px #0004}
+html body.ci-modern #sf-hud small{font-family:var(--ci-font)!important;letter-spacing:.035em!important}
+html body.ci-modern #sf-hud b{font:650 18px/1.25 var(--ci-font)!important;letter-spacing:-.03em!important}
+html body.ci-modern #sf-hud #sf-status{font:500 8px/1.2 var(--ci-font)!important;letter-spacing:.025em!important}
+html body.ci-modern #tf-impact{border-radius:9px!important;font-family:var(--ci-font)!important;font-size:11px!important}
+html body.ci-modern #hk-obj{border:1px solid #5d809c!important;border-left:3px solid #9ad5ff!important;border-radius:12px!important;background:#10273fe8!important;font-family:var(--ci-font)!important}
+html body.ci-modern #hk-obj strong{border-radius:9px 9px 0 0!important;background:#18334c!important;color:#c4e5ff!important;font:600 10px/1.4 var(--ci-font)!important;letter-spacing:.02em!important;padding-top:5px}
+html body.ci-modern #hk-obj p{font:500 12px/1.4 var(--ci-font)!important;margin:6px 0!important}
+html body.ci-modern #hk-obj small{font:400 10px/1.4 var(--ci-font)!important;color:#b1cce2!important}
+html body.ci-modern #cm-objective-toggle{min-height:28px!important;border-radius:7px!important;background:#244a64!important;color:#e2f5ff!important;font:500 10px/1.2 var(--ci-font)!important}
+html body.ci-modern #hk-obj.cm-compact>p{display:block!important}
+html body.ci-modern #radio{font:500 12px/1.5 var(--ci-font)!important;border:1px solid #668aaba6!important;border-radius:11px!important;background:#0c2035eb!important;color:#dfedfa!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body.ci-modern.command-ui #cm-boot{font:400 11px/1.5 var(--ci-font);color:#e3bbaa}
+html body.ci-modern.command-ui #cm-retry{border-radius:10px!important;background:#23384f!important;color:#e3f3ff!important}
+/* The headquarters uses the light cards, navy navigation and warm action accent
+   of HİSAR 360. Battle overlays keep their dark surfaces for outdoor contrast. */
+html body.ci-modern.command-ui #menu{color-scheme:light;background:#e8eef5!important}
+html body.ci-modern.command-ui #menu #mp{background:#f3f6fa!important;border-color:#d7e1ec!important;box-shadow:0 20px 70px #18334d14!important}
+html body.ci-modern.command-ui #menu #cm-header{border-color:#dce4ed}
+html body.ci-modern.command-ui #menu #cm-context{color:#8c7b58}
+html body.ci-modern.command-ui #menu #cm-brand .hd h1{color:#19334c!important}
+html body.ci-modern.command-ui #menu #cm-tools button,html body.ci-modern.command-ui #menu #cm-tools #ci-profile{background:#ffffff!important;border-color:#d9e2eb!important;color:#34516a!important}
+html body.ci-modern.command-ui #menu #cm-tools button:hover{background:#eaf1f7!important;border-color:#a7bccf!important}
+html body.ci-modern.command-ui #menu #mt{color:#7b8fa2!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs{border-color:transparent!important;background:transparent!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button{color:#7c8fa2!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button.sel{border-color:#20435e!important;background:#19364f!important;color:#ffffff!important;box-shadow:0 4px 12px #16375014!important}
+html body.ci-modern.command-ui #menu #mpBody>.tabs button:hover:not(.sel){background:#e6edf5!important}
+html body.ci-modern.command-ui #menu #mp>.acts{border-color:#dce5ee!important;background:#f7f9fc!important}
+html body.ci-modern.command-ui #menu #go,html body.ci-modern.command-ui #menu #rs{border-color:#cfb37a!important;background:#e1c58d!important;color:#1b3448!important;-webkit-text-fill-color:#1b3448!important;box-shadow:0 4px 14px #73603a14!important}
+html body.ci-modern.command-ui[data-ci-paused=true] #menu #go{background:#ffffff!important;border-color:#bdccda!important;color:#314e67!important;-webkit-text-fill-color:#314e67!important}
+html body.ci-modern.command-ui #menu button:focus-visible{outline-color:#436e94!important}
+html body.ci-modern.command-ui #menu #hkMode{background:#e7edf4!important;border-color:#dce4ed!important}
+html body.ci-modern.command-ui #menu #hkMode button{color:#778da2!important}
+html body.ci-modern.command-ui #menu #hkMode button.sel{background:#ffffff!important;color:#1c3b55!important;box-shadow:0 2px 5px #19334e0d!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op{background:#ffffff!important;border-color:#d9e3ed!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op.sel{background:#edf4fa!important;border-color:#7b9fbd!important;box-shadow:inset 0 0 0 1px #7b9fbd12!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op.sel::after{background:#234d70;color:#ffffff}
+html body.ci-modern.command-ui #menu #hkCard .hk-op b{color:#1d3a52!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op p{color:#778b9d!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-op small{color:#8b7c5a!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-tur{color:#66849f!important}
+html body.ci-modern.command-ui #menu #hkCard .hk-st{color:#937338}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk){color:#254159!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) h3{color:#607e96!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) :is(button,select){background:#ffffff!important;border-color:#d4e0eb!important;color:#2d4b64!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) button.sel{background:#244962!important;border-color:#244962!important;color:#ffffff!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) :is(p,small){color:#71879b!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) :is(b,strong,label,.nm){color:#24445e!important}
+html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) button.sel :is(b,small){color:#e3f2ff!important}
+html body.ci-modern.command-ui #menu :is(#galD,#galA,#upl>div){background:#ffffff!important;border-color:#d8e3ed!important}
+html body.ci-modern.command-ui #menu #tk .kseg{background:#e7eef5!important;border-color:#d9e3ed!important}
+html body.ci-modern.command-ui #menu #tk .klist{background:#ffffff!important;border-color:#d8e3ed!important}
+html body.ci-modern.command-ui #menu #tk .krow{border-color:#e2e9f0!important}
+html body.ci-modern.command-ui #menu #tk kbd{background:#eef3f8!important;border-color:#cedbe7!important;color:#385971!important;box-shadow:0 2px 0 #b9cbd9!important}
+html body.ci-modern.command-ui #cm-boot{color:#926344}
+html body.ci-modern.command-ui #cm-retry{background:#ffffff!important;border-color:#c6d4e0!important;color:#36526a!important}
+@media(max-width:850px){
+ html body.ci-modern.command-ui #menu #mp{width:100%!important;height:100dvh!important;max-height:100dvh!important;border:0!important;border-radius:0!important}
+ html body.ci-modern.command-ui #menu #mp>#mpBody{grid-template-columns:1fr!important;grid-template-rows:auto auto minmax(0,1fr)!important;gap:14px!important;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) 8px max(18px,env(safe-area-inset-left))!important}
+ html body.ci-modern.command-ui #menu #cm-header{grid-row:1!important;padding-bottom:14px}
+ html body.ci-modern.command-ui #menu #mpBody>.tabs{grid-row:2!important;grid-column:1!important;flex-direction:row!important;gap:4px!important;padding:5px!important;align-self:stretch!important}
+ html body.ci-modern.command-ui #menu #mpBody>.tabs button{flex:1 1 0!important;flex-direction:column!important;justify-content:center!important;gap:6px!important;min-width:0!important;width:auto!important;min-height:58px!important;padding:7px 4px!important;font-size:10px!important;border-radius:10px!important}
+ html body.ci-modern.command-ui #menu #mpBody>.tabs button svg{display:block!important;width:20px!important;height:20px!important}
+ html body.ci-modern.command-ui #menu #mt{display:none!important}
+ html body.ci-modern.command-ui #menu #mpBody>section,html body.ci-modern.command-ui:not([data-tab=g]) #menu #mpBody>section{grid-column:1!important;grid-row:3!important}
+ html body.ci-modern.command-ui #menu #mp>.acts{padding:12px max(18px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))!important}
+ html body.ci-modern.command-ui #menu .acts>button{flex:1!important;min-width:0!important;min-height:48px!important;padding:12px 10px!important;font-size:13px!important}
+}
+@media(max-width:600px){
+ html body.ci-modern.command-ui #menu #mp>#mpBody{gap:12px!important;padding-top:max(16px,env(safe-area-inset-top))!important;padding-left:max(14px,env(safe-area-inset-left))!important;padding-right:max(14px,env(safe-area-inset-right))!important}
+ html body.ci-modern.command-ui #menu #cm-header{flex-wrap:nowrap!important;align-items:center!important;gap:8px;padding-bottom:12px}
+ html body.ci-modern.command-ui #menu #cm-brand{flex:1;min-width:0!important;padding-left:43px!important}
+ html body.ci-modern.command-ui #menu #ci-brand-mark{width:33px;height:39px;border-radius:11px}
+ html body.ci-modern.command-ui #menu #ci-brand-mark svg{width:22px;height:25px}
+ html body.ci-modern.command-ui #menu #cm-brand .hd h1{font-size:18px!important;letter-spacing:0!important}
+ html body.ci-modern.command-ui #menu #cm-context{font-size:8px!important;letter-spacing:.08em;margin-bottom:4px}
+ html body.ci-modern.command-ui #menu #cm-tools{gap:5px;flex:none}
+ html body.ci-modern.command-ui #menu #cm-tools button{min-width:40px!important;width:40px!important;height:40px!important;min-height:40px!important;padding:9px!important;border-radius:12px!important;font-size:0!important;gap:0}
+ html body.ci-modern.command-ui #menu #cm-tools button>span{display:none!important}
+ html body.ci-modern.command-ui #menu #cm-tools #ci-profile{display:inline-flex!important}
+ html body.ci-modern.command-ui #menu #cm-tools #updB svg{display:block!important;width:18px!important;height:18px!important}
+ html body.ci-modern.command-ui #menu #cm-tools #cm-return{max-width:40px!important}
+ html body.ci-modern.command-ui #menu #sf-campaign{min-height:198px;padding:16px!important;border-radius:18px;margin-bottom:12px!important;background-position:64% 56%!important}
+ html body.ci-modern #sf-campaign #ci-mission{font-size:28px;margin-top:12px}
+ html body.ci-modern #sf-campaign #sf-summary{font-size:11px!important;line-height:1.6!important;max-width:92%;margin-bottom:12px!important}
+ html body.ci-modern.command-ui #menu .sf-campaign-actions{gap:6px!important}
+ html body.ci-modern.command-ui #menu .sf-campaign-actions button{flex:1;min-width:0;min-height:42px!important;font-size:10px!important;padding:9px!important}
+ html body.ci-modern.command-ui #menu #sf-resume{flex-basis:100%!important}
+ html body.ci-modern #sf-checkpoint-note{max-width:100%;font-size:10px!important}
+ html body.ci-modern.command-ui #menu #hkCard{grid-template-columns:1fr!important}
+ html body.ci-modern.command-ui #menu #hkCard .hk-op{min-height:96px!important;padding:12px!important;grid-template-columns:54px minmax(0,1fr)!important;border-radius:14px!important}
+ html body.ci-modern.command-ui #menu #hkCard .hk-op canvas{width:54px!important;height:54px!important;border-radius:10px!important}
+ html body.ci-modern.command-ui #menu #hkCard .hk-op b{font-size:16px!important}
+ html body.ci-modern.command-ui #menu #hkCard .hk-op p{display:none!important}
+ html body.ci-modern.command-ui #menu #hkCard .hk-op .hk-tur{font-size:8px!important}
+ html body.ci-modern #hisar-experience{border-radius:20px!important;padding:17px!important}
+ html body.ci-modern #hk-brief{inset:6px!important;width:calc(100% - 12px)!important;height:calc(100dvh - 12px)!important;max-height:calc(100dvh - 12px)!important;padding:max(14px,env(safe-area-inset-top)) 14px max(12px,env(safe-area-inset-bottom))!important;border-radius:19px!important}
+ html body.ci-modern #hk-brief header{gap:7px}
+ html body.ci-modern #hk-brief header h2{display:none}
+ html body.ci-modern #hk-brief header>b{font-size:16px}
+ html body.ci-modern #hk-brief header .hk-tur{font-size:8px;padding:5px 7px}
+ html body.ci-modern #hk-brief .hk-bbody{display:block;overflow-y:auto}
+ html body.ci-modern #hk-brief .hk-bbody>canvas{height:160px!important;width:100%!important;max-height:160px!important;margin-bottom:12px;background:#112338}
+ html body.ci-modern #hk-brief .hk-bt{overflow:visible;max-height:none;padding:0}
+ html body.ci-modern #hk-brief .hk-bs{padding:12px}
+ html body.ci-modern #hk-brief .hk-bs :is(p,li){font-size:12px!important}
+ html body.ci-modern #hk-brief .hk-bb button{flex:1;min-width:0!important;padding:12px!important}
+ html body.ci-modern :is(#rep .c,#prof .c){border-radius:19px!important;padding:18px!important}
+ html body.ci-modern #prof .ph{top:-18px}
+ html body.ci-modern #prof .ph b{font-size:19px!important}
+ html body.ci-modern #sf-hud b{font-size:16px!important}
+ html body.ci-modern #sf-hud>div{padding:0 9px!important}
+}
+@media(orientation:landscape) and (max-height:500px){
+ html body.ci-modern.command-ui #menu #mp>#mpBody{grid-template-columns:126px minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;gap:10px 16px!important;padding:10px max(16px,env(safe-area-inset-right)) 5px max(16px,env(safe-area-inset-left))!important}
+ html body.ci-modern.command-ui #menu #cm-header{min-height:40px;padding-bottom:9px!important}
+ html body.ci-modern.command-ui #menu #cm-brand .hd h1{font-size:21px!important}
+ html body.ci-modern.command-ui #menu #mpBody>.tabs{grid-column:1!important;grid-row:2!important;flex-direction:column!important;align-self:stretch!important;gap:4px!important;padding:5px!important}
+ html body.ci-modern.command-ui #menu #mpBody>.tabs button{min-height:38px!important;flex:1;flex-direction:row!important;justify-content:flex-start!important;padding:7px 9px!important;font-size:11px!important;gap:10px!important}
+ html body.ci-modern.command-ui #menu #mpBody>section,html body.ci-modern.command-ui:not([data-tab=g]) #menu #mpBody>section{grid-column:2!important;grid-row:2!important}
+ html body.ci-modern.command-ui #menu #mp>.acts{padding-top:8px!important;padding-bottom:max(8px,env(safe-area-inset-bottom))!important}
+ html body.ci-modern.command-ui #menu .acts>button{min-height:44px!important}
+ html body.ci-modern.command-ui #menu #sf-campaign{min-height:190px;padding:14px 16px!important;margin-bottom:10px!important}
+ html body.ci-modern #sf-campaign #ci-mission{font-size:27px;margin:6px 0}
+ html body.ci-modern #sf-campaign #sf-summary{font-size:11px!important;max-width:78%;margin:6px 0 10px!important}
+ html body.ci-modern.command-ui #menu #hkCard .hk-op{min-height:98px!important;padding:12px!important}
+ html body.ci-modern #hk-brief{padding:12px 16px!important}
+ html body.ci-modern #hk-brief .hk-bbody{display:grid;grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr);overflow:hidden}
+ html body.ci-modern #hk-brief .hk-bt{overflow-y:auto;max-height:100%;padding-right:4px}
+ html body.ci-modern #hk-brief .hk-bbody>canvas{height:auto!important;max-height:100%!important;margin:0}
+ html body.ci-modern #hk-brief .hk-bs{padding:10px 12px}
+ html body.ci-modern #hk-brief .hk-bs :is(p,li){font-size:12px!important}
+ html body.ci-modern #hk-brief .hk-bb{padding-top:8px}
+ html body.ci-modern #hk-brief .hk-bb button{min-height:44px!important;padding:10px 18px}
+ html body.ci-modern #vbar{left:50%!important;right:auto!important;top:calc(50px + env(safe-area-inset-top,0px))!important;bottom:auto!important;transform:translateX(-50%)!important}
+ html body.ci-modern #vbar .r{display:flex!important;flex-wrap:nowrap!important}
+ html body.ci-modern #vbar button{min-height:32px!important;padding:7px 9px!important}
+ html body.ci-modern #radio{top:calc(94px + env(safe-area-inset-top,0px))!important;max-width:calc(100vw - 350px)!important;font-size:10px!important;max-height:3em;overflow:hidden;padding:6px 10px!important}
+ html body.ci-modern #hk-obj{top:calc(66px + env(safe-area-inset-top,0px))!important;width:225px!important}
+ html body.ci-modern #sf-hud b{font-size:15px!important}
+ html body.ci-modern #sf-hud small{font-size:7px!important}
+ html body.ci-modern #sf-hud>div{min-width:78px!important;padding:0 9px!important}
+ html body.ci-modern #sf-health{width:62px!important}
+}
+@media(max-width:360px){html body.ci-modern.command-ui #menu #cm-brand .hd h1{font-size:16px!important}html body.ci-modern.command-ui #menu #cm-brand{padding-left:40px!important}html body.ci-modern.command-ui #menu #cm-tools{gap:4px}}
+@media(prefers-reduced-motion:reduce){html body.ci-modern :is(#menu,#hk-brief,#rep,#rep2,#hisar-experience,#ui) *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

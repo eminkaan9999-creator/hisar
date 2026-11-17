@@ -129,13 +129,13 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 #scn{position:absolute;left:50%;bottom:calc(50% - 43vmin);transform:translateX(-50%);font:700 13px monospace;color:#c8e8a0;text-shadow:0 0 4px #000;white-space:nowrap}
 body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:.45}body.cv #vg{display:block}
 </style>
-<script src="experience/guard.js?v=115"></script>
+<script src="experience/guard.js?v=116"></script>
 <script>
 /* Sürüm tutarlılığı. Yeni sürümün ilk açılışında sayfa ağdan yeni gelir ama eski hizmet işçisi bölümleri (experience/*.js) kendi önbelleğinden,
    eski hâlleriyle verir: yeni sayfa eski bölümlerle karışık çalışır, düzeltmeler ancak ikinci açılışta görünür. Bunu önlemek için sayfa, yüklenen
    bölümlerin yapı damgasına ve kendisini yöneten hizmet işçisinin önbellek adına bakar; biri eskiyse eski işçiyi ve önbelleğini bırakır, kendini
    bir kez yeniden yükler (bölümler ağdan, sayfayla aynı sürümden gelir). İki dakika içinde yinelenmez (döngü olmaz). */
-(function(){'use strict';var BUILD=115,SWC='hisar-main-v115-kontrol-noktasi';window.HISAR_PAGE={build:BUILD,cache:SWC,healed:''};
+(function(){'use strict';var BUILD=116,SWC='hisar-main-v116-modern-komuta';window.HISAR_PAGE={build:BUILD,cache:SWC,healed:''};
  if(!/^https?:/.test(location.protocol)||!('serviceWorker' in navigator))return;var done=false;
  function heal(why){if(done)return;done=true;try{var k='hisar-heal',t=+sessionStorage.getItem(k)||0;if(Date.now()-t<120000)return;sessionStorage.setItem(k,String(Date.now()));}catch(e){return;}
   window.HISAR_PAGE.healed=why;var root=new URL('./',location.href).href;
@@ -149,11 +149,11 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
  /* yanıt gelmezse (eski işçi bu soruyu tanımaz): ana iş parçacığı meşgulken yanıtı kaçırmamak için süre tek sayaçla değil, on iki ayrı turda beklenir */
  var n=0;(function tick(){if(got||done)return;if(++n>12){heal('yanit');return;}setTimeout(tick,300);})();})();
 </script>
-<link rel="stylesheet" href="experience/ui.css?v=115">
+<link rel="stylesheet" href="experience/ui.css?v=116">
 <link rel="preload" href="assets/brand/celik-boru.jpg" as="image">
 <link rel="preload" href="experience/fonts/hisar-dar-700.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="experience/fonts/hisar-dar-400.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="experience/skin.css?v=115">
+<link rel="stylesheet" href="experience/skin.css?v=116">
 
 <style id="spl-style">
 #spl{position:fixed;inset:0;z-index:100;overflow:hidden;background:#12140f;transition:opacity .6s;font-family:var(--sf,system-ui,sans-serif)}#spl.out{opacity:0;pointer-events:none}
@@ -165,9 +165,10 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
 @media (orientation:landscape) and (max-height:520px){#spl .art{left:auto;right:0;top:-9vh;margin-left:0;width:118vh;height:118vh;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34%);mask-image:linear-gradient(90deg,transparent 0,#000 34%)}#spl .tx{left:env(safe-area-inset-left,0px);right:auto;width:calc(100vw - 96vh - env(safe-area-inset-left,0px));box-sizing:border-box;bottom:auto;top:50%;transform:translateY(-50%)}#spl h1{font-size:min(7.4vw,calc((100vw - 96vh)/6.4))}}
 @media (prefers-reduced-motion:reduce){#spl .art,#spl i:after{animation:none}}
 </style>
-<link rel="stylesheet" href="experience/command-menu.css?v=115">
-<link rel="stylesheet" href="experience/modern.css?v=115">
-<link rel="stylesheet" href="experience/tank-feel.css?v=115">
+<link rel="stylesheet" href="experience/command-menu.css?v=116">
+<link rel="stylesheet" href="experience/modern.css?v=116">
+<link rel="stylesheet" href="experience/tank-feel.css?v=116">
+<link rel="stylesheet" href="experience/interface.css?v=116">
 </head>
 <body>
 <div id="spl"><div class="art"></div><div class="tx"><h1>ÇELİK BÖRÜ</h1><small>GELİŞTİRİCİ · <b>EMİN KAAN BOYACI</b></small><small id="splV">YÜKLENİYOR</small><i></i></div></div>
@@ -4637,7 +4638,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=115,LOGO=window.HISAR_LOGO;
+const VER=116,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7476,24 +7477,25 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script defer src="experience/bridge.js?v=63"></script>
 <script defer src="experience/ui.js?v=63"></script>
 
-<script src="experience/crew-orders.js?v=115"></script>
-<script src="experience/field.js?v=115"></script>
-<script src="experience/battle.js?v=115"></script>
-<script src="experience/swarm.js?v=115"></script>
-<script src="experience/realism.js?v=115"></script>
-<script src="experience/sinir.js?v=115"></script>
-<script src="experience/checkpoint.js?v=115"></script>
-<script src="experience/harekat.js?v=115"></script>
-<script src="experience/atis.js?v=115"></script>
-<script src="experience/harita.js?v=115"></script>
-<script src="experience/carpisma.js?v=115"></script>
-<script src="experience/koy.js?v=115"></script>
-<script src="experience/destek.js?v=115"></script>
-<script src="experience/menu.js?v=115"></script>
-<script src="experience/arazi.js?v=115"></script><script src="experience/ortam.js?v=115"></script><script src="experience/model.js?v=115"></script><script src="experience/sivil.js?v=115"></script><script src="experience/cevre.js?v=115"></script><script src="experience/mahalle.js?v=115"></script><script src="experience/militan.js?v=115"></script><script src="experience/agac.js?v=115"></script><script src="experience/hat.js?v=115"></script><script src="experience/ejderha.js?v=115"></script>
-<script defer src="experience/command-menu.js?v=115"></script>
-<script defer src="experience/safak.js?v=115"></script>
-<script defer src="experience/modern.js?v=115"></script>
-<script defer src="experience/tank-feel.js?v=115"></script>
+<script src="experience/crew-orders.js?v=116"></script>
+<script src="experience/field.js?v=116"></script>
+<script src="experience/battle.js?v=116"></script>
+<script src="experience/swarm.js?v=116"></script>
+<script src="experience/realism.js?v=116"></script>
+<script src="experience/sinir.js?v=116"></script>
+<script src="experience/checkpoint.js?v=116"></script>
+<script src="experience/harekat.js?v=116"></script>
+<script src="experience/atis.js?v=116"></script>
+<script src="experience/harita.js?v=116"></script>
+<script src="experience/carpisma.js?v=116"></script>
+<script src="experience/koy.js?v=116"></script>
+<script src="experience/destek.js?v=116"></script>
+<script src="experience/menu.js?v=116"></script>
+<script src="experience/arazi.js?v=116"></script><script src="experience/ortam.js?v=116"></script><script src="experience/model.js?v=116"></script><script src="experience/sivil.js?v=116"></script><script src="experience/cevre.js?v=116"></script><script src="experience/mahalle.js?v=116"></script><script src="experience/militan.js?v=116"></script><script src="experience/agac.js?v=116"></script><script src="experience/hat.js?v=116"></script><script src="experience/ejderha.js?v=116"></script>
+<script defer src="experience/command-menu.js?v=116"></script>
+<script defer src="experience/safak.js?v=116"></script>
+<script defer src="experience/modern.js?v=116"></script>
+<script defer src="experience/tank-feel.js?v=116"></script>
+<script defer src="experience/interface.js?v=116"></script>
 </body>
 </html>

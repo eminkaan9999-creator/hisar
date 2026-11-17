@@ -1,10 +1,10 @@
 name: HİSAR experience checks
 on:
   push:
-    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117, work/celik-boru-quality-20261117, work/celik-boru-quality-release-20261117]
-    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
+    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117, work/celik-boru-quality-20261117, work/celik-boru-quality-release-20261117, work/celik-boru-modern-interface-20261117]
+    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'scripts/interface-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
   pull_request:
-    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
+    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'scripts/interface-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
 permissions:
   contents: read
 jobs:
@@ -40,6 +40,7 @@ jobs:
             experience-browser-results.json
             simple-reports/headquarters-*.png
             simple-reports/modern-*.png
+            simple-reports/interface-*.png
           if-no-files-found: ignore
           retention-days: 7
   integrate:

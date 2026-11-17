@@ -31,7 +31,7 @@ test('a saved vehicle already in water can escape toward shallower ground withou
 test('the shipped update guard bounds actual combat infantry and blocks real engine movement into water',()=>{
  const c=terrain();Object.assign(c,{document:{hidden:false,addEventListener(){}},game:'play',SV:{U:{eng:0}},roadNear:()=>false,P:{x:-490,z:c.riv(-490)-20,h:0,v:8,w:0,dz:{trk:100}},AL:[],E:[{type:'inf',x:-490,z:50,h:0}],radio(){},drive(){throw Error('legacy fast drive must be replaced');},update(dt){c.drive(0,1,1,dt);c.E[0].z+=10*dt;},buildGrid(){return [];}});c.window=c;
  vm.runInContext(fs.readFileSync(__dirname+'/mobility.js','utf8'),c);const before=c.P.z;c.update(.1);assert.ok(c.E[0].z<=50.4200001);assert.ok(c.P.z>=before);
- for(let i=0;i<100;i++)c.update(.1);assert.ok(c.P.z<c.riv(c.P.x)-10);assert.equal(c.P.v,0);assert.ok(c.HisarMobility.diagnostics().terrainStops>0);
+ for(let i=0;i<100&&!c.HisarMobility.diagnostics().waterStops;i++)c.update(.1);assert.ok(c.P.z<c.riv(c.P.x)-10);assert.equal(c.P.v,0);assert.ok(c.HisarMobility.diagnostics().waterStops>0);const bank=c.P.z;for(let i=0;i<20;i++){c.update(.1);assert.equal(c.P.v,0,'held forward input cannot repeatedly creep after contact');assert.equal(c.P.z,bank);}
 });
 test('civilian sidesteps remain bounded even when a vehicle overlaps their previous position',()=>{
  const c=require('./koy.js');for(const dt of[1/60,.1]){assert.ok(c.sideStep({need:5,push:4},4.6,dt)<=4.6*dt+1e-9);}

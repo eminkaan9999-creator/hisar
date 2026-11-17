@@ -29,7 +29,8 @@ function stopped(){stat.terrainStops++;if(safe(()=>depth(hAt,riv,P.x+Math.sin(P.
 function sync(o){safe(()=>{o.g.position.set(o.x,hAt(o.x,o.z),o.z);o.g.rotation.y=o.h;},null);}
 function connect(){
  wrap('drive',old=>function(ix,iy,sp,dt){if(!safe(()=>P&&SV.U,false))return old.apply(this,arguments);const before={x:P.x,z:P.z,h:P.h},n={...before,v:P.v||0,w:P.w||0};advance(n,{steer:ix,forward:iy,condition:sp,engine:SV.U.eng,tracks:P.dz.trk>0,road:roadNear(P.x,P.z,1)},dt);
-  if(ground(before,n,false)){P.x=clamp(n.x,-WS+10,WS-10);P.z=clamp(n.z,-WS+10,WS-10);P.v=n.v;P.w=n.w;P.h=n.h;}else{P.v=P.w=0;stopped();}});
+  const travel=Math.hypot(n.x-before.x,n.z-before.z),probe=travel>1e-6&&travel<.25?{x:before.x+Math.sin(n.h)*Math.sign(n.v)*.25,z:before.z+Math.cos(n.h)*Math.sign(n.v)*.25,h:n.h}:n;
+  if(ground(before,n,false)&&(probe===n||ground(before,probe,false))){P.x=clamp(n.x,-WS+10,WS-10);P.z=clamp(n.z,-WS+10,WS-10);P.v=n.v;P.w=n.w;P.h=n.h;}else{P.v=P.w=0;stopped();}});
  wrap('buildGrid',old=>function(){const grid=old.apply(this,arguments);safe(()=>{for(let z=0;z<GN2;z++)for(let x=0;x<GN2;x++)if(depth(hAt,riv,gcx(x),gcx(z))>LIMIT.depth)grid[z*GN2+x]=1e9;},null);return grid;});
  wrap('update',old=>function(dt){if(!safe(()=>game==='play',false)||doc.hidden)return old.apply(this,arguments);const d=clamp(+dt||0,0,.1),list=safe(()=>[P,...AL.filter(a=>!a.dead),...E.filter(e=>['tank','apc','truck','inf'].includes(e.type))],[]),before=new Map(list.map(o=>[o,{x:o.x,z:o.z,h:o.h||0}]));
   const r=old.apply(this,arguments);for(const [o,b]of before){if(!Number.isFinite(o.x)||!Number.isFinite(o.z)){o.x=b.x;o.z=b.z;sync(o);continue;}const foot=o.type==='inf',distance=Math.hypot(o.x-b.x,o.z-b.z);

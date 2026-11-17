@@ -26,5 +26,6 @@ exports.play=async function(p,{out,ok}){
  // Real keyboard water approach. No enemies, fast-forward or position changes during the drive.
  await p.evaluate(()=>{HisarCampaign.choose();HisarHarekat.start('eve-donus');for(const e of [...E])killE(e);P.x=-490;P.z=riv(-490)+37;P.h=P.th=Math.PI;P.v=P.w=0;yaw=Math.PI;});
  const waterStart=await p.evaluate(()=>({z:P.z,r:riv(P.x),stops:HisarMobility.diagnostics().waterStops}));await p.keyboard.down('w');try{await p.waitForFunction(n=>HisarMobility.diagnostics().waterStops>n,waterStart.stops,{timeout:120000});}finally{await p.keyboard.up('w');}
+ await p.waitForFunction(()=>Math.abs(P.v)<1e-4);
  const stopped=await p.evaluate(()=>({x:P.x,z:P.z,v:P.v,h:hAt(P.x,P.z),r:riv(P.x)}));assert.ok(stopped.z<waterStart.z);assert.ok(stopped.z>stopped.r+8);assert.equal(stopped.v,0);assert.ok(stopped.h>-2.15);await p.screenshot({path:path.join(out,'campaign-water-stop-desktop.png')});await p.keyboard.press('p');ok('real W input stops the tank on the river bank away from a ford; deep water is no longer merely a speed penalty');
 };

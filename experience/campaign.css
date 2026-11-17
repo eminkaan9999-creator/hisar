@@ -1,5 +1,5 @@
 /* The main operation is one route, rather than a second grid of mission cards. */
-body[data-operation-view="continuous"] #hkCard{display:none!important}
+html body.ci-modern.command-ui[data-operation-view="continuous"] #menu #hkCard{display:none!important}
 #operation-plan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px;margin:18px 0;padding-left:24px;color:#526174;font:600 13px/1.45 system-ui}
 #operation-plan[hidden]{display:none}
 #operation-plan li{padding:6px 4px}

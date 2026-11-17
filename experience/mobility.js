@@ -32,7 +32,7 @@ function connect(){
   if(ground(before,n,false)){P.x=clamp(n.x,-WS+10,WS-10);P.z=clamp(n.z,-WS+10,WS-10);P.v=n.v;P.w=n.w;P.h=n.h;}else{P.v=P.w=0;stopped();}});
  wrap('buildGrid',old=>function(){const grid=old.apply(this,arguments);safe(()=>{for(let z=0;z<GN2;z++)for(let x=0;x<GN2;x++)if(depth(hAt,riv,gcx(x),gcx(z))>LIMIT.depth)grid[z*GN2+x]=1e9;},null);return grid;});
  wrap('update',old=>function(dt){if(!safe(()=>game==='play',false)||doc.hidden)return old.apply(this,arguments);const d=clamp(+dt||0,0,.1),list=safe(()=>[P,...AL.filter(a=>!a.dead),...E.filter(e=>['tank','apc','truck','inf'].includes(e.type))],[]),before=new Map(list.map(o=>[o,{x:o.x,z:o.z,h:o.h||0}]));
-  const r=old.apply(this,arguments);for(const [o,b]of before){if(!Number.isFinite(o.x)||!Number.isFinite(o.z))continue;const foot=o.type==='inf',distance=Math.hypot(o.x-b.x,o.z-b.z);
+  const r=old.apply(this,arguments);for(const [o,b]of before){if(!Number.isFinite(o.x)||!Number.isFinite(o.z)){o.x=b.x;o.z=b.z;sync(o);continue;}const foot=o.type==='inf',distance=Math.hypot(o.x-b.x,o.z-b.z);
    if(distance<1e-8&&Math.abs(angle((o.h||0)-b.h))<1e-8)continue;
    if(foot&&distance>LIMIT.foot*d&&distance>0){const k=LIMIT.foot*d/distance;o.x=b.x+(o.x-b.x)*k;o.z=b.z+(o.z-b.z)*k;stat.footLimited++;}
    if(!ground(b,o,foot)){o.x=b.x;o.z=b.z;if(o===safe(()=>P,null))P.v=P.w=0;else o.vx=o.vz=0;stat.terrainStops++;}sync(o);

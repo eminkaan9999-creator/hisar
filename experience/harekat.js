@@ -106,6 +106,7 @@ function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[k
  buildBeam(o.obj);doc.body.classList.add('hk-active','hr-mission-active');if(o.continuous)doc.body.classList.add('continuous-operation');safe(()=>{MI[MODE].t=o.n.toLocaleUpperCase('tr-TR');},null);if(card)card.hidden=false;
  navTo();
  safe(()=>root.radio('Komuta: '+o.emir),null);paint();}
+function currentObjective(){if(!H)return null;const o=H.op,p=o.phases&&o.phases[H.ph];return o.story&&p&&Number.isFinite(p.x)?{x:p.x,z:p.z,r:p.r||45,n:p.n}:o.obj;}
 function navTo(){if(!H)return;const o=H.op,ph=o.phases&&o.phases[H.ph];let t=ph&&ph.k!=='final'?{x:ph.x,z:ph.z,n:ph.n}:{x:o.obj.x,z:o.obj.z,n:o.obj.n};if(ph&&ph.k==='escort'&&H.convoy){const c=H.convoy,hostile=c.delivered&&ph.clearAll?enemies()[0]:null;t=hostile?{x:hostile.x,z:hostile.z,n:'Dönüş yolundaki tehdidi temizle'}:{x:c.x,z:c.z,n:'Konvoya eşlik et'};}safe(()=>root.startNav({x:t.x,z:t.z,n:t.n,id:'hk'}),null);}
 // görev havası: gece görevinde gece ve gece görüşü açılır; görev bitince ya da menüye dönünce eski hava geri gelir
 function sky(w){const nv=root.NVG||{};if(w){if(wx0==null){wx0=safe(()=>wx,'gunduz');nv0=nv.on||0;}if(w==='gece')nv.on=1;safe(()=>root.setW(w),null);/* kayıtlı hava tercihi değişmesin */safe(()=>{SV.wx=wx0;save();},null);}
@@ -325,10 +326,10 @@ function showBrief(){const o=op(),el=(t,c,x)=>{const e=doc.createElement(t);if(c
 function briefGuard(e){const g=e.target&&e.target.closest&&e.target.closest('#go');if(!g||briefOK||!picked())return;if(safe(()=>TUT.on,false))return;e.stopImmediatePropagation();e.preventDefault();showBrief();}
 // ---------- bağlantılar ----------
 function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')return;root[name]=factory(root[name]);hooks[name]=true;}
-function drawMap(c,SX,SY,s){if(!H)return;const o=H.op;c.save();c.strokeStyle='#ffc247';c.lineWidth=3;c.beginPath();c.arc(SX(o.obj.x),SY(o.obj.z),Math.max(6,o.obj.r*s),0,7);c.stroke();
+function drawMap(c,SX,SY,s){if(!H)return;const o={...H.op,obj:currentObjective()};c.save();c.strokeStyle='#ffc247';c.lineWidth=3;c.beginPath();c.arc(SX(o.obj.x),SY(o.obj.z),Math.max(6,o.obj.r*s),0,7);c.stroke();
  c.font='800 13px '+(safe(()=>getComputedStyle(doc.body).getPropertyValue('--sf'),'')||'system-ui');c.textAlign='center';c.fillStyle='#ffc247';c.fillText('HEDEF',SX(o.obj.x),SY(o.obj.z)-Math.max(9,o.obj.r*s)-5);
  c.fillStyle='#8fd14f';c.beginPath();c.arc(SX(o.start.x),SY(o.start.z),6,0,7);c.fill();c.fillText('BÖLGEN',SX(o.start.x),SY(o.start.z)+20);c.restore();}
-function drawMini(){if(!H||typeof mmx==='undefined')return;const W=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W,Z=z=>((z-O.z)/MMR+.5)*W,o=H.op;let x=X(o.obj.x),y=Z(o.obj.z);const dx=x-W/2,dy=y-W/2,l=Math.hypot(dx,dy),m=W/2-7;if(l>m){x=W/2+dx/l*m;y=W/2+dy/l*m;}
+function drawMini(){if(!H||typeof mmx==='undefined')return;const W=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W,Z=z=>((z-O.z)/MMR+.5)*W,o={...H.op,obj:currentObjective()};let x=X(o.obj.x),y=Z(o.obj.z);const dx=x-W/2,dy=y-W/2,l=Math.hypot(dx,dy),m=W/2-7;if(l>m){x=W/2+dx/l*m;y=W/2+dy/l*m;}
  mmx.save();mmx.fillStyle='#ffc247';mmx.strokeStyle='#1d1000';mmx.lineWidth=1.5;mmx.beginPath();mmx.moveTo(x,y-6);mmx.lineTo(x+5,y);mmx.lineTo(x,y+6);mmx.lineTo(x-5,y);mmx.closePath();mmx.fill();mmx.stroke();mmx.restore();}
 function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t:'Görevi tamamla',r:'Görev emri telsizde.',w:'Görev tamamlandı'};},null);
  wrap('pickTgt',old=>function(e,d){const t=old.apply(this,arguments),c=H&&H.convoy;if(!playing()||!c||(!c.active&&!c.engaged)||c.dead||!e.hk)return t;const dd=dist(e,c);if(dd<t.d&&safe(()=>root.los(e.x,hAt(e.x,e.z)+2,e.z,c.x,hAt(c.x,c.z)+1.8,c.z),true)){e.tg=c;return {x:c.x,z:c.z,d:dd,al:c};}return t;});
@@ -347,7 +348,7 @@ function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t
  wrap('mmDraw',old=>function(){const r=old.apply(this,arguments);safe(drawMini,null);return r;});
  (root.MAPX=root.MAPX||[]).includes(drawMap)||root.MAPX.push(drawMap);
  if(!hooks.brief){hooks.brief=true;doc.addEventListener('click',briefGuard,true);}
- root.MAPVIEW_HK=()=>H?H.op:null;}
+ root.MAPVIEW_HK=()=>H?{...H.op,obj:currentObjective()}:null;}
 function select(id,mode){if(mode)ST.mode=mode;if(id&&registered.has(id))ST.sel=id;store(ST);safe(()=>root.setG(ST.mode),null);paintMenu();return ST.sel;}
 function start(id){select(id,MODE);return safe(()=>{root.reset(typeof lvSel==='string'?lvSel:'normal');return !!H;},false);}
 function diagnostics(){const en=enemies();return {version:VERSION,hooks:{...hooks},mode:ST.mode,sel:ST.sel,done:{...ST.done},saveError,active:!!H,op:H?H.op.id:null,t:H?H.t:0,won:H?H.won:false,lost:H?H.lost:false,

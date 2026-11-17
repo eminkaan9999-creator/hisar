@@ -14,7 +14,7 @@ test('the primary game is one operation; old missions, stars and unknown metadat
 });
 test('orders are causal: later locations do not skip the approach, ambush, observation or local repair',()=>{
  const r=setup();r.start(ID);r.to({x:-610,z:420});r.run(120);assert.equal(r.snapshot().ph,0);assert.equal(r.c.E.length,0);assert.equal(r.snapshot().convoy.active,false);
- begin(r);assert.equal(r.c.E.length,3);r.to({x:-610,z:420});r.run(30);assert.equal(r.snapshot().ph,1);assert.equal(r.c.E.length,3);find(r);
+ begin(r);assert.equal(r.c.E.length,3);for(const e of r.c.E){e.x=-100;e.z=700;}r.to({x:-572,z:236});r.run(.2);assert.equal(r.snapshot().ph,1,'living ambush units outside the marker cannot count as destroyed');assert.equal(r.c.MAPVIEW_HK().obj.n,core.OP.phases[1].n);r.to({x:-610,z:420});r.run(30);assert.equal(r.snapshot().ph,1);assert.equal(r.c.E.length,3);find(r);
  r.to({x:-548,z:20});r.run(100);assert.equal(r.snapshot().wave,-1);assert.equal(r.snapshot().ph,3);assert.equal(r.snapshot().convoy.active,false);
  r.to({x:-610,z:390});r.run(10.1);assert.equal(r.snapshot().wave,0);r.run(100);assert.equal(r.snapshot().ph,3,'live attackers prevent repair completion');
  assert.equal(r.snapshot().convoy.x,-610);assert.equal(r.snapshot().convoy.z,420,'the same truck remains at the repair site');

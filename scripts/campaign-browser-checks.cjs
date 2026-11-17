@@ -7,6 +7,7 @@ exports.menu=async function(p,{mobile,label,out,ok}){
  await p.locator('#sf-archive').click();assert.equal(await p.locator('#hkCard [data-op]').count(),8);assert.equal(await p.locator('[data-op="tepe"]').isVisible(),true);await p.locator('#sf-archive').click();assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().sel),'eve-donus');ok(label+': one continuous operation is primary, its six-order plan closes cleanly, and eight old missions remain archived');
 };
 exports.play=async function(p,{out,ok}){
+ await p.locator('#hkMode [data-hm="harekat"]').click();
  if(await p.evaluate(()=>HisarHarekat.diagnostics().sel!=='eve-donus'))await p.locator('#sf-archive').click();await p.locator('#go').click();await p.locator('.hk-go').click();await p.waitForFunction(()=>game==='play'&&HisarHarekat.diagnostics().op==='eve-donus');
  await p.waitForFunction(()=>HisarHarekat.diagnostics().convoy?.modelReady);
  const start=await p.evaluate(()=>({x:P.x,z:P.z,hp:P.hp,t:HisarHarekat.diagnostics().t}));await p.bringToFront();await p.keyboard.down('w');try{await p.waitForFunction(()=>HisarHarekat.diagnostics().ph===1,{},{timeout:120000});}finally{await p.keyboard.up('w');}

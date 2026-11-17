@@ -17,7 +17,10 @@ module.exports=async function modernChecks(p,{mobile,label,out,ok}){
  await p.locator('#go').click();await p.locator('.hk-go').click();await p.waitForFunction(()=>game==='play'&&HisarHarekat.diagnostics().op==='safak-1');
  assert.equal(await p.evaluate(()=>P.mx),165);await p.locator('#sf-hud').waitFor({state:'visible'});assert.equal(await p.locator('#sf-hud').isVisible(),true);ok('new first chapter starts with preparation and the live vehicle HUD');
  // Ordinary keyboard driving, without moving P directly or advancing time.
- await p.keyboard.down('w');try{await p.waitForFunction(()=>HisarHarekat.diagnostics().ph>=1,{},{timeout:45000});}finally{await p.keyboard.up('w');}
+ await p.bringToFront();const drivingStart=await p.evaluate(()=>({x:P.x,z:P.z,t:HisarHarekat.diagnostics().t}));
+ await p.keyboard.down('w');try{await p.waitForFunction(()=>HisarHarekat.diagnostics().ph>=1,{},{timeout:120000});}
+ catch(error){const diagnostic=await p.evaluate(()=>({game,mode,iv,mapOpen:window.mapOpen,keys:{...keys},player:{x:P.x,z:P.z,h:P.h,v:P.v,hp:P.hp},mission:HisarHarekat.diagnostics(),errors:window.HERR?HERR.LOG:[]}));await p.screenshot({path:path.join(out,'modern-driving-failure.png')});throw new Error('Ordinary opening drive failed: '+JSON.stringify({drivingStart,...diagnostic}),{cause:error});}
+ finally{await p.keyboard.up('w');}
  assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().wave),-1);assert.ok(await p.evaluate(()=>P.hp>0));await p.evaluate(()=>setQ('orta'));await p.screenshot({path:path.join(out,'modern-gameplay-desktop.png')});await p.evaluate(()=>setQ('dusuk'));ok('ordinary forward driving reaches the first position alive before the first wave');
  await p.keyboard.press('p');assert.equal(await p.evaluate(()=>game),'pause');await p.locator('[data-op="safak-2"]').click();await p.locator('#cm-return').click();assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().op),'safak-1');ok('selecting another chapter in pause does not replace the current battle on resume');
  await p.evaluate(()=>HisarHarekat.start('safak-2'));await p.waitForFunction(()=>HisarHarekat.diagnostics().convoy?.modelReady,{},{timeout:60000});

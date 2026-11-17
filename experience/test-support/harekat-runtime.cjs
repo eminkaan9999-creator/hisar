@@ -16,10 +16,10 @@ function runtime(options={}){
   addEventListener(n,f){(listeners[n]||(listeners[n]=[])).push(f);}};
  const c={document:doc,Math:math,console,game:'menu',mis:'harekat',lvKey:'normal',lvSel:'normal',
   LV:{normal:{hp:100,sp:5},kolay:{hp:130},zor:{hp:80},serbest:{hp:100}},L:{},
-  P:{x:0,z:0,h:0,th:0,hp:100,mx:100,v:0,w:0},E:[],AL:Array.from({length:3},()=>({dead:false,g:{position:{set(){}},rotation:{}}})),
+  P:{x:0,z:0,h:0,th:0,hp:100,mx:100,v:0,w:0,dz:{trk:100,eng:100,tur:100}},E:[],AL:Array.from({length:3},(_,idx)=>({idx,hp:100,mx:100,dead:false,g:{position:{set(){}},rotation:{}}})),
   HPT:{tank:100,apc:80,inf:40,arty:80,truck:80,fuel:80,radar:80,aa:80,bunker:100},
   HELI:[],ED:[],MI:{},MAPX:[],NAV:{on:false},NVG:{on:options.nvg||0},wx:options.weather||'gunduz',
-  SV:{wx:options.weather||'gunduz'},ammo:6,AMX:()=>6,TA:[26,16,7,14],TA0:[26,16,7,14],yaw:0,
+  SV:{wx:options.weather||'gunduz'},ammo:6,AMX:()=>6,TA:[26,16,7,14],TA0:[26,16,7,14],yaw:0,cd:0,DC:9,dk:1,chg:100,mode:'tank',DR:{on:false},
   hAt:()=>0,riv:x=>120+Math.sin((x+60)*.03)*15,
   astar:(x,z,tx,tz)=>[[x,z],[tx,tz]],setTimeout(){},
   localStorage:{getItem:k=>data.get(k)??null,setItem(k,v){if(c.denyWrite)throw Error('storage unavailable');data.set(k,v);writes.push(k);}},
@@ -30,7 +30,8 @@ function runtime(options={}){
   radio:t=>events.push({kind:'radio',text:t}),say:t=>events.push({kind:'say',text:t}),
   sndBoom:(x,z)=>events.push({kind:'shot',x,z}),bigBoom:(x,z)=>events.push({kind:'impact',x,z}),
   startNav(t){c.NAV={on:true,to:t,len:Math.hypot(c.P.x-t.x,c.P.z-t.z)};},stopNav(){c.NAV.on=false;},
-  startMission(){},stagePending:()=>false,spotted:()=>false,eshot(){},
+  S:{remove(){}},
+  startMission(){},stagePending:()=>false,spotted:()=>false,eshot(){events.push({kind:'enemy-shot'});},
   pickTgt:(e,d)=>({x:c.P.x,z:c.P.z,d,al:null}),hitAl(a,k){a.hp-=k;},
   spawnHeli(){c.HELI.push({});},spawnED(){c.ED.push({});},
   openMenu(){if(c.game==='play')c.game='pause';},
@@ -40,6 +41,7 @@ function runtime(options={}){
  };
  c.window=c;vm.createContext(c);
  const source=options.source||missionSource;
+ vm.runInContext(production('experience/checkpoint.js'),c,{filename:'experience/checkpoint.js'});
  vm.runInContext(source,c,{filename:'experience/harekat.js'});
  if(options.campaign)vm.runInContext(production('experience/safak.js'),c,{filename:'experience/safak.js'});
  doc.body={classList:{add(){},remove(){}}};

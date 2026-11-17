@@ -1,0 +1,8 @@
+html body.sf-modern #tf-impact{position:absolute;left:50%;top:-36px;transform:translateX(-50%);max-width:calc(100vw - 28px);padding:7px 12px;box-sizing:border-box;border:1px solid #dd9981;border-left:3px solid #efa58a;border-radius:4px;background:rgba(39,22,22,.94);color:#ffdbca;font:700 13px/1.2 var(--sf);white-space:nowrap;pointer-events:none}
+html body.sf-modern #tf-impact[hidden],html body.sf-modern #tf-condition[hidden]{display:none!important}
+html body.sf-modern #sf-hud #tf-condition{margin-top:4px;color:#f0b29c;font-size:9px;line-height:1.2;letter-spacing:.02em;white-space:normal;max-width:160px}
+html body.sf-modern #sf-checkpoint-note{margin:10px 0 0;color:#b9c9cb;font:400 12px/1.4 var(--sf)}
+html body.sf-modern #sf-checkpoint-note[hidden],html body.sf-modern #sf-resume[hidden]{display:none!important}
+html body.sf-modern.command-ui #menu #sf-resume{border-color:#91bab0!important;background:#294640!important;color:#e4f2e9!important;-webkit-text-fill-color:#e4f2e9!important}
+@media(max-width:600px){html body.sf-modern #tf-impact{font-size:11px;top:-31px;padding:6px 9px}html body.sf-modern .sf-campaign-actions #sf-resume{flex-basis:100%}html body.sf-modern #sf-hud #tf-condition{max-width:95px;font-size:8px}}
+@media(orientation:landscape) and (max-height:500px){html body.sf-modern #tf-impact{top:-31px;font-size:11px}html body.sf-modern #sf-hud #tf-condition{max-width:100px;font-size:8px}}

@@ -21,3 +21,6 @@ test('shared instanced materials always have a valid white colour buffer without
 test('the drone HUD reads actual altitude and view heading, rather than an absent speed property',()=>{
  const ctx={document:{body:null,readyState:'loading',addEventListener(){}},addEventListener(){},game:'play',mode:'drone',DR:{on:true,x:5,z:6,y:90,hp:60},P:{h:0},SV:{U:{}},hAt:()=>10,yaw:1.2,ammo:4};ctx.window=ctx;vm.runInNewContext(fs.readFileSync(__dirname+'/modern.js','utf8'),ctx);const s=ctx.HisarModern.telemetry();assert.equal(s.speed,80);assert.equal(s.unit,'m');assert.equal(s.bearing,1.2);assert.equal(s.hp,100);
 });
+test('convoy terrain pose follows longitudinal and cross slopes without floating below the ground or producing invalid angles',()=>{
+ const flat=c.terrainPose(10,20,0,()=>5);assert.equal(flat.y,5);assert.equal(Math.abs(flat.pitch),0);assert.equal(flat.roll,0);const z=c.terrainPose(0,0,0,(x,z)=>z*.1);assert.ok(z.pitch<0&&Math.abs(z.roll)<1e-10);const x=c.terrainPose(0,0,0,(x,z)=>x*.1);assert.ok(x.roll>0&&Math.abs(x.pitch)<1e-10);const rotated=c.terrainPose(0,0,Math.PI/2,(x,z)=>x*.1);assert.ok(rotated.pitch<0);const invalid=c.terrainPose(0,0,0,()=>NaN);assert.ok(Object.values(invalid).every(Number.isFinite));
+});

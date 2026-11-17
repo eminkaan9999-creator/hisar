@@ -22,3 +22,8 @@ test('loaded before every module that draws a model; every model file is precach
  for(const f of files){assert.ok(sw.includes("'assets/mdl/"+f+"?v=1'"),'sw '+f);assert.ok(yml.includes("'assets/mdl/"+f+"'"),'smoke '+f);}
  for(const m of sw.match(/assets\/(mdl|tex)\/[a-z0-9_]+\.(bin|jpg|png)/g))assert.ok(fs.existsSync(__dirname+'/../'+m),m+' exists');
  assert.ok(src.includes('p.gone&&(p.seen||++p.age>600)'),'props of removed infantry are dropped');assert.ok(src.includes('if(p.force){p.isHi=true;nh++;continue;}'));});
+
+// Exercise actual prop creation: distant models do not add shadow casters.
+test('supplied vehicle props receive ground shadows while only the near detail casts a shadow',()=>{
+ const vm=require('node:vm'),c={document:{},THREE:{Mesh:class {constructor(g,m){this.geometry=g;this.material=m;}}}};c.window=c;vm.runInNewContext(src,c);const g={add(){}},p=c.HisarModel.prop(g,{},null,{},{});assert.equal(p.hi.castShadow,true);assert.equal(p.lo.castShadow,false);assert.equal(p.hi.receiveShadow,true);const off=c.HisarModel.prop(g,{},null,{},{shadow:false,receive:false});assert.equal(off.hi.castShadow,false);assert.equal(off.hi.receiveShadow,false);
+});

@@ -6,7 +6,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.1';
+const VERSION='1.0.2';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 // ---------- çekirdek ----------
@@ -67,7 +67,7 @@ function merge(parts){const T=root.THREE,pos=[],nor=[],col=[],idx=[],c=new T.Col
 // o.near: ayrıntılı çizim uzaklığı (m), o.max: aynı anahtardan en çok kaç nesne ayrıntılı çizilir, o.key: anahtar.
 // o.at: uzaklığı ölçülecek nesne (örgüler bir alt gruba eklendiyse dünyadaki kök grup), o.gone: kökü sahneden kaldırılınca listeden düşer
 // (ölen piyade gibi geçici nesneler). Dönen kayıtta force=true yapılırsa nesne uzaklığa bakılmadan ayrıntılı çizilir (küçük pencere çekimi).
-function prop(group,hiGeo,loGeo,mat,o){o=o||{};const T=root.THREE,hi=new T.Mesh(hiGeo,mat),lo=new T.Mesh(loGeo||hiGeo,o.loMat||mat);hi.castShadow=lo.castShadow=o.shadow!==false;hi.receiveShadow=lo.receiveShadow=!!o.receive;hi.visible=false;hi.name='MD_YAKIN';lo.name='MD_UZAK';
+function prop(group,hiGeo,loGeo,mat,o){o=o||{};const T=root.THREE,hi=new T.Mesh(hiGeo,mat),lo=new T.Mesh(loGeo||hiGeo,o.loMat||mat);hi.castShadow=o.shadow!==false;lo.castShadow=false;hi.receiveShadow=lo.receiveShadow=o.receive!==false;hi.visible=false;hi.name='MD_YAKIN';lo.name='MD_UZAK';
  group.add(hi,lo);const p={g:group,at:o.at||group,hi,lo,near:o.near||60,max:o.max||2,key:o.key||'x',isHi:false,gone:!!o.gone,seen:false,age:0,force:false};PROPS.push(p);stat.props=PROPS.length;hook();return p;}
 function tick(){const c=safe(()=>CAM.position,null);if(!c||!PROPS.length)return;const by={};let nh=0;
  for(let i=PROPS.length-1;i>=0;i--){const p=PROPS[i],a=p.at;p.isHi=false;if(!a.parent){if(p.gone&&(p.seen||++p.age>600)){p.hi.visible=false;p.lo.visible=true;PROPS.splice(i,1);stat.props=PROPS.length;}continue;}p.seen=true;if(!a.visible)continue;

@@ -15,7 +15,7 @@ module.exports=async function modernChecks(p,{mobile,label,out,ok}){
    await p.screenshot({path:path.join(out,'modern-gameplay-mobile-'+w+'x'+h+'.png')});}
   if(await p.locator('#uMenu').isVisible())await p.locator('#uMenu').click();else await p.keyboard.press('p');assert.equal(await p.evaluate(()=>game),'pause');ok('new vehicle HUD fits portrait/landscape phones and leaves driving/fire controls clear');return;}
  await p.locator('#go').click();await p.locator('.hk-go').click();await p.waitForFunction(()=>game==='play'&&HisarHarekat.diagnostics().op==='safak-1');
- assert.equal(await p.evaluate(()=>P.mx),165);assert.equal(await p.locator('#sf-hud').isVisible(),true);ok('new first chapter starts with preparation and the live vehicle HUD');
+ assert.equal(await p.evaluate(()=>P.mx),165);await p.locator('#sf-hud').waitFor({state:'visible'});assert.equal(await p.locator('#sf-hud').isVisible(),true);ok('new first chapter starts with preparation and the live vehicle HUD');
  // Ordinary keyboard driving, without moving P directly or advancing time.
  await p.keyboard.down('w');try{await p.waitForFunction(()=>HisarHarekat.diagnostics().ph>=1,{},{timeout:45000});}finally{await p.keyboard.up('w');}
  assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().wave),-1);assert.ok(await p.evaluate(()=>P.hp>0));await p.evaluate(()=>setQ('orta'));await p.screenshot({path:path.join(out,'modern-gameplay-desktop.png')});await p.evaluate(()=>setQ('dusuk'));ok('ordinary forward driving reaches the first position alive before the first wave');

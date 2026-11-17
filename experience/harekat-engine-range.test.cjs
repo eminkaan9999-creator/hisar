@@ -6,12 +6,13 @@ const {runtime,production}=require('./test-support/harekat-runtime.cjs');
 const html=production('index.html'),begin=html.indexOf('if(e.cd<=0){',html.indexOf('function update(dt){'));
 const end=html.indexOf('\n }\n // mermiler',begin);assert.ok(begin>=0&&end>begin);
 const branch=html.slice(begin,end);
+const helperStart=html.indexOf('function fireEnemyAt('),helper=helperStart<0?'':html.slice(helperStart,html.indexOf('\nfunction eshot(',helperStart));
 function decision(e,distance,ally=false){
  let shots=0;const c={mode:e.type==='aa'?'drone':'tank',DR:{on:true,x:e.x+distance,y:10,z:e.z},P:{x:0,z:0},
   L:{cd:1},smoked:()=>false,hAt:()=>0,rnd:()=>1,ebul:[],
   pickTgt:()=>({d:distance,x:0,z:0,al:ally?{cs:'friend'}:null}),
   eshot(){shots++;c.ebul.push({});},artyShot(){shots++;}};
- vm.createContext(c);vm.runInContext('function run(e,d){'+branch+'}',c);e.cd=0;c.run(e,distance);
+ vm.createContext(c);vm.runInContext(helper+'\nfunction run(e,d){'+branch+'}',c);e.cd=0;c.run(e,distance);
  return {shots,bullet:c.ebul[0]};
 }
 for(const [name,match,dayRange]of[

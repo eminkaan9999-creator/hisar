@@ -11,6 +11,9 @@ html body.ci-modern.command-ui #menu #ci-brand-mark{position:absolute;left:0;top
 html body.ci-modern.command-ui #menu #ci-brand-mark svg{width:26px;height:29px}
 html body.ci-modern.command-ui #menu #cm-context{font:600 9px/1.3 var(--ci-font)!important;letter-spacing:.16em;color:#8faac7;margin-bottom:5px}
 html body.ci-modern.command-ui #menu #cm-brand .hd h1{font:750 25px/1.2 var(--ci-font)!important;letter-spacing:.015em!important;color:#f0f6ff!important}
+html body.ci-modern.command-ui #menu #cm-brand .hd{background:none!important;box-shadow:none!important;border:0!important}
+html body.ci-modern.command-ui #menu #cm-brand .hd h1 .dev{font:500 8px/1.4 var(--ci-font)!important;color:#8b9cae!important;letter-spacing:.01em!important;padding:4px 0 0!important}
+html body.ci-modern.command-ui #menu #cm-brand .hd h1 .dev b{font:600 8px/1.4 var(--ci-font)!important;color:#647f97!important;letter-spacing:.01em!important}
 html body.ci-modern.command-ui #menu #cm-tools{display:flex;flex-wrap:nowrap;gap:8px}
 html body.ci-modern.command-ui #menu #cm-tools button{display:inline-flex!important;align-items:center;gap:8px;min-height:44px!important;min-width:44px!important;padding:10px 13px!important;border:1px solid #304963!important;border-radius:12px!important;background:#14253b!important;color:#deedff!important;-webkit-text-fill-color:currentColor!important;font:600 12px/1.2 var(--ci-font)!important;letter-spacing:0!important;box-shadow:none!important}
 html body.ci-modern.command-ui #menu #cm-tools button:hover{background:#1c3450!important;border-color:#50779b!important}
@@ -42,7 +45,8 @@ html body.ci-modern #sf-campaign .sf-heading{display:flex!important;flex-wrap:wr
 html body.ci-modern #sf-campaign .sf-heading>small{flex-basis:100%;font:600 9px/1.2 var(--ci-font)!important;letter-spacing:.13em!important;color:#b6d6f2}
 html body.ci-modern #sf-campaign #sf-title{font:600 13px/1.3 var(--ci-font)!important;letter-spacing:0;color:#aacae7}
 html body.ci-modern #sf-campaign #sf-progress{font:600 10px/1.3 var(--ci-font)!important;letter-spacing:0;padding:5px 8px;border:1px solid #4c698644;border-radius:8px;background:#10263cbf;color:#d0e6fc}
-html body.ci-modern #sf-campaign #ci-mission{margin:10px 0 7px;font:750 clamp(25px,3vw,34px)/1.12 var(--ci-font);letter-spacing:-.035em;color:#f5f9ff}
+html body.ci-modern.command-ui #menu #sf-campaign #ci-mission{display:block!important;margin:10px 0 7px!important;font:750 clamp(25px,3vw,34px)/1.12 var(--ci-font)!important;letter-spacing:-.035em!important;text-transform:none!important;color:#f5f9ff!important}
+html body.ci-modern.command-ui #menu #ci-mission::before,html body.ci-modern.command-ui #menu #ci-mission::after{display:none!important}
 html body.ci-modern #sf-campaign #sf-summary{max-width:68%;font:400 12px/1.6 var(--ci-font)!important;color:#b9cfe4!important;margin:8px 0 14px!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical;overflow:hidden}
 html body.ci-modern.command-ui #menu .sf-campaign-actions{gap:8px!important}
 html body.ci-modern.command-ui #menu .sf-campaign-actions button{flex:none;min-height:42px!important;padding:10px 12px!important;border:1px solid #527397!important;border-radius:11px!important;background:#172f49df!important;color:#e5f3ff!important;-webkit-text-fill-color:currentColor!important;font:600 11px/1.3 var(--ci-font)!important;letter-spacing:0!important}
@@ -135,6 +139,7 @@ html body.ci-modern #prof textarea{box-sizing:border-box;max-width:100%;font:400
 html body.ci-modern #hr-panel{border-color:#4b6d8d!important;border-radius:20px!important;background:#102237!important;color:#e5f3ff!important;font-family:var(--ci-font)!important;box-shadow:0 12px 45px #0006!important}
 html body.ci-modern #hr-panel :is(button,select){min-height:44px;border-color:#426382!important;border-radius:11px!important;background:#1a3650!important;color:#e0f0ff!important;font-family:var(--ci-font)!important}
 html body.ci-modern #hr-panel select{font-size:16px}
+html body.ci-modern #hr-panel header{background:#102237!important;border-color:#34516e!important}
 /* Touch targets stay in the native layout; only the visual language changes. */
 html body.ci-modern #ui .g1,html body.ci-modern #ui :is(.ab,.am),html body.ci-modern #ctx button,html body.ci-modern #hr-radio-entry,html body.ci-modern #vbar .r{border:1px solid #88a9c4b3!important;border-radius:14px!important;background:#102840e8!important;color:#e5f4ff!important;-webkit-text-fill-color:currentColor!important;box-shadow:0 3px 10px #03101c44!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html body.ci-modern #ui .ub{font-family:var(--ci-font)!important;font-size:11px!important}
@@ -199,6 +204,13 @@ html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) button.sel{background:#244
 html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) :is(p,small){color:#71879b!important}
 html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) :is(b,strong,label,.nm){color:#24445e!important}
 html body.ci-modern.command-ui #menu :is(#tb,#tu,#tk) button.sel :is(b,small){color:#e3f2ff!important}
+html body.ci-modern.command-ui #menu #ld .cnt b{font:650 16px/1.2 var(--ci-font)!important;color:#1f425e!important}
+html body.ci-modern.command-ui #menu #ld .up :is(b,em){font-family:var(--ci-font)!important;color:#274c69!important}
+html body.ci-modern.command-ui #menu #ld .up em{color:#758b9f!important;font-size:11px!important}
+html body.ci-modern.command-ui #menu #galV .nm{color:#e5f4ff!important}
+html body.ci-modern.command-ui #menu #galV .nm small{color:#a1bed6!important}
+html body.ci-modern.command-ui #menu #galD{font:400 12px/1.6 var(--ci-font)!important;color:#617f97!important;padding:10px 13px!important}
+html body.ci-modern.command-ui #menu #tk .klist *{font-family:var(--ci-font)!important}
 html body.ci-modern.command-ui #menu :is(#galD,#galA,#upl>div){background:#ffffff!important;border-color:#d8e3ed!important}
 html body.ci-modern.command-ui #menu #tk .kseg{background:#e7eef5!important;border-color:#d9e3ed!important}
 html body.ci-modern.command-ui #menu #tk .klist{background:#ffffff!important;border-color:#d8e3ed!important}

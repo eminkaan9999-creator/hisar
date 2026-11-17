@@ -976,7 +976,7 @@ addEventListener('pointermove',e=>{
 addEventListener('pointerup',e=>{if(e.pointerId===jid){jid=null;joy.x=joy.y=0}if(e.pointerId===lid)lid=null});
 addEventListener('keydown',e=>{
  if(e.code==='Space'){e.preventDefault();if(!e.repeat)fire();return}
- if(e.key==='Tab'||e.key==='c'||e.key==='C'){e.preventDefault();if(!e.repeat)sw();return}
+ if(e.key==='c'||e.key==='C'){e.preventDefault();if(!e.repeat)sw();return}
  if(e.key==='p'||e.key==='P'||e.key==='Escape'){if(!e.repeat&&(game==='play'||game==='pause'))game==='pause'?closeMenu():openMenu();return}
  if(e.key==='v'||e.key==='V'){if(!e.repeat)cycleView();return}
  if(e.key==='r'||e.key==='R'){if(!e.repeat)recall();return}
@@ -3557,9 +3557,10 @@ W.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();cons
 W.addEventListener('pointermove',e=>{if(!open||pid!=null)return;const s=W.querySelector('svg').getBoundingClientRect(),cx=s.left+s.width/2,cy=s.top+s.height/2,k=208/s.width,dx=(e.clientX-cx)*k,dy=(e.clientY-cy)*k,r=Math.hypot(dx,dy);if(e.pointerType==='mouse'&&document.pointerLockElement!==cv)setHi(r<R0-2||r>R1+14?-1:dirIdx(dx,dy,0))});
 // ---- klavye/fare: Tab basili tut
 let tabT=0,tabDown=0;
-addEventListener('keydown',e=>{if(e.key!=='Tab')return;e.preventDefault();e.stopImmediatePropagation();if(e.repeat||tabDown)return;tabDown=1;if(game!=='play')return;
- tabT=setTimeout(()=>{if(tabDown&&game==='play'){show(false);vx=vy=0}},210)},true);
-addEventListener('keyup',e=>{if(e.key!=='Tab')return;e.preventDefault();tabDown=0;clearTimeout(tabT);if(open){hide(true)}else if(game==='play')sw()},true);
+const tabUI=e=>game!=='play'||document.querySelector('#hisar-experience[open],#hr-panel:not([hidden]),#hk-brief:not([hidden]),#rep.on,#rep2[style*="flex"]')||!!(e.target&&e.target.closest&&e.target.closest('input,select,textarea,[contenteditable="true"]'));
+addEventListener('keydown',e=>{if(e.key!=='Tab'||tabUI(e))return;e.preventDefault();e.stopImmediatePropagation();if(e.repeat||tabDown)return;tabDown=1;
+ tabT=setTimeout(()=>{if(tabDown&&game==='play'&&!tabUI(e)){show(false);vx=vy=0}},210)},true);
+addEventListener('keyup',e=>{if(e.key!=='Tab'||!tabDown&&!open)return;e.preventDefault();tabDown=0;clearTimeout(tabT);if(open){hide(true)}else if(game==='play'&&!tabUI(e))sw()},true);
 addEventListener('pointermove',e=>{if(!open)return;if(document.pointerLockElement===cv&&pid==null){vx+=e.movementX;vy+=e.movementY;const l=Math.hypot(vx,vy);if(l>140){vx*=140/l;vy*=140/l}setHi(dirIdx(vx,vy,22))}
  if(pid==null||e.pointerId!==pid){e.stopImmediatePropagation();e.stopPropagation()}},true);
 addEventListener('pointerdown',e=>{if(open&&e.pointerType==='mouse'&&document.pointerLockElement===cv&&pid==null){e.stopImmediatePropagation();e.preventDefault();hide(true)}},true);

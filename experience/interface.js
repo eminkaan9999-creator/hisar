@@ -32,7 +32,7 @@ function titleAndRecords(){
  if(profile){profile.disabled=typeof root.openProfile!=='function';const value=by('ci-record-value');if(value){const text=state?Math.max(0,state.xp||0).toLocaleString('tr-TR')+' XP · '+Math.max(0,state.credits||0).toLocaleString('tr-TR')+' kredi':'Kayıtlar ve başarılar';if(value.textContent!==text)value.textContent=text;}}
  const go=by('go'),hk=safe(()=>root.HisarHarekat.diagnostics(),null),paused=safe(()=>game==='pause',false);
  doc.body.dataset.ciPaused=String(paused);
- if(go)go.textContent=paused?'Yeni görevi incele':hk&&hk.mode==='harekat'?'Görevi incele':'Savaşa başla';
+ if(go)go.textContent=paused?(hk&&hk.mode==='harekat'?'Yeni görevi incele':'Yeni savaş'):hk&&hk.mode==='harekat'?'Görevi incele':'Savaşa başla';
  const resume=by('rs');if(resume)resume.textContent='Oyuna devam et';
 }
 function campaign(){const box=by('sf-campaign');if(!box)return;let title=by('ci-mission');if(!title){title=node('h3','ci-mission');const heading=box.querySelector('.sf-heading');if(heading)heading.insertAdjacentElement('afterend',title);}

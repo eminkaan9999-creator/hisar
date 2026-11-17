@@ -16,7 +16,7 @@ Yeni arayüz modülü ilerleme yazmıyor, yeni bir çizim döngüsü oluşturmuy
 
 ## Doğrulama
 
-580 otomatik regresyon testi, İTİ kontrolleri ve dört gömülü betiğin sözdizimi denetimi yerelde geçti. Eklenen Escape testleri iç içe pencereleri ve eski profil katmanının yeniden başlatmada kapanmasını kapsıyor.
+586 otomatik regresyon testi, İTİ kontrolleri ve dört gömülü betiğin sözdizimi denetimi yerelde geçti. Eklenen Escape testleri iç içe pencereleri ve eski profil katmanının yeniden başlatmada kapanmasını kapsıyor. Menüde Tab tuşunu yakalayan eski çark girdisi düzeltildi; altı yerel regresyon menüde gezinmeyi, oyun içindeki kısa/uzun basmayı, duraklatmayı ve boşa gelen tuş bırakma olayını ayrı ayrı doğruluyor. Yedek koduna yazılan harfler oyun komutuna dönüşmüyor; menü düğmeleri Boşluk ile de etkinleştirilebiliyor.
 
 `scripts/interface-browser-checks.cjs`, mevcut Chromium/3B doğrulamasına gerçek menü tıklamaları, klavye odağı, dört bölümün 320×568, 390×844, 844×390 ve masaüstü ölçülerine sığması, görev seçimi, iç içe pencere kapatma, yedek işlemini iptal etme ve tekrar kurulum kontrolleri ekliyor. Sonuç ekranı yerel `endGame` çağrısıyla kontrollü olarak açılıyor; bu, tam görev oynanışı değildir. Görüntüler iş akışının test çıktılarında tutuluyor.
 

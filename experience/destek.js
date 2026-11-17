@@ -176,7 +176,7 @@ function objective(){const op=safe(()=>root.MAPVIEW_HK&&root.MAPVIEW_HK(),null);
 function forcesStep(dt){if(!forces||!forces.on)return;const obj=objective()||{x:P.x+Math.sin(P.h)*200,z:P.z+Math.cos(P.h)*200},en=enemies().filter(e=>e.seen);
  for(const m of forces.men){const f=m.f;
   /* tanka yol ver: üstüne tank gelen piyade (çömelmiş ateş ediyor ya da siper almış yatıyor olsa da) kalkıp yana koşar; vurulmuş er kalır */
-  const w=m.hp>0&&f.live&&forces.way?forces.way(f.x,f.z):null;if(w){m.down=0;const st=Math.max(Math.min(w.need,forces.run*dt),w.push||0);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;f.y=safe(()=>hAt(f.x,f.z),0);stat.gaveWay++;continue;}
+  const w=m.hp>0&&f.live&&forces.way?forces.way(f.x,f.z):null;if(w){m.down=0;const st=Math.min(Math.max(w.need,w.push||0),forces.run*dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;f.y=safe(()=>hAt(f.x,f.z),0);stat.gaveWay++;continue;}
   if(m.down>0){m.down-=dt;f.act='yat';if(m.down<=0&&m.hp<=0){f.live=false;}f.y=safe(()=>hAt(f.x,f.z),0);continue;}if(m.hp<=0)continue;
   let tgt=null,td=INF.range;for(const e of en){const d=Math.hypot(e.x-f.x,e.z-f.z);if(d<td){td=d;tgt=e;}}
   if(tgt){f.act='diz';f.t+=dt;let a=Math.atan2(tgt.x-f.x,tgt.z-f.z)-f.yaw;while(a>Math.PI)a-=6.283;while(a<-Math.PI)a+=6.283;f.yaw+=a*Math.min(1,dt*4);m.cd-=dt;
@@ -185,7 +185,7 @@ function forcesStep(dt){if(!forces||!forces.on)return;const obj=objective()||{x:
   else{const sl=squadSlot(P.x,P.z,obj.x,obj.z,m.i,6,INF.ahead+m.sq*16,INF.spread),wp=path(f.x,f.z,sl.x,sl.z,laneOf(m.i,m.sq)),dx=wp.x-f.x,dz=wp.z-f.z,d=Math.hypot(dx,dz);if(wp.gate)stat.viaGate++;
    if(d>(wp.gate?.4:1.5)){const s=Math.min(d,(Math.hypot(sl.x-f.x,sl.z-f.z)>25?INF.speed*1.8:INF.speed)*dt),o=stepAround(f.x,f.z,dx/d,dz/d,s,ESC.man,nearList(m,f.x,f.z,dt));if(!wp.gate)o.z=keepZ(f.x,f.z,o.x,o.z,BAND.keep);const mv=Math.hypot(o.x-f.x,o.z-f.z);
     /* tankın önüne, duvarın içine adım atmaz; binanın çevresinden dolanır */
-    if(mv<s*.15||wallBlocks(f.x,f.z,o.x,o.z)||(forces.way&&forces.way(o.x,o.z)))f.act='nobet';else{f.yaw=Math.atan2(o.x-f.x,o.z-f.z);f.x=o.x;f.z=o.z;f.act='nobet-yuru';f.t+=dt*5.2;}}
+    if(mv<s*.15||wallBlocks(f.x,f.z,o.x,o.z)||(root.HisarMobility&&!root.HisarMobility.allows({x:f.x,z:f.z},o,true))||(forces.way&&forces.way(o.x,o.z)))f.act='nobet';else{f.yaw=Math.atan2(o.x-f.x,o.z-f.z);f.x=o.x;f.z=o.z;f.act='nobet-yuru';f.t+=dt*5.2;}}
    else{f.act='nobet';f.yaw=sl.yaw;}}
   f.y=safe(()=>hAt(f.x,f.z),0);}
  const tk=tanksNow();
@@ -196,7 +196,7 @@ function forcesStep(dt){if(!forces||!forces.on)return;const obj=objective()||{x:
   for(const o of lead){const w=around(v.x,v.z,wp.x,wp.z,o.x,o.z,ESC.veh);if(w){wp=w;break;}}
   const dx=wp.x-v.x,dz=wp.z-v.z,d=Math.hypot(dx,dz);
   if(dT>2&&d>.3){const s=Math.min(d,(dT>30?16:Math.min(11,dT))*dt),o=stepAround(v.x,v.z,dx/d,dz/d,s,ESC.body,nearList(v,v.x,v.z,dt));if(!wp.gate)o.z=keepZ(v.x,v.z,o.x,o.z,BAND.keepVeh);const mx=o.x-v.x,mz=o.z-v.z;
-   if(!wallBlocks(v.x,v.z,o.x,o.z)){v.x=o.x;v.z=o.z;if(Math.hypot(mx,mz)>s*.1){let t2=Math.atan2(mx,mz)-v.yaw;while(t2>Math.PI)t2-=6.283;while(t2<-Math.PI)t2+=6.283;v.yaw+=t2*Math.min(1,dt*2.5);}}}
+   if(!wallBlocks(v.x,v.z,o.x,o.z)&&(!root.HisarMobility||root.HisarMobility.allows(v,{...o,h:v.yaw},false))){v.x=o.x;v.z=o.z;if(Math.hypot(mx,mz)>s*.1){let t2=Math.atan2(mx,mz)-v.yaw;while(t2>Math.PI)t2-=6.283;while(t2<-Math.PI)t2+=6.283;v.yaw+=t2*Math.min(1,dt*2.5);}}}
   /* tankın ve öbür aracın içine girmez (tank üstüne gelirse kenara çekilir) */
   {const x0=v.x,z0=v.z;let k=false;/* önce öndeki araç, sonra dost tanklar, en son oyuncunun tankı: araç tankların arasında sıkışsa da oyuncunun tankının içinde kalmaz */
    for(let it=0;it<3;it++){for(const o of lead)k=keepOff(v,o.x,o.z,ESC.veh)||k;for(let i=tk.length-1;i>=0;i--)k=keepOff(v,tk[i].x,tk[i].z,ESC.tank)||k;}if(k){stat.keptOff++;if(wallBlocks(x0,z0,v.x,v.z)){v.x=x0;v.z=z0;}}}

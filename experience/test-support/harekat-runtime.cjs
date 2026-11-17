@@ -43,7 +43,8 @@ function runtime(options={}){
  const source=options.source||missionSource;
  vm.runInContext(production('experience/checkpoint.js'),c,{filename:'experience/checkpoint.js'});
  vm.runInContext(source,c,{filename:'experience/harekat.js'});
- if(options.campaign)vm.runInContext(production('experience/safak.js'),c,{filename:'experience/safak.js'});
+ if(options.campaign||options.connected)vm.runInContext(production('experience/safak.js'),c,{filename:'experience/safak.js'});
+ if(options.connected)vm.runInContext(production('experience/campaign.js'),c,{filename:'experience/campaign.js'});
  doc.body={classList:{add(){},remove(){}}};
  return {c,data,events,writes,hk:c.HisarHarekat,doc,
   start(id){return c.HisarHarekat.start(id);},
@@ -57,7 +58,7 @@ function backup(data=new Map()){
  const html=indexSource;
  const start=html.indexOf('const BKEYS=['),endMark='window.HISAR_BACKUP={code:backupCode,restore:restoreCode,merge:mergeMax};';
  const end=html.indexOf(endMark,start);if(start<0||end<0)throw Error('backup production block missing');
- const writes=[],c={window:{HisarCheckpoint:{core:require('../checkpoint.js')}},localStorage:{getItem:k=>data.get(k)??null,setItem(k,v){data.set(k,v);writes.push(k);}},persist(){},
+ const writes=[],c={window:{HisarCheckpoint:{core:require('../checkpoint.js')},HisarCampaign:{core:require('../campaign.js')}},localStorage:{getItem:k=>data.get(k)??null,setItem(k,v){data.set(k,v);writes.push(k);}},persist(){},
   btoa:s=>Buffer.from(s,'binary').toString('base64'),atob:s=>Buffer.from(s,'base64').toString('binary'),encodeURIComponent,decodeURIComponent,escape,unescape};
  vm.createContext(c);vm.runInContext(html.slice(start,end+endMark.length),c,{filename:'index.html:backup'});
  return {api:c.window.HISAR_BACKUP,data,writes};

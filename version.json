@@ -1,10 +1,10 @@
 {
-  "v": 116,
+  "v": 117,
   "experience": "63.1",
-  "not": "HİSAR 360 yaklaşımıyla sadeleştirilmiş modern komuta merkezi: dört net bölüm, tutarlı simgeler, büyük dokunma alanları, seçili görev vitrini, kayıtlar ve başarılar erişimi. Ayarlar, harekât emri, telsiz ve sonuç ekranlarında ortak görünüm. Klavyeyle sekme gezinme; kapatılabilir görev ve yedek ekranları; ayar perdesine dokunarak güvenli dönüş. v115 görevleri, kontrol noktaları, XP, kredi ve mevcut araçlar korunur.",
+  "not": "Eve Dönüş: aynı haritada tek harekât, geçit pususu, konvoy tespiti, yerinde onarım, dönüşte karşı taarruz ve güvenli teslim. Aşamalar sırayla açılır; güvenli kayıttan tank, mühimmat, takım ve konvoy durumu korunarak devam edilir. Tankın dönüş, ivme, su ve eğim sınırları; yayanın koşu ve yol verme hareketleri düzeltildi. Eski görevler ve kayıtlar arşivde korunur.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
-  "gameplayNotes": "Şafak Hattı, önceki harekâtlar ve Son Takım korunur. İlk Işık kontrol noktaları kalıcı görev başarılarından ayrı saklanır.",
+  "gameplayNotes": "Eve Dönüş ana harekâttır. Önceki Şafak Hattı ve dört eski harekât arşivde oynanabilir. İlk Işık kaydı ayrı korunur; Eve Dönüş kaydı güvenli aşama sınırlarında yazılır.",
   "operations": "2.0.0",
   "operationNotes": "Telsiz emirleri: on emir, düğmeyle ya da sesle; dost tanklar çağrı adıyla yanıt verir. Harekât ve Şafak Hattı görevleri korunur. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır.",
   "battle": "1.1.1",
@@ -16,7 +16,7 @@
   "swarm": "1.1.0",
   "realism": "1.1.2",
   "sinir": "1.3.0",
-  "harekat": "2.1.0",
+  "harekat": "2.2.0",
   "atis": "1.0.1",
   "harita": "1.2.0",
   "carpisma": "1.2.0",
@@ -39,5 +39,7 @@
   "checkpoint": "1.0.0",
   "tank-feel": "1.0.0",
   "crew-orders": "1.4.0",
-  "interface": "1.0.0"
+  "interface": "1.0.0",
+  "campaign": "1.0.0",
+  "mobility": "1.0.0"
 }

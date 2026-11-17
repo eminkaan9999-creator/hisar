@@ -9,11 +9,11 @@ test('menu draws the background at 15 frames per second from a fixed camera (no 
 test('support and menu modules load after village life and are precached; textures are files, not inline',()=>{let i=html.indexOf('experience/koy.js?v=');for(const k of['destek','menu']){const j=html.indexOf('experience/'+k+'.js?v=');assert.ok(j>i,k);i=j;assert.ok(sw.includes("'experience/"+k+".js'"));}
  assert.ok(html.length<2500000,'index.html is light: '+html.length);assert.ok(!/data:image\/jpeg;base64,[A-Za-z0-9+/=]{20000,}/.test(html));for(const t of['sky_gunduz','t_cim','m60x_col'])assert.ok(sw.includes("'assets/tex/"+t+".jpg?v=96'"),t);
  for(const k of["'T129 ATAK'","'Bayraktar TB2'","'F-16'","ATAK 1: Bölgeye giriyorum","YAKIN ATIŞ"])assert.ok(src.includes(k),k);});
-test('escort infantry never get driven over: a man in the tank\'s path runs aside (pushed clear at once if the hull swings onto him) and nobody steps in front of it',()=>{
- assert.ok(src.includes("const w=m.hp>0&&f.live&&forces.way?forces.way(f.x,f.z):null;if(w){m.down=0;const st=Math.max(Math.min(w.need,forces.run*dt),w.push||0);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';"),'runs aside, also a man lying in cover gets up');
+test('escort infantry never get driven over: a man in the tank\'s path runs aside (at bounded speed if the hull swings onto him) and nobody steps in front of it',()=>{
+ assert.ok(src.includes("const w=m.hp>0&&f.live&&forces.way?forces.way(f.x,f.z):null;if(w){m.down=0;const st=Math.min(Math.max(w.need,w.push||0),forces.run*dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';"),'runs aside, also a man lying in cover gets up');
  assert.ok(src.indexOf("const w=m.hp>0&&f.live&&forces.way")<src.indexOf("if(m.down>0){m.down-=dt;f.act='yat';"),'giving way comes before lying down');
  assert.ok(src.indexOf("const w=m.hp>0&&f.live&&forces.way")<src.indexOf("if(tgt){f.act='diz';"),'giving way comes before kneeling to fire');
- assert.ok(src.includes("if(mv<s*.15||wallBlocks(f.x,f.z,o.x,o.z)||(forces.way&&forces.way(o.x,o.z)))f.act='nobet';"),'does not step into the corridor, nor through the wall');
+ assert.ok(src.includes("if(mv<s*.15||wallBlocks(f.x,f.z,o.x,o.z)||(root.HisarMobility&&!root.HisarMobility.allows({x:f.x,z:f.z},o,true))||(forces.way&&forces.way(o.x,o.z)))f.act='nobet';"),'does not step into the corridor, nor through the wall');
  assert.ok(src.includes("way:fig.way||null,run:safe(()=>root.HisarSinir.core.WAY.run,5)"),'same rule and running speed as the border soldiers');
  assert.ok(src.includes("root.HisarSinir.vehicleSource(()=>forces&&forces.on?forces.veh:null)")&&src.includes("v.h=v.yaw;"),'the escort vehicles are reported so soldiers clear their path too');
  assert.ok(/const VERSION='1\.4\.0'/.test(src)&&/experience\/destek\.js\?v=\d+/.test(html));});

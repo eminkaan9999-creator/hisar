@@ -22,7 +22,7 @@ const SAL=Object.freeze({r:26,hold:3.2,cool:30,wave:20});
 // Araca yol verirken yana kaçış hızı (m/sn): insan, koyun/köpek, inek, tavuk
 const GIVE=Object.freeze({insan:4.6,koyun:6,kopek:6.5,inek:4.5,tavuk:4});
 // Yana atılacak adım: gereken yoldan ve hızın izin verdiğinden büyüğü olmaz; gövdenin altındaysa (push) hemen o kadar çıkar
-function sideStep(w,speed,dt){return Math.max(Math.min(w.need,speed*dt),w.push||0);}
+function sideStep(w,speed,dt){return Math.min(Math.max(w.need,w.push||0),speed*dt);}
 // Selam: çocuk tankı görür (yakın), soğuma bitmişse selam verir
 const wantsSalute=(d,cool,hidden)=>!hidden&&cool<=0&&d<SAL.r;
 // Kaçış yönü: tehlikeden uzağa birim vektör

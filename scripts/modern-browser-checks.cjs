@@ -5,9 +5,11 @@ const assert=require('node:assert/strict'),path=require('node:path');
 module.exports=async function modernChecks(p,{mobile,label,out,ok}){
  await p.waitForFunction(()=>window.HisarSafak?.diagnostics().registered&&window.HisarModern?.diagnostics().graphics);
  assert.equal(await p.locator('#sf-campaign').isVisible(),true);
- assert.deepEqual(await p.locator('#hkCard [data-op]').evaluateAll(es=>es.map(e=>e.dataset.op)),['safak-1','safak-2','safak-3','safak-4']);
- assert.equal(await p.evaluate(()=>R.toneMapping===THREE.ACESFilmicToneMapping&&R.outputEncoding===THREE.sRGBEncoding),true);ok(label+': new campaign is primary and the actual 3D renderer uses colour-managed filmic output');
- await p.locator('#sf-archive').click();assert.equal(await p.locator('[data-op="gecit"]').isVisible(),true);await p.locator('#sf-archive').click();assert.equal(await p.locator('[data-op="safak-1"]').isVisible(),true);ok(label+': original operations remain playable from the campaign archive');
+ if(await p.evaluate(()=>HisarHarekat.diagnostics().sel==='eve-donus'))await p.locator('#sf-archive').click();
+ assert.deepEqual(await p.locator('#hkCard [data-op]').evaluateAll(es=>es.map(e=>e.dataset.op)),['safak-1','safak-2','safak-3','safak-4','gecit','tepe','depo','batarya']);
+ await p.locator('[data-op="safak-1"]').click();
+ assert.equal(await p.evaluate(()=>R.toneMapping===THREE.ACESFilmicToneMapping&&R.outputEncoding===THREE.sRGBEncoding),true);ok(label+': legacy campaign remains accessible and the actual 3D renderer uses colour-managed filmic output');
+ assert.equal(await p.locator('[data-op="gecit"]').isVisible(),true);await p.locator('#sf-archive').click();assert.equal(await p.locator('#operation-plan').isVisible(),true);await p.locator('#sf-archive').click();assert.equal(await p.locator('[data-op="safak-1"]').isVisible(),true);ok(label+': original operations remain playable from the campaign archive');
  await p.locator('#go').click();assert.equal(await p.locator('#hk-brief').isVisible(),true);assert.equal(await p.evaluate(()=>game==='play'),false);await p.screenshot({path:path.join(out,'modern-brief-'+label+'.png')});await p.locator('.hk-back').click();assert.equal(await p.locator('#hk-brief').isVisible(),false);ok(label+': briefing explains the new story and can close without launching');
  if(mobile){await p.setViewportSize({width:390,height:844});await p.screenshot({path:path.join(out,'modern-campaign-mobile.png')});await p.locator('#go').click();await p.locator('.hk-go').click();await p.waitForFunction(()=>game==='play');await p.locator('#sf-hud').waitFor({state:'visible'});await require('./modern-quality-checks.cjs').mobile(p);
   for(const [w,h]of [[390,844],[844,390]]){await p.setViewportSize({width:w,height:h});const b=await p.locator('#sf-hud').boundingBox();assert.ok(b&&b.x>=0&&b.y>=0&&b.x+b.width<=w+1&&b.y+b.height<=h+1,'vehicle HUD fits '+w+'x'+h+': '+JSON.stringify(b));

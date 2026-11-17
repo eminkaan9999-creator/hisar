@@ -35,7 +35,7 @@ function titleAndRecords(){
  if(go)go.textContent=paused?(hk&&hk.mode==='harekat'?'Yeni görevi incele':'Yeni savaş'):hk&&hk.mode==='harekat'?'Görevi incele':'Savaşa başla';
  const resume=by('rs');if(resume)resume.textContent='Oyuna devam et';
 }
-function campaign(){const box=by('sf-campaign');if(!box)return;let title=by('ci-mission');if(!title){title=node('h3','ci-mission');const heading=box.querySelector('.sf-heading');if(heading)heading.insertAdjacentElement('afterend',title);}
+function campaign(){if(root.HisarCampaign&&root.HisarCampaign.render())return;const box=by('sf-campaign');if(!box)return;let title=by('ci-mission');if(!title){title=node('h3','ci-mission');const heading=box.querySelector('.sf-heading');if(heading)heading.insertAdjacentElement('afterend',title);}
  const selected=doc.querySelector('#hkCard [data-op].sel'),name=selected&&selected.querySelector('.hk-tx>b'),hk=safe(()=>root.HisarHarekat.diagnostics(),null);
  const current=safe(()=>root.HisarSafak.core.OPS.find(o=>o.id===hk.sel),null);
  const text=name?name.textContent:current?current.n:'Harekâtını seç';if(title&&title.textContent!==text)title.textContent=text;

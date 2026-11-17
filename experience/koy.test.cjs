@@ -8,8 +8,8 @@ test('animal poses: grazing lowers the head, storks flap',()=>{assert.ok(c.anima
 test('villagers include headscarved women, capped elders, school children with bags',()=>{for(const k of["c:'bas',only:'kadin'","c:'kasket',only:'adam'","c:'canta',only:'cocuk|kiz'"])assert.ok(sn.includes(k),k);
  for(const k of["'Komutanım, çocuklar selam veriyor.'","wrap('sndBoom'","koyun:[","inek:[","kopek:[","tavuk:[","leylek:["])assert.ok(src.includes(k),k);});
 test('loads after the border module and is precached',()=>{assert.ok(html.indexOf('experience/sinir.js?v=')<html.indexOf('experience/koy.js?v='));assert.ok(sw.includes("'experience/koy.js'"));});
-test('villagers and animals give way to vehicles: they run sideways out of the path, are pushed clear of the hull at once, and do not step into the path',()=>{
- assert.ok(Math.abs(c.sideStep({need:3,push:0},4.6,.1)-.46)<1e-9);assert.equal(c.sideStep({need:.2,push:0},4.6,.1),.2,'never further than needed');assert.equal(c.sideStep({need:3,push:1.4},4.6,.1),1.4,'under the hull: out at once');assert.ok(Math.abs(c.sideStep({need:3},4.6,.1)-.46)<1e-9);
+test('villagers and animals give way to vehicles: they run sideways out of the path, leave the hull at their running speed, and do not step into the path',()=>{
+ assert.ok(Math.abs(c.sideStep({need:3,push:0},4.6,.1)-.46)<1e-9);assert.equal(c.sideStep({need:.2,push:0},4.6,.1),.2,'never further than needed');assert.ok(Math.abs(c.sideStep({need:3,push:1.4},4.6,.1)-.46)<1e-9,'under the hull: no instantaneous shove');assert.ok(Math.abs(c.sideStep({need:3},4.6,.1)-.46)<1e-9);
  for(const k of['insan','koyun','kopek','inek','tavuk'])assert.ok(c.GIVE[k]>=4&&c.GIVE[k]<=7,k);
  assert.ok(src.includes("WAYF=fig.way||null;"),'the rule comes from the border module, shared with the soldiers');
  assert.ok(src.includes("const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE.insan,dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';p.hold=0;"),'a saluting child also runs aside');

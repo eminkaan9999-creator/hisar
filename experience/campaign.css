@@ -1,0 +1,15 @@
+/* The main operation is one route, rather than a second grid of mission cards. */
+body[data-operation-view="continuous"] #hkCard{display:none!important}
+#operation-plan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px;margin:18px 0;padding-left:24px;color:#526174;font:600 13px/1.45 system-ui}
+#operation-plan[hidden]{display:none}
+#operation-plan li{padding:6px 4px}
+#operation-plan li::marker{color:#9d771d;font-weight:800}
+#operation-plan li.current{color:#102c48;font-weight:800}
+#operation-plan li.done{color:#526f58}
+body[data-operation-view="continuous"] #sf-campaign{grid-column:1/-1}
+body[data-operation-view="continuous"] #sf-title{font-size:12px;letter-spacing:.06em;color:#637182}
+body.continuous-operation #hk-obj ol{display:none}
+body.continuous-operation #hk-obj p{font-size:14px;line-height:1.35}
+body.continuous-operation #hk-obj small{line-height:1.4}
+@media(max-width:600px){#operation-plan{grid-template-columns:repeat(2,minmax(0,1fr));font-size:12px;margin:12px 0}}
+@media(prefers-reduced-motion:reduce){#operation-plan *{transition:none!important}}

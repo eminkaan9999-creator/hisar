@@ -4,6 +4,8 @@
 const assert=require('node:assert/strict'),path=require('node:path');
 exports.menu=async function(p,{mobile,label,out,ok}){
  await p.waitForFunction(()=>window.HisarInterface?.diagnostics().installed);
+ await require('./campaign-browser-checks.cjs').menu(p,{mobile,label,out,ok});
+ if(await p.evaluate(()=>HisarHarekat.diagnostics().sel==='eve-donus'))await p.locator('#sf-archive').click();
  const tab=k=>p.locator('#mp .tabs [data-t="'+k+'"]');
  await tab('g').press('ArrowRight');assert.equal(await tab('b').getAttribute('aria-selected'),'true');assert.equal(await tab('b').evaluate(e=>document.activeElement===e),true);
  await tab('b').press('End');assert.equal(await tab('k').getAttribute('aria-selected'),'true');await tab('k').press('Home');assert.equal(await tab('g').getAttribute('aria-selected'),'true');

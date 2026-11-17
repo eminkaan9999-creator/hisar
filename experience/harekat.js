@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.5.1',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='2.0.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -40,6 +40,7 @@ const OPS=Object.freeze([
 // zorluk: düşmanın yeniden dolum süresi (sn), isabet hasarı, dayanıklılık çarpanı
 const TUNE=Object.freeze({kolay:{cd:6,dmg:12,hp:1.8},normal:{cd:4.6,dmg:18,hp:2.2},zor:{cd:3.4,dmg:26,hp:2.6},serbest:{cd:6,dmg:0,hp:1.8}});
 const HOLD=12,QRF_STOP=170,FIRE_RANGE=360,SEEN=300,NIGHT=.6,LEASH=80,BASE_R=32;
+const registered=new Map(OPS.map(o=>[o.id,o]));let menuOps=OPS;
 // Ele geçirme: hedef çevresinde düşman kalmamışsa ve oyuncu içerideyse sayaç ilerler, çıkınca yavaşça geri iner.
 function capture(c,dt,inside,clear){if(!clear)return Math.max(0,c-dt*.5);return inside?Math.min(HOLD,c+dt):Math.max(0,c-dt*.5);}
 // Saldırı dalgaları: önceki dalga bitince bir sonrakinin sayacı başlar.
@@ -59,7 +60,13 @@ const UNIT={tank:'T-72',apc:'BMP',inf:'piyade timi',kornet:'Kornet timi',aa:'uç
 function forces(o){const c={};const add=t=>{c[t]=(c[t]||0)+1;};(o.outpost?o.outpost.u:[]).forEach(add);(o.guard?o.guard.u:[]).forEach(add);(o.depot||[]).forEach(add);(o.battery||[]).forEach(add);(o.qrf?o.qrf.u:[]).forEach(add);(o.waves||[]).forEach(w=>w.u.forEach(add));
  return Object.keys(UNIT).filter(k=>c[k]).map(k=>c[k]+' '+UNIT[k]).join(', ');}
 function posts(o,from,n,r){const a=Math.atan2(from.x-o.x,from.z-o.z),out=[];for(let i=0;i<n;i++){const k=n>1?(i/(n-1)-.5)*1.6:0;out.push({x:o.x+Math.sin(a+k)*r,z:o.z+Math.cos(a+k)*r,h:a+k});}return out;}
-const core=Object.freeze({VERSION,MODE,OPS,TUNE,HOLD,NIGHT,capture,waveDue,halt,posts,phaseDone,stars,forces,salvoGap,shellPoint});
+// A convoy waits for its escort and steers around a blocked footprint; no teleport.
+function escortMove(c,p,dt,passable){if(c.dead||c.delivered)return;if(Math.hypot(c.x-p.x,c.z-p.z)>c.follow){c.wait='Konvoya yaklaş · en fazla '+c.follow+' m';return;}if(Math.hypot(c.x-p.x,c.z-p.z)<8){c.wait='Araca yol ver';return;}
+ let q=c.path[c.i];while(q&&Math.hypot(q[0]-c.x,q[1]-c.z)<3){c.i++;q=c.path[c.i];}if(!q){c.delivered=true;c.wait='Konvoy güvenli bölgede';return;}
+ const dx=q[0]-c.x,dz=q[1]-c.z,d=Math.hypot(dx,dz),a=Math.atan2(dx,dz),s=Math.min(d,c.speed*dt);let best=null;
+ for(const off of [0,.3,-.3,.65,-.65,1,-1]){const h=a+off,x=c.x+Math.sin(h)*s,z=c.z+Math.cos(h)*s;if(!passable||passable(x,z,c)){best={x,z,h};break;}}
+ if(!best){c.wait='Yol kapalı · konvoy bekliyor';return;}c.x=best.x;c.z=best.z;const da=Math.atan2(Math.sin(best.h-c.h),Math.cos(best.h-c.h));c.h+=da*Math.min(1,dt*2);c.wait='Konvoy ilerliyor';}
+const core=Object.freeze({VERSION,MODE,OPS,TUNE,HOLD,NIGHT,capture,waveDue,halt,posts,phaseDone,stars,forces,salvoGap,shellPoint,escortMove});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
@@ -69,16 +76,16 @@ const rnd=Math.random,dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const record=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
 const load=()=>safe(()=>JSON.parse(root.localStorage.getItem(SAVE))||{},{});
 function state(v){const s=Object.assign({mode:MODE,sel:'gecit'},record(v));s.done={...record(s.done)};s.stars={...record(s.stars)};
- if(s.mode!==MODE&&s.mode!=='savas')s.mode=MODE;if(!OPS.some(o=>o.id===s.sel))s.sel='gecit';
- for(const o of OPS){if(o.id in s.done)s.done[o.id]=s.done[o.id]===1||s.done[o.id]===true?1:0;
+ if(s.mode!==MODE&&s.mode!=='savas')s.mode=MODE;if(!registered.has(s.sel))s.sel='gecit';
+ for(const o of registered.values()){if(o.id in s.done)s.done[o.id]=s.done[o.id]===1||s.done[o.id]===true?1:0;
   if(o.id in s.stars)s.stars[o.id]=Number.isFinite(s.stars[o.id])?clamp(Math.floor(s.stars[o.id]),0,3):0;}return s;}
 let ST=state(load());
 // Preserve achievement maxima written by another tab before this write.
 function store(v){const current=state(load()),next=state(v),s=Object.assign({},current,next,{done:{...current.done,...next.done},stars:{...current.stars,...next.stars}});
- for(const o of OPS)for(const k of ['done','stars'])if(o.id in current[k]||o.id in next[k])s[k][o.id]=Math.max(current[k][o.id]||0,next[k][o.id]||0);
+ for(const o of registered.values())for(const k of ['done','stars'])if(o.id in current[k]||o.id in next[k])s[k][o.id]=Math.max(current[k][o.id]||0,next[k][o.id]||0);
  ST=s;try{root.localStorage.setItem(SAVE,JSON.stringify(s));saveError=false;return true;}catch(e){saveError=true;return false;}}
 const picked=()=>ST.mode===MODE;
-const op=()=>OPS.find(o=>o.id===ST.sel)||OPS[0];
+const op=()=>registered.get(ST.sel)||OPS[0];
 const playing=()=>safe(()=>game==='play'&&mis===MODE,false);
 function mk(type,x,z,o){const kornet=type==='kornet';if(kornet)type='inf';const tank=type==='tank';if(tank)root.BT_KIND='t72';const e=safe(()=>root.addE(type,x,z,{h:o.h||0}),null);root.BT_KIND=null;if(!e)return null;
  const tune=H.tune;e.hk=Object.assign({role:'def'},o);e.pr=1e6;e.fr=type==='apc'?220:type==='bunker'?160:FIRE_RANGE;e.bs=80;e.bl=4.5;
@@ -87,6 +94,7 @@ function mk(type,x,z,o){const kornet=type==='kornet';if(kornet)type='inf';const 
 function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[key]||TUNE.normal;
  safe(()=>{L=Object.assign({},LV[key]||LV.normal,{sp:5,cd:tune.cd,dmg:tune.dmg,rl:3,ar:190});},null);
  sky(o.wx);H={op:o,tune,t:0,won:false,lost:false,wave:-1,waveT:0,cap:0,phase:'go',kills:0,sup:0,last:'',halts:new WeakMap(),post:null,ph:0,al0:safe(()=>AL.length,0)};
+ if(o.story){const hp=safe(()=>P.mx,100);safe(()=>{P.mx=Math.max(hp,o.armor||150);P.hp=P.mx;L.dmg=tune.dmg*.8;},null);H.phaseT=0;H.phaseTotal=0;H.preparation=o.preparation||0;}
  P.x=o.start.x;P.z=o.start.z;P.h=o.start.h;P.th=o.start.h;P.v=P.w=0;safe(()=>{yaw=o.start.h;},null);
  safe(()=>{AL.forEach((a,i)=>{const s=i%2?1:-1,b=10+8*Math.floor(i/2),x=o.start.x+Math.cos(o.start.h)*s*11-Math.sin(o.start.h)*b,z=o.start.z-Math.sin(o.start.h)*s*11-Math.cos(o.start.h)*b;a.x=x;a.z=z;a.h=o.start.h;a.g.position.set(x,hAt(x,z),z);a.g.rotation.y=o.start.h;a.cmd='follow';a.fire=1;});},null);
  H.post=safe(()=>root.HisarSinir.posts().find(p=>p.f===o.ford),null);
@@ -94,14 +102,15 @@ function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[k
  if(o.guard){const g=o.guard,ps=posts(o.obj,o.start,g.u.length,g.r);g.u.forEach((t,i)=>{const p=ps[i];mk(t,p.x,p.z,{role:'def',post:p,h:p.h});});}
  if(o.battery){o.battery.forEach((t,i)=>{const x=o.obj.x+(i-1)*16,z=o.obj.z+8+Math.abs(i-1)*5;const e=mk(t,x,z,{role:'def',bat:1,post:{x,z},h:Math.PI});if(e)e.nm='OBÜS';});H.shT=8;H.inc=[];H.hits=0;}
  if(o.depot){o.depot.forEach((t,i)=>{const a=i/o.depot.length*Math.PI*2,x=o.obj.x+Math.cos(a)*18,z=o.obj.z+Math.sin(a)*14;const e=mk(t,x,z,{role:'dep',post:{x,z},h:a});if(e){e.park=1;e.fr=0;}});}
+ if(o.escort){const q=o.escort;H.convoy={hkConvoy:true,x:q.route[0][0],z:q.route[0][1],h:0,hp:q.hp||240,mx:q.hp||240,dead:false,active:false,i:1,wait:'Görev emrini bekliyor',path:convoyPath(q.route),speed:q.speed||5.5,follow:q.follow||110,delivered:false};safe(()=>root.HisarModern.spawnConvoy(H.convoy),null);}
  buildBeam(o.obj);doc.body.classList.add('hk-active','hr-mission-active');safe(()=>{MI[MODE].t=o.n.toLocaleUpperCase('tr-TR');},null);if(card)card.hidden=false;
  navTo();
  safe(()=>root.radio('Komuta: '+o.emir),null);paint();}
-function navTo(){if(!H)return;const o=H.op,ph=o.phases&&o.phases[H.ph],t=ph&&ph.k!=='final'?{x:ph.x,z:ph.z,n:ph.n}:{x:o.obj.x,z:o.obj.z,n:o.obj.n};safe(()=>root.startNav({x:t.x,z:t.z,n:t.n,id:'hk'}),null);}
+function navTo(){if(!H)return;const o=H.op,ph=o.phases&&o.phases[H.ph];let t=ph&&ph.k!=='final'?{x:ph.x,z:ph.z,n:ph.n}:{x:o.obj.x,z:o.obj.z,n:o.obj.n};if(ph&&ph.k==='escort'&&H.convoy){const c=H.convoy;t={x:c.x,z:c.z,n:'İkmal aracına eşlik et'};}safe(()=>root.startNav({x:t.x,z:t.z,n:t.n,id:'hk'}),null);}
 // görev havası: gece görevinde gece ve gece görüşü açılır; görev bitince ya da menüye dönünce eski hava geri gelir
 function sky(w){const nv=root.NVG||{};if(w){if(wx0==null){wx0=safe(()=>wx,'gunduz');nv0=nv.on||0;}if(w==='gece')nv.on=1;safe(()=>root.setW(w),null);/* kayıtlı hava tercihi değişmesin */safe(()=>{SV.wx=wx0;save();},null);}
  else if(wx0!=null){const b=wx0;wx0=null;nv.on=nv0;nv0=null;safe(()=>root.setW(b),null);}}
-function cleanup(){sky(null);if(beam){safe(()=>{S.remove(beam);beam.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material)m.material.dispose();});},null);beam=null;}
+function cleanup(){sky(null);if(H&&H.convoy){H.convoy.disposed=true;safe(()=>root.HisarModern.removeConvoy(H.convoy),null);}if(beam){safe(()=>{S.remove(beam);beam.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material)m.material.dispose();});},null);beam=null;}
  if(H)doc.body.classList.remove('hr-mission-active');H=null;doc.body.classList.remove('hk-active');if(card)card.hidden=true;}
 function buildBeam(o){if(!root.THREE)return;const T=root.THREE,g=new T.Group(),y=hAt(o.x,o.z);
  const col=new T.Mesh(new T.CylinderGeometry(1.4,1.4,70,12,1,true),new T.MeshBasicMaterial({color:0xffb030,transparent:true,opacity:.28,depthWrite:false,fog:false,side:T.DoubleSide}));col.position.y=35;
@@ -109,7 +118,7 @@ function buildBeam(o){if(!root.THREE)return;const T=root.THREE,g=new T.Group(),y
  g.add(col,ring);g.position.set(o.x,y,o.z);g.name='HK_HEDEF';S.add(g);beam=g;}
 // ---------- adım ----------
 function enemies(){return safe(()=>E.filter(e=>e.hk&&e.hp>0),[]);}
-function control(dt){if(!H)return;for(const e of enemies()){const k=e.hk;
+function control(dt){if(!H)return;for(const e of enemies()){const k=e.hk;if(H.op.story&&H.t<H.preparation)e.cd=Math.max(e.cd||0,H.preparation-H.t);
   if(k.role==='def'){if(e.rt>0&&dist(e,k.post)>LEASH)e.rt=0;if(!(e.rt>0)){e.hd={x:k.post.x,z:k.post.z};e.hdT=1e9;e.hdV=1e9;}}
   else if(k.role==='qrf'){if(!(clock<k.next)){k.path=safe(()=>root.astar(e.x,e.z,P.x,P.z),null)||[[e.x,e.z],[P.x,P.z]];k.i=1;k.next=clock+8;}const w=k.path[k.i];
    if(w&&Math.hypot(w[0]-e.x,w[1]-e.z)<10&&k.i<k.path.length-1)k.i++;const stop=!w||dist(e,P)<Math.min(QRF_STOP,(e.fr||FIRE_RANGE)*.8);e.hd=stop?{x:e.x,z:e.z}:{x:w[0],z:w[1]};e.hdT=1e9;e.hdV=1e9;e.rt=0;}
@@ -124,7 +133,39 @@ function spawnQRF(q){H.qrfOn=true;q.u.forEach((t,i)=>{const x=q.from[0]+(i-(q.u.
 function spawnWave(w){const o=H.op,gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};w.u.forEach((t,i)=>{const s=o.spawn[i%o.spawn.length],x=s[0]+(rnd()-.5)*20,z=s[1]+(rnd()-.5)*20;
   const path=safe(()=>root.astar(x,z,gate.x,gate.z),null)||[[x,z],[gate.x,gate.z]];const e=mk(t,x,z,{role:'att',path,i:1,h:Math.PI});if(e){e.cd=4+rnd()*3;}});
  H.waveLeft=w.u.length;safe(()=>root.radio('Komuta: '+(H.wave+1)+'. dalga sınıra yaklaşıyor! '+w.u.length+' araç.'),null);}
+function convoyPath(anchors){const out=[anchors[0].slice()];for(let i=1;i<anchors.length;i++){const a=anchors[i-1],b=anchors[i],ps=safe(()=>root.astar(a[0],a[1],b[0],b[1]),null)||[a,b];for(const q of ps.slice(1))if(Array.isArray(q)&&Number.isFinite(q[0])&&Number.isFinite(q[1]))out.push([q[0],q[1]]);}return out;}
+function nextStoryPhase(){const old=H.op.phases[H.ph];H.ph++;H.phaseT=0;H.phaseTotal=0;H.navTick=0;navTo();const nx=H.op.phases[H.ph];safe(()=>root.radio('Komuta: '+old.n+' tamam. '+(nx?nx.n:H.op.success)),null);paint();}
+function storyStep(dt,en){const o=H.op,ph=o.phases[H.ph];if(!ph)return;const c=H.convoy;if(c&&c.dead)return lose('İkmal aracı devre dışı kaldı. Konvoya yakın kal ve yolu güvene al.');
+ if(o.qrf&&!H.qrfOn&&H.ph>=o.qrf.at){spawnQRF(o.qrf);en=enemies();}
+ if(o.battery){const guns=en.filter(e=>e.hk.bat);H.batLeft=guns.length;shelling(dt,o,guns);}
+ if(o.depot)H.depLeft=en.filter(e=>e.hk.role==='dep').length;
+ if(ph.k==='complete')return win(o.success||o.n+' tamamlandı.');
+ let done=false;H.phaseTotal=ph.seconds||0;
+ if(ph.k==='reach')done=phaseDone(ph,P,en);
+ if(ph.k==='clear')done=phaseDone(ph,P,en)&&dist(P,ph)<(ph.visit||ph.r*2);
+ if(ph.k==='scan'||ph.k==='extract'){const inside=dist(P,ph)<ph.r,clear=ph.k==='scan'||!en.some(e=>dist(e,ph)<(ph.threat||60));
+  const visible=ph.k!=='scan'||safe(()=>root.los(P.x,hAt(P.x,P.z)+2.8,P.z,ph.x,hAt(ph.x,ph.z)+3,ph.z),true);const still=ph.k!=='scan'||Math.abs(P.v||0)<1.5;
+  H.phaseT=inside&&clear&&visible&&still?H.phaseT+dt:0;done=H.phaseT>=(ph.seconds||4);}
+ if(ph.k==='destroy')done=ph.target==='bat'?!en.some(e=>e.hk.bat):!en.some(e=>e.hk.role==='dep');
+ if(ph.k==='defend'){let att=en.filter(e=>e.hk.role==='att');if(!att.length&&H.wave<o.waves.length-1){H.waveT+=dt;const nx=o.waves[H.wave+1];if(nx&&waveDue(nx,H.waveT)){H.wave++;H.waveT=0;spawnWave(nx);en=enemies();att=en.filter(e=>e.hk.role==='att');}}
+  const gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};if(att.some(e=>dist(e,gate)<40))return lose('Hat aşıldı. Mevzini değiştirerek yaklaşan araçları durdur.');done=H.wave===o.waves.length-1&&!att.length;}
+ if(ph.k==='escort'&&c){c.active=true;if(c.error)return lose('Konvoy modeli yüklenemedi. Bağlantıyı kontrol edip görevi yeniden aç.');const threat=en.some(e=>e.type!=='fuel'&&e.type!=='radar'&&e.type!=='truck'&&dist(e,c)<65);
+  if(threat)c.wait='Yakın tehdidi temizle · konvoy bekliyor';else escortMove(c,P,dt,(x,z,q)=>safe(()=>root.HisarModern.convoyPassable(x,z,q),true));
+  safe(()=>root.HisarModern.syncConvoy(c),null);done=c.delivered;H.navTick=(H.navTick||0)-dt;if(H.navTick<=0){H.navTick=3;navTo();}}
+ if(done){nextStoryPhase();if(H.op.phases[H.ph]&&H.op.phases[H.ph].k==='complete')return win(o.success||o.n+' tamamlandı.');}
+ // Supply is tied to the real starting post, rather than an invisible reward.
+ const base=H.post?H.post.door:o.start;if(dist(P,base)<BASE_R){H.sup+=dt;if(H.sup>=1){H.sup=0;safe(()=>{P.hp=Math.min(P.mx,P.hp+5);if(ammo<AMX())ammo++;if(TA&&TA0)for(let i=0;i<TA.length;i++)TA[i]=Math.min(TA0[i],TA[i]+1);},null);}}else H.sup=0;
+ if((H.paintT=(H.paintT||0)+dt)>.2){H.paintT=0;paint();}}
+function paintStory(p,pr,sm){const o=H.op,ph=o.phases[H.ph];if(!ph)return;p.textContent=ph.n;pr.value=H.phaseTotal?clamp(H.phaseT/H.phaseTotal,0,1):H.ph/Math.max(1,o.phases.length-1);
+ let detail='Bölüm '+o.chapter+'/4 · aşama '+Math.min(H.ph+1,o.phases.length-1)+'/'+(o.phases.length-1);
+ if(H.t<H.preparation)detail+=' · hazırlık '+Math.ceil(H.preparation-H.t)+' sn';
+ if(ph.k==='scan'||ph.k==='extract')detail+=' · '+Math.max(0,Math.ceil((ph.seconds||4)-H.phaseT))+' sn · '+Math.round(dist(P,ph))+' m';
+ else if(ph.k==='defend'){const att=enemies().filter(e=>e.hk.role==='att').length,nx=o.waves[H.wave+1];detail+=' · '+(att?(H.wave+1)+'. dalga / '+att+' araç':nx?'sonraki dalga '+Math.ceil(Math.max(0,nx.at-H.waveT))+' sn':'hat tutuldu');}
+ else if(ph.k==='destroy')detail+=' · '+(ph.target==='bat'?H.batLeft:H.depLeft)+' hedef kaldı';
+ else if(ph.k==='escort'&&H.convoy)detail+=' · konvoy %'+Math.round(H.convoy.hp/H.convoy.mx*100)+' · '+H.convoy.wait;
+ else if(Number.isFinite(ph.x))detail+=' · '+Math.round(dist(P,ph))+' m';sm.textContent=detail;}
 function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op;let en=enemies();
+ if(o.story){storyStep(dt,en);return;}
  // ara hedefler: sırayla; biri tamamlanınca rota bir sonrakine döner
  const ph=o.phases&&o.phases[H.ph];if(phaseDone(ph,P,en)){H.ph++;const nx=o.phases[H.ph];safe(()=>root.radio('Komuta: Ara hedef tamam: '+ph.n+'.'+(nx?' Sıradaki: '+nx.n+'.':'')),null);safe(()=>root.say('ARA HEDEF TAMAM',1.6),null);navTo();}
  if(o.qrf&&!H.qrfOn&&H.ph>=o.qrf.at){spawnQRF(o.qrf);en=enemies();}
@@ -147,11 +188,13 @@ function shelling(dt,o,guns){H.shT-=dt;if(guns.length&&H.shT<=0){const g=guns[Ma
   H.inc.push(Object.assign({t:o.shell.fly},shellPoint(o.shell,rnd(),rnd())));if(H.hits%3===0)safe(()=>root.radio('Karakol: '+o.shell.n+'\'ye topçu mermisi düşüyor! Bataryayı susturun!'),null);}
  for(const q of H.inc){q.t-=dt;if(q.t<=0){q.done=1;H.hits++;safe(()=>root.bigBoom(q.x,q.z,5),null);}}H.inc=H.inc.filter(q=>!q.done);}
 function win(t){if(!H)return;H.won=true;const o=H.op,n=stars(o,{won:true,hp:safe(()=>P.hp/P.mx,1),t:H.t,allies:safe(()=>AL.filter(a=>!a.dead).length,0)>=H.al0});H.stars=n;H.ph=o.phases.length;
+ if(o.story)safe(()=>root.HisarSafak.complete(o.id,n,H.t),null);
  ST.done[o.id]=1;ST.stars[o.id]=Math.max(ST.stars[o.id]||0,n);const saved=store(ST);safe(()=>root.stopNav(),null);safe(()=>root.endGame(1,t+' '+'★'.repeat(n)+'☆'.repeat(3-n)),null);
  if(!saved)safe(()=>root.say('Görev tamamlandı; kayıt yazılamadı. Cihaz depolamasını kontrol et.',4),null);}
 function lose(t){if(!H)return;H.lost=true;safe(()=>root.stopNav(),null);safe(()=>root.endGame(0,t),null);}
 // ---------- görev kartı (oyunda) ----------
 function paint(){if(!card||!H)return;const o=H.op,[s,p,pr,sm,ol]=card.children;paintPhases(ol);const d=Math.round(dist(P,o.obj));s.textContent=o.tur+' · '+o.n.toLocaleUpperCase('tr-TR');
+ if(o.story){paintStory(p,pr,sm);return;}
  if(o.waves){const att=enemies().filter(e=>e.hk.role==='att').length;if(att){p.textContent=(H.wave+1)+'. dalga: '+att+' araç kapıya ilerliyor';pr.value=1-att/Math.max(1,H.waveLeft||att);}
   else{const nx=o.waves[H.wave+1];p.textContent=nx?'Mevzine gir · '+(H.wave+2)+'. dalga '+Math.max(0,Math.ceil(nx.at-H.waveT))+' sn':'Bölgeyi tut';pr.value=nx?H.waveT/nx.at:1;}
   sm.textContent='Dalga '+Math.max(0,H.wave+1)+'/'+o.waves.length+' · kapıya '+Math.round(dist(P,o.obj))+' m';}
@@ -187,8 +230,8 @@ function paintMenu(){const tg=doc.getElementById('tg'),bt=doc.getElementById('bt
  if(!box){box=el('div');box.id='hkCard';tg.insertBefore(box,seg.nextSibling);box.onclick=e=>{const b=e.target.closest('[data-op]');if(!b)return;ST.sel=b.dataset.op;store(ST);paintMenu();};}
  seg.dataset.m=ST.mode;for(const b of seg.children){const on=b.dataset.hm===ST.mode;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',String(on));}
  box.hidden=!picked();if(bt)bt.style.display=picked()?'none':'';if(!picked())return;
- box.replaceChildren();for(const o of OPS){const b=el('button','hk-op'+(o.id===ST.sel?' sel':''));b.type='button';b.dataset.op=o.id;b.setAttribute('aria-pressed',String(o.id===ST.sel));
-  const cv=el('canvas');cv.width=176;cv.height=176;previewDraw(cv,o);const tx=el('div','hk-tx');const top=el('div','hk-top');top.append(el('span','hk-tur',o.tur));if(ST.done[o.id])top.append(el('span','hk-st','★'.repeat(ST.stars[o.id]||1)+'☆'.repeat(3-(ST.stars[o.id]||1))));
+ box.replaceChildren();for(const o of menuOps){const b=el('button','hk-op'+(o.id===ST.sel?' sel':''));b.type='button';b.dataset.op=o.id;b.setAttribute('aria-pressed',String(o.id===ST.sel));
+  const cv=el('canvas');cv.width=176;cv.height=176;previewDraw(cv,o);const tx=el('div','hk-tx');const top=el('div','hk-top');top.append(el('span','hk-tur',o.story?'BÖLÜM '+o.chapter+' · '+o.tur:o.tur));if(ST.done[o.id])top.append(el('span','hk-st','★'.repeat(ST.stars[o.id]||1)+'☆'.repeat(3-(ST.stars[o.id]||1))));
   tx.append(top,el('b',null,o.n),el('p',null,o.emir),el('small',null,'Rota '+routeKm(o)));b.append(cv,tx);box.appendChild(b);}
  if(picked())safe(()=>{if(mis!==MODE&&!safe(()=>TUT.on,false))root.setG(MODE);},null);}
 function installUI(){if(!doc.body||card)return;const st=doc.createElement('style');st.id='hk-style';st.textContent=`
@@ -234,9 +277,9 @@ let briefOK=false,brief=null;
 function showBrief(){const o=op(),el=(t,c,x)=>{const e=doc.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};if(!brief){brief=el('section');brief.id='hk-brief';doc.body.appendChild(brief);}
  brief.replaceChildren();const head=el('header');head.append(el('span','hk-tur',o.tur),el('h2',null,'HAREKÂT EMRİ'),el('b',null,o.n));const cv=el('canvas');cv.width=cv.height=520;previewDraw(cv,o,true);
  const tx=el('div','hk-bt');const sec=(h,body)=>{const d=el('div','hk-bs');d.append(el('h3',null,h));if(typeof body==='string')d.append(el('p',null,body));else d.append(body);tx.append(d);};
- sec('DURUM','Düşman: '+forces(o)+'. Dost: tank takımın, iki piyade timi, Kirpi ve ACV-15.');sec('GÖREV',o.emir);const ol=el('ol');(o.phases||[]).forEach(q=>ol.append(el('li',null,q.n)));sec('İCRA',ol);
- sec('DESTEK','Telsizden T129 ATAK, Bayraktar TB2, F-16 ve T-155 Fırtına. İkmal başlangıç karakolunda. Rota '+routeKm(o)+(o.par?' · hedef süre '+Math.round(o.par/60)+' dk':'')+'.');
- const bar=el('div','hk-bb'),back=el('button','hk-back','Geri'),go=el('button','hk-go','GÖREVE ÇIK');back.type=go.type='button';back.onclick=()=>{brief.hidden=true;};
+ if(o.story)sec('ŞAFAK HATTI · BÖLÜM '+o.chapter,o.story);sec('DURUM','Düşman: '+forces(o)+'. Dost: tank takımın, iki piyade timi, Kirpi ve ACV-15.');sec('GÖREV',o.emir);const ol=el('ol');(o.phases||[]).forEach(q=>ol.append(el('li',null,q.n)));sec('İCRA',ol);
+ sec('DESTEK','Telsizden T129 ATAK, Bayraktar TB2, F-16 ve T-155 Fırtına. İkmal başlangıç karakolunda. Rota '+routeKm(o)+(o.par?' · hedef süre '+Math.round(o.par/60)+' dk':'')+'.');if(o.story)sec('DEĞERLENDİRME','Görev tamamlanması, en az %50 tank sağlığı ve '+(o.par?'hedef süre':'takımın korunması')+'.'+(o.escort?' Konvoy 110 m içinde kaldığında ilerler; yakın tehditte bekler.':''));
+ const bar=el('div','hk-bb'),back=el('button','hk-back','Geri'),go=el('button','hk-go','GÖREVE ÇIK');back.type=go.type='button';go.disabled=!!(doc.getElementById('go')&&doc.getElementById('go').disabled);back.onclick=()=>{brief.hidden=true;};
  go.onclick=()=>{brief.hidden=true;briefOK=true;safe(()=>doc.getElementById('go').click(),null);briefOK=false;};bar.append(back,go);
  const body=el('div','hk-bbody');body.append(cv,tx);brief.append(head,body,bar);brief.hidden=false;}
 function briefGuard(e){const g=e.target&&e.target.closest&&e.target.closest('#go');if(!g||briefOK||!picked())return;if(safe(()=>TUT.on,false))return;e.stopImmediatePropagation();e.preventDefault();showBrief();}
@@ -248,6 +291,8 @@ function drawMap(c,SX,SY,s){if(!H)return;const o=H.op;c.save();c.strokeStyle='#f
 function drawMini(){if(!H||typeof mmx==='undefined')return;const W=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W,Z=z=>((z-O.z)/MMR+.5)*W,o=H.op;let x=X(o.obj.x),y=Z(o.obj.z);const dx=x-W/2,dy=y-W/2,l=Math.hypot(dx,dy),m=W/2-7;if(l>m){x=W/2+dx/l*m;y=W/2+dy/l*m;}
  mmx.save();mmx.fillStyle='#ffc247';mmx.strokeStyle='#1d1000';mmx.lineWidth=1.5;mmx.beginPath();mmx.moveTo(x,y-6);mmx.lineTo(x+5,y);mmx.lineTo(x,y+6);mmx.lineTo(x-5,y);mmx.closePath();mmx.fill();mmx.stroke();mmx.restore();}
 function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t:'Görevi tamamla',r:'Görev emri telsizde.',w:'Görev tamamlandı'};},null);
+ wrap('pickTgt',old=>function(e,d){const t=old.apply(this,arguments),c=H&&H.convoy;if(!playing()||!c||!c.active||c.dead||!e.hk)return t;const dd=dist(e,c);if(dd<t.d&&safe(()=>root.los(e.x,hAt(e.x,e.z)+2,e.z,c.x,hAt(c.x,c.z)+1.8,c.z),true)){e.tg=c;return {x:c.x,z:c.z,d:dd,al:c};}return t;});
+ wrap('hitAl',old=>function(a,k){if(!a||!a.hkConvoy)return old.apply(this,arguments);if(!playing()||a.dead)return;a.hp=Math.max(0,a.hp-safe(()=>L.dmg,0)*k*.8);if(a.hp<=0)a.dead=true;});
  wrap('startMission',old=>function(){const r=old.apply(this,arguments);if(safe(()=>mis===MODE,false))begin();else cleanup();return r;});
  /* görevlerde düşman helikopteri ve dronu yok: muharebe yerde, tank topuyla */
  wrap('spawnHeli',old=>function(){if(playing())return;return old.apply(this,arguments);});wrap('spawnED',old=>function(){if(playing())return;return old.apply(this,arguments);});
@@ -261,11 +306,14 @@ function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t
  (root.MAPX=root.MAPX||[]).includes(drawMap)||root.MAPX.push(drawMap);
  if(!hooks.brief){hooks.brief=true;doc.addEventListener('click',briefGuard,true);}
  root.MAPVIEW_HK=()=>H?H.op:null;}
-function select(id,mode){if(mode)ST.mode=mode;if(id&&OPS.some(o=>o.id===id))ST.sel=id;store(ST);safe(()=>root.setG(ST.mode),null);paintMenu();return ST.sel;}
+function select(id,mode){if(mode)ST.mode=mode;if(id&&registered.has(id))ST.sel=id;store(ST);safe(()=>root.setG(ST.mode),null);paintMenu();return ST.sel;}
 function start(id){select(id,MODE);return safe(()=>{root.reset(typeof lvSel==='string'?lvSel:'normal');return !!H;},false);}
 function diagnostics(){const en=enemies();return {version:VERSION,hooks:{...hooks},mode:ST.mode,sel:ST.sel,done:{...ST.done},saveError,active:!!H,op:H?H.op.id:null,t:H?H.t:0,won:H?H.won:false,lost:H?H.lost:false,
  wave:H?H.wave:-1,cap:H?H.cap:0,ph:H?H.ph:0,stars:H?H.stars||0:0,best:{...ST.stars},depLeft:H?H.depLeft:null,batLeft:H?H.batLeft??null:null,hits:H?H.hits||0:0,inc:H&&H.inc?H.inc.length:0,shT:H?H.shT??null:null,enemies:en.map(e=>({type:e.type,role:e.hk.role,x:Math.round(e.x),z:Math.round(e.z),hp:Math.round(e.hp),post:e.hk.post?Math.round(dist(e,e.hk.post)):null,i:e.hk.i})),
+ chapter:H?H.op.chapter||null:null,phase:H&&H.op.phases[H.ph]?{...H.op.phases[H.ph]}:null,phaseT:H?H.phaseT||0:0,preparation:H?Math.max(0,(H.preparation||0)-H.t):0,convoy:H&&H.convoy?{x:H.convoy.x,z:H.convoy.z,hp:H.convoy.hp,mx:H.convoy.mx,active:H.convoy.active,dead:H.convoy.dead,delivered:H.convoy.delivered,wait:H.convoy.wait,modelReady:!!H.convoy.modelReady}:null,
  nav:safe(()=>NAV.on?{to:NAV.to.n,len:Math.round(NAV.len)}:null,null)};}
-root.HisarHarekat=Object.freeze({version:VERSION,core,start,select,picked,brief:()=>{showBrief();return !!brief&&!brief.hidden;},connect,diagnostics,step:dt=>step(dt)});
+function registerOperations(list){for(const o of list){if(!o||!o.id||!o.phases||!o.phases.length||registered.has(o.id))continue;registered.set(o.id,o);}ST=state(load());return list.length;}
+function showOperations(ids){const list=ids.map(id=>registered.get(id)).filter(Boolean);if(list.length)menuOps=list;paintMenu();return menuOps.map(o=>o.id);}
+root.HisarHarekat=Object.freeze({version:VERSION,core,start,select,picked,registerOperations,showOperations,repaint:paintMenu,brief:()=>{showBrief();return !!brief&&!brief.hidden;},connect,diagnostics,step:dt=>step(dt)});
 connect();installUI();doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});
 })(typeof window!=='undefined'?window:globalThis);

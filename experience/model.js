@@ -6,7 +6,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.0.0';
+const VERSION='1.0.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 // ---------- çekirdek ----------
@@ -75,5 +75,6 @@ function tick(){const c=safe(()=>CAM.position,null);if(!c||!PROPS.length)return;
  for(const k in by){const a=by[k];a.sort((p,q)=>p.d-q.d);for(let i=0;i<a.length&&i<a[i].max;i++){a[i].isHi=true;nh++;}}
  for(const p of PROPS){if(p.hi.visible!==p.isHi)p.hi.visible=p.isHi;if(p.lo.visible===p.isHi)p.lo.visible=!p.isHi;}stat.hi=nh;}
 function hook(){if(hooked||typeof FRAME_HOOKS==='undefined')return;hooked=true;FRAME_HOOKS.push(()=>safe(tick,null));}
-root.HisarModel=Object.freeze({version:VERSION,core,load,geometry,texture,material,cardMaterial,merge,prop,tick,props:()=>PROPS.map(p=>({key:p.key,hi:p.isHi,d:p.d})),diagnostics:()=>({version:VERSION,...stat})});
+function release(p){const i=PROPS.indexOf(p);if(i<0)return false;PROPS.splice(i,1);stat.props=PROPS.length;return true;}
+root.HisarModel=Object.freeze({version:VERSION,core,load,geometry,texture,material,cardMaterial,merge,prop,release,tick,props:()=>PROPS.map(p=>({key:p.key,hi:p.isHi,d:p.d})),diagnostics:()=>({version:VERSION,...stat})});
 })(typeof window!=='undefined'?window:globalThis);

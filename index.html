@@ -147,6 +147,7 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
 @media (prefers-reduced-motion:reduce){#spl .art,#spl i:after{animation:none}}
 </style>
 <link rel="stylesheet" href="experience/command-menu.css?v=112">
+<link rel="stylesheet" href="experience/modern.css?v=113">
 </head>
 <body>
 <div id="spl"><div class="art"></div><div class="tx"><h1>ÇELİK BÖRÜ</h1><small>GELİŞTİRİCİ · <b>EMİN KAAN BOYACI</b></small><small id="splV">YÜKLENİYOR</small><i></i></div></div>
@@ -3878,7 +3879,7 @@ function openProf(){const{cur,nx}=nextRank(),pf=nx?Math.min(100,(SV.xp-cur[0])/(
  prof.querySelector('[data-bk="open"]').onclick=()=>{box.hidden=false;ta.value='';ta.focus();msg.textContent=''};
  prof.querySelector('[data-bk="load"]').onclick=()=>{const r=restoreCode(ta.value);if(!r.ok){msg.textContent=r.msg;return}msg.textContent='Kayıt yüklendi, oyun yeniden açılıyor.';setTimeout(()=>location.reload(),700)}}
 // ---- kayıt yedeği: kayıt bir koda çevrilir; geri yüklerken iki kayıttan yüksek olan değerler alınır (ilerleme kaybolmaz)
-const BKEYS=['m60v2','celik-boru-savas-v1','celik-boru-harekat-v1'];
+const BKEYS=['m60v2','celik-boru-savas-v1','celik-boru-harekat-v1','celik-boru-safak-v1'];
 const b64e=t=>btoa(unescape(encodeURIComponent(t))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),b64d=t=>decodeURIComponent(escape(atob(t.replace(/-/g,'+').replace(/_/g,'/'))));
 const sumOf=t=>{let a=7;for(let i=0;i<t.length;i++)a=(a*31+t.charCodeAt(i))%65521;return a.toString(36)};
 function backupCode(){persist();const o={};for(const k of BKEYS){try{const v=JSON.parse(localStorage.getItem(k)||'null');if(v)o[k]=v}catch(e){}}const body=b64e(JSON.stringify(o));return'CB1.'+body+'.'+sumOf(body)}
@@ -4397,11 +4398,11 @@ const ldx=(k,d)=>{try{const j=JSON.parse(localStorage.getItem('m60v2')||'null');
 SV.musV=ldx('musV',40);SV.sfxV=ldx('sfxV',100);
 const mf=m=>440*Math.pow(2,(m-69)/12),RN=Math.random;
 // ---------------- MUZIK MOTORU ----------------
-const BPM=96,BEAT=60/BPM,S16=BEAT/4,BAR=BEAT*4;
+const BPM=76,BEAT=60/BPM,S16=BEAT/4,BAR=BEAT*4;
 const CH=[[50,53,57],[50,53,57],[46,50,53],[48,52,55],[50,53,57],[46,50,53],[43,46,50],[45,49,52]];// Dm Dm Bb C Dm Bb Gm A
 const ROOT=[38,38,34,36,38,34,31,33];
 const MOT=[[0,62],[2,65],[4,69],[6,67],[8,65],[10,64],[12,62],[14,57]];// iki olculuk motif (16'lik adim, nota)
-let M=null,step=0,nextT=0,I=.15,It=.15,lastCombat=-99,fan=0;
+let modernMix=.42;let M=null,step=0,nextT=0,I=.15,It=.15,lastCombat=-99,fan=0;
 function build(){if(M||typeof AC==='undefined'||!AC)return;try{
  const out=AC.createGain();out.gain.value=0;out.connect(AC.destination);
  const dl=AC.createDelay(1);dl.delayTime.value=BEAT*.75;const fb=AC.createGain();fb.gain.value=.32;const dlg=AC.createGain();dlg.gain.value=.35;dl.connect(fb);fb.connect(dl);dl.connect(dlg);dlg.connect(out);
@@ -4415,18 +4416,18 @@ function kick(t,v){const o=AC.createOscillator(),g=AC.createGain();o.frequency.s
 function snare(t,v){noise(t,.16,v,M.L.drum,'highpass',1400);osc('triangle',190,t,.09,v*.5,M.L.drum)}
 function taiko(t,v){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(55,t+.35);o.connect(g);g.connect(M.L.taiko);env(g,t,.003,v,.7);o.start(t);o.stop(t+.75);noise(t,.05,v*.3,M.L.taiko,'lowpass',900)}
 function sched(s,t){const bar=(s>>4)%8,st=s%16,ch=CH[bar];
- if(st===0){for(const n of ch){for(const dt of[-6,6]){const o=osc('sawtooth',mf(n),t,BAR*1.02,.045,M.L.pad,900,.7);o.detune.value=dt}}osc('sine',mf(ROOT[bar]),t,BAR,.09,M.L.pad,300,.4)}
+ if(st===0){for(const n of ch){for(const dt of[-6,6]){const o=osc('triangle',mf(n),t,BAR*1.02,.045,M.L.pad,900,.7);o.detune.value=dt}}osc('sine',mf(ROOT[bar]),t,BAR,.09,M.L.pad,300,.4)}
  if(st%2===0){const p=[0,1,2,1,0,2,1,2][(st/2)|0];osc('triangle',mf(ch[p]+12),t,.34,.07,M.L.arp,2600)}
- if(st%2===0){const oc=(st===6||st===14)?12:0;osc('sawtooth',mf(ROOT[bar]+oc),t,.22,.16,M.L.bass,340)}
+ if(st%2===0){const oc=(st===6||st===14)?12:0;osc('sine',mf(ROOT[bar]+oc),t,.22,.16,M.L.bass,340)}
  noise(t,.03,st%4===2?.05:.025,M.L.bass,'highpass',7500);
  if(st===0||st===8||st===10)kick(t,.5);if(st===4||st===12)snare(t,.32);else if(st%2===1&&RN()<.35)snare(t,.07);
  if(st===0||st===6||(bar%2===1&&st===12))taiko(t,.45);
- if(bar%2===0){const q=MOT.find(q=>q[0]===st);if(q){osc('sawtooth',mf(q[1]),t,S16*2.6,.06,M.L.brass,1500,.02);osc('square',mf(q[1]-12),t,S16*2.6,.03,M.L.brass,900,.02)}}}
+ if(bar%2===0){const q=MOT.find(q=>q[0]===st);if(q){osc('triangle',mf(q[1]),t,S16*2.6,.06,M.L.brass,1500,.02);osc('sine',mf(q[1]-12),t,S16*2.6,.03,M.L.brass,900,.02)}}}
 // zafer / yenilgi
 function sting(ok){build();if(!M)return;const t=AC.currentTime+.05,dst=M.L.sting;
- if(ok){[62,66,69,74].forEach((n,i)=>{osc('sawtooth',mf(n),t+i*.16,i===3?1.6:.3,.09,dst,2200,.01);osc('square',mf(n-12),t+i*.16,i===3?1.6:.3,.04,dst,1200,.01)});kick(t,.6);kick(t+.64,.6)}
+ if(ok){[62,66,69,74].forEach((n,i)=>{osc('triangle',mf(n),t+i*.16,i===3?1.6:.3,.09,dst,2200,.01);osc('square',mf(n-12),t+i*.16,i===3?1.6:.3,.04,dst,1200,.01)});kick(t,.6);kick(t+.64,.6)}
  else{[50,53,57].forEach(n=>osc('sawtooth',mf(n-12),t,2.6,.06,dst,500,.5));taiko(t,.6);taiko(t+.9,.4)}fan=performance.now()+3500}
-window.MUSIC={sting,get I(){return I}};
+window.MUSIC={sting,mix:v=>{modernMix=Math.max(0,Math.min(1,+v||0))},get I(){return I},style:'safak-ambient'};
 // yogunluk: catisma olaylari
 const _f=window.fire;window.fire=function(){const n0=shells.length;const r=_f.apply(this,arguments);if(shells.length>n0)lastCombat=performance.now();return r};
 const _h=window.hitP;window.hitP=function(){lastCombat=performance.now();return _h.apply(this,arguments)};
@@ -4439,7 +4440,7 @@ setInterval(()=>{if(!M){if(typeof AC!=='undefined'&&AC&&AC.state==='running')bui
  It=tg;I+=(It-I)*.06;
  const L=M.L,T=AC.currentTime,c=(v)=>Math.max(0,Math.min(1,v));
  L.pad.gain.setTargetAtTime(.55,T,.5);L.arp.gain.setTargetAtTime(c(1.1-I)*.8+.1,T,.5);L.bass.gain.setTargetAtTime(c((I-.25)*2.2),T,.5);L.drum.gain.setTargetAtTime(c((I-.5)*2.4),T,.4);L.taiko.gain.setTargetAtTime(c((I-.7)*3.3),T,.4);L.brass.gain.setTargetAtTime(c((I-.8)*5),T,.5);
- const duck=(window.CREW&&CREW.busy)?.5:1,fanOn=now<fan?.25:1,vol=sndOn?SV.musV/100:0;M.out.gain.setTargetAtTime(.5*vol*duck*fanOn*(game==='pause'?.6:1),T,.25);
+ const duck=(window.CREW&&CREW.busy)?.5:1,fanOn=now<fan?.25:1,vol=sndOn?SV.musV/100:0;M.out.gain.setTargetAtTime(.5*modernMix*vol*duck*fanOn*(game==='pause'?.6:1),T,.25);
  if(vol<=0){nextT=T+.1;return}
  while(nextT<T+.16){if(nextT<T-.05)nextT=T+.02;sched(step,nextT);nextT+=S16;step=(step+1)%128}},30);
 // ilk dokunusta ses motorunu ac (menude de muzik calsin)
@@ -4605,7 +4606,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=112,LOGO=window.HISAR_LOGO;
+const VER=113,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7446,14 +7447,16 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script src="experience/swarm.js?v=4"></script>
 <script src="experience/realism.js?v=4"></script>
 <script src="experience/sinir.js?v=9"></script>
-<script src="experience/harekat.js?v=110"></script>
+<script src="experience/harekat.js?v=113"></script>
 <script src="experience/atis.js?v=2"></script>
 <script src="experience/harita.js?v=3"></script>
 <script src="experience/carpisma.js?v=3"></script>
 <script src="experience/koy.js?v=4"></script>
 <script src="experience/destek.js?v=4"></script>
 <script src="experience/menu.js?v=110"></script>
-<script src="experience/arazi.js?v=3"></script><script src="experience/ortam.js?v=1"></script><script src="experience/model.js?v=1"></script><script src="experience/sivil.js?v=5"></script><script src="experience/cevre.js?v=1"></script><script src="experience/mahalle.js?v=1"></script><script src="experience/militan.js?v=1"></script><script src="experience/agac.js?v=1"></script><script src="experience/hat.js?v=1"></script><script src="experience/ejderha.js?v=1"></script>
+<script src="experience/arazi.js?v=3"></script><script src="experience/ortam.js?v=1"></script><script src="experience/model.js?v=113"></script><script src="experience/sivil.js?v=5"></script><script src="experience/cevre.js?v=1"></script><script src="experience/mahalle.js?v=1"></script><script src="experience/militan.js?v=1"></script><script src="experience/agac.js?v=1"></script><script src="experience/hat.js?v=1"></script><script src="experience/ejderha.js?v=1"></script>
 <script defer src="experience/command-menu.js?v=112"></script>
+<script defer src="experience/safak.js?v=113"></script>
+<script defer src="experience/modern.js?v=113"></script>
 </body>
 </html>

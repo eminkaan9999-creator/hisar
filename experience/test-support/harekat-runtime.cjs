@@ -31,6 +31,7 @@ function runtime(options={}){
   sndBoom:(x,z)=>events.push({kind:'shot',x,z}),bigBoom:(x,z)=>events.push({kind:'impact',x,z}),
   startNav(t){c.NAV={on:true,to:t,len:Math.hypot(c.P.x-t.x,c.P.z-t.z)};},stopNav(){c.NAV.on=false;},
   startMission(){},stagePending:()=>false,spotted:()=>false,eshot(){},
+  pickTgt:(e,d)=>({x:c.P.x,z:c.P.z,d,al:null}),hitAl(a,k){a.hp-=k;},
   spawnHeli(){c.HELI.push({});},spawnED(){c.ED.push({});},
   openMenu(){if(c.game==='play')c.game='pause';},
   endGame(ok,text){if(c.game!=='play')return;c.game='over';events.push({kind:'end',ok,text});c.openMenu();},
@@ -40,6 +41,7 @@ function runtime(options={}){
  c.window=c;vm.createContext(c);
  const source=options.source||missionSource;
  vm.runInContext(source,c,{filename:'experience/harekat.js'});
+ if(options.campaign)vm.runInContext(production('experience/safak.js'),c,{filename:'experience/safak.js'});
  doc.body={classList:{add(){},remove(){}}};
  return {c,data,events,writes,hk:c.HisarHarekat,doc,
   start(id){return c.HisarHarekat.start(id);},

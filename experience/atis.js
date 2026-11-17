@@ -59,7 +59,7 @@ function casStep(dt){if(!cas)return;const o=cas.o,L=cas.list;for(let i=L.length-
  for(let i=0;i<L.length;i++){const c=L[i];o.position.set(c.x,c.y,c.z);o.rotation.set(0,c.r,c.r*.3);o.updateMatrix();cas.m.setMatrixAt(i,o.matrix);}cas.m.count=L.length;cas.m.instanceMatrix.needsUpdate=true;stat.live=L.length;}
 function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')return;root[name]=factory(root[name]);hooks[name]=true;}
 function connect(){
- wrap('fire',old=>function(){const n0=safe(()=>shells.length,0);const r=old.apply(this,arguments);if(safe(()=>mode==='tank'&&!(root.AA&&AA.on)&&shells.length>n0,false))safe(gunBlast,null);return r;});
+ wrap('fire',old=>function(){if(root.__tfFireTrace)root.__tfFireTrace.push('atis');const n0=safe(()=>shells.length,0);const r=old.apply(this,arguments);if(safe(()=>mode==='tank'&&!(root.AA&&AA.on)&&shells.length>n0,false))safe(gunBlast,null);return r;});
  wrap('update',old=>function(dt){const r=old.apply(this,arguments);const d=clamp(+dt||0,0,.1);
   safe(()=>{rockStep(rock,d);rockStep(roll,d);if(Math.abs(rock.a)>1e-4&&P.g)P.g.rotation.x+=rock.a;if(Math.abs(roll.a)>1e-4&&P.g)P.g.rotation.z+=roll.a;},null);
   safe(()=>{const a=root.AA&&AA.ammo;if(typeof a==='number'){if(aaAmmo!=null&&a<aaAmmo)ejectAA(Math.min(4,aaAmmo-a));aaAmmo=a;}},null);safe(()=>casStep(d),null);return r;});

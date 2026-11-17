@@ -19,7 +19,7 @@ function wrap(name,f){if(hooks[name]||typeof root[name]!=='function')return;root
 function clear(){ttl=0;lastHit=null;if(impact)impact.hidden=true;if(condition)condition.hidden=true;safe(()=>{resetMotion(SUSP);SUSP.lx=P.x;SUSP.lz=P.z;SUSP.lh=P.h;},null);}
 function connect(){
  wrap('reset',old=>function(){const r=old.apply(this,arguments);clear();return r;});
- wrap('fire',old=>function(){const before=safe(()=>mode==='tank'&&game==='play'?TA[st]:null,null),r=old.apply(this,arguments);if(before!=null&&safe(()=>TA[st]<before,false)){safe(()=>impulse(SUSP),null);stat.shots++;}return r;});
+ wrap('fire',old=>function(){if(root.__tfFireTrace)root.__tfFireTrace.push('tank-feel');const before=safe(()=>mode==='tank'&&game==='play'?TA[st]:null,null),r=old.apply(this,arguments);if(before!=null&&safe(()=>TA[st]<before,false)){safe(()=>impulse(SUSP),null);stat.shots++;}return r;});
  wrap('eshot',old=>function(e){const n=safe(()=>ebul.length,0),r=old.apply(this,arguments);safe(()=>{if(ebul.length>n&&Number.isFinite(e.x)&&Number.isFinite(e.z))ebul[ebul.length-1].hitSource={x:e.x,z:e.z};},null);return r;});
  wrap('hitP',old=>function(k,p,source){const before=safe(()=>P.hp,0),r=old.apply(this,arguments),lost=before-safe(()=>P.hp,before);if(lost>0){lastHit={damage:Math.round(lost),sector:safe(()=>hitSector(P,source||p),null)};ttl=3;stat.hits++;draw();}return r;});
 }

@@ -53,7 +53,7 @@ function stepBombs(items,dt){const live=[];for(const b of items){if(!b?.m?.posit
  if(!b.done)live.push(b);
  }return live;}
 function installHooks(){patchVoices();
- wrap('fire',old=>function(){const s=watch();if(s.drone&&opts.balancedDrops){const reason=canDrop(s);if(reason){const texts={empty:'Bomba kalmadı · tanka dönerek ikmal yap.',cooldown:'Bırakma mekanizması hazırlanıyor.',busy:'Havadaki bombaların tamamlanmasını bekle.','not-ready':'Uçangöz uçuşa hazır değil.',paused:'Oyun duraklatıldı.'};announce(texts[reason]);return false;}}
+ wrap('fire',old=>function(){if(root.__tfFireTrace)root.__tfFireTrace.push('gameplay');const s=watch();if(s.drone&&opts.balancedDrops){const reason=canDrop(s);if(reason){const texts={empty:'Bomba kalmadı · tanka dönerek ikmal yap.',cooldown:'Bırakma mekanizması hazırlanıyor.',busy:'Havadaki bombaların tamamlanmasını bekle.','not-ready':'Uçangöz uçuşa hazır değil.',paused:'Oyun duraklatıldı.'};announce(texts[reason]);return false;}}
  const before=safe(()=>shells.length,0),n=safe(()=>bombs.length,0);const result=old.apply(this,arguments);
  const added=safe(()=>bombs.slice(n),[]);if(added.length){stats.drops+=added.length;stats.shots+=added.length;dropAt=sim+.65;for(const b of added)if(opts.balancedDrops)b.hg={vx:velocity.x,vz:velocity.z,age:0};announce('Bomba bırakıldı · '+safe(()=>ammo,0)+' kaldı');}
  else if(safe(()=>shells.length,0)>before)stats.shots++;

@@ -844,7 +844,7 @@ function sw(){
  if(mode==='tank'){if(!DR.on){let nb=100;if(dk&&chg>=25){nb=chg;dk=0}else if(DC>0){DC--}else{say(dk?'Uçangöz şarj oluyor: %'+Math.round(chg):'Uçangöz kalmadı! İkmal aracına git',2.5);return}DR.rt=0;DR.kz=0;DR.lbw=0;DR.on=true;DR.hp=60*(1+.25*SV.U.dar);DR.x=P.x-Math.sin(P.h)*DOCKD;DR.z=P.z-Math.cos(P.h)*DOCKD;DR.y=hAt(P.x,P.z)+1.95;DR.ty=45+hAt(DR.x,DR.z);DR.sp=0;DR.ti=[0,0];DR.bat=nb;DR.fall=0;DR.sig=1;DR.th=0;DR.g.visible=true;shadow.visible=true}iv=0;mode='drone';pitch=.55;say('UÇANGÖZ kontrolü',1.2)}
  else{mode='tank';pitch=.3;say('TANK kontrolü',1.2)}
 }
-function fire(){
+function fire(){if(window.__tfFireTrace)window.__tfFireTrace.push('native');
  if(game==='menu'||game==='over'||game==='pause')return;
  if(mode==='tank'){
   if(cd>0)return;const T=SH[st];if(TA[st]<=0){say('Bu mermi bitti! 1-2-3 ile değiştir ya da ikmal aracına git',1.8);cd=.5;return}TA[st]--;cd=T.cd*(L.rl||1)*(L.cd?1:.8)*(1-.1*SV.U.gun);let a=P.th,best=L.cone*(1+.25*SV.U.fcs),tgt=null;
@@ -857,6 +857,10 @@ function fire(){
  }
 }
 const EBG=new THREE.SphereGeometry(.35,8,6),EBM1=new THREE.MeshBasicMaterial({color:0xffa030}),EBM2=new THREE.MeshBasicMaterial({color:0xff4040});EBG.userData.sh=true; // ortak: silinmez
+function fireEnemyAt(e,tg){
+ const count=ebul.length;eshot(e,tg.x,hAt(tg.x,tg.z)+1.6,tg.z,e.bs||38,tg.al?'ally':'tank');
+ if(ebul.length<=count)return null;const b=ebul[ebul.length-1];if(tg.al)b.al=tg.al;return b;
+}
 function eshot(e,tx,ty,tz,sp,tgt){
  const a=L.cone*18*(e.fr?.5+Math.hypot(tx-e.x,tz-e.z)/120:1),x=e.x,y=hAt(e.x,e.z)+2,z=e.z,dx=tx-x+rnd(-a,a),dy=ty-y+rnd(-a,a)*.5,dz=tz-z+rnd(-a,a),l=Math.hypot(dx,dy,dz)||1;
  const m=new THREE.Mesh(EBG,tgt==='drone'?EBM2:EBM1);m.position.set(x,y,z);S.add(m);
@@ -907,7 +911,7 @@ function update(dt){
   if(e.cd<=0){
    if(e.type==='aa'){if(DR.on&&mode==='drone'&&Math.hypot(DR.x-e.x,DR.z-e.z)<(e.hkFireRange||95)){eshot(e,DR.x,DR.y,DR.z,55,'drone');e.cd=L.cd*.9}else e.cd=.5}
    else if(e.type==='arty'){if(d<(e.hkFireRange||170)&&d>25&&!smoked(P.x,P.z)){artyShot(e);e.cd=L.cd*3+rnd(3,6)}else e.cd=1}
-   else{const tg=pickTgt(e,d);if(tg.d<(e.hkFireRange||(e.type==='bunker'?75:e.type==='inf'?(e.at?115:50):e.type==='mgn'?60:e.fr||70))&&!smoked(tg.x,tg.z)&&!(e.fl>0)&&(!e.cvr||e.pk)){eshot(e,tg.x,hAt(tg.x,tg.z)+1.6,tg.z,e.bs||38,tg.al?'ally':'tank');if(tg.al)ebul[ebul.length-1].al=tg.al;e.cd=L.cd*rnd(1,1.6)*(e.type==='inf'?(e.at?4.2:1.8):e.type==='mgn'?.5:1)}else e.cd=.5}}
+   else{const tg=pickTgt(e,d);if(tg.d<(e.hkFireRange||(e.type==='bunker'?75:e.type==='inf'?(e.at?115:50):e.type==='mgn'?60:e.fr||70))&&!smoked(tg.x,tg.z)&&!(e.fl>0)&&(!e.cvr||e.pk)){fireEnemyAt(e,tg);e.cd=L.cd*rnd(1,1.6)*(e.type==='inf'?(e.at?4.2:1.8):e.type==='mgn'?.5:1)}else e.cd=.5}}
  }
  // mermiler
  for(const s of shells){const q=s.m.position,ns=Math.max(1,Math.ceil(Math.hypot(s.vx,s.vy,s.vz)*dt/2)),sd=dt/ns;s.life-=dt; // küçük adımlar: hızlı mermi hedefin içinden geçmesin
@@ -2482,7 +2486,7 @@ addEventListener('keydown',e=>{if(game!=='play'||mode!=='tank'||iv!==1||e.repeat
  if(k==='y'){act('m');e.stopImmediatePropagation()}else if(k==='u'){act('pol');e.stopImmediatePropagation()}else if(k==='i'){act('fv');e.stopImmediatePropagation()}else if(k==='l'){lase();e.stopImmediatePropagation()}},true);
 // ---- XM21: taze lazer mesafesi varsa serbest atislara ilave yukselis (hedef kilidi yoksa)
 const _fire=window.fire;
-window.fire=function(){const n0=shells.length,el=gel();_fire.apply(this,arguments);
+window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-1');const n0=shells.length,el=gel();_fire.apply(this,arguments);
  if(mode!=='tank'||shells.length<=n0)return;const s=shells[shells.length-1],L=window.LAS;if(cd>0)SGT.cdMax=Math.max(.3,cd);
  if(!L||!(L.d>0)||performance.now()-L.t>20000)return;const vh=Math.hypot(s.vx,s.vz),V=Math.hypot(vh,s.vy);
  if(Math.abs(vh-V*Math.cos(el))>.5)return;                      // nisan kilidi zaten duzeltti
@@ -2617,7 +2621,7 @@ addEventListener('pointerup',e=>{if(e.pointerType==='mouse')AA.hold=0},true);
 addEventListener('pointermove',e=>{if(window.WHEEL&&WHEEL.open)return;if(!AA.on||game!=='play'||mode!=='tank'||window.mapOpen)return;
  if(document.pointerLockElement===cv){AA.yaw-=e.movementX*.0028;AA.el=clamp(AA.el-e.movementY*.0028,-.26,1.05);e.stopImmediatePropagation();e.stopPropagation()}
  else if(e.pointerId===lid){AA.yaw-=(e.clientX-lp.x)*.0042;AA.el=clamp(AA.el-(e.clientY-lp.y)*.0036,-.26,1.05);lp={x:e.clientX,y:e.clientY};e.stopImmediatePropagation();e.stopPropagation()}},true);
-const _fire=window.fire;window.fire=function(){if(AA.on&&mode==='tank'){AA.trig=now();return}return _fire.apply(this,arguments)};
+const _fire=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-2');if(AA.on&&mode==='tank'){AA.trig=now();return}return _fire.apply(this,arguments)};
 const _sw=window.sw;window.sw=function(){if(AA.on)setAA(0);return _sw.apply(this,arguments)};
 const _cyc=window.cycleView;window.cycleView=function(){if(AA.on){setAA(0);return}return _cyc.apply(this,arguments)};
 // kule ve top AA modunda sabit
@@ -2953,7 +2957,7 @@ const stt=()=>TK[SV.tank||'m60'].st;
 const _ie=window.initExtra;window.initExtra=function(){_ie.apply(this,arguments);const s=stt();P.mx*=s.arm;P.hp=P.mx};
 const _up=window.update;window.update=function(dt){const s=stt();if(s.spd===1)return _up(dt);const e0=SV.U.eng;SV.U.eng=(s.spd*(1+.07*e0)-1)/.07;try{_up(dt)}finally{SV.U.eng=e0}};
 const _imp=window.impact;window.impact=function(){const s=stt();if(s.dmg===1)return _imp.apply(this,arguments);const d0=SV.U.dmg;SV.U.dmg=(s.dmg*(1+.1*d0)-1)/.1;try{return _imp.apply(this,arguments)}finally{SV.U.dmg=d0}};
-const _fi=window.fire;window.fire=function(){const c0=cd;const r=_fi.apply(this,arguments);if(mode==='tank'&&cd>c0+.05&&!(window.AA&&AA.on))cd*=stt().rel;return r};
+const _fi=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-3');const c0=cd;const r=_fi.apply(this,arguments);if(mode==='tank'&&cd>c0+.05&&!(window.AA&&AA.on))cd*=stt().rel;return r};
 // ---------- GALERI arayuzu ----------
 if(!SV.tanks)SV.tanks=['m60'];if(!SV.tank)SV.tank='m60';
 document.head.insertAdjacentHTML('beforeend','<style>'+
@@ -3094,7 +3098,7 @@ window.boom=function(x,y,z,r){const k=r/4;FI.emit(x,y,z,0,0,0,.18,r*.6,r*1.5,0xf
 // atis: namlu efekti, govde sallanmasi, yer tozu, kabinde kovan
 P.rock=0;P.rockV=0;
 const _fire=window.fire;
-window.fire=function(){const n0=shells.length,b0=bombs.length;const r=_fire.apply(this,arguments);
+window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-4');const n0=shells.length,b0=bombs.length;const r=_fire.apply(this,arguments);
  if(mode==='tank'&&shells.length>n0){const s=shells[shells.length-1],p=s.m.position,l=Math.hypot(s.vx,s.vy,s.vz)||1;const mk_=window.MZK||1;FX.muzzle(p.x,p.y,p.z,s.vx/l,s.vy/l,s.vz/l,mk_);if(mk_>=1)FX.groundBlast(P.x+Math.sin(P.th)*5,P.z+Math.cos(P.th)*5,P.th,1);
   P.rockV-=1.1*mk_;s.fx=1;s.d0={x:P.x,z:P.z};if(iv===2||iv===3)casing();if(window.HAP)HAP(35)}
  return r};
@@ -3765,14 +3769,14 @@ FRAME_HOOKS.push(dr=>{if(game!=='play'||mode!=='tank')return;const now=performan
  if(!le)lastLock=null;
  // dolum tamam
  if(cd0>0&&cd<=0&&now-firedAt<8&&!(window.AA&&AA.on))CREW.say(TA[st]>0?'Yüklendi! '+['APDS','HEAT','WP','HEP'][st]+' hazır.':'Bu mermi bitti!',1,'rl',1.5);cd0=cd});
-const _fire=window.fire;window.fire=function(){const n0=shells.length;const r=_fire.apply(this,arguments);if(mode==='tank'&&shells.length>n0){firedAt=performance.now()/1000;CREW.say('Atış!',2,'fire',1)}return r};
+const _fire=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-5');const n0=shells.length;const r=_fire.apply(this,arguments);if(mode==='tank'&&shells.length>n0){firedAt=performance.now()/1000;CREW.say('Atış!',2,'fire',1)}return r};
 const _k=window.killE;window.killE=function(e){const was=e&&E.includes(e);const r=_k.apply(this,arguments);if(was&&!E.includes(e)&&!e.nc){if(performance.now()-radioT<400){HAP([20,30,40]);return r}const t=e.type==='inf'?['Piyade düştü.','Asker etkisiz.'][Math.random()*2|0]:['Hedef imha edildi!','Tam isabet, hedef yanıyor!','Vurduk! Hedef imha.'][Math.random()*3|0];CREW.say(t,1,'kill',2.5);HAP([20,30,40])}return r};
 const _hp=window.hitP;window.hitP=function(k,p){const h0=P.hp;const r=_hp.apply(this,arguments);if(P.hp<h0){HAP([70,40,90]);if(P.hp<P.mx*.3)CREW.say('Zırh kritik! Siper alın!',2,'crit',8);else CREW.say(['Vurulduk!','İsabet aldık!','Darbe aldık, devam!'][Math.random()*3|0],2,'hit',4)}return r};
 if(window.spawnHeli){const _sh=window.spawnHeli;window.spawnHeli=function(){const r=_sh.apply(this,arguments);const h=HELI[HELI.length-1];if(h)setTimeout(()=>CREW.say('Helikopter! Saat '+clock(h.x,h.z)+'! Uçaksavara geç!',2,'heli',6),400);return r}}
 const _sw=window.sw;window.sw=function(){const m0=mode,on0=DR.on;const r=_sw.apply(this,arguments);if(m0==='tank'&&mode==='drone'&&!on0)CREW.say('Uçangöz havada.',1,'dr',4);return r};
 // ---------- MERMI KAMERASI ----------
 const BC={on:0,s:null,t:0,after:0,ts:.32,last:-99,p:new THREE.Vector3(),lk:new THREE.Vector3(),init:0,hp:null};window.BCAM=BC;
-const _f2=window.fire;window.fire=function(){const n0=shells.length;const r=_f2.apply(this,arguments);
+const _f2=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-6');const n0=shells.length;const r=_f2.apply(this,arguments);
  if(SV.bcam&&mode==='tank'&&shells.length>n0&&iv!==2&&iv!==3&&!(window.AA&&AA.on)&&!BC.on){const le=typeof lockE!=='undefined'?lockE:null,now=performance.now()/1000;
   if(le&&E.includes(le)&&Math.hypot(le.x-P.x,le.z-P.z)>140&&now-BC.last>14&&SH[st]&&st!==2){BC.on=1;BC.live=0;BC.s=shells[shells.length-1];BC.p0=BC.s.m.position.clone();setTimeout(()=>{if(BC.on)say('🎥 MERMİ KAMERASI · dokun: geç',1.2)},250);BC.t=0;BC.after=0;BC.endT=0;BC.t0=performance.now();BC.last=now;BC.init=0;BC.e=le;BC.iv=iv;iv=0}}
  return r};
@@ -3855,7 +3859,7 @@ function nextMed(){const m=mq.shift();if(!m){mBusy=0;return}mBusy=1;mt.innerHTML
 function grant(id){if(SV.med[id])return;const m=MED.find(q=>q.id===id);if(!m)return;SV.med[id]=Date.now();SV.kr+=m.kr;if(ST)ST.meds.push(m);persist();showMed(m)}
 window.grantMedal=grant;
 // ---- olay kancalari
-const _fire=window.fire;window.fire=function(){const n0=shells.length;const r=_fire.apply(this,arguments);if(mode==='tank'&&shells.length>n0){ST.shots++;SV.tot.shots++;const s=shells[shells.length-1];if(!s.d0)s.d0={x:P.x,z:P.z}}return r};
+const _fire=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-7');const n0=shells.length;const r=_fire.apply(this,arguments);if(mode==='tank'&&shells.length>n0){ST.shots++;SV.tot.shots++;const s=shells[shells.length-1];if(!s.d0)s.d0={x:P.x,z:P.z}}return r};
 const _imp=window.impact;window.impact=function(s,x,y,z,e){if(e&&s&&!s.cnt){s.cnt=1;ST.hits++;SV.tot.hits++;const d=s.d0?Math.hypot(x-s.d0.x,z-s.d0.z):0;if(d>ST.longest)ST.longest=d;if(d>SV.tot.longest)SV.tot.longest=Math.round(d);if(d>=200)grant('kes')}return _imp.apply(this,arguments)};
 const _k=window.killE;window.killE=function(e){const was=e&&E.includes(e);const r=_k.apply(this,arguments);
  if(was&&!E.includes(e)&&game==='play'&&!e.nc){ST.kills++;SV.tot.all++;if(e.type==='tank')SV.tot.tk++;if(e.type==='inf')SV.tot.inf++;if(mode==='drone')SV.tot.drn++;
@@ -4261,7 +4265,7 @@ const TE=document.createElement('div');TE.id='tutEnd';document.body.appendChild(
 const TUT={on:0,i:0};window.TUT=TUT;
 // olcumler
 const M={drv:0,turn:0,look:0,shots:0,kills:0,dfly:0,t:0,lockT:0,noT:0};let lp={x:0,z:0,h:0,y:0},ldr={x:0,z:0};
-const _f=window.fire;window.fire=function(){const n0=shells.length,b0=bombs.length;const r=_f.apply(this,arguments);if(shells.length>n0||bombs.length>b0)M.shots++;return r};
+const _f=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-8');const n0=shells.length,b0=bombs.length;const r=_f.apply(this,arguments);if(shells.length>n0||bombs.length>b0)M.shots++;return r};
 const _k=window.killE;window.killE=function(e){const was=e&&E.includes(e);const r=_k.apply(this,arguments);if(was&&!E.includes(e))M.kills++;return r};
 const ctxBtn=k=>document.querySelector(k==='smk'?'#ctx [data-k^="smk"]':'#ctx [data-k="'+k+'"]');
 // adimlar: id, tx (dokunmatik), kx (klavye), hl (vurgulanacak oge), ok (tamam kosulu), on (gosterim kosulu)
@@ -4456,7 +4460,7 @@ function sting(ok){build();if(!M)return;const t=AC.currentTime+.05,dst=M.L.sting
  else{[50,53,57].forEach(n=>osc('sawtooth',mf(n-12),t,2.6,.06,dst,500,.5));taiko(t,.6);taiko(t+.9,.4)}fan=performance.now()+3500}
 window.MUSIC={sting,mix:v=>{modernMix=Math.max(0,Math.min(1,+v||0))},get I(){return I},style:'safak-ambient'};
 // yogunluk: catisma olaylari
-const _f=window.fire;window.fire=function(){const n0=shells.length;const r=_f.apply(this,arguments);if(shells.length>n0)lastCombat=performance.now();return r};
+const _f=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-9');const n0=shells.length;const r=_f.apply(this,arguments);if(shells.length>n0)lastCombat=performance.now();return r};
 const _h=window.hitP;window.hitP=function(){lastCombat=performance.now();return _h.apply(this,arguments)};
 const _eg=window.endGame;window.endGame=function(ok){const was=game==='play';const r=_eg.apply(this,arguments);if(was)sting(!!ok);return r};
 // eski basit muzigi kapat
@@ -4492,7 +4496,7 @@ if(window.CREW){const say0=CREW.say.bind(CREW),pick=a=>a[(RN()*a.length)|0];
  // iska geri bildirimi: hedefe kilitliyken yere dusen mermi
  const _imp=window.impact;window.impact=function(s,x,y,z,e){const r=_imp.apply(this,arguments);try{if(!e&&s&&s.lk&&E.includes(s.lk)&&mode==='tank'&&!s._ms){s._ms=1;const dT=Math.hypot(s.lk.x-(s.d0?s.d0.x:P.x),s.lk.z-(s.d0?s.d0.z:P.z)),dI=Math.hypot(x-(s.d0?s.d0.x:P.x),z-(s.d0?s.d0.z:P.z));
    CREW.say(dI<dT-8?pick(['Kısa düştü!','Kısa! Biraz yükselt.','Önüne düştü!']):dI>dT+8?pick(['Uzun gitti!','Üstünden geçti!','Uzun! Biraz indir.']):pick(['Iska! Yandan geçti.','Kaçtı, tekrar!']),1,'miss',3)}}catch(_){}return r};
- const _fi=window.fire;window.fire=function(){const n0=shells.length;const r=_fi.apply(this,arguments);if(shells.length>n0&&typeof lockE!=='undefined'&&lockE)shells[shells.length-1].lk=lockE;return r};
+ const _fi=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-10');const n0=shells.length;const r=_fi.apply(this,arguments);if(shells.length>n0&&typeof lockE!=='undefined'&&lockE)shells[shells.length-1].lk=lockE;return r};
  // sakin anlarda telsiz/murettebat sohbeti
  const IDLE=['Bölge sakin görünüyor, gözünüzü dört açın.','Ufukta hareket yok.','Telsiz açık, komuta dinlemede.','Herkes yerinde, devam ediyoruz.','Sürücü, hızını koru.','Nişancı, taret serbest.','Dürbünle tarıyorum, şimdilik temiz.'];let idleT=performance.now()+40000;
  setInterval(()=>{if(game!=='play'||mode!=='tank'||CREW.busy)return;const now=performance.now();if(now-lastCombat<20000){idleT=Math.max(idleT,now+25000);return}if(now>idleT){idleT=now+45000+RN()*30000;CREW.say(pick(IDLE),1,'idle',30)}},2000)}
@@ -5391,7 +5395,7 @@ let lk0=null,lkT=0;
 FRAME_HOOKS.push(dr=>{lkT=Math.max(0,lkT-dr);if(game!=='play'||mode!=='tank'){lk0=null;return}const le=typeof lockE!=='undefined'?lockE:null;
  if(le&&le!==lk0&&E.includes(le)&&lkT<=0){lkT=7;const n=TN[le.type]||'HEDEF';say('Nişancı! '+n+'! '+(AM[typeof st==='number'?st:0]||'APDS')+'!',1,'cmd1',4);setTimeout(()=>{if(game==='play')say('Tanımlandı!',1,'cmd2',3)},1400)}
  lk0=le});
-{const f0=window.fire;window.fire=function(){const n0=shells.length;const r=f0.apply(this,arguments);if(mode==='tank'&&shells.length>n0){if(INJ.dol)cd*=1.6;setTimeout(()=>{if(game==='play')say('Yolda!',1,'cmd3',2)},350)}return r}}
+{const f0=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-11');const n0=shells.length;const r=f0.apply(this,arguments);if(mode==='tank'&&shells.length>n0){if(INJ.dol)cd*=1.6;setTimeout(()=>{if(game==='play')say('Yolda!',1,'cmd3',2)},350)}return r}}
 // ---------- 2) YARALANMA ----------
 const INJ={};window.INJ=INJ;
 const IN={nis:{n:'NİŞANCI YARALI',e:'nişan kayıyor',t:25,s:'Nişancı yaralandı!',ok:'Nişancıya ilk yardım yapıldı, görevde.'},dol:{n:'DOLDURUCU YARALI',e:'dolum yavaş',t:22,s:'Doldurucu yaralandı! Dolum yavaşlayacak.',ok:'Doldurucu toparlandı.'},
@@ -5641,7 +5645,7 @@ rig(P.g);
 {const t0=window.trk;window.trk=function(g,vl,vr,dt){const r=t0.apply(this,arguments);const R=g&&g.userData&&g.userData.roll;if(R&&dt>0&&Number.isFinite(vl)&&Number.isFinite(vr)){R.wd[0]+=vl*dt;R.wd[1]+=vr*dt;if(R.hU)R.hU.uWd.value.set(R.wd[0],R.wd[1])}return r}}
 // ---------------- 2) top atinca govde sarsilir, antenler kirbac gibi sallanir ----------------
 const SU=window.SUSP;
-{const f0=window.fire;window.fire=function(){const n0=shells.length;const r=f0.apply(this,arguments);
+{const f0=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-12');const n0=shells.length;const r=f0.apply(this,arguments);
   if(mode==='tank'&&shells.length>n0&&SU){const rel=angd(P.th,P.h);SU.pv-=.42*Math.cos(rel);SU.rv+=.42*Math.sin(rel);const R=P.g.userData.roll;if(R){R.sv.y+=1.6;}}return r}}
 // ---------------- 3) anten salinimi (oyuncu: ivme + donus + taret hareketi; digerleri: hizla hafif) ----------------
 let thL=P.th;
@@ -6271,7 +6275,7 @@ const _hp=window.hitP;window.hitP=function(k,p){const h0=P.hp,r=_hp.apply(this,a
   if(SV&&SV.U&&SV.U.era>0&&k>=1&&RN()<.6){eraOff(p.x,p.y,p.z,2,0x48573a);const m2=decalOn(P.g,p.x,p.y,p.z,dir,'era');if(m2)PDEC.push(m2)}}}catch(x){}return r};
 const _up=window.update;window.update=function(dt){const r=_up.apply(this,arguments);for(const e of E)if(e.immob&&e.ix!=null){e.x=e.ix;e.z=e.iz;if(e.g){e.g.position.x=e.x;e.g.position.z=e.z}}return r};
 // ---------------- APDS: namludan cikinca sabot parcalari ayrilir ----------------
-const _fire=window.fire;window.fire=function(){const n0=typeof shells!=='undefined'?shells.length:0;const r=_fire.apply(this,arguments);
+const _fire=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-13');const n0=typeof shells!=='undefined'?shells.length:0;const r=_fire.apply(this,arguments);
  try{if(mode==='tank'&&shells.length>n0){const s=shells[shells.length-1];if(s.k===0){const p=s.m.position,l=Math.hypot(s.vx,s.vy,s.vz)||1,dx=s.vx/l,dy=s.vy/l,dz=s.vz/l,ux=-dz,uz=dx;
   for(let i=0;i<3;i++){const a=i/3*2*PI+rr(-.3,.3),ox=ux*Math.cos(a),oy=Math.sin(a),oz=uz*Math.cos(a),sp=rr(7,12);DB.emit(p.x+dx*3,p.y+dy*3,p.z+dz*3,dx*rr(35,60)+ox*sp,dy*rr(35,60)+oy*sp+1.5,dz*rr(35,60)+oz*sp,rr(1.2,1.8),rr(.3,.42),rr(.26,.36),0x55554c,0x3a3a34,1,.9,.6,9,null,rr(-14,14))}}}}catch(x){}return r};
 // ---------------- her kare ----------------
@@ -6761,7 +6765,7 @@ function post(dt){if(game!=='play'||!(dt>0))return;const k=KIND();
  const d=DZ.cur;if(d&&Math.hypot(P.x-d.x,P.z-d.z)<1.8){DZ.sink=Math.min(.5,DZ.sink+dt*.8)}else DZ.sink=Math.max(0,DZ.sink-dt*1.5);if(DZ.sink>0&&P.g)P.g.position.y-=DZ.sink}
 // ---------------- 3) hareket halinde atis sapmasi + T-72 yukleyici ----------------
 const STAB={m60:.6,leo1:.7,t72:.75,leo2:.1,m1:.3,altay:.3};let mvT=0,LR=0;
-{const fi=window.fire;window.fire=function(){const n0=typeof shells!=='undefined'?shells.length:0,c0=cd;const r=fi.apply(this,arguments);
+{const fi=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-14');const n0=typeof shells!=='undefined'?shells.length:0,c0=cd;const r=fi.apply(this,arguments);
  try{if(mode==='tank'&&!(window.AA&&AA.on)&&shells.length>n0){const s=shells[shells.length-1],k=KIND(),sp=spdNow();REV.t=performance.now();
   if(sp>1.2){const f=Math.min(1,(sp-1.2)/9),sig=.026*f*(STAB[k]==null?.6:STAB[k]);if(sig>.0005){const a=gauss()*sig,b=gauss()*sig*.55,h=Math.hypot(s.vx,s.vz),ca=Math.cos(a),sa=Math.sin(a);const vx=s.vx*ca+s.vz*sa,vz=-s.vx*sa+s.vz*ca;s.vx=vx;s.vz=vz;s.vy+=h*b;s.m.lookAt(s.m.position.x+s.vx,s.m.position.y+s.vy,s.m.position.z+s.vz)}
    const t=performance.now();if(t-mvT>25000){mvT=t;if(k==='leo2')say2('Stabilize atış, hareket halinde de tutar!',1,'stb',20);else if(sig>.006)say2('Hareket halindeyiz, atış sapabilir! Dur ya da yavaşla.',1,'mvf',20)}}
@@ -7209,7 +7213,7 @@ function apply(){const a=isACV();if(a===act)return;act=a;const src=a?SHA:SH0;for
 const MISM=new THREE.MeshStandardMaterial({color:0x58603e,roughness:.6,metalness:.3}),MISG=new THREE.CylinderGeometry(.075,.075,1.15,10);MISG.rotateX(PI/2);MISG.userData.sh=1;
 const FING=new THREE.BoxGeometry(.5,.02,.12);FING.userData.sh=1;
 let inB=0;
-{const fi=window.fire;window.fire=function(){if(!isACV()||mode!=='tank'||(window.AA&&AA.on))return fi.apply(this,arguments);
+{const fi=window.fire;window.fire=function(){if(window.__tfFireTrace)window.__tfFireTrace.push('inline-15');if(!isACV()||mode!=='tank'||(window.AA&&AA.on))return fi.apply(this,arguments);
  const n0=shells.length,k=st;window.MZK=k===3?.7:k===2?1:.3;window.SMALLG=k===0||k===1?1:k===3?2:0;let r;try{r=fi.apply(this,arguments)}finally{window.MZK=null;window.SMALLG=0}
  if(shells.length>n0){const s=shells[shells.length-1];post(s);if((k===0||k===1)&&!inB)burst(k)}return r}}
 function post(s){if(s.k===0||s.k===1){s.m.scale.setScalar(.32);s.pen=s.k===0?{p:95,fall:.12,ric:.3}:{p:25,fall:0,ric:.2};s.cal=25;shake=Math.min(shake,.14);P.rec=.35}

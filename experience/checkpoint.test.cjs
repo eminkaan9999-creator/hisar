@@ -27,6 +27,9 @@ test('first chapter telegraphs each attacker once, then permits normal fire; leg
  const r=setup();r.start('safak-1');position(r);r.run(35);const e=r.c.E[0];r.c.eshot(e);assert.equal(r.events.filter(e=>e.kind==='enemy-shot').length,0);assert.equal(r.c.spotted(e),true);r.c.eshot(e);assert.equal(r.events.filter(e=>e.kind==='enemy-shot').length,1);const second=r.c.E[1];r.c.eshot(second);assert.equal(r.events.filter(e=>e.kind==='radio'&&e.text.includes('Düşman ateşe hazırlanıyor')).length,1);
  r.start('gecit');r.run(55);r.c.eshot(r.c.E[0]);assert.equal(r.events.filter(e=>e.kind==='enemy-shot').length,2);
 });
+test('a deferred enemy shot targeting an ally cannot access a missing projectile or retarget an older round',()=>{
+ const vm=require('node:vm'),html=require('./test-support/harekat-runtime.cjs').production('index.html'),begin=html.indexOf('function fireEnemyAt('),end=html.indexOf('\nfunction eshot(',begin),code=html.slice(begin,end),old={al:'old target'},ally={hp:100},c={ebul:[old],hAt:()=>0,eshot(){}};vm.createContext(c);vm.runInContext(code,c);assert.equal(c.fireEnemyAt({bs:38},{x:1,z:2,al:ally}),null);assert.equal(old.al,'old target');c.eshot=()=>c.ebul.push({});const shot=c.fireEnemyAt({bs:38},{x:1,z:2,al:ally});assert.equal(shot.al,ally);assert.equal(old.al,'old target');
+});
 test('an active drone delays checkpoint creation until it is safely back at the tank',()=>{
  const r=setup();r.c.mode='tank';r.c.DR={on:true};r.start('safak-1');r.to({x:70,z:58});r.run(.2);assert.equal(r.c.HisarCheckpoint.read(),null);r.c.DR.on=false;r.run(.1);assert.ok(r.c.HisarCheckpoint.read());
 });

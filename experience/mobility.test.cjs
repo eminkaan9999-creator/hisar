@@ -36,3 +36,9 @@ test('the shipped update guard bounds actual combat infantry and blocks real eng
 test('civilian sidesteps remain bounded even when a vehicle overlaps their previous position',()=>{
  const c=require('./koy.js');for(const dt of[1/60,.1]){assert.ok(c.sideStep({need:5,push:4},4.6,dt)<=4.6*dt+1e-9);}
 });
+
+test('native fuel and dozer power restrictions still affect the new drive; an immobilised tank cannot pivot',()=>{
+ const run=engine=>{const p={x:0,z:0,h:0,v:0,w:0};for(let i=0;i<100;i++)core.advance(p,{forward:1,steer:1,condition:1,road:true,engine},.1);return p;};
+ const normal=run(0),reserve=run((.25-1)/.07),dug=run(-1/.07);assert.ok(reserve.v<normal.v*.3);assert.ok(Math.abs(dug.v)<1e-8&&Math.abs(dug.h)<1e-8);
+ const p={x:0,z:0,h:0,v:0,w:0};for(let i=0;i<20;i++)core.advance(p,{forward:1,steer:1,tracks:false,condition:1,road:true},.1);assert.equal(p.v,0);assert.equal(p.h,0);
+});

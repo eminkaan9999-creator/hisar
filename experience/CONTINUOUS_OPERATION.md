@@ -9,7 +9,7 @@ Eve Dönüş ana akışta tek bir açılışla başlar. Tankın sağlığı, mü
 | Toplanma | Oyuncu batı yolundaki ilk işarete ulaşır. Uzaktan beklemek ilerletmez. |
 | Geçit pususu | Pusu yalnız bu aşama açılınca oluşturulur. Oyuncu bölgeye gelir ve pusunun yaşayan bütün unsurlarını durdurur. Bir unsur işaretin dışına çıkınca öldürülmüş sayılmaz. |
 | Konvoy tespiti | Oyuncu 150 m içinde, görüş hattında ve durarak kesintisiz 4 saniye gözetler. |
-| Yerinde onarım | Oyuncu konvoyun 65 m yakınına gelmeden taarruz sayacı başlamaz. İki grup durdurulur; yakın tehdit olmadan 12 saniyelik onarım tamamlanır. Konvoy yerinde kalır. |
+| Yerinde onarım | Oyuncu konvoyun 65 m yakınına gelmeden taarruz sayacı başlamaz. İki grup durdurulur; yakın tehdit olmadan 12 saniyelik onarım tamamlanır. Konvoy yerinde kalır. Başlangıç noktası köy merkezindeki kapalı alan yerine, gerçek haritanın yol üzerindeki açık alanındadır; bina/engel çakışması ve görüş hattı tarayıcıda kontrol edilir. |
 | Dönüş | Aynı kamyon başlangıç konumundan yola çıkar. Oyuncu 110 m içinde olmalı; oyuncu yolu kapatırsa, yakın tehdit veya katı engel varsa bekler. Karşı taarruz dönüş güzergâhına varınca bir kez oluşturulur. Yaşayan takviye teslimi engeller. |
 | Teslim | Konvoy teslim edilmiş, kalan tehditler temizlenmiş ve oyuncu karakolda 5 saniye beklemiş olmalıdır. Sadece son hedefe gitmek görevi bitirmez. |
 
@@ -26,7 +26,7 @@ Snapshot; aşama, süre, ödenmemiş maç puanı, tank konumu/sağlığı/hasarl
 ## Kara hareketlerindeki somut değişiklikler
 
 - Derin nehir suyu artık sadece hız azaltmaz. Tank, dost/düşman kara araçları, piyade ve konvoy için kara geçiş kontrolü bulunur. Rota ızgarası da derin suyu kapalı sayar; kuru geçitler kullanılabilir.
-- Tankın hareketi ivme ve frenle ilerler. Geri kumandası önce frenler. Yüksek hızda dönüş, yanal ivme sınırıyla daralır; yerinde dönüş sınırlıdır.
+- Tankın hareketi ivme ve frenle ilerler. Geri kumandası önce frenler. Mevcut yakıt/dozer güç kısıtları korunur; palet kopukken tank hareket etmez ve mevcut saha onarımı tamamlanınca hareket geri gelir. Yüksek hızda dönüş, yanal ivme sınırıyla daralır; yerinde dönüş sınırlıdır.
 - Gövdenin merkezi ve dört köşesi hareket boyunca örneklenir. Uzun bir kare su şeridini atlayamaz. Dik basamaklar engellenir; eski kayıtta suda kalan unsur daha sığ zemine çıkabilir.
 - Muharebe piyadesi koşu sınırıyla ilerler. Nöbetçi, refakat piyadesi ve köylünün araca yol vermesi tek karede yana itme içermez. Yol verme ve kaçışta da su kontrolü uygulanır.
 - Mevzi piyadesi görev yerinden uzaklaşıp oyuncuyu harita boyunca kovalamaz.
@@ -36,7 +36,7 @@ Hareket katsayıları bir oyun ayarıdır; belirli bir gerçek tankın sertifika
 
 ## Doğrulama kapsamı
 
-`node --test experience/*.test.cjs`: 601 yerel regresyon testi başarılı. İTİ testi ve dört inline betiğin sözdizimi kontrolü başarılı.
+`node --test experience/*.test.cjs`: 602 yerel regresyon testi başarılı. İTİ testi ve dört inline betiğin sözdizimi kontrolü başarılı.
 
 Tarayıcı senaryoları `scripts/campaign-browser-checks.cjs`, eski kapsam ise `scripts/modern-browser-checks.cjs` ve `scripts/interface-browser-checks.cjs` içindedir. GitHub Actions raporu; gerçek Chromium/WebGL, masaüstü/telefon görünümü, açılıştaki normal W sürüşü, gerçek sayfa yenileme/Devam düğmesi ve kıyıya normal sürüş kontrollerini ayrıca kaydeder.
 

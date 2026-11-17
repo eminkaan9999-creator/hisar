@@ -2,11 +2,11 @@
 (function(root){'use strict';
 const VERSION='1.0.0',LIMIT=Object.freeze({forward:14.5,reverse:5.5,acceleration:3.2,brake:6,turn:.62,turnAcceleration:1.5,lateral:2,foot:4.2,depth:.55,slope:.7});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),angle=a=>Math.atan2(Math.sin(a),Math.cos(a));
-function advance(p,input,dt){dt=clamp(Number.isFinite(dt)?dt:0,0,.1);const eng=clamp(input.engine||0,0,5),road=input.road?1:.75,condition=clamp(input.condition||0,0,1.2);
- const target=(input.tracks===false?0:1)*clamp(input.forward||0,-1,1)*(input.forward<0?LIMIT.reverse:LIMIT.forward)*(1+eng*.025)*road*condition;
+function advance(p,input,dt){dt=clamp(Number.isFinite(dt)?dt:0,0,.1);const raw=Number.isFinite(input.engine)?input.engine:0,eng=clamp(raw,0,5),power=raw<0?clamp(1+.07*raw,0,1):1+eng*.025,road=input.road?1:.75,condition=clamp(input.condition||0,0,1.2);
+ const target=(input.tracks===false?0:1)*clamp(input.forward||0,-1,1)*(input.forward<0?LIMIT.reverse:LIMIT.forward)*power*road*condition;
  const v=p.v||0,a=target*v>=0&&Math.abs(target)>Math.abs(v)?LIMIT.acceleration*(1+eng*.025):LIMIT.brake;
  p.v=v+clamp(target-v,-a*dt,a*dt);
- const maxTurn=Math.min(LIMIT.turn,LIMIT.lateral/Math.max(1,Math.abs(p.v))),targetTurn=-clamp(input.steer||0,-1,1)*maxTurn*(input.tracks===false?0:1);
+ const maxTurn=Math.min(LIMIT.turn,LIMIT.lateral/Math.max(1,Math.abs(p.v))),targetTurn=-clamp(input.steer||0,-1,1)*maxTurn*(input.tracks===false||condition<=0||power<1e-4?0:1);
  p.w=clamp((p.w||0)+clamp(targetTurn-(p.w||0),-LIMIT.turnAcceleration*dt,LIMIT.turnAcceleration*dt),-maxTurn,maxTurn);
  p.h+=p.w*dt;p.x+=Math.sin(p.h)*p.v*dt;p.z+=Math.cos(p.h)*p.v*dt;return p;
 }

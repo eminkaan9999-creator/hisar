@@ -2,24 +2,24 @@
 (function(root){'use strict';
 const VERSION='1.0.0',ID='eve-donus',KEY='celik-boru-eve-donus-v1';
 const OP=Object.freeze({id:ID,n:'Eve Dönüş',tur:'KONVOY KURTARMA',continuous:true,ford:-560,armor:180,preparation:15,
- start:{x:-548,z:20,h:0},obj:{x:-610,z:420,r:45,n:'Mahsur Kalan Konvoy'},
+ start:{x:-548,z:20,h:0},obj:{x:-605,z:360,r:45,n:'Mahsur Kalan Konvoy'},
  story:'Batı yolundaki onarım konvoyuyla bağlantı kesildi. Ekip hayatta, araç hareket edemiyor. Çelik Börü’nün tek amacı ekibi bulup aynı araçla karakola geri getirmek. Yolun açılması, yerinde onarım ve dönüş birbirinin devamıdır; harita ve araç durumları sıfırlanmaz.',
  emir:'Toplanma noktasına ilerle, geçitteki pusuyu kaldır ve konvoyu bul. Ekibin onarımı bitirmesi için çevresinde kal. Araç hazır olduğunda aynı yoldan karakola kadar refakat et; dönüşteki karşı taarruzu durdur. Yalnızca konvoy ve sen güvenli bölgeye ulaştığında harekât tamamlanır.',
  waves:[{at:10,u:['apc']},{at:16,u:['tank','apc']}],spawn:[[-690,600],[-530,610]],
- qrf:{at:4,u:['tank','apc'],from:[-650,340],when:{x:-580,z:255,r:95},message:'Dönüş yolunda düşman takviyesi görüldü. Konvoyu koru; işaretlenen araçlar temizlenmeden teslim tamamlanmaz.'},
- escort:{hp:320,h:Math.PI,speed:5.5,follow:110,route:[[-610,420],[-600,300],[-560,208],[-560,178],[-560,90],[-548,20]]},
+ qrf:{at:4,u:['tank','apc'],from:[-650,340],when:{x:-580,z:220,r:70},message:'Dönüş yolunda düşman takviyesi görüldü. Konvoyu koru; işaretlenen araçlar temizlenmeden teslim tamamlanmaz.'},
+ escort:{hp:320,h:Math.PI,speed:5.5,follow:110,route:[[-605,360],[-600,300],[-560,208],[-560,178],[-560,90],[-548,20]]},
  rating:'convoy',
  phases:[
   {n:'Toplanma noktasına ilerle',why:'Takımınla batı yoluna gir. Konvoyun son konumuna buradan ulaşabilirsin.',k:'reach',x:-560,z:82,r:24},
   {n:'Geçitteki pusuyu kaldır',why:'Onarım ekibine ulaşmak ve dönüş yolunu açmak için geçit temizlenmeli.',k:'clear',x:-572,z:236,r:110,visit:130,spawn:[{type:'apc',x:-584,z:270,h:Math.PI},{type:'inf',x:-596,z:258,h:Math.PI},{type:'inf',x:-558,z:275,h:Math.PI}]},
-  {n:'Mahsur kalan konvoyu tespit et',why:'Aracı görüş hattında bul; 4 saniye durarak ekiple bağlantı kur.',k:'scan',x:-610,z:420,r:150,seconds:4},
-  {n:'Yerinde onarımı koru',why:'Konvoyun 65 m yakınında kal. Yaklaşan iki grubu durdur; güvenli alanda 12 saniyelik onarımı tamamla.',k:'defend',x:-610,z:420,r:65,seconds:12,local:true},
+  {n:'Mahsur kalan konvoyu tespit et',why:'Aracı görüş hattında bul; 4 saniye durarak ekiple bağlantı kur.',k:'scan',x:-605,z:360,r:150,seconds:4},
+  {n:'Yerinde onarımı koru',why:'Konvoyun 65 m yakınında kal. Yaklaşan iki grubu durdur; güvenli alanda 12 saniyelik onarımı tamamla.',k:'defend',x:-605,z:360,r:65,seconds:12,local:true},
   {n:'Konvoyla birlikte karakola dön',why:'Konvoy 110 m içinde takip eder; yakın tehditte durur. Dönüşte çıkan takviyeyi temizle.',k:'escort',x:-548,z:20,clearAll:true},
   {n:'Güvenli bölgede teslimi tamamla',why:'Konvoy ve tank karakolda olmalı. Bölgeyi 5 saniye güvenli tut.',k:'extract',x:-548,z:20,r:50,threat:90,seconds:5,requireConvoy:true},
   {n:'Konvoy teslim edildi',k:'complete',x:-548,z:20}
  ],
  success:'Konvoy ve onarım ekibi karakola ulaştı. Eve Dönüş tamamlandı.',
- via:[[-548,20],[-560,82],[-560,178],[-572,236],[-600,300],[-610,420],[-600,300],[-560,178],[-548,20]]});
+ via:[[-548,20],[-560,82],[-560,178],[-572,236],[-600,300],[-605,360],[-600,300],[-560,178],[-548,20]]});
 const num=(v,a,b)=>Number.isFinite(v)&&v>=a&&v<=b;
 const vehicleCore=typeof module==='object'&&module.exports?require('./checkpoint.js'):root.HisarCheckpoint&&root.HisarCheckpoint.core;
 function normalise(v){

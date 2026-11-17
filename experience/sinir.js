@@ -292,7 +292,7 @@ function soldierStep(dt){const sp=1.35;vehicles(dt);for(const f of SOLD){f.t+=dt
   else if(f.home.gate){const d=safe(()=>Math.hypot(P.x-f.x,P.z-f.z),99);f.act0=d<26&&safe(()=>game==='play',false)?'selam':'nobet';if(!f.moved)f.act=f.act0;}
   /* yol verme: üstüne araç gelen asker yana koşar; araç yerinden çekilince yürüyerek döner (kule tepesindeki nöbetçi yerinde kalır) */
   const w=f.home.dy>1?null:way(f.bx+f.ax,f.bz+f.az);
-  if(w){const st=Math.min(Math.max(w.need,w.push||0),WAY.run*dt);f.ax+=w.x*st;f.az+=w.z*st;f.hold=WAY.hold;f.moved=1;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;stat.gaveWay++;}
+  if(w){const st=Math.min(Math.max(w.need,w.push||0),WAY.run*dt);if(spotBlocked(f.bx+f.ax+w.x*st,f.bz+f.az+w.z*st,true)){f.act='nobet';continue;}f.ax+=w.x*st;f.az+=w.z*st;f.hold=WAY.hold;f.moved=1;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;stat.gaveWay++;}
   else if(f.hold>0){f.hold-=dt;if(!f.pat)f.act='nobet';}
   else if(f.ax||f.az){if(way(f.bx,f.bz)){if(!f.pat)f.act='nobet';}else{const l=Math.hypot(f.ax,f.az),st=Math.min(l,WAY.back*dt);f.yaw=Math.atan2(-f.ax,-f.az);f.ax-=f.ax/l*st;f.az-=f.az/l*st;if(l-st<.03)f.ax=f.az=0;f.act='nobet-yuru';f.t+=dt*4;}}
   else if(f.moved){f.moved=0;if(!f.pat){f.act=f.act0;f.yaw=f.yaw0;}}

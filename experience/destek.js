@@ -176,7 +176,7 @@ function objective(){const op=safe(()=>root.MAPVIEW_HK&&root.MAPVIEW_HK(),null);
 function forcesStep(dt){if(!forces||!forces.on)return;const obj=objective()||{x:P.x+Math.sin(P.h)*200,z:P.z+Math.cos(P.h)*200},en=enemies().filter(e=>e.seen);
  for(const m of forces.men){const f=m.f;
   /* tanka yol ver: üstüne tank gelen piyade (çömelmiş ateş ediyor ya da siper almış yatıyor olsa da) kalkıp yana koşar; vurulmuş er kalır */
-  const w=m.hp>0&&f.live&&forces.way?forces.way(f.x,f.z):null;if(w){m.down=0;const st=Math.min(Math.max(w.need,w.push||0),forces.run*dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;f.y=safe(()=>hAt(f.x,f.z),0);stat.gaveWay++;continue;}
+  const w=m.hp>0&&f.live&&forces.way?forces.way(f.x,f.z):null;if(w){m.down=0;const st=Math.min(Math.max(w.need,w.push||0),forces.run*dt);if(root.HisarMobility&&!root.HisarMobility.allows(f,{x:f.x+w.x*st,z:f.z+w.z*st},true)){f.act='nobet';continue;}f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;f.y=safe(()=>hAt(f.x,f.z),0);stat.gaveWay++;continue;}
   if(m.down>0){m.down-=dt;f.act='yat';if(m.down<=0&&m.hp<=0){f.live=false;}f.y=safe(()=>hAt(f.x,f.z),0);continue;}if(m.hp<=0)continue;
   let tgt=null,td=INF.range;for(const e of en){const d=Math.hypot(e.x-f.x,e.z-f.z);if(d<td){td=d;tgt=e;}}
   if(tgt){f.act='diz';f.t+=dt;let a=Math.atan2(tgt.x-f.x,tgt.z-f.z)-f.yaw;while(a>Math.PI)a-=6.283;while(a<-Math.PI)a+=6.283;f.yaw+=a*Math.min(1,dt*4);m.cd-=dt;

@@ -12,7 +12,7 @@ test('villagers and animals give way to vehicles: they run sideways out of the p
  assert.ok(Math.abs(c.sideStep({need:3,push:0},4.6,.1)-.46)<1e-9);assert.equal(c.sideStep({need:.2,push:0},4.6,.1),.2,'never further than needed');assert.ok(Math.abs(c.sideStep({need:3,push:1.4},4.6,.1)-.46)<1e-9,'under the hull: no instantaneous shove');assert.ok(Math.abs(c.sideStep({need:3},4.6,.1)-.46)<1e-9);
  for(const k of['insan','koyun','kopek','inek','tavuk'])assert.ok(c.GIVE[k]>=4&&c.GIVE[k]<=7,k);
  assert.ok(src.includes("WAYF=fig.way||null;"),'the rule comes from the border module, shared with the soldiers');
- assert.ok(src.includes("const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE.insan,dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';p.hold=0;"),'a saluting child also runs aside');
+ assert.ok(src.includes("const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE.insan,dt);if(!dryStep(f,f.x+w.x*st,f.z+w.z*st)){f.act='dur';continue;}f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';p.hold=0;"),'a saluting child also runs aside');
  assert.ok(src.indexOf("const st=sideStep(w,GIVE.insan,dt)")<src.indexOf("if(p.hold>0){p.hold-=dt;"),'giving way comes before saluting');
  assert.ok(src.includes("const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE[a.kind]||GIVE.koyun,dt);"),'animals too');
  assert.ok(src.includes("if(WAYF&&WAYF(nx,nz)){f.wait=1;return false;}"),'nobody walks into the path of a vehicle');

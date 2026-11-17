@@ -154,6 +154,7 @@ function build(){if(built||!root.THREE||typeof S==='undefined'||typeof BLD==='un
 function threats(){const out=[];safe(()=>{if(mode==='tank'&&game==='play')out.push(P);},null);for(const a of safe(()=>AL,[]))if(!a.dead)out.push(a);return out;}
 let WAYF=null,WETF=null;const ROADS=()=>safe(()=>WROADS,[]);
 // Hedefe yürür; atacağı adım bir aracın yoluna ya da suya düşüyorsa atmaz, bekler (f.wait). road: yol kenarı kuralı uygulanır (insanlar için)
+function dryStep(f,x,z){return (!WETF||!WETF(x,z)||WETF(f.x,f.z))&&(!root.HisarMobility||root.HisarMobility.allows(f,{x,z},true));}
 function moveTo(f,tx,tz,sp,dt,road){const dx=tx-f.x,dz=tz-f.z,d=Math.hypot(dx,dz);if(d<.3)return true;let ux=dx/d,uz=dz/d,v=sp;
  if(road){const R=roadAt(ROADS(),f.x,f.z,ROAD.pad);if(R){const w=roadWalk(R,(tx-R.ax)*R.nx+(tz-R.az)*R.nz,ux,uz);if(w.mode==='vardi')return true;ux=w.x;uz=w.z;if(w.mode==='gec'){v=sp*ROAD.cross;stat.crossed++;}else stat.shoulder++;}}
  const s=Math.min(d,v*dt),nx=f.x+ux*s,nz=f.z+uz*s;if(WAYF&&WAYF(nx,nz)){f.wait=1;return false;}if(WETF&&WETF(nx,nz)&&!WETF(f.x,f.z)){f.wait=2;stat.dry++;return false;}
@@ -167,10 +168,10 @@ function peopleStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);
   if(p.st==='hidden'){p.t-=dt;if(p.t<=0){p.st='idle';f.live=true;p.t=2;}continue;}
   if(p.st==='home'){p.t-=dt;if(p.t<=0){const d=door(pick(p.v.hs));f.x=d.x;f.z=d.z;f.live=true;p.st='walk';const s=p.v.school;p.path=[{x:p.v.x+(Math.random()-.5)*10,z:p.v.z+(Math.random()-.5)*10},s.gate,s.door].map(q=>offRoad(ROADS(),q));p.school=1;}continue;}
   /* tanka yol ver: üstüne araç gelen köylü (selam duruyor olsa da) yana koşar */
-  const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE.insan,dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';p.hold=0;f.y=safe(()=>hAt(f.x,f.z),f.y);stat.gaveWay++;continue;}
+  const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE.insan,dt);if(!dryStep(f,f.x+w.x*st,f.z+w.z*st)){f.act='dur';continue;}f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';p.hold=0;f.y=safe(()=>hAt(f.x,f.z),f.y);stat.gaveWay++;continue;}
   // tank yakında: selam ya da el sallama; çok yakında kenara çekilme
   let near=null,nd=1e9;for(const o of th){const d=Math.hypot(o.x-f.x,o.z-f.z);if(d<nd){nd=d;near=o;}}
-  if(near&&nd<7&&p.st!=='run'){const e=flee(f.x,f.z,near.x,near.z),nx=f.x+e.x*3*dt,nz=f.z+e.z*3*dt;if(!WAYF||!WAYF(nx,nz)){f.x=nx;f.z=nz;}}
+  if(near&&nd<7&&p.st!=='run'){const e=flee(f.x,f.z,near.x,near.z),nx=f.x+e.x*3*dt,nz=f.z+e.z*3*dt;if((!WAYF||!WAYF(nx,nz))&&dryStep(f,nx,nz)){f.x=nx;f.z=nz;}}
   if(p.hold>0){p.hold-=dt;if(near)faceTo(f,near.x,near.z,dt);if(p.hold<=0){f.act='dur';}else{f.y=safe(()=>hAt(f.x,f.z),f.y);continue;}}
   if(near&&p.st!=='run'){if(p.kid&&wantsSalute(nd,p.cool,false)){f.act='selam';p.hold=SAL.hold;p.cool=SAL.cool;stat.salutes++;if(clock-sayT>90){sayT=clock;safe(()=>root.CREW.say('Komutanım, çocuklar selam veriyor.',1,'selam',90),null);}continue;}
    if(!p.kid&&p.kind!=='coban'&&nd<SAL.wave&&p.cool<=0){f.act='el-salla';p.hold=2.6;p.cool=40;stat.waves++;continue;}}
@@ -184,7 +185,7 @@ function peopleStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);
 function animalStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);for(const a of A_){const f=a.f;if(a.st!=='sky'&&far(f,cam))continue;f.t+=dt*(f.act==='kos'?9:f.act==='yuru'?5:1);
   if(a.st==='sky'){const s=a.sky;s.a+=s.w*dt;f.x=s.x+Math.cos(s.a)*s.r;f.z=s.z+Math.sin(s.a)*s.r;f.y=safe(()=>hAt(s.x,s.z),0)+s.h+Math.sin(clock*.3+s.r)*2;f.yaw=Math.atan2(-Math.sin(s.a)*Math.sign(s.w),Math.cos(s.a)*Math.sign(s.w));f.act=Math.sin(clock*.4+s.r)>.2?'uc':'suzul';continue;}
   /* araca yol ver: üstüne araç gelen hayvan yana kaçar */
-  const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE[a.kind]||GIVE.koyun,dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';a.st='idle';a.t=1.2;f.y=safe(()=>hAt(f.x,f.z),f.y);stat.gaveWay++;continue;}
+  const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE[a.kind]||GIVE.koyun,dt);if(!dryStep(f,f.x+w.x*st,f.z+w.z*st)){f.act='dur';continue;}f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';a.st='idle';a.t=1.2;f.y=safe(()=>hAt(f.x,f.z),f.y);stat.gaveWay++;continue;}
   let near=null,nd=1e9;for(const o of th){const d=Math.hypot(o.x-f.x,o.z-f.z);if(d<nd){nd=d;near=o;}}const fr=a.kind==='inek'?18:a.kind==='tavuk'?10:30;
   if(near&&nd<fr){const e=flee(f.x,f.z,near.x,near.z);a.tx=f.x+e.x*14;a.tz=f.z+e.z*14;a.st='kos';if(a.herd&&!a.dog){a.herd.x+=e.x*dt*2;a.herd.z+=e.z*dt*2;}}
   if(a.st==='kos'){if(moveTo(f,a.tx,a.tz,a.kind==='tavuk'?3:a.kind==='inek'?3.5:4.5,dt)){a.st='idle';a.t=2;}f.act='kos';}

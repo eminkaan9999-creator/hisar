@@ -121,7 +121,7 @@ function buildBeam(o){if(!root.THREE)return;const T=root.THREE,g=new T.Group(),y
 // ---------- adım ----------
 function enemies(){return safe(()=>E.filter(e=>e.hk&&e.hp>0),[]);}
 function control(dt){if(!H)return;for(const e of enemies()){const k=e.hk;if(H.op.story&&H.t<H.preparation)e.cd=Math.max(e.cd||0,H.preparation-H.t);
-  if(k.role==='def'){if(e.rt>0&&dist(e,k.post)>LEASH)e.rt=0;if(!(e.rt>0)){e.hd={x:k.post.x,z:k.post.z};e.hdT=1e9;e.hdV=1e9;}}
+  if(k.role==='def'){if(e.type==='inf'&&k.post&&dist(e,k.post)>=32){e.st='fire';e.stT=Math.max(e.stT||0,1);}if(e.rt>0&&dist(e,k.post)>LEASH)e.rt=0;if(!(e.rt>0)){e.hd={x:k.post.x,z:k.post.z};e.hdT=1e9;e.hdV=1e9;}}
   else if(k.role==='qrf'){if(!(clock<k.next)){k.path=safe(()=>root.astar(e.x,e.z,P.x,P.z),null)||[[e.x,e.z],[P.x,P.z]];k.i=1;k.next=clock+8;}const w=k.path[k.i];
    if(w&&Math.hypot(w[0]-e.x,w[1]-e.z)<10&&k.i<k.path.length-1)k.i++;const stop=!w||dist(e,P)<Math.min(QRF_STOP,(e.fr||FIRE_RANGE)*.8);e.hd=stop?{x:e.x,z:e.z}:{x:w[0],z:w[1]};e.hdT=1e9;e.hdV=1e9;e.rt=0;}
   else if(k.role==='att'){const w=k.path&&k.path[k.i];if(!w){e.hd={x:e.x,z:e.z};e.hdT=1e9;e.hdV=1e9;continue;}

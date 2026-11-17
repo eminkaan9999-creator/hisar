@@ -5,8 +5,8 @@
  const KEY='hisar-control-feel-v1';
  const profiles=Object.freeze({
   hassas:Object.freeze({deadzone:.12,curve:1.55,response:12}),
-  dengeli:Object.freeze({deadzone:.08,curve:1.18,response:18}),
-  seri:Object.freeze({deadzone:.04,curve:1,response:28})
+  dengeli:Object.freeze({deadzone:.06,curve:1.08,response:26}),
+  seri:Object.freeze({deadzone:.04,curve:1,response:40})
  });
  function axis(value,profile){
   const p=profiles[profile]||profiles.dengeli;

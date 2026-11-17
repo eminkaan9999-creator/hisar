@@ -1,0 +1,37 @@
+'use strict';
+// Dokunma yardımcısı (guard.js, HisarTap): bir parmak kumandadayken öteki parmağın dokunuşu da düğmeyi çalıştırır.
+const {test}=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const src=fs.readFileSync(__dirname+'/guard.js','utf8'),radio=fs.readFileSync(__dirname+'/radio-missions.js','utf8'),css=fs.readFileSync(__dirname+'/ui.css','utf8'),hk=fs.readFileSync(__dirname+'/harekat.js','utf8');
+function page(game){const L={},clicks=[];let now=1000;const ctx={game,performance:{now:()=>now},addEventListener:(t,f)=>{(L[t]=L[t]||[]).push(f);},dispatchEvent(){},document:{getElementById:()=>null},KeyboardEvent:function(){},Event:function(){},MouseEvent:function(type,o){this.type=type;Object.assign(this,o);},Map,Math};ctx.window=ctx;
+ vm.createContext(ctx);vm.runInContext(src,ctx);
+ const button=(o)=>Object.assign({disabled:false,isConnected:true,parentElement:null,_r:{left:100,right:200,top:50,bottom:94},getBoundingClientRect(){return this._r;},dispatchEvent(e){clicks.push({b:this,e});},closest(){return this;}},o||{});
+ const fire=(t,e)=>{for(const f of L[t]||[])f(e);};const ev=(o)=>Object.assign({pointerType:'touch',isTrusted:true,detail:1,stopped:0,prevented:0,stopImmediatePropagation(){this.stopped++;},preventDefault(){this.prevented++;}},o);
+ return {ctx,clicks,button,fire,ev,tick:ms=>now+=ms,tap(b,id,x,y){fire('pointerdown',ev({pointerId:id,target:b,clientX:x,clientY:y}));fire('pointerup',ev({pointerId:id,target:b,clientX:x,clientY:y}));}};}
+test('in play, lifting the finger on a button clicks it at once, also while another finger rests on the joystick',()=>{const p=page('play'),pad={closest:()=>null},b=p.button();
+ p.fire('pointerdown',p.ev({pointerId:1,target:pad,clientX:40,clientY:700}));p.tap(b,2,150,70);assert.equal(p.clicks.length,1);assert.equal(p.clicks[0].b,b);assert.equal(p.clicks[0].e.type,'click');assert.equal(p.clicks[0].e.bubbles,true);
+ p.fire('pointerup',p.ev({pointerId:1,target:pad,clientX:40,clientY:700}));assert.equal(p.clicks.length,1,'lifting the joystick finger clicks nothing');});
+test('the phone\'s own click for the same tap is swallowed once, by position, even if it arrives late or lands on what opened underneath',()=>{const p=page('play'),b=p.button();p.tap(b,2,150,70);
+ p.tick(900);const late=p.ev({clientX:151,clientY:71,target:{closest:()=>null}});p.fire('click',late);assert.equal(late.stopped,1);assert.equal(late.prevented,1);
+ const second=p.ev({clientX:151,clientY:71});p.fire('click',second);assert.equal(second.stopped,0,'only one click is swallowed per tap');
+ p.tap(b,3,150,70);const far=p.ev({clientX:300,clientY:300});p.fire('click',far);assert.equal(far.stopped,0,'a click somewhere else is untouched');
+ const key=p.ev({detail:0,clientX:150,clientY:70});p.fire('click',key);assert.equal(key.stopped,0,'a keyboard click is never swallowed');});
+test('a new touch ends the wait for the old click; a slide, a disabled button, the mouse and the menu are left alone',()=>{let p=page('play'),b=p.button();p.tap(b,2,150,70);p.fire('pointerdown',p.ev({pointerId:5,target:{closest:()=>null},clientX:10,clientY:10}));const c=p.ev({clientX:150,clientY:70});p.fire('click',c);assert.equal(c.stopped,0);
+ p=page('play');b=p.button();p.fire('pointerdown',p.ev({pointerId:2,target:b,clientX:150,clientY:70}));p.fire('pointerup',p.ev({pointerId:2,target:b,clientX:150+p.ctx.HisarTap.MOVE+2,clientY:70}));assert.equal(p.clicks.length,0,'a slide is not a tap');
+ p.fire('pointerdown',p.ev({pointerId:2,target:b,clientX:150,clientY:70}));p.fire('pointerup',p.ev({pointerId:2,target:b,clientX:150,clientY:140}));assert.equal(p.clicks.length,0,'lifted outside the button');
+ p.tap(p.button({disabled:true}),4,150,70);assert.equal(p.clicks.length,0);p.fire('pointerdown',p.ev({pointerType:'mouse',pointerId:9,target:b,clientX:150,clientY:70}));p.fire('pointerup',p.ev({pointerType:'mouse',pointerId:9,target:b,clientX:150,clientY:70}));assert.equal(p.clicks.length,0,'the mouse keeps its own click');
+ const own=p.button({parentElement:{_mob:1,parentElement:null}});p.tap(own,6,150,70);assert.equal(p.clicks.length,0,'buttons with their own helper are not clicked twice');
+ const m=page('menu');m.tap(m.button(),2,150,70);assert.equal(m.clicks.length,0,'menus use the ordinary click');
+ p.fire('pointerdown',p.ev({pointerId:7,target:b,clientX:150,clientY:70}));p.fire('pointercancel',p.ev({pointerId:7}));p.fire('pointerup',p.ev({pointerId:7,target:b,clientX:150,clientY:70}));assert.equal(p.clicks.length,0,'a cancelled touch clicks nothing');});
+test('radio sheet on an upright phone: never under the notch, header with a large Kapat stays in view, no picker pops up on touch, mission card clear of the buttons',()=>{
+ assert.ok(radio.includes("max-height:calc(100dvh - env(safe-area-inset-top,0px) - max(12px,env(safe-area-inset-bottom,0px)) - 12px)"));assert.ok(radio.includes("#hr-panel header{position:sticky;top:0;z-index:2;"));assert.ok(radio.includes("#hr-panel header button{min-height:46px;min-width:88px;"));
+ assert.ok(radio.includes("@media (orientation:portrait) and (max-width:600px){#hr-panel{top:calc(env(safe-area-inset-top,0px) + 12px);max-height:none}#hr-log{height:125px}}"),'the sheet is pinned top and bottom on an upright phone: the Kapat button never moves when a reply arrives');
+ assert.ok(radio.includes("if(!coarse())roster.focus({preventScroll:true});"));assert.ok(radio.includes("radioStatus=el('p',coarse()?'':'T / Esc: kapat · 1–9: komut');")&&radio.includes('#hr-status:empty{display:none}'),'no keyboard hint on a phone');assert.ok(css.includes("body:has(#hr-panel:not([hidden])) :is(#uTL,#hr-objective,#hk-obj,#sn-ulke,#ej-pip,#mm,"),'the mission card and the country chip do not show through the open sheet');
+ /* görev kartı: çentikli telefonda menü düğmesinin altında başlar, küçük haritanın ve TELSİZ'in altına girmez (yeni görünümün biçem dosyasında) */
+ const modern=fs.readFileSync(__dirname+'/modern.css','utf8');assert.ok(modern.includes("html body.sf-modern #hk-obj{top:calc(env(safe-area-inset-top,0px) + 62px);width:min(280px,calc(100vw - 47px - var(--hudMM,106px)))}}"));assert.ok(!hk.includes('(orientation:portrait){#hk-obj'),'no second, overridden rule left in the mission module');
+ /* dik ekranda araç göstergesi görüş düğmelerinin altında başlar; yatay ekranda görev kartı görüş düğmelerinin altında, Uçangöz düğmesi göstergenin üstünde durur */
+ assert.ok(modern.includes("html body.sf-modern #sf-hud{bottom:calc(193px + env(safe-area-inset-bottom));"));assert.ok(modern.includes("html body.sf-modern #hk-obj{top:100px;width:270px}html body.sf-modern #uDock{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 75px)!important}"));});
+
+test('the result screen opens above the headquarters menu: its buttons are never covered',()=>{const cm=fs.readFileSync(__dirname+'/command-menu.css','utf8'),html=fs.readFileSync(__dirname+'/../index.html','utf8');
+ const menuZ=+cm.match(/html body\.command-ui #menu\{[^}]*z-index:(\d+)!important\}/)[1],repZ=+cm.match(/html body\.command-ui #rep\{z-index:(\d+)!important\}/)[1];assert.ok(repZ>menuZ,repZ+' > '+menuZ);
+ assert.ok(html.includes("$('mt').textContent=(ok?'ZAFER':'ELENDİN')+(txt?' · '+txt:'');openMenu()"),'the game still opens the menu underneath when a battle ends');
+ assert.ok(html.includes("{const _rs=window.reset;window.reset=function(){rep.classList.remove('on');return _rs.apply(this,arguments)}}"),'a new game, however it starts, closes the previous result screen: it never stays over the running game');});

@@ -16,4 +16,17 @@ test('villagers and animals give way to vehicles: they run sideways out of the p
  assert.ok(src.indexOf("const st=sideStep(w,GIVE.insan,dt)")<src.indexOf("if(p.hold>0){p.hold-=dt;"),'giving way comes before saluting');
  assert.ok(src.includes("const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE[a.kind]||GIVE.koyun,dt);"),'animals too');
  assert.ok(src.includes("if(WAYF&&WAYF(nx,nz)){f.wait=1;return false;}"),'nobody walks into the path of a vehicle');
- assert.ok(/const VERSION='1\.2\.0'/.test(src)&&html.includes('experience/koy.js?v=4'));});
+ assert.ok(/const VERSION='1\.3\.0'/.test(src)&&/experience\/koy\.js\?v=\d+/.test(html));});
+test('villagers keep off the carriageway: along a road they walk on the shoulder, across it they go straight over and hurry',()=>{const roads=[{w:6,pts:[[0,-100],[0,100]]},{w:8,pts:[[0,0],[200,0]]}],R=c.roadAt(roads,1,-50,c.ROAD.pad);
+ assert.ok(R&&Math.abs(R.lat-1)<1e-9&&R.half===3&&R.ux===0&&R.uz===1&&R.nx===1,'one metre right of the centre line of a road running north');assert.equal(c.roadAt(roads,3+c.ROAD.pad+.1,-50,c.ROAD.pad),null,'beyond the shoulder the rule does not apply');
+ const along=c.roadWalk(R,1,0,1);assert.equal(along.mode,'kenar');assert.ok(along.x>.3&&along.z>.5,'walking along: drifts out to his own side while going on');
+ const over=c.roadWalk(R,-20,-1,0);assert.deepEqual([over.x,over.z,over.mode],[-1,0,'gec'],'goal on the far side: straight across');assert.ok(c.ROAD.cross>1);
+ /* yolun ortasındaki hedefe yürüyen: asfaltın dışına çıkar, hedefin hizasında durur */
+ let x=1,z=-50;const tx=0,tz=-20;let mode='';for(let i=0;i<400;i++){const dx=tx-x,dz=tz-z,d=Math.hypot(dx,dz);if(d<.3)break;const Q=c.roadAt(roads,x,z,c.ROAD.pad);let ux=dx/d,uz=dz/d;if(Q){const w=c.roadWalk(Q,(tx-Q.ax)*Q.nx+(tz-Q.az)*Q.nz,ux,uz);mode=w.mode;if(mode==='vardi')break;ux=w.x;uz=w.z;}x+=ux*.2;z+=uz*.2;}
+ assert.equal(mode,'vardi');assert.ok(Math.abs(x)>=3+c.ROAD.edge-.21&&Math.abs(z-tz)<1.2,'he ends beside the road, level with the goal, not on the asphalt: '+x+','+z);
+ /* yol boyunca uzun yürüyüş: asfaltta geçen adım sayısı çok az */
+ x=.5;z=-90;let on=0,n=0;for(let i=0;i<1200;i++){const dx=2-x,dz=90-z,d=Math.hypot(dx,dz);if(d<.5)break;const Q=c.roadAt(roads.slice(0,1),x,z,c.ROAD.pad);let ux=dx/d,uz=dz/d;if(Q){const w=c.roadWalk(Q,(2-Q.ax)*Q.nx+(90-Q.az)*Q.nz,ux,uz);if(w.mode==='vardi')break;ux=w.x;uz=w.z;}x+=ux*.2;z+=uz*.2;n++;if(Math.abs(x)<3)on++;}
+ assert.ok(n>300&&on<25,'180 m along the road: '+on+' of '+n+' steps on the asphalt (only while leaving it)');
+ assert.deepEqual(c.offRoad(roads,{x:9,z:-50}),{x:9,z:-50},'a stop well off the road stays');const st=c.offRoad(roads,{x:1,z:-50});assert.ok(Math.abs(st.x-(3+c.ROAD.clear+.05))<1e-9&&st.z===-50,'a stop on the road is moved to its own side of it');assert.ok(c.offRoad(roads,{x:-.5,z:-50}).x<-4);
+ for(const k of["moveTo(f,w.x,w.z,p.sp*(p.kid?1.15:1),dt,true)","moveTo(f,d.x,d.z,4,dt,true)","].map(q=>offRoad(ROADS(),q));p.school=1;","if(WETF&&WETF(nx,nz)&&!WETF(f.x,f.z)){f.wait=2;stat.dry++;return false;}","if(f.wait===2&&p.st==='walk'&&p.path.length){p.path.shift();if(!p.path.length){p.school=0;p.st='idle';p.t=3+Math.random()*6;}}","if(f.wait===2){a.st='idle';a.t=1+Math.random()*3;}"])assert.ok(src.includes(k),k);});
+

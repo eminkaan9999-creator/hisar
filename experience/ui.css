@@ -96,7 +96,7 @@ body.hisar-crosshair-contrast #cross{filter:drop-shadow(0 1px 2px #000) drop-sha
 }
 
 /* Radio sheet open: the HUD underneath is hidden so the sheet is the only thing to read (all orientations) */
-body:has(#hr-panel:not([hidden])) :is(#uTL,#hr-objective,#mm,#mmW,#wnd,#ctx,#vbar,#radio,#msg,#coach,#drvH,#uDock,#uStat,#uPad,#uFire,#uEye,#uSw,#uScope,#uZoom,#uMapB,#hr-radio-entry,#rec,#cross,#gRing){visibility:hidden!important}
+body:has(#hr-panel:not([hidden])) :is(#uTL,#hr-objective,#hk-obj,#sn-ulke,#ej-pip,#mm,#mmW,#wnd,#ctx,#vbar,#radio,#msg,#coach,#drvH,#uDock,#uStat,#uPad,#uFire,#uEye,#uSw,#uScope,#uZoom,#uMapB,#hr-radio-entry,#rec,#cross,#gRing){visibility:hidden!important}
 
 /* Landscape phones (about 844x390 and similar): top bar, left column and right column each get their own band */
 @media (min-aspect-ratio:1/1) and (max-height:500px){

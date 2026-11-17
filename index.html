@@ -129,12 +129,31 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 #scn{position:absolute;left:50%;bottom:calc(50% - 43vmin);transform:translateX(-50%);font:700 13px monospace;color:#c8e8a0;text-shadow:0 0 4px #000;white-space:nowrap}
 body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:.45}body.cv #vg{display:block}
 </style>
-<script src="experience/guard.js?v=63"></script>
-<link rel="stylesheet" href="experience/ui.css?v=77">
+<script src="experience/guard.js?v=114"></script>
+<script>
+/* Sürüm tutarlılığı. Yeni sürümün ilk açılışında sayfa ağdan yeni gelir ama eski hizmet işçisi bölümleri (experience/*.js) kendi önbelleğinden,
+   eski hâlleriyle verir: yeni sayfa eski bölümlerle karışık çalışır, düzeltmeler ancak ikinci açılışta görünür. Bunu önlemek için sayfa, yüklenen
+   bölümlerin yapı damgasına ve kendisini yöneten hizmet işçisinin önbellek adına bakar; biri eskiyse eski işçiyi ve önbelleğini bırakır, kendini
+   bir kez yeniden yükler (bölümler ağdan, sayfayla aynı sürümden gelir). İki dakika içinde yinelenmez (döngü olmaz). */
+(function(){'use strict';var BUILD=114,SWC='hisar-main-v114-tutarli';window.HISAR_PAGE={build:BUILD,cache:SWC,healed:''};
+ if(!/^https?:/.test(location.protocol)||!('serviceWorker' in navigator))return;var done=false;
+ function heal(why){if(done)return;done=true;try{var k='hisar-heal',t=+sessionStorage.getItem(k)||0;if(Date.now()-t<120000)return;sessionStorage.setItem(k,String(Date.now()));}catch(e){return;}
+  window.HISAR_PAGE.healed=why;var root=new URL('./',location.href).href;
+  Promise.resolve().then(function(){return navigator.serviceWorker.getRegistrations();}).then(function(rs){return Promise.all(rs.filter(function(r){return r.scope===root;}).map(function(r){return r.unregister().catch(function(){});}));}).catch(function(){})
+  .then(function(){return window.caches?caches.keys().then(function(ks){return Promise.all(ks.filter(function(n){return n.indexOf('hisar-main-')===0&&n!==SWC;}).map(function(n){return caches.delete(n);}));}):null;}).catch(function(){})
+  .then(function(){var u=new URL(location.href);u.searchParams.set('v',Date.now().toString(36));location.replace(u.toString());});}
+ window.HISAR_PAGE.heal=heal;
+ if(window.HISAR_BUILD!==BUILD){heal('bolum');return;}
+ var c=navigator.serviceWorker.controller;if(!c)return;var got=false;
+ try{var ch=new MessageChannel();ch.port1.onmessage=function(e){got=true;if(!e.data||e.data.cache!==SWC)heal('isci');};c.postMessage('VERSION',[ch.port2]);}catch(e){}
+ /* yanıt gelmezse (eski işçi bu soruyu tanımaz): ana iş parçacığı meşgulken yanıtı kaçırmamak için süre tek sayaçla değil, on iki ayrı turda beklenir */
+ var n=0;(function tick(){if(got||done)return;if(++n>12){heal('yanit');return;}setTimeout(tick,300);})();})();
+</script>
+<link rel="stylesheet" href="experience/ui.css?v=114">
 <link rel="preload" href="assets/brand/celik-boru.jpg" as="image">
 <link rel="preload" href="experience/fonts/hisar-dar-700.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="experience/fonts/hisar-dar-400.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="experience/skin.css?v=5">
+<link rel="stylesheet" href="experience/skin.css?v=114">
 
 <style id="spl-style">
 #spl{position:fixed;inset:0;z-index:100;overflow:hidden;background:#12140f;transition:opacity .6s;font-family:var(--sf,system-ui,sans-serif)}#spl.out{opacity:0;pointer-events:none}
@@ -146,8 +165,8 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
 @media (orientation:landscape) and (max-height:520px){#spl .art{left:auto;right:0;top:-9vh;margin-left:0;width:118vh;height:118vh;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34%);mask-image:linear-gradient(90deg,transparent 0,#000 34%)}#spl .tx{left:env(safe-area-inset-left,0px);right:auto;width:calc(100vw - 96vh - env(safe-area-inset-left,0px));box-sizing:border-box;bottom:auto;top:50%;transform:translateY(-50%)}#spl h1{font-size:min(7.4vw,calc((100vw - 96vh)/6.4))}}
 @media (prefers-reduced-motion:reduce){#spl .art,#spl i:after{animation:none}}
 </style>
-<link rel="stylesheet" href="experience/command-menu.css?v=112">
-<link rel="stylesheet" href="experience/modern.css?v=113">
+<link rel="stylesheet" href="experience/command-menu.css?v=114">
+<link rel="stylesheet" href="experience/modern.css?v=114">
 </head>
 <body>
 <div id="spl"><div class="art"></div><div class="tx"><h1>ÇELİK BÖRÜ</h1><small>GELİŞTİRİCİ · <b>EMİN KAAN BOYACI</b></small><small id="splV">YÜKLENİYOR</small><i></i></div></div>
@@ -292,12 +311,14 @@ function mkAA(){const g=new THREE.Group(),K=M(0x333333);cy(g,1.6,2,1.2,M(0x7a6a5
 const RUIN=M(0x2c2823),SUP={x:24,z:14};
 function putB(g,x,z,rot,r,hp,h){g.position.set(x,hAt(x,z),z);g.rotation.y=rot;S.add(shad(g));const b={x,z,r,hp,hp0:hp,h,g,dead:0};BLD.push(b);return b}
 function collapse(c){c.dead=1;c.g.scale.y=.28;if(c.parts){c.sync();BX.anim(c)}c.g.traverse(o=>{if(o.isMesh){o.mat0=o.mat0||o.material;o.material=RUIN}});for(let i=0;i<5;i++)dust(c.x+rnd(-c.r,c.r)*.6,c.z+rnd(-c.r,c.r)*.6,i%2?0x8a8272:0x3a3530,.8,rnd(2,5),hAt(c.x,c.z)+2,rnd(3,6));sndBoom(c.x,c.z)}
-// Sürüş: 52 tonluk tank ağır kalkar ama paletler kaymaz: dönüş hemen tutar, fren sert durdurur. En çok yolda 12 m/sn (43 km/sa), arazide 9,6; geri 4,5 m/sn.
+// Sürüş: tank ağırdır ama hantal değildir: üç saniyeye varmadan tam hıza çıkar, paletler kaymaz, dönüş hemen tutar, fren sert durdurur. En çok yolda
+// 14,5 m/sn (52 km/sa), arazide 13 (47 km/sa); geri 6,5 m/sn. Hızlandıkça dönüş beşte bir ağırlaşır (slow). Yokuş yukarı en çok üçte bir yavaşlar
+// (hill, up), yokuş aşağı beşte bir hızlanır (down); derin suda hız yarıya yakın düşer (wade).
 // Hız ve dönüş hedefe ivmeyle yaklaşır; ters yöne basmak fren yapar.
-const DRV=Object.freeze({vf:12,vr:4.5,off:.8,acc:3.4,brk:9,turn:1.05,tacc:7});
+const DRV=Object.freeze({vf:14.5,vr:6.5,off:.9,acc:5.2,brk:12,turn:1.4,tacc:12,slow:.2,hill:1,up:.35,down:.2,wade:.55});
 function drive(ix,iy,sp,dt){const up=1+.07*SV.U.eng,road=roadNear(P.x,P.z,1)?1:DRV.off,v=P.v||0,tv=iy*(iy>=0?DRV.vf:DRV.vr)*up*sp*road;
  const a=(tv*v>=0&&Math.abs(tv)>Math.abs(v))?DRV.acc*(1+.06*SV.U.eng):DRV.brk;P.v=v+clamp(tv-v,-a*dt,a*dt);
- const tw=-ix*DRV.turn*(1+.06*SV.U.eng)*(P.dz.trk<=0?.4:1)*(1-.3*clamp(Math.abs(P.v)/DRV.vf,0,1));P.w=(P.w||0)+clamp(tw-(P.w||0),-DRV.tacc*dt,DRV.tacc*dt);P.h+=P.w*dt;
+ const tw=-ix*DRV.turn*(1+.06*SV.U.eng)*(P.dz.trk<=0?.4:1)*(1-DRV.slow*clamp(Math.abs(P.v)/DRV.vf,0,1));P.w=(P.w||0)+clamp(tw-(P.w||0),-DRV.tacc*dt,DRV.tacc*dt);P.h+=P.w*dt;
  P.x=clamp(P.x+Math.sin(P.h)*P.v*dt,-WS+10,WS-10);P.z=clamp(P.z+Math.cos(P.h)*P.v*dt,-WS+10,WS-10)}
 // Binaya çarpma: hızla giren tank binayı hasarlar; sundurma ve köy evi birkaç çarpmada, betonarme daha geç yıkılır.
 function ramB(){const v=Math.abs(P.v||0);if(v<2.5)return;const now=performance.now()/1000;for(const c of BLD){if(c.dead||c.hp>900)continue;const d=Math.hypot(P.x-c.x,P.z-c.z);if(d>=c.r+2.6||(c.rmT||0)>now)continue;
@@ -845,7 +866,7 @@ function update(dt){
  const k=keys;let ix=clamp((k.d||k.ArrowRight?1:0)-(k.a||k.ArrowLeft?1:0)+joy.x,-1,1),iy=clamp((k.w||k.ArrowUp?1:0)-(k.s||k.ArrowDown?1:0)+joy.y,-1,1);gix=ix;giy=iy;
  
  const fx_=Math.sin(yaw),fz_=Math.cos(yaw);cd-=dt;ammoT+=dt;if(ammoT>2&&ammo<AMX()){ammo++;ammoT=0}
- if(mode==='tank'){const sp=(1-clamp((P.sl||0)*1.6,-.3,.6))*(P.dz.trk<=0?.1:1)*(P.dz.eng<=0?.5:1)*(hAt(P.x,P.z)<-1.5?.45:1);drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);if(P.dz.tur>0)P.th+=angd(yaw,P.th)*Math.min(1,7*dt)}
+ if(mode==='tank'){const sp=(1-clamp((P.sl||0)*DRV.hill,-DRV.down,DRV.up))*(P.dz.trk<=0?.1:1)*(P.dz.eng<=0?.5:1)*(hAt(P.x,P.z)<-1.5?DRV.wade:1);drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);if(P.dz.tur>0)P.th+=angd(yaw,P.th)*Math.min(1,7*dt)}
  else if(DR.on){
   DR.x=clamp(DR.x+(fx_*iy-fz_*ix)*(24+DR.y*.2)*(1+.08*SV.U.dsp)*dt,-WS+10,WS-10);DR.z=clamp(DR.z+(fz_*iy+fx_*ix)*(24+DR.y*.2)*(1+.08*SV.U.dsp)*dt,-WS+10,WS-10);
   gv=clamp((k.e?1:0)-(k.q?1:0)+hold+sv,-1,1);DR.ty=clamp(DR.ty+gv*35*dt,hAt(DR.x,DR.z)+4,180)}
@@ -1606,7 +1627,8 @@ addEventListener('mousedown',e=>{if(e.button===2&&game==='play'&&document.pointe
  const mv=e=>{const r=pad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,R=r.width*.34;let dx=e.clientX-cx,dy=e.clientY-cy;const l=Math.hypot(dx,dy);if(l>R){dx*=R/l;dy*=R/l}
   let jx=dx/R,jy=-dy/R,md='';const m=Math.hypot(jx,jy);let kx=dx,ky=dy;
   if(m<.16){jx=jy=0}else if(mode==='tank'){const a=Math.atan2(Math.abs(jy),Math.abs(jx));
-   if(a<PV){jx=Math.sign(jx)*Math.min(1,m);jy=0;md='p';kx=Math.sign(dx)*Math.min(R,Math.hypot(dx,dy));ky=0}
+   /* çubuk yana itilince: duran tank olduğu yerde döner; giden tank durmaz, gazı kısıp keskin döner (aniden durup dönmek hantal kalıyordu) */
+   if(a<PV){const go=Math.abs(P.v||0)>3?Math.sign(P.v)*.32:0;jx=Math.sign(jx)*Math.min(1,m);jy=go;md=go?'':'p';kx=Math.sign(dx)*Math.min(R,Math.hypot(dx,dy));ky=0}
    else if(a>Math.PI/2-SQ){jy=Math.sign(jy)*Math.min(1,m);jx=0;md=jy>0?'f':'b';ky=Math.sign(dy)*Math.min(R,Math.hypot(dx,dy));kx=0}}
   kn.style.transform='translate('+kx+'px,'+ky+'px)';joy.x=jx;joy.y=jy;hint(jx,jy,md)};
  pad.addEventListener('pointerdown',e=>{if(pid!==null)return;pid=e.pointerId;try{pad.setPointerCapture(pid)}catch(_){}e.preventDefault();e.stopPropagation();mv(e)});
@@ -3863,6 +3885,8 @@ const _eg=window.endGame;window.endGame=function(ok,txt){const was=game==='play'
  rep.querySelector('[data-r="again"]').onclick=()=>{rep.classList.remove('on');reset(lvSel)};rep.querySelector('[data-r="menu"]').onclick=()=>rep.classList.remove('on');
  if(window.CREW)setTimeout(()=>CREW.say(ok?'Savaş kazanıldı. İyi iş çıkardınız.':'Tank kaybedildi.',2,'end',1),300);
  return r};
+// Yeni oyun hangi yoldan başlarsa başlasın (menüdeki BAŞLAT, sonraki bölüm, sonuç ekranındaki YENİ SAVAŞ) önceki sonuç ekranı kapanır: oyunun üstünde kalmaz
+{const _rs=window.reset;window.reset=function(){rep.classList.remove('on');return _rs.apply(this,arguments)}}
 // ---- profil karti (rutbe rozetine dokun)
 const prof=document.createElement('div');prof.id='rep2';document.body.appendChild(prof);
 function openProf(){const{cur,nx}=nextRank(),pf=nx?Math.min(100,(SV.xp-cur[0])/(nx[0]-cur[0])*100):100,T=SV.tot,got=MED.filter(m=>SV.med[m.id]).length;
@@ -4607,7 +4631,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=113,LOGO=window.HISAR_LOGO;
+const VER=114,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4654,7 +4678,7 @@ document.body.dataset.tab='g';
 const btn=box.querySelector('#updB'),inf=box.querySelector('#updI');
 async function update(){btn.classList.add('spin');btn.querySelector('span').textContent='GÜNCELLENİYOR…';
  try{if('serviceWorker' in navigator){const rs=(await navigator.serviceWorker.getRegistrations()).filter(r=>!/\/poligon\//.test(r.scope));for(const r of rs){try{await r.update()}catch(e){}try{await r.unregister()}catch(e){}}}}catch(e){}
- try{if(window.caches){const ks=(await caches.keys()).filter(k=>k.startsWith('hisar-v'));await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}
+ try{if(window.caches){const ks=(await caches.keys()).filter(k=>k.startsWith('hisar-v')||k.startsWith('hisar-main-'));await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}
  const u=new URL(location.href);if(/^https?:/.test(location.protocol)&&!/claude\.ai|claudeusercontent/.test(location.hostname)){u.searchParams.set('v',Date.now().toString(36));location.replace(u.toString())}else location.reload()}
 const FILE=location.protocol==='file:'||location.protocol==='content:';
 if(FILE){inf.innerHTML='Yeni gelen <b>HISAR-SIMULATOR.html</b> dosyasını eskisinin üzerine kaydet, sonra GÜNCELLE\'ye bas · kayıtların korunur'}
@@ -5086,8 +5110,11 @@ addEventListener('error',e=>err('olay',e.error||e.message));addEventListener('un
 const HN=h=>{const s=String(h);return s.slice(0,48).replace(/\s+/g,' ')};
 window.loop=function(t){requestAnimationFrame(loop);
  const realDt=Math.max(0,(t-last)/1000)||0;const dr=Math.min(.05,realDt);last=t;fpsA+=Math.min(realDt,1);fpsN++;if(fpsA>2){try{perfAdapt(fpsN/fpsA)}catch(e){}fpsA=fpsN=0}
- let dt=dr;
- if(game==='play'&&!window.mapOpen){try{update(dt)}catch(e){err('güncelle',e)}try{hud()}catch(e){err('gösterge',e)}}
+ /* Kare hızı saniyede 20'nin altına düşerse oyun ağır çekime girmez: geçen gerçek süre en çok üç adıma bölünür (her adım en çok 50 ms; uzun
+    duraklamadan sonra en çok 150 ms işlenir). Tankın hızı telefonun kare hızına bağlı kalmaz. SIM_MAX adım sayısının tavanıdır (sınama kapısı
+    zamanı kendi adımlarıyla yürütür, 1 yapar). */
+ const span=Math.min(realDt,.15),steps=span>.05?Math.min(window.SIM_MAX||3,Math.ceil(span/.05)):1;let dt=steps>1?span/steps:dr;window.SIM_STEPS=steps;
+ if(game==='play'&&!window.mapOpen){for(let i=0;i<steps;i++){try{update(dt)}catch(e){err('güncelle',e);break}}try{hud()}catch(e){err('gösterge',e)}}
  try{camUpdate()}catch(e){err('kamera',e);if(window.BCAM&&BCAM.on){BCAM.on=0;iv=BCAM.iv||0}}
  try{skyUp(dr)}catch(e){err('gök',e)}
  dmgA=Math.max(0,dmgA-dr*1.2);shake=Math.max(0,shake-dr*2.2);try{$('dmg').style.opacity=dmgA*.8}catch(e){}
@@ -7219,6 +7246,7 @@ function teamStep(dt){if(!TEAM.on)return;const sn=Math.sin(P.h),cs=Math.cos(P.h)
  if(!TEAM.emb&&(mv>2.5||mode!=='tank')&&TEAM.m.some(s=>Math.hypot(s.x-P.x,s.z-P.z)>4))TEAM.emb=1;
  let near=null,nd=1e9;for(const e of E){if(e.type==='bridge')continue;const d=Math.hypot(e.x-P.x,e.z-P.z);if(d<nd&&d<85){nd=d;near=e}}
  for(let i=TEAM.m.length-1;i>=0;i--){const s=TEAM.m[i],u=s.u;let tx,tz,run=0,aim=0;
+  /* araç erin üstüne gelirse er araca biner: içinden geçilmez */if(mv>.8&&Math.hypot(s.x-P.x,s.z-P.z)<2.4){S.remove(s.g);TEAM.m.splice(i,1);continue}
   if(TEAM.emb){tx=rx;tz=rz;run=1;if(Math.hypot(s.x-rx,s.z-rz)<1.4){S.remove(s.g);TEAM.m.splice(i,1);continue}}
   else{const base=near?Math.atan2(near.x-P.x,near.z-P.z):P.h+PI,off=(s.slot-1.5)*.45,r=near?7.5:4.5;tx=P.x+Math.sin(base+off)*r;tz=P.z+Math.cos(base+off)*r;aim=near?1:0}
   const dx=tx-s.x,dz=tz-s.z,d=Math.hypot(dx,dz);let spd=0;if(d>.6){const sp=run?5.2:3.2;s.h=Math.atan2(dx,dz);s.x+=dx/d*Math.min(d,sp*dt);s.z+=dz/d*Math.min(d,sp*dt);spd=sp}
@@ -7442,22 +7470,22 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script defer src="experience/bridge.js?v=63"></script>
 <script defer src="experience/ui.js?v=63"></script>
 
-<script src="experience/crew-orders.js?v=6"></script>
-<script src="experience/field.js?v=7"></script>
-<script src="experience/battle.js?v=6"></script>
-<script src="experience/swarm.js?v=4"></script>
-<script src="experience/realism.js?v=4"></script>
-<script src="experience/sinir.js?v=9"></script>
-<script src="experience/harekat.js?v=113"></script>
-<script src="experience/atis.js?v=2"></script>
-<script src="experience/harita.js?v=3"></script>
-<script src="experience/carpisma.js?v=3"></script>
-<script src="experience/koy.js?v=4"></script>
-<script src="experience/destek.js?v=4"></script>
-<script src="experience/menu.js?v=110"></script>
-<script src="experience/arazi.js?v=3"></script><script src="experience/ortam.js?v=1"></script><script src="experience/model.js?v=113"></script><script src="experience/sivil.js?v=5"></script><script src="experience/cevre.js?v=1"></script><script src="experience/mahalle.js?v=1"></script><script src="experience/militan.js?v=1"></script><script src="experience/agac.js?v=1"></script><script src="experience/hat.js?v=1"></script><script src="experience/ejderha.js?v=1"></script>
-<script defer src="experience/command-menu.js?v=112"></script>
-<script defer src="experience/safak.js?v=113"></script>
-<script defer src="experience/modern.js?v=113"></script>
+<script src="experience/crew-orders.js?v=114"></script>
+<script src="experience/field.js?v=114"></script>
+<script src="experience/battle.js?v=114"></script>
+<script src="experience/swarm.js?v=114"></script>
+<script src="experience/realism.js?v=114"></script>
+<script src="experience/sinir.js?v=114"></script>
+<script src="experience/harekat.js?v=114"></script>
+<script src="experience/atis.js?v=114"></script>
+<script src="experience/harita.js?v=114"></script>
+<script src="experience/carpisma.js?v=114"></script>
+<script src="experience/koy.js?v=114"></script>
+<script src="experience/destek.js?v=114"></script>
+<script src="experience/menu.js?v=114"></script>
+<script src="experience/arazi.js?v=114"></script><script src="experience/ortam.js?v=114"></script><script src="experience/model.js?v=114"></script><script src="experience/sivil.js?v=114"></script><script src="experience/cevre.js?v=114"></script><script src="experience/mahalle.js?v=114"></script><script src="experience/militan.js?v=114"></script><script src="experience/agac.js?v=114"></script><script src="experience/hat.js?v=114"></script><script src="experience/ejderha.js?v=114"></script>
+<script defer src="experience/command-menu.js?v=114"></script>
+<script defer src="experience/safak.js?v=114"></script>
+<script defer src="experience/modern.js?v=114"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* ÇELİK BÖRÜ sınır 1.2 — haritanın kuzeyi Türkiye, güneyi Suriye; sınır nehir boyuncadır.
+/* ÇELİK BÖRÜ sınır 1.3 — haritanın kuzeyi Türkiye, güneyi Suriye; sınır nehir boyuncadır.
  * - Sınır duvarı: nehrin kuzey kıyısında; kullanıcının gönderdiği 3B duvar modeliyle çizilir (beton levha, üstünde jiletli tel halkaları;
  *   hat.js verir), model gelmezse beton bloklarla. Yalnız geçitlerdeki sınır kapılarından geçilir (oyuncu, dost ve düşman araçları için;
  *   rota bulma da duvarı bilir).
@@ -6,6 +6,8 @@
  * - Askerler tanka yol verir: üstüne tank gelen asker yana çekilir, tank geçince yerine döner (tank askerin içinden geçmez).
  *   Aynı kuralı köylüler, hayvanlar ve refakat piyadesi de kullanır; yol verilen araçlar tank, dost tanklar, Kirpi devriyesi ve refakat araçlarıdır.
  * - Devriye Kirpi'si katıdır (tank içinden geçemez) ve önünde tank varsa durup bekler.
+ * - Kimse suyun içinden yürümez: düşman piyadesi de duvarı yalnız kapıdan, çayı yalnız geçitten aşar; kıyıya gelince geçide doğru kıyı boyunca
+ *   yürür. Yol verirken de kimse suya çekilmez.
  * - Nöbetçi kuleleri (içinde nöbetçi), geçitlerin yanında sınır karakolları (bina, gönderde büyük bayrak, kum torbası, kapı nöbetçileri),
  *   duvar boyunca ikişerli devriye.
  * - Türkiye tarafındaki bütün evlerde Türk bayrağı (balkon, pencere, dam gönderi); köylerde okul ve okul bahçesinde bayrak.
@@ -15,7 +17,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -66,12 +68,22 @@ function course(h,vx,vz){let sp=Math.hypot(vx,vz);if(!(sp<40)){vx=vz=sp=0;}if(ty
 // (bina, duvar) karşı yana geçer (oyun tarafında bakılır).
 function giveWay(fx,fz,veh,cfg){cfg=cfg||WAY;const sx=Math.sin(veh.h),cz=Math.cos(veh.h),dx=fx-veh.x,dz=fz-veh.z,f=dx*sx+dz*cz,l=dx*cz-dz*sx,v=Math.abs(veh.v||0),half=cfg.half+Math.min(cfg.wide,v*.4),reach=cfg.body+Math.min(cfg.max,v*cfg.look);
  if(f<-cfg.body||f>reach||Math.abs(l)>=half)return null;const side=l>=0?1:-1;return {x:cz*side,z:-sx*side,need:half-Math.abs(l),half,f,push:Math.abs(f)<cfg.hullLen&&Math.abs(l)<cfg.hull?cfg.hull-Math.abs(l):0};}
-const core=Object.freeze({VERSION,FLAG,starPts,WALL,WAY,giveWay,course,wallZ,atGate,blocked,via,towersAlong,stretches,tile,turkish,pose});
+// Su: çayın su şeridi eksenin iki yanında half m genişliğindedir, yüzeyi level yüksekliğindedir; zemin yüzeyin dip kadar altındaysa orası sudur
+// (geçitlerde zemin suyun üstündedir: geçit kurudur)
+const WATER=Object.freeze({half:16,level:-1.6,dip:.2,reach:17});
+function wetAt(riv,h,x,z){return Math.abs(z-riv(x))<WATER.reach&&h(x,z)<WATER.level-WATER.dip;}
+// Kıyıda ya da duvarın dibinde durdurulan piyadenin sıradaki adımı: en yakın geçide doğru, çaya uzaklığını koruyarak (kıyı boyunca) step kadar.
+// Dönen nokta da su ya da duvarın öbür yanıysa null (yerinde kalır).
+// Çay yer yer genişler: kıyı çizgisi suya düşüyorsa adım çaydan biraz daha uzağa (OUT sırasıyla) atılır.
+const OUT=Object.freeze([0,.5,1,1.6,2.4,3.5]);
+function bankStep(riv,h,fords,x,z,step){let g=fords[0];for(const k of fords)if(Math.abs(k-x)<Math.abs(g-x))g=k;const dir=g>=x?1:-1,nx=x+dir*step,nz=z+(riv(nx)-riv(x)),away=z>=riv(x)?1:-1;
+ for(const o of OUT){const cz=nz+away*o;if(!wetAt(riv,h,nx,cz)&&!blocked(riv,fords,x,z,nx,cz))return {x:nx,z:cz,ford:g};}return null;}
+const core=Object.freeze({VERSION,FLAG,starPts,WALL,WAY,WATER,wetAt,bankStep,giveWay,course,wallZ,atGate,blocked,via,towersAlong,stretches,tile,turkish,pose});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
 // ---------- oyun ----------
-const hooks={};const stat={blocks:0,coils:0,towers:0,posts:0,flags:0,poleFlags:0,schools:[],soldiers:0,crossBlocked:0,civil:0,figuresDrawn:0,gaveWay:0};
+const hooks={};const stat={blocks:0,coils:0,towers:0,posts:0,flags:0,poleFlags:0,schools:[],soldiers:0,crossBlocked:0,civil:0,figuresDrawn:0,gaveWay:0,infHeld:0,infBank:0};
 let built=false,T=null,flagTex=null,crowd=null,waves=[],fhouse=[],clock=0;
 const W=()=>root.WS||800,FD=()=>safe(()=>FORDS,[]),RV=x=>safe(()=>riv(x),120);
 
@@ -259,11 +271,12 @@ function soldiers(tw,posts){const add=o=>{const y=safe(()=>hAt(o.x,o.z),0)+(o.dy
 let VEH=[];const vprev=new WeakMap(),VSRC=[];
 function vehicles(dt){const out=[],put=o=>{const q=vprev.get(o);vprev.set(o,[o.x,o.z]);let vx=0,vz=0;if(q&&dt>0){vx=(o.x-q[0])/dt;vz=(o.z-q[1])/dt;}const c=course(o.h,vx,vz);out.push({x:o.x,z:o.z,h:c.h,v:c.v});};
  /* Uçangöz kipinde de tank yerinde durur: sayılır */safe(()=>{if(game==='play')put(P);},null);for(const a of safe(()=>AL,[]))if(!a.dead)put(a);for(const u of KRP){u.h=u.yaw;put(u);}for(const fn of VSRC)for(const o of safe(fn,null)||[])put(o);VEH=out;}
-// Çekilecek yer kapalı mı: bina (dikdörtgen tabanlıysa tabanı, değilse dairesi) ya da sınır duvarı; hard değilse siper daireleri de (kaya, araç,
-// eski mahalle) sayılır
+const HG=(x,z)=>safe(()=>hAt(x,z),0),wet=(x,z)=>wetAt(RV,HG,x,z);
+// Çekilecek yer kapalı mı: bina (dikdörtgen tabanlıysa tabanı, değilse dairesi), sınır duvarı ya da su; hard değilse siper daireleri de (kaya,
+// araç, eski mahalle) sayılır
 function spotBlocked(x,z,hard){if(safe(()=>BLD.some(b=>{if(b.dead)return false;const dx=x-b.x,dz=z-b.z;if(Math.abs(dx)>30||Math.abs(dz)>30)return false;
    if(b.w&&b.d){const c=Math.cos(b.rot||0),s=Math.sin(b.rot||0);return Math.abs(dx*c-dz*s)<b.w/2+.7&&Math.abs(dx*s+dz*c)<b.d/2+.7;}return Math.hypot(dx,dz)<b.r*.8;}),false))return true;
- if(Math.abs(z-wallZ(RV,x))<1.6&&!atGate(FD(),x))return true;
+ if(Math.abs(z-wallZ(RV,x))<1.6&&!atGate(FD(),x))return true;if(wet(x,z))return true;
  return !hard&&safe(()=>COV.some(c=>Math.abs(c.x-x)<c.r+.5&&Math.abs(c.z-z)<c.r+.5&&Math.hypot(c.x-x,c.z-z)<c.r+.4),false);}
 // Bir noktanın çekilmesi gereken yön (birim) ve yol; tehlike yoksa null. Çekileceği yan kapalıysa karşı yana geçer; iki yanda da yalnız kaya ya da
 // araç varsa yine yana çekilir (binaya ve duvara girmez); iki yan da bina ya da duvarsa aracın gidiş yönünde ileri kaçar. Birden çok araç varsa
@@ -309,7 +322,17 @@ function frame(dt){if(!built)build();if(!built)return;clock+=dt||0;waveStep(cloc
 const prev=new WeakMap();
 function remember(){const f=FD();for(const o of [safe(()=>P,null),...safe(()=>AL,[]),...safe(()=>E,[])]){if(!o)continue;prev.set(o,[o.x,o.z]);}}
 function enforce(){const f=FD();const chk=(o,isP)=>{const q=prev.get(o);if(!q)return;if(blocked(RV,f,q[0],q[1],o.x,o.z)){o.x=q[0];o.z=q[1];stat.crossBlocked++;if(isP){P.v=-(P.v||0)*.1;}}};
- safe(()=>chk(P,true),null);for(const a of safe(()=>AL,[]))chk(a);for(const e of safe(()=>E,[]))if(e.type!=='inf')chk(e);}
+ safe(()=>chk(P,true),null);for(const a of safe(()=>AL,[]))chk(a);for(const e of safe(()=>E,[])){if(e.type!=='inf')chk(e);else foot(e,f);}}
+// Düşman piyadesi: duvarı yalnız kapıdan, çayı yalnız geçitten aşar (suyun içinden yürümez). Durdurulan er yerinde saymaz: en yakın geçide doğru
+// kıyı boyunca yürür. Zaten suyun içindeyse (oraya düşmüşse) çıkmasına izin verilir.
+function foot(e,f){const q=prev.get(e);if(!q)return;const step=Math.hypot(e.x-q[0],e.z-q[1]);if(step<1e-4||step>6)return;const wall=blocked(RV,f,q[0],q[1],e.x,e.z),water=wet(e.x,e.z)&&!wet(q[0],q[1]);if(!wall&&!water)return;
+ stat.infHeld++;let to=null;
+ /* önce geçit yolu: oyuncunun bulunduğu yana, en uygun geçidin ağzına, oradan şeridin içinden karşıya (refakat kolunun kullandığı kural) */
+ const rt=safe(()=>root.HisarDestek.core.route,null);if(rt){if(e._lane==null)e._lane=(Math.random()-.5)*8;const wp=safe(()=>rt(RV,f,WALL.back,q[0],q[1],P.x,P.z,e._lane),null);
+  if(wp){const dx=wp.x-q[0],dz=wp.z-q[1],d=Math.hypot(dx,dz);if(d>.05){const k=Math.min(d,step)/d,nx=q[0]+dx*k,nz=q[1]+dz*k;if(!(wet(nx,nz)&&!wet(q[0],q[1]))&&!blocked(RV,f,q[0],q[1],nx,nz))to={x:nx,z:nz};}}}
+ /* düz yol suya ya da duvara çıkıyorsa kıyı boyunca geçide doğru */
+ if(!to)to=bankStep(RV,HG,f,q[0],q[1],step);
+ if(to){e.x=to.x;e.z=to.z;e.h=Math.atan2(to.x-q[0],to.z-q[1]);stat.infBank++;}else{e.x=q[0];e.z=q[1];}safe(()=>{e.g.position.x=e.x;e.g.position.z=e.z;},null);}
 function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')return;root[name]=factory(root[name]);hooks[name]=true;}
 function connect(){build();
  // devriye ve nöbetçiler oyun saatiyle yürür (güncelleme adımında)
@@ -333,6 +356,6 @@ function drawMini(){if(typeof mmx==='undefined'||typeof mmO!=='function')return;
 function diagnostics(){return {version:VERSION,built,hooks:{...hooks},...stat,posts:POSTS.map(p=>({x:Math.round(p.x),z:Math.round(p.z),f:p.f})),towersAt:TW.map(t=>Math.round(t.x)),
  kirpis:KRP.map(u=>({x:Math.round(u.x),z:Math.round(u.z),dir:u.dir})),schoolsAt:SCH.map(s=>({x:Math.round(s.x),z:Math.round(s.z),name:s.name})),sentries:SOLD.filter(f=>f.home.gate).map(f=>({x:f.x,z:f.z,act:f.act})),patrols:SOLD.filter(f=>f.pat).map(f=>({x:f.x,z:f.z,act:f.act})),
   vehicles:VEH.length,men:SOLD.map(f=>({x:f.x,z:f.z,act:f.act,off:Math.hypot(f.ax||0,f.az||0),kind:f.pat?'devriye':f.home.tower?'kule':f.home.gate?'kapi':'karakol'}))};}
-root.HisarSinir=Object.freeze({version:VERSION,core,fig:()=>({Crowd:(...a)=>{T=T||root.THREE;return Crowd(...a);},RIG,pose,SKIN,way}),vehicleSource:fn=>{if(typeof fn==='function'&&!VSRC.includes(fn))VSRC.push(fn);return VSRC.length;},flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd,bust:setBust,hasBust:()=>!!BUST,wallModel,towerGuards,towers:()=>TW.map(t=>({x:t.x,z:t.z})),kirpis:()=>KRP.map(u=>u.g),wall:()=>WM?{segs:WM.segs.length,counts:WM.lv.map(L=>L.n),old:!!WOLD}:null});
+root.HisarSinir=Object.freeze({version:VERSION,core,fig:()=>({Crowd:(...a)=>{T=T||root.THREE;return Crowd(...a);},RIG,pose,SKIN,way,wet}),vehicleSource:fn=>{if(typeof fn==='function'&&!VSRC.includes(fn))VSRC.push(fn);return VSRC.length;},flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd,bust:setBust,hasBust:()=>!!BUST,wallModel,towerGuards,towers:()=>TW.map(t=>({x:t.x,z:t.z})),kirpis:()=>KRP.map(u=>u.g),wall:()=>WM?{segs:WM.segs.length,counts:WM.lv.map(L=>L.n),old:!!WOLD}:null});
 connect();doc.addEventListener('hisar:ui-ready',connect);
 })(typeof window!=='undefined'?window:globalThis);

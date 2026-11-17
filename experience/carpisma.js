@@ -7,7 +7,7 @@
  * Yeni savaşta ağaçlar kalkar, setler yeniden kazılır. Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -35,10 +35,10 @@ function movers(){const out=[];safe(()=>{if(mode==='tank')out.push(P);},null);fo
 // Düşman piyadesi (yalnız oyuncunun ve dost tankların altında): hareket eden tankın gövdesi altında kalan ezilir (patlama olmaz: toz kalkar, tok bir
 // ses gelir); duran ya da çok ağır giden tankın gövdesinin içinde de kimse duramaz, yana çıkar. Alan gövdenin eksenindedir (yana kayan tankta da).
 function infantry(o,vx,vz,v){const hk=typeof o.h==='number',ax=hk?Math.sin(o.h):vx,az=hk?Math.cos(o.h):vz,al=Math.hypot(ax,az);if(!(al>0))return;const ux=ax/al,uz=az/al;
- for(const e of safe(()=>E.slice(),[])){if(e.type!=='inf')continue;const dx=e.x-o.x,dz=e.z-o.z;if(Math.abs(dx)>6||Math.abs(dz)>6||!under(dx,dz,ux,uz))continue;
+ for(const e of safe(()=>E.slice(),[])){/* makineli tüfek yuvasındaki er de ezilir (yuva yerinden oynamaz: duran tank onu itmez) */if(e.type!=='inf'&&e.type!=='mgn')continue;const dx=e.x-o.x,dz=e.z-o.z;if(Math.abs(dx)>6||Math.abs(dz)>6||!under(dx,dz,ux,uz))continue;
   if(v>RUN.min){const bb=root.bigBoom;root.bigBoom=function(){};try{root.killE(e);}catch(err){}finally{root.bigBoom=bb;}stat.runOver++;
    safe(()=>{const y=hAt(e.x,e.z);for(let i=0;i<4;i++)root.FXP.puff(e.x+(Math.random()-.5)*1.6,y+.3,e.z+(Math.random()-.5)*1.6,(Math.random()-.5)*2,1.2+Math.random(),(Math.random()-.5)*2,1,.6,2.2,0xb9a57e,0x8c7a58,.5,1.2);if(o===P)root.thump(110,45,.22,.3);},null);}
-  else{const q=sideOut(dx,dz,ux,uz);e.x+=q.x;e.z+=q.z;safe(()=>{e.g.position.x=e.x;e.g.position.z=e.z;},null);stat.pushedOut++;}}}
+  else if(e.type==='inf'){const q=sideOut(dx,dz,ux,uz);e.x+=q.x;e.z+=q.z;safe(()=>{e.g.position.x=e.x;e.g.position.z=e.z;},null);stat.pushedOut++;}}}
 function step(dt){findTrees();if(!trees)return;const T=root.THREE;
  for(const o of movers()){const p=prev.get(o);prev.set(o,[o.x,o.z]);if(!p)continue;const vx=(o.x-p[0])/Math.max(dt,1e-3),vz=(o.z-p[1])/Math.max(dt,1e-3),v=Math.hypot(vx,vz);if((o===P||!o.type)&&v<=40)infantry(o,vx,vz,v);if(v<TREE.min||v>40)continue;
   for(const t of trees){if(t.t>=0)continue;if(Math.abs(t.x-o.x)>TREE.hit||Math.abs(t.z-o.z)>TREE.hit)continue;if(Math.hypot(t.x-o.x,t.z-o.z)>TREE.hit)continue;

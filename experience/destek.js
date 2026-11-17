@@ -1,4 +1,4 @@
-/* ÇELİK BÖRÜ destek 1.3 — bir savaş, yalnız tanklarla olmaz.
+/* ÇELİK BÖRÜ destek 1.4 — bir savaş, yalnız tanklarla olmaz.
  * Hava desteği (telsizden istenir, her birinin hazırlanma süresi vardır):
  * - T129 ATAK: kuzeyden gelir, hedef bölgenin çevresinde döner, tanka UMTAS füzesi, zırhlı araca ve piyadeye Cirit roketi atar, sonra döner.
  * - Bayraktar TB2: yüksekten döner, iki MAM-L akıllı mühimmatı en yakın görülen hedefe bırakır.
@@ -13,7 +13,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.3.0';
+const VERSION='1.4.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -33,8 +33,9 @@ const ready=(cdEnd,now)=>Math.max(0,Math.ceil(cdEnd-now));
 // Piyade hedef noktası: tankın önünde, hedefe doğru, tim içinde yan yana
 function squadSlot(px,pz,tx,tz,i,n,ahead,spread){const a=Math.atan2(tx-px,tz-pz),d=Math.min(ahead,Math.hypot(tx-px,tz-pz)),cx=px+Math.sin(a)*d,cz=pz+Math.cos(a)*d,o=(i-(n-1)/2)*spread;return {x:cx+Math.cos(a)*o,z:cz-Math.sin(a)*o,yaw:a};}
 // Refakat kolu sınır şeridini (duvar ve çay) yalnız geçitten aşar. BAND: şeridin güney kıyısı (çayın ekseninden, m), geçidin kuzey ağzının duvara
-// ve güney ağzının kıyıya uzaklığı, erin kendi şeridinde sayıldığı yarı en, ağıza varmış sayıldığı pay
-const BAND=Object.freeze({south:18,north:12,past:4,half:3,near:5});
+// ve güney ağzının kıyıya uzaklığı, erin kendi şeridinde sayıldığı yarı en, ağıza varmış sayıldığı pay, geçit yolunda olmayan erin ve aracın şeride
+// en az uzaklığı, şeritteki bir hedefin aynı geçide ait sayıldığı uzaklık (same) (keep, keepVeh: çay kıvrımlıdır; iki ucu aynı yanda olan düz yol şeridin içinden geçebilir, o zaman duvar ya da kıyı boyunca yürünür)
+const BAND=Object.freeze({south:18,north:12,past:4,half:3,near:5,keep:3.5,keepVeh:8,same:40});
 // ESC: refakat aracının tanka ve öbür araca en az uzaklığı (m), aracın ve erin bina payı, geçitte erler arası şerit aralığı, park hâlindeki aracın
 // engeli (boyu eninden uzun: ekseninde önde ve arkada birer daire; yarıçap ve eksenden uzaklık)
 const ESC=Object.freeze({tank:6.5,veh:5.5,body:2.2,man:.7,lane:1.6,parked:2.8,parkOff:{kirpi:1.8,acv:1.4}});
@@ -48,15 +49,20 @@ function zone(riv,back,x,z){const r=riv(x);return z<r-back?0:z>r+BAND.south?2:1;
 function route(riv,fords,back,ax,az,tx,tz,lane){const sa=zone(riv,back,ax,az),st=zone(riv,back,tx,tz);if(sa===st&&sa!==1)return {x:tx,z:tz,gate:false};
  let g=fords[0];for(const f of fords)if(Math.abs(f-ax)+Math.abs(f-tx)<Math.abs(g-ax)+Math.abs(g-tx))g=f;
  const x=g+(lane||0),r=riv(g),N={x,z:r-back-BAND.north,gate:true},S={x,z:r+BAND.south+BAND.past,gate:true},inC=Math.abs(ax-x)<BAND.half,goal=st===0?N:st===2?S:{x,z:tz,gate:true};
- if(sa===1)return inC?goal:{x,z:az,gate:true};
+ /* şeridin içindeyse önce içinde bulunduğu (kendisine en yakın) geçitten çıkar: hedefe en uygun geçit başkası olsa da şeridin içinden (suyun
+    içinden) o geçide yürümez; kuzeye çıkar, oradan gider */
+ if(sa===1){let g0=fords[0];for(const f of fords)if(Math.abs(f-ax)<Math.abs(g0-ax))g0=f;const x0=g0+(lane||0),r0=riv(g0);if(Math.abs(ax-x0)>=BAND.half)return {x:x0,z:az,gate:true};
+  return st===2?{x:x0,z:r0+BAND.south+BAND.past,gate:true}:st===1&&Math.abs(tx-g0)<BAND.same?{x:x0,z:tz,gate:true}:{x:x0,z:r0-back-BAND.north,gate:true};}
  if(sa===0)return inC&&az>N.z-BAND.near?goal:N;
  return inC&&az<S.z+BAND.near?goal:S;}
+// Geçit yolunda olmayan yürüyüş şeride girmez: z, bulunulan yanda (0 kuzey, 2 güney) şeridin pad kadar dışında tutulur (şeridin içindeyken dokunulmaz)
+function keepSide(riv,back,zn,x,z,pad){if(zn===0)return Math.min(z,riv(x)-back-pad);if(zn===2)return Math.max(z,riv(x)+BAND.south+pad);return z;}
 // Geçitte erin şeridi: altı er yan yana, iki tim yarım adım kaydırılmış (hepsi geçidin sığ yerinde kalır)
 const laneOf=(i,sq)=>(i-2.5)*ESC.lane+(sq?-.4:.4);
 // Hedefe giden doğru (x,z → tx,tz) merkezi (ox,oz), yarıçapı r olan bir tankın içinden geçiyorsa tankın yanındaki dolanma noktası; geçmiyorsa null
 function around(x,z,tx,tz,ox,oz,r){const dx=tx-x,dz=tz-z,d=Math.hypot(dx,dz);if(d<1e-6)return null;const ux=dx/d,uz=dz/d,ex=ox-x,ez=oz-z,f=ex*ux+ez*uz;if(f<=0||f>=d+r)return null;
  const l=ex*uz-ez*ux;if(Math.abs(l)>=r)return null;const k=l>=0?-1:1;return {x:ox+uz*k*(r+1.5),z:oz-ux*k*(r+1.5),gate:false};}
-const core=Object.freeze({VERSION,SUP,INF,BAND,ESC,NEAR,pickTarget,orbitPt,ready,squadSlot,zone,route,laneOf,around});
+const core=Object.freeze({VERSION,SUP,INF,BAND,ESC,NEAR,pickTarget,orbitPt,ready,squadSlot,zone,route,keepSide,laneOf,around});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
@@ -141,6 +147,7 @@ function buildForces(){const fig=safe(()=>root.HisarSinir.fig(),null);if(!fig||!
 const WBACK=()=>safe(()=>root.HisarSinir.core.WALL.back,26);
 const path=(ax,az,tx,tz,lane)=>safe(()=>route(riv,FORDS,WBACK(),ax,az,tx,tz,lane),null)||{x:tx,z:tz,gate:false};
 const zoneAt=(x,z)=>safe(()=>zone(riv,WBACK(),x,z),0);
+const keepZ=(x0,z0,x1,z1,pad)=>safe(()=>keepSide(riv,WBACK(),zone(riv,WBACK(),x0,z0),x1,z1,pad),z1);
 const wallBlocks=(x0,z0,x1,z1)=>safe(()=>root.HisarSinir.core.blocked(riv,FORDS,x0,z0,x1,z1),false);
 // Yakındaki engeller: her er ve araç çevresindeki (NEAR.r m) bina ve siperleri kısa bir listede tutar; liste NEAR.every sn'de bir ya da NEAR.move m
 // yer değiştirince yenilenir. Bütün engelleri her adımda taramak (iki bin kayıt) telefonda kareyi yavaşlatır.
@@ -167,15 +174,16 @@ function forcesOn(on){if(!forces)forces=buildForces();if(!forces)return;forces.o
    const o={x:sl.x,z:sl.z};safe(()=>pushOut(o,ESC.man),null);m.f.x=o.x;m.f.z=o.z;m.f.yaw=P.h;}}}
 function objective(){const op=safe(()=>root.MAPVIEW_HK&&root.MAPVIEW_HK(),null);return op?op.obj:null;}
 function forcesStep(dt){if(!forces||!forces.on)return;const obj=objective()||{x:P.x+Math.sin(P.h)*200,z:P.z+Math.cos(P.h)*200},en=enemies().filter(e=>e.seen);
- for(const m of forces.men){const f=m.f;if(m.down>0){m.down-=dt;f.act='yat';if(m.down<=0&&m.hp<=0){f.live=false;}f.y=safe(()=>hAt(f.x,f.z),0);continue;}if(m.hp<=0)continue;
-  /* tanka yol ver: üstüne tank gelen piyade (çömelmiş ateş ediyor olsa da) yana koşar */
-  const w=forces.way?forces.way(f.x,f.z):null;if(w){const st=Math.max(Math.min(w.need,forces.run*dt),w.push||0);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;f.y=safe(()=>hAt(f.x,f.z),0);stat.gaveWay++;continue;}
+ for(const m of forces.men){const f=m.f;
+  /* tanka yol ver: üstüne tank gelen piyade (çömelmiş ateş ediyor ya da siper almış yatıyor olsa da) kalkıp yana koşar; vurulmuş er kalır */
+  const w=m.hp>0&&f.live&&forces.way?forces.way(f.x,f.z):null;if(w){m.down=0;const st=Math.max(Math.min(w.need,forces.run*dt),w.push||0);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;f.y=safe(()=>hAt(f.x,f.z),0);stat.gaveWay++;continue;}
+  if(m.down>0){m.down-=dt;f.act='yat';if(m.down<=0&&m.hp<=0){f.live=false;}f.y=safe(()=>hAt(f.x,f.z),0);continue;}if(m.hp<=0)continue;
   let tgt=null,td=INF.range;for(const e of en){const d=Math.hypot(e.x-f.x,e.z-f.z);if(d<td){td=d;tgt=e;}}
   if(tgt){f.act='diz';f.t+=dt;let a=Math.atan2(tgt.x-f.x,tgt.z-f.z)-f.yaw;while(a>Math.PI)a-=6.283;while(a<-Math.PI)a+=6.283;f.yaw+=a*Math.min(1,dt*4);m.cd-=dt;
    if(m.cd<=0){m.cd=INF.every[0]+Math.random()*(INF.every[1]-INF.every[0]);const gy=safe(()=>hAt(f.x,f.z),0);tracer({x:f.x,y:gy+1.1,z:f.z},{x:tgt.x,y:safe(()=>hAt(tgt.x,tgt.z),0)+1.2,z:tgt.z});stat.infShots++;
     small(tgt,tgt.type==='inf'?INF.dmgInf:INF.dmgVeh);}}
   else{const sl=squadSlot(P.x,P.z,obj.x,obj.z,m.i,6,INF.ahead+m.sq*16,INF.spread),wp=path(f.x,f.z,sl.x,sl.z,laneOf(m.i,m.sq)),dx=wp.x-f.x,dz=wp.z-f.z,d=Math.hypot(dx,dz);if(wp.gate)stat.viaGate++;
-   if(d>(wp.gate?.4:1.5)){const s=Math.min(d,(Math.hypot(sl.x-f.x,sl.z-f.z)>25?INF.speed*1.8:INF.speed)*dt),o=stepAround(f.x,f.z,dx/d,dz/d,s,ESC.man,nearList(m,f.x,f.z,dt)),mv=Math.hypot(o.x-f.x,o.z-f.z);
+   if(d>(wp.gate?.4:1.5)){const s=Math.min(d,(Math.hypot(sl.x-f.x,sl.z-f.z)>25?INF.speed*1.8:INF.speed)*dt),o=stepAround(f.x,f.z,dx/d,dz/d,s,ESC.man,nearList(m,f.x,f.z,dt));if(!wp.gate)o.z=keepZ(f.x,f.z,o.x,o.z,BAND.keep);const mv=Math.hypot(o.x-f.x,o.z-f.z);
     /* tankın önüne, duvarın içine adım atmaz; binanın çevresinden dolanır */
     if(mv<s*.15||wallBlocks(f.x,f.z,o.x,o.z)||(forces.way&&forces.way(o.x,o.z)))f.act='nobet';else{f.yaw=Math.atan2(o.x-f.x,o.z-f.z);f.x=o.x;f.z=o.z;f.act='nobet-yuru';f.t+=dt*5.2;}}
    else{f.act='nobet';f.yaw=sl.yaw;}}
@@ -187,7 +195,7 @@ function forcesStep(dt){if(!forces||!forces.on)return;const obj=objective()||{x:
   for(const o of tk){const w=around(v.x,v.z,wp.x,wp.z,o.x,o.z,ESC.tank);if(w){wp=w;break;}}
   for(const o of lead){const w=around(v.x,v.z,wp.x,wp.z,o.x,o.z,ESC.veh);if(w){wp=w;break;}}
   const dx=wp.x-v.x,dz=wp.z-v.z,d=Math.hypot(dx,dz);
-  if(dT>2&&d>.3){const s=Math.min(d,(dT>30?16:Math.min(11,dT))*dt),o=stepAround(v.x,v.z,dx/d,dz/d,s,ESC.body,nearList(v,v.x,v.z,dt)),mx=o.x-v.x,mz=o.z-v.z;
+  if(dT>2&&d>.3){const s=Math.min(d,(dT>30?16:Math.min(11,dT))*dt),o=stepAround(v.x,v.z,dx/d,dz/d,s,ESC.body,nearList(v,v.x,v.z,dt));if(!wp.gate)o.z=keepZ(v.x,v.z,o.x,o.z,BAND.keepVeh);const mx=o.x-v.x,mz=o.z-v.z;
    if(!wallBlocks(v.x,v.z,o.x,o.z)){v.x=o.x;v.z=o.z;if(Math.hypot(mx,mz)>s*.1){let t2=Math.atan2(mx,mz)-v.yaw;while(t2>Math.PI)t2-=6.283;while(t2<-Math.PI)t2+=6.283;v.yaw+=t2*Math.min(1,dt*2.5);}}}
   /* tankın ve öbür aracın içine girmez (tank üstüne gelirse kenara çekilir) */
   {const x0=v.x,z0=v.z;let k=false;/* önce öndeki araç, sonra dost tanklar, en son oyuncunun tankı: araç tankların arasında sıkışsa da oyuncunun tankının içinde kalmaz */

@@ -27,7 +27,7 @@ test('soldiers give way to a tank: whoever stands in its path steps to his own s
  assert.ok(a.need/W.run<(8-W.body)/5+1,'he is clear before the hull arrives');assert.equal(a.push,0,'no shove while the hull is still away');
  const hull=c.giveWay(.5,1,t);assert.ok(Math.abs(hull.push-(W.hull-.5))<1e-9,'if the tank swings onto him he is pushed clear of the hull at once');assert.equal(c.giveWay(W.hull+.1,1,t).push,0);assert.equal(c.giveWay(.5,W.hullLen+.2,t).push,0);assert.ok(W.hull>2&&W.hull<W.half);assert.ok(W.body>=W.hullLen+1&&W.body<7,'a standing tank keeps people clear of its nose and tail, not just out from under it');assert.ok(W.back<W.run,'he walks back, he does not sprint');
  assert.ok(src.includes("if(own(false)){if(!oth(false))flip();else if(own(true)){if(!oth(true))flip();else{nx=Math.sin(v.h);nz=Math.cos(v.h);need=6;pp=Math.max(0,WAY.hullLen+.3-g.f);}}}"),'he does not run into a building or the wall: he crosses to the open side, and with walls on both sides he runs ahead of the tank');
- assert.ok(src.includes("else if(f.ax||f.az){if(way(f.bx,f.bz)){if(!f.pat)f.act='nobet';}"),'he waits beside the tank while it stands on his post');assert.ok(src.includes("RIG,pose,SKIN,way})"),'escort infantry use the same rule');
+ assert.ok(src.includes("else if(f.ax||f.az){if(way(f.bx,f.bz)){if(!f.pat)f.act='nobet';}"),'he waits beside the tank while it stands on his post');assert.ok(src.includes("RIG,pose,SKIN,way,wet})"),'escort infantry use the same rule');
  assert.ok(src.includes("for(const a of safe(()=>AL,[]))if(!a.dead)put(a);for(const u of KRP){u.h=u.yaw;put(u);}for(const fn of VSRC)for(const o of safe(fn,null)||[])put(o);VEH=out;}"),'they also give way to friendly tanks, the Kirpi patrol and the escort vehicles');
  const fw=c.course(0,0,6);assert.deepEqual(fw,{h:0,v:6});const rv=c.course(0,0,-5);assert.ok(Math.abs(rv.h-Math.PI)<1e-9&&rv.v===5,'reversing: the rear leads');
  const sl=c.course(0,3,.2);assert.ok(sl.h===0&&Math.abs(sl.v-.2)<1e-9,'a tank sliding sideways along a wall keeps its corridor on the hull axis');assert.deepEqual(c.course(1.2,90,0),{h:1.2,v:0},'a teleport is not speed');
@@ -36,3 +36,15 @@ test('soldiers give way to a tank: whoever stands in its path steps to his own s
  assert.ok(src.includes("const blockP=tk.some(o=>Math.hypot(o.x-ahead.x,o.z-ahead.z)<8);"),'and it stops for any tank ahead, the player\'s or a friendly one');
  assert.ok(src.includes("vehicleSource:fn=>{if(typeof fn==='function'&&!VSRC.includes(fn))VSRC.push(fn);return VSRC.length;}"));
  assert.ok(src.includes("const w=f.home.dy>1?null:way(f.bx+f.ax,f.bz+f.az);")&&src.includes("f.home.dy=0;f.bx=null;"),'a guard on top of a coded tower stays there; guards beside the model towers are on the ground and step aside');});
+test('nobody walks through the water: enemy infantry cross the wall only at a gate and the river only at a ford, and walk along the bank to get there',()=>{const riv=x=>100,W=c.WATER,h=(x,z)=>Math.abs(z-100)<14?(Math.abs(x)<8||Math.abs(x-300)<8?.45:-3.4):.5,F=[0,300];
+ assert.equal(c.wetAt(riv,h,50,100),true);assert.equal(c.wetAt(riv,h,50,100+W.reach+1),false,'on the bank');assert.equal(c.wetAt(riv,h,0,100),false,'the ford is dry');assert.ok(W.level<0&&W.half>=14);
+ const b=c.bankStep(riv,h,F,50,116,.4);assert.ok(b&&b.ford===0&&Math.abs(b.x-49.6)<1e-9&&b.z===116,'held at the bank he walks towards the nearest ford');assert.equal(c.bankStep(riv,h,F,200,116,.4).ford,300);
+ const curved=x=>100+x*.5,bc=c.bankStep(curved,(x,z)=>.5,[0],50,150,.4);assert.ok(Math.abs((bc.z-curved(bc.x))-(150-curved(50)))<1e-9,'along a bending river he keeps his distance from it');
+ assert.equal(c.bankStep(riv,(x,z)=>-3.4,F,50,106,.4),null,'if there is no dry step within reach he stays put');
+ const wide=(x,z)=>Math.abs(z-100)<(x<49.8?16.6:14)?-3.4:.5,ws=c.bankStep(riv,wide,F,50,115,.4);assert.ok(ws&&ws.z>115.9&&ws.z<=118.5&&!c.wetAt(riv,wide,ws.x,ws.z),'where the river widens he steps a little further out and goes on: '+JSON.stringify(ws));
+ assert.ok(src.includes("const rt=safe(()=>root.HisarDestek.core.route,null);")&&src.includes("if(!to)to=bankStep(RV,HG,f,q[0],q[1],step);"),'the gate route first, the bank as a fallback');
+ for(const k of["if(e.type!=='inf')chk(e);else foot(e,f);","const wall=blocked(RV,f,q[0],q[1],e.x,e.z),water=wet(e.x,e.z)&&!wet(q[0],q[1]);if(!wall&&!water)return;","if(wet(x,z))return true;"])assert.ok(src.includes(k),k);
+ assert.ok(/const VERSION='1\.3\.0'/.test(src));});
+
+test('the supply truck of the convoy missions is a vehicle people give way to',()=>{const hk=require('node:fs').readFileSync(__dirname+'/harekat.js','utf8');
+ assert.ok(hk.includes("root.HisarSinir.vehicleSource(()=>H&&H.convoy&&H.convoy.active&&!H.convoy.dead&&!H.convoy.disposed?[H.convoy]:null)"),'registered once with the border module');});

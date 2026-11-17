@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='2.0.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='2.0.1',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -293,6 +293,7 @@ function drawMini(){if(!H||typeof mmx==='undefined')return;const W=132,O=mmO(),X
  mmx.save();mmx.fillStyle='#ffc247';mmx.strokeStyle='#1d1000';mmx.lineWidth=1.5;mmx.beginPath();mmx.moveTo(x,y-6);mmx.lineTo(x+5,y);mmx.lineTo(x,y+6);mmx.lineTo(x-5,y);mmx.closePath();mmx.fill();mmx.stroke();mmx.restore();}
 function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t:'Görevi tamamla',r:'Görev emri telsizde.',w:'Görev tamamlandı'};},null);
  wrap('pickTgt',old=>function(e,d){const t=old.apply(this,arguments),c=H&&H.convoy;if(!playing()||!c||!c.active||c.dead||!e.hk)return t;const dd=dist(e,c);if(dd<t.d&&safe(()=>root.los(e.x,hAt(e.x,e.z)+2,e.z,c.x,hAt(c.x,c.z)+1.8,c.z),true)){e.tg=c;return {x:c.x,z:c.z,d:dd,al:c};}return t;});
+ /* ikmal kamyonu da yol verilen araçtır: önündeki asker, köylü ve hayvan yana çekilir (sinir.js) */safe(()=>root.HisarSinir.vehicleSource(()=>H&&H.convoy&&H.convoy.active&&!H.convoy.dead&&!H.convoy.disposed?[H.convoy]:null),null);
  wrap('hitAl',old=>function(a,k){if(!a||!a.hkConvoy)return old.apply(this,arguments);if(!playing()||a.dead)return;a.hp=Math.max(0,a.hp-safe(()=>L.dmg,0)*k*.8);if(a.hp<=0)a.dead=true;});
  wrap('startMission',old=>function(){const r=old.apply(this,arguments);if(safe(()=>mis===MODE,false))begin();else cleanup();return r;});
  /* görevlerde düşman helikopteri ve dronu yok: muharebe yerde, tank topuyla */

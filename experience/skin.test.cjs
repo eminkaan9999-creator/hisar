@@ -79,7 +79,8 @@ test('phones render lighter: fast shadows, small shadow map, other tanks and tre
  const t=code.slice(code.indexOf('// ===== m_trees ====='),code.indexOf('// ===== m_nature ====='));assert.ok(t.includes("const mv=OV?8:20;if(force||DIRTY||Math.abs(cx-lcx)>mv||Math.abs(cz-lcz)>mv||"),'trees are repacked only when needed');
 });
 test('tank drives heavy (speed and turn ramp up), allies keep up',()=>{
- assert.ok(code.includes('const DRV=Object.freeze({vf:12,vr:4.5,off:.8,acc:3.4,brk:9,turn:1.05,tacc:7});'));assert.ok(code.includes('drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));
+ assert.ok(code.includes('const DRV=Object.freeze({vf:14.5,vr:6.5,off:.9,acc:5.2,brk:12,turn:1.4,tacc:12,slow:.2,hill:1,up:.35,down:.2,wade:.55});'),'brisk, not sluggish: 52 km/h on the road, 47 across country, under three seconds to top speed');assert.ok(code.includes('(1-clamp((P.sl||0)*DRV.hill,-DRV.down,DRV.up))')&&code.includes('(1-DRV.slow*clamp(Math.abs(P.v)/DRV.vf,0,1))'));
+ assert.ok(code.includes('const span=Math.min(realDt,.15),steps=span>.05?Math.min(window.SIM_MAX||3,Math.ceil(span/.05)):1;let dt=steps>1?span/steps:dr;')&&code.includes('for(let i=0;i<steps;i++){try{update(dt)}catch(e){err(\'güncelle\',e);break}}'),'below 20 frames a second the game does not fall into slow motion');assert.ok(code.includes('drive(ix,iy,sp,dt);ramB();pushOut(P,2.6);'));assert.ok(code.includes("mv=Math.min(a.cmd==='attack'?15.5:14.5,d*.8)"));
  assert.ok(code.includes('gg.index.updateRange.offset=0;gg.index.updateRange.count=o;gg.index.needsUpdate=true;'),'only the used part of the ground index is uploaded');
 });
 test('save can be backed up as a code and restored without losing progress',()=>{

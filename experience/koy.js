@@ -1,4 +1,4 @@
-/* ÇELİK BÖRÜ köy hayatı 1.2 — Türkiye tarafındaki köylerde gündelik hayat ve bütün arazide doğa.
+/* ÇELİK BÖRÜ köy hayatı 1.3 — Türkiye tarafındaki köylerde gündelik hayat ve bütün arazide doğa.
  * - Köylüler: kadınlar (başörtüsü, uzun etek), kasketli yaşlılar, gençler; evler arasında yürür, kapı önünde durur.
  *   Tank yaklaşınca el sallar; yakına mermi düşünce en yakın eve koşup saklanır, ortalık sakinleşince çıkar.
  * - Çocuklar: okul olan köylerde evlerinden okula yürür (çantalı), okula girer, bir süre sonra evden yeniden çıkar.
@@ -7,11 +7,13 @@
  *   süzülen leylekler. Tank yaklaşınca kaçışırlar.
  * - Yol verme: köylü de hayvan da üstüne gelen tankın (ve öbür askerî araçların) önünden yana kaçar, araç geçene kadar yoluna adım atmaz;
  *   hiçbir canlının içinden araç geçmez.
+ * - Yol: köylü yolun ortasından yürümez. Yol boyunca gidecekse banketten (yolun kenarından) yürür, karşıya geçecekse dik ve hızlı geçer;
+ *   uğrak noktaları yolun üstüne düşmez. Kimse suya girmez.
  * - Çiçekler: kameranın çevresinde gelincik, papatya, sarı çiçek ve mor çiçek öbekleri (sabit tohumlu; aynı yerde hep aynı).
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -39,7 +41,24 @@ function animalPose(act,t){const P={};const s=Math.sin(t);
  if(act==='uc'){const f=Math.sin(t*1.6);P.WL=[0,0,f*.45];P.WR=[0,0,-f*.45];}
  if(act==='suzul'){P.WL=[0,0,.06];P.WR=[0,0,-.06];}
  return P;}
-const core=Object.freeze({VERSION,SAL,GIVE,sideStep,wantsSalute,flee,flower,FCELL,animalPose});
+// Yol kenarı kuralı. ROAD: pad yolun kenarından bu kadar dışarısı da yol şeridi sayılır (banket), edge asfaltın kenarından bu kadar içeride ya da
+// dışarıdaysa dışa doğru itilir, out itmenin payı, clear uğrak noktalarının asfaltın kenarına en az uzaklığı, cross karşıya geçerken hız çarpanı
+const ROAD=Object.freeze({pad:1.5,edge:.7,out:.9,clear:1.3,cross:1.5});
+// En yakın yol parçası (nokta parçanın yarı eni + pad içindeyse): eksene işaretli yan uzaklık lat, yarı en half, yön (ux,uz), yana birim (nx,nz),
+// parçanın başı (ax,az). roads: [{w,pts:[[x,z],...]}]
+function roadAt(roads,x,z,pad){let best=null,bd=1e9;for(const r of roads){const p=r.pts,h=(r.w||6)/2+pad;for(let i=0;i<p.length-1;i++){const ax=p[i][0],az=p[i][1],bx=p[i+1][0],bz=p[i+1][1];
+   if(x<Math.min(ax,bx)-h||x>Math.max(ax,bx)+h||z<Math.min(az,bz)-h||z>Math.max(az,bz)+h)continue;
+   const dx=bx-ax,dz=bz-az,l2=dx*dx+dz*dz||1,t=clamp(((x-ax)*dx+(z-az)*dz)/l2,0,1),d=Math.hypot(x-ax-dx*t,z-az-dz*t);if(d>=h||d>=bd)continue;bd=d;const l=Math.sqrt(l2),ux=dx/l,uz=dz/l;
+   best={d,half:(r.w||6)/2,ux,uz,nx:uz,nz:-ux,lat:(x-ax)*uz-(z-az)*ux,ax,az};}}return best;}
+// Yol şeridindeki yürüyüşün yönü. lat yürüyenin, tl hedefin eksene işaretli yan uzaklığı; (dx,dz) hedefe birim yön. Hedef yolun öbür yanındaysa
+// dik geçer (mode 'gec'); aynı yandaysa ya da yolun üstündeyse banketten yürür: içe dönük bileşen atılır, asfalttaysa dışa itilir (mode 'kenar');
+// gidecek yer kalmadıysa (hedef tam karşıda, yolun üstünde) varmış sayılır (mode 'vardi').
+function roadWalk(R,tl,dx,dz){const side=R.lat>=0?1:-1;if(tl*side<0&&Math.abs(tl)>R.half+.5)return {x:-side*R.nx,z:-side*R.nz,mode:'gec'};
+ let x=dx,z=dz;const inw=-side*(x*R.nx+z*R.nz);if(inw>0){x+=side*R.nx*inw;z+=side*R.nz*inw;}if(Math.abs(R.lat)<R.half+ROAD.edge){x+=side*R.nx*ROAD.out;z+=side*R.nz*ROAD.out;}
+ const l=Math.hypot(x,z);return l<.08?{x:0,z:0,mode:'vardi'}:{x:x/l,z:z/l,mode:'kenar'};}
+// Uğrak noktası yolun üstüne ya da banketine düşüyorsa kendi yanında, asfaltın kenarından clear kadar dışarı alınır
+function offRoad(roads,pt){const R=roadAt(roads,pt.x,pt.z,ROAD.clear);if(!R)return pt;const side=R.lat>=0?1:-1,k=R.half+ROAD.clear-Math.abs(R.lat)+.05;return {x:pt.x+side*R.nx*k,z:pt.z+side*R.nz*k};}
+const core=Object.freeze({VERSION,SAL,GIVE,ROAD,roadAt,roadWalk,offRoad,sideStep,wantsSalute,flee,flower,FCELL,animalPose});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
@@ -61,7 +80,7 @@ const RIGS={
   b(0,[.11,.03,0],[.62,0,0],[1.24,.03,.42],'beyaz','WL'),b(0,[-.11,.03,0],[-.62,0,0],[1.24,.03,.42],'beyaz','WR'),b(4,[1.24,0,0],[.22,0,0],[.44,.03,.4],'siyah'),b(5,[-1.24,0,0],[-.22,0,0],[.44,.03,.4],'siyah'),
   b(0,[0,-.04,-.42],[0,0,-.32],[.03,.03,.6],'gaga')]};
 // ---------- oyun ----------
-const hooks={},stat={people:0,kids:0,adults:0,saluting:0,salutes:0,waves:0,hidden:0,animals:{},flowers:0,frebuild:0,fled:0,gaveWay:0};
+const hooks={},stat={people:0,kids:0,adults:0,saluting:0,salutes:0,waves:0,hidden:0,animals:{},flowers:0,frebuild:0,fled:0,gaveWay:0,shoulder:0,crossed:0,dry:0};
 let built=false,T=null,folk=null,beasts={},P_=[],A_=[],FL=null,fgx=1e9,fgz=1e9,clock=0,sayT=-1e9;
 const RV=x=>safe(()=>riv(x),120),WZ=x=>RV(x)-26,TR=(x,z)=>z<WZ(x)-4;
 const HOUSE={house:1,beton:1,apt:1,shop:1,kerpic:1};
@@ -79,7 +98,7 @@ function villages(){const out=[];const sch=safe(()=>root.HisarSinir.schools(),[]
 function person(kind,colors,v,o){const sc=kind==='cocuk'||kind==='kiz'?.62+Math.random()*.08:kind==='adam'?.97+Math.random()*.06:.93+Math.random()*.06;
  const d=door(pick(v.hs)),f=folk.add(kind==='genc'?'adam2':kind,colors,{x:d.x,y:safe(()=>hAt(d.x,d.z),0),z:d.z,sc,act:'dur'});
  const p={f,v,kind,kid:kind==='cocuk'||kind==='kiz',st:'idle',t:1+Math.random()*6,path:[],cool:Math.random()*8,hold:0,sp:kind==='adam'?1.05:1.3};P_.push(p);return p;}
-function buildFolk(){const fig=safe(()=>root.HisarSinir.fig(),null);if(!fig)return false;WAYF=fig.way||null;
+function buildFolk(){const fig=safe(()=>root.HisarSinir.fig(),null);if(!fig)return false;WAYF=fig.way||null;WETF=fig.wet||null;
  const pf=(act,t,o)=>fig.pose(act==='kos'?'yuru':act,act==='kos'?t*1.6:t,o);folk=fig.Crowd(150,fig.RIG,pf,'KH_INSAN');
  for(const v of villages()){for(let i=0;i<5;i++){const k=i<2?'kadin':i<4?'adam':'genc';person(k,col(k==='genc'?'genc':k),v);}
   const nk=v.school?8:3;for(let i=0;i<nk;i++){const k=i%2?'kiz':'cocuk';const p=person(k,col(k),v);if(v.school){p.st='home';p.t=Math.random()*25;p.f.live=false;}}}
@@ -133,9 +152,12 @@ function squareStep(){for(const c of CAMI)c.g.visible=!c.b.dead;}
 function build(){if(built||!root.THREE||typeof S==='undefined'||typeof BLD==='undefined'||!root.HisarSinir)return;T=root.THREE;if(!buildFolk())return;built=true;buildAnimals();buildFlowers();safe(buildSquare,null);}
 // ---------- davranış ----------
 function threats(){const out=[];safe(()=>{if(mode==='tank'&&game==='play')out.push(P);},null);for(const a of safe(()=>AL,[]))if(!a.dead)out.push(a);return out;}
-let WAYF=null;
-// Hedefe yürür; atacağı adım bir aracın yoluna düşüyorsa atmaz, bekler (f.wait)
-function moveTo(f,tx,tz,sp,dt){const dx=tx-f.x,dz=tz-f.z,d=Math.hypot(dx,dz);if(d<.3)return true;const s=Math.min(d,sp*dt),nx=f.x+dx/d*s,nz=f.z+dz/d*s;if(WAYF&&WAYF(nx,nz)){f.wait=1;return false;}f.x=nx;f.z=nz;let a=Math.atan2(dx,dz)-f.yaw;while(a>Math.PI)a-=6.283;while(a<-Math.PI)a+=6.283;f.yaw+=a*Math.min(1,dt*6);return false;}
+let WAYF=null,WETF=null;const ROADS=()=>safe(()=>WROADS,[]);
+// Hedefe yürür; atacağı adım bir aracın yoluna ya da suya düşüyorsa atmaz, bekler (f.wait). road: yol kenarı kuralı uygulanır (insanlar için)
+function moveTo(f,tx,tz,sp,dt,road){const dx=tx-f.x,dz=tz-f.z,d=Math.hypot(dx,dz);if(d<.3)return true;let ux=dx/d,uz=dz/d,v=sp;
+ if(road){const R=roadAt(ROADS(),f.x,f.z,ROAD.pad);if(R){const w=roadWalk(R,(tx-R.ax)*R.nx+(tz-R.az)*R.nz,ux,uz);if(w.mode==='vardi')return true;ux=w.x;uz=w.z;if(w.mode==='gec'){v=sp*ROAD.cross;stat.crossed++;}else stat.shoulder++;}}
+ const s=Math.min(d,v*dt),nx=f.x+ux*s,nz=f.z+uz*s;if(WAYF&&WAYF(nx,nz)){f.wait=1;return false;}if(WETF&&WETF(nx,nz)&&!WETF(f.x,f.z)){f.wait=2;stat.dry++;return false;}
+ f.x=nx;f.z=nz;let a=Math.atan2(ux,uz)-f.yaw;while(a>Math.PI)a-=6.283;while(a<-Math.PI)a+=6.283;f.yaw+=a*Math.min(1,dt*6);return false;}
 function faceTo(f,x,z,dt){let a=Math.atan2(x-f.x,z-f.z)-f.yaw;while(a>Math.PI)a-=6.283;while(a<-Math.PI)a+=6.283;f.yaw+=a*Math.min(1,dt*5);}
 function nearestDoor(p){let best=null,bd=1e9;for(const h of (p.v?p.v.hs:[])){if(h.dead)continue;const d=door(h),k=Math.hypot(d.x-p.f.x,d.z-p.f.z);if(k<bd){bd=k;best=d;}}return best;}
 // uzaktakiler (tanktan yaklaşık 320 m) beklemede kalır: işlemci yalnız görünen çevre için çalışır
@@ -143,7 +165,7 @@ const far=(f,c)=>c&&Math.abs(f.x-c.x)+Math.abs(f.z-c.z)>450;
 function peopleStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);
  for(const p of P_){const f=p.f;if(far(f,cam)&&p.st!=='home'&&p.st!=='hidden')continue;f.t+=dt*(f.act==='yuru'?p.sp*4.2:f.act==='kos'?7:1);p.cool-=dt;
   if(p.st==='hidden'){p.t-=dt;if(p.t<=0){p.st='idle';f.live=true;p.t=2;}continue;}
-  if(p.st==='home'){p.t-=dt;if(p.t<=0){const d=door(pick(p.v.hs));f.x=d.x;f.z=d.z;f.live=true;p.st='walk';const s=p.v.school;p.path=[{x:p.v.x+(Math.random()-.5)*10,z:p.v.z+(Math.random()-.5)*10},s.gate,s.door];p.school=1;}continue;}
+  if(p.st==='home'){p.t-=dt;if(p.t<=0){const d=door(pick(p.v.hs));f.x=d.x;f.z=d.z;f.live=true;p.st='walk';const s=p.v.school;p.path=[{x:p.v.x+(Math.random()-.5)*10,z:p.v.z+(Math.random()-.5)*10},s.gate,s.door].map(q=>offRoad(ROADS(),q));p.school=1;}continue;}
   /* tanka yol ver: üstüne araç gelen köylü (selam duruyor olsa da) yana koşar */
   const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE.insan,dt);f.x+=w.x*st;f.z+=w.z*st;f.yaw=Math.atan2(w.x,w.z);f.act='kos';p.hold=0;f.y=safe(()=>hAt(f.x,f.z),f.y);stat.gaveWay++;continue;}
   // tank yakında: selam ya da el sallama; çok yakında kenara çekilme
@@ -152,11 +174,12 @@ function peopleStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);
   if(p.hold>0){p.hold-=dt;if(near)faceTo(f,near.x,near.z,dt);if(p.hold<=0){f.act='dur';}else{f.y=safe(()=>hAt(f.x,f.z),f.y);continue;}}
   if(near&&p.st!=='run'){if(p.kid&&wantsSalute(nd,p.cool,false)){f.act='selam';p.hold=SAL.hold;p.cool=SAL.cool;stat.salutes++;if(clock-sayT>90){sayT=clock;safe(()=>root.CREW.say('Komutanım, çocuklar selam veriyor.',1,'selam',90),null);}continue;}
    if(!p.kid&&p.kind!=='coban'&&nd<SAL.wave&&p.cool<=0){f.act='el-salla';p.hold=2.6;p.cool=40;stat.waves++;continue;}}
-  if(p.st==='run'){const d=p.to;if(!d||moveTo(f,d.x,d.z,4,dt)){p.st='hidden';f.live=false;p.t=40+Math.random()*20;stat.fled++;}else f.act='kos';}
-  else if(p.st==='walk'){const w=p.path[0];if(!w){p.st='idle';p.t=3+Math.random()*8;f.act='dur';}else if(moveTo(f,w.x,w.z,p.sp*(p.kid?1.15:1),dt)){p.path.shift();if(!p.path.length){if(p.school){p.school=0;p.st='home';f.live=false;p.t=20+Math.random()*40;}else{p.st='idle';p.t=4+Math.random()*10;f.act='dur';}}}else f.act='yuru';}
-  else if(p.st==='herd'){const h=p.herd;if(moveTo(f,h.x-7,h.z-3,1,dt))f.act='dur';else f.act='yuru';}
-  else{p.t-=dt;f.act='dur';if(p.t<=0&&p.v){const d=door(pick(p.v.hs));p.path=Math.random()<.5?[{x:p.v.x+(Math.random()-.5)*14,z:p.v.z+(Math.random()-.5)*14},d]:[d];p.st='walk';}}
-  if(f.wait){f.wait=0;f.act='dur';}f.y=safe(()=>hAt(f.x,f.z),f.y);}
+  if(p.st==='run'){const d=p.to;if(!d||moveTo(f,d.x,d.z,4,dt,true)){p.st='hidden';f.live=false;p.t=40+Math.random()*20;stat.fled++;}else f.act='kos';}
+  else if(p.st==='walk'){const w=p.path[0];if(!w){p.st='idle';p.t=3+Math.random()*8;f.act='dur';}else if(moveTo(f,w.x,w.z,p.sp*(p.kid?1.15:1),dt,true)){p.path.shift();if(!p.path.length){if(p.school){p.school=0;p.st='home';f.live=false;p.t=20+Math.random()*40;}else{p.st='idle';p.t=4+Math.random()*10;f.act='dur';}}}else f.act='yuru';}
+  else if(p.st==='herd'){const h=p.herd;if(moveTo(f,h.x-7,h.z-3,1,dt,true))f.act='dur';else f.act='yuru';}
+  else{p.t-=dt;f.act='dur';if(p.t<=0&&p.v){const d=door(pick(p.v.hs));p.path=(Math.random()<.5?[{x:p.v.x+(Math.random()-.5)*14,z:p.v.z+(Math.random()-.5)*14},d]:[d]).map(q=>offRoad(ROADS(),q));p.st='walk';}}
+  /* su kıyısında durdu (wait 2): o uğraktan vazgeçer, sıradakine yürür; kalmadıysa biraz bekleyip yeni bir yere gider */
+  if(f.wait){if(f.wait===2&&p.st==='walk'&&p.path.length){p.path.shift();if(!p.path.length){p.school=0;p.st='idle';p.t=3+Math.random()*6;}}f.wait=0;f.act='dur';}f.y=safe(()=>hAt(f.x,f.z),f.y);}
  stat.hidden=P_.filter(p=>p.st==='hidden'||p.st==='home').length;stat.saluting=P_.filter(p=>p.f.act==='selam'&&p.f.live).length;}
 function animalStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);for(const a of A_){const f=a.f;if(a.st!=='sky'&&far(f,cam))continue;f.t+=dt*(f.act==='kos'?9:f.act==='yuru'?5:1);
   if(a.st==='sky'){const s=a.sky;s.a+=s.w*dt;f.x=s.x+Math.cos(s.a)*s.r;f.z=s.z+Math.sin(s.a)*s.r;f.y=safe(()=>hAt(s.x,s.z),0)+s.h+Math.sin(clock*.3+s.r)*2;f.yaw=Math.atan2(-Math.sin(s.a)*Math.sign(s.w),Math.cos(s.a)*Math.sign(s.w));f.act=Math.sin(clock*.4+s.r)>.2?'uc':'suzul';continue;}
@@ -167,7 +190,8 @@ function animalStep(dt){const th=threats(),cam=safe(()=>({x:P.x,z:P.z}),null);fo
   if(a.st==='kos'){if(moveTo(f,a.tx,a.tz,a.kind==='tavuk'?3:a.kind==='inek'?3.5:4.5,dt)){a.st='idle';a.t=2;}f.act='kos';}
   else if(a.st==='walk'){if(moveTo(f,a.tx,a.tz,a.sp,dt)){a.st='idle';a.t=3+Math.random()*8;}f.act='yuru';}
   else{a.t-=dt;f.act=a.kind==='tavuk'?'gagala':a.kind==='kopek'?'dur':'otla';if(a.t<=0){const c=a.herd||a.home||{x:f.x,z:f.z},r=a.dog?18:a.herd?13:a.kind==='tavuk'?4:8,an=Math.random()*6.283;a.tx=c.x+Math.cos(an)*Math.random()*r;a.tz=c.z+Math.sin(an)*Math.random()*r;a.st='walk';}}
-  if(f.wait){f.wait=0;f.act=a.kind==='tavuk'?'gagala':'dur';}f.y=safe(()=>hAt(f.x,f.z),f.y);}}
+  /* su kıyısında durdu: o yöne gitmekten vazgeçer, biraz otlayıp başka yere yürür */
+  if(f.wait){if(f.wait===2){a.st='idle';a.t=1+Math.random()*3;}f.wait=0;f.act=a.kind==='tavuk'?'gagala':'dur';}f.y=safe(()=>hAt(f.x,f.z),f.y);}}
 function boomNear(x,z){for(const p of P_){if(p.st==='hidden'||p.st==='home'||p.kind==='coban')continue;if(Math.hypot(p.f.x-x,p.f.z-z)<140){p.st='run';p.hold=0;p.to=nearestDoor(p);}}
  for(const a of A_){if(a.st==='sky')continue;if(Math.hypot(a.f.x-x,a.f.z-z)<90){const e=flee(a.f.x,a.f.z,x,z);a.tx=a.f.x+e.x*25;a.tz=a.f.z+e.z*25;a.st='kos';}}}
 function reset(){for(const p of P_){if(p.v&&p.v.school&&p.kid){p.st='home';p.t=Math.random()*25;p.f.live=false;}else if(p.st==='hidden'||p.st==='run'){p.st='idle';p.f.live=true;p.t=1;}p.hold=0;}}

@@ -13,8 +13,13 @@ function budget(coarse,quality,ratio){return {pixelRatio:Math.min(Math.max(.5,ra
 function musicMix(state,radio){return state==='play'?(radio?.18:.42):state==='pause'?0:.12;}
 function percent(value,max){return Number.isFinite(value)&&Number.isFinite(max)&&max>0?Math.round(clamp(value/max*100,0,100)):0;}
 function instanceColour(mesh,Attribute){if(!mesh.isInstancedMesh||mesh.instanceColor)return false;const n=mesh.instanceMatrix&&mesh.instanceMatrix.count;if(!(n>0))return false;mesh.instanceColor=new Attribute(new Float32Array(n*3).fill(1),3);return true;}
+const colourGuards=new WeakSet();
+// Models attached later to an existing group also need their colour buffer
+// before WebGL uploads them, even when their material was already compiled.
+function guardInstanceColours(Object3D,Attribute){const proto=Object3D&&Object3D.prototype;if(!proto||colourGuards.has(proto))return false;const add=proto.add;if(typeof add!=='function')return false;
+ proto.add=function(){for(const child of arguments)if(child&&child.traverse)child.traverse(o=>instanceColour(o,Attribute));return add.apply(this,arguments);};colourGuards.add(proto);return true;}
 function terrainPose(x,z,h,ground){const s=Math.sin(h),c=Math.cos(h),at=(a,b)=>{const y=ground(a,b);return Number.isFinite(y)?y:0;},f=at(x+s*2,z+c*2),b=at(x-s*2,z-c*2),r=at(x+c*1.2,z-s*1.2),l=at(x-c*1.2,z+s*1.2);return {y:Math.max(at(x,z),(f+b+r+l)/4),pitch:clamp(-Math.atan2(f-b,4),-.25,.25),roll:clamp(Math.atan2(r-l,2.4),-.2,.2)};}
-const core=Object.freeze({VERSION,LOOKS,budget,musicMix,percent,instanceColour,terrainPose});if(typeof module==='object'&&module.exports)module.exports=core;
+const core=Object.freeze({VERSION,LOOKS,budget,musicMix,percent,instanceColour,guardInstanceColours,terrainPose});if(typeof module==='object'&&module.exports)module.exports=core;
 const doc=root.document;if(!doc)return;const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const stat={installed:false,graphics:false,materials:0,looks:0,assets:'idle',error:null,convoys:0,removed:0,hudUpdates:0},hooks={};let assetPromise=null,truck=null,hud=null,uiTime=0;
 const coarse=()=>safe(()=>root.matchMedia('(pointer:coarse)').matches,false);
@@ -27,6 +32,7 @@ function quality(){const b=budget(coarse(),safe(()=>qlv,'orta'),safe(()=>R.getPi
 function look(w){const q=LOOKS[w]||LOOKS.gunduz;safe(()=>{R.toneMappingExposure=q.exposure;sun.intensity=q.sun;sun.color.setHex(q.color);hemi.intensity=q.hemi;hemi.groundColor.setHex(q.ground);S.fog.near=q.near;S.fog.far=q.far;
  if(S.background&&S.background.isTexture)colourTexture(S.background);if(typeof WX!=='undefined'&&WX[w])WX[w].hi=q.hemi;stat.looks++;},null);}
 function graphics(){if(stat.graphics||!root.THREE||!safe(()=>R.getContext(),null))return;stat.graphics=true;const T=root.THREE;
+ guardInstanceColours(T.Object3D,T.InstancedBufferAttribute);
  safe(()=>{R.outputEncoding=T.sRGBEncoding;R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=1;materials(S);const add=S.add;S.add=function(){const r=add.apply(this,arguments);for(const g of arguments)materials(g);return r;};},null);
  wrap('setW',old=>function(w){const r=old.apply(this,arguments);look(w);return r;});wrap('setQ',old=>function(){const r=old.apply(this,arguments);quality();return r;});
  const sky=root.onSky;root.onSky=function(w){const r=typeof sky==='function'?sky.apply(this,arguments):undefined;look(w);return r;};

@@ -18,6 +18,13 @@ test('shared instanced materials always have a valid white colour buffer without
  class Attribute{constructor(array,itemSize){this.array=array;this.itemSize=itemSize;}}
  const mesh={isInstancedMesh:true,instanceColor:null,instanceMatrix:{count:4}};assert.equal(c.instanceColour(mesh,Attribute),true);assert.equal(mesh.instanceColor.array.length,12);assert.ok(mesh.instanceColor.array.every(v=>v===1));const old=mesh.instanceColor;assert.equal(c.instanceColour(mesh,Attribute),false);assert.equal(mesh.instanceColor,old);assert.equal(c.instanceColour({isInstancedMesh:false},Attribute),false);
 });
+test('late instances attached to an existing nested group receive buffers before rendering; real colours and repeated installation are preserved',()=>{
+ class Attribute{constructor(array,itemSize){this.array=array;this.itemSize=itemSize;}}
+ class Object3D{constructor(){this.children=[];}add(...children){this.children.push(...children);return this;}traverse(fn){fn(this);for(const c of this.children)c.traverse(fn);}}
+ const scene=new Object3D(),group=new Object3D();scene.add(group);assert.equal(c.guardInstanceColours(Object3D,Attribute),true);assert.equal(c.guardInstanceColours(Object3D,Attribute),false);
+ const mesh=new Object3D();Object.assign(mesh,{isInstancedMesh:true,instanceColor:null,instanceMatrix:{count:8},count:0});assert.equal(group.add(mesh),group);assert.equal(mesh.instanceColor.array.length,24);assert.ok(mesh.instanceColor.array.every(v=>v===1));
+ const real=new Object3D(),colour=new Attribute(new Float32Array([.2,.4,.6]),3);Object.assign(real,{isInstancedMesh:true,instanceColor:colour,instanceMatrix:{count:1}});group.add(real);assert.equal(real.instanceColor,colour);assert.equal(group.children.length,2);
+});
 test('the drone HUD reads actual altitude and view heading, rather than an absent speed property',()=>{
  const ctx={document:{body:null,readyState:'loading',addEventListener(){}},addEventListener(){},game:'play',mode:'drone',DR:{on:true,x:5,z:6,y:90,hp:60},P:{h:0},SV:{U:{}},hAt:()=>10,yaw:1.2,ammo:4};ctx.window=ctx;vm.runInNewContext(fs.readFileSync(__dirname+'/modern.js','utf8'),ctx);const s=ctx.HisarModern.telemetry();assert.equal(s.speed,80);assert.equal(s.unit,'m');assert.equal(s.bearing,1.2);assert.equal(s.hp,100);
 });

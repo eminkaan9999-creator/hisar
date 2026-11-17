@@ -844,7 +844,7 @@ function sw(){
  if(mode==='tank'){if(!DR.on){let nb=100;if(dk&&chg>=25){nb=chg;dk=0}else if(DC>0){DC--}else{say(dk?'Uçangöz şarj oluyor: %'+Math.round(chg):'Uçangöz kalmadı! İkmal aracına git',2.5);return}DR.rt=0;DR.kz=0;DR.lbw=0;DR.on=true;DR.hp=60*(1+.25*SV.U.dar);DR.x=P.x-Math.sin(P.h)*DOCKD;DR.z=P.z-Math.cos(P.h)*DOCKD;DR.y=hAt(P.x,P.z)+1.95;DR.ty=45+hAt(DR.x,DR.z);DR.sp=0;DR.ti=[0,0];DR.bat=nb;DR.fall=0;DR.sig=1;DR.th=0;DR.g.visible=true;shadow.visible=true}iv=0;mode='drone';pitch=.55;say('UÇANGÖZ kontrolü',1.2)}
  else{mode='tank';pitch=.3;say('TANK kontrolü',1.2)}
 }
-function fire(){if(window.__tfFireTrace)window.__tfFireTrace.push('native');
+function fire(){if(window.__tfFireTrace)window.__tfFireTrace.push({tag:'native',game,mode,cd,ammo:TA[st]});
  if(game==='menu'||game==='over'||game==='pause')return;
  if(mode==='tank'){
   if(cd>0)return;const T=SH[st];if(TA[st]<=0){say('Bu mermi bitti! 1-2-3 ile değiştir ya da ikmal aracına git',1.8);cd=.5;return}TA[st]--;cd=T.cd*(L.rl||1)*(L.cd?1:.8)*(1-.1*SV.U.gun);let a=P.th,best=L.cone*(1+.25*SV.U.fcs),tgt=null;

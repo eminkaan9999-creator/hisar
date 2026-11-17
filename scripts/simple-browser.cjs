@@ -23,8 +23,12 @@ const ok=name=>{checks.push(name);console.log('PASS',name);};
  for(const key of ['b','u','k','g']){await p.locator('#mp .tabs [data-t="'+key+'"]').click();assert.equal(await p.locator('#t'+key).isVisible(),true);assert.equal(await p.locator('#mp .tabs [data-t="'+key+'"]').getAttribute('aria-selected'),'true');}
  ok(label+': headquarters tabs switch real game panes without duplicate headers');
  const menuSizes=mobile?[[320,568],[844,390],[390,844]]:[[1280,800]];
+ assert.equal(await p.locator('#heroSp').isVisible(),false,'static headquarters has no legacy scene spacer');
  for(const [w,h]of menuSizes){await p.setViewportSize({width:w,height:h});await p.screenshot({path:path.join(out,'headquarters-'+w+'x'+h+'.png')});for(const id of ['go','hisar-experience-entry']){const b=await p.locator('#'+id).boundingBox();assert.ok(b&&b.width>=36&&b.height>=32&&b.x>=-1&&b.y>=-1&&b.x+b.width<=w+1&&b.y+b.height<=h+1,id+' remains reachable at '+w+'x'+h+': '+JSON.stringify(b));}
- assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);ok('headquarters controls fit '+w+'x'+h);}
+ assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+ assert.equal(await p.locator('#tg').evaluate(e=>getComputedStyle(e).opacity),'1');
+ if(mobile&&h>w){const ys=await p.locator('#mp .tabs [role="tab"]').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().y));assert.ok(Math.max(...ys)-Math.min(...ys)<1,'portrait tabs share one row');}
+ ok('headquarters controls fit '+w+'x'+h);}
  assert.equal(await p.evaluate(()=>HisarExperience.getSettings().quality),'mevcut');assert.equal(await p.evaluate(()=>HisarExperience.getSettings().cinematic),false);ok(label+': old manual graphics preference cannot disable automatic settings');
  await p.locator('#hisar-experience-entry').click();assert.equal(await p.locator('#hisar-experience').evaluate(e=>e.open),true);
  assert.equal(await p.locator('#hx-settings input:visible,#hx-settings select:visible').count(),3);ok(label+': exactly three visible player settings');

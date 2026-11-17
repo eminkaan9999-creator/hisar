@@ -87,7 +87,7 @@ function install(){
  if(root.MutationObserver){const observer=new root.MutationObserver(refresh);observer.observe(by('menu'),{attributes:true,attributeFilter:['style']});}
  refresh();boot();let attempts=0;const timer=root.setInterval(()=>{if(boot()||++attempts>=24)root.clearInterval(timer);},250);
 }
-root.HisarCommandMenu=Object.freeze({version:'1.0.1',staticBackground:true,connect,install,closeLayers,refresh,escape,diagnostics:()=>({installed,hooks:{...hooks}})});
+root.HisarCommandMenu=Object.freeze({version:'1.0.2',staticBackground:true,connect,install,closeLayers,refresh,escape,diagnostics:()=>({installed,hooks:{...hooks}})});
 root.addEventListener('keydown',escape,true);doc.addEventListener('hisar:ui-ready',install);
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',install);else install();
 connect();

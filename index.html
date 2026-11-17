@@ -303,8 +303,8 @@ function ramB(){const v=Math.abs(P.v||0);if(v<2.5)return;const now=performance.n
   for(let i=0;i<3;i++)dust(c.x+(P.x-c.x)*.6+rnd(-2,2),c.z+(P.z-c.z)*.6+rnd(-2,2),0x9a8f7c,.7,rnd(2,4),hAt(c.x,c.z)+.5,1.6);
   if(c.hp<=0)collapse(c);else P.v*=-.15;window.RAMMED=(window.RAMMED|0)+1;break}}
 function bldHit(x,z,r,n){for(const c of BLD){if(c.dead||c.hp>900)continue;if(Math.hypot(c.x-x,c.z-z)<r+c.r*.8){c.hp-=n;if(c.hp<=0)collapse(c)}}}
-function pushOut(o,m){for(const c of BLD){if(c.dead)continue;const dx=o.x-c.x,dz=o.z-c.z,d=Math.hypot(dx,dz),mm=c.r+m;if(d<mm){o.x=c.x+(d?dx/d:1)*mm;o.z=c.z+(d?dz/d:0)*mm}}
- for(const c of COV){if(c.pos&&c.h<.5)continue;const dx=o.x-c.x,dz=o.z-c.z,d=Math.hypot(dx,dz),mm=c.r*.85+m;if(d<mm){o.x=c.x+(d?dx/d:1)*mm;o.z=c.z+(d?dz/d:0)*mm}}} // ezilmiş mevzi setinin üstünden geçilir
+function pushOut(o,m){/* uzaktaki engeller karekök almadan elenir (kare başına onlarca kez çağrılır) */for(const c of BLD){if(c.dead)continue;const mm=c.r+m,dx=o.x-c.x;if(dx>mm||dx<-mm)continue;const dz=o.z-c.z;if(dz>mm||dz<-mm)continue;const d=Math.hypot(dx,dz);if(d<mm){o.x=c.x+(d?dx/d:1)*mm;o.z=c.z+(d?dz/d:0)*mm}}
+ for(const c of COV){if(c.pos&&c.h<.5)continue;const mm=c.r*.85+m,dx=o.x-c.x;if(dx>mm||dx<-mm)continue;const dz=o.z-c.z;if(dz>mm||dz<-mm)continue;const d=Math.hypot(dx,dz);if(d<mm){o.x=c.x+(d?dx/d:1)*mm;o.z=c.z+(d?dz/d:0)*mm}}} // ezilmiş mevzi setinin üstünden geçilir
 function blockedAt(p){for(const c of BLD){if(c.dead)continue;if(Math.hypot(p.x-c.x,p.z-c.z)<c.r&&p.y<hAt(c.x,c.z)+c.h)return c}
  for(const c of COV){if(Math.hypot(p.x-c.x,p.z-c.z)<c.r&&p.y<hAt(c.x,c.z)+c.h)return c}return null}
 // Köy merkezindeki evler. Türkiye: Kilis–Antep taş evi (kesme kireç taşı, düz dam ve korkuluk, dış merdiven, damda güneş
@@ -4604,7 +4604,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=108,LOGO=window.HISAR_LOGO;
+const VER=109,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -7444,14 +7444,14 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script src="experience/battle.js?v=6"></script>
 <script src="experience/swarm.js?v=4"></script>
 <script src="experience/realism.js?v=4"></script>
-<script src="experience/sinir.js?v=8"></script>
+<script src="experience/sinir.js?v=9"></script>
 <script src="experience/harekat.js?v=7"></script>
 <script src="experience/atis.js?v=2"></script>
 <script src="experience/harita.js?v=3"></script>
-<script src="experience/carpisma.js?v=2"></script>
-<script src="experience/koy.js?v=3"></script>
-<script src="experience/destek.js?v=3"></script>
+<script src="experience/carpisma.js?v=3"></script>
+<script src="experience/koy.js?v=4"></script>
+<script src="experience/destek.js?v=4"></script>
 <script src="experience/menu.js?v=2"></script>
-<script src="experience/arazi.js?v=3"></script><script src="experience/ortam.js?v=1"></script><script src="experience/model.js?v=1"></script><script src="experience/sivil.js?v=4"></script><script src="experience/cevre.js?v=1"></script><script src="experience/mahalle.js?v=1"></script><script src="experience/militan.js?v=1"></script><script src="experience/agac.js?v=1"></script><script src="experience/hat.js?v=1"></script><script src="experience/ejderha.js?v=1"></script>
+<script src="experience/arazi.js?v=3"></script><script src="experience/ortam.js?v=1"></script><script src="experience/model.js?v=1"></script><script src="experience/sivil.js?v=5"></script><script src="experience/cevre.js?v=1"></script><script src="experience/mahalle.js?v=1"></script><script src="experience/militan.js?v=1"></script><script src="experience/agac.js?v=1"></script><script src="experience/hat.js?v=1"></script><script src="experience/ejderha.js?v=1"></script>
 </body>
 </html>

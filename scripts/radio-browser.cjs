@@ -281,6 +281,65 @@ if(!mobile){
   assert.equal(ej.e2.flying,0,'every drone is hit within two seconds');assert.equal(ej.d2.downed-ej.d0.downed,ej.e0.n);assert.equal(ej.d2.active,false);assert.equal(ej.left,3);assert.ok(ej.d2.timer>=ej.range[1][0]-15&&ej.d2.timer<=ej.range[1][1],'next swarm in '+ej.d2.timer);
   assert.deepEqual(ej.hp[1],ej.hp[0],'the tank takes no damage');assert.ok(ej.gone,'the small window closes');assert.ok(ej.turk&&ej.cov===ej.sites.length&&ej.arac===ej.sites.length,'vehicles stand in Türkiye and block the tank');
   ok('EJDERHA: '+ej.sites.length+' antenna vehicles from the supplied model stand by the border posts; a swarm of '+ej.e0.n+' drones came after '+Math.round(ej.wait)+' s, the nearest vehicle turned its dish to it and the system downed all of them by itself; a small window showed the pulse and the falling drones with "EJDERHA · '+ej.e0.n+' İHA düşürüldü"; the tank took no damage');
+  // ---- yol verme: nöbetçi ve tankın önündeki piyade tanka yol verir, tank geçince yerine döner; koyun sürüsü ve çoban yana kaçar; düşman piyadesi
+  // tankın altında ezilir
+  const yv=await p.evaluate(()=>{HisarHarekat.start('tepe');L.dmg=0;L.cd=0;for(let i=0;i<3;i++)update(.1);const men=()=>HisarSinir.diagnostics().men,post=HisarSinir.posts()[1]||HisarSinir.posts()[0];
+   /* 1) karakol kapısındaki nöbetçi: tank karakolun önünden tam üstüne sürülür, 4,5 m kala durur */
+   const idx=men().map((m,i)=>[Math.hypot(m.x-post.x,m.z-post.z),i,m.kind]).filter(q=>q[2]==='kapi').sort((u,v)=>u[0]-v[0])[0][1],m0=men()[idx],c=Math.cos(post.rot),sn=Math.sin(post.rot);
+   let minD=1e9,maxOff=0;for(let k=0;k<45;k++){const u=22-k*.4;P.x=m0.x+sn*u;P.z=m0.z+c*u;P.h=post.rot+Math.PI;update(.1);const m=men()[idx];minD=Math.min(minD,Math.hypot(m.x-P.x,m.z-P.z));maxOff=Math.max(maxOff,m.off);}
+   const aside=men()[idx],lat=Math.abs((aside.x-P.x)*c-(aside.z-P.z)*sn);for(let k=0;k<25;k++)update(.1);const wait=men()[idx];
+   P.x=m0.x+160;P.z=m0.z-160;for(let k=0;k<120;k++)update(.1);const back=men()[idx];
+   /* 2) tankın önündeki piyade: en yakın erin üstüne sürülür */
+   const fr=()=>HisarDestek.diagnostics().forces,at0=fr().at,near=at0.slice().sort((u,v)=>Math.hypot(u.x-P.x,u.z-P.z)-Math.hypot(v.x-P.x,v.z-P.z))[0];let infMin=1e9;const g0=HisarDestek.diagnostics().gaveWay;
+   if(near){const dx=near.x-P.x,dz=near.z-P.z,l=Math.hypot(dx,dz)||1,ux=dx/l,uz=dz/l,sx=near.x-ux*14,sz=near.z-uz*14;for(let k=0;k<70;k++){P.x=sx+ux*k*.45;P.z=sz+uz*k*.45;P.h=Math.atan2(ux,uz);update(.1);/* tank sınamada yerine ışınlanır: ilk bir saniye erlerin açılması beklenir */if(k>=12)for(const q of fr().at)infMin=Math.min(infMin,Math.hypot(q.x-P.x,q.z-P.z));}}
+   /* 3) düşman piyadesi: açık arazide önüne konur, tank üstünden geçer */
+   let spot=null;for(let k=0;k<2400&&!spot;k++){const x=P.x+((k*37)%640-320),z=P.z+((k*53)%600-300);if(Math.abs(x)>WS-90||Math.abs(z)>WS-90||Math.abs(z-riv(x))<70||hAt(x,z)<.5)continue;if(BLD.some(b=>!b.dead&&Math.hypot(b.x-x,b.z-z)<b.r+22)||COV.some(q=>Math.hypot(q.x-x,q.z-z)<q.r+18))continue;if((window.TREES||[]).some(t=>t.st!==3&&Math.hypot(t.x-x,t.z-z)<14))continue;spot={x,z};}
+   let run=null;if(spot){const n0=E.length,r0=HisarCarpisma.diagnostics().runOver,b0=HisarSivil.diagnostics().burned;addE('inf',spot.x,spot.z+4);const e=E[E.length-1],slow0=E.includes(e);/* refakat araçlarının ateşi sınamayı bozmasın: er yalnız ezilerek ölebilir */e.hp=1e9;
+    P.x=e.x;P.z=e.z-.3;P.h=0;for(let k=0;k<4;k++){P.z=e.z-.3;update(.1);}const still=E.includes(e),side=Math.abs(e.x-P.x);/* duran tank ezmez; er gövdenin içinde de kalmaz, yana çıkar */for(let k=0;k<40;k++){P.x=e.x;P.z=e.z-12+k*.5;P.h=0;update(.1);if(!E.includes(e))break;}
+    run={type:e.type,slow0,still,side,gone:!E.includes(e),ro:HisarCarpisma.diagnostics().runOver-r0,burned:HisarSivil.diagnostics().burned-b0};}
+   /* 4) koyun sürüsü ve çobanı: tank sürünün ortasından sürülür; hiçbir canlı gövdenin altında kalmaz */
+   const hull=q=>{const sx=Math.sin(P.h),cz=Math.cos(P.h),dx=q.x-P.x,dz=q.z-P.z;return Math.abs(dx*sx+dz*cz)<3.4&&Math.abs(dx*cz-dz*sx)<1.8;};let koy=null;const lead=HisarKoy.animals().find(a=>a.kind==='koyun'&&a.herd);
+   if(lead){const flock=HisarKoy.animals().filter(a=>a.herd===lead.herd),c={x:flock.reduce((t,a)=>t+a.f.x,0)/flock.length,z:flock.reduce((t,a)=>t+a.f.z,0)/flock.length},k0=HisarKoy.diagnostics().gaveWay;let hits=0,near2=1e9;
+    P.x=c.x;P.z=c.z-200;for(let k=0;k<3;k++)update(.1);const all=flock.map(a=>a.f).concat(HisarKoy.people().filter(q=>q.f.live&&Math.hypot(q.f.x-c.x,q.f.z-c.z)<60).map(q=>q.f));
+    for(let k=0;k<70;k++){P.x=c.x;P.z=c.z-26+k*.9;P.h=0;update(.1);if(k>=3)for(const f of all){if(hull(f))hits++;near2=Math.min(near2,Math.hypot(f.x-P.x,f.z-P.z));}}
+    koy={n:flock.length,all:all.length,hits,near:near2,gave:HisarKoy.diagnostics().gaveWay-k0};}
+   return {m0,minD,maxOff,lat,aside,wait,back,gave:HisarSinir.diagnostics().gaveWay,forces:!!near,infMin,infGave:HisarDestek.diagnostics().gaveWay-g0,spot,run,koy,veh:HisarSinir.diagnostics().vehicles};});
+  assert.ok(yv.maxOff>2.4&&yv.minD>2.6&&yv.lat>2.6,'the sentry steps out of the tank\'s path: '+JSON.stringify([yv.maxOff,yv.minD,yv.lat]));assert.ok(yv.wait.off>2.4,'he waits beside the tank while it stands on his post '+yv.wait.off);
+  assert.ok(yv.back.off<.05&&Math.hypot(yv.back.x-yv.m0.x,yv.back.z-yv.m0.z)<.1&&yv.back.act!=='nobet-yuru','he walks back to his post '+JSON.stringify(yv.back));assert.ok(yv.gave>0);
+  assert.ok(yv.forces&&yv.infMin>2.2&&yv.infGave>0,'escort infantry clear the tank\'s path: nearest '+yv.infMin);
+  assert.ok(yv.koy&&yv.koy.n>=10&&yv.koy.hits===0&&yv.koy.near>1.9&&yv.koy.gave>0,'a flock in the tank\'s path scatters sideways: '+JSON.stringify(yv.koy));assert.ok(yv.veh>=6,'friendly tanks, Kirpi patrols and escort vehicles are all given way to: '+yv.veh);
+  assert.ok(yv.run&&yv.run.type==='inf'&&yv.run.still===true&&yv.run.side>=1.9&&yv.run.gone===true&&yv.run.ro>=1&&yv.run.burned===0,'enemy infantry: '+JSON.stringify(yv.run));
+  ok('giving way: a border sentry in the tank\'s path steps '+yv.maxOff.toFixed(1)+' m aside (never closer than '+yv.minD.toFixed(1)+' m to the hull centre), waits and walks back to his post; escort infantry run clear (nearest '+yv.infMin.toFixed(1)+' m); a flock of '+yv.koy.n+' sheep and its shepherd scatter sideways (nobody under the hull, nearest '+yv.koy.near.toFixed(1)+' m); enemy infantry under the moving hull are run over without an explosion, a standing tank harms nobody (the man is moved '+yv.run.side.toFixed(1)+' m out of the hull)');
+  // ---- refakat kolu: sınırı yalnız geçitten aşar, suya ve binaya girmez; araçlar tankın çevresinden dolanır; Kirpi ve park hâlindeki araç katıdır
+  const kol=await p.evaluate(()=>{HisarHarekat.start('tepe');L.dmg=0;L.cd=0;for(let i=0;i<3;i++)update(.1);const C=HisarDestek.core,WB=HisarSinir.core.WALL.back,wallZ=x=>riv(x)-WB,g=FORDS.slice().sort((a,b)=>Math.abs(a-P.x)-Math.abs(b-P.x))[0];
+   /* düşman uzağa alınır: erler ateş etmek için diz çöküp geride kalmasın, ölçüm kolun yürüyüşünü sınasın */E.forEach((e,i)=>{e.x=WS-60-i*9;e.z=WS-60;if(e.g)e.g.position.set(e.x,hAt(e.x,e.z),e.z);});
+   const fr=()=>HisarDestek.diagnostics().forces,zn=q=>C.zone(riv,WB,q.x,q.z),zone0=fr().at.map(zn).join('');let bad=0,deep=0,inB=0,minTank=1e9;const prev=new Map();
+   const inBld=(x,z)=>BLD.some(b=>{if(b.dead)return false;const dx=x-b.x,dz=z-b.z;if(b.w&&b.d){const c=Math.cos(b.rot||0),s=Math.sin(b.rot||0);return Math.abs(dx*c-dz*s)<b.w/2-.3&&Math.abs(dx*s+dz*c)<b.d/2-.3;}return Math.hypot(dx,dz)<(b.r||3)*.6;});
+   const check=()=>{const f=fr();for(const[k,q]of f.at.map((q,i)=>['m'+i,q]).concat(f.vehAt.map((q,i)=>['v'+i,q]))){const side=q.z<wallZ(q.x),was=prev.get(k);if(was!=null&&was!==side&&Math.abs(q.x-g)>14)bad++;prev.set(k,side);if(hAt(q.x,q.z)<-1)deep++;if(inBld(q.x,q.z))inB++;if(k[0]==='v')minTank=Math.min(minTank,Math.hypot(q.x-P.x,q.z-P.z));}};
+   /* tank geçitten güneye geçer, kol ardından gelir */
+   for(const[tx,tz]of[[g,wallZ(g)-30],[g,riv(g)+60],[g+30,riv(g)+170]])for(let k=0;k<400;k++){const dx=tx-P.x,dz=tz-P.z,d=Math.hypot(dx,dz);if(d<1)break;const st=Math.min(d,.8);P.x+=dx/d*st;P.z+=dz/d*st;P.h=Math.atan2(dx,dz);update(.1);check();}
+   let wait=0;for(;wait<1500;wait++){update(.1);check();const f=fr();if(f.at.every(q=>zn(q)===2&&Math.hypot(q.x-P.x,q.z-P.z)<90)&&f.vehAt.every(q=>zn(q)===2))break;}
+   const f1=fr(),cross={zone0,tank:zn(P),men:f1.at.length,zones:f1.at.map(zn).join(''),vz:f1.vehAt.map(zn).join(''),wait,bad,deep,inB,follow:minTank,via:HisarDestek.diagnostics().viaGate};
+   /* tank olduğu yerde geri döner: araçlar yeni yerlerine tankın çevresinden dolanarak geçer */
+   /* dost tanklar ölçümü karıştırmasın: uzakta bekletilir */AL.forEach((a,i)=>{a.cmd='hold';a.x=P.x+150+i*25;a.z=P.z+150;});
+   for(let k=0;k<150;k++)update(.1);minTank=1e9;P.h+=Math.PI;let reach=-1;for(let k=0;k<300;k++){update(.1);check();const f=fr(),t=[28,44].map(o=>({x:P.x-Math.sin(P.h)*o,z:P.z-Math.cos(P.h)*o}));if(reach<0&&f.vehAt.every((q,i)=>Math.hypot(q.x-t[i].x,q.z-t[i].z)<4))reach=k;}
+   const turn={near:minTank,reach,al:Math.min(...AL.map(a=>Math.hypot(a.x-P.x,a.z-P.z)))};
+   /* katı araçlar */
+   const kg=HisarSinir.kirpis()[0];P.x=kg.position.x+.5;P.z=kg.position.z+.5;update(.05);const kd=Math.hypot(P.x-kg.position.x,P.z-kg.position.z),pk=COV.find(c=>c.park);P.x=pk.x+.4;P.z=pk.z-.3;update(.05);const park=Math.hypot(P.x-pk.x,P.z-pk.z);
+   /* aracın ucundan da girilemez: gövdenin ekseninde, merkezinden 3 m ötede bırakılan tank dışarı itilir */
+   const k2=HisarSinir.kirpis()[1],ky=k2.rotation.y;P.x=k2.position.x+Math.sin(ky)*3;P.z=k2.position.z+Math.cos(ky)*3;update(.05);const kend=Math.hypot(P.x-k2.position.x,P.z-k2.position.z);
+   /* asker taşıyan kamyon: tank hızla üstüne sürülür; kamyon ezilmez, tank içine giremez */
+   const ti=HisarSivil.cars().findIndex(c=>c.kind==='kamyon'),truck=()=>HisarSivil.cars()[ti],c0=HisarSivil.diagnostics().crushed;
+   /* önüne tank çıkınca kamyon durur; sonra tank yandan hızla üstüne sürülür */
+   for(let k=0;k<25;k++){const t=truck();P.x=t.x+Math.sin(t.h)*10;P.z=t.z+Math.cos(t.h)*10;update(.1);}const tv=truck().v;
+   let tmin=1e9;for(let k=0;k<14;k++){const t=truck(),rx=Math.cos(t.h),rz=-Math.sin(t.h);P.x=t.x+rx*(8-k*.6);P.z=t.z+rz*(8-k*.6);P.h=Math.atan2(-rx,-rz);update(.1);const t1=truck();tmin=Math.min(tmin,Math.hypot(P.x-t1.x,P.z-t1.z));}const trk=truck();
+   return {cross,turn,solid:{kirpi:kd,kend,park,parkN:COV.filter(c=>c.park).length,krpN:COV.filter(c=>c.krp).length,truck:{dead:!!trk.dead,near:tmin,stopped:tv,crushed:HisarSivil.diagnostics().crushed-c0,covs:COV.filter(c=>c.kam).length}}};});
+  assert.ok(kol.cross.zone0==='000000000000'&&kol.cross.tank===2&&kol.cross.men===12&&kol.cross.zones==='222222222222'&&kol.cross.vz==='22','the whole column follows the tank across the border: '+JSON.stringify(kol.cross));
+  assert.ok(kol.cross.bad===0&&kol.cross.deep===0&&kol.cross.inB===0&&kol.cross.via>100,'through the gate only, never through the wall, deep water or a building: '+JSON.stringify(kol.cross));
+  assert.ok(kol.turn.near>=6.4&&kol.turn.reach>=0,'escort vehicles drive round the tank when it turns about: '+JSON.stringify(kol.turn));
+  assert.ok(kol.solid.kirpi>4.5&&kol.solid.kend>6.2&&kol.solid.park>4.8&&kol.solid.park<10&&kol.solid.parkN===18&&kol.solid.krpN>=6,'the Kirpi patrol and parked vehicles are solid along their whole length: '+JSON.stringify(kol.solid));
+  assert.ok(kol.solid.truck.dead===false&&kol.solid.truck.stopped<1&&kol.solid.truck.near>4.3&&kol.solid.truck.covs===4,'the troop truck is solid and is never crushed: '+JSON.stringify(kol.solid.truck));
+  ok('escort column: all 12 infantry and both vehicles cross the border through the gate behind the tank (no wall, deep water or building crossed; '+(kol.cross.wait/10).toFixed(0)+' s to close up); vehicles pass a turning tank no closer than '+kol.turn.near.toFixed(1)+' m; the tank cannot enter the Kirpi patrol (kept '+kol.solid.kirpi.toFixed(1)+' m from its centre, '+kol.solid.kend.toFixed(1)+' m end-on) or a parked vehicle ('+kol.solid.park.toFixed(1)+' m); the troop truck is not crushed and keeps the tank '+kol.solid.truck.near.toFixed(1)+' m off');
  // ---- harekât: savunma, taarruz, baskın
  await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,1);
  const g1=await p.evaluate(()=>{const d0=HisarHarekat.diagnostics();for(let i=0;i<570;i++){P.x=70;P.z=40;update(.1);}const d1=HisarHarekat.diagnostics();const z0=d1.enemies.map(e=>e.z);for(let i=0;i<100;i++){P.x=70;P.z=40;update(.1);}const d2=HisarHarekat.diagnostics();

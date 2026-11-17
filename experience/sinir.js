@@ -1,8 +1,11 @@
-/* ÇELİK BÖRÜ sınır 1.1 — haritanın kuzeyi Türkiye, güneyi Suriye; sınır nehir boyuncadır.
+/* ÇELİK BÖRÜ sınır 1.2 — haritanın kuzeyi Türkiye, güneyi Suriye; sınır nehir boyuncadır.
  * - Sınır duvarı: nehrin kuzey kıyısında; kullanıcının gönderdiği 3B duvar modeliyle çizilir (beton levha, üstünde jiletli tel halkaları;
  *   hat.js verir), model gelmezse beton bloklarla. Yalnız geçitlerdeki sınır kapılarından geçilir (oyuncu, dost ve düşman araçları için;
  *   rota bulma da duvarı bilir).
  * - Devriye yolunda Kirpi araçları gezer (gövdeleri gönderilen Kirpi modelidir; hat.js giydirir).
+ * - Askerler tanka yol verir: üstüne tank gelen asker yana çekilir, tank geçince yerine döner (tank askerin içinden geçmez).
+ *   Aynı kuralı köylüler, hayvanlar ve refakat piyadesi de kullanır; yol verilen araçlar tank, dost tanklar, Kirpi devriyesi ve refakat araçlarıdır.
+ * - Devriye Kirpi'si katıdır (tank içinden geçemez) ve önünde tank varsa durup bekler.
  * - Nöbetçi kuleleri (içinde nöbetçi), geçitlerin yanında sınır karakolları (bina, gönderde büyük bayrak, kum torbası, kapı nöbetçileri),
  *   duvar boyunca ikişerli devriye.
  * - Türkiye tarafındaki bütün evlerde Türk bayrağı (balkon, pencere, dam gönderi); köylerde okul ve okul bahçesinde bayrak.
@@ -12,7 +15,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -49,12 +52,26 @@ function pose(kind,t,o){o=o||{};const P={};
  if(kind==='selam'){P.UL=[0,0,.07];P.FL=[-.1,0,0];P.UR=[-.35,0,-1.3];P.FR=[0,0,-2.55];P.H=[-.05,0,0];}
  if(kind==='el-salla'){P.UL=[0,0,.07];P.FL=[-.1,0,0];P.UR=[0,0,-2.6];P.FR=[0,0,Math.sin(t*7)*.45];}
  if(o.look)P.H=[(P.H||[0])[0],o.look,0];return P;}
-const core=Object.freeze({VERSION,FLAG,starPts,WALL,wallZ,atGate,blocked,via,towersAlong,stretches,tile,turkish,pose});
+// Yol verme: üstüne tank gelen asker kenara çekilir, tank geçince yerine döner (tank askerin içinden geçmez).
+// half: aracın eksenine en az yan uzaklık (m), wide: hareketli araçta hıza göre eklenen pay, body: duran aracın önünde ve arkasında boş kalan
+// boy (gövdenin yarı boyu 3,5 m + burnunun önünde iki metreye yakın pay: namlunun altında, burnun dibinde kimse durmaz),
+// look/max: hıza göre ileri bakış (sn) ve sınırı (m), run/back: çekilme ve yerine dönme hızı (m/sn), hold: araç geçtikten sonra bekleme (sn),
+// hull/hullLen: gövdenin yarı eni ve yarı boyu; araç ani dönüp askerin üstüne gelirse asker gövdenin dışına hemen itilir
+const WAY=Object.freeze({half:2.7,wide:1.3,body:5.4,look:1.7,max:15,run:5.2,back:1.5,hold:.9,hull:2.3,hullLen:4});
+// Aracın yol verme ekseni ve o eksendeki hızı: eksen gövdenin eksenidir (duvara sürtünüp yana kayan aracın da altı boşalır), geri gidiyorsa
+// arkası öndür; yönü bilinmeyen araçta gidiş yönüdür. Bir karede 40 m/sn'den hızlı yer değiştirme ışınlanmadır, hız sayılmaz.
+function course(h,vx,vz){let sp=Math.hypot(vx,vz);if(!(sp<40)){vx=vz=sp=0;}if(typeof h!=='number'||h!==h)return {h:sp>.4?Math.atan2(vx,vz):0,v:sp};const al=vx*Math.sin(h)+vz*Math.cos(h);return al<-.4?{h:h+Math.PI,v:-al}:{h,v:Math.max(0,al)};}
+// Araç {x,z,h gidiş yönü,v hız}; nokta aracın gövdesinde ya da önündeki koridordaysa çekileceği yan yön (birim), gereken yol ve koridorun
+// yarı eni döner, değilse null (push: gövdenin içindeyse dışına çıkması için hemen gereken yol). Asker bulunduğu yana çekilir; o yan kapalıysa
+// (bina, duvar) karşı yana geçer (oyun tarafında bakılır).
+function giveWay(fx,fz,veh,cfg){cfg=cfg||WAY;const sx=Math.sin(veh.h),cz=Math.cos(veh.h),dx=fx-veh.x,dz=fz-veh.z,f=dx*sx+dz*cz,l=dx*cz-dz*sx,v=Math.abs(veh.v||0),half=cfg.half+Math.min(cfg.wide,v*.4),reach=cfg.body+Math.min(cfg.max,v*cfg.look);
+ if(f<-cfg.body||f>reach||Math.abs(l)>=half)return null;const side=l>=0?1:-1;return {x:cz*side,z:-sx*side,need:half-Math.abs(l),half,f,push:Math.abs(f)<cfg.hullLen&&Math.abs(l)<cfg.hull?cfg.hull-Math.abs(l):0};}
+const core=Object.freeze({VERSION,FLAG,starPts,WALL,WAY,giveWay,course,wallZ,atGate,blocked,via,towersAlong,stretches,tile,turkish,pose});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
 // ---------- oyun ----------
-const hooks={};const stat={blocks:0,coils:0,towers:0,posts:0,flags:0,poleFlags:0,schools:[],soldiers:0,crossBlocked:0,civil:0,figuresDrawn:0};
+const hooks={};const stat={blocks:0,coils:0,towers:0,posts:0,flags:0,poleFlags:0,schools:[],soldiers:0,crossBlocked:0,civil:0,figuresDrawn:0,gaveWay:0};
 let built=false,T=null,flagTex=null,crowd=null,waves=[],fhouse=[],clock=0;
 const W=()=>root.WS||800,FD=()=>safe(()=>FORDS,[]),RV=x=>safe(()=>riv(x),120);
 
@@ -143,7 +160,7 @@ function wallPack(force){if(!WM)return;const c=safe(()=>CAM.position,null);if(!c
  for(let i=0;i<segs.length;i++)ds[i]=Math.hypot(segs[i].x-c.x,segs[i].z-c.z);const a=WM.assign(ds,lv);for(const L of lv)L.n=0;
  for(let i=0;i<segs.length;i++){const l=a[i];if(l<0)continue;const L=lv[l];L.m.setMatrixAt(L.n++,segs[i].M);}for(const L of lv){L.m.count=L.n;L.m.instanceMatrix.needsUpdate=true;}stat.wallNear=lv[0].n;stat.wallMid=lv.length>2?lv[1].n:0;}
 // Kule modeli kapalı beton kuledir (üstünde durulmaz): kule nöbetçileri kulenin dibine, doğu yanına iner
-function towerGuards(off){let n=0;for(const f of SOLD){if(!f.home||!f.home.tower)continue;f.x=f.home.x+off;f.z=f.home.z;f.y=safe(()=>hAt(f.x,f.z),0);n++;}return n;}
+function towerGuards(off){let n=0;for(const f of SOLD){if(!f.home||!f.home.tower)continue;f.x=f.home.x+off;f.z=f.home.z;f.y=safe(()=>hAt(f.x,f.z),0);f.home.dy=0;f.bx=null;n++;}return n;}
 // Devriye yolu: duvarın Türkiye yanında, duvara koşut çakıllı yol (kapılarda yola bağlanır)
 function patrolRoad(){const ws=W(),xs=[];for(let x=-ws+6;x<=ws-6;x+=4)xs.push(x);const m=new T.InstancedMesh(new T.BoxGeometry(1,1,1),new T.MeshLambertMaterial({color:0xa99d80,polygonOffset:true,polygonOffsetFactor:-2}),xs.length),o=new T.Object3D();
  xs.forEach((x,i)=>{const z=wallZ(RV,x)-WALL.road,dz=RV(x+2)-RV(x-2);o.position.set(x,Math.max(hAt(x,z),hAt(x-2,z),hAt(x+2,z))+.04,z);o.rotation.set(0,-Math.atan2(dz,4),0);o.scale.set(4.3,.08,5);o.updateMatrix();m.setMatrixAt(i,o.matrix);});
@@ -151,13 +168,17 @@ function patrolRoad(){const ws=W(),xs=[];for(let x=-ws+6;x<=ws-6;x+=4)xs.push(x)
 // Kirpi devriyesi: devriye yolunda iki kapı arasında gider, uca varınca döner; oyuncu önündeyse durur. Gövdesi kullanıcının gönderdiği
 // 3B Kirpi modelidir (hat.js bu gruplara giydirir); burada yalnız yeri ve yönü yürütülür.
 let KRP=[];
+// Devriye aracının engeli: boyu eninden uzun olduğu için ekseni üzerinde önde ve arkada birer daire (yarıçap r, eksenden uzaklık off). Yarıçap,
+// tankın burnu (tankın çarpışma yarıçapı 2,6 m, yarı boyu 3,5 m) aracın gövdesine girmeyecek kadar geniştir
+const KIRPI_COV=Object.freeze({r:2.8,off:1.8,h:2.4});
 function kirpis(){const f=FD().slice().sort((a,b)=>a-b),ws=W(),segs=[];let a=-ws+20;for(const x of f){if(x-a>120)segs.push([a,x-18]);a=x+18;}if(ws-20-a>120)segs.push([a,ws-20]);
- segs.filter((q,i)=>i%2===0||segs.length<4).slice(0,4).forEach((sg,i)=>{const g=new T.Group();g.name='SN_KIRPI';S.add(g);KRP.push({g,a:sg[0],b:sg[1],x:sg[0]+(sg[1]-sg[0])*(.2+.5*(i%2)),dir:i%2?-1:1,v:7,yaw:0,stop:0});});
+ segs.filter((q,i)=>i%2===0||segs.length<4).slice(0,4).forEach((sg,i)=>{const g=new T.Group();g.name='SN_KIRPI';S.add(g);const u={g,a:sg[0],b:sg[1],x:sg[0]+(sg[1]-sg[0])*(.2+.5*(i%2)),dir:i%2?-1:1,v:7,yaw:0,stop:0,cov:[1,-1].map(k=>({x:0,z:0,r:KIRPI_COV.r,h:KIRPI_COV.h,pos:1,krp:k}))};KRP.push(u);
+  /* devriye aracı katıdır: tank içinden geçemez (araçla birlikte yürüyen engel; düşman siper diye kullanmaz: pos) */safe(()=>COV.push(...u.cov),null);});
  /* devriye araçları kurulur kurulmaz yollarına yerleşir (menüde dünya merkezinde, tankın üstünde görünmesinler) */kirpiStep(1);}
-function kirpiStep(dt){for(const u of KRP){const ahead={x:u.x+u.dir*9,z:wallZ(RV,u.x+u.dir*9)-WALL.road};const blockP=safe(()=>Math.hypot(P.x-ahead.x,P.z-ahead.z)<8,false);
+function kirpiStep(dt){const tk=safe(()=>[P].concat(AL.filter(a=>!a.dead)),[]);for(const u of KRP){const ahead={x:u.x+u.dir*9,z:wallZ(RV,u.x+u.dir*9)-WALL.road};/* önünde tank (oyuncu ya da dost) varsa durur, bekler */const blockP=tk.some(o=>Math.hypot(o.x-ahead.x,o.z-ahead.z)<8);
   const v=blockP?0:u.v;u.x+=u.dir*v*dt;if(u.x>u.b){u.x=u.b;u.dir=-1;}if(u.x<u.a){u.x=u.a;u.dir=1;}const z=wallZ(RV,u.x)-WALL.road,dz=wallZ(RV,u.x+u.dir)-wallZ(RV,u.x);
   const ty=Math.atan2(u.dir,dz);let d=ty-u.yaw;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;u.yaw+=d*Math.min(1,dt*2.2);
-  const y=safe(()=>hAt(u.x,z),0),fx=Math.sin(u.yaw)*1.9,fz=Math.cos(u.yaw)*1.9;u.g.position.set(u.x,y,z);u.g.rotation.order='YXZ';u.g.rotation.set(-Math.atan2(safe(()=>hAt(u.x+fx,z+fz),y)-safe(()=>hAt(u.x-fx,z-fz),y),3.8),u.yaw,0);u.z=z;}}
+  const y=safe(()=>hAt(u.x,z),0),fx=Math.sin(u.yaw)*1.9,fz=Math.cos(u.yaw)*1.9;u.g.position.set(u.x,y,z);u.g.rotation.order='YXZ';u.g.rotation.set(-Math.atan2(safe(()=>hAt(u.x+fx,z+fz),y)-safe(()=>hAt(u.x-fx,z-fz),y),3.8),u.yaw,0);u.z=z;for(const c of u.cov){c.x=u.x+Math.sin(u.yaw)*KIRPI_COV.off*c.krp;c.z=z+Math.cos(u.yaw)*KIRPI_COV.off*c.krp;}}}
 // Ülke göstergesi: oyunda ekranın üstünde bulunduğun ülke ve sınıra uzaklık
 let chip=null;
 function chipStep(){if(!doc.body)return;if(!chip){chip=doc.createElement('div');chip.id='sn-ulke';const st=doc.createElement('style');st.textContent=`#sn-ulke{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);transform:translateX(-50%);z-index:12;display:flex;align-items:center;gap:8px;padding:5px 11px 5px 6px;border-radius:6px;background:rgba(12,13,12,.78);border:1px solid rgba(255,255,255,.12);color:#f4f2ec;font:800 13px/1 var(--sf,system-ui);letter-spacing:.1em;pointer-events:none;white-space:nowrap}
@@ -233,11 +254,36 @@ function soldiers(tw,posts){const add=o=>{const y=safe(()=>hAt(o.x,o.z),0)+(o.dy
  for(let i=0;i+1<tw.length;i+=1){if(Math.abs(tw[i+1].x-tw[i].x)>WALL.tower+5)continue;if(i%2)continue;const a=tw[i].x+12,b=tw[i+1].x-12;
   for(const k of[0,1]){const f=add({x:a,z:wallZ(RV,a)-5-k*1.3,act:'nobet-yuru'});f.pat={a,b,u:Math.random(),dir:1,off:5+k*1.3};}}
  for(const p of posts)for(const g of p.sentries||[])add(g);stat.soldiers=SOLD.length;}
-function soldierStep(dt){const sp=1.35;for(const f of SOLD){f.t+=dt*(f.pat?5.2:1.2);
+// Yol verilen araçlar: oyuncunun tankı, dost tanklar, sınırdaki Kirpi devriyesi ve öbür bölümlerin bildirdikleri (refakat araçları); hız ve gidiş
+// yönü konum değişiminden bulunur (geri giden araç da sayılır)
+let VEH=[];const vprev=new WeakMap(),VSRC=[];
+function vehicles(dt){const out=[],put=o=>{const q=vprev.get(o);vprev.set(o,[o.x,o.z]);let vx=0,vz=0;if(q&&dt>0){vx=(o.x-q[0])/dt;vz=(o.z-q[1])/dt;}const c=course(o.h,vx,vz);out.push({x:o.x,z:o.z,h:c.h,v:c.v});};
+ /* Uçangöz kipinde de tank yerinde durur: sayılır */safe(()=>{if(game==='play')put(P);},null);for(const a of safe(()=>AL,[]))if(!a.dead)put(a);for(const u of KRP){u.h=u.yaw;put(u);}for(const fn of VSRC)for(const o of safe(fn,null)||[])put(o);VEH=out;}
+// Çekilecek yer kapalı mı: bina (dikdörtgen tabanlıysa tabanı, değilse dairesi) ya da sınır duvarı; hard değilse siper daireleri de (kaya, araç,
+// eski mahalle) sayılır
+function spotBlocked(x,z,hard){if(safe(()=>BLD.some(b=>{if(b.dead)return false;const dx=x-b.x,dz=z-b.z;if(Math.abs(dx)>30||Math.abs(dz)>30)return false;
+   if(b.w&&b.d){const c=Math.cos(b.rot||0),s=Math.sin(b.rot||0);return Math.abs(dx*c-dz*s)<b.w/2+.7&&Math.abs(dx*s+dz*c)<b.d/2+.7;}return Math.hypot(dx,dz)<b.r*.8;}),false))return true;
+ if(Math.abs(z-wallZ(RV,x))<1.6&&!atGate(FD(),x))return true;
+ return !hard&&safe(()=>COV.some(c=>Math.abs(c.x-x)<c.r+.5&&Math.abs(c.z-z)<c.r+.5&&Math.hypot(c.x-x,c.z-z)<c.r+.4),false);}
+// Bir noktanın çekilmesi gereken yön (birim) ve yol; tehlike yoksa null. Çekileceği yan kapalıysa karşı yana geçer; iki yanda da yalnız kaya ya da
+// araç varsa yine yana çekilir (binaya ve duvara girmez); iki yan da bina ya da duvarsa aracın gidiş yönünde ileri kaçar. Birden çok araç varsa
+// itmeler toplanır.
+function way(x,z){let tx=0,tz=0,hit=false,push=0;for(const v of VEH){if(Math.abs(v.x-x)>24||Math.abs(v.z-z)>24)continue;const g=giveWay(x,z,v);if(!g)continue;let nx=g.x,nz=g.z,need=g.need,pp=g.push;
+  const alt=2*g.half-need,own=h=>spotBlocked(x+g.x*need,z+g.z*need,h),oth=h=>spotBlocked(x-g.x*alt,z-g.z*alt,h),flip=()=>{nx=-g.x;nz=-g.z;need=alt;if(pp>0)pp=2*WAY.hull-pp;};
+  if(own(false)){if(!oth(false))flip();else if(own(true)){if(!oth(true))flip();else{nx=Math.sin(v.h);nz=Math.cos(v.h);need=6;pp=Math.max(0,WAY.hullLen+.3-g.f);}}}
+  tx+=nx*need;tz+=nz*need;hit=true;push=Math.max(push,pp);}if(!hit)return null;const l=Math.hypot(tx,tz)||1;return {x:tx/l,z:tz/l,need:l,push:Math.min(push,l)};}
+function soldierStep(dt){const sp=1.35;vehicles(dt);for(const f of SOLD){f.t+=dt*(f.pat?5.2:1.2);if(f.bx==null){f.bx=f.x;f.bz=f.z;f.ax=f.az=0;f.hold=0;f.act0=f.act;f.yaw0=f.yaw;}
   if(f.pat){const p=f.pat,L=p.b-p.a;p.u+=p.dir*sp*dt/L;if(p.u>1){p.u=1;p.dir=-1;}if(p.u<0){p.u=0;p.dir=1;}const x=p.a+L*p.u,z=wallZ(RV,x)-p.off,dx=p.dir*1,dz=(wallZ(RV,x+p.dir)-wallZ(RV,x));
-   f.x=x;f.z=z;f.y=safe(()=>hAt(x,z),0);f.yaw=Math.atan2(dx,dz);}
+   f.bx=x;f.bz=z;f.yaw=Math.atan2(dx,dz);f.act='nobet-yuru';}
   else if(f.home.tower){f.look=Math.sin(clock*.25+f.home.x)*.9;}
-  else if(f.home.gate){const d=safe(()=>Math.hypot(P.x-f.x,P.z-f.z),99);f.act=d<26&&safe(()=>game==='play',false)?'selam':'nobet';}}}
+  else if(f.home.gate){const d=safe(()=>Math.hypot(P.x-f.x,P.z-f.z),99);f.act0=d<26&&safe(()=>game==='play',false)?'selam':'nobet';if(!f.moved)f.act=f.act0;}
+  /* yol verme: üstüne araç gelen asker yana koşar; araç yerinden çekilince yürüyerek döner (kule tepesindeki nöbetçi yerinde kalır) */
+  const w=f.home.dy>1?null:way(f.bx+f.ax,f.bz+f.az);
+  if(w){const st=Math.max(Math.min(w.need,WAY.run*dt),w.push);f.ax+=w.x*st;f.az+=w.z*st;f.hold=WAY.hold;f.moved=1;f.yaw=Math.atan2(w.x,w.z);f.act='nobet-yuru';f.t+=dt*8;stat.gaveWay++;}
+  else if(f.hold>0){f.hold-=dt;if(!f.pat)f.act='nobet';}
+  else if(f.ax||f.az){if(way(f.bx,f.bz)){if(!f.pat)f.act='nobet';}else{const l=Math.hypot(f.ax,f.az),st=Math.min(l,WAY.back*dt);f.yaw=Math.atan2(-f.ax,-f.az);f.ax-=f.ax/l*st;f.az-=f.az/l*st;if(l-st<.03)f.ax=f.az=0;f.act='nobet-yuru';f.t+=dt*4;}}
+  else if(f.moved){f.moved=0;if(!f.pat){f.act=f.act0;f.yaw=f.yaw0;}}
+  if(f.pat||f.moved){f.x=f.bx+f.ax;f.z=f.bz+f.az;f.y=safe(()=>hAt(f.x,f.z),0);}}}
 // ---------- sivil yerleşim uyarısı ----------
 const CIVIL={house:1,beton:1,apt:1,shop:1,barn:1,shed:1,okul:1,kerpic:1};
 function civilNear(x,z,r){for(const b of BLD){if(b.dead||!CIVIL[b.kind])continue;if(Math.hypot(b.x-x,b.z-z)<b.r+(r||12))return b;}return null;}
@@ -285,7 +331,8 @@ function drawMap(c,SX,SY,s){c.save();c.strokeStyle='rgba(235,60,50,.95)';c.lineW
 function drawMini(){if(typeof mmx==='undefined'||typeof mmO!=='function')return;const W2=132,O=mmO(),X=x=>((x-O.x)/MMR+.5)*W2,Z=z=>((z-O.z)/MMR+.5)*W2;
  mmx.save();mmx.strokeStyle='rgba(235,60,50,.9)';mmx.lineWidth=1.6;mmx.setLineDash([4,3]);mmx.beginPath();let f=true;for(let x=O.x-MMR;x<=O.x+MMR;x+=6){const X0=X(x),Y0=Z(wallZ(RV,x));if(f){mmx.moveTo(X0,Y0);f=false;}else mmx.lineTo(X0,Y0);}mmx.stroke();mmx.restore();}
 function diagnostics(){return {version:VERSION,built,hooks:{...hooks},...stat,posts:POSTS.map(p=>({x:Math.round(p.x),z:Math.round(p.z),f:p.f})),towersAt:TW.map(t=>Math.round(t.x)),
- kirpis:KRP.map(u=>({x:Math.round(u.x),z:Math.round(u.z),dir:u.dir})),schoolsAt:SCH.map(s=>({x:Math.round(s.x),z:Math.round(s.z),name:s.name})),sentries:SOLD.filter(f=>f.home.gate).map(f=>({x:f.x,z:f.z,act:f.act})),patrols:SOLD.filter(f=>f.pat).map(f=>({x:f.x,z:f.z,act:f.act}))};}
-root.HisarSinir=Object.freeze({version:VERSION,core,fig:()=>({Crowd:(...a)=>{T=T||root.THREE;return Crowd(...a);},RIG,pose,SKIN}),flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd,bust:setBust,hasBust:()=>!!BUST,wallModel,towerGuards,towers:()=>TW.map(t=>({x:t.x,z:t.z})),kirpis:()=>KRP.map(u=>u.g),wall:()=>WM?{segs:WM.segs.length,counts:WM.lv.map(L=>L.n),old:!!WOLD}:null});
+ kirpis:KRP.map(u=>({x:Math.round(u.x),z:Math.round(u.z),dir:u.dir})),schoolsAt:SCH.map(s=>({x:Math.round(s.x),z:Math.round(s.z),name:s.name})),sentries:SOLD.filter(f=>f.home.gate).map(f=>({x:f.x,z:f.z,act:f.act})),patrols:SOLD.filter(f=>f.pat).map(f=>({x:f.x,z:f.z,act:f.act})),
+  vehicles:VEH.length,men:SOLD.map(f=>({x:f.x,z:f.z,act:f.act,off:Math.hypot(f.ax||0,f.az||0),kind:f.pat?'devriye':f.home.tower?'kule':f.home.gate?'kapi':'karakol'}))};}
+root.HisarSinir=Object.freeze({version:VERSION,core,fig:()=>({Crowd:(...a)=>{T=T||root.THREE;return Crowd(...a);},RIG,pose,SKIN,way}),vehicleSource:fn=>{if(typeof fn==='function'&&!VSRC.includes(fn))VSRC.push(fn);return VSRC.length;},flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd,bust:setBust,hasBust:()=>!!BUST,wallModel,towerGuards,towers:()=>TW.map(t=>({x:t.x,z:t.z})),kirpis:()=>KRP.map(u=>u.g),wall:()=>WM?{segs:WM.segs.length,counts:WM.lv.map(L=>L.n),old:!!WOLD}:null});
 connect();doc.addEventListener('hisar:ui-ready',connect);
 })(typeof window!=='undefined'?window:globalThis);

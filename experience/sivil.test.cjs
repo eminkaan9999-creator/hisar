@@ -22,3 +22,9 @@ test('no brands or logos; crushed and burnt cars; coded car bodies are gone; loa
  assert.ok(src.includes('function crush(c)')&&src.includes('function burn(c)'));assert.ok(!src.includes('ExtrudeGeometry')&&!src.includes("kind==='sedan'")&&!src.includes('function hide('));
  assert.ok(html.indexOf('experience/model.js?v=')<html.indexOf('experience/sivil.js?v='));assert.ok(sw.includes("'experience/sivil.js'"));
  for(const f of['pikap','pikap_uzak','traktor','traktor_uzak','kamyon','kamyon_uzak'])assert.ok(sw.includes("'assets/mdl/"+f+".bin?v=1'"),f);for(const f of['pikap','traktor','kamyon'])assert.ok(sw.includes("'assets/tex/"+f+"_col.jpg?v=1'"),f);});
+test('the troop truck is never crushed and is solid; village cars still are crushed; road traffic is given way to',()=>{const c=v.crushable;
+ assert.equal(c({kind:'pikap'}),true);assert.equal(c({kind:'traktor'}),true);assert.equal(c({kind:'eski'}),true);assert.equal(c({kind:'kamyon'}),false,'soldiers ride in it');assert.equal(c({kind:'pikap',dead:1}),false);
+ assert.ok(v.TRUCK_COV.r>=2.6&&v.TRUCK_COV.off>=1.5&&v.TRUCK_COV.off+v.TRUCK_COV.r>3.2,'two blockers cover its length');assert.ok(Math.sqrt((v.TRUCK_COV.r*.85+2.6)**2-v.TRUCK_COV.off**2)-3.5>.9,'wide enough that the nose of the tank (3.5 m ahead of its centre) stops at the side of the truck, not inside it');
+ for(const k of["if(kind==='kamyon'){car.cov=[1,-1].map(k=>({x:0,z:0,r:TRUCK_COV.r,h:TRUCK_COV.h,pos:1,kam:k}));safe(()=>COV.push(...car.cov),null);}","if(c.cov)for(const k of c.cov){k.x=c.x+Math.sin(c.h)*TRUCK_COV.off*k.kam;k.z=c.z+Math.cos(c.h)*TRUCK_COV.off*k.kam;}",
+  "for(const c of CARS){if(!crushable(c))continue;","root.HisarSinir.vehicleSource(()=>MOV)","const stop=blocked(c,movers,16,c.cov?5.4:4.5)"])assert.ok(src.includes(k),k);
+ assert.ok(/const VERSION='1\.3\.0'/.test(src)&&html.includes('experience/sivil.js?v=5'));});

@@ -1,15 +1,16 @@
-/* ÇELİK BÖRÜ sivil 1.2 — köylerin araçları, yol trafiği ve asker taşıyan kamyonlar; hepsi kullanıcının gönderdiği 3B modellerle çizilir.
+/* ÇELİK BÖRÜ sivil 1.3 — köylerin araçları, yol trafiği ve asker taşıyan kamyonlar; hepsi kullanıcının gönderdiği 3B modellerle çizilir.
  * - Köy araçları (dost ve düşman köylerinde) gönderilen pikap modelidir, araca göre renk tonu alır: Türkiye'de evlerin yanında park hâlinde
  *   pikap ve traktör (çoğu römorklu, kimi saman balyalı), Suriye'de az sayıda tozlu pikap.
  * - Türkiye içindeki köy yollarında ağır giden trafik: sağ şeritte gider, tank ya da dost araç önündeyse durur, yolun sonunda döner.
  * - Asker taşıyan kamyon (gönderilen model: kasada askerler, tepede nişancı) sınıra inen yollarda gider gelir; sınır ucunda bir süre bekler.
- * - Tank üstünden geçerse araç ezilir (yassılaşır, kararır); yakınına mermi düşerse yanar.
+ * - Tank üstünden geçerse köy aracı ezilir (yassılaşır, kararır); yakınına mermi düşerse yanar. Asker taşıyan kamyon ezilmez: katıdır, tank
+ *   içinden geçemez. Yoldaki araçlar da yol verilen araçlardır: köylü, hayvan ve asker önlerinden çekilir.
  * Çizim: her model üç örnekli mesh'tir. Kameraya en yakın araçlar ayrıntılı örgüyle (yaklaşık 20 bin üçgen), ötekiler hafif örgüyle
  * (yaklaşık 3 bin üçgen) çizilir; araç yamaçta burnunu yokuşa verir. Römork ve saman balyası kodla kurulur (modeli yok).
  * Model dosyası gelmezse o türün araçları kurulmaz. Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 // ---------- çekirdek ----------
@@ -20,6 +21,10 @@ const MDL=Object.freeze({pikap:Object.freeze({sc:5.4,rot:Math.PI/2,tint:.65,r:2.
  kamyon:Object.freeze({sc:6.4,rot:0,tint:0,r:3.4,v:7,wb:3.8,sh:[3.4,7.2],gain:1.2})});
 // Ayrıntı düzeyleri: yakın (ayrıntılı örgü), orta (hafif örgü, gölge atar), uzak (hafif örgü); far'dan ötesi çizilmez
 const LOD=Object.freeze({near:45,maxHi:3,mid:85,maxMid:8,far:440});
+// Asker taşıyan kamyonun engeli: boyu eninden uzun olduğu için ekseninde önde ve arkada birer daire (yarıçap r, eksenden uzaklık off, yükseklik h)
+const TRUCK_COV=Object.freeze({r:2.8,off:2,h:2.8});
+// Tank yalnız köy araçlarını ezer; asker taşıyan kamyon ezilmez
+const crushable=c=>!!c&&!c.dead&&c.kind!=='kamyon';
 // Kamyon sınır ucunda ve geri ucunda bekler (sn); yolun sınıra yakın son shuttle metresinde gidip gelir, ilk kamyon sınıra first metre kala yola çıkar
 const PAUSE=Object.freeze({border:12,back:6,shuttle:480,first:150,gap:170});
 const TIRE=0x181818,RIM=0x8a8d90;
@@ -50,7 +55,7 @@ function tail(p,end,L){const q=end?p.slice():p.slice().reverse();let acc=0,i=q.l
 function arrived(s0,s1,L){const k0=Math.floor(s0/L),k1=Math.floor(s1/L);return k1===k0?-1:(k1%2===1?1:0);}
 // Yamaç eğimi: ön ve arka dingildeki zemin yüksekliğinden (burun yukarı eksi açı; three.js x dönüşü)
 function pitch(hf,hb,wb){return -Math.atan2(hf-hb,wb);}
-const core=Object.freeze({VERSION,PAL,MDL,LOD,PAUSE,TOW,romork,balya,len,dense,along,lane,blocked,borderEnd,tail,arrived,pitch});
+const core=Object.freeze({VERSION,PAL,MDL,LOD,PAUSE,TOW,romork,balya,len,dense,along,lane,blocked,borderEnd,tail,arrived,pitch,TRUCK_COV,crushable});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 // ---------- oyun ----------
@@ -71,13 +76,16 @@ function buildParked(){for(const b of safe(()=>BLD,[])){if(b.dead||!b.w||!b.kind
 // Türkiye içinde kalan yol parçaları (sınıra 45 m'den yakın kısım alınmaz)
 function stretches(){const out=[];for(const r of safe(()=>WROADS,[])){let cur=[];const flush=()=>{if(cur.length>1&&len(cur)>160){cur.w=r.w||6;out.push(cur);}cur=[];};
   for(const p of dense(r.pts,8)){if(p[1]<RV(p[0])-45&&Math.abs(p[0])<WSZ()-20)cur.push(p);else flush();}flush();}return out;}
-function mover(kind,model,p,s,u){const d=MDL[model],car={kind,model,path:p,L:len(p),s,v:0,vmax:d.v,x:0,z:0,y:0,h:0,pitch:0,r:d.r,wait:0,col:kind==='pikap'?pick(PAL.pikap,u):0xffffff};trailer(car,u);place(car,0);MOV.push(car);CARS.push(car);return car;}
+function mover(kind,model,p,s,u){const d=MDL[model],car={kind,model,path:p,L:len(p),s,v:0,vmax:d.v,x:0,z:0,y:0,h:0,pitch:0,r:d.r,wait:0,col:kind==='pikap'?pick(PAL.pikap,u):0xffffff};trailer(car,u);
+ /* asker taşıyan kamyon katıdır: engeli araçla birlikte yürür (düşman siper diye kullanmaz: pos) */
+ if(kind==='kamyon'){car.cov=[1,-1].map(k=>({x:0,z:0,r:TRUCK_COV.r,h:TRUCK_COV.h,pos:1,kam:k}));safe(()=>COV.push(...car.cov),null);}
+ place(car,0);MOV.push(car);CARS.push(car);return car;}
 function buildMoving(){const all=stretches(),kinds=['pikap','pikap','traktor','pikap','pikap','pikap'];
  all.slice().sort((a,b)=>len(b)-len(a)).slice(0,6).forEach((p,i)=>{const kind=kinds[i%kinds.length];mover(kind,kind,p,len(p)*hash(i,3,1),hash(i,7,9));});
  /* kamyonlar: ucu sınıra en yakın iki yol; yolun sınıra yakın kesiminde gidip gelir, sınıra doğru yola çıkar */
  all.map(p=>({p,e:borderEnd(p,RV)})).filter(q=>q.e.gap<110).sort((a,b)=>a.e.gap-b.e.gap).slice(0,2).forEach((q,i)=>{const p=tail(q.p,q.e.end,PAUSE.shuttle),L=len(p),c=mover('kamyon','kamyon',p,Math.max(0,L-PAUSE.first-PAUSE.gap*i),0);c.border=1;stat.trucks++;});
  stat.moving=MOV.length;}
-function place(c,dt){const q=lane(along(c.path,c.s),Math.min(1.7,(c.path.w||6)/4));let d=q.h-c.h;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;c.h+=dt?d*Math.min(1,dt*(c.kind==='kamyon'?1.1:2.5)):d;c.x=q.x;c.z=q.z;c.y=H(c.x,c.z);slope(c);}
+function place(c,dt){const q=lane(along(c.path,c.s),Math.min(1.7,(c.path.w||6)/4));let d=q.h-c.h;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;c.h+=dt?d*Math.min(1,dt*(c.kind==='kamyon'?1.1:2.5)):d;c.x=q.x;c.z=q.z;c.y=H(c.x,c.z);slope(c);if(c.cov)for(const k of c.cov){k.x=c.x+Math.sin(c.h)*TRUCK_COV.off*k.kam;k.z=c.z+Math.cos(c.h)*TRUCK_COV.off*k.kam;}}
 // ---------- gönderilen 3B modeller ----------
 const FILES={pikap:['pikap','pikap_uzak','pikap_col'],traktor:['traktor','traktor_uzak','traktor_col'],kamyon:['kamyon','kamyon_uzak','kamyon_col']};
 function inst(T,geo,mat,n,name,shadow){const m=new T.InstancedMesh(geo,mat,Math.max(1,n));m.instanceColor=new T.InstancedBufferAttribute(new Float32Array(Math.max(1,n)*3).fill(1),3);m.count=0;m.frustumCulled=false;m.castShadow=!!shadow;m.receiveShadow=false;m.name=name;S.add(m);return m;}
@@ -87,6 +95,7 @@ async function load(){const M=root.HisarModel,T=root.THREE;if(started||!M||!T||!
    const hi=M.geometry(a,{rotY:d.rot}),lo=M.geometry(b,{rotY:d.rot}),mat=M.material(M.texture('assets/tex/'+f[2]+'.jpg?v=1'),{gain:d.gain});
    g[k]={def:d,lv:[inst(T,hi,mat,LOD.maxHi,'SV_MODEL_'+k,true),inst(T,lo,mat,LOD.maxMid,'SV_ORTA_'+k,true),inst(T,lo,mat,n,'SV_UZAK_'+k,false)],n:[0,0,0]};stat.tris[k]=[a.ni/3,b.ni/3];}catch(e){errs.push(String(e&&e.message||e));}}));
  /* modeli gelmeyen türün araçları kurulmaz (görünmez araç kalmasın) */
+ for(const c of MOV)if(!g[c.model]&&c.cov)safe(()=>{for(const k of c.cov){const i=COV.indexOf(k);if(i>=0)COV.splice(i,1);}},null);
  CARS=CARS.filter(c=>g[c.model]);MOV=MOV.filter(c=>g[c.model]);stat.parked=CARS.filter(c=>c.parked).length;stat.moving=MOV.length;stat.trucks=MOV.filter(c=>c.kind==='kamyon').length;
  const nt=CARS.filter(c=>c.trailer).length,vm=new T.MeshLambertMaterial({vertexColors:true});stat.trailers=nt;
  TRL={r:inst(T,M.merge(romork()),vm,nt,'SV_ROMORK',false),b:inst(T,M.merge(balya()),vm,nt,'SV_BALYA',false)};
@@ -104,15 +113,15 @@ function draw(){if(!G)return;const cam=safe(()=>CAM.position,null),M=root.HisarM
    if(blob&&ds[i]<150){o.position.y=ty+.08;o.scale.set(2.6,1,4.2);o.updateMatrix();TRL.s.setMatrixAt(ns++,o.matrix);}}}
  let h=0,m=0,f=0;for(const k in FILES){const g=G[k];if(!g)continue;g.lv.forEach((im,l)=>{im.count=g.n[l];im.instanceMatrix.needsUpdate=true;im.instanceColor.needsUpdate=true;});h+=g.n[0];m+=g.n[1];f+=g.n[2];}
  for(const [im,c] of [[TRL.r,nt],[TRL.b,nb],[TRL.s,ns]]){im.count=c;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}stat.hi=h;stat.mid=m;stat.far=f;}
-function build(){if(built||!root.THREE||typeof S==='undefined'||typeof BLD==='undefined'||typeof WROADS==='undefined'||!safe(()=>BLD.some(b=>b.kind==='house'&&b.w),false))return;built=true;safe(buildParked,null);safe(buildMoving,null);load();}
+function build(){if(built||!root.THREE||typeof S==='undefined'||typeof BLD==='undefined'||typeof WROADS==='undefined'||!safe(()=>BLD.some(b=>b.kind==='house'&&b.w),false))return;built=true;safe(buildParked,null);safe(buildMoving,null);/* yoldaki araçlar da yol verilen araçlardır: köylü, hayvan ve asker önlerinden çekilir */safe(()=>root.HisarSinir.vehicleSource(()=>MOV),null);load();}
 // hasar: ezilen araç yassılaşır ve kararır, yanan araç kapkara kalır (çizimde ölçek ve renkle)
 function crush(c){if(c.dead)return;c.dead=1;stat.crushed++;}
 function burn(c){if(c.burnt)return;c.burnt=1;c.dead=1;stat.burned++;}
 const prev=new WeakMap();
 function step(dt){if(!built)return;const movers=[];safe(()=>{if(mode==='tank')movers.push(P);},null);for(const a of safe(()=>AL,[]))if(!a.dead)movers.push(a);for(const e of safe(()=>E,[]))if(e.type==='tank'||e.type==='apc')movers.push(e);
  const sp=new Map();for(const m of movers){const q=prev.get(m);prev.set(m,[m.x,m.z]);sp.set(m,q?Math.hypot(m.x-q[0],m.z-q[1])/Math.max(dt,1e-3):0);}
- for(const c of CARS){if(c.dead)continue;for(const m of movers){if(sp.get(m)>1.2&&Math.hypot(m.x-c.x,m.z-c.z)<c.r){crush(c);break;}}}
- for(const c of MOV){if(c.dead)continue;if(c.wait>0){c.wait-=dt;c.v=0;place(c,dt);continue;}const stop=blocked(c,movers,16,4.5)||blocked(c,CARS.filter(o=>o!==c),9+c.r,2.2);/* uzun araç daha erken durur */const tv=stop?0:c.vmax;c.v+=Math.max(-6*dt,Math.min(2*dt,tv-c.v));
+ for(const c of CARS){if(!crushable(c))continue;for(const m of movers){if(sp.get(m)>1.2&&Math.hypot(m.x-c.x,m.z-c.z)<c.r){crush(c);break;}}}
+ for(const c of MOV){if(c.dead)continue;if(c.wait>0){c.wait-=dt;c.v=0;place(c,dt);continue;}const stop=blocked(c,movers,16,c.cov?5.4:4.5)/* katı kamyon yanındaki tankı itmesin diye daha geniş bakar */||blocked(c,CARS.filter(o=>o!==c),9+c.r,2.2);/* uzun araç daha erken durur */const tv=stop?0:c.vmax;c.v+=Math.max(-6*dt,Math.min(2*dt,tv-c.v));
   const s0=c.s;c.s+=c.v*dt;if(c.kind==='kamyon'){const e=arrived(s0,c.s,c.L);if(e>=0){c.wait=e===c.border?PAUSE.border:PAUSE.back;c.v=0;}}place(c,dt);}}
 function reset(){/* yeni görevde yanmış ve ezilmiş araçlar yerine konur */for(const c of CARS){c.dead=0;c.burnt=0;}stat.crushed=stat.burned=0;}
 function wrap(name,factory){if(hooks[name]||typeof root[name]!=='function')return;root[name]=factory(root[name]);hooks[name]=true;}

@@ -30,7 +30,7 @@ jobs:
           npx playwright install chromium
       - name: Test original game on desktop and mobile viewports
         timeout-minutes: 10
-        run: node scripts/experience-browser.cjs
+        run: HISAR_FIRE_PROBE=1 node scripts/experience-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

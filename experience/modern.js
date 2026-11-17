@@ -1,6 +1,6 @@
 /* Modern presentation: colour-managed 3D, bounded shadows, live vehicle HUD and real convoy model. */
 (function(root){'use strict';
-const VERSION='1.0.0',clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const VERSION='1.1.0',clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const LOOKS=Object.freeze({
  gunduz:{exposure:1.0,sun:1.55,hemi:.48,color:0xffecd0,ground:0x5b5144,near:100,far:510},
  aksam:{exposure:1.08,sun:1.3,hemi:.4,color:0xffc58d,ground:0x51484a,near:85,far:470},
@@ -13,7 +13,8 @@ function budget(coarse,quality,ratio){return {pixelRatio:Math.min(Math.max(.5,ra
 function musicMix(state,radio){return state==='play'?(radio?.18:.42):state==='pause'?0:.12;}
 function percent(value,max){return Number.isFinite(value)&&Number.isFinite(max)&&max>0?Math.round(clamp(value/max*100,0,100)):0;}
 function instanceColour(mesh,Attribute){if(!mesh.isInstancedMesh||mesh.instanceColor)return false;const n=mesh.instanceMatrix&&mesh.instanceMatrix.count;if(!(n>0))return false;mesh.instanceColor=new Attribute(new Float32Array(n*3).fill(1),3);return true;}
-const core=Object.freeze({VERSION,LOOKS,budget,musicMix,percent,instanceColour});if(typeof module==='object'&&module.exports)module.exports=core;
+function terrainPose(x,z,h,ground){const s=Math.sin(h),c=Math.cos(h),at=(a,b)=>{const y=ground(a,b);return Number.isFinite(y)?y:0;},f=at(x+s*2,z+c*2),b=at(x-s*2,z-c*2),r=at(x+c*1.2,z-s*1.2),l=at(x-c*1.2,z+s*1.2);return {y:Math.max(at(x,z),(f+b+r+l)/4),pitch:clamp(-Math.atan2(f-b,4),-.25,.25),roll:clamp(Math.atan2(r-l,2.4),-.2,.2)};}
+const core=Object.freeze({VERSION,LOOKS,budget,musicMix,percent,instanceColour,terrainPose});if(typeof module==='object'&&module.exports)module.exports=core;
 const doc=root.document;if(!doc)return;const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const stat={installed:false,graphics:false,materials:0,looks:0,assets:'idle',error:null,convoys:0,removed:0,hudUpdates:0},hooks={};let assetPromise=null,truck=null,hud=null,uiTime=0;
 const coarse=()=>safe(()=>root.matchMedia('(pointer:coarse)').matches,false);
@@ -38,7 +39,7 @@ function spawnConvoy(c){loadTruck().then(d=>{if(c.disposed)return;const T=root.T
   const plate=new T.Mesh(new T.BoxGeometry(1.3,.24,.05),new T.MeshStandardMaterial({color:0xdde8d3,roughness:.8}));plate.position.set(0,1,-3.3);g.add(plate);c.owned=[plate.geometry,plate.material];c.g=g;c.modelReady=true;c.colliders=[-1.65,1.65].map(off=>({x:c.x,z:c.z,r:2.25,sfConvoy:c,off}));safe(()=>COV.push(...c.colliders),null);stat.convoys++;syncConvoy(c);safe(()=>root.REAL.convObj(g),null);materials(g);
  }).catch(e=>{if(!c.disposed)c.error=String(e&&e.message||e);});}
 function removeConvoy(c){c.disposed=true;if(c.g){safe(()=>S.remove(c.g),null);c.g=null;stat.removed++;}if(c.detail)safe(()=>root.HisarModel.release(c.detail),null);c.detail=null;for(const v of c.owned||[])safe(()=>v.dispose(),null);c.owned=[];if(c.colliders)safe(()=>{for(const q of c.colliders){const i=COV.indexOf(q);if(i>=0)COV.splice(i,1);}},null);c.colliders=[];}
-function syncConvoy(c){if(!c.g)return;const h=c.h||0,y=safe(()=>hAt(c.x,c.z),0),s=Math.sin(h),k=Math.cos(h);c.g.position.set(c.x,y,c.z);const dy=safe(()=>hAt(c.x+s*2,c.z+k*2)-hAt(c.x-s*2,c.z-k*2),0);c.g.rotation.set(-Math.atan2(dy,4),h,0);for(const q of c.colliders||[]){q.x=c.x+s*q.off;q.z=c.z+k*q.off;}}
+function syncConvoy(c){if(!c.g)return;const h=c.h||0,s=Math.sin(h),k=Math.cos(h),pose=terrainPose(c.x,c.z,h,(x,z)=>safe(()=>hAt(x,z),0));if(c.terrain){for(const a of ['y','pitch','roll'])c.terrain[a]+=(pose[a]-c.terrain[a])*.3;}else c.terrain=pose;c.g.position.set(c.x,c.terrain.y,c.z);c.g.rotation.set(c.terrain.pitch,h,c.terrain.roll);for(const q of c.colliders||[]){q.x=c.x+s*q.off;q.z=c.z+k*q.off;}}
 function convoyPassable(x,z,c){if(!c._near||Math.hypot(x-(c._nx||0),z-(c._nz||0))>8){c._nx=x;c._nz=z;c._near=safe(()=>[...COV,...BLD].filter(o=>!o.dead&&!o.sfConvoy&&Number.isFinite(o.x)&&Number.isFinite(o.z)&&Math.hypot(o.x-x,o.z-z)<45),[]);}
  const water=safe(()=>hAt(x,z)<-1.2,false);if(water)return false;for(const o of c._near)if(Math.hypot(o.x-x,o.z-z)<(o.r||2)+2.4)return false;return true;}
 function telemetry(){return safe(()=>{if(game!=='play')return {state:game};const drone=mode==='drone'&&DR.on,hk=root.HisarHarekat&&root.HisarHarekat.diagnostics();return {state:game,drone,hp:drone?percent(DR.hp,60*(1+.25*(SV.U.dar||0))):percent(P.hp,P.mx),speed:drone?Math.max(0,Math.round(DR.y-hAt(DR.x,DR.z))):Math.round(Math.abs(P.v||0)*3.6),unit:drone?'m':'km/sa',bearing:safe(()=>drone?yaw:P.h,0),ammo:drone?ammo:TA[st],weapon:drone?'UÇANGÖZ':(SH[st].n.split(' · ')[0]),ready:drone?'GÖREVDE':cd>0?'YÜKLENİYOR '+cd.toFixed(1):'ATIŞA HAZIR',chapter:hk&&hk.chapter,preparation:hk&&hk.preparation||0,convoy:hk&&hk.convoy};},null);}

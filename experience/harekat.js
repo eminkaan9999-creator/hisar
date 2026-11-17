@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='2.0.1',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='2.1.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -93,7 +93,7 @@ function mk(type,x,z,o){const kornet=type==='kornet';if(kornet)type='inf';const 
  if(H.op.wx==='gece'&&e.fr){e.fr=Math.round(e.fr*NIGHT);const close={inf:kornet?115:50,bunker:75,aa:95,arty:170,mgn:60};if(close[type])e.hkFireRange=Math.round(close[type]*NIGHT);}return e;}
 function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[key]||TUNE.normal;
  safe(()=>{L=Object.assign({},LV[key]||LV.normal,{sp:5,cd:tune.cd,dmg:tune.dmg,rl:3,ar:190});},null);
- sky(o.wx);H={op:o,tune,t:0,won:false,lost:false,wave:-1,waveT:0,cap:0,phase:'go',kills:0,sup:0,last:'',halts:new WeakMap(),post:null,ph:0,al0:safe(()=>AL.length,0)};
+ sky(o.wx);H={op:o,tune,t:0,won:false,lost:false,wave:-1,waveT:0,cap:0,phase:'go',kills:0,sup:0,last:'',halts:new WeakMap(),post:null,ph:0,al0:safe(()=>AL.length,0),sessionStartedAt:safe(()=>root.HisarCheckpoint.session(),Date.now()),checkpointWave:null};
  if(o.story){const hp=safe(()=>P.mx,100);safe(()=>{P.mx=Math.max(hp,o.armor||150);P.hp=P.mx;L.dmg=tune.dmg*.8;},null);H.phaseT=0;H.phaseTotal=0;H.preparation=o.preparation||0;}
  P.x=o.start.x;P.z=o.start.z;P.h=o.start.h;P.th=o.start.h;P.v=P.w=0;safe(()=>{yaw=o.start.h;},null);
  safe(()=>{AL.forEach((a,i)=>{const s=i%2?1:-1,b=10+8*Math.floor(i/2),x=o.start.x+Math.cos(o.start.h)*s*11-Math.sin(o.start.h)*b,z=o.start.z-Math.sin(o.start.h)*s*11-Math.cos(o.start.h)*b;a.x=x;a.z=z;a.h=o.start.h;a.g.position.set(x,hAt(x,z),z);a.g.rotation.y=o.start.h;a.cmd='follow';a.fire=1;});},null);
@@ -135,7 +135,19 @@ function spawnWave(w){const o=H.op,gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40
   const path=safe(()=>root.astar(x,z,gate.x,gate.z),null)||[[x,z],[gate.x,gate.z]];const e=mk(t,x,z,{role:'att',path,i:1,h:Math.PI});if(e){e.cd=4+rnd()*3;}});
  H.waveLeft=w.u.length;safe(()=>root.radio('Komuta: '+(H.wave+1)+'. dalga sınıra yaklaşıyor! '+w.u.length+' araç.'),null);}
 function convoyPath(anchors){const out=[anchors[0].slice()];for(let i=1;i<anchors.length;i++){const a=anchors[i-1],b=anchors[i],ps=safe(()=>root.astar(a[0],a[1],b[0],b[1]),null)||[a,b];for(const q of ps.slice(1))if(Array.isArray(q)&&Number.isFinite(q[0])&&Number.isFinite(q[1]))out.push([q[0],q[1]]);}return out;}
-function nextStoryPhase(){const old=H.op.phases[H.ph];H.ph++;H.phaseT=0;H.phaseTotal=0;H.navTick=0;navTo();const nx=H.op.phases[H.ph];safe(()=>root.radio('Komuta: '+old.n+' tamam. '+(nx?nx.n:H.op.success)),null);paint();}
+function saveCheckpoint(){if(!H||H.op.id!=='safak-1'||H.ph!==1||H.won||H.lost||H.wave>1||H.checkpointWave===H.wave||H.checkpointAttemptWave===H.wave||enemies().length||!(P.hp>0)||!safe(()=>mode==='tank'&&!DR.on,true)||!root.HisarCheckpoint)return false;H.checkpointAttemptWave=H.wave;
+ const now=Date.now(),parts=safe(()=>P.dz,{trk:100,eng:100,tur:100}),allies=safe(()=>AL.filter(a=>!a.dead).map((a,i)=>({idx:Number.isInteger(a.idx)?a.idx:i,x:a.x,z:a.z,h:a.h||0,hp:a.hp||100,mx:a.mx||100})),[]);
+ const saved=root.HisarCheckpoint.write({schema:1,rules:1,operation:'safak-1',updatedAt:now,sessionStartedAt:H.sessionStartedAt,phase:1,clearedWave:H.wave,elapsed:H.t,difficulty:safe(()=>lvKey,'normal'),player:{x:P.x,z:P.z,h:P.h,th:P.th,hp:P.hp,mx:P.mx,parts:{...parts}},ammunition:{capacity:safe(()=>TA0.slice(),[26,16,7,14]),shells:safe(()=>TA.slice(),[26,16,7,14])},cooldown:clamp(safe(()=>cd,0),0,120),drone:{ammo:safe(()=>ammo,6),stock:safe(()=>DC,0),charged:safe(()=>dk,1),charge:safe(()=>chg,100)},formation:H.al0,allies,kills:H.kills});
+ if(saved){H.checkpointWave=H.wave;safe(()=>root.say('KONTROL NOKTASI KAYDEDİLDİ',2),null);}else if(root.HisarCheckpoint.diagnostics().error==='storage'&&!H.checkpointWarning){H.checkpointWarning=true;safe(()=>root.radio('Kontrol noktası cihaza kaydedilemedi. Depolama alanını kontrol et.'),null);}return saved;}
+function resumeCheckpoint(){const c=root.HisarCheckpoint&&root.HisarCheckpoint.read();if(!c||safe(()=>game==='play'||game==='pause',false))return false;
+ const previous=safe(()=>({form:SV.form,load:SV.load,lv:lvSel}),null);let started=false;
+ try{SV.form=c.formation;SV.load=c.ammunition.capacity.slice();select('safak-1',MODE);root.reset(c.difficulty);started=!!(H&&H.op.id==='safak-1');}catch(e){}
+ if(!started){if(previous)safe(()=>{SV.form=previous.form;SV.load=previous.load;lvSel=previous.lv;},null);return false;}
+ H.ph=1;H.wave=c.clearedWave;H.waveT=0;H.t=c.elapsed;H.preparation=H.t+8;H.kills=c.kills;H.al0=c.formation;H.checkpointWave=c.clearedWave;
+ const p=c.player;P.x=p.x;P.z=p.z;P.h=p.h;P.th=p.th;P.v=P.w=0;P.hp=clamp(p.hp/p.mx*P.mx,.001,P.mx);P.dz={...p.parts};safe(()=>{yaw=P.th;cd=c.cooldown;TA=c.ammunition.shells.slice();ammo=c.drone.ammo;DC=c.drone.stock;dk=c.drone.charged;chg=c.drone.charge;},null);
+ safe(()=>{for(let i=AL.length-1;i>=0;i--){const a=AL[i],q=c.allies.find(q=>q.idx===(Number.isInteger(a.idx)?a.idx:i));if(!q){S.remove(a.g);AL.splice(i,1);continue;}a.x=q.x;a.z=q.z;a.h=q.h;a.hp=clamp(q.hp/q.mx*(a.mx||q.mx),.001,a.mx||q.mx);a.g.position.set(a.x,hAt(a.x,a.z),a.z);a.g.rotation.y=a.h;a.cmd='follow';a.fire=1;}},null);
+ navTo();paint();safe(()=>root.save(),null);safe(()=>root.radio('Komuta: Kontrol noktasına dönüldü. '+(c.clearedWave+1)+' dalga tamam; hattı korumaya devam et.'),null);return true;}
+function nextStoryPhase(){const old=H.op.phases[H.ph];H.ph++;H.phaseT=0;H.phaseTotal=0;H.navTick=0;navTo();const nx=H.op.phases[H.ph];safe(()=>root.radio('Komuta: '+old.n+' tamam. '+(nx?nx.n:H.op.success)),null);saveCheckpoint();paint();}
 function storyStep(dt,en){const o=H.op,ph=o.phases[H.ph];if(!ph)return;const c=H.convoy;if(c&&c.dead)return lose('İkmal aracı devre dışı kaldı. Konvoya yakın kal ve yolu güvene al.');
  if(o.qrf&&!H.qrfOn&&H.ph>=o.qrf.at){spawnQRF(o.qrf);en=enemies();}
  if(o.battery){const guns=en.filter(e=>e.hk.bat);H.batLeft=guns.length;shelling(dt,o,guns);}
@@ -148,7 +160,7 @@ function storyStep(dt,en){const o=H.op,ph=o.phases[H.ph];if(!ph)return;const c=H
   const visible=ph.k!=='scan'||safe(()=>root.los(P.x,hAt(P.x,P.z)+2.8,P.z,ph.x,hAt(ph.x,ph.z)+3,ph.z),true);const still=ph.k!=='scan'||Math.abs(P.v||0)<1.5;
   H.phaseT=inside&&clear&&visible&&still?H.phaseT+dt:0;done=H.phaseT>=(ph.seconds||4);}
  if(ph.k==='destroy')done=ph.target==='bat'?!en.some(e=>e.hk.bat):!en.some(e=>e.hk.role==='dep');
- if(ph.k==='defend'){let att=en.filter(e=>e.hk.role==='att');if(!att.length&&H.wave<o.waves.length-1){H.waveT+=dt;const nx=o.waves[H.wave+1];if(nx&&waveDue(nx,H.waveT)){H.wave++;H.waveT=0;spawnWave(nx);en=enemies();att=en.filter(e=>e.hk.role==='att');}}
+ if(ph.k==='defend'){let att=en.filter(e=>e.hk.role==='att');if(!att.length&&H.wave<o.waves.length-1){saveCheckpoint();H.waveT+=dt;const nx=o.waves[H.wave+1];if(nx&&waveDue(nx,H.waveT)){H.wave++;H.waveT=0;spawnWave(nx);en=enemies();att=en.filter(e=>e.hk.role==='att');}}
   const gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};if(att.some(e=>dist(e,gate)<40))return lose('Hat aşıldı. Mevzini değiştirerek yaklaşan araçları durdur.');done=H.wave===o.waves.length-1&&!att.length;}
  if(ph.k==='escort'&&c){c.active=true;if(c.error)return lose('Konvoy modeli yüklenemedi. Bağlantıyı kontrol edip görevi yeniden aç.');const threat=en.some(e=>e.type!=='fuel'&&e.type!=='radar'&&e.type!=='truck'&&dist(e,c)<65);
   if(threat)c.wait='Yakın tehdidi temizle · konvoy bekliyor';else escortMove(c,P,dt,(x,z,q)=>safe(()=>root.HisarModern.convoyPassable(x,z,q),true));
@@ -190,6 +202,7 @@ function shelling(dt,o,guns){H.shT-=dt;if(guns.length&&H.shT<=0){const g=guns[Ma
  for(const q of H.inc){q.t-=dt;if(q.t<=0){q.done=1;H.hits++;safe(()=>root.bigBoom(q.x,q.z,5),null);}}H.inc=H.inc.filter(q=>!q.done);}
 function win(t){if(!H)return;H.won=true;const o=H.op,n=stars(o,{won:true,hp:safe(()=>P.hp/P.mx,1),t:H.t,allies:safe(()=>AL.filter(a=>!a.dead).length,0)>=H.al0});H.stars=n;H.ph=o.phases.length;
  if(o.story)safe(()=>root.HisarSafak.complete(o.id,n,H.t),null);
+ if(o.id==='safak-1')safe(()=>root.HisarCheckpoint.clear(H.sessionStartedAt),null);
  ST.done[o.id]=1;ST.stars[o.id]=Math.max(ST.stars[o.id]||0,n);const saved=store(ST);safe(()=>root.stopNav(),null);safe(()=>root.endGame(1,t+' '+'★'.repeat(n)+'☆'.repeat(3-n)),null);
  if(!saved)safe(()=>root.say('Görev tamamlandı; kayıt yazılamadı. Cihaz depolamasını kontrol et.',4),null);}
 function lose(t){if(!H)return;H.lost=true;safe(()=>root.stopNav(),null);safe(()=>root.endGame(0,t),null);}
@@ -302,7 +315,7 @@ function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t
  wrap('update',old=>function(dt){const d=clamp(+dt||0,0,.1);if(playing()&&H&&!doc.hidden)safe(()=>control(d),null);const r=old.apply(this,arguments);if(playing()&&H&&!doc.hidden)safe(()=>step(d),null);return r;});
  wrap('endGame',old=>function(ok){if(!ok&&playing()&&H&&!H.won&&!H.lost){H.lost=true;safe(()=>root.stopNav(),null);}return old.apply(this,arguments);});
  wrap('spotted',old=>function(e){if(old.apply(this,arguments))return true;if(!H||!e||!e.hk)return false;if(e.spT>clock)return true;const sn=H.op.wx==='gece'?SEEN*NIGHT:SEEN;if(dist(e,P)<sn)return true;return safe(()=>AL.some(a=>!a.dead&&dist(a,e)<sn*.8),false);});
- wrap('eshot',old=>function(e){if(H&&e&&e.hk)e.spT=clock+8;return old.apply(this,arguments);});
+ wrap('eshot',old=>function(e){if(H&&e&&e.hk){e.spT=clock+8;if(H.op.id==='safak-1'&&e.hk.role==='att'&&!e.hk.fireAnnounced){e.hk.fireAnnounced=true;if(H.warnedWave!==H.wave){H.warnedWave=H.wave;safe(()=>root.radio('Komuta: Düşman ateşe hazırlanıyor. İşaretlenen araçları izle, mevzini değiştir ve karşılık ver.'),null);}return;}}return old.apply(this,arguments);});
  wrap('openMenu',old=>function(){if(!playing())sky(null);const r=old.apply(this,arguments);paintMenu();const b=doc.getElementById('hkCard');if(b){b.classList.remove('hk-anim');void b.offsetWidth;b.classList.add('hk-anim');root.setTimeout(()=>b.classList.remove('hk-anim'),900);}return r;});
  wrap('mmDraw',old=>function(){const r=old.apply(this,arguments);safe(drawMini,null);return r;});
  (root.MAPX=root.MAPX||[]).includes(drawMap)||root.MAPX.push(drawMap);
@@ -316,6 +329,6 @@ function diagnostics(){const en=enemies();return {version:VERSION,hooks:{...hook
  nav:safe(()=>NAV.on?{to:NAV.to.n,len:Math.round(NAV.len)}:null,null)};}
 function registerOperations(list){for(const o of list){if(!o||!o.id||!o.phases||!o.phases.length||registered.has(o.id))continue;registered.set(o.id,o);}ST=state(load());return list.length;}
 function showOperations(ids){const list=ids.map(id=>registered.get(id)).filter(Boolean);if(list.length)menuOps=list;paintMenu();return menuOps.map(o=>o.id);}
-root.HisarHarekat=Object.freeze({version:VERSION,core,start,select,picked,registerOperations,showOperations,repaint:paintMenu,brief:()=>{showBrief();return !!brief&&!brief.hidden;},connect,diagnostics,step:dt=>step(dt)});
+root.HisarHarekat=Object.freeze({version:VERSION,core,start,select,picked,registerOperations,showOperations,repaint:paintMenu,resumeCheckpoint,brief:()=>{showBrief();return !!brief&&!brief.hidden;},connect,diagnostics,step:dt=>step(dt)});
 connect();installUI();doc.addEventListener('hisar:ui-ready',()=>{connect();installUI();});
 })(typeof window!=='undefined'?window:globalThis);

@@ -1,7 +1,7 @@
 name: HİSAR experience checks
 on:
   push:
-    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117]
+    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117, work/celik-boru-quality-20261117, work/celik-boru-quality-release-20261117]
     paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
   pull_request:
     paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']

@@ -3891,6 +3891,7 @@ function restoreCode(text){const m=/^\s*CB1\.([A-Za-z0-9_-]+)\.([a-z0-9]+)\s*$/.
  if(!o||typeof o!=='object'||!o.m60v2||typeof o.m60v2!=='object')return{ok:false,msg:'Kodda kayıt yok.'};persist();
  for(const k of BKEYS){if(!o[k]||typeof o[k]!=='object')continue;let cur=null;try{cur=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
   const out=cur?mergeMax(cur,o[k],k==='m60v2'?'':''):o[k];if(k==='m60v2'){for(const f of['form','load','dbody','ui'])if(cur&&cur[f]!==undefined)out[f]=cur[f]}
+  if(k==='celik-boru-safak-v1'&&cur&&cur.best&&o[k].best&&out.best)for(const id of Object.keys(out.best)){const a=cur.best[id],b=o[k].best[id];if(Number.isFinite(a)&&a>0&&Number.isFinite(b)&&b>0)out.best[id]=Math.min(a,b);}
   try{localStorage.setItem(k,JSON.stringify(out))}catch(e){return{ok:false,msg:'Kayıt yazılamadı (depolama dolu olabilir).'}}}
  return{ok:true}}
 window.HISAR_BACKUP={code:backupCode,restore:restoreCode,merge:mergeMax};
@@ -5411,7 +5412,7 @@ window.PHA={sky_gunduz:'assets/tex/sky_gunduz.jpg?v=96',sky_aksam:'assets/tex/sk
 if(!window.PHA)return;
 const L=new THREE.TextureLoader(),TX={};let ready=0;
 const SKY={gunduz:{k:'sky_gunduz',u:.600,v:.443,el:.62,sun:1.25},aksam:{k:'sky_aksam',u:.590,v:.331,el:.5,sun:1.05},gece:{k:'sky_gece',u:.13,v:.3,el:.9,sun:.22},sis:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.4},yagmur:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.32},kar:{k:'sky_kapali',u:.3,v:.25,el:1.0,sun:.5}};window.PHSKY=SKY;
-function load(k,cb){if(TX[k])return cb&&cb(TX[k]);L.load(PHA[k],t=>{TX[k]=t;cb&&cb(t)})}
+function load(k,cb){if(TX[k])return cb&&cb(TX[k]);L.load(PHA[k],t=>{t.encoding=THREE.sRGBEncoding;TX[k]=t;cb&&cb(t)})}
 // ---------- gokyuzu ----------
 const BGC=S.background&&S.background.isColor?S.background:new THREE.Color(0x9ec3e0);const pm=new THREE.PMREMGenerator(R);let envRT=null,cur=null,SD=new THREE.Vector3(.42,.84,.25).normalize();
 function horizon(img){const c=document.createElement('canvas');c.width=64;c.height=32;const g=c.getContext('2d');g.drawImage(img,0,0,64,32);const d=g.getImageData(0,14,64,2).data,u=g.getImageData(0,4,64,4).data,lo=g.getImageData(0,24,64,6).data;
@@ -5458,8 +5459,8 @@ function patchGround(){const m=gr.material;const U={tG:{value:TX.t_cim},tK:{valu
   vec3 plow=vec3(.5,.35,.24)*(.78+.3*fu)*(.82+.36*mac),stub=vec3(.76,.66,.44)*(.86+.18*fu)*(.9+.2*mac);
   float fm=(1.-sy)*(1.-w.w)*(1.-vWet)*ed*step(.38,hs);col=mix(col,hs<.66?plow:stub,fm*.82);
   float lu=dot(col,vec3(.333));col=mix(col,vec3(lu)*vec3(1.16,1.02,.8),.35+.4*sy);
-  diffuseColor.rgb*=col;`)};
- m.customProgramCacheKey=()=>'phg3';m.needsUpdate=true;
+  diffuseColor.rgb*=sRGBToLinear(vec4(col,1.0)).rgb;`)};
+ m.customProgramCacheKey=()=>'phg4-srgb';m.needsUpdate=true;
  if(typeof rocks!=='undefined'&&rocks.material){const rm=rocks.material;const rt=TX.t_tas.clone();rt.needsUpdate=true;rt.repeat.set(1.6,1.6);rt.wrapS=rt.wrapT=THREE.RepeatWrapping;rm.map=rt;rm.color.setRGB(.82,.8,.76);rm.needsUpdate=true}
  if(typeof gm!=='undefined'&&gm.material){gm.material.color&&gm.material.color.setRGB(.78,.78,.62)}}
 })();

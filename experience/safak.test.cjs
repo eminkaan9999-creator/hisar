@@ -50,3 +50,7 @@ test('campaign merge keeps maxima, best time and extra metadata when an older ta
 test('campaign progress, old stars and independent applications survive the backup round trip',()=>{
  const data=new Map([['m60v2',JSON.stringify({xp:321,kr:200,U:{},best:{}})],[story.SAVE,JSON.stringify({selected:'safak-3',done:{'safak-1':1},stars:{'safak-1':3}})],[key,JSON.stringify({done:{tepe:1},stars:{tepe:3}})],['unrelated-app','keep']]);const a=backup(data),code=a.api.code(),b=backup(new Map([['unrelated-app','keep']]));assert.equal(b.api.restore(code).ok,true);assert.equal(JSON.parse(b.data.get(story.SAVE)).stars['safak-1'],3);assert.equal(JSON.parse(b.data.get(key)).stars.tepe,3);assert.equal(JSON.parse(b.data.get('m60v2')).xp,321);assert.equal(b.data.get('unrelated-app'),'keep');
 });
+test('restoring a slower campaign backup never replaces a faster local best time or higher stars',()=>{
+ const source=backup(new Map([['m60v2',JSON.stringify({xp:20})],[story.SAVE,JSON.stringify({done:{'safak-1':1},stars:{'safak-1':1},best:{'safak-1':500}})]]));
+ const target=backup(new Map([['m60v2',JSON.stringify({xp:100})],[story.SAVE,JSON.stringify({done:{'safak-1':1},stars:{'safak-1':3},best:{'safak-1':300}})]]));assert.equal(target.api.restore(source.api.code()).ok,true);const s=JSON.parse(target.data.get(story.SAVE));assert.equal(s.best['safak-1'],300);assert.equal(s.stars['safak-1'],3);assert.equal(JSON.parse(target.data.get('m60v2')).xp,100);
+});

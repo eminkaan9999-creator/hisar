@@ -10,3 +10,10 @@ test('every supported weather has finite exposure and a usable ordered visibilit
 test('radio and pause duck the music without changing the master sound preference',()=>{
  assert.ok(c.musicMix('play',true)<c.musicMix('play',false));assert.equal(c.musicMix('pause',false),0);assert.ok(c.musicMix('menu',false)<c.musicMix('play',false));
 });
+test('an uninitialised or invalid health value can never write NaN into a progress element',()=>{
+ for(const [v,m]of [[undefined,undefined],[100,0],[NaN,100],[100,Infinity]])assert.equal(c.percent(v,m),0);assert.equal(c.percent(75,150),50);assert.equal(c.percent(200,150),100);
+});
+test('shared instanced materials always have a valid white colour buffer without replacing real colours',()=>{
+ class Attribute{constructor(array,itemSize){this.array=array;this.itemSize=itemSize;}}
+ const mesh={isInstancedMesh:true,instanceColor:null,instanceMatrix:{count:4}};assert.equal(c.instanceColour(mesh,Attribute),true);assert.equal(mesh.instanceColor.array.length,12);assert.ok(mesh.instanceColor.array.every(v=>v===1));const old=mesh.instanceColor;assert.equal(c.instanceColour(mesh,Attribute),false);assert.equal(mesh.instanceColor,old);assert.equal(c.instanceColour({isInstancedMesh:false},Attribute),false);
+});

@@ -115,6 +115,7 @@ function cleanup(){sky(null);if(H&&H.convoy){H.convoy.disposed=true;safe(()=>roo
 function buildBeam(o){if(!root.THREE)return;const T=root.THREE,g=new T.Group(),y=hAt(o.x,o.z);
  const col=new T.Mesh(new T.CylinderGeometry(1.4,1.4,70,12,1,true),new T.MeshBasicMaterial({color:0xffb030,transparent:true,opacity:.28,depthWrite:false,fog:false,side:T.DoubleSide}));col.position.y=35;
  const ring=new T.Mesh(new T.RingGeometry(o.r-1.2,o.r,64),new T.MeshBasicMaterial({color:0xffb030,transparent:true,opacity:.55,depthWrite:false,side:T.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.6;
+ if(H&&H.op.story){col.visible=false;ring.material.color.setHex(0x94c7c9);ring.material.opacity=.22;}
  g.add(col,ring);g.position.set(o.x,y,o.z);g.name='HK_HEDEF';S.add(g);beam=g;}
 // ---------- adım ----------
 function enemies(){return safe(()=>E.filter(e=>e.hk&&e.hp>0),[]);}

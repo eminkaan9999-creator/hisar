@@ -18,7 +18,7 @@ module.exports=async function modernChecks(p,{mobile,label,out,ok}){
  assert.equal(await p.evaluate(()=>P.mx),165);assert.equal(await p.locator('#sf-hud').isVisible(),true);ok('new first chapter starts with preparation and the live vehicle HUD');
  // Ordinary keyboard driving, without moving P directly or advancing time.
  await p.keyboard.down('w');try{await p.waitForFunction(()=>HisarHarekat.diagnostics().ph>=1,{},{timeout:45000});}finally{await p.keyboard.up('w');}
- assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().wave),-1);assert.ok(await p.evaluate(()=>P.hp>0));await p.screenshot({path:path.join(out,'modern-gameplay-desktop.png')});ok('ordinary forward driving reaches the first position alive before the first wave');
+ assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().wave),-1);assert.ok(await p.evaluate(()=>P.hp>0));await p.evaluate(()=>setQ('orta'));await p.screenshot({path:path.join(out,'modern-gameplay-desktop.png')});await p.evaluate(()=>setQ('dusuk'));ok('ordinary forward driving reaches the first position alive before the first wave');
  await p.keyboard.press('p');assert.equal(await p.evaluate(()=>game),'pause');await p.locator('[data-op="safak-2"]').click();await p.locator('#cm-return').click();assert.equal(await p.evaluate(()=>HisarHarekat.diagnostics().op),'safak-1');ok('selecting another chapter in pause does not replace the current battle on resume');
  await p.evaluate(()=>HisarHarekat.start('safak-2'));await p.waitForFunction(()=>HisarHarekat.diagnostics().convoy?.modelReady,{},{timeout:60000});
  assert.equal(await p.evaluate(()=>!!S.getObjectByName('SF_IKMAL_KAMYONU')),true);ok('escort uses the supplied textured 3D truck in the live scene');

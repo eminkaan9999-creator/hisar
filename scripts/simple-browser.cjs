@@ -15,7 +15,7 @@ const ok=name=>{checks.push(name);console.log('PASS',name);};
  await c.addInitScript(()=>{if(!localStorage.getItem('m60v2'))localStorage.setItem('m60v2',JSON.stringify({xp:321,kr:200,U:{},best:{}}));
  if(!localStorage.getItem('test-graphics-seeded')){localStorage.setItem('hisar-experience-v1',JSON.stringify({quality:'yuksek',autoQuality:false,cinematic:true,contrastCrosshair:true,showFPS:true}));localStorage.setItem('test-graphics-seeded','1');}
  const raf=window.requestAnimationFrame;let primed=false;window.requestAnimationFrame=fn=>raf.call(window,t=>{if(!primed){try{if(typeof setQ==='function'){setQ('dusuk');primed=true;}}catch{}}fn(t);});});
- const p=await c.newPage();p.setDefaultTimeout(60000);p.on('pageerror',e=>errors.push(label+': '+String(e.stack||e)));
+ const p=await c.newPage();p.setDefaultTimeout(60000);p.on('pageerror',e=>errors.push(label+': '+String(e.stack||e)));p.on('console',m=>{if(m.type()==='error'&&/THREE.WebGLProgram.*[Ss]hader|VALIDATE_STATUS/.test(m.text()))errors.push(label+': '+m.text());});
  await p.goto(base,{waitUntil:'domcontentloaded',timeout:120000});await p.waitForFunction(()=>window.HisarSimpleSettings?.diagnostics().ready,{},{timeout:90000});
  assert.equal(await p.evaluate(()=>R.getContext().isContextLost()),false);assert.equal(await p.evaluate(()=>HisarSimpleSettings.diagnostics().automatic),true);ok(label+': actual game renderer uses automatic graphics');
  await p.waitForFunction(()=>window.HisarCommandMenu?.diagnostics().installed);

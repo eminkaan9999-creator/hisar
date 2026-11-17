@@ -56,3 +56,13 @@ test('a corrupt newer local checkpoint cannot prevent restoring a valid older ba
  const data=v=>new Map([['m60v2',JSON.stringify({xp:100})],[core.KEY,JSON.stringify(v)]]),valid=backup(data(good)),invalid=backup(data(bad));assert.equal(invalid.api.restore(valid.api.code()).ok,true);assert.deepEqual(JSON.parse(invalid.data.get(core.KEY)),good);
  const source=backup(data(bad));assert.equal(valid.api.restore(source.api.code()).ok,true);assert.deepEqual(JSON.parse(valid.data.get(core.KEY)),good);
 });
+test('a reload preserves unpaid match points and elapsed mission time, without inventing a faster best time',()=>{
+ const r=setup();r.start('safak-1');r.c.score=240;r.run(80);const cp=position(r),next=setup({data:new Map(r.data)});assert.equal(cp.score,240);assert.equal(cp.rewarded,false);assert.equal(next.hk.resumeCheckpoint(),true);assert.equal(next.c.score,240);assert.equal(next.c.tP,cp.elapsed);assert.equal(next.snapshot().t,cp.elapsed);
+});
+test('repeated loss and checkpoint resume cannot award the same stored match points twice',()=>{
+ const r=setup({rewards:true});r.start('safak-1');r.c.score=240;position(r);r.c.endGame(0,'loss');assert.equal(r.c.SV.xp,240);assert.equal(r.c.SV.kr,6);assert.equal(r.c.HisarCheckpoint.read().rewarded,true);
+ assert.equal(r.hk.resumeCheckpoint(),true);assert.equal(r.c.score,0);r.c.endGame(0,'loss again');assert.equal(r.c.SV.xp,240);assert.equal(r.c.SV.kr,6);assert.equal(r.hk.resumeCheckpoint(),true);r.c.score=80;r.c.endGame(0,'new earned points');assert.equal(r.c.SV.xp,320);assert.equal(r.c.SV.kr,8);
+});
+test('failed permanent reward storage cannot mark checkpoint points as already paid',()=>{
+ const r=setup({rewards:true});r.start('safak-1');r.c.score=240;position(r);r.c.denyWrite=true;r.c.endGame(0,'loss');assert.equal(r.c.HisarCheckpoint.read().rewarded,false);r.c.denyWrite=false;const next=setup({data:new Map(r.data),rewards:true});assert.equal(next.hk.resumeCheckpoint(),true);assert.equal(next.c.score,240);
+});

@@ -19,7 +19,7 @@ function runtime(options={}){
   P:{x:0,z:0,h:0,th:0,hp:100,mx:100,v:0,w:0,dz:{trk:100,eng:100,tur:100}},E:[],AL:Array.from({length:3},(_,idx)=>({idx,hp:100,mx:100,dead:false,g:{position:{set(){}},rotation:{}}})),
   HPT:{tank:100,apc:80,inf:40,arty:80,truck:80,fuel:80,radar:80,aa:80,bunker:100},
   HELI:[],ED:[],MI:{},MAPX:[],NAV:{on:false},NVG:{on:options.nvg||0},wx:options.weather||'gunduz',
-  SV:{wx:options.weather||'gunduz'},ammo:6,AMX:()=>6,TA:[26,16,7,14],TA0:[26,16,7,14],yaw:0,cd:0,DC:9,dk:1,chg:100,mode:'tank',DR:{on:false},
+  SV:{wx:options.weather||'gunduz',xp:0,kr:0},score:0,tP:0,ammo:6,AMX:()=>6,TA:[26,16,7,14],TA0:[26,16,7,14],yaw:0,cd:0,DC:9,dk:1,chg:100,mode:'tank',DR:{on:false},
   hAt:()=>0,riv:x=>120+Math.sin((x+60)*.03)*15,
   astar:(x,z,tx,tz)=>[[x,z],[tx,tz]],setTimeout(){},
   localStorage:{getItem:k=>data.get(k)??null,setItem(k,v){if(c.denyWrite)throw Error('storage unavailable');data.set(k,v);writes.push(k);}},
@@ -35,8 +35,8 @@ function runtime(options={}){
   pickTgt:(e,d)=>({x:c.P.x,z:c.P.z,d,al:null}),hitAl(a,k){a.hp-=k;},
   spawnHeli(){c.HELI.push({});},spawnED(){c.ED.push({});},
   openMenu(){if(c.game==='play')c.game='pause';},
-  endGame(ok,text){if(c.game!=='play')return;c.game='over';events.push({kind:'end',ok,text});c.openMenu();},
-  reset(k){c.lvKey=k;c.E=[];c.game='play';c.P.hp=c.P.mx=100;c.startMission();},
+  endGame(ok,text){if(c.game!=='play')return;if(options.rewards){c.SV.xp+=c.score;c.SV.kr+=Math.round(c.score/40);try{c.save();}catch{}}c.game='over';events.push({kind:'end',ok,text});c.openMenu();},
+  reset(k){c.lvKey=k;c.E=[];c.score=0;c.tP=0;c.game='play';c.P.hp=c.P.mx=100;c.startMission();},
   update(dt){if(c.engineStep)c.engineStep(dt);}
  };
  c.window=c;vm.createContext(c);

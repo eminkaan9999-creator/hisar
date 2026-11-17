@@ -1,7 +1,7 @@
 name: HİSAR experience checks
 on:
   push:
-    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117]
+    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117, work/celik-boru-quality-20261117]
     paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
   pull_request:
     paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
@@ -15,6 +15,20 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/work/celik-boru-quality-20261117'
+        with:
+          name: quality-source-assets
+          path: |
+            assets/
+            three.min.js
+            experience/fonts/
+            icon-*.png
+            apple-touch-icon.png
+            favicon-32.png
+            ecza-19be12ce/dev/scan-and-labels.js
+            kk-9b4bc121/sw.js
+          retention-days: 1
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

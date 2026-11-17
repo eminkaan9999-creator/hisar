@@ -24,8 +24,8 @@ function connect(){
  wrap('hitP',old=>function(k,p,source){const before=safe(()=>P.hp,0),r=old.apply(this,arguments),lost=before-safe(()=>P.hp,before);if(lost>0){lastHit={damage:Math.round(lost),sector:safe(()=>hitSector(P,source||p),null)};ttl=3;stat.hits++;draw();}return r;});
 }
 function draw(){if(!impact||!condition)return;const active=safe(()=>game==='play'&&mode==='tank',false);impact.hidden=!active||ttl<=0||!lastHit;
- if(!impact.hidden){const s=lastHit.sector;impact.textContent=(s==null?'İSABET':SECTORS[s]+' · İSABET')+' −'+lastHit.damage+' ZIRH';impact.dataset.sector=s==null?'unknown':String(s);}
- const text=active?safe(()=>partsText(P.dz),''):'';condition.textContent=text;condition.hidden=!text;
+ if(!impact.hidden){const s=lastHit.sector,message=(s==null?'İSABET':SECTORS[s]+' · İSABET')+' −'+lastHit.damage+' ZIRH';if(impact.textContent!==message)impact.textContent=message;impact.dataset.sector=s==null?'unknown':String(s);}
+ const text=active?safe(()=>partsText(P.dz),''):'';if(condition.textContent!==text)condition.textContent=text;condition.hidden=!text;
 }
 function install(){connect();if(installed)return;const hud=doc.getElementById('sf-hud'),armour=hud&&hud.querySelector('.sf-armour');if(!hud||!armour)return;
  installed=true;impact=doc.createElement('output');impact.id='tf-impact';impact.hidden=true;impact.setAttribute('role','status');impact.setAttribute('aria-live','polite');hud.appendChild(impact);condition=doc.createElement('small');condition.id='tf-condition';condition.hidden=true;armour.appendChild(condition);

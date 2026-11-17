@@ -48,3 +48,8 @@ test('backup restore chooses a complete checkpoint, keeps newer local state and 
  const empty=backup();assert.equal(empty.api.restore(local.api.code()).ok,true);assert.deepEqual(JSON.parse(empty.data.get(core.KEY)),newer);
  const tombstone={schema:1,rules:1,operation:'safak-1',sessionStartedAt:newer.sessionStartedAt,updatedAt:newer.updatedAt+1000,removed:true};const completed=backup(save(tombstone));completed.api.restore(incoming.api.code());assert.equal(JSON.parse(completed.data.get(core.KEY)).removed,true);assert.equal(core.latest(newer,tombstone).removed,true);
 });
+test('a corrupt newer local checkpoint cannot prevent restoring a valid older backup, and a corrupt incoming record cannot replace a valid checkpoint',()=>{
+ const r=setup();r.start('safak-1');const good=plain(position(r)),bad={...good,updatedAt:good.updatedAt+1000,player:{...good.player,hp:NaN}};
+ const data=v=>new Map([['m60v2',JSON.stringify({xp:100})],[core.KEY,JSON.stringify(v)]]),valid=backup(data(good)),invalid=backup(data(bad));assert.equal(invalid.api.restore(valid.api.code()).ok,true);assert.deepEqual(JSON.parse(invalid.data.get(core.KEY)),good);
+ const source=backup(data(bad));assert.equal(valid.api.restore(source.api.code()).ok,true);assert.deepEqual(JSON.parse(valid.data.get(core.KEY)),good);
+});

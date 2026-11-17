@@ -57,7 +57,7 @@ function backup(data=new Map()){
  const html=indexSource;
  const start=html.indexOf('const BKEYS=['),endMark='window.HISAR_BACKUP={code:backupCode,restore:restoreCode,merge:mergeMax};';
  const end=html.indexOf(endMark,start);if(start<0||end<0)throw Error('backup production block missing');
- const writes=[],c={window:{},localStorage:{getItem:k=>data.get(k)??null,setItem(k,v){data.set(k,v);writes.push(k);}},persist(){},
+ const writes=[],c={window:{HisarCheckpoint:{core:require('../checkpoint.js')}},localStorage:{getItem:k=>data.get(k)??null,setItem(k,v){data.set(k,v);writes.push(k);}},persist(){},
   btoa:s=>Buffer.from(s,'binary').toString('base64'),atob:s=>Buffer.from(s,'base64').toString('binary'),encodeURIComponent,decodeURIComponent,escape,unescape};
  vm.createContext(c);vm.runInContext(html.slice(start,end+endMark.length),c,{filename:'index.html:backup'});
  return {api:c.window.HISAR_BACKUP,data,writes};

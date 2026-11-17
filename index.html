@@ -3915,7 +3915,7 @@ function restoreCode(text){const m=/^\s*CB1\.([A-Za-z0-9_-]+)\.([a-z0-9]+)\s*$/.
  if(sumOf(m[1])!==m[2])return{ok:false,msg:'Kod eksik ya da bozuk. Yeniden kopyalayıp dene.'};let o;try{o=JSON.parse(b64d(m[1]))}catch(e){return{ok:false,msg:'Kod okunamadı.'}}
  if(!o||typeof o!=='object'||!o.m60v2||typeof o.m60v2!=='object')return{ok:false,msg:'Kodda kayıt yok.'};persist();
  for(const k of BKEYS){if(!o[k]||typeof o[k]!=='object')continue;let cur=null;try{cur=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
-  const incoming=o[k],checkpoint=k==='celik-boru-ilk-isik-v1';const out=checkpoint?(cur&&Number.isFinite(cur.updatedAt)&&(!Number.isFinite(incoming.updatedAt)||cur.updatedAt>=incoming.updatedAt)?cur:incoming):(cur?mergeMax(cur,incoming,''):incoming);if(k==='m60v2'){for(const f of['form','load','dbody','ui'])if(cur&&cur[f]!==undefined)out[f]=cur[f]}
+  const incoming=o[k],checkpoint=k==='celik-boru-ilk-isik-v1';const out=checkpoint?(window.HisarCheckpoint&&window.HisarCheckpoint.core.latest(cur,incoming)):(cur?mergeMax(cur,incoming,''):incoming);if(checkpoint&&!out)continue;if(k==='m60v2'){for(const f of['form','load','dbody','ui'])if(cur&&cur[f]!==undefined)out[f]=cur[f]}
   if(k==='celik-boru-safak-v1'&&cur&&cur.best&&o[k].best&&out.best)for(const id of Object.keys(out.best)){const a=cur.best[id],b=o[k].best[id];if(Number.isFinite(a)&&a>0&&Number.isFinite(b)&&b>0)out.best[id]=Math.min(a,b);}
   try{localStorage.setItem(k,JSON.stringify(out))}catch(e){return{ok:false,msg:'Kayıt yazılamadı (depolama dolu olabilir).'}}}
  return{ok:true}}

@@ -19,7 +19,7 @@ Bozuk şema, geçersiz konum, fazla mühimmat, yinelenen dost kimliği ve uyumsu
 
 ## Doğrulama kapsamı
 
-565 otomatik test ve İTİ kontrolleri yerelde geçti. Yeni testler yeniden açma sonrası görev sırası, sağlık/mühimmat/dost kayıpları, kayıt bozulması, depolama hatası, sekmeler arası yazma ve eski yedek dönüşünü kapsar.
+566 otomatik test ve İTİ kontrolleri yerelde geçti. Yeni testler yeniden açma sonrası görev sırası, sağlık/mühimmat/dost kayıpları, kayıt bozulması, depolama hatası, sekmeler arası yazma ve eski yedek dönüşünü kapsar.
 
 Chromium testleri gerçek 3B sahnede atış ve gösterge bağlantısını, normal sürüşle ilk noktanın oluşmasını, gerçek sayfa yenilemesini ve oyuncunun **Devam** düğmesini kullanmasını sınar. Dalga arası kaydı oluşturmak için düşman kaldırma ve oyun zamanını ilerletme kullanılır. Hasar göstergesi için yerel oyun işlevleriyle kontrollü isabet uygulanır. Bunlar dört görevin baştan sona normal oynanışı veya fiziksel iPhone performans ölçümü değildir.
 

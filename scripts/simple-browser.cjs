@@ -18,6 +18,13 @@ const ok=name=>{checks.push(name);console.log('PASS',name);};
  const p=await c.newPage();p.setDefaultTimeout(60000);p.on('pageerror',e=>errors.push(label+': '+String(e.stack||e)));
  await p.goto(base,{waitUntil:'domcontentloaded',timeout:120000});await p.waitForFunction(()=>window.HisarSimpleSettings?.diagnostics().ready,{},{timeout:90000});
  assert.equal(await p.evaluate(()=>R.getContext().isContextLost()),false);assert.equal(await p.evaluate(()=>HisarSimpleSettings.diagnostics().automatic),true);ok(label+': actual game renderer uses automatic graphics');
+ await p.waitForFunction(()=>window.HisarCommandMenu?.diagnostics().installed);
+ assert.equal(await p.locator('#cm-header').count(),1);assert.equal(await p.locator('#mp .tabs [role="tab"]').count(),4);
+ for(const key of ['b','u','k','g']){await p.locator('#mp .tabs [data-t="'+key+'"]').click();assert.equal(await p.locator('#t'+key).isVisible(),true);assert.equal(await p.locator('#mp .tabs [data-t="'+key+'"]').getAttribute('aria-selected'),'true');}
+ ok(label+': headquarters tabs switch real game panes without duplicate headers');
+ const menuSizes=mobile?[[320,568],[844,390],[390,844]]:[[1280,800]];
+ for(const [w,h]of menuSizes){await p.setViewportSize({width:w,height:h});for(const id of ['go','hisar-experience-entry']){const b=await p.locator('#'+id).boundingBox();assert.ok(b&&b.width>=36&&b.height>=32&&b.x>=-1&&b.y>=-1&&b.x+b.width<=w+1&&b.y+b.height<=h+1,id+' remains reachable at '+w+'x'+h);}
+ assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);await p.screenshot({path:path.join(out,'headquarters-'+w+'x'+h+'.png')});ok('headquarters controls fit '+w+'x'+h);}
  assert.equal(await p.evaluate(()=>HisarExperience.getSettings().quality),'mevcut');assert.equal(await p.evaluate(()=>HisarExperience.getSettings().cinematic),false);ok(label+': old manual graphics preference cannot disable automatic settings');
  await p.locator('#hisar-experience-entry').click();assert.equal(await p.locator('#hisar-experience').evaluate(e=>e.open),true);
  assert.equal(await p.locator('#hx-settings input:visible,#hx-settings select:visible').count(),3);ok(label+': exactly three visible player settings');
@@ -36,6 +43,8 @@ const ok=name=>{checks.push(name);console.log('PASS',name);};
  const adjusted=await p.evaluate(()=>{const original=performance.now.bind(performance),oldGame=game;let t=original();Object.defineProperty(performance,'now',{configurable:true,value:()=>t});try{document.dispatchEvent(new Event('visibilitychange'));setQ('orta');game='play';window.mapOpen=false;perfAdapt(20);t+=9000;perfAdapt(20);t+=2200;perfAdapt(20);return {q:qlv,n:HisarSimpleSettings.diagnostics().adjustments};}finally{Object.defineProperty(performance,'now',{configurable:true,value:original});game=oldGame;document.dispatchEvent(new Event('visibilitychange'));}});
  assert.equal(adjusted.q,'dusuk');assert.ok(adjusted.n>=1);ok('injected slow-frame samples lower actual renderer quality without UI action');
  await p.evaluate(()=>{HisarBattle.start();});await p.waitForFunction(()=>game==='play');assert.equal(await p.evaluate(()=>L.hp),150);assert.equal(await p.evaluate(()=>mis),'savas');await p.waitForTimeout(1800);ok('new battle starts with the selected easy difficulty');
+ await p.locator('#bmn').click();assert.equal(await p.evaluate(()=>game),'pause');assert.equal(await p.locator('#cm-return').isVisible(),true);
+ await p.locator('#cm-return').click();assert.equal(await p.evaluate(()=>game),'play');assert.equal(await p.evaluate(()=>mis),'savas');assert.equal(await p.locator('#menu').isVisible(),false);ok('headquarters return resumes the same battle and closes its parent overlay');
  await p.keyboard.press('F2');assert.equal(await p.evaluate(()=>game),'pause');await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>game),'play');ok('simple settings pause and resume active gameplay');
  }
  await p.evaluate(async()=>{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;});const cache=fs.readFileSync('sw.js','utf8').match(/const CACHE='([^']+)'/)[1];await p.waitForFunction(async name=>{const c=await caches.open(name);return !!await c.match(new URL('experience/simple-settings.js',location.href));},cache,{timeout:90000});ok(label+': automatic settings module is precached for offline play');

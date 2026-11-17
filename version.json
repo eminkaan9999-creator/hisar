@@ -1,7 +1,7 @@
 {
-  "v": 109,
+  "v": 110,
   "experience": "63.1",
-  "not": "Tank artık hiçbir canlının içinden geçmiyor: üstüne tank gelen nöbetçi, devriye, tankın önündeki piyade, köylü, çoban ve koyun sürüsü yana kaçar, tank geçince yerine döner. Asker taşıyan kamyon artık ezilmiyor; kamyon, devriye gezen Kirpi ve karakolda park hâlindeki araçlar katı: tank içlerinden geçemez. Refakat kolu sınırı duvarın içinden değil kapıdan geçer, suya ve binaya girmez; Kirpi ve ACV tankın çevresinden dolanır. Köy trafiği de kimsenin içinden geçmez. Düşman piyadesi hareket eden tankın altında kalırsa ezilir, duran tankın içinde duramaz. Bir önceki sürümle gelenler: gönderdiğin on bir 3B model oyunda (köy pikabı ve traktör, asker taşıyan kamyon, sınır duvarı ve jiletli tel, beton kuleler, kapılardaki zırhlı araç, devriye gezen Kirpi, zeytin ağaçları, Mehmetçik ve düşman piyadesi, eski mahalle). ASELSAN EJDERHA karakolların yanında nöbette: çanağı gökyüzünü tarar, gelen dron sürüsüne döner ve sen bir şey yapmadan hepsini düşürür; düşürme anını küçük bir pencerede gösterir ve kaç İHA düştüğünü yazar.",
+  "not": "Yeni karargâh menüsü: sade açılış, yazılı sekmeler ve tek biçim simgeler, sabit arka plan, görünür Ayarlar ve Oyuna dön düğmesi. Menü açılırken telsiz, harita, çark ve görev emri kapanır; basılı kontroller bırakılır. Görev bilgisi küçültülebilir. Görevlerin erken bitmesi, gece menzili, kayıt ve yedekleme hataları düzeltildi. Mevcut v109 modelleri ve çevre geliştirmeleri korunur.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Net drone/takip görünümü, mesafeye bağlı oyun patlamaları, sınırlı bırakma ve ikmal, görünür hedef etiketleri ve telsiz bağlantısı. Eski dört bölümlük hikâye kaldırıldı.",
@@ -16,13 +16,13 @@
   "swarm": "1.1.0",
   "realism": "1.1.2",
   "sinir": "1.2.0",
-  "harekat": "1.5.0",
+  "harekat": "1.5.1",
   "atis": "1.0.1",
   "harita": "1.2.0",
   "carpisma": "1.1.0",
   "koy": "1.2.0",
   "destek": "1.3.0",
-  "menu": "1.0.1",
+  "menu": "1.1.0",
   "arazi": "1.2.0",
   "ortam": "1.0.0",
   "sivil": "1.3.0",
@@ -32,5 +32,6 @@
   "model": "1.0.0",
   "agac": "1.0.0",
   "hat": "1.0.0",
-  "ejderha": "1.0.0"
+  "ejderha": "1.0.0",
+  "commandMenu": "1.0.0"
 }

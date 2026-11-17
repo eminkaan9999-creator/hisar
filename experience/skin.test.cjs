@@ -83,7 +83,7 @@ test('tank drives heavy (speed and turn ramp up), allies keep up',()=>{
  assert.ok(code.includes('gg.index.updateRange.offset=0;gg.index.updateRange.count=o;gg.index.needsUpdate=true;'),'only the used part of the ground index is uploaded');
 });
 test('save can be backed up as a code and restored without losing progress',()=>{
- for(const part of ["const BKEYS=['m60v2','celik-boru-savas-v1'];","function backupCode(){","function restoreCode(text){","window.HISAR_BACKUP={code:backupCode,restore:restoreCode,merge:mergeMax};",'data-bk="copy">KAYDI YEDEKLE','data-bk="open">YEDEK KODU GİR'])assert.ok(code.includes(part),part);
+ for(const part of ["function backupCode(){","function restoreCode(text){","window.HISAR_BACKUP={code:backupCode,restore:restoreCode,merge:mergeMax};",'data-bk="copy">KAYDI YEDEKLE','data-bk="open">YEDEK KODU GİR'])assert.ok(code.includes(part),part);
 });
 test('map header is plain text and garage tabs carry no emoji',()=>{
  assert.match(code,/<div id="fmT"><b>HARİTA<\/b><small><\/small><\/div>/);

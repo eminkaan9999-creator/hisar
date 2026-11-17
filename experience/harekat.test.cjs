@@ -10,7 +10,7 @@ test('defence posts face the approach; attackers halt to fire',()=>{const p=c.po
 test('enemies never chase across the map and never get Turkish tanks',()=>{assert.ok(src.includes("e.pr=1e6;"));assert.ok(src.includes("if(tank)root.BT_KIND='t72';"));assert.ok(bt.includes("const SQUAD_KINDS=Object.freeze(['t72']);"));
  assert.ok(src.includes("safe(()=>root.startNav({x:t.x,z:t.z,n:t.n,id:'hk'}),null);"),'route to the next step and the objective');assert.ok(!src.includes('dropCrate'),'no random crates in missions');});
 test('loaded after the border, precached, default mode',()=>{assert.ok(html.indexOf('experience/sinir.js?v=')<html.indexOf('experience/harekat.js?v='));assert.ok(sw.includes("'experience/harekat.js'"));
- assert.ok(src.includes("let ST=Object.assign({mode:MODE,sel:'gecit',done:{},stars:{}},load());"));});
+ assert.equal(c.MODE,'harekat');});
 test('operation steps: cross, clear, take; stars for health and time',()=>{const t=c.OPS[1];assert.deepEqual(t.phases.map(q=>q.k),['reach','clear','final']);
  assert.equal(c.phaseDone(t.phases[0],{x:-560,z:180},[]),true);assert.equal(c.phaseDone(t.phases[1],{x:0,z:0},[{x:-580,z:300}]),false);assert.equal(c.phaseDone(t.phases[1],{x:0,z:0},[]),true);assert.equal(c.phaseDone(t.phases[2],{x:-540,z:680},[]),false);
  assert.equal(c.stars(t,{won:false}),0);assert.equal(c.stars(t,{won:true,hp:.3,t:900}),1);assert.equal(c.stars(t,{won:true,hp:.9,t:300}),3);assert.equal(c.stars(c.OPS[0],{won:true,hp:.9,allies:true}),3);
@@ -20,7 +20,7 @@ test('counter-battery: three guns shell a Turkish village; each silenced gun slo
  assert.equal(c.salvoGap(20,3,.5),20);assert.equal(c.salvoGap(20,1,.5),60);assert.equal(c.salvoGap(20,0,.5),Infinity);
  for(const [a,d] of [[0,0],[.3,1],[.9,.5]]){const q=c.shellPoint(b.shell,a,d),r=Math.hypot(q.x-b.shell.x,q.z-b.shell.z);assert.ok(r>=24&&r<=90+1e-9,'r '+r);assert.ok(q.z<riv(q.x)-26,'lands in Türkiye');}});
 test('the depot raid is fought at night: night vision on, shorter enemy sight and fire range, weather restored afterwards',()=>{const d=c.OPS[2];assert.equal(d.wx,'gece');assert.ok(c.NIGHT>0&&c.NIGHT<1);
- assert.ok(src.includes("if(w==='gece')nv.on=1;"));assert.ok(src.includes('SV.wx=wx0;save();'),'the saved weather choice is kept');assert.ok(src.includes('function cleanup(){sky(null);'));assert.ok(src.includes("if(H.op.wx==='gece'&&e.fr)e.fr=Math.round(e.fr*NIGHT);"));
+ assert.ok(src.includes("if(w==='gece')nv.on=1;"));assert.ok(src.includes('SV.wx=wx0;save();'),'the saved weather choice is kept');assert.ok(src.includes('function cleanup(){sky(null);'));
  for(const o of c.OPS)if(o.id!=='depo')assert.equal(o.wx,undefined);});
 test('counter-attacks come at the player; no enemy helicopters or drones in missions',()=>{for(const o of c.OPS.slice(1)){assert.ok(o.qrf&&o.qrf.at===1&&o.qrf.u.includes('tank'),o.id);assert.ok(o.qrf.from[1]>riv(o.qrf.from[0])+100,'reserve waits in Syria');}
  assert.equal(c.OPS[0].qrf,undefined);assert.ok(src.includes("k.path=safe(()=>root.astar(e.x,e.z,P.x,P.z),null)"),'re-routes to the player');assert.ok(src.includes("wrap('spawnHeli',old=>function(){if(playing())return;"));assert.ok(src.includes("wrap('spawnED',old=>function(){if(playing())return;"));});

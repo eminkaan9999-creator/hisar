@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.5.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='1.5.1',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -64,16 +64,26 @@ if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
 // ---------- oyun ----------
-const hooks={};let wx0=null,H=null,card=null,pick=null,beam=null,clock=0;
+const hooks={};let wx0=null,nv0=null,H=null,card=null,pick=null,beam=null,clock=0,saveError=false;
 const rnd=Math.random,dist=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
-const load=()=>safe(()=>JSON.parse(root.localStorage.getItem(SAVE))||{},{}),store=v=>safe(()=>root.localStorage.setItem(SAVE,JSON.stringify(v)),null);
-let ST=Object.assign({mode:MODE,sel:'gecit',done:{},stars:{}},load());if(!ST.stars)ST.stars={};
+const record=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
+const load=()=>safe(()=>JSON.parse(root.localStorage.getItem(SAVE))||{},{});
+function state(v){const s=Object.assign({mode:MODE,sel:'gecit'},record(v));s.done={...record(s.done)};s.stars={...record(s.stars)};
+ if(s.mode!==MODE&&s.mode!=='savas')s.mode=MODE;if(!OPS.some(o=>o.id===s.sel))s.sel='gecit';
+ for(const o of OPS){if(o.id in s.done)s.done[o.id]=s.done[o.id]===1||s.done[o.id]===true?1:0;
+  if(o.id in s.stars)s.stars[o.id]=Number.isFinite(s.stars[o.id])?clamp(Math.floor(s.stars[o.id]),0,3):0;}return s;}
+let ST=state(load());
+// Preserve achievement maxima written by another tab before this write.
+function store(v){const current=state(load()),next=state(v),s=Object.assign({},current,next,{done:{...current.done,...next.done},stars:{...current.stars,...next.stars}});
+ for(const o of OPS)for(const k of ['done','stars'])if(o.id in current[k]||o.id in next[k])s[k][o.id]=Math.max(current[k][o.id]||0,next[k][o.id]||0);
+ ST=s;try{root.localStorage.setItem(SAVE,JSON.stringify(s));saveError=false;return true;}catch(e){saveError=true;return false;}}
 const picked=()=>ST.mode===MODE;
 const op=()=>OPS.find(o=>o.id===ST.sel)||OPS[0];
 const playing=()=>safe(()=>game==='play'&&mis===MODE,false);
 function mk(type,x,z,o){const kornet=type==='kornet';if(kornet)type='inf';const tank=type==='tank';if(tank)root.BT_KIND='t72';const e=safe(()=>root.addE(type,x,z,{h:o.h||0}),null);root.BT_KIND=null;if(!e)return null;
  const tune=H.tune;e.hk=Object.assign({role:'def'},o);e.pr=1e6;e.fr=type==='apc'?220:type==='bunker'?160:FIRE_RANGE;e.bs=80;e.bl=4.5;
- if(tank){e.mx=safe(()=>HPT.tank,100)*tune.hp;e.nm='T-72';}else e.mx=safe(()=>HPT[type],80)*(type==='apc'?1.4:1);e.hp=e.mx;e.sn=e.hp;e.cd=2+rnd()*3;e.h=o.h||0;if(kornet){e.at=1;e.nm='KORNET';}if(H.op.wx==='gece'&&e.fr)e.fr=Math.round(e.fr*NIGHT);return e;}
+ if(tank){e.mx=safe(()=>HPT.tank,100)*tune.hp;e.nm='T-72';}else e.mx=safe(()=>HPT[type],80)*(type==='apc'?1.4:1);e.hp=e.mx;e.sn=e.hp;e.cd=2+rnd()*3;e.h=o.h||0;if(kornet){e.at=1;e.nm='KORNET';}
+ if(H.op.wx==='gece'&&e.fr){e.fr=Math.round(e.fr*NIGHT);const close={inf:kornet?115:50,bunker:75,aa:95,arty:170,mgn:60};if(close[type])e.hkFireRange=Math.round(close[type]*NIGHT);}return e;}
 function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[key]||TUNE.normal;
  safe(()=>{L=Object.assign({},LV[key]||LV.normal,{sp:5,cd:tune.cd,dmg:tune.dmg,rl:3,ar:190});},null);
  sky(o.wx);H={op:o,tune,t:0,won:false,lost:false,wave:-1,waveT:0,cap:0,phase:'go',kills:0,sup:0,last:'',halts:new WeakMap(),post:null,ph:0,al0:safe(()=>AL.length,0)};
@@ -89,8 +99,8 @@ function begin(){cleanup();const o=op(),key=safe(()=>lvKey,'normal'),tune=TUNE[k
  safe(()=>root.radio('Komuta: '+o.emir),null);paint();}
 function navTo(){if(!H)return;const o=H.op,ph=o.phases&&o.phases[H.ph],t=ph&&ph.k!=='final'?{x:ph.x,z:ph.z,n:ph.n}:{x:o.obj.x,z:o.obj.z,n:o.obj.n};safe(()=>root.startNav({x:t.x,z:t.z,n:t.n,id:'hk'}),null);}
 // görev havası: gece görevinde gece ve gece görüşü açılır; görev bitince ya da menüye dönünce eski hava geri gelir
-function sky(w){const nv=root.NVG||{};if(w){if(wx0==null)wx0=safe(()=>wx,'gunduz');if(w==='gece')nv.on=1;safe(()=>root.setW(w),null);/* kayıtlı hava tercihi değişmesin */safe(()=>{SV.wx=wx0;save();},null);}
- else if(wx0!=null){const b=wx0;wx0=null;nv.on=0;safe(()=>root.setW(b),null);}}
+function sky(w){const nv=root.NVG||{};if(w){if(wx0==null){wx0=safe(()=>wx,'gunduz');nv0=nv.on||0;}if(w==='gece')nv.on=1;safe(()=>root.setW(w),null);/* kayıtlı hava tercihi değişmesin */safe(()=>{SV.wx=wx0;save();},null);}
+ else if(wx0!=null){const b=wx0;wx0=null;nv.on=nv0;nv0=null;safe(()=>root.setW(b),null);}}
 function cleanup(){sky(null);if(beam){safe(()=>{S.remove(beam);beam.traverse(m=>{if(m.geometry)m.geometry.dispose();if(m.material)m.material.dispose();});},null);beam=null;}
  if(H)doc.body.classList.remove('hr-mission-active');H=null;doc.body.classList.remove('hk-active');if(card)card.hidden=true;}
 function buildBeam(o){if(!root.THREE)return;const T=root.THREE,g=new T.Group(),y=hAt(o.x,o.z);
@@ -99,13 +109,13 @@ function buildBeam(o){if(!root.THREE)return;const T=root.THREE,g=new T.Group(),y
  g.add(col,ring);g.position.set(o.x,y,o.z);g.name='HK_HEDEF';S.add(g);beam=g;}
 // ---------- adım ----------
 function enemies(){return safe(()=>E.filter(e=>e.hk&&e.hp>0),[]);}
-function control(){if(!H)return;for(const e of enemies()){const k=e.hk;
+function control(dt){if(!H)return;for(const e of enemies()){const k=e.hk;
   if(k.role==='def'){if(e.rt>0&&dist(e,k.post)>LEASH)e.rt=0;if(!(e.rt>0)){e.hd={x:k.post.x,z:k.post.z};e.hdT=1e9;e.hdV=1e9;}}
   else if(k.role==='qrf'){if(!(clock<k.next)){k.path=safe(()=>root.astar(e.x,e.z,P.x,P.z),null)||[[e.x,e.z],[P.x,P.z]];k.i=1;k.next=clock+8;}const w=k.path[k.i];
-   if(w&&Math.hypot(w[0]-e.x,w[1]-e.z)<10&&k.i<k.path.length-1)k.i++;const stop=!w||dist(e,P)<QRF_STOP;e.hd=stop?{x:e.x,z:e.z}:{x:w[0],z:w[1]};e.hdT=1e9;e.hdV=1e9;e.rt=0;}
+   if(w&&Math.hypot(w[0]-e.x,w[1]-e.z)<10&&k.i<k.path.length-1)k.i++;const stop=!w||dist(e,P)<Math.min(QRF_STOP,(e.fr||FIRE_RANGE)*.8);e.hd=stop?{x:e.x,z:e.z}:{x:w[0],z:w[1]};e.hdT=1e9;e.hdV=1e9;e.rt=0;}
   else if(k.role==='att'){const w=k.path&&k.path[k.i];if(!w){e.hd={x:e.x,z:e.z};e.hdT=1e9;e.hdV=1e9;continue;}
    if(Math.hypot(w[0]-e.x,w[1]-e.z)<10&&k.i<k.path.length-1)k.i++;let st=H.halts.get(e);if(!st){st={t:8+rnd()*6,stop:false};H.halts.set(e,st);}
-   const near=Math.min(dist(e,P),...safe(()=>AL.filter(a=>!a.dead).map(a=>dist(e,a)),[]),1e9)<FIRE_RANGE;const stop=near&&halt(st,.05,rnd);
+   const near=Math.min(dist(e,P),...safe(()=>AL.filter(a=>!a.dead).map(a=>dist(e,a)),[]),1e9)<FIRE_RANGE;const stop=near&&halt(st,dt,rnd);
    e.hd=stop?{x:e.x,z:e.z}:{x:w[0],z:w[1]};e.hdT=1e9;e.hdV=1e9;e.rt=0;}}}
 // Karşı taarruz: oyuncu sınırı geçince düşman yedeği (tank ve BMP) mevzisinden çıkıp oyuncunun üstüne yürür
 function spawnQRF(q){H.qrfOn=true;q.u.forEach((t,i)=>{const x=q.from[0]+(i-(q.u.length-1)/2)*14,z=q.from[1]+(i%2)*10;const e=mk(t,x,z,{role:'qrf',i:1,h:Math.PI});if(e)e.cd=3+rnd()*3;});
@@ -114,17 +124,18 @@ function spawnQRF(q){H.qrfOn=true;q.u.forEach((t,i)=>{const x=q.from[0]+(i-(q.u.
 function spawnWave(w){const o=H.op,gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};w.u.forEach((t,i)=>{const s=o.spawn[i%o.spawn.length],x=s[0]+(rnd()-.5)*20,z=s[1]+(rnd()-.5)*20;
   const path=safe(()=>root.astar(x,z,gate.x,gate.z),null)||[[x,z],[gate.x,gate.z]];const e=mk(t,x,z,{role:'att',path,i:1,h:Math.PI});if(e){e.cd=4+rnd()*3;}});
  H.waveLeft=w.u.length;safe(()=>root.radio('Komuta: '+(H.wave+1)+'. dalga sınıra yaklaşıyor! '+w.u.length+' araç.'),null);}
-function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op,en=enemies();
- if(o.waves){const att=en.filter(e=>e.hk.role==='att');
-  if(H.wave<0||(att.length===0&&H.wave<o.waves.length)){if(H.wave<o.waves.length-1||H.wave<0){H.waveT+=dt;const nx=o.waves[H.wave+1];if(nx&&waveDue(nx,H.waveT)){H.wave++;H.waveT=0;spawnWave(nx);}}}
-  if(H.wave>=o.waves.length-1&&att.length===0&&H.wave>=0&&!H.pendingSpawn)return win('Taş Geçit tutuldu. Taarruz sınırda durduruldu.');
-  const gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};if(att.some(e=>dist(e,gate)<40))return lose('Düşman sınır kapısına dayandı.');}
- if(o.guard&&!o.depot){const near=en.filter(e=>dist(e,o.obj)<200).length,inside=dist(P,o.obj)<o.obj.r;H.cap=capture(H.cap,dt,inside,near===0);if(H.cap>=HOLD)return win(o.obj.n+' ele geçirildi.');}
- if(o.battery){const guns=en.filter(e=>e.hk.bat);H.batLeft=guns.length;if(!guns.length)return win('Batarya susturuldu. '+o.shell.n+'\'ye ateş kesildi.');shelling(dt,o,guns);}
- if(o.depot){const left=en.filter(e=>e.hk.role==='dep').length;H.depLeft=left;if(left===0)return win('Kafr Sadun deposu imha edildi.');}
- if(o.qrf&&!H.qrfOn&&H.ph>=o.qrf.at)spawnQRF(o.qrf);
+function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op;let en=enemies();
  // ara hedefler: sırayla; biri tamamlanınca rota bir sonrakine döner
  const ph=o.phases&&o.phases[H.ph];if(phaseDone(ph,P,en)){H.ph++;const nx=o.phases[H.ph];safe(()=>root.radio('Komuta: Ara hedef tamam: '+ph.n+'.'+(nx?' Sıradaki: '+nx.n+'.':'')),null);safe(()=>root.say('ARA HEDEF TAMAM',1.6),null);navTo();}
+ if(o.qrf&&!H.qrfOn&&H.ph>=o.qrf.at){spawnQRF(o.qrf);en=enemies();}
+ const final=!!(o.phases&&o.phases[H.ph]&&o.phases[H.ph].k==='final');
+ if(o.waves){let att=en.filter(e=>e.hk.role==='att');
+  if(H.wave<0||(att.length===0&&H.wave<o.waves.length)){if(H.wave<o.waves.length-1||H.wave<0){H.waveT+=dt;const nx=o.waves[H.wave+1];if(nx&&waveDue(nx,H.waveT)){H.wave++;H.waveT=0;spawnWave(nx);en=enemies();att=en.filter(e=>e.hk.role==='att');}}}
+  const gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};if(att.some(e=>dist(e,gate)<40))return lose('Düşman sınır kapısına dayandı.');
+  if(final&&H.wave>=o.waves.length-1&&att.length===0&&H.wave>=0)return win('Taş Geçit tutuldu. Taarruz sınırda durduruldu.');}
+ if(o.guard&&!o.depot&&!o.battery){const near=en.filter(e=>dist(e,o.obj)<200).length,inside=dist(P,o.obj)<o.obj.r;H.cap=capture(H.cap,dt,final&&inside,final&&near===0);if(H.cap>=HOLD)return win(o.obj.n+' ele geçirildi.');}
+ if(o.battery){const guns=en.filter(e=>e.hk.bat);H.batLeft=guns.length;if(final&&!guns.length)return win('Batarya susturuldu. '+o.shell.n+'\'ye ateş kesildi.');shelling(dt,o,guns);}
+ if(o.depot){const left=en.filter(e=>e.hk.role==='dep').length;H.depLeft=left;if(final&&left===0)return win('Kafr Sadun deposu imha edildi.');}
  // başlangıç karakolunda ikmal
  const base=H.post?H.post.door:o.start;if(dist(P,base)<BASE_R){H.sup+=dt;if(H.sup>1){H.sup=0;let did=false;safe(()=>{if(ammo<AMX()){ammo++;did=true;}if(TA&&TA0)for(let i=0;i<TA.length;i++)if(TA[i]<TA0[i]){TA[i]++;did=true;}if(P.hp<P.mx){P.hp=Math.min(P.mx,P.hp+4);did=true;}},null);
    if(did&&H.last!=='sup'){H.last='sup';safe(()=>root.say('KARAKOLDA İKMAL',1.5),null);}}}else if(H.last==='sup')H.last='';
@@ -132,11 +143,12 @@ function step(dt){if(!H||H.won||H.lost)return;H.t+=dt;clock+=dt;const o=H.op,en=
  for(const e of en)if(e.type==='inf'&&e.hk.post){const dx=e.x-e.hk.post.x,dz=e.z-e.hk.post.z,d=Math.hypot(dx,dz);if(d>35){e.x=e.hk.post.x+dx/d*35;e.z=e.hk.post.z+dz/d*35;}}
  if((H.paintT=(H.paintT||0)+dt)>.25){H.paintT=0;paint();}}
 // Batarya köyü döver: atış sesi bataryadan gelir, mermi uçuştan sonra köyün çevresine düşer
-function shelling(dt,o,guns){H.shT-=dt;if(H.shT<=0){const g=guns[Math.floor(rnd()*guns.length)];H.shT=salvoGap(o.shell.every,guns.length,rnd());safe(()=>root.sndBoom(g.x,g.z),null);
+function shelling(dt,o,guns){H.shT-=dt;if(guns.length&&H.shT<=0){const g=guns[Math.floor(rnd()*guns.length)];H.shT=salvoGap(o.shell.every,guns.length,rnd());safe(()=>root.sndBoom(g.x,g.z),null);
   H.inc.push(Object.assign({t:o.shell.fly},shellPoint(o.shell,rnd(),rnd())));if(H.hits%3===0)safe(()=>root.radio('Karakol: '+o.shell.n+'\'ye topçu mermisi düşüyor! Bataryayı susturun!'),null);}
  for(const q of H.inc){q.t-=dt;if(q.t<=0){q.done=1;H.hits++;safe(()=>root.bigBoom(q.x,q.z,5),null);}}H.inc=H.inc.filter(q=>!q.done);}
-function win(t){if(!H)return;H.won=true;const o=H.op,n=stars(o,{won:true,hp:safe(()=>P.hp/P.mx,1),t:H.t,allies:safe(()=>AL.filter(a=>!a.dead).length,0)>=H.al0});H.stars=n;
- ST.done[o.id]=1;ST.stars[o.id]=Math.max(ST.stars[o.id]||0,n);store(ST);safe(()=>root.stopNav(),null);safe(()=>root.endGame(1,t+' '+'★'.repeat(n)+'☆'.repeat(3-n)),null);}
+function win(t){if(!H)return;H.won=true;const o=H.op,n=stars(o,{won:true,hp:safe(()=>P.hp/P.mx,1),t:H.t,allies:safe(()=>AL.filter(a=>!a.dead).length,0)>=H.al0});H.stars=n;H.ph=o.phases.length;
+ ST.done[o.id]=1;ST.stars[o.id]=Math.max(ST.stars[o.id]||0,n);const saved=store(ST);safe(()=>root.stopNav(),null);safe(()=>root.endGame(1,t+' '+'★'.repeat(n)+'☆'.repeat(3-n)),null);
+ if(!saved)safe(()=>root.say('Görev tamamlandı; kayıt yazılamadı. Cihaz depolamasını kontrol et.',4),null);}
 function lose(t){if(!H)return;H.lost=true;safe(()=>root.stopNav(),null);safe(()=>root.endGame(0,t),null);}
 // ---------- görev kartı (oyunda) ----------
 function paint(){if(!card||!H)return;const o=H.op,[s,p,pr,sm,ol]=card.children;paintPhases(ol);const d=Math.round(dist(P,o.obj));s.textContent=o.tur+' · '+o.n.toLocaleUpperCase('tr-TR');
@@ -240,7 +252,8 @@ function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t
  /* görevlerde düşman helikopteri ve dronu yok: muharebe yerde, tank topuyla */
  wrap('spawnHeli',old=>function(){if(playing())return;return old.apply(this,arguments);});wrap('spawnED',old=>function(){if(playing())return;return old.apply(this,arguments);});
  wrap('stagePending',old=>function(){return !!(H&&!H.won&&!H.lost)||old.apply(this,arguments);});
- wrap('update',old=>function(dt){if(playing()&&H)safe(control,null);const r=old.apply(this,arguments);if(playing()&&H&&!doc.hidden)safe(()=>step(clamp(+dt||0,0,.1)),null);return r;});
+ wrap('update',old=>function(dt){const d=clamp(+dt||0,0,.1);if(playing()&&H&&!doc.hidden)safe(()=>control(d),null);const r=old.apply(this,arguments);if(playing()&&H&&!doc.hidden)safe(()=>step(d),null);return r;});
+ wrap('endGame',old=>function(ok){if(!ok&&playing()&&H&&!H.won&&!H.lost){H.lost=true;safe(()=>root.stopNav(),null);}return old.apply(this,arguments);});
  wrap('spotted',old=>function(e){if(old.apply(this,arguments))return true;if(!H||!e||!e.hk)return false;if(e.spT>clock)return true;const sn=H.op.wx==='gece'?SEEN*NIGHT:SEEN;if(dist(e,P)<sn)return true;return safe(()=>AL.some(a=>!a.dead&&dist(a,e)<sn*.8),false);});
  wrap('eshot',old=>function(e){if(H&&e&&e.hk)e.spT=clock+8;return old.apply(this,arguments);});
  wrap('openMenu',old=>function(){if(!playing())sky(null);const r=old.apply(this,arguments);paintMenu();const b=doc.getElementById('hkCard');if(b){b.classList.remove('hk-anim');void b.offsetWidth;b.classList.add('hk-anim');root.setTimeout(()=>b.classList.remove('hk-anim'),900);}return r;});
@@ -250,7 +263,7 @@ function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t
  root.MAPVIEW_HK=()=>H?H.op:null;}
 function select(id,mode){if(mode)ST.mode=mode;if(id&&OPS.some(o=>o.id===id))ST.sel=id;store(ST);safe(()=>root.setG(ST.mode),null);paintMenu();return ST.sel;}
 function start(id){select(id,MODE);return safe(()=>{root.reset(typeof lvSel==='string'?lvSel:'normal');return !!H;},false);}
-function diagnostics(){const en=enemies();return {version:VERSION,hooks:{...hooks},mode:ST.mode,sel:ST.sel,done:{...ST.done},active:!!H,op:H?H.op.id:null,t:H?H.t:0,won:H?H.won:false,lost:H?H.lost:false,
+function diagnostics(){const en=enemies();return {version:VERSION,hooks:{...hooks},mode:ST.mode,sel:ST.sel,done:{...ST.done},saveError,active:!!H,op:H?H.op.id:null,t:H?H.t:0,won:H?H.won:false,lost:H?H.lost:false,
  wave:H?H.wave:-1,cap:H?H.cap:0,ph:H?H.ph:0,stars:H?H.stars||0:0,best:{...ST.stars},depLeft:H?H.depLeft:null,batLeft:H?H.batLeft??null:null,hits:H?H.hits||0:0,inc:H&&H.inc?H.inc.length:0,shT:H?H.shT??null:null,enemies:en.map(e=>({type:e.type,role:e.hk.role,x:Math.round(e.x),z:Math.round(e.z),hp:Math.round(e.hp),post:e.hk.post?Math.round(dist(e,e.hk.post)):null,i:e.hk.i})),
  nav:safe(()=>NAV.on?{to:NAV.to.n,len:Math.round(NAV.len)}:null,null)};}
 root.HisarHarekat=Object.freeze({version:VERSION,core,start,select,picked,brief:()=>{showBrief();return !!brief&&!brief.hidden;},connect,diagnostics,step:dt=>step(dt)});

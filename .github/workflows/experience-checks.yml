@@ -2,9 +2,9 @@ name: HİSAR experience checks
 on:
   push:
     branches: [main, feature/hisar-experience-20261109]
-    paths: ['experience/**', 'scripts/experience-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
+    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
   pull_request:
-    paths: ['experience/**', 'scripts/experience-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
+    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
 permissions:
   contents: read
 jobs:
@@ -38,6 +38,7 @@ jobs:
           path: |
             experience-*.png
             experience-browser-results.json
+            simple-reports/headquarters-*.png
           if-no-files-found: ignore
           retention-days: 7
   integrate:

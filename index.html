@@ -249,8 +249,8 @@ function hAt(x,z){let h=hr(x,z);for(let i=0;i<FLAT.length;i++){const v=FLAT[i],d
  const dr=Math.abs(z-riv(x));if(dr<24){const fk=fordK(x);if(dr<20)h+=(-3.4-h)*(1-sm(dr,6,20))*fk;if(fk<1){const m=.45*(1-fk)*(1-sm(dr,14,24));if(h<m)h=m}}return h}
 // Yollar: [ad, genişlik, renk, noktalar]. Geçitlerdeki kuzey–güney yolları nehri karadan aşar.
 const WROADS=[
- {n:'Kuzey Manevra Yolu',extension:true,w:7,c:'#fff',pts:[[-900,-80],[-900,-850],[900,-850],[900,-80]]},
- {n:'Güney Manevra Yolu',extension:true,w:7,c:'#fff',pts:[[-900,220],[-900,850],[900,850],[900,220]]},
+ {n:'Kuzey Manevra Yolu',mapId:'kuzey-yolu',extension:true,w:7,c:'#fff',pts:[[-900,-80],[-900,-850],[900,-850],[900,-80]]},
+ {n:'Güney Manevra Yolu',mapId:'guney-yolu',extension:true,w:7,c:'#fff',pts:[[-900,220],[-900,850],[900,850],[900,220]]},
  {n:'D-70 Karayolu',w:9,c:'#f2b134',pts:[[70,-WS+10],[70,WS-10]]},
  {n:'D-24 Karayolu',w:8,c:'#f2b134',pts:[[-240,-WS+10],[-240,WS-10]]},
  {n:'D-40 Karayolu',w:8,c:'#f2b134',pts:[[400,-WS+10],[400,WS-10]]},
@@ -1342,6 +1342,10 @@ const POI0=[
  {id:'kt',n:'Kara Tepe',k:'Saha',x:FLAT[2][0],z:FLAT[2][1],c:'#e8742a',ic:'▲',d:'Düz saha'}]
  .concat(VILS.map((v,i)=>({id:'v'+i,n:VNAME[i],k:'Yerleşim',x:v[0],z:v[1],c:'#b9936a',ic:'⌂',d:'Köy'})))
  .concat(FORDS.map((f,i)=>({id:'f'+i,n:FNAME[i],k:'Geçit',x:f,z:Math.round(riv(f)),c:'#4aa8e8',ic:'≈',d:'Karasu Çayı geçidi'})))
+ .concat(WROADS.filter(road=>road.mapId).map(road=>{
+   const [west,east]=road.pts.slice(1,3);
+   return {id:road.mapId,n:road.n,k:'Yol',x:(west[0]+east[0])/2,z:(west[1]+east[1])/2,c:'#587a83',ic:'◆',d:'Dış yolun orta noktası'};
+ }))
  .concat(HAML.map((m,i)=>({id:'m'+i,n:m.n,k:'Yerleşim',x:Math.round(m.x),z:Math.round(m.z),c:'#b9936a',ic:'⌂',d:'Mezra'})));
 let WP=null;                                   // elle isaretlenen nokta
 function pois(){const L2=POI0.slice();if(WP)L2.push(WP);return L2}

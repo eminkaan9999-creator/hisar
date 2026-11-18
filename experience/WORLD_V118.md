@@ -1,6 +1,6 @@
 # ÇELİK BÖRÜ v118 — geniş arazi ve hareketin korunması
 
-Oynanabilir tek harita 1,6 × 1,6 km’den 2 × 2 km’ye çıktı: kenar uzunluğu %25, toplam alan %56,25 büyüdü. Eve Dönüş aynı harekât olarak kalır; görev noktaları değiştirilmedi. Kuzey ve güney manevra yolları yeni dış şeritte mevcut ana yollarla birleşir. Bu yollar nehri kestirmeden geçmez; kara geçişleri mevcut kuru geçitlerdedir.
+Oynanabilir tek harita 1,6 × 1,6 km’den 2 × 2 km’ye çıktı: kenar uzunluğu %25, toplam alan %56,25 büyüdü. Eve Dönüş aynı harekât olarak kalır; görev noktaları değiştirilmedi. Kuzey ve güney manevra yolları yeni dış şeritte mevcut ana yollarla birleşir. Büyük haritadaki Yerler listesinden iki yolun orta noktası seçilip rota çizilebilir. Bu yollar nehri kestirmeden geçmez; kara geçişleri mevcut kuru geçitlerdedir.
 
 ## Mevcut dünyanın korunması
 

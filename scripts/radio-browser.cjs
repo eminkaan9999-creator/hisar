@@ -358,10 +358,31 @@ if(!mobile){
    const turn={near:minTank,reach,al:Math.min(...AL.map(a=>Math.hypot(a.x-P.x,a.z-P.z)))};
    /* katı araçlar */
    const kg=HisarSinir.kirpis()[0];P.x=kg.position.x+.5;P.z=kg.position.z+.5;update(.05);const kd=Math.hypot(P.x-kg.position.x,P.z-kg.position.z),pk=COV.find(c=>c.park);P.x=pk.x+.4;P.z=pk.z-.3;update(.05);const park=Math.hypot(P.x-pk.x,P.z-pk.z);
-   /* aracın ucundan da girilemez: gövdenin ekseninde, merkezinden 3 m ötede bırakılan tank dışarı itilir */
-   /* devriye yolunun ucunda dönmekte olan araç duvara dönüktür (itilen tank duvara dayanır, ölçü yanıltır): araç yolunda düz giderken ölçülür */
-   const k2=HisarSinir.kirpis()[1];{let y0=k2.rotation.y;for(let i=0;i<80;i++){update(.1);const y1=k2.rotation.y,dy=Math.abs(Math.atan2(Math.sin(y1-y0),Math.cos(y1-y0)));y0=y1;if(dy<.012)break;}}
-   const ky=k2.rotation.y;P.x=k2.position.x+Math.sin(ky)*3;P.z=k2.position.z+Math.cos(ky)*3;update(.05);const kend=Math.hypot(P.x-k2.position.x,P.z-k2.position.z);
+   // Start on a clear stretch of road, drive towards the nose and measure every tick.
+   // The centre-overlap test above covers recovery from an already-intersecting pose.
+   let patrol;
+   for(let i=0;i<120&&!patrol;i++){
+    update(.1);
+    const vehicles=HisarSinir.kirpis(),positions=HisarSinir.diagnostics().kirpis;
+    patrol=vehicles.find((g,j)=>{
+     const h=g.rotation.y,s=Math.sin(h),c=Math.cos(h),dir=positions[j].dir;
+     const roadHeading=Math.atan2(dir,riv(g.position.x+dir)-riv(g.position.x));
+     if(Math.cos(h-roadHeading)<.995)return false;
+     const blockers=[...BLD,...COV].filter(o=>!o.dead&&!o.krp);
+     for(const front of [6.5,9,12]){
+      const x=g.position.x+s*front,z=g.position.z+c*front;
+      if(blockers.some(o=>Math.hypot(x-o.x,z-o.z)<o.r+3.6))return false;
+     }
+     return true;
+    });
+   }
+   if(!patrol)throw Error('No clear patrol-road approach was available');
+   P.h=patrol.rotation.y+Math.PI;P.v=P.w=0;
+   P.x=patrol.position.x-Math.sin(P.h)*12;P.z=patrol.position.z-Math.cos(P.h)*12;
+   let kend=Infinity;
+   keys.w=true;
+   try{for(let i=0;i<45;i++){update(.1);kend=Math.min(kend,Math.hypot(P.x-patrol.position.x,P.z-patrol.position.z));}}
+   finally{keys.w=false;}
    /* asker taşıyan kamyon: tank hızla üstüne sürülür; kamyon ezilmez, tank içine giremez */
    const ti=HisarSivil.cars().findIndex(c=>c.kind==='kamyon'),truck=()=>HisarSivil.cars()[ti],c0=HisarSivil.diagnostics().crushed;
    /* önüne tank çıkınca kamyon durur; sonra tank yandan hızla üstüne sürülür */
@@ -371,7 +392,7 @@ if(!mobile){
   assert.ok(kol.cross.zone0==='000000000000'&&kol.cross.tank===2&&kol.cross.men===12&&kol.cross.zones==='222222222222'&&kol.cross.vz==='22','the whole column follows the tank across the border: '+JSON.stringify(kol.cross));
   assert.ok(kol.cross.bad===0&&kol.cross.deep===0&&kol.cross.inB===0&&kol.cross.via>100,'through the gate only, never through the wall, deep water or a building: '+JSON.stringify(kol.cross));
   assert.ok(kol.turn.near>=6.4&&kol.turn.reach>=0,'escort vehicles drive round the tank when it turns about: '+JSON.stringify(kol.turn));
-  assert.ok(kol.solid.kirpi>4.5&&kol.solid.kend>6.2&&kol.solid.park>4.8&&kol.solid.park<10&&kol.solid.parkN===18&&kol.solid.krpN>=6,'the Kirpi patrol and parked vehicles are solid along their whole length: '+JSON.stringify(kol.solid));
+  assert.ok(kol.solid.kirpi>4.5&&kol.solid.kend>6.2&&kol.solid.kend<7.5&&kol.solid.park>4.8&&kol.solid.park<10&&kol.solid.parkN===18&&kol.solid.krpN>=6,'the Kirpi patrol and parked vehicles are solid along their whole length: '+JSON.stringify(kol.solid));
   assert.ok(kol.solid.truck.dead===false&&kol.solid.truck.stopped<1&&kol.solid.truck.near>4.3&&kol.solid.truck.covs===4,'the troop truck is solid and is never crushed: '+JSON.stringify(kol.solid.truck));
   ok('escort column: all 12 infantry and both vehicles cross the border through the gate behind the tank (no wall, deep water or building crossed; '+(kol.cross.wait/10).toFixed(0)+' s to close up); vehicles pass a turning tank no closer than '+kol.turn.near.toFixed(1)+' m; the tank cannot enter the Kirpi patrol (kept '+kol.solid.kirpi.toFixed(1)+' m from its centre, '+kol.solid.kend.toFixed(1)+' m end-on) or a parked vehicle ('+kol.solid.park.toFixed(1)+' m); the troop truck is not crushed and keeps the tank '+kol.solid.truck.near.toFixed(1)+' m off');
   // ---- gerçek sürüş, su ve yol: kumandayla (ışınlamadan) kovalanan köylünün içinden geçilmez; kimse suda yürümez; köylü asfaltta yürümez

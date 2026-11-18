@@ -73,9 +73,20 @@ if(!mobile){
   return {shot:__shots>n0,far:L0.length,seen:L0.filter(e=>e.sp>0&&spotted(e)).length,quiet:L0.filter(e=>!(e.sp>0)&&far(e)).every(e=>!spotted(e))};},id);
  assert.equal(seen.shot,true);assert.ok(seen.seen>=1,'a firing tank beyond 121 m is shown: '+JSON.stringify(seen));assert.equal(seen.quiet,true);ok('an enemy that opens fire shows on the minimap for a few seconds even beyond normal sight; silent ones stay hidden');
  // imha sayımı ve puan: oyuncunun takımının imhası sayılır, düşmanların birbirine verdiği kayıp sayılmaz
- const k0=await p.evaluate(()=>({k:HisarBattle.diagnostics().kills,kr:SV.kr}));await p.evaluate(id=>{const e=E.find(q=>q.bt===id);killE(e);},id);await tick(p,8);const k1=await p.evaluate(()=>({k:HisarBattle.diagnostics().kills,kr:SV.kr,left:HisarBattle.diagnostics().enemies}));
- assert.equal(k1.k,k0.k+1);assert.ok(k1.kr>k0.kr);assert.equal(k1.left,15);await p.evaluate(id=>{const e=E.find(q=>q.bt===id);e.nc=1;killE(e);},id);await tick(p,8);const k2=await p.evaluate(()=>({k:HisarBattle.diagnostics().kills,kr:SV.kr,left:HisarBattle.diagnostics().enemies}));
- assert.equal(k2.k,k1.k);assert.equal(k2.kr,k1.kr);assert.equal(k2.left,14);ok('own kills are counted and paid; losses enemies inflict on each other are not credited to the player');
+ const teamStats=()=>p.evaluate(id=>{
+  const d=HisarBattle.diagnostics();
+  return {kills:d.kills,credits:SV.kr,alive:d.squads.find(s=>s.id===id).alive};
+ },id);
+ const k0=await teamStats();
+ await p.evaluate(id=>killE(E.find(e=>e.bt===id)),id);
+ await tick(p,8);
+ const k1=await teamStats();
+ assert.equal(k1.kills,k0.kills+1);assert.ok(k1.credits>k0.credits);assert.equal(k1.alive,k0.alive-1);
+ await p.evaluate(id=>{const e=E.find(e=>e.bt===id);e.nc=1;killE(e);},id);
+ await tick(p,8);
+ const k2=await teamStats();
+ assert.equal(k2.kills,k1.kills);assert.equal(k2.credits,k1.credits);assert.equal(k2.alive,k1.alive-1);
+ ok('credited and uncredited losses update the selected squad and apply the correct reward');
  // sahadan çekilme: uzaklaşınca tanklar kaldırılır, kalan can saklanır, dönünce aynı canla geri gelir
  await p.evaluate(id=>{const e=E.find(q=>q.bt===id);e.hp=e.mx*.5;},id);await tick(p,6);const gone=await p.evaluate(id=>{const s=HisarBattle.diagnostics().squads.find(q=>q.id===id);let best=null,bd=-1;for(const x of [-760,760])for(const z of [-760,760]){const d=Math.hypot(s.x-x,s.z-z);if(d>bd){bd=d;best={x,z};}}P.x=best.x;P.z=best.z;AL.forEach((a,i)=>{a.x=P.x+(P.x>0?-10:10)*(i+1);a.z=P.z;a.cmd='follow';});return bd;},id);assert.ok(gone>700,'far corner '+gone);
  for(let k=0;k<16;k++){await tick(p,10);s=await squad(p,id);if(!s.active)break;} // karargâh ya da başka gözcü yakındaysa çekilme gecikebilir

@@ -13,6 +13,19 @@ test('a pivot is bounded and a long frame never teleports or bypasses the accele
  const p={x:0,z:0,h:0,v:0,w:0};core.advance(p,{steer:1,condition:1,road:true},4);assert.equal(p.x,0);assert.equal(p.z,0);assert.ok(Math.abs(p.h)<=.01501);
  core.advance(p,{forward:1,condition:1,engine:999,road:true},4);assert.ok(p.v<.37);assert.ok(Math.hypot(p.x,p.z)<.037);
 });
+test('every signed dry crossing has a continuous approach on both banks',()=>{
+ const c=terrain();
+ for(const x of vm.runInContext('FORDS',c)){
+  const centre=c.riv(x);
+  for(const heading of [0,Math.PI]){
+   const direction=heading===0?1:-1;
+   for(let offset=-32;offset<32;offset+=.25){
+    const z=centre+direction*offset;
+    assert.ok(core.terrainAllowed({x,z,h:heading},{x,z:z+direction*.25,h:heading},c.hAt,c.riv),'blocked crossing at '+x+', '+z);
+   }
+  }
+ }
+});
 test('swept terrain checks stop a tank and a pedestrian at deep water, allow the real dry ford, and reject a cliff',()=>{
  const c=terrain(),h=c.hAt,river=c.riv,x=-490,z=river(x);
  assert.ok(core.depth(h,river,x,z)>1.7);

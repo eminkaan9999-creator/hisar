@@ -15,9 +15,11 @@ v117’de rota ızgarası her istendiğinde nehir suyu için bütün harita yeni
 
 Hareket denetimi, kabul ettiği her hareketten sonra modeli yeniden ham arazi yüksekliğine koyuyordu. Bu, motorun verdiği gövde/saha mevzisi yüksekliğini silebiliyordu. Model artık yalnızca gerçekten geri alınan veya sınırlandırılan hareketten sonra yeniden zemine oturtulur. Kabul edilen hareketin mevcut gövde pozu korunur.
 
+Kuru geçitlerde düşük kotlu kıyı ile geçit zemini arasında kalan görünmez basamak giderildi. Beş geçidin iki yöndeki yaklaşımı tankın hareket denetimiyle örneklenir.
+
 ## Doğrulama
 
-609 yerel regresyon testi, İTİ kontrolü ve dört inline betiğin sözdizimi kontrolü başarılıdır. Su önbelleği testleri tekrar isteklerde yükseklik sorgularının artmadığını, yeni/yıkılmış bina maliyetlerinin yine değiştiğini sınar. Poz testi kabul edilen gövde yüksekliğinin korunmasını ve sınırlandırılan piyadenin doğru noktaya çizilmesini kontrol eder.
+610 yerel regresyon testi, İTİ kontrolü ve dört inline betiğin sözdizimi kontrolü başarılıdır. Su önbelleği testleri tekrar isteklerde yükseklik sorgularının artmadığını, yeni/yıkılmış bina maliyetlerinin yine değiştiğini sınar. Poz testi kabul edilen gövde yüksekliğinin korunmasını ve sınırlandırılan piyadenin doğru noktaya çizilmesini kontrol eder.
 
 `world-browser-checks.cjs` gerçek Chromium/WebGL’de dünya/ızgara ölçülerini, yeni şeritte rota bulunmasını ve canlı engel değişikliğini kontrol eder. Dış şerit sürüşü kontrollü bir başlangıç konumundan sonra gerçek W girdisiyle yapılır. Eski görev, konvoy, kayıt/Devam, gece/gündüz, menü ve telefon görünümü kontrolleri korunur. Sonuçlar ilgili GitHub Actions çalışmasındaki raporda bulunur.
 

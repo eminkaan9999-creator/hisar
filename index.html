@@ -246,7 +246,12 @@ function hr(x,z){const r=Math.hypot(x,z),f=clamp((r-12)/30,0,1);let h=(Math.sin(
 const FH=FLAT.map(v=>hr(v[0],v[1]));
 function fordK(x){let m=1;for(const f of FORDS){const d=Math.abs(x-f);if(d<14){const k=sm(d,6,14);if(k<m)m=k}}return m}
 function hAt(x,z){let h=hr(x,z);for(let i=0;i<FLAT.length;i++){const v=FLAT[i],dx=x-v[0];if(dx>40||dx<-40)continue;const dz=z-v[1];if(dz>40||dz<-40)continue;const k=1-sm(Math.hypot(dx,dz),22,40);if(k>0)h+=(FH[i]-h)*k}
- const dr=Math.abs(z-riv(x));if(dr<24){const fk=fordK(x);if(dr<20)h+=(-3.4-h)*(1-sm(dr,6,20))*fk;if(fk<1){const m=.45*(1-fk)*(1-sm(dr,14,24));if(h<m)h=m}}return h}
+ const dr=Math.abs(z-riv(x));if(dr<24){const fk=fordK(x);if(dr<20)h+=(-3.4-h)*(1-sm(dr,6,20))*fk;if(fk<1){
+  // Blend a low bank into the ford. A zero-height floor creates a step wherever the approach is below zero.
+  const ramp=(1-fk)*(1-sm(dr,14,24));
+  const floor=Math.min(h,0)*(1-ramp)+.45*ramp;
+  h=Math.max(h,floor);
+ }}return h}
 // Yollar: [ad, genişlik, renk, noktalar]. Geçitlerdeki kuzey–güney yolları nehri karadan aşar.
 const WROADS=[
  {n:'Kuzey Manevra Yolu',mapId:'kuzey-yolu',extension:true,w:7,c:'#fff',pts:[[-900,-80],[-900,-850],[900,-850],[900,-80]]},

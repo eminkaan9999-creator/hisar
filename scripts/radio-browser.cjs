@@ -379,10 +379,11 @@ if(!mobile){
    if(!patrol)throw Error('No clear patrol-road approach was available');
    P.h=patrol.rotation.y+Math.PI;P.v=P.w=0;
    P.x=patrol.position.x-Math.sin(P.h)*12;P.z=patrol.position.z-Math.cos(P.h)*12;
-   let kend=Infinity;
+   let kend=Infinity;const contacts=HisarMobility.diagnostics().patrolStops;
    keys.w=true;
    try{for(let i=0;i<45;i++){update(.1);kend=Math.min(kend,Math.hypot(P.x-patrol.position.x,P.z-patrol.position.z));}}
    finally{keys.w=false;}
+   if(HisarMobility.diagnostics().patrolStops===contacts)throw Error('The tank never reached the patrol on the road: '+kend);
    /* asker taşıyan kamyon: tank hızla üstüne sürülür; kamyon ezilmez, tank içine giremez */
    const ti=HisarSivil.cars().findIndex(c=>c.kind==='kamyon'),truck=()=>HisarSivil.cars()[ti],c0=HisarSivil.diagnostics().crushed;
    /* önüne tank çıkınca kamyon durur; sonra tank yandan hızla üstüne sürülür */

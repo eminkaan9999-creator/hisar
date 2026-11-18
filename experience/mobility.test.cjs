@@ -90,3 +90,18 @@ test('a rejected native vehicle rotation restores the previous heading on the mo
  c.update(.1);
  assert.equal(truck.h,0);assert.equal(model.rotation.y,0);
 });
+
+test('driving into the nose of a solid patrol stops the tank, held input cannot build speed, and reverse frees it',()=>{
+ const {approachesBlocker}=require('./sinir.js');
+ const nose={x:0,z:1.8,r:2.8},P={x:0,z:12,h:Math.PI,v:0,w:0,dz:{trk:100}};
+ const c={document:{addEventListener(){}},SV:{U:{eng:0}},P,hAt:()=>0,riv:()=>100,roadNear:()=>true,WS:1000,drive(){},
+  HisarSinir:{blocksPatrolDrive:(a,b)=>approachesBlocker(a,b,nose,2.6)}};
+ c.window=c;vm.createContext(c);vm.runInContext(fs.readFileSync(__dirname+'/mobility.js','utf8'),c);
+ for(let i=0;i<60;i++)c.drive(0,1,1,.1);
+ assert.ok(P.z>6.7&&P.z<7.5);assert.equal(P.v,0);
+ const stopped=P.z;for(let i=0;i<25;i++)c.drive(0,1,1,.1);
+ assert.equal(P.z,stopped);assert.ok(c.HisarMobility.diagnostics().patrolStops>0);
+ for(let i=0;i<10;i++)c.drive(0,-1,1,.1);
+ assert.ok(P.z>stopped+1);assert.ok(P.v<0);
+ assert.equal(approachesBlocker({x:0,z:6},{x:0,z:7},nose,2.6),false);
+});

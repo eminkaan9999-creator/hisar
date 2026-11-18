@@ -44,7 +44,7 @@ test('nobody walks through the water: enemy infantry cross the wall only at a ga
  const wide=(x,z)=>Math.abs(z-100)<(x<49.8?16.6:14)?-3.4:.5,ws=c.bankStep(riv,wide,F,50,115,.4);assert.ok(ws&&ws.z>115.9&&ws.z<=118.5&&!c.wetAt(riv,wide,ws.x,ws.z),'where the river widens he steps a little further out and goes on: '+JSON.stringify(ws));
  assert.ok(src.includes("const rt=safe(()=>root.HisarDestek.core.route,null);")&&src.includes("if(!to)to=bankStep(RV,HG,f,q[0],q[1],step);"),'the gate route first, the bank as a fallback');
  for(const k of["if(e.type!=='inf')chk(e);else foot(e,f);","const wall=blocked(RV,f,q[0],q[1],e.x,e.z),water=wet(e.x,e.z)&&!wet(q[0],q[1]);if(!wall&&!water)return;","if(wet(x,z))return true;"])assert.ok(src.includes(k),k);
- assert.ok(/const VERSION='1\.3\.0'/.test(src));});
+ assert.equal(c.VERSION,require('../version.json').sinir);});
 
 test('the supply truck of the convoy missions is a vehicle people give way to',()=>{const hk=require('node:fs').readFileSync(__dirname+'/harekat.js','utf8');
  assert.ok(hk.includes("root.HisarSinir.vehicleSource(()=>H&&H.convoy&&H.convoy.active&&!H.convoy.dead&&!H.convoy.disposed?[H.convoy]:null)"),'registered once with the border module');});

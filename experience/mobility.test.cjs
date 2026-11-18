@@ -68,3 +68,25 @@ test('accepted movement preserves the native suspension/dug-in height; only a re
  const c=terrain(),g=()=>({position:{x:0,y:0,z:0,set(x,y,z){Object.assign(this,{x,y,z});}},rotation:{x:0,y:0,z:0}});Object.assign(c,{document:{hidden:false,addEventListener(){}},game:'play',SV:{U:{eng:0}},roadNear:()=>true,P:{x:70,z:30,h:0,v:0,w:0,dz:{trk:100},g:g()},AL:[],E:[{type:'inf',x:20,z:20,h:0,g:g()}],radio(){},drive(){},update(dt){c.drive(0,1,1,dt);c.P.g.position.set(c.P.x,c.hAt(c.P.x,c.P.z)-.35,c.P.z);c.E[0].z+=10*dt;c.E[0].g.position.set(c.E[0].x,0,c.E[0].z);}});c.window=c;
  vm.runInContext(fs.readFileSync(__dirname+'/mobility.js','utf8'),c);c.update(.1);assert.equal(c.P.g.position.y,c.hAt(c.P.x,c.P.z)-.35);assert.equal(c.E[0].g.position.z,c.E[0].z);assert.ok(c.E[0].z<=20.4200001);
 });
+
+test('a pivot checks the arc of the hull even when its centre and final corners are on level ground',()=>{
+ const from={x:0,z:0,h:0},to={x:0,z:0,h:Math.PI/2};
+ // The outer corner sweeps past x=3.1 m. Both end poses are within x=2.8 m.
+ for(const height of [-4,4]){
+  const ground=x=>Math.abs(x)>3.1?height:0;
+  assert.equal(core.terrainAllowed(from,to,ground,()=>0),false);
+  assert.equal(core.terrainAllowed(to,from,ground,()=>0),false);
+  assert.equal(core.terrainAllowed(from,to,ground,()=>0,true),true);
+ }
+ assert.equal(core.terrainAllowed(from,to,x=>.2*x,()=>50),true);
+ assert.equal(core.terrainAllowed({...from,h:Math.PI-.01},{...to,h:-Math.PI+.01},x=>Math.abs(x)>3.1?4:0,()=>50),true);
+});
+
+test('a rejected native vehicle rotation restores the previous heading on the model as well as in the simulation',()=>{
+ const model={position:{set(){}},rotation:{y:0}},truck={x:0,z:0,h:0,type:'truck',g:model};
+ const c={document:{hidden:false,addEventListener(){}},game:'play',AL:[],E:[truck],P:{x:20,z:20,h:0},
+  hAt:x=>Math.abs(x)>3.1?-4:0,riv:()=>0,update(){truck.h=Math.PI/2;model.rotation.y=truck.h;}};
+ c.window=c;vm.createContext(c);vm.runInContext(fs.readFileSync(__dirname+'/mobility.js','utf8'),c);
+ c.update(.1);
+ assert.equal(truck.h,0);assert.equal(model.rotation.y,0);
+});

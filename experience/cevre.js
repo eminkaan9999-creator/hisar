@@ -24,7 +24,7 @@ if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 // ---------- oyun ----------
 const hooks={},stat={poles:0,spans:0,syria:0,craters:0,columns:0,felled:0};let built=false,PM=null,AM=null,WIRE=null,list=[],COLS=[],clock=0;
-const RV=x=>safe(()=>riv(x),120),WSZ=()=>safe(()=>WS,800);
+const RV=x=>safe(()=>riv(x),120),WSZ=()=>Math.min(800,safe(()=>WS,800));
 function okSpot(x,z){if(Math.abs(x)>WSZ()-10||Math.abs(z)>WSZ()-10)return false;if(Math.abs(z-RV(x))<42)return false;if(safe(()=>hAt(x,z),0)<-.3)return false;if(safe(()=>roadNear(x,z,1),false))return false;
  if(safe(()=>BLD.some(b=>!b.dead&&Math.hypot(b.x-x,b.z-z)<b.r+1.5),false))return false;if(safe(()=>COV.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+2),false))return false;
  return !safe(()=>root.HisarField.positions().some(q=>Math.hypot(q.x-x,q.z-z)<13),false);}

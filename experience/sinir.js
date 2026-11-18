@@ -206,7 +206,7 @@ function gates(flags){for(const f of FD()){const z=wallZ(RV,f);
   const bx=f-WALL.gate+2.4,bz=z-4;make(bx,bz-3,0,1.6,999,'kapi',(b,part,win)=>{part('w',0,1.4,0,2.2,2.8,2.2,0,0xe6e2d6);part('t',0,2.95,0,2.6,.2,2.6,0,0x6e6a64);win(0,1.6,1.12,1.2,.8,0);return 3;});
   make(f+WALL.gate-1.2,z-1.2,0,.6,999,'kapi',(b,part)=>{part('t',0,.6,0,.5,1.2,.5,0,0x2a2a2a);for(let i=0;i<6;i++)part('t',-.1,1.3+i*.75,0,.14,.75,.14,0,i%2?0xf2f2f2:0xd2261d);return 5.6;});
   flags.push({x:f-WALL.gate,z:z-.8,y:hAt(f-WALL.gate,z)+4.35,h:2.6,s:1.5});}}
-function towers(){const out=[];for(const x of towersAlong(FD(),W())){const z=wallZ(RV,x)-8;
+function towers(){const out=[];for(const x of towersAlong(FD(),Math.min(W(),800))){const z=wallZ(RV,x)-8;
   const b=make(x,z,0,1.6,6,'kule',(b,part)=>{part('t',0,4,0,1.3,8,1.3,0,0xb5b2aa);part('t',0,8.55,0,2.9,1.1,2.9,0,0xd8d4c8);
    for(const[a,c]of[[-1,-1],[1,-1],[-1,1],[1,1]])part('t',a*1.35,9.75,c*1.35,.14,1.3,.14,0,0x8a8680);part('t',0,10.5,0,3.3,.25,3.3,0,0x6e6a64);return 10.6;});
   if(b)out.push({x,z,y:hAt(x,z)});}stat.towers=out.length;return out;}

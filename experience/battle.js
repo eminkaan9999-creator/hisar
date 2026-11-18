@@ -337,7 +337,7 @@ function paintMenu(){const box=doc.getElementById('btCard');if(!box)return;const
  // takım büyüklüğü doğrudan ana ekrandan seçilir
  const seg=el('div','bt-seg');seg.setAttribute('role','group');seg.setAttribute('aria-label','Takım büyüklüğü');
  for(const [k,n,sub] of [[0,'TEK','1 tank'],[1,'KISIM','2 tank'],[3,'TAKIM','4 tank']]){const b=el('button',form===k?'sel':null);b.type='button';b.dataset.bf=k;b.setAttribute('aria-pressed',String(form===k));b.append(el('b',null,n),el('small',null,sub));seg.appendChild(b);}
- const facts=el('div','bt-facts');for(const t of [pl.squads+' rakip takım',pl.tanks+' düşman tank','1,6 km harita'])facts.appendChild(el('span',null,t));
+ const facts=el('div','bt-facts');for(const t of [pl.squads+' rakip takım',pl.tanks+' düşman tank','2 km × 2 km harita'])facts.appendChild(el('span',null,t));
  box.append(top,el('p',null,'Güvenli alan daralır; dışında kalan hasar alır. Son kalan takım kazanır.'),seg,facts);
  if(stats.games)box.appendChild(el('p','bt-rec',stats.games+' savaş · '+(stats.wins|0)+' zafer · en iyi sıralama '+(stats.best||'—')+(stats.last?' · son: '+stats.last.place+'/'+stats.last.teams:'')));
  box.onclick=e=>{const b=e.target&&e.target.closest&&e.target.closest('[data-bf]');if(!b)return;safe(()=>{SV.form=+b.dataset.bf;root.save();if(typeof root.ldRender==='function')root.ldRender();},null);paintMenu();};}

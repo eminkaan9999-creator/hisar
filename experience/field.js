@@ -175,10 +175,10 @@ function build(){if(positions)return;positions=[];const t0=performance.now();
 // ---------- bütün harita: yol boyları, köy kenarları, tepeler ----------
 // Her çapanın çevresinde (en çok 70 m) iki mevzi aranır; mevziler birbirinden en az 45 m uzak durur ve çapadan dışarı bakar.
 // Yük telefonu takmasın diye çapalar küçük parçalar halinde, kareler arasında işlenir.
-function anchorsWide(){const out=[],add=(x,z,k)=>{if(Math.abs(x)>WS-60||Math.abs(z)>WS-60)return;if(Math.hypot(x,z)<150)return;if(out.some(a=>Math.hypot(a[0]-x,a[1]-z)<90))return;out.push([x,z,k]);};
+function anchorsWide(){const out=[],add=(x,z,k)=>{if(Math.abs(x)>Math.min(WS,800)-60||Math.abs(z)>Math.min(WS,800)-60)return;if(Math.hypot(x,z)<150)return;if(out.some(a=>Math.hypot(a[0]-x,a[1]-z)<90))return;out.push([x,z,k]);};
  safe(()=>{for(const v of VILS)add(v[0],v[1],'köy');},null);safe(()=>{for(const m of HAML)add(m.x,m.z,'köy');},null);
- safe(()=>{for(const r of WROADS){const p=r.pts;for(let i=0;i<p.length-1;i++){const ax=p[i][0],az=p[i][1],dx=p[i+1][0]-ax,dz=p[i+1][1]-az,L=Math.hypot(dx,dz);for(let t=60;t<L;t+=140)add(ax+dx/L*t,az+dz/L*t,'yol');}}},null);
- safe(()=>{for(let x=-WS+80;x<=WS-80;x+=80)for(let z=-WS+80;z<=WS-80;z+=80){const h=hAt(x,z);let top=h>2;for(const[dx,dz]of[[30,0],[-30,0],[0,30],[0,-30]])if(hAt(x+dx,z+dz)>h-1)top=false;if(top)add(x,z,'tepe');}},null);
+ safe(()=>{for(const r of WROADS){if(r.extension)continue;const p=r.pts.map(q=>q.map(v=>Math.max(-790,Math.min(790,v))));for(let i=0;i<p.length-1;i++){const ax=p[i][0],az=p[i][1],dx=p[i+1][0]-ax,dz=p[i+1][1]-az,L=Math.hypot(dx,dz);for(let t=60;t<L;t+=140)add(ax+dx/L*t,az+dz/L*t,'yol');}}},null);
+ safe(()=>{for(let x=-Math.min(WS,800)+80;x<=Math.min(WS,800)-80;x+=80)for(let z=-Math.min(WS,800)+80;z<=Math.min(WS,800)-80;z+=80){const h=hAt(x,z);let top=h>2;for(const[dx,dz]of[[30,0],[-30,0],[0,30],[0,-30]])if(hAt(x+dx,z+dz)>h-1)top=false;if(top)add(x,z,'tepe');}},null);
  return out;}
 let wideQ=null,wideN=0,wideMax=0,wideSum=0;
 function wide(){if(wideQ)return;wideQ=anchorsWide();wideN=wideQ.length;const env0=envNow();/* binalar her dilimde yeniden okunur: sonradan kurulan cami, okul, karakol da gözetilir */Object.defineProperty(env0,'blds',{get:()=>safe(()=>BLD.filter(b=>!b.dead||b.ruin).map(b=>({x:b.x,z:b.z,r:b.r})),[])});const near=(L,a,R)=>L.filter(o=>Math.hypot(o.x-a[0],o.z-a[1])<R);

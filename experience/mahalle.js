@@ -21,7 +21,7 @@ if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 // ---------- oyun ----------
 const stat={state:'bekliyor',sites:0,tris:0,trisFar:0,blockers:0,error:null};let started=false,SITES=[];
-const RV=x=>safe(()=>riv(x),120),WSZ=()=>safe(()=>WS,800);
+const RV=x=>safe(()=>riv(x),120),WSZ=()=>Math.min(800,safe(()=>WS,800));
 function flat(x,z,half){let lo=1e9,hi=-1e9;for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const h=safe(()=>hAt(x+i*half,z+j*half),0);lo=Math.min(lo,h);hi=Math.max(hi,h);}return {lo,hi};}
 function okSite(x,z,half){if(Math.abs(x)>WSZ()-half-20||Math.abs(z)>WSZ()-half-20)return false;if(Math.abs(z-RV(x))<half+70)return false;const f=flat(x,z,half);if(f.lo<.2||f.hi-f.lo>4)return false;
  for(let i=-2;i<=2;i++)for(let j=-2;j<=2;j++)if(safe(()=>roadNear(x+i*half/2,z+j*half/2,8),false))return false;

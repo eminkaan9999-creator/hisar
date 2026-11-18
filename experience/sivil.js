@@ -60,7 +60,7 @@ if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 // ---------- oyun ----------
 const hooks={},stat={parked:0,moving:0,trucks:0,trailers:0,crushed:0,burned:0,hi:0,mid:0,far:0,state:'bekliyor',error:null,tris:{}};let built=false,MOV=[],CARS=[],G=null,TRL=null,started=false;
-const RV=x=>safe(()=>riv(x),120),WSZ=()=>safe(()=>WS,800),H=(x,z)=>safe(()=>hAt(x,z),0);
+const RV=x=>safe(()=>riv(x),120),WSZ=()=>Math.min(800,safe(()=>WS,800)),H=(x,z)=>safe(()=>hAt(x,z),0);
 const hash=(x,z,k)=>{const v=Math.sin(x*12.9898+z*78.233+k*37.719)*43758.5453;return v-Math.floor(v);};
 const pick=(a,u)=>a[Math.floor(u*a.length)%a.length];
 function freeSpot(x,z,r,own){if(Math.abs(x)>WSZ()-15||Math.abs(z)>WSZ()-15)return false;if(Math.abs(z-RV(x))<40)return false;if(H(x,z)<-.4)return false;if(safe(()=>roadNear(x,z,.6),false))return false;
@@ -74,8 +74,8 @@ function buildParked(){for(const b of safe(()=>BLD,[])){if(b.dead||!b.w||!b.kind
   if(!freeSpot(x,z,3.2,b))continue;const w=hash(b.x,b.z,5),car={x,z,h,y:H(x,z),r:MDL[model].r,kind,model,parked:true,col:kind==='eski'?pick(PAL.syr,w):kind==='pikap'?pick(PAL.pikap,w):0xffffff};slope(car);trailer(car,w);CARS.push(car);}
  stat.parked=CARS.length;}
 // Türkiye içinde kalan yol parçaları (sınıra 45 m'den yakın kısım alınmaz)
-function stretches(){const out=[];for(const r of safe(()=>WROADS,[])){let cur=[];const flush=()=>{if(cur.length>1&&len(cur)>160){cur.w=r.w||6;out.push(cur);}cur=[];};
-  for(const p of dense(r.pts,8)){if(p[1]<RV(p[0])-45&&Math.abs(p[0])<WSZ()-20)cur.push(p);else flush();}flush();}return out;}
+function stretches(){const out=[];for(const r of safe(()=>WROADS,[])){if(r.extension)continue;let cur=[];const flush=()=>{if(cur.length>1&&len(cur)>160){cur.w=r.w||6;out.push(cur);}cur=[];};
+  for(const p of dense(r.pts.map(q=>q.map(v=>Math.max(-790,Math.min(790,v)))),8)){if(p[1]<RV(p[0])-45&&Math.abs(p[0])<WSZ()-20)cur.push(p);else flush();}flush();}return out;}
 function mover(kind,model,p,s,u){const d=MDL[model],car={kind,model,path:p,L:len(p),s,v:0,vmax:d.v,x:0,z:0,y:0,h:0,pitch:0,r:d.r,wait:0,col:kind==='pikap'?pick(PAL.pikap,u):0xffffff};trailer(car,u);
  /* asker taşıyan kamyon katıdır: engeli araçla birlikte yürür (düşman siper diye kullanmaz: pos) */
  if(kind==='kamyon'){car.cov=[1,-1].map(k=>({x:0,z:0,r:TRUCK_COV.r,h:TRUCK_COV.h,pos:1,kam:k}));safe(()=>COV.push(...car.cov),null);}

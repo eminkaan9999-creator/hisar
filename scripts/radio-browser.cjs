@@ -165,6 +165,9 @@ if(!mobile){
  // Compare the same camera position before the dust scenario moves it. Low quality deliberately thins grass.
  assert.equal(real.dag,3);assert.ok(real.highGrass>800,'high-quality grass '+real.highGrass);assert.ok(real.lowGrass>0&&real.lowGrass<real.highGrass,'low/high grass '+real.lowGrass+'/'+real.highGrass);assert.equal(real.oldGrass,false);assert.ok(real.dust>=3,'dust '+real.dust);
  if(real.sp)assert.deepEqual(real.sp,[2.2,1.5,1.15]);ok('three mountain ranges, grass density responds to quality ('+real.lowGrass+'/'+real.highGrass+'), dust behind a moving tank, enemy gunners bracket');
+ // Start the movement fixture in a fresh match so earlier damage and random world events cannot affect it.
+ await calm();
+ await p.evaluate(()=>HisarBattle.events(false));
  const hold=await p.evaluate(()=>{/* dost tanklar ateş etmez: mevziye girecek tank vurulup geri çekilmesin */AL.forEach(q=>{q.fire=0;});const s=HisarBattle.diagnostics().squads.find(q=>!q.dead),a=Math.atan2(-s.x,-s.z);P.x=s.x+Math.sin(a)*300;P.z=s.z+Math.cos(a)*300;for(let i=0;i<20;i++)update(.1);
   const e=E.find(q=>q.bt===s.id);if(!e)return null;const cands=HisarField.positions().filter(q=>Math.hypot(q.x,q.z)>200&&Math.abs(q.z-riv(q.x)+26)>230).sort((u,v)=>Math.hypot(u.x-e.x,u.z-e.z)-Math.hypot(v.x-e.x,v.z-e.z)).slice(0,3);
   /* rastgele seçilen mevzinin yolu kapalı olabilir (bahçe, yıkıntı): en yakın üç mevzi sırayla denenir */let p=null,k=0,at=null,who=null,put=null;for(const c of cands){p=c;
@@ -312,7 +315,7 @@ if(!mobile){
    /* 3) düşman piyadesi: açık arazide önüne konur, tank üstünden geçer */
    let spot=null;for(let k=0;k<2400&&!spot;k++){const x=P.x+((k*37)%640-320),z=P.z+((k*53)%600-300);if(Math.abs(x)>WS-90||Math.abs(z)>WS-90||Math.abs(z-riv(x))<70||hAt(x,z)<.5)continue;if(BLD.some(b=>!b.dead&&Math.hypot(b.x-x,b.z-z)<b.r+22)||COV.some(q=>Math.hypot(q.x-x,q.z-z)<q.r+18))continue;if((window.TREES||[]).some(t=>t.st!==3&&Math.hypot(t.x-x,t.z-z)<14))continue;spot={x,z};}
    let run=null;if(spot){const n0=E.length,r0=HisarCarpisma.diagnostics().runOver,b0=HisarSivil.diagnostics().burned;addE('inf',spot.x,spot.z+4);const e=E[E.length-1],slow0=E.includes(e);/* refakat araçlarının ateşi sınamayı bozmasın: er yalnız ezilerek ölebilir */e.hp=1e9;
-    P.x=e.x;P.z=e.z-.3;P.h=0;for(let k=0;k<4;k++){P.z=e.z-.3;update(.1);}const still=E.includes(e),side=Math.abs(e.x-P.x);/* duran tank ezmez; er gövdenin içinde de kalmaz, yana çıkar */for(let k=0;k<40;k++){P.x=e.x;P.z=e.z-12+k*.5;P.h=0;update(.1);if(!E.includes(e))break;}
+    P.x=e.x;P.z=e.z-.3;P.h=0;for(let k=0;k<12&&Math.abs(e.x-P.x)<1.9;k++){P.z=e.z-.3;update(.1);}const still=E.includes(e),side=Math.abs(e.x-P.x);/* duran tank ezmez; er gövdenin içinde de kalmaz, yana çıkar */for(let k=0;k<40;k++){P.x=e.x;P.z=e.z-12+k*.5;P.h=0;update(.1);if(!E.includes(e))break;}
     run={type:e.type,slow0,still,side,gone:!E.includes(e),ro:HisarCarpisma.diagnostics().runOver-r0,burned:HisarSivil.diagnostics().burned-b0};}
    /* 4) koyun sürüsü ve çobanı: tank sürünün ortasından sürülür; hiçbir canlı gövdenin altında kalmaz */
    const hull=q=>{const sx=Math.sin(P.h),cz=Math.cos(P.h),dx=q.x-P.x,dz=q.z-P.z;return Math.abs(dx*sx+dz*cz)<3.4&&Math.abs(dx*cz-dz*sx)<1.8;};let koy=null;const lead=HisarKoy.animals().find(a=>a.kind==='koyun'&&a.herd);
@@ -421,7 +424,7 @@ if(!mobile){
 
  // ---- güvenli alan: bekleme, daralma, dışarıda hasar
  await p.evaluate(()=>{HisarBattle.start();});await holdInZone(p,112);let z=await p.evaluate(()=>HisarBattle.diagnostics().zone);assert.equal(z.info.state,'shrink');assert.equal(z.info.phase,1);assert.equal(await p.evaluate(()=>P.hp),await p.evaluate(()=>P.mx));ok('after the waiting time the zone starts to shrink; inside it nobody is hurt');
- await holdInZone(p,82);z=await p.evaluate(()=>HisarBattle.diagnostics().zone);assert.equal(z.info.phase,2);assert.ok(z.r<650&&z.r>600,'first circle radius '+z.r);
+ await holdInZone(p,82);z=await p.evaluate(()=>HisarBattle.diagnostics().zone);assert.equal(z.info.phase,2);assert.ok(Math.abs(z.r-(Math.hypot(d0.ws,d0.ws)+20)*.55)<.01,'first circle radius '+z.r);
  const outside=await p.evaluate(()=>{const z=HisarBattle.diagnostics().zone,a=Math.atan2(z.cx,z.cz)+Math.PI;const c=v=>Math.max(-WS+12,Math.min(WS-12,v));let x=z.cx,zz=z.cz;for(let r=z.r+30;r<2400;r+=10){x=c(z.cx+Math.sin(a)*r);zz=c(z.cz+Math.cos(a)*r);if(Math.hypot(x-z.cx,zz-z.cz)>z.r+25)break;}P.x=x;P.z=zz;const hp=P.hp;for(let i=0;i<30&&game==='play';i++){P.x=x;P.z=zz;update(.1);}return {hp,after:P.hp,dist:Math.hypot(x-z.cx,zz-z.cz)-z.r,card:document.getElementById('hr-objective').className,text:document.querySelector('#hr-objective p').textContent};});
  assert.ok(outside.dist>20);assert.ok(outside.after<outside.hp-5&&outside.after>outside.hp-25,'zone damage '+outside.hp+' -> '+outside.after);await p.waitForTimeout(400);ok('outside the zone the tank loses armour steadily ('+Math.round(outside.hp-outside.after)+' in 3 s at phase 2)');
  await p.evaluate(()=>{for(let i=0;i<3;i++)update(.1);});assert.match(await p.locator('#hr-objective p').textContent(),/ALANIN DIŞINDASIN/);await shot(p,'zone-outside.png');

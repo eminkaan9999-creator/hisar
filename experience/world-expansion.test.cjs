@@ -7,3 +7,16 @@ test('the original five-metre terrain grid stays unchanged and the new band has 
 test('new maneuver roads connect to the extended highways and never draw a fake water crossing or change an old village footprint',()=>{const {c,api}=world(),roads=api.WROADS.filter(r=>r.extension);assert.equal(roads.length,2);for(const road of roads)for(let i=1;i<road.pts.length;i++){const a=road.pts[i-1],b=road.pts[i],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1]));for(let j=0;j<=n;j++){const x=a[0]+(b[0]-a[0])*j/n,z=a[1]+(b[1]-a[1])*j/n;assert.ok(Math.abs(x)>800||Math.abs(z)>800);assert.ok(Math.abs(z-c.riv(x))>35);assert.ok(Math.abs(x)<990&&Math.abs(z)<990);}}});
 test('native scenery retains its original seed bounds and the visible river reaches both expanded edges',()=>{assert.match(html,/wrnd\(-SEED_WS\+10,SEED_WS-10\)/);assert.doesNotMatch(html,/wrnd\(-WS\+10,WS-10\)/);assert.match(html,/Math\.ceil\(\(2\*WS\+880\)\/10\)\+1/);const src=fs.readFileSync(__dirname+'/sivil.js','utf8');assert.ok(src.includes('if(r.extension)continue;'));});
 test('v117 mission and checkpoint coordinates retain exactly the same terrain height after expansion',()=>{const {c}=world(),old=require('./test-support/v117-world-samples.json');for(const p of old.points)assert.ok(Math.abs(c.hAt(p.x,p.z)-p.h)<1e-10,JSON.stringify(p));});
+
+test('choosing another road refreshes the distance and arrival estimate while the map is open',()=>{
+ const context={game:'pause',P:{x:0,z:0},tP:32,Math,rebuildRibbon(){},say(){},
+  astar:(x,z,tx,tz)=>[[x,z],[tx,tz]]};
+ vm.createContext(context);
+ const start=html.indexOf('const NAV={'),end=html.indexOf('function stopNav(',start);
+ vm.runInContext(html.slice(start,end),context);
+ const run=code=>vm.runInContext(code,context);
+ run("startNav({x:0,z:85});NAV.left=12;NAV.dev=40;NAV.off=1;NAV.tt=.5;startNav({x:0,z:850})");
+ assert.equal(run('NAV.left'),850);
+ assert.equal(run('NAV.eta'),100);
+ assert.equal(run('NAV.dev+NAV.off+NAV.tt'),0);
+});

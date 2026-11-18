@@ -1401,7 +1401,7 @@ function pathLen(p,from){let s=0;for(let i=from;i<p.length-1;i++)s+=Math.hypot(p
 function turnAt(p,k){if(k>=p.length-1)return null;const a=Math.atan2(p[k][0]-p[k-1][0],p[k][1]-p[k-1][1]),b=Math.atan2(p[k+1][0]-p[k][0],p[k+1][1]-p[k][1]);return angd(b,a)}
 function turnText(t){if(t==null)return'Hedefe ulaşıyorsunuz';const a=Math.abs(t);if(a<.35)return'Düz devam edin';const dir=t<0?'sağa':'sola';return a>2.1?'Keskin '+dir+' dönün':a>1.1?dir[0].toUpperCase()+dir.slice(1)+' dönün':'Hafif '+dir+' dönün'}
 function startNav(to){if(game!=='play'&&game!=='pause'){return false}const p=astar(P.x,P.z,to.x,to.z);if(!p||p.length<2){say('Rota bulunamadı',1.8);return false}
- NAV.on=1;NAV.to=to;NAV.path=p;NAV.i=1;NAV.len=pathLen(p,0);NAV.off=0;NAV.lastSay={};NAV.t0=tP;rebuildRibbon(true);return true}
+ NAV.on=1;NAV.to=to;NAV.path=p;NAV.i=1;NAV.len=pathLen(p,0);NAV.left=NAV.len;NAV.eta=NAV.left/8.5;NAV.dev=NAV.off=NAV.tt=0;NAV.lastSay={};NAV.t0=tP;rebuildRibbon(true);return true}
 function stopNav(msg){NAV.on=0;NAV.to=null;NAV.path=[];if(RIB)RIB.visible=false;if(msg)radio(msg)}
 function navStep(dt){if(!NAV.on||game!=='play')return;NAV.tt+=dt;const p=NAV.path,o=mode==='drone'&&DR.on?{x:P.x,z:P.z}:P;
  while(NAV.i<p.length-1&&Math.hypot(p[NAV.i][0]-o.x,p[NAV.i][1]-o.z)<13)NAV.i++;

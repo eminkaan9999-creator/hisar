@@ -26,7 +26,9 @@ exports.play=async(p,{out,ok})=>{
  await p.keyboard.press('g');
  await p.locator('#fmL button').filter({hasText:'Kuzey Manevra Yolu'}).click();
  await p.locator('#fmC [data-a="nav"]').click();
- assert.equal(await p.evaluate(()=>NAV.on&&NAV.to.id),'kuzey-yolu');
+ const selected=await p.evaluate(()=>({id:NAV.on&&NAV.to.id,metres:Math.round(NAV.len),label:document.querySelector('#fmT small').textContent}));
+ assert.equal(selected.id,'kuzey-yolu');
+ assert.ok(selected.metres>800&&selected.label.endsWith(selected.metres+' m'),'map header shows the new route distance: '+selected.label);
  await p.screenshot({path:path.join(out,'world-road-selection-desktop.png')});
  await p.locator('#fmX').click();
  ok('the player selects the northern road and starts its route from the map list');

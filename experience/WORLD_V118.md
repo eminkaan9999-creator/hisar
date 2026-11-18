@@ -1,6 +1,6 @@
 # ÇELİK BÖRÜ v118 — geniş arazi ve hareketin korunması
 
-Oynanabilir tek harita 1,6 × 1,6 km’den 2 × 2 km’ye çıktı: kenar uzunluğu %25, toplam alan %56,25 büyüdü. Eve Dönüş aynı harekât olarak kalır; görev noktaları değiştirilmedi. Kuzey ve güney manevra yolları yeni dış şeritte mevcut ana yollarla birleşir. Büyük haritadaki Yerler listesinden iki yolun orta noktası seçilip rota çizilebilir. Bu yollar nehri kestirmeden geçmez; kara geçişleri mevcut kuru geçitlerdedir.
+Oynanabilir tek harita 1,6 × 1,6 km’den 2 × 2 km’ye çıktı: kenar uzunluğu %25, toplam alan %56,25 büyüdü. Eve Dönüş aynı harekât olarak kalır; görev noktaları değiştirilmedi. Kuzey ve güney manevra yolları yeni dış şeritte mevcut ana yollarla birleşir. Büyük haritadaki Yerler listesinden iki yolun orta noktası seçilip rota çizilebilir. Rota değiştirildiği anda haritadaki kalan mesafe ile tahmini süre yeni yola göre hesaplanır. Bu yollar nehri kestirmeden geçmez; kara geçişleri mevcut kuru geçitlerdedir.
 
 ## Mevcut dünyanın korunması
 
@@ -19,7 +19,7 @@ Kuru geçitlerde düşük kotlu kıyı ile geçit zemini arasında kalan görün
 
 ## Doğrulama
 
-610 yerel regresyon testi, İTİ kontrolü ve dört inline betiğin sözdizimi kontrolü başarılıdır. Su önbelleği testleri tekrar isteklerde yükseklik sorgularının artmadığını, yeni/yıkılmış bina maliyetlerinin yine değiştiğini sınar. Poz testi kabul edilen gövde yüksekliğinin korunmasını ve sınırlandırılan piyadenin doğru noktaya çizilmesini kontrol eder.
+611 yerel regresyon testi, İTİ kontrolü ve dört inline betiğin sözdizimi kontrolü başarılıdır. Su önbelleği testleri tekrar isteklerde yükseklik sorgularının artmadığını, yeni/yıkılmış bina maliyetlerinin yine değiştiğini sınar. Poz testi kabul edilen gövde yüksekliğinin korunmasını ve sınırlandırılan piyadenin doğru noktaya çizilmesini kontrol eder.
 
 `world-browser-checks.cjs` gerçek Chromium/WebGL’de dünya/ızgara ölçülerini, yeni şeritte rota bulunmasını ve canlı engel değişikliğini kontrol eder. Dış şerit sürüşü kontrollü bir başlangıç konumundan sonra gerçek W girdisiyle yapılır. Eski görev, konvoy, kayıt/Devam, gece/gündüz, menü ve telefon görünümü kontrolleri korunur. Sonuçlar ilgili GitHub Actions çalışmasındaki raporda bulunur.
 

@@ -341,9 +341,9 @@ body:not(.inplay) #hk-obj{display:none}
 // ---------- görev emri ekranı: BAŞLAT'a basınca harita, durum, görev, icra ve destek; GÖREVE ÇIK ile başlar ----------
 let briefOK=false,brief=null;
 function showBrief(){const o=op(),el=(t,c,x)=>{const e=doc.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};if(!brief){brief=el('section');brief.id='hk-brief';doc.body.appendChild(brief);}
- brief.replaceChildren();const head=el('header');head.append(el('span','hk-tur',o.tur),el('h2',null,'HAREKÂT EMRİ'),el('b',null,o.n));const cv=el('canvas');cv.width=cv.height=520;previewDraw(cv,o,true);
+ brief.replaceChildren();const head=el('header');head.append(el('span','hk-tur',o.tur),el('h2',null,'HAREKÂT EMRİ'),el('b',null,o.n));const cv=el('canvas');cv.width=cv.height=520;cv.setAttribute('role','img');cv.setAttribute('aria-label',o.n+' görev haritası');previewDraw(cv,o,true);
  const tx=el('div','hk-bt');const sec=(h,body)=>{const d=el('div','hk-bs');d.append(el('h3',null,h));if(typeof body==='string')d.append(el('p',null,body));else d.append(body);tx.append(d);};
- if(o.story)sec(o.continuous?'TEK HAREKÂT · AYNI HARİTADA 6 AŞAMA':'ŞAFAK HATTI · BÖLÜM '+o.chapter,o.story);sec('DURUM','Düşman: '+forces(o)+'. Dost: tank takımın, iki piyade timi, Kirpi ve ACV-15.');sec('GÖREV',o.emir);const ol=el('ol');(o.phases||[]).filter(q=>q.k!=='complete').forEach(q=>ol.append(el('li',null,q.n+(q.why?' — '+q.why:''))));sec('İCRA',ol);
+ if(o.story)sec(o.continuous?'TEK HAREKÂT · AYNI HARİTADA 6 AŞAMA':'ŞAFAK HATTI · BÖLÜM '+o.chapter,o.story);sec('DURUM','Düşman: '+forces(o)+'. Dost: tank takımın, iki piyade timi, Kirpi ve ACV-15.');sec('GÖREV',o.emir);const ol=el('ol');(o.phases||[]).filter(q=>q.k!=='complete').forEach(q=>ol.append(el('li',null,q.n+(q.why?' — '+q.why:''))));const steps=el('details','hk-bs journey-brief-steps'),summary=el('summary',null,'Aşamaları incele · '+ol.children.length);steps.append(summary,ol);tx.append(steps);
  sec('DESTEK','Telsizden T129 ATAK, Bayraktar TB2, F-16 ve T-155 Fırtına. İkmal başlangıç karakolunda. Rota '+routeKm(o)+(o.par?' · hedef süre '+Math.round(o.par/60)+' dk':'')+'.');if(o.story)sec('DEĞERLENDİRME','Görev tamamlanması, en az %50 tank sağlığı ve '+(o.rating==='convoy'?'en az %75 konvoy sağlığı':o.par?'hedef süre':'takımın korunması')+'.'+(o.escort?' Konvoy 110 m içinde kaldığında ilerler; yakın tehditte bekler.':''));
  const bar=el('div','hk-bb'),back=el('button','hk-back','Geri'),go=el('button','hk-go','GÖREVE ÇIK');back.type=go.type='button';go.disabled=!!(doc.getElementById('go')&&doc.getElementById('go').disabled);back.onclick=()=>{brief.hidden=true;};
  go.onclick=()=>{brief.hidden=true;briefOK=true;safe(()=>doc.getElementById('go').click(),null);briefOK=false;};bar.append(back,go);
@@ -365,7 +365,13 @@ function connect(){safe(()=>{if(typeof MI!=='undefined')MI[MODE]={n:'Harekât',t
  wrap('spawnHeli',old=>function(){if(playing())return;return old.apply(this,arguments);});wrap('spawnED',old=>function(){if(playing())return;return old.apply(this,arguments);});
  wrap('stagePending',old=>function(){return !!(H&&!H.won&&!H.lost)||old.apply(this,arguments);});
  wrap('update',old=>function(dt){const d=clamp(+dt||0,0,.1);if(playing()&&H&&!doc.hidden)safe(()=>control(d),null);const r=old.apply(this,arguments);if(playing()&&H&&!doc.hidden)safe(()=>step(d),null);return r;});
- wrap('endGame',old=>function(ok){if(!ok&&playing()&&H&&!H.won&&!H.lost){H.lost=true;safe(()=>root.stopNav(),null);}const h=H,r=old.apply(this,arguments);
+ wrap('endGame',old=>function(ok){if(!ok&&playing()&&H&&!H.won&&!H.lost){H.lost=true;safe(()=>root.stopNav(),null);}const h=H,record=h&&playing()&&root.HisarJourney?{
+   id:h.op.id+'-'+h.sessionStartedAt,session:h.sessionStartedAt,at:Date.now(),mission:h.op.id,name:h.op.n,
+   won:!!ok,elapsed:h.t,difficulty:safe(()=>lvKey,'normal'),step:h.ph,last:h.op.phases[h.ph]?.n||h.op.n,
+   convoy:h.convoy?Math.max(0,Math.round(h.convoy.hp/h.convoy.mx*100)):null
+  }:null;
+  const r=old.apply(this,arguments);
+  if(record)safe(()=>root.HisarJourney.end(record),null);
   if(!ok&&h&&(h.op.id==='safak-1'||h.op.continuous))safe(()=>{const cp=h.op.continuous?root.HisarCampaign:root.HisarCheckpoint,c=cp.read(),disk=JSON.parse(root.localStorage.getItem('m60v2'));if(c&&!c.rewarded&&c.sessionStartedAt===h.sessionStartedAt&&disk&&Number.isFinite(SV.xp)&&Number.isFinite(SV.kr)&&disk.xp===SV.xp&&disk.kr===SV.kr)cp.write({...c,rewarded:true});},null);return r;});
  wrap('spotted',old=>function(e){if(old.apply(this,arguments))return true;if(!H||!e||!e.hk)return false;if(e.spT>clock)return true;const sn=H.op.wx==='gece'?SEEN*NIGHT:SEEN;if(dist(e,P)<sn)return true;return safe(()=>AL.some(a=>!a.dead&&dist(a,e)<sn*.8),false);});
  wrap('eshot',old=>function(e){if(H&&e&&e.hk){e.spT=clock+8;if(H.op.continuous&&H.t<H.preparation)return;if((H.op.id==='safak-1'||H.op.continuous)&&e.hk.role==='att'&&!e.hk.fireAnnounced){e.hk.fireAnnounced=true;if(H.warnedWave!==H.wave){H.warnedWave=H.wave;safe(()=>root.radio('Komuta: Düşman ateşe hazırlanıyor. İşaretlenen araçları izle, mevzini değiştir ve karşılık ver.'),null);}return;}}return old.apply(this,arguments);});

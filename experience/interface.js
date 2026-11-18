@@ -93,7 +93,7 @@ function keydown(e){
   e.preventDefault();e.stopImmediatePropagation();tabs[n].click();focus(tabs[n]);return;
  }
  const modal=blocking();if(!modal||e.key!=='Tab')return;
- const list=[...modal.querySelectorAll('button:not([disabled]),select:not([disabled]),input:not([disabled]),textarea:not([disabled]),a[href],[tabindex="0"]')].filter(visible);if(!list.length)return;
+ const list=[...modal.querySelectorAll('button:not([disabled]),select:not([disabled]),input:not([disabled]),textarea:not([disabled]),summary,a[href],[tabindex="0"]')].filter(visible);if(!list.length)return;
  const first=list[0],last=list[list.length-1],active=doc.activeElement;
  if(e.shiftKey&&(active===first||!modal.contains(active))){e.preventDefault();focus(last);}else if(!e.shiftKey&&(active===last||!modal.contains(active))){e.preventDefault();focus(first);}
 }

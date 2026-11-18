@@ -401,7 +401,7 @@ if(!mobile){
    const inHull=q=>{const sx=Math.sin(P.h),cz=Math.cos(P.h),dx=q.x-P.x,dz=q.z-P.z;return Math.abs(dx*sx+dz*cz)<HL&&Math.abs(dx*cz-dz*sx)<HW;};
    const steer=(tx,tz)=>{const want=Math.atan2(tx-P.x,tz-P.z);let d=want-P.h;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;joy.y=1;joy.x=Math.max(-1,Math.min(1,-d*2.5));};
    const live=()=>HisarKoy.people().filter(q=>q.f.live&&q.st!=='hidden'&&q.st!=='home');let hits=0,near=1e9,vmax=0,runs=0;
-   for(let r=0;r<4;r++){const L0=live(),t=L0[(r*11)%L0.length];if(!t)break;let ok=false;for(let a=0;a<12&&!ok;a++){const h=a*Math.PI/6,sx=t.f.x-Math.sin(h)*50,sz=t.f.z-Math.cos(h)*50;if(!BLD.some(b=>!b.dead&&Math.hypot(b.x-sx,b.z-sz)<b.r+6)&&Math.abs(sz-riv(sx))>60){P.x=sx;P.z=sz;P.h=h;P.v=0;P.w=0;ok=true;}}if(!ok)continue;runs++;
+   for(let r=0;r<4;r++){const L0=live(),t=L0[(r*11)%L0.length];if(!t)break;let ok=false;for(let a=0;a<12&&!ok;a++){const h=a*Math.PI/6,sx=t.f.x-Math.sin(h)*50,sz=t.f.z-Math.cos(h)*50;if(!L0.some(q=>Math.hypot(q.f.x-sx,q.f.z-sz)<7)&&!BLD.some(b=>!b.dead&&Math.hypot(b.x-sx,b.z-sz)<b.r+6)&&Math.abs(sz-riv(sx))>60){P.x=sx;P.z=sz;P.h=h;P.v=0;P.w=0;ok=true;}}if(!ok)continue;runs++;
     for(let k=0;k<420;k++){steer(t.f.x,t.f.z);update(1/60);vmax=Math.max(vmax,Math.abs(P.v));for(const q of live()){near=Math.min(near,Math.hypot(q.f.x-P.x,q.f.z-P.z));if(inHull(q.f))hits++;}}}
    joy.x=joy.y=0;const chase={runs,hits,near,vmax};
    /* yol: yolun ortasına konan köylü yol boyunca yürür; asfaltta yalnız çıkarken bulunur */

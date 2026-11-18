@@ -48,7 +48,7 @@ function waterGridCache(){let saved=null,indices=null,builds=0,samples=0,request
 }
 const core=Object.freeze({VERSION,LIMIT,advance,depth,terrainAllowed,angle,waterGridCache});if(typeof module==='object'&&module.exports)module.exports=core;
 const doc=root.document;if(!doc)return;const safe=(f,d)=>{try{return f();}catch(e){return d;}};
-const hooks={},stat={patrolStops:0,waterStops:0,terrainStops:0,footLimited:0},waterGrid=waterGridCache();let warning=0,contact=null;
+const hooks={},stat={crowdStops:0,patrolStops:0,waterStops:0,terrainStops:0,footLimited:0},waterGrid=waterGridCache();let warning=0,contact=null;
 const ground=(a,b,foot)=>terrainAllowed(a,b,(x,z)=>hAt(x,z),x=>riv(x),foot);
 function wrap(n,f){if(hooks[n]||typeof root[n]!=='function')return;hooks[n]=true;root[n]=f(root[n]);}
 function stopped(){stat.terrainStops++;if(safe(()=>depth(hAt,riv,P.x+Math.sin(P.h)*4,P.z+Math.cos(P.h)*4)>.55,false))stat.waterStops++;const t=Date.now();if(t-warning>8000){warning=t;safe(()=>root.radio('Sürücü: Geçiş uygun değil. Yol veya kuru geçit kullan.'),null);}}
@@ -56,6 +56,9 @@ function sync(o){safe(()=>{o.g.position.set(o.x,hAt(o.x,o.z),o.z);o.g.rotation.y
 function connect(){
  wrap('drive',old=>function(ix,iy,sp,dt){if(!safe(()=>P&&SV.U,false))return old.apply(this,arguments);const before={x:P.x,z:P.z,h:P.h},n={...before,v:P.v||0,w:P.w||0};advance(n,{steer:ix,forward:iy,condition:sp,engine:SV.U.eng,tracks:P.dz.trk>0,road:roadNear(P.x,P.z,1)},dt);
   const travel=Math.hypot(n.x-before.x,n.z-before.z),latched=contact&&Math.hypot(before.x-contact.x,before.z-contact.z)<.5&&Math.sign(n.v)===contact.direction&&Math.abs(angle(n.h-contact.h))<.1,reach=Math.max(.25,latched?contact.reach:0),probe=travel>1e-6&&travel<reach?{x:before.x+Math.sin(n.h)*Math.sign(n.v)*reach,z:before.z+Math.cos(n.h)*Math.sign(n.v)*reach,h:n.h}:n;
+  if((travel>1e-6||n.h!==before.h)&&root.HisarKoy?.blocksDrive?.(before,probe)){
+   P.v=P.w=0;stat.crowdStops++;return;
+  }
   if(ground(before,n,false)&&(probe===n||ground(before,probe,false))){if(travel>1e-6&&root.HisarSinir?.blocksPatrolDrive?.(before,probe)){
     P.v=0;
     if(ground(before,{...before,h:n.h},false)){P.h=n.h;P.w=n.w;}else P.w=0;

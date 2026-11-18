@@ -13,7 +13,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.3.0';
+const VERSION='1.3.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -58,7 +58,26 @@ function roadWalk(R,tl,dx,dz){const side=R.lat>=0?1:-1;if(tl*side<0&&Math.abs(tl
  const l=Math.hypot(x,z);return l<.08?{x:0,z:0,mode:'vardi'}:{x:x/l,z:z/l,mode:'kenar'};}
 // Uğrak noktası yolun üstüne ya da banketine düşüyorsa kendi yanında, asfaltın kenarından clear kadar dışarı alınır
 function offRoad(roads,pt){const R=roadAt(roads,pt.x,pt.z,ROAD.clear);if(!R)return pt;const side=R.lat>=0?1:-1,k=R.half+ROAD.clear-Math.abs(R.lat)+.05;return {x:pt.x+side*R.nx*k,z:pt.z+side*R.nz*k};}
-const core=Object.freeze({VERSION,SAL,GIVE,ROAD,roadAt,roadWalk,offRoad,sideStep,wantsSalute,flee,flower,FCELL,animalPose});
+// Distance from an actor to the tank centreline, including the rounded ends.
+function crowdClearance(actor,x,z,h){
+ const dx=actor.x-x,dz=actor.z-z,s=Math.sin(h),c=Math.cos(h);
+ const along=clamp(dx*s+dz*c,-2.1,2.1);
+ return (dx-s*along)**2+(dz-c*along)**2;
+}
+function blocksActor(from,to,actor){
+ const dx=to.x-from.x,dz=to.z-from.z;
+ if(Math.abs(actor.x-from.x)>6+Math.abs(dx)||Math.abs(actor.z-from.z)>6+Math.abs(dz))return false;
+ const turn=Math.atan2(Math.sin(to.h-from.h),Math.cos(to.h-from.h));
+ const steps=Math.max(1,Math.ceil((Math.hypot(dx,dz)+Math.abs(turn)*2.1)/.5));
+ let previous=crowdClearance(actor,from.x,from.z,from.h);
+ for(let i=1;i<=steps;i++){
+  const t=i/steps,d=crowdClearance(actor,from.x+dx*t,from.z+dz*t,from.h+turn*t);
+  if(d<2.75**2&&d<previous-1e-8)return true;
+  previous=d;
+ }
+ return false;
+}
+const core=Object.freeze({VERSION,blocksActor,SAL,GIVE,ROAD,roadAt,roadWalk,offRoad,sideStep,wantsSalute,flee,flower,FCELL,animalPose});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
@@ -205,6 +224,11 @@ function connect(){build();
  if(!hooks.frame&&typeof FRAME_HOOKS!=='undefined'){hooks.frame=true;FRAME_HOOKS.push(dt=>safe(()=>frame(dt),null));}}
 function diagnostics(){return {version:VERSION,built,hooks:{...hooks},...stat,animals:{...stat.animals},
  kidsOut:P_.filter(p=>p.kid&&p.f.live).map(p=>({x:Math.round(p.f.x),z:Math.round(p.f.z),act:p.f.act,st:p.st})).slice(0,40)};}
-root.HisarKoy=Object.freeze({version:VERSION,core,connect,diagnostics,flowers:()=>flowerStep(true),people:()=>P_,animals:()=>A_});
+function blocksDrive(from,to){
+ for(const p of P_)if(p.f.live&&blocksActor(from,to,p.f))return true;
+ for(const a of A_)if(a.st!=='sky'&&a.f.live&&blocksActor(from,to,a.f))return true;
+ return false;
+}
+root.HisarKoy=Object.freeze({version:VERSION,core,blocksDrive,connect,diagnostics,flowers:()=>flowerStep(true),people:()=>P_,animals:()=>A_});
 connect();doc.addEventListener('hisar:ui-ready',connect);
 })(typeof window!=='undefined'?window:globalThis);

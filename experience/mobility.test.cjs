@@ -105,3 +105,17 @@ test('driving into the nose of a solid patrol stops the tank, held input cannot 
  assert.ok(P.z>stopped+1);assert.ok(P.v<0);
  assert.equal(approachesBlocker({x:0,z:6},{x:0,z:7},nose,2.6),false);
 });
+
+test('the driver yields to a stationary villager and can reverse or proceed after the path clears',()=>{
+ const {blocksActor}=require('./koy.js'),actor={x:0,z:10};
+ const P={x:0,z:0,h:0,v:10,w:0,dz:{trk:100}};
+ const c={document:{addEventListener(){}},SV:{U:{eng:0}},P,hAt:()=>0,riv:()=>100,roadNear:()=>true,WS:1000,drive(){},
+  HisarKoy:{blocksDrive:(a,b)=>blocksActor(a,b,actor)}};
+ c.window=c;vm.createContext(c);vm.runInContext(fs.readFileSync(__dirname+'/mobility.js','utf8'),c);
+ for(let i=0;i<50;i++)c.drive(0,1,1,.1);
+ assert.ok(actor.z-P.z>=4.85&&actor.z-P.z<5.3);assert.equal(P.v,0);assert.ok(c.HisarMobility.diagnostics().crowdStops>0);
+ const stop=P.z;for(let i=0;i<10;i++)c.drive(0,-1,1,.1);assert.ok(P.z<stop-1);
+ actor.x=8;for(let i=0;i<60;i++)c.drive(0,1,1,.1);assert.ok(P.z>actor.z);
+ assert.ok(blocksActor({x:0,z:0,h:0},{x:0,z:0,h:Math.PI/2},{x:4.2,z:0}));
+ assert.equal(blocksActor({x:0,z:0,h:0},{x:0,z:-1,h:0},{x:0,z:4}),false);
+});

@@ -1,7 +1,7 @@
 {
   "v": 119,
   "experience": "63.1",
-  "not": "Eve Dönüş’te konvoy onarımı kesintiden sonra kaldığı yerden sürer. Görev kartı bekleme nedenini gösterir. Kıyıda dönüşlerde araç gövdesinin izlediği yay denetlenir. Tank devriye aracına dayandığında hız keser ve geri vitesle ayrılabilir.",
+  "not": "Eve Dönüş’te konvoy onarımı kesintiden sonra kaldığı yerden sürer. Görev kartı bekleme nedenini gösterir. Kıyıda dönüşlerde araç gövdesinin izlediği yay denetlenir. Tank devriye aracına dayandığında hız keser ve geri vitesle ayrılabilir. Köy yolunda tankın önünü bir yaya veya hayvan kapatırsa tank bekler.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Eve Dönüş ana harekâttır. Önceki Şafak Hattı ve dört eski harekât arşivde oynanabilir. İlk Işık kaydı ayrı korunur; Eve Dönüş kaydı güvenli aşama sınırlarında yazılır.",
@@ -20,7 +20,7 @@
   "atis": "1.0.1",
   "harita": "1.2.0",
   "carpisma": "1.2.0",
-  "koy": "1.3.0",
+  "koy": "1.3.1",
   "destek": "1.4.0",
   "menu": "1.1.0",
   "arazi": "1.2.0",

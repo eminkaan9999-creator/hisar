@@ -16,7 +16,7 @@ test('villagers and animals give way to vehicles: they run sideways out of the p
  assert.ok(src.indexOf("const st=sideStep(w,GIVE.insan,dt)")<src.indexOf("if(p.hold>0){p.hold-=dt;"),'giving way comes before saluting');
  assert.ok(src.includes("const w=WAYF?WAYF(f.x,f.z):null;if(w){const st=sideStep(w,GIVE[a.kind]||GIVE.koyun,dt);"),'animals too');
  assert.ok(src.includes("if(WAYF&&WAYF(nx,nz)){f.wait=1;return false;}"),'nobody walks into the path of a vehicle');
- assert.ok(/const VERSION='1\.3\.0'/.test(src)&&/experience\/koy\.js\?v=\d+/.test(html));});
+ assert.ok(c.VERSION===require('../version.json').koy&&/experience\/koy\.js\?v=\d+/.test(html));});
 test('villagers keep off the carriageway: along a road they walk on the shoulder, across it they go straight over and hurry',()=>{const roads=[{w:6,pts:[[0,-100],[0,100]]},{w:8,pts:[[0,0],[200,0]]}],R=c.roadAt(roads,1,-50,c.ROAD.pad);
  assert.ok(R&&Math.abs(R.lat-1)<1e-9&&R.half===3&&R.ux===0&&R.uz===1&&R.nx===1,'one metre right of the centre line of a road running north');assert.equal(c.roadAt(roads,3+c.ROAD.pad+.1,-50,c.ROAD.pad),null,'beyond the shoulder the rule does not apply');
  const along=c.roadWalk(R,1,0,1);assert.equal(along.mode,'kenar');assert.ok(along.x>.3&&along.z>.5,'walking along: drifts out to his own side while going on');

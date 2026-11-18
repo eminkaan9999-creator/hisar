@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const core=require('./mobility.js'),html=fs.readFileSync(__dirname+'/../index.html','utf8');
-function terrain(){const c={Math,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))};vm.createContext(c);vm.runInContext(html.slice(html.indexOf('const WS=800;'),html.indexOf('const WROADS=[')),c);return c;}
+function terrain(){const c={Math,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))};c.window=c;vm.createContext(c);vm.runInContext(html.slice(html.search(/const WS=\d+/),html.indexOf('const WROADS=[')),c);return c;}
 test('a tank accelerates and brakes over time, cannot reverse instantly and limits lateral acceleration at road speed',()=>{
  const p={x:0,z:0,h:0,v:0,w:0};core.advance(p,{forward:1,condition:1,road:true},.1);assert.ok(p.v>.3&&p.v<.33);assert.equal(p.h,0);
  for(let i=0;i<80;i++)core.advance(p,{forward:1,condition:1,road:true},.1);assert.equal(p.v,14.5);
@@ -12,6 +12,19 @@ test('a tank accelerates and brakes over time, cannot reverse instantly and limi
 test('a pivot is bounded and a long frame never teleports or bypasses the acceleration limit',()=>{
  const p={x:0,z:0,h:0,v:0,w:0};core.advance(p,{steer:1,condition:1,road:true},4);assert.equal(p.x,0);assert.equal(p.z,0);assert.ok(Math.abs(p.h)<=.01501);
  core.advance(p,{forward:1,condition:1,engine:999,road:true},4);assert.ok(p.v<.37);assert.ok(Math.hypot(p.x,p.z)<.037);
+});
+test('every signed dry crossing has a continuous approach on both banks',()=>{
+ const c=terrain();
+ for(const x of vm.runInContext('FORDS',c)){
+  const centre=c.riv(x);
+  for(const heading of [0,Math.PI]){
+   const direction=heading===0?1:-1;
+   for(let offset=-32;offset<32;offset+=.25){
+    const z=centre+direction*offset;
+    assert.ok(core.terrainAllowed({x,z,h:heading},{x,z:z+direction*.25,h:heading},c.hAt,c.riv),'blocked crossing at '+x+', '+z);
+   }
+  }
+ }
 });
 test('swept terrain checks stop a tank and a pedestrian at deep water, allow the real dry ford, and reject a cliff',()=>{
  const c=terrain(),h=c.hAt,river=c.riv,x=-490,z=river(x);
@@ -41,4 +54,17 @@ test('native fuel and dozer power restrictions still affect the new drive; an im
  const run=engine=>{const p={x:0,z:0,h:0,v:0,w:0};for(let i=0;i<100;i++)core.advance(p,{forward:1,steer:1,condition:1,road:true,engine},.1);return p;};
  const normal=run(0),reserve=run((.25-1)/.07),dug=run(-1/.07);assert.ok(reserve.v<normal.v*.3);assert.ok(Math.abs(dug.v)<1e-8&&Math.abs(dug.h)<1e-8);
  const p={x:0,z:0,h:0,v:0,w:0};for(let i=0;i<20;i++)core.advance(p,{forward:1,steer:1,tracks:false,condition:1,road:true},.1);assert.equal(p.v,0);assert.equal(p.h,0);
+});
+
+test('static water mask is sampled once while each caller receives current building blockers',()=>{
+ const mask=core.waterGridCache();let calls=0;const h=(x,z)=>{calls++;return z<0?-3.4:1;},river=()=>0;
+ const first=new Float32Array(16);mask.apply(first,4,4,8,h,river);assert.equal(calls,16);assert.equal(first[0],1e9);assert.equal(first[15],0);
+ const changed=new Float32Array(16);changed[15]=1e9;mask.apply(changed,4,4,8,h,river);assert.equal(calls,16);assert.equal(changed[15],1e9,'a new building stays blocked');
+ const destroyed=new Float32Array(16);mask.apply(destroyed,4,4,8,h,river);assert.equal(destroyed[15],0,'demolition is not hidden by a cached combined grid');assert.equal(mask.diagnostics().builds,1);
+ mask.invalidate();mask.apply(new Float32Array(16),4,4,8,h,river);assert.equal(calls,32);mask.apply(new Float32Array(25),5,4,10,h,river);assert.equal(calls,57);
+});
+
+test('accepted movement preserves the native suspension/dug-in height; only a rejected or clamped move is resynchronised',()=>{
+ const c=terrain(),g=()=>({position:{x:0,y:0,z:0,set(x,y,z){Object.assign(this,{x,y,z});}},rotation:{x:0,y:0,z:0}});Object.assign(c,{document:{hidden:false,addEventListener(){}},game:'play',SV:{U:{eng:0}},roadNear:()=>true,P:{x:70,z:30,h:0,v:0,w:0,dz:{trk:100},g:g()},AL:[],E:[{type:'inf',x:20,z:20,h:0,g:g()}],radio(){},drive(){},update(dt){c.drive(0,1,1,dt);c.P.g.position.set(c.P.x,c.hAt(c.P.x,c.P.z)-.35,c.P.z);c.E[0].z+=10*dt;c.E[0].g.position.set(c.E[0].x,0,c.E[0].z);}});c.window=c;
+ vm.runInContext(fs.readFileSync(__dirname+'/mobility.js','utf8'),c);c.update(.1);assert.equal(c.P.g.position.y,c.hAt(c.P.x,c.P.z)-.35);assert.equal(c.E[0].g.position.z,c.E[0].z);assert.ok(c.E[0].z<=20.4200001);
 });

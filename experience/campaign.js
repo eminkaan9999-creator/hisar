@@ -47,7 +47,7 @@ function render(){const box=doc.getElementById('sf-campaign');if(!box)return fal
  if(!primary)return false;
  const title=by('ci-mission');if(title)title.textContent=OP.n;
  by('sf-title').textContent='Tek harekât · tek amaç';
- box.querySelector('.sf-heading>small').textContent='KESİNTİSİZ HAREKÂT · 6 AŞAMA';
+ box.querySelector('.sf-heading>small').textContent='KESİNTİSİZ HAREKÂT · 6 AŞAMA · 2 × 2 KM';
  by('sf-summary').textContent=OP.story;
  const cp=read(),paused=safe(()=>game==='play'||game==='pause',false),active=paused&&hk.op===ID;
  by('sf-progress').textContent=active?'Aşama '+Math.min(hk.ph+1,6)+'/6':hk.done[ID]?'Tamamlandı · '+'★'.repeat(hk.best[ID]||1):cp?'Kayıtlı ilerleme · aşama '+(cp.phase+1)+'/6':'Konvoyu bul · onarımı koru · eve getir';

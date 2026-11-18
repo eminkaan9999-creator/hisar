@@ -31,6 +31,7 @@ jobs:
           git rev-parse origin/main > simple-reports/base-main.txt
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' merge --no-edit origin/main
       - name: Apply guarded settings and audio integration
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/easy-clean-neural-20261110'
         run: |
           mkdir -p simple-reports
           node scripts/simple-integrate.cjs
@@ -40,6 +41,7 @@ jobs:
       - name: All unit tests and original inline script syntax
         run: |
           set -o pipefail
+          mkdir -p simple-reports
           node --test experience/*.test.cjs 2>&1 | tee simple-reports/unit-tests.tap
           node scripts/experience-integrate.cjs
       - name: Install original-game browser tooling

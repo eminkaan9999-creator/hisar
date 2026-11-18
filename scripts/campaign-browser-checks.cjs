@@ -24,8 +24,27 @@ exports.play=async function(p,{out,ok}){
  const restored=await p.evaluate(()=>({d:HisarHarekat.diagnostics(),hp:P.hp,xp:SV.xp,credits:SV.kr,shells:TA.slice(),old:localStorage.getItem('celik-boru-ilk-isik-v1')}));assert.equal(restored.d.convoy.delivered,true);assert.equal(restored.hp,saved.cp.player.hp);assert.deepEqual(restored.shells,saved.cp.ammunition.shells);assert.equal(restored.xp,saved.xp);assert.equal(restored.credits,saved.credits);assert.equal(restored.old,saved.old);ok('continuous operation: real reload and Continue restore the delivered convoy, tank and ammo without changing the legacy checkpoint, XP or credits');
  const result=await p.evaluate(()=>{P.x=-548;P.z=20;P.v=P.w=0;for(let i=0;i<55;i++)HisarHarekat.step(.1);return {d:HisarHarekat.diagnostics(),cp:HisarCampaign.read()};});assert.equal(result.d.won,true);assert.ok(result.d.stars>=1);assert.equal(result.cp,null);await p.locator('#ci-result-close').waitFor({state:'visible'});await p.screenshot({path:path.join(out,'campaign-success-desktop.png')});await p.locator('#ci-result-close').click();ok('continuous operation: secure delivery completes the mission once, awards stars and clears its checkpoint with a backup-safe tombstone');
  // Real keyboard water approach. No enemies, fast-forward or position changes during the drive.
- await p.evaluate(()=>{HisarCampaign.choose();HisarHarekat.start('eve-donus');for(const e of [...E])killE(e);P.x=-490;P.z=riv(-490)+37;P.h=P.th=Math.PI;P.v=P.w=0;yaw=Math.PI;});
- const waterStart=await p.evaluate(()=>({z:P.z,r:riv(P.x),stops:HisarMobility.diagnostics().waterStops}));await p.keyboard.down('w');try{await p.waitForFunction(n=>HisarMobility.diagnostics().waterStops>n,waterStart.stops,{timeout:120000});}finally{await p.keyboard.up('w');}
- await p.waitForFunction(()=>Math.abs(P.v)<1e-4);
- const stopped=await p.evaluate(()=>({x:P.x,z:P.z,v:P.v,h:hAt(P.x,P.z),r:riv(P.x)}));assert.ok(stopped.z<waterStart.z);assert.ok(stopped.z>stopped.r+8);assert.equal(stopped.v,0);assert.ok(stopped.h>-2.15);await p.screenshot({path:path.join(out,'campaign-water-stop-desktop.png')});await p.keyboard.press('p');ok('real W input stops the tank on the river bank away from a ford; deep water is no longer merely a speed penalty');
+ await p.bringToFront();
+ await p.evaluate(()=>{
+  HisarCampaign.choose();HisarHarekat.start('eve-donus');
+  for(const e of [...E])killE(e);
+  P.x=-490;P.z=riv(P.x)+20;P.h=P.th=yaw=Math.PI;P.v=P.w=0;
+ });
+ const startZ=await p.evaluate(()=>P.z);
+ await p.keyboard.down('w');
+ try{
+  await p.waitForFunction(start=>{
+   const water=HisarMobility.core.depth(hAt,riv,P.x,P.z-5);
+   return keys.w&&P.z<start-1&&P.v===0&&water>HisarMobility.core.LIMIT.depth;
+  },startZ,{timeout:120000});
+  const contact=await p.evaluate(()=>({z:P.z,t:tP}));
+  await p.waitForFunction(t=>tP>t+.4,contact.t);
+  const stopped=await p.evaluate(()=>({z:P.z,v:P.v,r:riv(P.x),h:hAt(P.x,P.z)}));
+  assert.ok(Math.abs(stopped.z-contact.z)<.05,'held W cannot creep forward after water contact');
+  assert.ok(stopped.z>stopped.r+8&&stopped.h>-2.15);assert.equal(stopped.v,0);
+ }catch(error){
+  const diagnostic=await p.evaluate(()=>({game,mode,x:P.x,z:P.z,speed:P.v,held:keys.w,hidden:document.hidden,terrain:HisarMobility.diagnostics()}));
+  throw new Error('Water approach did not stop on the dry bank: '+JSON.stringify(diagnostic),{cause:error});
+ }finally{await p.keyboard.up('w');}
+ await p.screenshot({path:path.join(out,'campaign-water-stop-desktop.png')});await p.keyboard.press('p');ok('real W input stops the tank on the river bank away from a ford; deep water is no longer merely a speed penalty');
 };

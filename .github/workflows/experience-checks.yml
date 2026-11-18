@@ -1,16 +1,16 @@
 name: HİSAR experience checks
 on:
   push:
-    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117, work/celik-boru-quality-20261117, work/celik-boru-quality-release-20261117, work/celik-boru-modern-interface-20261117, work/celik-boru-connected-operation-20261118]
-    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'scripts/interface-*', 'scripts/campaign-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
+    branches: [main, feature/hisar-experience-20261109, work/celik-boru-safak-modern-20261117, work/celik-boru-quality-20261117, work/celik-boru-quality-release-20261117, work/celik-boru-modern-interface-20261117, work/celik-boru-connected-operation-20261118, work/celik-boru-expanded-world-20261118]
+    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'scripts/interface-*', 'scripts/campaign-*', 'scripts/world-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
   pull_request:
-    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'scripts/interface-*', 'scripts/campaign-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
+    paths: ['experience/**', 'scripts/experience-*', 'scripts/simple-*', 'scripts/modern-*', 'scripts/interface-*', 'scripts/campaign-*', 'scripts/world-*', 'index.html', 'version.json', 'sw.js', '.github/workflows/experience-checks.yml']
 permissions:
   contents: read
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,7 +29,7 @@ jobs:
           npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
           npx playwright install chromium
       - name: Test original game on desktop and mobile viewports
-        timeout-minutes: 10
+        timeout-minutes: 12
         run: node scripts/experience-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -42,6 +42,7 @@ jobs:
             simple-reports/modern-*.png
             simple-reports/interface-*.png
             simple-reports/campaign-*.png
+            simple-reports/world-*.png
           if-no-files-found: ignore
           retention-days: 7
   integrate:

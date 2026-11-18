@@ -1,7 +1,7 @@
 {
-  "v": 119,
+  "v": 120,
   "experience": "63.1",
-  "not": "Eve Dönüş’te konvoy onarımı kesintiden sonra kaldığı yerden sürer. Görev kartı bekleme nedenini gösterir. Kıyıda dönüşlerde araç gövdesinin izlediği yay denetlenir. Tank devriye aracına dayandığında hız keser ve geri vitesle ayrılabilir. Köy yolunda tankın önünü bir yaya veya hayvan kapatırsa tank bekler.",
+  "not": "Yol Defteri: Eve Dönüş için altı resimli durak, kayıt özeti, sefer geçmişi, görev ve kontrol araması, krediye göre garaj, okunabilirlik ayarları ve yeni sonuç ekranı.",
   "gameplay": "1.3.0",
   "presentation": "1.1.0",
   "gameplayNotes": "Eve Dönüş ana harekâttır. Önceki Şafak Hattı ve dört eski harekât arşivde oynanabilir. İlk Işık kaydı ayrı korunur; Eve Dönüş kaydı güvenli aşama sınırlarında yazılır.",
@@ -42,5 +42,6 @@
   "interface": "1.0.0",
   "campaign": "1.1.0",
   "mobility": "1.2.0",
-  "world": "1.0.0"
+  "world": "1.0.0",
+  "journey": "1.0.0"
 }

@@ -26,7 +26,7 @@ function wrap(name,f){if(hooks[name]||typeof root[name]!=='function')return;root
 function connect(){
  wrap('openMenu',old=>function(){
   if(pausedMode==null&&safe(()=>game==='play'||game==='pause',false))pausedMode=safe(()=>mis,null);
-  closeLayers();const r=old.apply(this,arguments);refresh();return r;
+  closeLayers();const r=old.apply(this,arguments);refresh();root.HisarJourney?.pause();return r;
  });
  wrap('closeMenu',old=>function(){
   const resume=safe(()=>game==='pause',false);closeLayers();
@@ -35,9 +35,9 @@ function connect(){
    // Closing a child dialog may resume the engine first; the parent still owns its menu.
    safe(()=>{game='pause';},null);
   }
-  const r=old.apply(this,arguments);if(resume)pausedMode=null;refresh();return r;
+  const r=old.apply(this,arguments);if(resume)pausedMode=null;refresh();root.HisarJourney?.pause();return r;
  });
- wrap('reset',old=>function(){closeLayers();pausedMode=null;const r=old.apply(this,arguments);refresh();return r;});
+ wrap('reset',old=>function(){closeLayers();pausedMode=null;const r=old.apply(this,arguments);refresh();root.HisarJourney?.pause();return r;});
  wrap('tab',old=>function(t){const r=old.apply(this,arguments);const pane=by('t'+t);if(pane)pane.scrollTop=0;refresh();return r;});
 }
 function escape(e){

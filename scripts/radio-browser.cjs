@@ -219,8 +219,8 @@ if(!mobile){
  // ---- ağır sürüş ve binaya çarpma
  const drv=await p.evaluate(()=>{P.x=70;P.z=-200;P.h=Math.PI;P.v=0;P.w=0;keys.w=true;update(.1);for(let i=0;i<9;i++)update(.1);const v1=P.v;for(let i=0;i<120;i++)update(.1);const vmax=P.v;keys.w=false;
   const b=BLD.find(q=>q.kind==='house'&&!q.dead&&q.hp>=3);const hp=b.hp,a=Math.atan2(b.x-70,b.z+200)+Math.PI;P.x=b.x+Math.sin(a)*(b.r+6);P.z=b.z+Math.cos(a)*(b.r+6);P.h=a+Math.PI;P.v=9;const r0=window.RAMMED|0;keys.w=true;for(let i=0;i<14;i++)update(.1);keys.w=false;
-  return {v1,vmax,hp,after:b.hp,dead:b.dead,ram:(window.RAMMED|0)-r0};});
- assert.ok(drv.v1>3.6&&drv.v1<6.4,'one second from rest: '+drv.v1);assert.ok(drv.vmax>11.5&&drv.vmax<15.6,'top speed '+drv.vmax);assert.ok(drv.ram>0&&(drv.dead||drv.after<drv.hp),'ramming damages the house');
+  return {v1,vmax,downhillLimit:HisarMobility.core.LIMIT.forward*(1+DRV.down),hp,after:b.hp,dead:b.dead,ram:(window.RAMMED|0)-r0};});
+ assert.ok(Math.abs(drv.v1-3.2)<.05,'one second from rest: '+drv.v1);assert.ok(drv.vmax>11.5&&drv.vmax<=drv.downhillLimit+.01,'top speed '+drv.vmax);assert.ok(drv.ram>0&&(drv.dead||drv.after<drv.hp),'ramming damages the house');
  ok('the tank is brisk but has weight: '+drv.v1.toFixed(1)+' m/s after one second, '+drv.vmax.toFixed(1)+' m/s top on the road; ramming a house damages it');
  // yavaş kare: 130 ms süren kare üç adıma bölünür (oyun ağır çekime girmez); kapının kendi tavanıyla (1) tek adım atılır
  const slow=n=>p.evaluate(n=>new Promise(res=>{const keep=window.SIM_MAX;window.SIM_MAX=n;requestAnimationFrame(()=>{const t=performance.now();while(performance.now()-t<130){}requestAnimationFrame(()=>{const s=window.SIM_STEPS;window.SIM_MAX=keep;res(s);});});}),n);

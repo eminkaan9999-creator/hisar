@@ -229,9 +229,21 @@ if(!mobile){
  const slow=n=>p.evaluate(n=>new Promise(res=>{const keep=window.SIM_MAX;window.SIM_MAX=n;requestAnimationFrame(()=>{const t=performance.now();while(performance.now()-t<130){}requestAnimationFrame(()=>{const s=window.SIM_STEPS;window.SIM_MAX=keep;res(s);});});}),n);
  assert.equal(await slow(3),3,'a 130 ms frame is simulated in three steps');assert.equal(await slow(1),1);assert.equal(await p.evaluate(()=>window.SIM_MAX),1);ok('a slow frame (130 ms) is simulated in three steps of real time instead of one: no slow motion on a slow phone');
  // ---- atış hissi, kovan, erkek ses, gerçek küçük harita, çarpışmalar
- await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,2);
- // mürettebat "Ateş!" der, top konuşma bitince ateşlenir (crew-orders.js): bir an beklenir
- const a0=await p.evaluate(()=>{const a=HisarAtis.diagnostics();cd=0;ammo=Math.max(ammo,3);mode='tank';fire();return a;});await p.waitForFunction(s=>HisarAtis.diagnostics().shots>s,a0.shots,{timeout:8000});
+ await p.bringToFront();
+ const started=await p.evaluate(()=>{lvSel='normal';const ready=HisarHarekat.start('gecit');L.dmg=0;return ready&&game==='play';});
+ assert.ok(started,'the effect check needs an active mission');await tick(p,2);
+ // This scenario measures the visual effect after the asynchronous crew audio completes.
+ const a0=await p.evaluate(()=>{
+  if(game!=='play'||mode!=='tank'||AA.on||!HisarAtis.diagnostics().hooks.fire)throw Error('Unexpected vehicle or effect state');
+  cd=0;TA[st]=Math.max(TA[st],1);
+  const before=HisarAtis.diagnostics();fire();return before;
+ });
+ try{
+  await p.waitForFunction(shots=>HisarAtis.diagnostics().shots>shots,a0.shots,{polling:200,timeout:45000});
+ }catch(cause){
+  const state=await p.evaluate(()=>({game,mode,aa:AA.on,stock:TA[st],cooldown:cd,crew:HisarCrewOrders.diagnostics(),effects:HisarAtis.diagnostics().shots}));
+  throw new Error('Vehicle effect did not finish: '+JSON.stringify(state),{cause});
+ }
  const fx=await p.evaluate(a0=>{update(.05);const a1=HisarAtis.diagnostics();HisarAtis.eject(3);for(let i=0;i<25;i++)update(.1);const a2=HisarAtis.diagnostics();
   mmDraw();const h=HisarHarita.diagnostics();return {shots:a1.shots-a0.shots,smoke:a1.smoke-a0.smoke,rock:a1.peak,cas:a2.live,v:typeof trVoice==='function',h,
    kovan:!!S.getObjectByName('AT_KOVAN')};},a0);

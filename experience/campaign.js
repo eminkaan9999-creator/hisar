@@ -1,6 +1,6 @@
 /* One deployment, one persistent convoy and six causal orders on the same map. */
 (function(root){'use strict';
-const VERSION='1.0.0',ID='eve-donus',KEY='celik-boru-eve-donus-v1';
+const VERSION='1.1.0',ID='eve-donus',KEY='celik-boru-eve-donus-v1';
 const OP=Object.freeze({id:ID,n:'Eve Dönüş',tur:'KONVOY KURTARMA',continuous:true,ford:-560,armor:180,preparation:15,
  start:{x:-548,z:20,h:0},obj:{x:-605,z:360,r:45,n:'Mahsur Kalan Konvoy'},
  story:'Batı yolundaki onarım konvoyuyla bağlantı kesildi. Ekip hayatta, araç hareket edemiyor. Çelik Börü’nün tek amacı ekibi bulup aynı araçla karakola geri getirmek. Yolun açılması, yerinde onarım ve dönüş birbirinin devamıdır; harita ve araç durumları sıfırlanmaz.',
@@ -13,7 +13,7 @@ const OP=Object.freeze({id:ID,n:'Eve Dönüş',tur:'KONVOY KURTARMA',continuous:
   {n:'Toplanma noktasına ilerle',why:'Takımınla batı yoluna gir. Konvoyun son konumuna buradan ulaşabilirsin.',k:'reach',x:-560,z:82,r:24},
   {n:'Geçitteki pusuyu kaldır',why:'Onarım ekibine ulaşmak ve dönüş yolunu açmak için geçit temizlenmeli.',k:'clear',x:-572,z:236,r:110,visit:130,spawn:[{type:'apc',x:-584,z:270,h:Math.PI},{type:'inf',x:-596,z:258,h:Math.PI},{type:'inf',x:-558,z:275,h:Math.PI}]},
   {n:'Mahsur kalan konvoyu tespit et',why:'Aracı görüş hattında bul; 4 saniye durarak ekiple bağlantı kur.',k:'scan',x:-605,z:360,r:150,seconds:4},
-  {n:'Yerinde onarımı koru',why:'Konvoyun 65 m yakınında kal. Yaklaşan iki grubu durdur; güvenli alanda 12 saniyelik onarımı tamamla.',k:'defend',x:-605,z:360,r:65,seconds:12,local:true},
+  {n:'Yerinde onarımı koru',why:'Ekip, konvoyun 65 m yakınındayken 12 saniyede onarımı bitirir. Uzaklaşırsan veya tehlike yaklaşırsa işe ara verir. Ekip kaldığı yerden devam eder. Dönüş için iki grubun da bölgeden temizlenmesi gerekir.',k:'defend',x:-605,z:360,r:65,seconds:12,local:true},
   {n:'Konvoyla birlikte karakola dön',why:'Konvoy 110 m içinde takip eder; yakın tehditte durur. Dönüşte çıkan takviyeyi temizle.',k:'escort',x:-548,z:20,clearAll:true},
   {n:'Güvenli bölgede teslimi tamamla',why:'Konvoy ve tank karakolda olmalı. Bölgeyi 5 saniye güvenli tut.',k:'extract',x:-548,z:20,r:50,threat:90,seconds:5,requireConvoy:true},
   {n:'Konvoy teslim edildi',k:'complete',x:-548,z:20}

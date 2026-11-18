@@ -1,7 +1,7 @@
 /* Loaded before the game: dialog typing must not become gameplay input. */
 /* Yapı damgası: sayfa (index.html) bu sayıyı kendi yapı numarasıyla karşılaştırır. Farklıysa bölümler önbellekten eski gelmiştir; sayfa eski hizmet
    işçisini bırakıp kendini bir kez yeniden yükler (index.html, "Sürüm tutarlılığı"). Her sürümde VER ile birlikte artırılır. */
-window.HISAR_BUILD=118;
+window.HISAR_BUILD=119;
 (function(){'use strict';const held=new Map();
  function modal(){const el=document.getElementById('hisar-experience');return el&&el.open;}
  addEventListener('keydown',e=>{if(modal()){if(e.key==='Escape'){e.preventDefault();window.HisarExperience?.close();}e.stopImmediatePropagation();return;}

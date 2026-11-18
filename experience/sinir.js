@@ -17,7 +17,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='1.3.0';
+const VERSION='1.3.1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -78,7 +78,18 @@ function wetAt(riv,h,x,z){return Math.abs(z-riv(x))<WATER.reach&&h(x,z)<WATER.le
 const OUT=Object.freeze([0,.5,1,1.6,2.4,3.5]);
 function bankStep(riv,h,fords,x,z,step){let g=fords[0];for(const k of fords)if(Math.abs(k-x)<Math.abs(g-x))g=k;const dir=g>=x?1:-1,nx=x+dir*step,nz=z+(riv(nx)-riv(x)),away=z>=riv(x)?1:-1;
  for(const o of OUT){const cz=nz+away*o;if(!wetAt(riv,h,nx,cz)&&!blocked(riv,fords,x,z,nx,cz))return {x:nx,z:cz,ford:g};}return null;}
-const core=Object.freeze({VERSION,FLAG,starPts,WALL,WAY,WATER,wetAt,bankStep,giveWay,course,wallZ,atGate,blocked,via,towersAlong,stretches,tile,turkish,pose});
+// Use the same two solid circles as the engine. A vehicle already touching
+// one may back away. A step towards it stops before the native push-out.
+function approachesBlocker(from,to,circle,radius){
+ const dx=to.x-from.x,dz=to.z-from.z,length2=dx*dx+dz*dz;
+ if(!length2)return false;
+ const x=circle.x-from.x,z=circle.z-from.z;
+ const t=clamp((x*dx+z*dz)/length2,0,1);
+ if(t<=0)return false;
+ const clearance=circle.r*.85+radius;
+ return (x-dx*t)**2+(z-dz*t)**2<clearance*clearance;
+}
+const core=Object.freeze({VERSION,approachesBlocker,FLAG,starPts,WALL,WAY,WATER,wetAt,bankStep,giveWay,course,wallZ,atGate,blocked,via,towersAlong,stretches,tile,turkish,pose});
 if(typeof module==='object'&&module.exports)module.exports=core;
 if(!doc)return;
 
@@ -356,6 +367,12 @@ function drawMini(){if(typeof mmx==='undefined'||typeof mmO!=='function')return;
 function diagnostics(){return {version:VERSION,built,hooks:{...hooks},...stat,posts:POSTS.map(p=>({x:Math.round(p.x),z:Math.round(p.z),f:p.f})),towersAt:TW.map(t=>Math.round(t.x)),
  kirpis:KRP.map(u=>({x:Math.round(u.x),z:Math.round(u.z),dir:u.dir})),schoolsAt:SCH.map(s=>({x:Math.round(s.x),z:Math.round(s.z),name:s.name})),sentries:SOLD.filter(f=>f.home.gate).map(f=>({x:f.x,z:f.z,act:f.act})),patrols:SOLD.filter(f=>f.pat).map(f=>({x:f.x,z:f.z,act:f.act})),
   vehicles:VEH.length,men:SOLD.map(f=>({x:f.x,z:f.z,act:f.act,off:Math.hypot(f.ax||0,f.az||0),kind:f.pat?'devriye':f.home.tower?'kule':f.home.gate?'kapi':'karakol'}))};}
-root.HisarSinir=Object.freeze({version:VERSION,core,fig:()=>({Crowd:(...a)=>{T=T||root.THREE;return Crowd(...a);},RIG,pose,SKIN,way,wet}),vehicleSource:fn=>{if(typeof fn==='function'&&!VSRC.includes(fn))VSRC.push(fn);return VSRC.length;},flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd,bust:setBust,hasBust:()=>!!BUST,wallModel,towerGuards,towers:()=>TW.map(t=>({x:t.x,z:t.z})),kirpis:()=>KRP.map(u=>u.g),wall:()=>WM?{segs:WM.segs.length,counts:WM.lv.map(L=>L.n),old:!!WOLD}:null});
+function blocksPatrolDrive(from,to){
+ for(const vehicle of KRP)for(const circle of vehicle.cov){
+  if(approachesBlocker(from,to,circle,2.6))return true;
+ }
+ return false;
+}
+root.HisarSinir=Object.freeze({version:VERSION,core,blocksPatrolDrive,fig:()=>({Crowd:(...a)=>{T=T||root.THREE;return Crowd(...a);},RIG,pose,SKIN,way,wet}),vehicleSource:fn=>{if(typeof fn==='function'&&!VSRC.includes(fn))VSRC.push(fn);return VSRC.length;},flagTex:()=>{if(!flagTex&&root.THREE){T=T||root.THREE;flagTex=makeFlagTex();}return flagTex;},connect,posts:()=>POSTS.slice(),schools:()=>SCH.slice(),civilNear,diagnostics,crowd:()=>crowd,bust:setBust,hasBust:()=>!!BUST,wallModel,towerGuards,towers:()=>TW.map(t=>({x:t.x,z:t.z})),kirpis:()=>KRP.map(u=>u.g),wall:()=>WM?{segs:WM.segs.length,counts:WM.lv.map(L=>L.n),old:!!WOLD}:null});
 connect();doc.addEventListener('hisar:ui-ready',connect);
 })(typeof window!=='undefined'?window:globalThis);

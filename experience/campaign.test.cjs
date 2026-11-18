@@ -50,3 +50,21 @@ test('invalid checkpoints, failed storage and a stale tab cannot replace a coher
  const r=setup();begin(r);find(r);const cp=r.c.HisarCampaign.read();for(const bad of [{...cp,phase:1},{...cp,schema:2},{...cp,convoy:{hp:0}},{...cp,ammunition:{capacity:[1],shells:[1]}}]){assert.equal(r.c.HisarCampaign.write(bad),false);assert.equal(core.normalise(bad),null);}
  r.c.denyWrite=true;assert.equal(r.c.HisarCampaign.clear(cp.sessionStartedAt),false);assert.equal(r.c.HisarCampaign.read().phase,3);r.c.denyWrite=false;assert.equal(r.c.HisarCampaign.write({...cp,sessionStartedAt:cp.sessionStartedAt+100}),true);assert.equal(r.c.HisarCampaign.clear(cp.sessionStartedAt),false);assert.equal(r.c.HisarCampaign.diagnostics().error,'stale');
 });
+
+test('repair pauses on absence or danger, resumes earned work and requires the escort and clear area for departure',()=>{
+ const r=setup(),site={x:-605,z:330};
+ begin(r);find(r);r.to(site);r.run(3);
+ const earned=r.snapshot().phaseT;
+ assert.ok(earned>=2.9&&earned<=3.1);
+ r.to({x:0,z:0});r.run(4);
+ assert.equal(r.snapshot().phaseT,earned);assert.match(r.snapshot().convoy.wait,/yaklaş/);
+ r.to(site);r.run(1);assert.ok(r.snapshot().phaseT>earned);
+ r.run(3);assert.equal(r.snapshot().wave,0);
+ const threat=r.c.E[0];threat.x=site.x;threat.z=site.z;
+ const interrupted=r.snapshot().phaseT;r.run(2);
+ assert.equal(r.snapshot().phaseT,interrupted);assert.match(r.snapshot().convoy.wait,/tehlike/);
+ r.clear();r.run(16.1);assert.equal(r.snapshot().phaseT,12);assert.equal(r.snapshot().ph,3);
+ r.to({x:0,z:0});r.clear();r.run(1);
+ assert.equal(r.snapshot().ph,3);assert.equal(r.snapshot().phaseT,12);
+ r.to(site);r.run(.1);assert.equal(r.snapshot().ph,4);
+});

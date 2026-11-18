@@ -9,7 +9,7 @@
  * Çekirdek saf işlevlerdir ve Node ile sınanır.
  */
 (function(root){'use strict';
-const VERSION='2.2.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
+const VERSION='2.3.0',MODE='harekat',SAVE='celik-boru-harekat-v1';
 const doc=root.document;
 const safe=(f,d)=>{try{return f();}catch(e){return d;}};
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -169,7 +169,7 @@ function resumeCampaignCheckpoint(){const cp=root.HisarCampaign,c=cp&&cp.read();
  if(c.phase===5){const end=v.path[v.path.length-1];v.x=end[0];v.z=end[1];v.i=v.path.length;v.delivered=true;v.active=true;H.qrfOn=true;}
  safe(()=>root.HisarModern.syncConvoy(v),null);navTo();paint();safe(()=>root.save(),null);safe(()=>root.radio('Komuta: Güvenli kayıt yüklendi. '+H.op.phases[H.ph].n+'.'),null);return true;
 }
-function nextStoryPhase(){const old=H.op.phases[H.ph];H.ph++;H.phaseT=0;H.phaseTotal=0;H.navTick=0;navTo();const nx=H.op.phases[H.ph];safe(()=>root.radio('Komuta: '+old.n+' tamam. '+(nx?nx.n:H.op.success)),null);saveCheckpoint();saveCampaignCheckpoint();paint();}
+function nextStoryPhase(){const old=H.op.phases[H.ph];H.ph++;H.phaseT=0;H.phaseTotal=0;H.phaseHint='';H.navTick=0;navTo();const nx=H.op.phases[H.ph];safe(()=>root.radio('Komuta: '+old.n+' tamam. '+(nx?nx.n:H.op.success)),null);saveCheckpoint();saveCampaignCheckpoint();paint();}
 function storyStep(dt,en){const o=H.op,ph=o.phases[H.ph];if(!ph)return;const c=H.convoy;if(c&&c.dead)return lose('İkmal aracı devre dışı kaldı. Konvoya yakın kal ve yolu güvene al.');
  if(H.enteredPhase!==H.ph){H.enteredPhase=H.ph;for(const q of ph.spawn||[])if(!mk(q.type,q.x,q.z,{role:'def',post:{x:q.x,z:q.z},phase:H.ph,h:q.h||0}))H.spawnError=true;en=enemies();}
  if(H.spawnError)return lose('Görev unsurları oluşturulamadı. Son güvenli kayıttan yeniden dene.');
@@ -180,17 +180,35 @@ function storyStep(dt,en){const o=H.op,ph=o.phases[H.ph];if(!ph)return;const c=H
  let done=false;H.phaseTotal=ph.seconds||0;
  if(ph.k==='reach')done=phaseDone(ph,P,en);
  if(ph.k==='clear')done=phaseDone(ph,P,en)&&dist(P,ph)<(ph.visit||ph.r*2)&&(!o.continuous||!en.some(e=>e.hk.phase===H.ph));
- if(ph.k==='scan'||ph.k==='extract'){const inside=dist(P,ph)<ph.r,clear=ph.k==='scan'||!en.some(e=>dist(e,ph)<(ph.threat||60));
-  const visible=ph.k!=='scan'||safe(()=>root.los(P.x,hAt(P.x,P.z)+2.8,P.z,ph.x,hAt(ph.x,ph.z)+3,ph.z),true);const still=ph.k!=='scan'||Math.abs(P.v||0)<1.5;
-  H.phaseT=inside&&clear&&visible&&still?H.phaseT+dt:0;done=H.phaseT>=(ph.seconds||4);}
+ if(ph.k==='scan'||ph.k==='extract'){
+  const inside=dist(P,ph)<ph.r;
+  let hint='';
+  if(!inside)hint=ph.k==='scan'?'Konvoya yaklaş':'Teslim alanına gir';
+  else if(ph.k==='scan'){
+   if(Math.abs(P.v||0)>=1.5)hint='Tankı durdur';
+   else if(!safe(()=>root.los(P.x,hAt(P.x,P.z)+2.8,P.z,ph.x,hAt(ph.x,ph.z)+3,ph.z),true))hint='Aracı görebileceğin bir yere geç';
+  }else if(ph.requireConvoy&&(!c||!c.delivered))hint='Konvoyu bekle';
+  else if(ph.requireConvoy?en.length:en.some(e=>dist(e,ph)<(ph.threat||60)))hint='Bölgenin güvenli olmasını bekle';
+  H.phaseHint=hint;
+  H.phaseT=hint?0:H.phaseT+dt;
+  done=H.phaseT>=(ph.seconds||4);
+ }
  if(ph.k==='destroy')done=ph.target==='bat'?!en.some(e=>e.hk.bat):!en.some(e=>e.hk.role==='dep');
  if(ph.k==='defend'){if(ph.local){c.engaged=true;H.repairStarted=H.repairStarted||dist(P,ph)<ph.r;}let att=en.filter(e=>e.hk.role==='att');if((!ph.local||H.repairStarted)&&!att.length&&H.wave<o.waves.length-1){saveCheckpoint();H.waveT+=dt;const nx=o.waves[H.wave+1];if(nx&&waveDue(nx,H.waveT)){H.wave++;H.waveT=0;spawnWave(nx);en=enemies();att=en.filter(e=>e.hk.role==='att');}}
   const gate={x:o.ford,z:safe(()=>riv(o.ford),110)+40};if(!ph.local&&att.some(e=>dist(e,gate)<40))return lose('Hat aşıldı. Mevzini değiştirerek yaklaşan araçları durdur.');done=H.wave===o.waves.length-1&&!att.length;
-  if(ph.local){if(H.spawnError)return lose('Taarruz unsurları oluşturulamadı. Son güvenli kayıttan yeniden dene.');const clear=!en.some(e=>dist(e,ph)<90);H.phaseT=dist(P,ph)<ph.r&&clear?Math.min(ph.seconds,H.phaseT+dt):0;done=done&&H.phaseT>=ph.seconds;c.wait=dist(P,ph)>=ph.r?'Onarım ekibine yaklaş':clear?'Onarım '+Math.floor(H.phaseT)+'/'+ph.seconds+' sn':'Onarım durdu · yakın tehdit var';}}
+  if(ph.local){
+   if(H.spawnError)return lose('Taarruz unsurları oluşturulamadı. Son güvenli kayıttan yeniden dene.');
+   const nearby=dist(P,ph)<ph.r,clear=!en.some(e=>dist(e,ph)<90);
+   if(nearby&&clear)H.phaseT=Math.min(ph.seconds,H.phaseT+dt);
+   done=done&&nearby&&clear&&H.phaseT>=ph.seconds;
+   if(!nearby)c.wait='Onarım ekibine yaklaş';
+   else if(!clear)c.wait='Ekip yakın tehlikenin geçmesini bekliyor';
+   else if(H.phaseT>=ph.seconds)c.wait='Araç hazır';
+   else c.wait='Ekip çalışıyor';
+  }}
  if(ph.k==='escort'&&c){c.active=true;if(c.error)return lose('Konvoy modeli yüklenemedi. Bağlantıyı kontrol edip görevi yeniden aç.');const threat=en.some(e=>e.type!=='fuel'&&e.type!=='radar'&&e.type!=='truck'&&dist(e,c)<65);
   if(threat)c.wait='Yakın tehdidi temizle · konvoy bekliyor';else escortMove(c,P,dt,(x,z,q)=>safe(()=>root.HisarModern.convoyPassable(x,z,q),true));
   safe(()=>root.HisarModern.syncConvoy(c),null);done=c.delivered&&(!ph.clearAll||H.qrfOn&&!enemies().length);if(c.delivered&&!done)c.wait='Dönüş yolundaki takviyeyi temizle';H.navTick=(H.navTick||0)-dt;if(H.navTick<=0){H.navTick=3;navTo();}}
- if(ph.requireConvoy&&(!c||!c.delivered||enemies().length)){H.phaseT=0;done=false;}
  if(done){nextStoryPhase();if(H.op.phases[H.ph]&&H.op.phases[H.ph].k==='complete')return win(o.success||o.n+' tamamlandı.');}
  // Supply is tied to the real starting post, rather than an invisible reward.
  const base=H.post?H.post.door:o.start;if(dist(P,base)<BASE_R){H.sup+=dt;if(H.sup>=1){H.sup=0;safe(()=>{P.hp=Math.min(P.mx,P.hp+5);if(ammo<AMX())ammo++;if(TA&&TA0)for(let i=0;i<TA.length;i++)TA[i]=Math.min(TA0[i],TA[i]+1);},null);}}else H.sup=0;
@@ -198,8 +216,15 @@ function storyStep(dt,en){const o=H.op,ph=o.phases[H.ph];if(!ph)return;const c=H
 function paintStory(p,pr,sm){const o=H.op,ph=o.phases[H.ph];if(!ph)return;p.textContent=ph.n;pr.value=H.phaseTotal?clamp(H.phaseT/H.phaseTotal,0,1):H.ph/Math.max(1,o.phases.length-1);
  let detail=(o.continuous?'':('Bölüm '+o.chapter+'/4 · '))+'Aşama '+Math.min(H.ph+1,o.phases.length-1)+'/'+(o.phases.length-1);
  if(H.t<H.preparation)detail+=' · hazırlık '+Math.ceil(H.preparation-H.t)+' sn';
- if(ph.k==='scan'||ph.k==='extract')detail+=' · '+Math.max(0,Math.ceil((ph.seconds||4)-H.phaseT))+' sn · '+Math.round(dist(P,ph))+' m';
- else if(ph.k==='defend'){if(ph.local)detail+=' · onarım '+Math.floor(H.phaseT)+'/'+ph.seconds+' sn'+(dist(P,ph)>=ph.r?' · konvoya yaklaş':'');const att=enemies().filter(e=>e.hk.role==='att').length,nx=o.waves[H.wave+1];detail+=' · '+(att?(H.wave+1)+'. dalga / '+att+' araç':nx?'sonraki dalga '+Math.ceil(Math.max(0,nx.at-H.waveT))+' sn':'hat tutuldu');}
+ if(o.continuous&&(ph.k==='scan'||ph.k==='extract')&&H.phaseHint)detail+=' · '+H.phaseHint+' · '+Math.round(dist(P,ph))+' m';
+ else if(ph.k==='scan'||ph.k==='extract')detail+=' · '+Math.max(0,Math.ceil((ph.seconds||4)-H.phaseT))+' sn · '+Math.round(dist(P,ph))+' m';
+ else if(ph.k==='defend'){
+  if(ph.local)detail+=' · onarım '+Math.floor(H.phaseT)+'/'+ph.seconds+' sn · '+H.convoy.wait;
+  const active=enemies().filter(e=>e.hk.role==='att').length,next=o.waves[H.wave+1];
+  if(active)detail+=' · '+(H.wave+1)+'. dalga / '+active+' araç';
+  else if(next&&(!ph.local||H.repairStarted))detail+=' · sonraki dalga '+Math.ceil(Math.max(0,next.at-H.waveT))+' sn';
+  else if(!next)detail+=' · bölge güvenli';
+ }
  else if(ph.k==='destroy')detail+=' · '+(ph.target==='bat'?H.batLeft:H.depLeft)+' hedef kaldı';
  else if(ph.k==='escort'&&H.convoy)detail+=' · konvoy %'+Math.round(H.convoy.hp/H.convoy.mx*100)+' · '+H.convoy.wait;
  else if(Number.isFinite(ph.x))detail+=' · '+Math.round(dist(P,ph))+' m';sm.textContent=detail;}

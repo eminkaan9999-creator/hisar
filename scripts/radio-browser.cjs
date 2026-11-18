@@ -229,9 +229,21 @@ if(!mobile){
  const slow=n=>p.evaluate(n=>new Promise(res=>{const keep=window.SIM_MAX;window.SIM_MAX=n;requestAnimationFrame(()=>{const t=performance.now();while(performance.now()-t<130){}requestAnimationFrame(()=>{const s=window.SIM_STEPS;window.SIM_MAX=keep;res(s);});});}),n);
  assert.equal(await slow(3),3,'a 130 ms frame is simulated in three steps');assert.equal(await slow(1),1);assert.equal(await p.evaluate(()=>window.SIM_MAX),1);ok('a slow frame (130 ms) is simulated in three steps of real time instead of one: no slow motion on a slow phone');
  // ---- atış hissi, kovan, erkek ses, gerçek küçük harita, çarpışmalar
- await p.evaluate(()=>{lvSel='normal';HisarHarekat.start('gecit');L.dmg=0;});await tick(p,2);
- // mürettebat "Ateş!" der, top konuşma bitince ateşlenir (crew-orders.js): bir an beklenir
- const a0=await p.evaluate(()=>{const a=HisarAtis.diagnostics();cd=0;ammo=Math.max(ammo,3);mode='tank';fire();return a;});await p.waitForFunction(s=>HisarAtis.diagnostics().shots>s,a0.shots,{timeout:8000});
+ await p.bringToFront();
+ const started=await p.evaluate(()=>{lvSel='normal';const ready=HisarHarekat.start('gecit');L.dmg=0;return ready&&game==='play';});
+ assert.ok(started,'the effect check needs an active mission');await tick(p,2);
+ // This scenario measures the visual effect after the asynchronous crew audio completes.
+ const a0=await p.evaluate(()=>{
+  if(game!=='play'||mode!=='tank'||AA.on||!HisarAtis.diagnostics().hooks.fire)throw Error('Unexpected vehicle or effect state');
+  cd=0;TA[st]=Math.max(TA[st],1);
+  const before=HisarAtis.diagnostics();fire();return before;
+ });
+ try{
+  await p.waitForFunction(shots=>HisarAtis.diagnostics().shots>shots,a0.shots,{polling:200,timeout:45000});
+ }catch(cause){
+  const state=await p.evaluate(()=>({game,mode,aa:AA.on,stock:TA[st],cooldown:cd,crew:HisarCrewOrders.diagnostics(),effects:HisarAtis.diagnostics().shots}));
+  throw new Error('Vehicle effect did not finish: '+JSON.stringify(state),{cause});
+ }
  const fx=await p.evaluate(a0=>{update(.05);const a1=HisarAtis.diagnostics();HisarAtis.eject(3);for(let i=0;i<25;i++)update(.1);const a2=HisarAtis.diagnostics();
   mmDraw();const h=HisarHarita.diagnostics();return {shots:a1.shots-a0.shots,smoke:a1.smoke-a0.smoke,rock:a1.peak,cas:a2.live,v:typeof trVoice==='function',h,
    kovan:!!S.getObjectByName('AT_KOVAN')};},a0);
@@ -346,10 +358,32 @@ if(!mobile){
    const turn={near:minTank,reach,al:Math.min(...AL.map(a=>Math.hypot(a.x-P.x,a.z-P.z)))};
    /* katı araçlar */
    const kg=HisarSinir.kirpis()[0];P.x=kg.position.x+.5;P.z=kg.position.z+.5;update(.05);const kd=Math.hypot(P.x-kg.position.x,P.z-kg.position.z),pk=COV.find(c=>c.park);P.x=pk.x+.4;P.z=pk.z-.3;update(.05);const park=Math.hypot(P.x-pk.x,P.z-pk.z);
-   /* aracın ucundan da girilemez: gövdenin ekseninde, merkezinden 3 m ötede bırakılan tank dışarı itilir */
-   /* devriye yolunun ucunda dönmekte olan araç duvara dönüktür (itilen tank duvara dayanır, ölçü yanıltır): araç yolunda düz giderken ölçülür */
-   const k2=HisarSinir.kirpis()[1];{let y0=k2.rotation.y;for(let i=0;i<80;i++){update(.1);const y1=k2.rotation.y,dy=Math.abs(Math.atan2(Math.sin(y1-y0),Math.cos(y1-y0)));y0=y1;if(dy<.012)break;}}
-   const ky=k2.rotation.y;P.x=k2.position.x+Math.sin(ky)*3;P.z=k2.position.z+Math.cos(ky)*3;update(.05);const kend=Math.hypot(P.x-k2.position.x,P.z-k2.position.z);
+   // Start on a clear stretch of road, drive towards the nose and measure every tick.
+   // The centre-overlap test above covers recovery from an already-intersecting pose.
+   let patrol;
+   for(let i=0;i<120&&!patrol;i++){
+    update(.1);
+    const vehicles=HisarSinir.kirpis(),positions=HisarSinir.diagnostics().kirpis;
+    patrol=vehicles.find((g,j)=>{
+     const h=g.rotation.y,s=Math.sin(h),c=Math.cos(h),dir=positions[j].dir;
+     const roadHeading=Math.atan2(dir,riv(g.position.x+dir)-riv(g.position.x));
+     if(Math.cos(h-roadHeading)<.995)return false;
+     const blockers=[...BLD,...COV].filter(o=>!o.dead&&!o.krp);
+     for(const front of [6.5,9,12]){
+      const x=g.position.x+s*front,z=g.position.z+c*front;
+      if(blockers.some(o=>Math.hypot(x-o.x,z-o.z)<o.r+3.6))return false;
+     }
+     return true;
+    });
+   }
+   if(!patrol)throw Error('No clear patrol-road approach was available');
+   P.h=patrol.rotation.y+Math.PI;P.v=P.w=0;
+   P.x=patrol.position.x-Math.sin(P.h)*12;P.z=patrol.position.z-Math.cos(P.h)*12;
+   let kend=Infinity;const contacts=HisarMobility.diagnostics().patrolStops;
+   keys.w=true;
+   try{for(let i=0;i<45;i++){update(.1);kend=Math.min(kend,Math.hypot(P.x-patrol.position.x,P.z-patrol.position.z));}}
+   finally{keys.w=false;}
+   if(HisarMobility.diagnostics().patrolStops===contacts)throw Error('The tank never reached the patrol on the road: '+kend);
    /* asker taşıyan kamyon: tank hızla üstüne sürülür; kamyon ezilmez, tank içine giremez */
    const ti=HisarSivil.cars().findIndex(c=>c.kind==='kamyon'),truck=()=>HisarSivil.cars()[ti],c0=HisarSivil.diagnostics().crushed;
    /* önüne tank çıkınca kamyon durur; sonra tank yandan hızla üstüne sürülür */
@@ -359,7 +393,7 @@ if(!mobile){
   assert.ok(kol.cross.zone0==='000000000000'&&kol.cross.tank===2&&kol.cross.men===12&&kol.cross.zones==='222222222222'&&kol.cross.vz==='22','the whole column follows the tank across the border: '+JSON.stringify(kol.cross));
   assert.ok(kol.cross.bad===0&&kol.cross.deep===0&&kol.cross.inB===0&&kol.cross.via>100,'through the gate only, never through the wall, deep water or a building: '+JSON.stringify(kol.cross));
   assert.ok(kol.turn.near>=6.4&&kol.turn.reach>=0,'escort vehicles drive round the tank when it turns about: '+JSON.stringify(kol.turn));
-  assert.ok(kol.solid.kirpi>4.5&&kol.solid.kend>6.2&&kol.solid.park>4.8&&kol.solid.park<10&&kol.solid.parkN===18&&kol.solid.krpN>=6,'the Kirpi patrol and parked vehicles are solid along their whole length: '+JSON.stringify(kol.solid));
+  assert.ok(kol.solid.kirpi>4.5&&kol.solid.kend>6.2&&kol.solid.kend<7.5&&kol.solid.park>4.8&&kol.solid.park<10&&kol.solid.parkN===18&&kol.solid.krpN>=6,'the Kirpi patrol and parked vehicles are solid along their whole length: '+JSON.stringify(kol.solid));
   assert.ok(kol.solid.truck.dead===false&&kol.solid.truck.stopped<1&&kol.solid.truck.near>4.3&&kol.solid.truck.covs===4,'the troop truck is solid and is never crushed: '+JSON.stringify(kol.solid.truck));
   ok('escort column: all 12 infantry and both vehicles cross the border through the gate behind the tank (no wall, deep water or building crossed; '+(kol.cross.wait/10).toFixed(0)+' s to close up); vehicles pass a turning tank no closer than '+kol.turn.near.toFixed(1)+' m; the tank cannot enter the Kirpi patrol (kept '+kol.solid.kirpi.toFixed(1)+' m from its centre, '+kol.solid.kend.toFixed(1)+' m end-on) or a parked vehicle ('+kol.solid.park.toFixed(1)+' m); the troop truck is not crushed and keeps the tank '+kol.solid.truck.near.toFixed(1)+' m off');
   // ---- gerçek sürüş, su ve yol: kumandayla (ışınlamadan) kovalanan köylünün içinden geçilmez; kimse suda yürümez; köylü asfaltta yürümez
@@ -367,7 +401,7 @@ if(!mobile){
    const inHull=q=>{const sx=Math.sin(P.h),cz=Math.cos(P.h),dx=q.x-P.x,dz=q.z-P.z;return Math.abs(dx*sx+dz*cz)<HL&&Math.abs(dx*cz-dz*sx)<HW;};
    const steer=(tx,tz)=>{const want=Math.atan2(tx-P.x,tz-P.z);let d=want-P.h;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;joy.y=1;joy.x=Math.max(-1,Math.min(1,-d*2.5));};
    const live=()=>HisarKoy.people().filter(q=>q.f.live&&q.st!=='hidden'&&q.st!=='home');let hits=0,near=1e9,vmax=0,runs=0;
-   for(let r=0;r<4;r++){const L0=live(),t=L0[(r*11)%L0.length];if(!t)break;let ok=false;for(let a=0;a<12&&!ok;a++){const h=a*Math.PI/6,sx=t.f.x-Math.sin(h)*50,sz=t.f.z-Math.cos(h)*50;if(!BLD.some(b=>!b.dead&&Math.hypot(b.x-sx,b.z-sz)<b.r+6)&&Math.abs(sz-riv(sx))>60){P.x=sx;P.z=sz;P.h=h;P.v=0;P.w=0;ok=true;}}if(!ok)continue;runs++;
+   for(let r=0;r<4;r++){const L0=live(),t=L0[(r*11)%L0.length];if(!t)break;let ok=false;for(let a=0;a<12&&!ok;a++){const h=a*Math.PI/6,sx=t.f.x-Math.sin(h)*50,sz=t.f.z-Math.cos(h)*50;if(!L0.some(q=>Math.hypot(q.f.x-sx,q.f.z-sz)<7)&&!BLD.some(b=>!b.dead&&Math.hypot(b.x-sx,b.z-sz)<b.r+6)&&Math.abs(sz-riv(sx))>60){P.x=sx;P.z=sz;P.h=h;P.v=0;P.w=0;ok=true;}}if(!ok)continue;runs++;
     for(let k=0;k<420;k++){steer(t.f.x,t.f.z);update(1/60);vmax=Math.max(vmax,Math.abs(P.v));for(const q of live()){near=Math.min(near,Math.hypot(q.f.x-P.x,q.f.z-P.z));if(inHull(q.f))hits++;}}}
    joy.x=joy.y=0;const chase={runs,hits,near,vmax};
    /* yol: yolun ortasına konan köylü yol boyunca yürür; asfaltta yalnız çıkarken bulunur */

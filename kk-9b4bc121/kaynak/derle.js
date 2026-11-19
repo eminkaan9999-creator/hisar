@@ -54,7 +54,7 @@ catch (e) { hata("SÖZDİZİMİ HATASI: " + e.message + "\n" + String(e.stack ||
 
 let sayfa = oku("sayfa.html").replace(/\s+$/, "");
 for (const isaret of ["/*@@STIL@@*/", "<!--@@BETIKLER@@-->"]) if (sayfa.split(isaret).length !== 2) hata("sayfa.html içinde " + isaret + " işareti tam bir kez bulunmalı");
-const stil = oku("stil.css").replace(/\s+$/, "");
+const stil = [oku("stil.css"), oku("gorsel-iyilestirme.css")].join("\n").replace(/\s+$/, "");
 sayfa = sayfa.split("/*@@STIL@@*/").join(stil).split("<!--@@BETIKLER@@-->").join(betikler);
 
 const suNormal = fs.readFileSync(path.join(KAYNAK, "varlik", "su_normal.jpg")).toString("base64"); // deniz dalgası dokusu sayfaya gömülür

@@ -1,0 +1,40 @@
+# HİSAR TETİK: bütün testler, her push ve Pull Request'te.
+# Sensör yazılımının masaüstü testi (g++), Android sayfa güncellemesi (PageStore, JDK) ve 18 tarayıcı testi
+# (Playwright + sahte sensör, sahte kamera, sahte yerel köprü). Gerçek donanım testi değildir.
+# Bir şey yayınlamaz; yalnız okur.
+name: Tetik testler
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'tetik-*']
+    paths:
+      - 'tetik/**'
+      - '.github/workflows/tetik-testler.yml'
+  pull_request:
+    paths:
+      - 'tetik/**'
+      - '.github/workflows/tetik-testler.yml'
+permissions:
+  contents: read
+concurrency:
+  group: tetik-testler-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  testler:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Playwright (Chromium)
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Bütün testler (tetik/test/hepsi.sh)
+        run: bash tetik/test/hepsi.sh

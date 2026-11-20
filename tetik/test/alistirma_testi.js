@@ -45,7 +45,10 @@ const DRIVE = async ({ id, set, maxMs, stopAfter }) => {
       else if (id === 'sarjor') { if (el - last > 1800) { last = el; fire(100); } }
       else if (el - last > 1300) { last = el; fire(100, id === 'geritepme' ? { live: true } : {}); }
       const enough = stopAfter && r.sess.shots.length >= stopAfter;
-      if (!r.active || el > maxMs || enough) { clearInterval(iv); res(); }
+      // Karar: komut türü rastgele (%60 yeşil). Sabit sürede bütün turlar kırmızı gelebiliyordu (atış yok, oturum kaydedilmez,
+      // test yanlışlıkla başarısız). En az bir yeşil ve bir kırmızı tur bitene kadar sürer (alıştırma en çok 15 tur).
+      const kararTamam = id === 'karar' && types.includes('ates') && types.includes('dur') && st.goT == null;
+      if (!r.active || el > maxMs || enough || kararTamam) { clearInterval(iv); res(); }
     }, 40);
   });
   const auto = !r.active;
@@ -62,7 +65,7 @@ const DRILLS = [
   ['serbest', {}, 9000, 6], ['safespace', {}, 7000, 4], ['degerlendirme', {}, 20000], ['dayaniklilik', { dayanik: 10 }, 20000], ['atiseli', {}, 7000, 4], ['destekeli', {}, 7000, 4],
   ['zamanlayici', {}, 22000], ['par', { par: 2.0 }, 22000], ['kiyas20', {}, 30000], ['zamankiyas', {}, 15000], ['ritim', { ritimShots: 5, ritim: 1.5 }, 20000], ['kilif', {}, 24000],
   ['surpriz', { dset: { surpriz: { rounds: 3 } } }, 40000], ['rehine', { dset: { rehine: { rounds: 3, zorluk: 'kolay' } } }, 45000],
-  ['karar', {}, 22000], ['sarjor', {}, 11000], ['geritepme', { mode: 'gercek' }, 7000, 4],
+  ['karar', {}, 130000], ['sarjor', {}, 11000], ['geritepme', { mode: 'gercek' }, 7000, 4],
 ];
 
 (async () => {

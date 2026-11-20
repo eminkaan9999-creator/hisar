@@ -8,7 +8,7 @@ Kullanim:
 Her calismada Android sayfasi apk/index.html'ye de yazilir: GitHub Pages'ten yayinlanir, Android uygulamasi
 yeni surumu buradan kendi icinden indirir (PageStore.java; yazi tiplerini APK'dakilere kendisi baglar).
 """
-import sys, pathlib, shutil
+import sys, pathlib, shutil, json
 
 here = pathlib.Path(__file__).resolve().parent
 args = [a for a in sys.argv[1:] if not a.startswith('--')]
@@ -20,6 +20,19 @@ if args:
         src_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(given, src_path)
 src = src_path.read_text(encoding='utf-8')
+
+# Keep the optional studio available to the single-page native updater and offline PWA.
+# Its document is inert until the user opens the studio from settings.
+studio_dir = src_path.parent / 'studio'
+studio = (studio_dir / 'shell.html').read_text(encoding='utf-8')
+for marker, filename in [('PALETTE', 'palette.css'), ('STYLE', 'layout.css'),
+                         ('WIDGETS', 'widgets.js'), ('MODEL', 'model.js'), ('APP', 'app.js')]:
+    studio = studio.replace('/*' + marker + '*/', (studio_dir / filename).read_text(encoding='utf-8'))
+slot = '<!-- tetik-studio-document -->'
+if slot in src:
+    payload = json.dumps(studio, ensure_ascii=False).replace('<', r'\u003c')
+    src = src.replace(slot, '<script type="application/json" id="studioDocument">' + payload + '</script>')
+
 
 head = '''<!doctype html>
 <html lang="tr">

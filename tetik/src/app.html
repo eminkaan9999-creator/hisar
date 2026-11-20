@@ -422,6 +422,30 @@ td.m{font-family:var(--mono)}
 .warnbox.out{opacity:0}
 svg text{font-family:var(--body)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Administrative surfaces use their own palette. The classic view remains the default. */
+#adminLook{min-height:44px;max-width:100%;font:inherit;border-radius:8px;padding:6px 10px;color:inherit;background:var(--btn);border:1px solid var(--line2)}
+.admin-look{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 14px 12px;font-weight:600}
+#v-ayarlar[data-admin-look=light]{--admin-bg:#f1f5f6;--admin-card:#fff;--admin-ink:#172833;--admin-muted:#465c67;--admin-edge:#cbd8dd;--admin-action:#076c65}
+#v-ayarlar[data-admin-look=dark]{--admin-bg:#0e1c26;--admin-card:#192b37;--admin-ink:#ecf5f6;--admin-muted:#b6c8ce;--admin-edge:#425967;--admin-action:#89dfcf}
+#v-ayarlar[data-admin-look] .admin-area{background:var(--admin-bg);color:var(--admin-ink);padding:12px 0 4px}
+#v-ayarlar[data-admin-look] .prof,#v-ayarlar[data-admin-look] .sl{background:var(--admin-card);border:1px solid var(--admin-edge);border-radius:12px;margin:0 12px 12px}
+#v-ayarlar[data-admin-look] .prof .pe,#v-ayarlar[data-admin-look] .prof .pl{color:var(--admin-action)}
+#v-ayarlar[data-admin-look] .sl{padding-bottom:0}
+#v-ayarlar[data-admin-look] .sl button{color:var(--admin-ink);border-color:var(--admin-edge);text-transform:none}
+#v-ayarlar[data-admin-look] .sl button:last-child{border-bottom:0}
+#v-ayarlar[data-admin-look] .sl small{color:var(--admin-muted)}
+#v-ayarlar[data-admin-look] #adminLook{background:var(--admin-card);border-color:var(--admin-edge)}
+/* The studio entry and frame are isolated from the classic screens. */
+.studio-entry{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px;padding:15px 17px;border:1px solid #42636d;border-radius:12px;background:#152c36;color:#f0f7f6;text-align:left;font:inherit;cursor:pointer}
+.studio-entry strong,.studio-entry small{display:block}
+.studio-entry strong{font-size:16px}.studio-entry small{margin-top:3px;font-size:13px;color:#bed6d7}
+.studio-entry .studio-open{font-weight:650;color:#93e5d2}
+.studio-entry:focus-visible{outline:3px solid #93e5d2;outline-offset:2px}
+.app.studio-view{max-width:none}
+.studio-view #v-sayfa{height:100%}
+.studio-view #pgBody{flex:1;min-height:0;display:flex}
+#studioFrame{display:block;flex:1;width:100%;height:100%;min-height:0;border:0;background:#132330}
 </style>
 
 <div class="app" lang="tr">
@@ -536,7 +560,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=28;
+const VER=29;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -2909,15 +2933,57 @@ function pgRoot(){
     <div class="mx-l"><span>${esc(MODE_A[S.mode])}</span>${infoBtn("tip")}</div>
     ${mxSeg("sMode",[["gercek","Gerçek atış",MODE_IC.gercek],["kuru","Kuru tetik",MODE_IC.kuru],["more",S.mode==="co2"?"CO2":"Daha fazla",S.mode==="co2"?MODE_IC.co2:""]],S.mode==="co2"?"more":S.mode,"mode")}
   </div>
+  <div class="admin-area"><label class="admin-look" for="adminLook">Yönetim görünümü
+    <select id="adminLook"><option value="classic">Klasik</option><option value="light">Açık</option><option value="dark">Koyu</option></select>
+  </label>
   <div class="prof"><span class="pl">${LOGO_SVG}</span><div style="min-width:0"><div class="pn" id="profName">${esc(curProf().ad)}</div><button class="pe" id="profEdit">Profilini düzenle</button></div><button class="pd" id="profPick" aria-label="Atıcı değiştir"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 8h14l-7 9z"/></svg></button></div>
+  <button type="button" class="studio-entry" id="rtStudio"><span><strong>Ölçüm stüdyosu</strong><small>Sentetik veri · açık ve koyu tema</small></span><span class="studio-open">Aç</span></button>
   <div class="sl">
     <button id="rtSes">${IC_SPK}Sesli geri bildirim<small>${esc(SOUND_T[S.sound]||"")}${S.greet?" · karşılama":""}</small></button>
     <button id="rtSaat">${IC_SAAT}Akıllı saat<small>${esc(saatDesc())}</small></button>
     <button id="rtProgram">${IC_BELL}Eğitim programı<small>${esc(planDesc())}</small></button>
     <button id="rtAdv">${IC_SLD}Gelişmiş ayarlar<small>Algılama, görünüm, veriler</small></button>
-  </div>`;
+  </div></div>`;
+}
+const ADMIN_LOOK_KEY="hisarTetik.ui.adminLook.v1";
+let adminLook="classic";
+try{
+  const saved=localStorage.getItem(ADMIN_LOOK_KEY);
+  if(saved==="light"||saved==="dark") adminLook=saved;
+}catch(e){}
+function bindAdminLook(root){
+  const control=root.querySelector("#adminLook");
+  function apply(value){
+    if(value==="classic") root.removeAttribute("data-admin-look");
+    else root.dataset.adminLook=value;
+    control.value=value;
+  }
+  apply(adminLook);
+  control.onchange=()=>{
+    adminLook=control.value;
+    apply(adminLook);
+    try{localStorage.setItem(ADMIN_LOOK_KEY,adminLook);}
+    catch(e){toast("Görünüm yalnız bu açılış için uygulandı.");}
+  };
+}
+function openStudio(){
+  const doc=$("studioDocument");
+  if(!doc){ toast("Stüdyo bu kopyada bulunamadı."); return; }
+  const app=$("main").closest(".app");
+  app.classList.add("studio-view");
+  pushPage({
+    onPop:()=>{
+      const frame=$("studioFrame");
+      if(frame) frame.remove();
+      app.classList.remove("studio-view");
+    },
+    title:"Ölçüm stüdyosu", back:"Ayarlar", noNav:true,
+    render:()=>`<iframe id="studioFrame" title="Sentetik ölçüm stüdyosu" allow="camera 'none'; microphone 'none'; geolocation 'none'; usb 'none'; serial 'none'; bluetooth 'none'"></iframe>`,
+    bind:root=>{ root.querySelector("#studioFrame").srcdoc=JSON.parse(doc.textContent); }
+  });
 }
 function bindRoot(root){
+  bindAdminLook(root);
   bindSeg(root,"sWeapon",v=>{ if(S.weapon!==v){ S.weapon=v; if(S.weaponName&&!(S.weapons||[]).some(w=>w.ad===S.weaponName&&w.tip===v)) S.weaponName=""; } saveMeta(); renderSettings(); });
   bindSeg(root,"sHand",v=>{S.hand=v;saveMeta();renderSettings();});
   bindSeg(root,"sMode",v=>{ if(v==="more"){ openModeList(); return; } setMode(v); renderSettings(); });
@@ -2928,6 +2994,7 @@ function bindRoot(root){
   $("rtProgram").onclick=()=>openSetPage("program");
   $("rtSes").onclick=()=>openSetPage("ses");
   $("rtSaat").onclick=()=>openSetPage("saat");
+  $("rtStudio").onclick=openStudio;
   $("rtAdv").onclick=()=>openSetPage("gelismis");
 }
 function setMode(v){ S.mode=v; applyCfg(); saveMeta(); if(v!=="kuru"&&source==="phone") toast("Telefonu gerçek atışta silaha takma; tepme telefona zarar verir."); }
@@ -4028,3 +4095,5 @@ if(sensorPaired()&&S.autoConnect&&canAutoConnect()){
 window.addEventListener("resize",()=>{if(curView==="oturum")renderSub();});
 })();
 </script>
+
+<!-- tetik-studio-document -->

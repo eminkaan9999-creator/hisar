@@ -646,7 +646,7 @@ button.k-satir.k-kutu{background:var(--panel);border:1px solid var(--line);borde
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=29;
+const VER=30;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -793,8 +793,15 @@ const CAUSES={
    neden:"Duruşun sağlam değil, nefesini tutmuyorsun, kolların yorgun ya da kasların gergin.",
    duzelt:["Duruşunu sağlamlaştır: gözünü kapatıp açtığında silah hâlâ hedefteyse duruşun doğru.","Nefesini ver, 1–2 saniyelik doğal duraklamada tetiği düşür.","Kısa ve sık çalış; Dayanıklılık alıştırmasını kullan."],al:"dayaniklilik"},
  takip:{ad:"Atıştan sonra hemen gevşeme",ozet:"Tetik düşer düşmez nişanı bırakıyorsun.",
-   neden:"Atış biter bitmez gevşiyorsun ya da sonucu görmek için kıpırdıyorsun.",
-   duzelt:["Tetik düştükten sonra nişanı ve tetiği bir saniye daha tut.","Sonra tetiği yalnız tık sesini duyacağın yere kadar bırak."],al:"serbest"}
+   neden:"Atış biter bitmez gevşiyorsun ya da sonucu görmek için kıpırdıyorsun. Kabzayı gevşek tutmak da tetik düşünce silahın oynamasına yol açar.",
+   duzelt:["Tetik düştükten sonra nişanı ve tetiği bir saniye daha tut.","Sonra tetiği yalnız tık sesini duyacağın yere kadar bırak.","Kabzayı atış boyunca aynı sıkılıkta tut; tetik düşünce gevşetme."],al:"serbest"},
+ // T4: tetik anında namlu çevresinde dönme (jiroskoptan). + silahın üstü sağa (atıcının gözünden saat yönü)
+ donme_sag:{ad:"Tetik çekerken silahı sağa döndürme",ozet:"Tetik düşerken silah kendi ekseninde sağa dönüyor (üstü sağa yatıyor). Bileğin ya da tutuşun tetikle birlikte dönüyor; atış yana kayar.",
+   neden:"Tetik baskısı tam geriye değil yana gidiyor ya da kabzayı gevşek tutuyorsun; tetik çekilirken el silahı çeviriyor.",
+   duzelt:["Kabzayı iki elinle sıkı ve eşit kavra; destek elin silahı yandan sarsın.","Tetiği namluya paralel, dümdüz geriye çek.","Yavaş kuru tetikte gez ve arpacığa bak: tetik düşerken yana yatmamalı."],al:"serbest"},
+ donme_sol:{ad:"Tetik çekerken silahı sola döndürme",ozet:"Tetik düşerken silah kendi ekseninde sola dönüyor (üstü sola yatıyor). Bileğin ya da tutuşun tetikle birlikte dönüyor; atış yana kayar.",
+   neden:"Tetik baskısı tam geriye değil yana gidiyor ya da kabzayı gevşek tutuyorsun; tetik çekilirken el silahı çeviriyor.",
+   duzelt:["Kabzayı iki elinle sıkı ve eşit kavra; destek elin silahı yandan sarsın.","Tetiği namluya paralel, dümdüz geriye çek.","Yavaş kuru tetikte gez ve arpacığa bak: tetik düşerken yana yatmamalı."],al:"serbest"}
 };
 // sağ elli atıcı için saat yönüne göre olası nedenler (NRA ve 4-H atış eğitimi şemalarından)
 const MAP_PISTOL={12:["bilek_yukari","geri_tepme"],1:["avucla_itme","geri_tepme"],2:["avucla_itme","basparmak"],3:["basparmak","az_parmak"],4:["siki_tutus","az_parmak"],5:["siki_tutus","bilek_asagi"],6:["bilek_asagi","ileri_itme"],7:["tokatlama","bilek_asagi"],8:["tokatlama","tum_el"],9:["fazla_parmak","tokatlama"],10:["geri_tepme","fazla_parmak"],11:["geri_tepme","bilek_yukari"]};
@@ -805,19 +812,38 @@ const effHand=s=>{const h=s.hand||"R";return s.handMode==="weak"?(h==="R"?"L":"R
 // Tetik penceresindeki (son 150 ms) hareket, aynı sürede nişan titremesinin yaptığı tipik hareketin (q.wv) belirgin üstünde mi?
 // Değilse hareketin yönü rastgele titremeden gelir: saat yönüne göre tetik hatası söylenmez, puan kaybı tutuş titremesindendir.
 // Hızlı alıştırmalarda (önceki saniye çekiş/geçişle hareketli) ve eski kayıtlarda (wv yok) yön her zaman kullanılır.
-const TRIG_SNR=1.75;
+const TRIG_SNR=1.75, DONME_MIN=1;
 function trigClear(q,s){ if(q.wv==null||SPEED.has(s.drill)) return true; const d=Math.hypot(q.dx||0,q.dy||0); return d>=TRIG_SNR*q.wv&&d>=0.1*scaleFor(s.weapon,s.diff); }
 function diagnose(q,s){
   const out=[]; const scale=scaleFor(s.weapon,s.diff);
   if(q.sc<85){ if(trigClear(q,s)){let h=q.h;if(effHand(s)==="L")h=(12-h)%12||12;const pair=(s.weapon==="rifle"?MAP_RIFLE:MAP_PISTOL)[h];if(pair){out.push(pair[0]);if(q.sc<70)out.push(pair[1]);}} else out.push("gezinme"); }
   // kanting: 2,5°'den itibaren. Yön testi yapılmadan sıfır, sensörün kendi ekseninden alınır; bantlı montajda birkaç derece
   // yatıklık olağandır, o yüzden eşik 6°. 25°'den büyük yatıklık kanting değil, sensörün farklı takılmasıdır (mountChecks uyarır).
+  // T4: tetik penceresinde namlu çevresinde dönme: tutuştaki dönme titremesinin 1,75 katı ve en az 1° (hızlı alıştırmalarda aranmaz)
+  if(q.dr!=null&&!SPEED.has(s.drill)){ const a=Math.abs(q.dr); if(a>=DONME_MIN&&(q.rv==null||a>=TRIG_SNR*q.rv)) out.push(q.dr>0?"donme_sag":"donme_sol"); }
   const ca=Math.abs(q.ca||0); if(ca>=(s.yt===false?6:2.5)&&ca<=25) out.push("kanting");
-  if(!SPEED.has(s.drill)&&q.ho>0.55*scale&&q.ho>q.tr) out.push("gezinme");
+  // T4: nişan gezinmesi yalnız skoru düşük atışta söylenir; iyi atışta (85+) titreme skoru bozmamıştır, her atışta aynı hatayı
+  // tekrarlamak asıl tetik hatalarını gölgeliyordu
+  if(!SPEED.has(s.drill)&&q.sc<85&&q.ho>0.55*scale&&q.ho>q.tr) out.push("gezinme");
   if(s.mode==="kuru"&&q.po!=null&&q.po>Math.max(0.35,3*q.tr)) out.push("takip");
   return [...new Set(out)].slice(0,3);
 }
 function verdict(sc){return sc>=85?["HARİKA ATIŞ","good"]:sc>=70?["İYİ ATIŞ","mid"]:sc>=50?["GELİŞTİRİLMELİ","bad"]:["ZAYIF ATIŞ","bad"];}
+// T4: oturum geneli tetik hatası. Tek atışta tetik hareketi titremeden ayırt edilemeyebilir (trigClear); ama her atışta aynı yöne
+// giden küçük bir hareket, atışların ortalamasında ortaya çıkar (titreme rastgele yönlüdür, ortalamada söner). En az 6 atış;
+// ortalama hareket standart hatasının SIS_Z katı ve ölçeğin %10'u üstündeyse yönü ve olası nedeni söylenir.
+const SIS_Z=2.5;
+function sistematik(s){
+  if(!s||SPEED.has(s.drill)) return null;
+  const v=validShots(s).filter(q=>q.dx!=null&&q.dy!=null), n=v.length; if(n<6) return null;
+  let mx=0,my=0; for(const q of v){ mx+=q.dx; my+=q.dy; } mx/=n; my/=n;
+  let vv=0; for(const q of v) vv+=(q.dx-mx)**2+(q.dy-my)**2; vv/=n-1;
+  const se=Math.sqrt(vv/n), m=Math.hypot(mx,my);
+  if(!(m>=SIS_Z*se&&m>=0.1*scaleFor(s.weapon,s.diff))) return null;
+  const saat=hourOf(mx,my); let h=saat; if(effHand(s)==="L") h=(12-h)%12||12;
+  const pair=(s.weapon==="rifle"?MAP_RIFLE:MAP_PISTOL)[h]; if(!pair) return null;
+  return {saat,c:pair[0],c2:pair[1],n,m:+m.toFixed(4),z:+(m/se).toFixed(2)};
+}
 
 /* ---------------------------------------------------------------- işlemci: ham veri → açı, atış algılama, ölçüm */
 function Proc(){this.cfg={B:[0,1,0],invX:false,invY:false,U:null,yer:"alt",thr:0.6,lockout:450,mic:"kapali",weak:0.45,clickDb:15,clickMin:32,clickRise:8};this.micOn=false;this.bias0=null;this.reset();}
@@ -828,7 +854,7 @@ Proc.prototype.reset=function(){
   this.buf=[];this.lastT=null;this.yaw=0;this.pitch=0;this.aFast=null;this.aSlow=null;
   this.zeroUp=null;this.zeroR=null;this.bias=this.bias0?this.bias0.slice():[0,0,0];this.gP=null;
   this.em=[0,0,0];this.ev=[1,1,1];this.stillSince=null;this.lastCal=-1e9;
-  this.jerk=0;this.gmag=0;this.cant=0;this.base=[0,0];this.live=[0,0];
+  this.jerk=0;this.gmag=0;this.cant=0;this.roll=0;this.base=[0,0];this.live=[0,0];
   this.lastShot=-1e9;this.pending=[];this.armed=false;this.samples=0;this.lastData=-1e9;this.rawOm=[0,0,0];this.up=[0,0,1];
   this.gaps=[];
 };
@@ -875,6 +901,9 @@ Proc.prototype.feed=function(t,acc,om,devJerk,snd){
   let pr=dot(w,f.R), yr=-dot(w,f.U);
   if(this.cfg.invY)pr=-pr; if(this.cfg.invX)yr=-yr;
   this.yaw+=yr*dt; this.pitch+=pr*dt; this.gmag=wm;
+  // T4: namlu çevresindeki dönme, jiroskoptan anlık (kanting ivmeölçerden ve yavaştır; tetik anındaki bilek dönmesini göremez).
+  // İşaret kantingle aynı: + silahın üstü sağa (atıcının gözünden saat yönü)
+  { let rr=dot(w,norm(this.cfg.B||[0,1,0])); if(this.cfg.invX) rr=-rr; this.roll+=rr*dt; }
   this.w=w;
   if(this.zeroUp){this.cant=-Math.atan2(dot(this.aSlow,this.zeroR),dot(this.aSlow,this.zeroUp))*DEG;if(this.cfg.invX)this.cant=-this.cant;}else this.cant=0;
   const kb2=dt>0?1-Math.exp(-dt/1.2):1;
@@ -882,7 +911,7 @@ Proc.prototype.feed=function(t,acc,om,devJerk,snd){
   this.live=[this.yaw-this.base[0],this.pitch-this.base[1]];
   // doyma: ivme ±16 g, jiroskop ±2000 °/sn sınırına dayandı mı (gerçek atış tepmesi)
   const sat=(Math.max(Math.abs(acc[0]),Math.abs(acc[1]),Math.abs(acc[2]))>=15.5?1:0)|(Math.max(Math.abs(om[0]),Math.abs(om[1]),Math.abs(om[2]))>=1950?2:0);
-  this.buf.push([t,this.yaw,this.pitch,this.cant,wm,this.jerk,sat,lin,acc[0],acc[1],acc[2]]);
+  this.buf.push([t,this.yaw,this.pitch,this.cant,wm,this.jerk,sat,lin,acc[0],acc[1],acc[2],this.roll]);
   while(this.buf.length&&this.buf[0][0]<t-3000)this.buf.shift();
   if(this.onSample)this.onSample(t,wm,this.jerk,w,dt);
   this.detect(t,snd);
@@ -952,13 +981,15 @@ Proc.prototype.finalize=function(st){
   const up=ux||uy||uz?norm([ux,uy,uz]):null;
   // titreme ölçüsü (wv): tetikten önceki tutuşta nişanın 150 ms'de tipik (RMS) yer değiştirmesi. Tetik penceresi de 150 ms;
   // oradaki hareket bunun belirgin üstünde değilse yönü titremeden gelir, tetik hatası sayılmaz (bkz. trigClear)
-  let wv=0,wn=0; for(let i=Math.max(0,this.idxBefore(st-850));i<b.length&&b[i][0]<=st-250;i++){ if(b[i][0]<st-850) continue;
-    const j=this.idxBefore(b[i][0]-150), dt=b[i][0]-b[j][0]; if(dt<140||dt>165) continue; wv+=(b[i][1]-b[j][1])**2+(b[i][2]-b[j][2])**2; wn++; }
-  wv=wn>=10?Math.sqrt(wv/wn):null;
+  // rv: aynı pencerelerde namlu çevresindeki dönmenin tipik (RMS) değişimi; droll: tetik penceresindeki dönme (T4, bilek dönmesi)
+  let wv=0,wn=0,rv=0; for(let i=Math.max(0,this.idxBefore(st-850));i<b.length&&b[i][0]<=st-250;i++){ if(b[i][0]<st-850) continue;
+    const j=this.idxBefore(b[i][0]-150), dt=b[i][0]-b[j][0]; if(dt<140||dt>165) continue; wv+=(b[i][1]-b[j][1])**2+(b[i][2]-b[j][2])**2; rv+=((b[i][11]||0)-(b[j][11]||0))**2; wn++; }
+  wv=wn>=10?Math.sqrt(wv/wn):null; rv=wn>=10?Math.sqrt(rv/wn):null;
+  const droll=(b[i0][11]||0)-(b[i150][11]||0);
   const xy=new Float32Array(TRN*2); let k=0;
   for(let g=0;g<TRN;g++){const tg=st+TR0+g*TRS;while(k<b.length-2&&b[k+1][0]<tg)k++;const s0=b[k],s1=b[Math.min(k+1,b.length-1)];const u=s1[0]>s0[0]?clamp((tg-s0[0])/(s1[0]-s0[0]),0,1):0;xy[g*2]=s0[1]+(s1[1]-s0[1])*u-aim[0];xy[g*2+1]=s0[2]+(s1[2]-s0[2])*u-aim[1];}
   let elev=null; if(this.aSlow&&this.cfg&&this.cfg.B){ elev=Math.asin(clamp(dot(norm(this.cfg.B),norm(this.aSlow)),-1,1))*DEG; }   // namlunun yatayla açısı
-  if(this.onShot)this.onShot({st,trig,hold:Math.hypot(hx,hy),hx,hy,dx:p0[0]-p150[0],dy:p0[1]-p150[1],wv,cant:cn?cs/cn:0,post,rise,fall,peakD,pg,rec,xy,sat,gap,elev,lHold,l150,lPost,up,impCh:!!this.impCh});
+  if(this.onShot)this.onShot({st,trig,hold:Math.hypot(hx,hy),hx,hy,dx:p0[0]-p150[0],dy:p0[1]-p150[1],wv,droll,rv,cant:cn?cs/cn:0,post,rise,fall,peakD,pg,rec,xy,sat,gap,elev,lHold,l150,lPost,up,impCh:!!this.impCh});
 };
 
 /* ---------------------------------------------------------------- sanal atıcı (deneme modu) */
@@ -1768,7 +1799,7 @@ proc.onShot=m=>{
     r.st.gevsek=true; r.ups=[]; toast("Tetik düşmesine benzeyen 3 darbe üst üste sayılmadı; bu seride süzgeç gevşetildi. Gerçek atışlar yine sayılmazsa Ayarlar › Gelişmiş › Atış algılama'dan kapat.",8000); }
   r.st.yokArka=0; if(m.up){ (r.ups=r.ups||[]).push(m.up); if(r.ups.length>6) r.ups.shift(); }
   const q={n:s.shots.length+1,at:Math.round(m.st-r.t0),sc:Math.round(score*10)/10,tr:+m.trig.toFixed(4),ho:+m.hold.toFixed(4),hx:+m.hx.toFixed(4),hy:+m.hy.toFixed(4),
-    dx:+m.dx.toFixed(4),dy:+m.dy.toFixed(4),wv:m.wv==null?null:+m.wv.toFixed(4),h:hourOf(m.dx,m.dy),ca:+m.cant.toFixed(2),po:+m.post.toFixed(3),ri:+m.rise.toFixed(3),pg:+m.pg.toFixed(2),rc:m.rec==null?null:Math.round(m.rec),c:[],x:{},tz:encTrace(m.xy)};
+    dx:+m.dx.toFixed(4),dy:+m.dy.toFixed(4),wv:m.wv==null?null:+m.wv.toFixed(4),dr:+(m.droll||0).toFixed(2),rv:m.rv==null?null:+m.rv.toFixed(2),h:hourOf(m.dx,m.dy),ca:+m.cant.toFixed(2),po:+m.post.toFixed(3),ri:+m.rise.toFixed(3),pg:+m.pg.toFixed(2),rc:m.rec==null?null:Math.round(m.rec),c:[],x:{},tz:encTrace(m.xy)};
   if(s.lzR) q.lz=lzAtis(s,m,q);                                   // lazer hedef: atışın kağıtta gerçek yeri
   if(prevT!=null) q.x.split=Math.round(m.st-prevT);
   if(m.gap) q.x.gap=1;
@@ -1876,13 +1907,17 @@ function kTiles(){
 function kBagla(el){ el.querySelectorAll("[data-git]").forEach(b=>b.onclick=()=>kGit(b.dataset.git)); }
 function renderMerkez(){
   const el=$("v-merkez"); if(!el) return;
-  const son=kSonOturum(), v=son?validShots(son):[], hd=son?kEnSikHata(son):null;
+  const son=kSonOturum(), v=son?validShots(son):[], hd=son?kEnSikHata(son):null, sis=son?sistematik(son):null;
+  const sisAd=sis&&CAUSES[sis.c].ad!==hd?CAUSES[sis.c].ad:null;
+  // T4: tabancada nişan dışı sarsıntılar sayılıyorsa (süzgeç kapalı) sürgü çekmek atış sayılır; uyarı ve tek dokunuşla düzeltme
+  const suzKapali=S.sarsintiSuz===false&&S.weapon!=="rifle";
   const dr=son&&DRM[son.drill]?son.drill:"serbest";
   const diger=["zamanlayici","karar","degerlendirme"].filter(x=>x!==dr&&DRM[x]).slice(0,2), tl=kTiles();
   el.innerHTML=`<div class="k-vh"><h1>Kontrol Merkezi</h1></div>
   <div class="k-vb">
     <button class="k-satir k-kutu" id="mzProf"><span class="k-ikon">${K_IC.silah}</span><span class="k-st"><b>${esc(wName({weaponName:S.weaponName,weapon:S.weapon}))} · ${S.hand==="L"?"Sol el":"Sağ el"}</b><small>${esc(curProf().ad)} · ${esc(MODE_T[S.mode]||"")}</small></span><span class="k-chev">${K_IC.ileri}</span></button>
     <div class="k-tiles" id="mzTiles">${tl}</div>
+    ${suzKapali?`<section class="k-kart k-yedek" aria-label="Atış algılama uyarısı"><span style="align-self:flex-start">${kRozet({tur:"uyari",metin:"Nişan dışı sarsıntılar da sayılıyor"})}</span><p class="k-not">Sürgüyü çekmek ya da silahı indirmek atış sayılabilir; skorlar ve hatalar bozulur.</p><button class="k-btn" id="mzSuz">Bu sarsıntıları sayma</button></section>`:""}
     <div class="k-ust">
     <section class="k-kart" aria-labelledby="mzHb"><span class="k-bas" id="mzHb">Hızlı başlat</span><span class="k-ad">${esc(DRM[dr].ad)}</span><p class="k-not">${son?"Son kullanılan alıştırma":"Önerilen ilk alıştırma"}${DRM[dr].hedef?" · "+esc(DRM[dr].hedef):""}</p>
       <button class="k-btn ana" data-mzd="${dr}">${K_IC.oynat}Alıştırmaya geç</button>
@@ -1890,12 +1925,14 @@ function renderMerkez(){
     <section class="k-kart" aria-labelledby="mzSo"><span class="k-bas" id="mzSo">Son oturum</span>${son?`<span class="k-ad">${esc(DRM[son.drill]?DRM[son.drill].ad:"Antrenman")}</span><p class="k-not">${esc(dateShort(son.date))}</p>
       <div class="k-sayi"><div><b>${v.length?fx(avgOf(v),1):"–"}</b><span>ortalama skor</span></div><div><b>${v.length}</b><span>atış</span></div></div>
       ${hd?`<span class="k-rozet uyari" style="align-self:flex-start;white-space:normal">${K_IC.uyari}En sık: ${esc(hd)}</span>`:""}
+      ${sisAd?`<span class="k-rozet uyari" style="align-self:flex-start;white-space:normal">${K_IC.uyari}Oturum geneli: ${esc(sisAd)}</span>`:""}
       <button class="k-btn" id="mzAc">Oturumu ve raporu aç</button>`:`<p class="k-not">Henüz kayıtlı oturum yok. İlk alıştırmayı bitirdiğinizde özeti burada görünür.</p>`}</section>
     </div>
   </div>`;
   kBagla(el); $("mzTiles")._h=tl;
   el.querySelectorAll("[data-mzd]").forEach(b=>b.onclick=()=>{ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } openDrill(b.dataset.mzd); });
   $("mzProf").onclick=()=>kGit("ayarlar");
+  const suz=$("mzSuz"); if(suz) suz.onclick=()=>{ S.sarsintiSuz=true; saveMeta(); toast("Nişan dışı sarsıntılar artık atış sayılmayacak."); renderMerkez(); };
   const ac=$("mzAc"); if(ac) ac.onclick=()=>{ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } showView("gecmis"); openReview(son); };
 }
 function kCihazHtml(){
@@ -2233,8 +2270,10 @@ function hedefMetin(s,v,q,run,rev,yeni){
     let grup=""; if(v.length>=2){ const dm=s.dist||S.dist||25, g=hdGrup(v), cm=g.d*RAD*dm*100, k=x=>x<10?fx(x,1):Math.round(x); grup=` Grup çapı ≈ ${k(cm)} cm (${fx(dm,dm%1?1:0)} m'de).`;
       if(v.length>=3){ const r=Math.hypot(g.m[0],g.m[1]); grup+=r/rw<0.35?" Grup merkezi tam ortada.":` Grup merkezi merkezin ${HD_YER[Math.round(((Math.atan2(g.m[0],g.m[1])*DEG+360)%360)/45)%8]}, ≈ ${k(r*RAD*dm*100)} cm.`; } }
     const lv=s.lzR?v.filter(x=>x.lz&&x.lz.gor):[], lzp=lv.reduce((a,x)=>a+x.lz.halka,0), lzt=s.lzR?` Lazer ${lv.length}/${v.length} atışta görüldü${lv.length?`: toplam ${lzp} puan, atış başına ${fx(lzp/lv.length,1)}`:""}.`:"";
+    // T4: oturum geneli tetik hatası (atışların ortalamasında aynı yöne kayma) en üstte
+    const sis=sistematik(s), sisK=sis?`<button class="hd-kart" data-cause="${sis.c}" data-list="${sis.c},${sis.c2}"><span class="hd-k">Oturum geneli · ${sis.n} atışın ortalaması</span><b>${esc(CAUSES[sis.c].ad)}</b><span>Tetik anında namlu çoğunlukla saat ${sis.saat} yönüne kayıyor. Tek tek atışlarda titreme bunu gizleyebilir; atışların ortalamasında belirgin.</span><i>Nasıl düzeltilir ›</i></button>`:"";
     return `<div class="hd"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(Math.floor(avg),0)}</b><small>Ortalama</small></div><div class="hd-ne"><b>${esc(vt.replace("ATIŞ","OTURUM"))}</b><span>${v.length} atış, ${iyi} tanesi ${S.sesEsik||85} ve üzeri.${grup}${lzt}</span></div></div>
-      ${ids.map((id,i)=>kart(id,ids,i>0,cc[i][1])).join("")}</div>`; }
+      ${sisK}${ids.map((id,i)=>kart(id,ids,i>0,cc[i][1])).join("")}</div>`; }
   const [vt,vc]=verdict(q.sc), yon=hdYon(hdShot(q).p,rw), ids=(q.c||[]).filter(k=>CAUSES[k]), sw=silahBul(s.weaponName), lz=s.lzR&&q.lz;
   const ilk=run&&q.n===1&&sw&&sw.tetik==="da_sa"?`<p class="note" style="margin:0">${esc(sw.ad)}: ilk atış çift hareketlidir, tetik ağır ve uzundur. Tetiğe sürekli ve düz bas.</p>`:"";
   const lej=run&&hdShot(q).iz?`<p class="hd-lej"><span><i style="background:var(--hold)"></i>Atıştan önce nişanın</span><span><i style="background:var(--trig)"></i>Tetiği çekerken kayma</span></p>`:"";
@@ -4178,7 +4217,7 @@ function makeSample(){
   const s={id:"ornek",v:2,drill:"serbest",date:Date.now()-86400000,dur:38,src:"demo",mode:"kuru",weapon:S.weapon,weaponName:"",hand:S.hand,handMode:"normal",diff:"normal",notes:"",extra:{},shots:[],sample:true};
   const p=new Proc(); const sm=new Sim(20261028); p.armed=true; let t0=0, lastT=null;
   p.onShot=m=>{const scale=scaleFor(s.weapon,s.diff);const sc=clamp(100*Math.exp(-(m.trig+0.3*m.hold)/scale),0,100);
-    const q={n:s.shots.length+1,at:Math.round(m.st),sc:Math.round(sc*10)/10,tr:+m.trig.toFixed(4),ho:+m.hold.toFixed(4),hx:+m.hx.toFixed(4),hy:+m.hy.toFixed(4),dx:+m.dx.toFixed(4),dy:+m.dy.toFixed(4),wv:m.wv==null?null:+m.wv.toFixed(4),h:hourOf(m.dx,m.dy),ca:+m.cant.toFixed(2),po:+m.post.toFixed(3),ri:+m.rise.toFixed(3),pg:+m.pg.toFixed(2),rc:m.rec==null?null:Math.round(m.rec),c:[],x:{},tz:encTrace(m.xy)};
+    const q={n:s.shots.length+1,at:Math.round(m.st),sc:Math.round(sc*10)/10,tr:+m.trig.toFixed(4),ho:+m.hold.toFixed(4),hx:+m.hx.toFixed(4),hy:+m.hy.toFixed(4),dx:+m.dx.toFixed(4),dy:+m.dy.toFixed(4),wv:m.wv==null?null:+m.wv.toFixed(4),dr:+(m.droll||0).toFixed(2),rv:m.rv==null?null:+m.rv.toFixed(2),h:hourOf(m.dx,m.dy),ca:+m.cant.toFixed(2),po:+m.post.toFixed(3),ri:+m.rise.toFixed(3),pg:+m.pg.toFixed(2),rc:m.rec==null?null:Math.round(m.rec),c:[],x:{},tz:encTrace(m.xy)};
     if(lastT!=null)q.x.split=Math.round(m.st-lastT); lastT=m.st; q.c=diagnose(q,s); s.shots.push(q);};
   for(let t=0;t<34000;t+=5){const d=sm.step(t);p.feed(t,d.acc,d.om,d.jerk);if(t===2600)p.zero();if(t>3000&&t%3600===0)sm.fire(t);}
   return s;
@@ -4264,7 +4303,7 @@ function openFromHash(){
 window.addEventListener("hashchange",openFromHash);
 
 /* --- test kancası */
-window.__hisar={trigClear,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
+window.__hisar={trigClear,sistematik,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0a0e0f">
+<meta name="theme-color" content="#14171B">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
 <style>:root{color-scheme:dark}html,body{margin:0}body{font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="bridge.js"></script>
@@ -14,15 +14,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&display=swap">
 <style>
-/* Düzen MantisX uygulamasından esinlenir: alt sekmeler (Alıştırma, Analiz, Sensör, Ayarlar), bölümlü listeler,
-   kırmızı seçili düğmeler, koyu gri zemin. Tek (karanlık) tema. */
+/* T2 arayüzü: antrasit zemin, koyu lacivert paneller, kontrollü turkuaz vurgu. Telefonda alt menü (Merkez, Eğitim,
+   Analiz, Cihazlar, Menü), 900 px ve üstünde solda 7 ana menü. En küçük yazı 14 px. Tek (karanlık) tema. */
 :root{
-  --bg:#252525; --bar:#303030; --hdr:#525252; --btn:#383838; --btn2:#414141; --line:#3a3a3a; --line2:#4a4a4a;
-  --fg:#ffffff; --fg2:#e4e4e4; --muted:#a1a1a1; --dim:#7c7c7c;
+  --bg:#14171B; --bar:#0F1722; --hdr:#172538; --btn:#1B2738; --btn2:#22324A; --line:#24344A; --line2:#2E4560;
+  --fg:#E9EEF3; --fg2:#D2DCE6; --muted:#A9B7C6; --dim:#8FA1B5;
   --red:#b62126; --red2:#d93a3f; --green:#2fb54a; --blue:#3b8ff0;
-  --hold:#3b8ff0; --trig:#f5c518; --recoil:#d93a3f; --good:#4cc26b; --warn:#f2b33d; --bad:#e5484d;
-  --panel:#2e2e2e; --panel2:#383838; --accent:#22d3c5; --accent-dim:#0f5e58;
-  --acc:#22d3c5; --acc2:#1bb3a7; --acc-ink:#04201d; --acc-soft:rgba(34,211,197,.16);   /* menü ve düğme rengi: turkuaz */
+  --hold:#3b8ff0; --trig:#f5c518; --recoil:#d93a3f; --good:#43C97A; --warn:#F0B13C; --bad:#F0595E;
+  --panel:#111C2B; --panel2:#172538; --accent:#2CC9BA; --accent-dim:#0F4A46;
+  --acc:#2CC9BA; --acc2:#24B0A3; --acc-ink:#062521; --acc-soft:rgba(44,201,186,.16);   /* menü ve düğme rengi: turkuaz */
   --logo:"Chakra Petch","Arial Narrow",system-ui,sans-serif;
   --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
@@ -40,10 +40,10 @@ a{color:var(--acc)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative}
 .view{display:flex;flex-direction:column}
 .pad{padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
-/* alt sekmeler */
-.nav{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bar);border-top:1px solid #1c1c1c;padding-bottom:env(safe-area-inset-bottom,0px)}
-.nav button{background:none;border:0;padding:7px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--dim);font-size:9.5px;letter-spacing:.04em;text-transform:uppercase}
-.nav button svg{width:27px;height:27px}
+/* ana menü: telefonda alt menü (5), geniş ekranda sol menü (7) — ayrıntı dosya sonundaki T2 bölümünde */
+.nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--bar);border-top:1px solid #22324A;padding:4px 4px env(safe-area-inset-bottom,0px)}
+.nav button{background:none;border:0;padding:6px 2px 8px;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--dim);font-size:14px;font-weight:600;white-space:nowrap}
+.nav button svg{width:24px;height:24px;flex:none}
 .nav button[aria-selected="true"]{color:var(--acc)}
 /* sayfa başlığı */
 .ph{display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;min-height:52px;background:var(--bar);position:sticky;top:0;z-index:5}
@@ -57,8 +57,8 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 #v-oturum .ph{grid-template-columns:1fr auto 1fr}
 #v-oturum .ph .bk{justify-self:start;width:52px}
 #v-oturum .ph .rt .bk{width:40px}
-#sessConn{white-space:nowrap;font-size:12px;cursor:pointer}
-@media (max-width:380px){#v-oturum .ph .logo{font-size:16px;gap:5px}#v-oturum .ph .logo svg{width:20px;height:20px}.mx-seg.mode button svg{display:none}.mx-seg.mode button{font-size:12px}}
+#sessConn{white-space:nowrap;font-size:14px;cursor:pointer}
+@media (max-width:380px){#v-oturum .ph .logo{font-size:16px;gap:5px}#v-oturum .ph .logo svg{width:20px;height:20px}.mx-seg.mode button svg{display:none}.mx-seg.mode button{font-size:14px}}
 #sessConn .dot{margin-right:5px}
 .logo{display:flex;align-items:center;justify-content:center;gap:7px;font-family:var(--logo);font-weight:700;letter-spacing:.12em;font-size:19px}
 .logo svg{width:24px;height:24px;color:var(--acc)}
@@ -68,15 +68,15 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 .sec .ed svg{width:20px;height:20px}
 .li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-height:72px;padding:12px max(14px,env(safe-area-inset-right,0px)) 12px max(18px,env(safe-area-inset-left,0px));background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);text-align:left;font-size:17px}
 .li .ln{min-width:0}
-.li .ln small{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
-.li .st{display:grid;grid-auto-flow:column;gap:12px;text-align:center;font-size:12px;color:var(--fg2)}
-.li .st b{display:block;font-size:13px;font-weight:600;color:var(--fg)}
+.li .ln small{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.li .st{display:grid;grid-auto-flow:column;gap:12px;text-align:center;font-size:14px;color:var(--fg2)}
+.li .st b{display:block;font-size:14px;font-weight:600;color:var(--fg)}
 .li .st span{font-weight:600}
-.li .th{width:52px;height:52px;border-radius:6px;background:#1b1b1b;display:grid;place-items:center;overflow:hidden}
+.li .th{width:52px;height:52px;border-radius:6px;background:#0B1119;display:grid;place-items:center;overflow:hidden}
 .li .th svg{width:46px;height:46px}
 .li .chk{width:24px;height:24px;accent-color:var(--acc)}
-.li .badge{font-size:11px;color:var(--muted);text-align:right}
-.li .badge b{display:block;color:var(--good);font-size:13px}
+.li .badge{font-size:14px;color:var(--muted);text-align:right}
+.li .badge b{display:block;color:var(--good);font-size:14px}
 .li.off{opacity:.45}
 .li .sw{display:flex;align-items:center;gap:8px}
 /* MantisX ayar düzeni */
@@ -84,7 +84,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 .mx-l{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:15px;color:var(--fg2);margin-top:12px;min-height:26px}
 .mx-l:first-child{margin-top:0}
 .mx-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px}
-.mx-seg button{background:var(--btn);border:0;border-radius:2px;color:#8f8f8f;min-height:50px;padding:6px 4px;font-size:13px;letter-spacing:.02em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}
+.mx-seg button{background:var(--btn);border:0;border-radius:2px;color:#8f8f8f;min-height:50px;padding:6px 4px;font-size:14px;letter-spacing:.02em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}
 .mx-seg button svg{flex:none}
 .mx-seg button[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink)}
 .mx-seg.big button{min-height:52px}
@@ -93,52 +93,52 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 .mx-seg.mode button svg{width:24px;height:24px}
 .mx-seg.mt button svg{width:34px;height:26px}
 .mx-seg.four{gap:8px}
-.mx-btn{background:var(--btn2);border:0;border-radius:2px;color:#e8e8e8;min-height:50px;font-size:13.5px;text-transform:uppercase;letter-spacing:.02em;width:100%}
+.mx-btn{background:var(--btn2);border:0;border-radius:2px;color:#e8e8e8;min-height:50px;font-size:14px;text-transform:uppercase;letter-spacing:.02em;width:100%}
 .mx-btn.red{background:var(--acc);color:var(--acc-ink)}
 .i-red{width:24px;height:24px;border-radius:50%;border:1.6px solid var(--acc);background:none;color:var(--acc);font:600 14px/1 Georgia,serif;font-style:italic;display:inline-grid;place-items:center;padding:0;flex:none}
 .prof{display:grid;grid-template-columns:44px minmax(0,1fr) 48px;align-items:center;gap:12px;padding:14px max(14px,env(safe-area-inset-right,0px)) 14px max(14px,env(safe-area-inset-left,0px))}
 .prof .pl{width:44px;height:44px;color:var(--acc)}
 .prof .pn{font-size:16.5px}
-.prof .pe{background:none;border:0;padding:0;color:var(--acc);font-size:12px;display:block}
+.prof .pe{background:none;border:0;padding:0;color:var(--acc);font-size:14px;display:block}
 .prof .pd{width:46px;height:42px;background:var(--btn2);border:0;border-radius:2px;color:#fff;display:grid;place-items:center}
 .sl{display:flex;flex-direction:column;padding:0 max(14px,env(safe-area-inset-right,0px)) 18px max(14px,env(safe-area-inset-left,0px))}
 .sl button{display:flex;align-items:center;gap:14px;background:none;border:0;border-bottom:1px solid var(--line2);color:var(--fg);padding:14px 4px;font-size:16px;text-transform:uppercase;text-align:left;letter-spacing:.01em}
 .sl button svg{width:22px;height:22px;flex:none}
-.sl button small{margin-left:auto;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;text-align:right;max-width:46%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl button small{margin-left:auto;font-size:14px;color:var(--muted);text-transform:none;letter-spacing:0;text-align:right;max-width:46%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* genel öğeler (ayar sayfaları) */
 .pg{display:flex;flex-direction:column;gap:12px;padding:14px max(14px,env(safe-area-inset-right,0px)) 22px max(14px,env(safe-area-inset-left,0px))}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .card h2,.sheet h2{margin:0;font-weight:600;font-size:14px;letter-spacing:.06em;text-transform:uppercase;text-wrap:balance}
-.card p{margin:0;color:var(--muted);font-size:13.5px}
-.note{font-size:12px;color:var(--muted)}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.note{font-size:14px;color:var(--muted)}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.lbl{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lbl{font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .num{font-variant-numeric:tabular-nums;font-size:21px;font-weight:500}
 .big{font-size:34px;font-weight:500;font-variant-numeric:tabular-nums}
-.btn{border:0;background:var(--btn2);border-radius:2px;padding:13px 10px;font-weight:500;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;text-align:center;text-decoration:none;color:var(--fg)}
+.btn{border:0;background:var(--btn2);border-radius:2px;padding:13px 10px;font-weight:500;font-size:14px;letter-spacing:.03em;text-transform:uppercase;text-align:center;text-decoration:none;color:var(--fg)}
 .btn.primary{background:var(--acc);color:var(--acc-ink);font-weight:600}
 .btn.stop{background:var(--red);color:#fff}
 .btn.ghost{background:none;border:1px solid var(--line2)}
 .btn.danger{color:var(--bad);background:none;border:1px solid #5a2226}
-.btn.sm{padding:8px 10px;font-size:12px}
+.btn.sm{padding:8px 10px;font-size:14px}
 .btn:disabled{opacity:.45;cursor:default}
 .btn-row{display:flex;flex-wrap:wrap;gap:8px}
 .btn-row .btn{flex:1 1 140px}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
-.seg button{background:var(--btn);border:0;border-radius:2px;padding:10px 4px;font-size:13px;color:#9a9a9a;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg button{background:var(--btn);border:0;border-radius:2px;padding:10px 4px;font-size:14px;color:#9a9a9a;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seg button[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink)}
-.meter{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
-.meter .bar{flex:1;height:6px;border-radius:3px;background:#1d1d1d;position:relative;overflow:hidden}
+.meter{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.meter .bar{flex:1;height:6px;border-radius:3px;background:#0B1220;position:relative;overflow:hidden}
 .meter .fill{position:absolute;inset:0 auto 0 0;width:0;background:var(--good)}
 .meter .thr{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--acc)}
 .meter .val{font-family:var(--mono);min-width:56px;text-align:right}
 .field{display:flex;flex-direction:column;gap:6px}
-.field>label,.field>.fl{font-size:13px;color:var(--muted)}
+.field>label,.field>.fl{font-size:14px;color:var(--muted)}
 .field input[type=range]{width:100%;accent-color:var(--acc)}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14.5px;padding:4px 0}
 .toggle input{width:22px;height:22px;accent-color:var(--acc);flex:0 0 auto}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-select,input[type=number],input[type=text],textarea{background:#1d1d1d;border:1px solid var(--line2);border-radius:2px;padding:10px;width:100%;min-width:0}
+select,input[type=number],input[type=text],textarea{background:#0B1220;border:1px solid var(--line2);border-radius:2px;padding:10px;width:100%;min-width:0}
 textarea{min-height:140px;resize:vertical;line-height:1.45}
 .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .kv>div{background:var(--btn);border-radius:2px;padding:8px 10px;min-width:0}
@@ -146,7 +146,7 @@ textarea{min-height:140px;resize:vertical;line-height:1.45}
 .kv3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .kv3>div{background:var(--btn);border-radius:2px;padding:8px 10px;min-width:0;display:flex;flex-direction:column;gap:1px}
 .kv3 .num{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kv3 .note{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kv3 .note{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dev{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center}
 .dev .dn{font-weight:600;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px;background:var(--dim)}
@@ -157,19 +157,19 @@ textarea{min-height:140px;resize:vertical;line-height:1.45}
 .sig{display:inline-flex;gap:2px;align-items:flex-end;height:13px;margin-right:6px;vertical-align:-1px}
 .sig i{width:4px;background:var(--line2);border-radius:1px}
 .sig i.on{background:var(--good)}
-.status{font-size:13px;color:var(--muted);min-height:1.4em}
+.status{font-size:14px;color:var(--muted);min-height:1.4em}
 .status b{color:var(--fg);font-weight:600}
 .status.err{color:var(--bad)}
-.link-row{display:flex;align-items:center;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
-.lnk{background:none;border:0;color:var(--acc);font:inherit;font-size:13px;padding:2px 0;white-space:nowrap}
-.banner{padding:9px 14px;font-size:13px;border-bottom:1px solid}
+.link-row{display:flex;align-items:center;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.lnk{background:none;border:0;color:var(--acc);font:inherit;font-size:14px;padding:2px 0;white-space:nowrap}
+.banner{padding:9px 14px;font-size:14px;border-bottom:1px solid}
 .banner.wait{color:var(--warn);border-color:#5a4719;background:rgba(242,179,61,.08)}
 .banner.ok{color:var(--good);border-color:#1f5a3a;background:rgba(76,194,107,.08)}
 details.card>summary{cursor:pointer;font-weight:600;font-size:14px;letter-spacing:.06em;text-transform:uppercase;list-style:none;display:flex;justify-content:space-between}
 details.card>summary::-webkit-details-marker{display:none}
 details.card>summary::after{content:"+";color:var(--acc)}
 details.card[open]>summary::after{content:"–"}
-details.sub>summary{cursor:pointer;color:var(--acc);font-size:13px;list-style:none}
+details.sub>summary{cursor:pointer;color:var(--acc);font-size:14px;list-style:none}
 details.sub>summary::-webkit-details-marker{display:none}
 .level-wrap{display:grid;grid-template-columns:116px minmax(0,1fr);gap:12px;align-items:center}
 .level-wrap svg{width:116px;height:116px;display:block}
@@ -178,19 +178,19 @@ details.sub>summary::-webkit-details-marker{display:none}
 .info{width:24px;height:24px;border-radius:50%;border:1.6px solid var(--acc);background:none;color:var(--acc);font:600 13px/1 Georgia,serif;font-style:italic;display:inline-grid;place-items:center;padding:0;flex:none}
 .ch{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
 .tablewrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-th{font-weight:500;color:var(--muted);text-align:left;font-size:12px;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-weight:500;color:var(--muted);text-align:left;font-size:14px;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
 td{padding:9px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
 td.m{font-family:var(--mono)}
 .sc-g{color:var(--good)}.sc-m{color:var(--warn)}.sc-b{color:var(--bad)}
-.tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid #5a4719;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:1px;white-space:nowrap;display:inline-block}
+.tag{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid #5a4719;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:1px;white-space:nowrap;display:inline-block}
 .tag.demo{color:var(--warn)}
 .tag.rec{color:var(--bad);border-color:#5a2226}
 .tag.safe{color:var(--blue);border-color:#1f3d63}
 .demo-note{color:var(--warn)}
 .share-prev{width:100%;border-radius:4px;border:1px solid var(--line);display:block}
 /* oturum ekranı */
-.s-tabs{display:grid;grid-template-columns:repeat(4,1fr);background:#242424;border-bottom:1px solid #1c1c1c}
+.s-tabs{display:grid;grid-template-columns:repeat(4,1fr);background:#0F1722;border-bottom:1px solid #22324A}
 .s-tabs button{background:none;border:0;height:46px;display:grid;place-items:center;color:#bdbdbd;position:relative}
 .s-tabs button svg{width:26px;height:26px}
 .s-tabs button[aria-pressed="true"]{color:#fff}
@@ -203,38 +203,38 @@ td.m{font-family:var(--mono)}
 .pre h2{margin:0 0 4px;font-size:21px;font-weight:400}
 .pre .ins{align-self:stretch;text-align:left;font-size:15.5px;color:#f0f0f0;display:flex;flex-direction:column;gap:12px}
 .pre .ins p{margin:0}
-.wk{display:grid;grid-auto-flow:column;gap:16px;align-items:end;font-size:13px;color:var(--fg2);margin-top:8px}
+.wk{display:grid;grid-auto-flow:column;gap:16px;align-items:end;font-size:14px;color:var(--fg2);margin-top:8px}
 .wk div{display:flex;flex-direction:column;align-items:center;gap:2px}
 .wk b{font-weight:600}
 .wk svg{width:16px;height:16px;color:var(--acc)}
 .sq{display:flex;gap:10px;justify-content:center}
-.sq button{width:66px;height:62px;background:#3a3a3a;border:1px solid #4a4a4a;border-radius:3px;color:#eee;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;text-transform:uppercase;padding:4px 2px;overflow:hidden;white-space:nowrap}
+.sq button{width:66px;height:62px;background:#1B2738;border:1px solid #2E4560;border-radius:3px;color:#eee;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:14px;text-transform:uppercase;padding:4px 2px;overflow:hidden;white-space:nowrap}
 .sq button svg{width:28px;height:28px}
 .wpn{color:var(--muted);text-transform:uppercase;font-size:15px;letter-spacing:.04em}
-.go{width:104px;height:104px;border-radius:50%;border:4px solid var(--green);background:#1d1d1d;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15px;text-transform:uppercase;margin-top:4px}
+.go{width:104px;height:104px;border-radius:50%;border:4px solid var(--green);background:#0B1220;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15px;text-transform:uppercase;margin-top:4px}
 .go svg{width:34px;height:34px}
 .go:disabled{opacity:.5}
 .ring-wrap{position:relative;width:100%;max-width:380px;margin:0 auto;aspect-ratio:1}
 .ring-wrap canvas{width:100%;height:100%;display:block}
-.pc-h{font-size:12.5px;text-transform:uppercase;color:var(--fg2);margin-top:4px}
+.pc-h{font-size:14px;text-transform:uppercase;color:var(--fg2);margin-top:4px}
 /* hedef görünümü: atışın sonucu ve nedeni */
 .hd{display:flex;flex-direction:column;gap:10px}
 .hd-son{display:flex;align-items:center;gap:14px}
 .hd-skor{display:flex;flex-direction:column;align-items:center;min-width:78px}
 .hd-skor b{font-family:var(--logo);font-size:46px;line-height:1;font-weight:700;color:var(--fg)}
-.hd-skor small{font-size:10.5px;letter-spacing:.12em;color:var(--muted);margin-top:3px;text-transform:uppercase}
+.hd-skor small{font-size:14px;letter-spacing:.12em;color:var(--muted);margin-top:3px;text-transform:uppercase}
 .hd-skor.good b{color:var(--good)} .hd-skor.mid b{color:var(--warn)} .hd-skor.bad b{color:var(--bad)}
 .hd-ne{display:flex;flex-direction:column;gap:3px;min-width:0}
 .hd-ne b{font-size:16px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
 .hd-ne span{font-size:14.5px;color:var(--fg2);line-height:1.4;text-wrap:pretty}
 .hd-kart{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--bad);border-radius:4px;padding:12px 14px;color:var(--fg);font:inherit}
-.hd-kart .hd-k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hd-kart .hd-k{font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .hd-kart b{font-size:18px;font-weight:600;line-height:1.25}
 .hd-kart span{font-size:14px;color:var(--fg2);line-height:1.45;text-wrap:pretty}
 .hd-kart i{font-style:normal;color:var(--acc);font-size:14px;font-weight:600;margin-top:3px}
 .hd-kart.iki{border-left-color:var(--warn);padding:9px 14px} .hd-kart.iki b{font-size:15px}
 .hd-kart.temiz{border-left-color:var(--good)}
-.hd-lej{display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:center;font-size:12.5px;color:var(--muted);margin:0}
+.hd-lej{display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:center;font-size:14px;color:var(--muted);margin:0}
 .hd-lej i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
 .hd-in{animation:hdIn .45s ease-out both;animation-delay:.6s}
 @keyframes hdIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -246,24 +246,24 @@ td.m{font-family:var(--mono)}
 .s-bar .stopb{justify-self:center;width:min(200px,60%);height:44px;background:var(--red);border:0;border-radius:2px;color:#fff;font-size:15px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px}
 .s-bar .stopb i{width:15px;height:15px;border-radius:50%;border:2px solid #fff;display:inline-block}
 .s-bar .stopb.goB{background:var(--green)}
-.s-bar .nb{background:none;border:0;color:#eee;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;min-width:52px}
+.s-bar .nb{background:none;border:0;color:#eee;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:14px;min-width:52px}
 .s-bar .nb svg{width:24px;height:24px}
-.drill-panel{background:#1d1d1d;border-left:3px solid var(--acc);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.drill-panel{background:#0B1220;border-left:3px solid var(--acc);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .drill-panel .dp-big{font-family:var(--mono);font-size:26px;font-variant-numeric:tabular-nums}
 .drill-panel .dp-msg{font-size:14px;color:var(--fg)}
-.drill-panel .dp-sub{font-size:12px;color:var(--muted)}
+.drill-panel .dp-sub{font-size:14px;color:var(--muted)}
 .oz h2{margin:6px 0 10px;text-align:center;font-size:23px;font-weight:400}
 .oz .tot{display:grid;grid-template-columns:1fr 1fr;text-align:center;font-size:18px;margin-bottom:14px}
 .oz .tot b{display:block;font-size:24px;font-weight:400;margin-top:2px}
-.oz .xl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;font-size:13px;color:var(--muted);margin:-6px 0 12px}
+.oz .xl{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;font-size:14px;color:var(--muted);margin:-6px 0 12px}
 .oz .xl b{color:var(--fg);font-weight:500}
 .oz table{font-size:14px}
-.oz th{text-align:center;font-size:12.5px;color:var(--fg2);border-bottom:0}
+.oz th{text-align:center;font-size:14px;color:var(--fg2);border-bottom:0}
 .oz th:first-child,.oz td:first-child{text-align:left}
 .oz td{text-align:center;border-bottom:0;padding:12px 6px 8px;position:relative}
 .oz td .note{white-space:normal}
 .oz tr{cursor:pointer}
-.oz tr.sel td{background:#3a3a3a}
+.oz tr.sel td{background:#1B2738}
 .oz .hb{display:flex;height:3px;margin:0 6px 2px}
 .oz .hb i{display:block;height:100%}
 .oz td svg{width:16px;height:16px;vertical-align:-3px;margin-left:4px}
@@ -273,14 +273,14 @@ td.m{font-family:var(--mono)}
 .tw-b button{pointer-events:auto;background:none;border:0;color:#fff;padding:2px;display:grid;place-items:center}
 .tw-b button svg{width:30px;height:30px}
 .tw-b .del{color:var(--red2)}
-.cantbox{position:absolute;top:8px;right:8px;width:84px;height:66px;border:1px solid #555;background:rgba(30,30,30,.7);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;padding:0}
+.cantbox{position:absolute;top:8px;right:8px;width:84px;height:66px;border:1px solid #3A4D66;background:rgba(11,17,25,.75);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;padding:0}
 .cantbox svg{width:60px;height:12px}
 .shotchips{display:flex;gap:6px;overflow-x:auto;padding:2px 0;scrollbar-width:none}
 .shotchip{flex:0 0 auto;min-width:40px;height:40px;border-radius:999px;border:0;background:none;font-size:16px;color:#ddd}
 .shotchip[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--acc);color:#fff}
 .ss-l{font-size:17px;text-transform:uppercase;margin-top:4px}
 .ss-v{font-size:27px;margin-top:-6px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--fg2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--fg2)}
 .legend i{display:inline-block;width:13px;height:13px;margin-right:6px;vertical-align:-2px}
 /* geçmiş */
 .h-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch;background:var(--hdr);position:sticky;top:0;z-index:4}
@@ -309,16 +309,16 @@ td.m{font-family:var(--mono)}
 .h-sess{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 16px;align-items:baseline;width:100%;padding:12px max(14px,env(safe-area-inset-right,0px)) 12px max(14px,env(safe-area-inset-left,0px));background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);text-align:left}
 .h-sess .sn{font-size:17px}
 .h-sess .sv{font-size:16px}
-.h-sess .sd{grid-column:1/-1;font-size:12.5px;color:var(--muted);margin-top:-2px}
-.h-sess .sm{grid-column:1/-1;font-size:12px;color:var(--dim)}
+.h-sess .sd{grid-column:1/-1;font-size:14px;color:var(--muted);margin-top:-2px}
+.h-sess .sm{grid-column:1/-1;font-size:14px;color:var(--dim)}
 .bars{display:flex;flex-direction:column;gap:6px;text-align:left;margin-top:6px}
-.bar-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13px;background:none;border:0;padding:0;text-align:left;color:var(--fg2)}
+.bar-row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:14px;background:none;border:0;padding:0;text-align:left;color:var(--fg2)}
 /* gruplar */
 .lb-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:12px max(14px,env(safe-area-inset-right,0px)) 12px max(14px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);font-size:16px}
 .lb-row .rk{font-size:18px;color:var(--muted);text-align:center}
 .lb-row.me{background:#2f2f2f}
 .lb-row .sc{font-size:17px;text-align:right}
-.lb-row small{color:var(--muted);font-size:12px}
+.lb-row small{color:var(--muted);font-size:14px}
 /* Analiz: üç grafik kartı (gelişim, hata haritası, atış grubu) */
 .an{display:flex;flex-direction:column;gap:12px;padding:2px max(14px,env(safe-area-inset-right,0px)) 12px max(14px,env(safe-area-inset-left,0px))}
 .an .card{gap:8px}
@@ -326,26 +326,26 @@ td.m{font-family:var(--mono)}
 .an-c{position:relative;touch-action:pan-y;-webkit-user-select:none;user-select:none}
 .an-c svg{display:block;width:100%;height:auto}
 .an-ring{max-width:250px;margin:0 auto}
-.an-tip{position:absolute;top:0;pointer-events:none;background:#1b1b1b;border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;line-height:1.4;color:var(--muted);white-space:nowrap;z-index:2}
+.an-tip{position:absolute;top:0;pointer-events:none;background:#0B1119;border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:14px;line-height:1.4;color:var(--muted);white-space:nowrap;z-index:2}
 .an-tip b{color:var(--fg);font-weight:600}
 .an-tip i{display:inline-block;width:10px;height:2px;margin-right:6px;vertical-align:middle}
-.an-key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
+.an-key{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted)}
 .an-key i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .an-key i.ring{background:none;border:2px solid var(--acc);width:11px;height:11px;vertical-align:-2px}
-.an-cap{min-height:1.4em;font-size:12.5px;color:var(--muted);text-align:center;margin:0}
+.an-cap{min-height:1.4em;font-size:14px;color:var(--muted);text-align:center;margin:0}
 .an-top{display:flex;flex-direction:column}
 .an-top button{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:center;background:none;border:0;border-top:1px solid var(--line);padding:10px 0;color:var(--fg);text-align:left;font-size:14.5px;width:100%}
-.an-top .rk{color:var(--muted);font-size:13px}
-.an-top small{display:block;color:var(--muted);font-size:12px;margin-top:1px}
-.an-top .tr{font-size:12.5px;color:var(--fg2);text-align:right;white-space:nowrap}
+.an-top .rk{color:var(--muted);font-size:14px}
+.an-top small{display:block;color:var(--muted);font-size:14px;margin-top:1px}
+.an-top .tr{font-size:14px;color:var(--fg2);text-align:right;white-space:nowrap}
 .an-more{padding-bottom:6px}
 /* Sensör sekmesi: hazırlık adımları */
 .acts{display:flex;flex-direction:column}
 .act{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;background:none;border:0;border-top:1px solid var(--line);padding:11px 2px;color:var(--fg);text-align:left;width:100%}
 .act:first-child{border-top:0;padding-top:2px}
 .act b{display:block;font-weight:600;font-size:15px}
-.act small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.35}
-.act .act-t{font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.act small{display:block;color:var(--muted);font-size:14px;margin-top:2px;line-height:1.35}
+.act .act-t{font-size:14px;color:var(--muted);text-align:right;white-space:nowrap}
 .act .act-t.ok{color:var(--good)}
 .act .act-t.warn{color:var(--warn)}
 .act:disabled{opacity:.45;cursor:default}
@@ -356,21 +356,21 @@ td.m{font-family:var(--mono)}
 .bul-sin .bars i{display:block;width:9px;height:14px;border-radius:2px;background:var(--line2)}
 .bul-sin .bars i.on{background:var(--acc)}
 .bul-sin b{display:block;font-size:17px;font-weight:600}
-.bul-sin small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
-.harita{position:relative;height:250px;overflow:hidden;border-radius:4px;background:#3a3a3a;touch-action:pan-y}
+.bul-sin small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
+.harita{position:relative;height:250px;overflow:hidden;border-radius:4px;background:#1B2738;touch-action:pan-y}
 .harita .hk img{position:absolute;width:256px;height:256px;max-width:none;user-select:none;-webkit-user-select:none;filter:saturate(.75) brightness(.92)}
 .harita i{position:absolute;display:block;border-radius:50%;transform:translate(-50%,-50%)}
 .harita .hsn{left:50%;top:50%;width:18px;height:18px;background:var(--acc);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.6)}
-.harita .hdo{left:50%;top:50%;background:rgba(34,211,197,.18);border:1.5px solid rgba(34,211,197,.8)}
+.harita .hdo{left:50%;top:50%;background:rgba(44,201,186,.18);border:1.5px solid rgba(44,201,186,.8)}
 .harita .hme{width:14px;height:14px;background:#3b8ff0;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.6)}
 .harita .hz{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
-.harita .hz button{width:36px;height:36px;border:0;border-radius:4px;background:rgba(32,32,32,.85);color:#fff;font-size:20px;line-height:1}
-.harita .hn{position:absolute;left:0;right:0;top:40%;margin:0;text-align:center;color:var(--fg2);font-size:13px;padding:0 20px}
-.harita .hcp{position:absolute;right:4px;bottom:3px;font-size:10px;color:#222;background:rgba(255,255,255,.75);padding:1px 4px;border-radius:2px;text-decoration:none}
+.harita .hz button{width:36px;height:36px;border:0;border-radius:4px;background:rgba(15,23,34,.88);color:#fff;font-size:20px;line-height:1}
+.harita .hn{position:absolute;left:0;right:0;top:40%;margin:0;text-align:center;color:var(--fg2);font-size:14px;padding:0 20px}
+.harita .hcp{position:absolute;right:4px;bottom:3px;font-size:14px;color:#222;background:rgba(255,255,255,.75);padding:1px 4px;border-radius:2px;text-decoration:none}
 .empty{padding:28px 20px;text-align:center;color:var(--muted);font-size:14.5px;display:flex;flex-direction:column;gap:14px;align-items:center}
 /* neden sayfası */
-.c-tabs{display:flex;overflow-x:auto;background:#242424;scrollbar-width:none}
-.c-tabs button{flex:1 0 auto;background:none;border:0;color:#ddd;font-size:12.5px;text-transform:uppercase;padding:12px 14px;position:relative;white-space:nowrap}
+.c-tabs{display:flex;overflow-x:auto;background:#0F1722;scrollbar-width:none}
+.c-tabs button{flex:1 0 auto;background:none;border:0;color:#ddd;font-size:14px;text-transform:uppercase;padding:12px 14px;position:relative;white-space:nowrap}
 .c-tabs button[aria-pressed="true"]{color:#fff}
 .c-tabs button[aria-pressed="true"]::after{content:"";position:absolute;left:10%;right:10%;bottom:0;height:3px;background:var(--acc)}
 .c-art{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#f2f2f2}
@@ -378,67 +378,170 @@ td.m{font-family:var(--mono)}
 .c-body{padding:16px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 .c-body h2{margin:0;text-align:center;font-size:21px;font-weight:400;text-transform:uppercase;line-height:1.25}
 .c-body p{margin:0;font-size:15.5px;color:#f0f0f0}
-.c-body h3{margin:6px 0 0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.c-body h3{margin:6px 0 0;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .c-body ul,.c-body ol{margin:0;padding-left:20px;font-size:15px;color:#f0f0f0}
 .c-body li{margin:5px 0}
-.c-body p.note{font-size:12.5px;color:var(--muted)}
-.see{align-self:flex-start;background:var(--btn2);border:0;color:#ddd;padding:8px 12px;font-size:13px;text-transform:uppercase}
+.c-body p.note{font-size:14px;color:var(--muted)}
+.see{align-self:flex-start;background:var(--btn2);border:0;color:#ddd;padding:8px 12px;font-size:14px;text-transform:uppercase}
 /* ders */
 .ders{padding:16px max(16px,env(safe-area-inset-right,0px)) 26px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:6px}
-.ders h3{margin:14px 0 2px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc)}
+.ders h3{margin:14px 0 2px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc)}
 .ders p,.ders li{font-size:15px;color:#ececec}
 .ders p{margin:4px 0}
 .ders ol,.ders ul{margin:4px 0;padding-left:20px}
 .ders li{margin:4px 0}
 /* açılış ekranı (bağlan) */
-.splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 38%,#3a3a3a 0%,#1e1e1e 70%);transition:opacity .4s ease;padding:24px}
+.splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#14171B;transition:opacity .4s ease;padding:24px}
 .splash.out{opacity:0;pointer-events:none}
 .splash .sp-logo{width:150px;height:150px;color:var(--acc)}
 .splash .sp-name{font-family:var(--logo);font-weight:700;font-size:min(40px,9.6vw);letter-spacing:.12em;padding-left:.12em;line-height:1;margin-top:-6px;white-space:nowrap}
-.splash .sp-sub{font-size:13px;color:var(--muted);letter-spacing:.04em;margin-bottom:28px}
+.splash .sp-sub{font-size:14px;color:var(--muted);letter-spacing:.04em;margin-bottom:28px}
 .splash .sp-go{min-width:200px;height:48px;background:var(--acc);border:0;border-radius:2px;color:var(--acc-ink);font-weight:600;font-size:18px;text-transform:uppercase;letter-spacing:.02em}
 .splash .sp-go:disabled{opacity:.7}
-.splash .sp-skip{background:none;border:0;color:#cfcfcf;font-size:13.5px;text-transform:uppercase;padding:14px 10px 6px}
+.splash .sp-skip{background:none;border:0;color:#cfcfcf;font-size:14px;text-transform:uppercase;padding:14px 10px 6px}
 .splash .status{max-width:330px;text-align:center;margin-top:4px}
 .splash .sp-dev{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:4px}
-.splash .sp-dev span{font-family:var(--logo);font-size:11px;font-weight:600;letter-spacing:.24em;color:var(--muted)}
+.splash .sp-dev span{font-family:var(--logo);font-size:14px;font-weight:600;letter-spacing:.24em;color:var(--muted)}
 .splash .sp-dev b{font-family:var(--logo);font-size:17px;font-weight:600;letter-spacing:.12em;color:var(--fg)}
 @media (max-height:620px){.splash .sp-logo{width:96px;height:96px}.splash .sp-dev{position:static;margin-top:18px}}
 /* alt pencere ve bildirimler */
 .sheet{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center}
 .sheet-back{position:absolute;inset:0;background:rgba(0,0,0,.6)}
-.sheet-card{position:relative;width:100%;max-width:620px;max-height:88%;overflow-y:auto;background:#2b2b2b;border-top:1px solid var(--line2);border-radius:10px 10px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.sheet-card{position:relative;width:100%;max-width:620px;max-height:88%;overflow-y:auto;background:#111C2B;border-top:1px solid var(--line2);border-radius:10px 10px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .sheet-head .x{width:36px;height:36px;border:0;background:var(--btn2);border-radius:2px;color:#fff}
 .sheet p{margin:0;color:#e2e2e2;font-size:14.5px}
 .sheet ul,.sheet ol{margin:0;padding-left:20px;color:#e2e2e2;font-size:14px}
 .sheet li{margin:4px 0}
-.sheet h3{margin:6px 0 0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+.sheet h3{margin:6px 0 0;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
 .pick{display:flex;flex-direction:column}
 .pick button{display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--fg);padding:14px 4px;text-align:left;font-size:16px}
 .pick button[aria-pressed="true"]{color:var(--acc)}
 .pick button[aria-pressed="true"]::after{content:"✓"}
 .pick .sw{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-.pick .sw small{font-size:12.5px;color:var(--muted)}
+.pick .sw small{font-size:14px;color:var(--muted)}
 .pick .sk{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1.5px solid var(--acc);border-radius:50%;color:var(--acc);font:italic 700 15px Georgia,serif}
 .flash{position:fixed;inset:0;z-index:40;display:grid;place-items:center;pointer-events:none;font-family:var(--logo);font-weight:700;font-size:min(22vw,140px);letter-spacing:.08em}
 .flash.go{background:rgba(47,181,74,.9);color:#03200f}
 .flash.no{background:rgba(182,33,38,.92);color:#fff}
 .flash.par{background:rgba(242,179,61,.92);color:#2a1d03}
 .flash.end{background:rgba(59,143,240,.88);color:#04162b}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:50;background:#3a3a3a;border:1px solid #555;border-radius:4px;padding:10px 14px;font-size:14px;max-width:min(92vw,460px);box-shadow:0 8px 30px rgba(0,0,0,.5)}
-.warnbox{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);z-index:45;width:min(86vw,360px);background:rgba(40,40,40,.94);border:1px solid #555;border-radius:4px;padding:16px 18px;text-align:center;pointer-events:none;transition:opacity .6s ease}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:50;background:#1B2738;border:1px solid #3A4D66;border-radius:4px;padding:10px 14px;font-size:14px;max-width:min(92vw,460px);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.warnbox{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);z-index:45;width:min(86vw,360px);background:rgba(17,28,43,.96);border:1px solid #3A4D66;border-radius:4px;padding:16px 18px;text-align:center;pointer-events:none;transition:opacity .6s ease}
 .warnbox b{display:block;font-size:17px;font-weight:500;margin-bottom:6px}
 .warnbox span{font-size:14px;color:#ddd}
 .warnbox.out{opacity:0}
 svg text{font-family:var(--body)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------------------------------------------------------------- T2: yeni arayüz */
+/* daha yuvarlak, daha büyük dokunma alanları */
+.btn{border-radius:12px;min-height:48px}
+.btn.sm{min-height:40px}
+.card{border-radius:14px}
+select,input[type=number],input[type=text],textarea{border-radius:10px}
+.sheet-card{border-radius:18px 18px 0 0}
+.sheet-head .x{width:44px;height:44px;border-radius:12px}
+.s-bar .stopb{height:52px;border-radius:12px}
+.toast,.warnbox{border-radius:12px}
+/* ana menü: kısa ad telefonda, uzun ad geniş ekranda; geniş ekrana özel düğmeler telefonda gizli */
+.nav .nlogo,.nav button.w,.nav button .ln{display:none}
+.netbar{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px;min-height:32px;padding:4px 10px;margin:-4px -4px 4px;background:#2A2412;border-bottom:1px solid #4A3B16;color:var(--warn);font-size:14px;font-weight:600}
+.netbar svg{width:18px;height:18px;flex:none}
+@media (min-width:900px){
+  .app{max-width:none;flex-direction:row}
+  .nav{order:-1;width:252px;flex:none;display:flex;flex-direction:column;gap:4px;padding:18px 12px calc(18px + env(safe-area-inset-bottom,0px));border-top:0;border-right:1px solid #22324A;overflow-y:auto}
+  .nav .nlogo{display:flex;align-items:center;gap:10px;padding:2px 10px 16px;font-family:var(--logo);font-weight:700;font-size:20px;letter-spacing:.08em;color:var(--fg);white-space:nowrap}
+  .nav .nlogo svg{width:32px;height:32px;flex:none}
+  .nav button.w{display:flex}
+  .nav button.n{display:none}
+  .nav button{flex-direction:row;justify-content:flex-start;gap:12px;min-height:48px;padding:0 12px;border-radius:12px;color:#C9D4DF;font-size:15px;text-align:left}
+  .nav button .ln{display:inline}
+  .nav button .sn{display:none}
+  .nav button[aria-selected="true"]{background:#13263A;color:var(--acc);box-shadow:inset 0 0 0 1px #2A4A66}
+  .netbar{order:99;margin:auto 0 0;border:1px solid #4A3B16;border-radius:12px;justify-content:flex-start;padding:10px 12px}
+  main{flex:1;min-width:0}
+  /* eski ekranlar telefon genişliği için tasarlandı: 720 px'te kalır; yeni ekranlar ve Analiz geniş */
+  main>.view{width:100%;max-width:720px;margin-left:auto;margin-right:auto}
+  #v-merkez,#v-cihaz,#v-kamera,#v-menu,#v-gecmis{max-width:980px}
+  #v-gecmis .an{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  .sheet-card{max-width:680px}
+  .toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+}
+/* yeni görünümler: Kontrol Merkezi, Cihaz Yönetimi, Kamera, Menü */
+.k-vh{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:60px;padding:12px max(16px,env(safe-area-inset-right,0px)) 4px max(16px,env(safe-area-inset-left,0px))}
+.k-vh h1{margin:0;font-family:var(--logo);font-weight:700;font-size:24px;letter-spacing:.02em}
+.k-vh .k-sur{font-size:14px;color:var(--dim)}
+.k-vb{display:flex;flex-direction:column;gap:12px;padding:8px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.k-kart{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.k-bas{font-size:14px;font-weight:600;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+.k-satir{display:flex;align-items:center;gap:12px;min-height:56px;width:100%;background:none;border:0;color:var(--fg);text-align:left;padding:0;font:inherit}
+button.k-satir.k-kutu{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 14px;min-height:64px}
+.k-ikon{width:44px;height:44px;border-radius:12px;background:var(--panel2);color:var(--acc);display:grid;place-items:center;flex:none}
+.k-ikon svg{width:24px;height:24px}
+.k-st{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.k-st b{font-size:16px;font-weight:600;overflow-wrap:anywhere}
+.k-st small{font-size:14px;color:var(--dim)}
+.k-chev{width:20px;height:20px;color:var(--dim);flex:none}
+.k-rozet{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap;border:1px solid;flex:none}
+.k-rozet svg{width:16px;height:16px;flex:none}
+.k-rozet.iyi{background:#12301F;border-color:#1E4A30;color:var(--good)}
+.k-rozet.uyari{background:#2A2412;border-color:#4A3B16;color:var(--warn)}
+.k-rozet.kapali{background:#1B2533;border-color:#2A3A50;color:var(--muted)}
+.k-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.k-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:100px;padding:12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);color:var(--fg);text-align:left;font:inherit;min-width:0}
+.k-tile b{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.k-tile b svg{width:18px;height:18px;color:var(--acc);flex:none}
+.k-tile .k-d{font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px}
+.k-tile .k-d svg{width:16px;height:16px;flex:none}
+.k-tile .k-d.iyi{color:var(--good)}.k-tile .k-d.uyari{color:var(--warn)}.k-tile .k-d.kapali{color:var(--muted)}
+.k-tile small{font-size:14px;color:var(--dim);overflow-wrap:anywhere}
+.k-ad{font-size:20px;font-weight:600}
+.k-not{font-size:14px;color:var(--dim);margin:0}
+.k-btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:12px;border:1.5px solid var(--line2);background:transparent;color:var(--fg);font:600 15px var(--body);padding:0 14px;text-align:center}
+.k-btn svg{width:20px;height:20px;flex:none}
+.k-btn.ana{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-size:17px;font-weight:700;min-height:56px}
+.k-btn.ana svg{fill:currentColor}
+.k-btn:disabled{opacity:.45}
+.k-iz2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.k-iz3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.k-kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.k-kv div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.k-kv span{font-size:14px;color:var(--dim)}
+.k-kv b{font-size:16px;font-weight:600;overflow-wrap:anywhere}
+.k-cips{display:flex;flex-wrap:wrap;gap:8px}
+.k-cips button{min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line2);background:none;color:var(--fg);font:600 14px var(--body)}
+.k-sayi{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.k-sayi div{display:flex;flex-direction:column}
+.k-sayi b{font-family:var(--logo);font-weight:700;font-size:34px;line-height:1.05}
+.k-sayi span{font-size:14px;color:var(--dim)}
+.k-etiket{font-size:14px;color:var(--dim);border:1px dashed #3A4D66;border-radius:8px;padding:2px 8px;white-space:nowrap}
+.k-liste{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.k-liste button{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 14px;background:var(--panel);border:0;color:var(--fg);text-align:left;font:inherit;width:100%}
+.k-liste .k-ikon{width:40px;height:40px;border-radius:10px}
+.k-yedek{background:#2A2412;border-color:#4A3B16}
+.k-yedek .k-not{color:#E2D3AE}
+.k-ayrac{border-top:1px solid #1E2C3F;padding-top:12px}
+@media (min-width:900px){.k-vh,.k-vb{padding-left:24px;padding-right:24px}.k-tiles{gap:12px}.k-ust{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}}
+/* açılış ekranı */
+.splash{background:#14171B}
+.splash .sp-logo{width:124px;height:124px;color:var(--acc)}
+.splash .sp-sub{font-size:16px;color:var(--muted);letter-spacing:0;margin-bottom:20px}
+.splash .sp-go{min-width:250px;height:56px;border-radius:14px;font-size:18px;font-weight:700;text-transform:none}
+.splash .sp-skip{min-width:250px;min-height:52px;margin-top:6px;padding:0 16px;border:1.5px solid var(--line2);border-radius:14px;color:var(--fg2);font-size:15px;font-weight:600;text-transform:none}
+.splash .sp-dev span{font-size:14px}
 </style>
 
 <div class="app" lang="tr">
   <main id="main">
-    <!-- ALIŞTIRMA -->
-    <section class="view" id="v-alistirma"><div id="drillList"></div></section>
+    <!-- T2: KONTROL MERKEZİ (açılış görünümü), CİHAZ YÖNETİMİ, KAMERA, MENÜ (telefonda 7 ana menünün listesi) -->
+    <section class="view" id="v-merkez"></section>
+    <section class="view" id="v-cihaz" hidden></section>
+    <section class="view" id="v-kamera" hidden></section>
+    <section class="view" id="v-menu" hidden></section>
+
+    <!-- ALIŞTIRMA (menüde "Eğitim Oturumları") -->
+    <section class="view" id="v-alistirma" hidden><div id="drillList"></div></section>
 
     <!-- OTURUM (alıştırma ekranı) -->
     <section class="view" id="v-oturum" hidden style="min-height:100%">
@@ -475,7 +578,7 @@ svg text{font-family:var(--body)}
           <div class="trace-wrap"><canvas id="trace" aria-label="Atış izi"></canvas>
             <button class="i-red" id="izInfo" aria-label="İz açıklaması" style="position:absolute;top:8px;left:8px">i</button>
             <button class="cantbox" id="btnCant" aria-label="Kanting tablosu"><span id="cantTxt">–</span><svg viewBox="0 0 60 12"><line x1="2" y1="6" x2="58" y2="6" stroke="#fff" stroke-width="2" id="cantLine"/><circle cx="30" cy="6" r="3" fill="#fff"/></svg></button>
-            <div class="tw-b"><span style="display:flex;gap:8px"><button id="btnReplay" aria-label="İzi oynat"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#fff"/><path d="M10 7.5l6 4.5-6 4.5z" fill="#252525"/></svg></button><button id="btnReplayAll" aria-label="Bütün izleri oynat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9" stroke="var(--acc)"/><path d="M12 3v18M3 12h18" stroke="var(--acc)"/><circle cx="12" cy="12" r="3.5" fill="var(--acc)" stroke="none"/></svg></button></span>
+            <div class="tw-b"><span style="display:flex;gap:8px"><button id="btnReplay" aria-label="İzi oynat"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#fff"/><path d="M10 7.5l6 4.5-6 4.5z" fill="#14171B"/></svg></button><button id="btnReplayAll" aria-label="Bütün izleri oynat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9" stroke="var(--acc)"/><path d="M12 3v18M3 12h18" stroke="var(--acc)"/><circle cx="12" cy="12" r="3.5" fill="var(--acc)" stroke="none"/></svg></button></span>
               <button class="del" id="btnDelShot" aria-label="Atışı sil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div></div>
           <div class="shotchips" id="shotChips"></div>
           <div class="ss-l">Atış skoru</div><div class="ss-v" id="izScore">–</div>
@@ -511,21 +614,28 @@ svg text{font-family:var(--body)}
     <section class="view" id="v-sayfa" hidden style="min-height:100%"><div class="ph"><button class="bk t" id="pgBack" aria-label="Geri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg><span id="pgBackT"></span></button><h1 id="pgTitle"></h1><div class="rt" id="pgRight"></div></div><div id="pgBody"></div></section>
   </main>
 
-  <nav class="nav" id="nav" role="tablist" aria-label="Bölümler">
-    <button role="tab" data-view="alistirma" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2.5"/></svg>Alıştırma</button>
-    <button role="tab" data-view="gecmis" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="13" width="4.5" height="8"/><rect x="9.75" y="8" width="4.5" height="13"/><rect x="16.5" y="3" width="4.5" height="18"/></svg>Analiz</button>
-    <button role="tab" data-view="sensor" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="8" y="4.5" width="8" height="15" rx="2"/><path d="M11 8h2"/><path d="M5 9a5 5 0 0 0 0 6M19 9a5 5 0 0 1 0 6M2.5 7a8.5 8.5 0 0 0 0 10M21.5 7a8.5 8.5 0 0 1 0 10"/></svg>Sensör</button>
-    <button role="tab" data-view="ayarlar" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="3.3"/><path d="M12 2.5l1.6 2.6 3-.6.8 3 2.8 1.2-1.1 2.8 1.6 2.6-2.6 1.6.2 3.1-3.1.1-1.6 2.6-2.6-1.6-2.8 1.2-1.1-2.9-3-.6.6-3L2.5 12l2.4-1.9-.6-3 3-.6 1.1-2.9 2.8 1.2z"/></svg>Ayarlar</button>
+  <!-- ana menü: telefonda alttaki 5 düğme (.w gizli), 900 px ve üstünde solda 7 ana menü (.n gizli) -->
+  <nav class="nav" id="nav" role="tablist" aria-label="Ana menü">
+    <div class="netbar" id="netBar" role="status" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 5-2.7M22 8.5A15 15 0 0 0 10.5 5M9 15.5a5 5 0 0 1 6 0M12 19.5h.01M3 3l18 18"/></svg><span>Çevrimdışı · uygulama bu cihazda çalışıyor</span></div>
+    <div class="nlogo" aria-hidden="true"><svg viewBox="0 0 92 92" fill="none"><path d="M46 6L80 20V48C80 66 64 80 46 86C28 80 12 66 12 48V20Z" stroke="#2CC9BA" stroke-width="5" stroke-linejoin="round"/><circle cx="46" cy="46" r="17" stroke="#E9EEF3" stroke-width="4.5"/><circle cx="46" cy="46" r="4" fill="#2CC9BA"/></svg>HİSAR TETİK</div>
+    <button role="tab" data-view="merkez" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span class="ln">Kontrol Merkezi</span><span class="sn">Merkez</span></button>
+    <button role="tab" class="w" data-view="kamera" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5h3.5l2-2.5h6l2 2.5h3.5v11h-17z"/><circle cx="12" cy="13.5" r="3.5"/></svg><span>Kamera</span></button>
+    <button role="tab" class="w" data-view="sensor" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l2.5-6 4 12 2.5-6h6"/></svg><span>Sensörler</span></button>
+    <button role="tab" data-view="alistirma" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg><span class="ln">Eğitim Oturumları</span><span class="sn">Eğitim</span></button>
+    <button role="tab" data-view="gecmis" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 20h17M6.5 16.5v-5M11.5 16.5V6M16.5 16.5v-8"/></svg><span class="ln">Analiz ve Raporlar</span><span class="sn">Analiz</span></button>
+    <button role="tab" data-view="cihaz" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><rect x="7.5" y="4" width="9" height="16" rx="2"/><path d="M10.5 8h3M3.5 9c1.4 1.6 1.4 4.4 0 6M20.5 9c-1.4 1.6-1.4 4.4 0 6"/></svg><span class="ln">Cihaz Yönetimi</span><span class="sn">Cihazlar</span></button>
+    <button role="tab" class="w" data-view="ayarlar" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg><span>Ayarlar</span></button>
+    <button role="tab" class="n" data-view="menu" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menü</span></button>
   </nav>
 </div>
 
 <div class="splash" id="splash" lang="tr">
-  <svg class="sp-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/></svg>
+  <svg class="sp-logo" viewBox="0 0 92 92" fill="none" aria-hidden="true"><path d="M46 6L80 20V48C80 66 64 80 46 86C28 80 12 66 12 48V20Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="46" cy="46" r="17" stroke="#E9EEF3" stroke-width="2"/><path d="M46 22v12M46 58v12M22 46h12M58 46h12" stroke="#E9EEF3" stroke-width="2" stroke-linecap="round"/><circle cx="46" cy="46" r="3.2" fill="currentColor"/></svg>
   <div class="sp-name">HİSAR TETİK</div>
   <div class="sp-sub">Atış ve tetik analizi</div>
   <button class="sp-go" id="spConnect">Bağlan</button>
   <div class="status" id="srcStatus"></div>
-  <button class="sp-skip" id="spSkip">Bağlantıyı atla</button>
+  <button class="sp-skip" id="spSkip">Bağlanmadan devam et</button>
   <div class="sp-dev"><span>GELİŞTİRİCİ</span><b>EMİN KAAN BOYACI</b></div>
 </div>
 <div class="sheet" id="sheet" lang="tr" hidden>
@@ -547,7 +657,7 @@ svg text{font-family:var(--body)}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=28;
+const VER=29;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -1275,7 +1385,7 @@ function connState(){
 }
 function refreshChip(){
   const c=$("sessConn"); if(c){ const s=connState(); const h=`<span class="dot ${s.k}"></span>${s.k==="ok"||source==="demo"?esc(s.t):`<span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">${esc(s.t)}</span>`}`; if(c._h!==h){c._h=h;c.innerHTML=h;} }
-  updateSrcCard();
+  updateSrcCard(); kDurumYenile();
 }
 function sensorPaired(){ return !!S.lastSensor; }
 function sensorIdleText(){
@@ -1329,9 +1439,9 @@ const DR=[
  {id:"kilif",g:"elit",ad:"Kılıf Çekiş Analizi",hedef:"Hızlı ve isabetli çekiş.",talimat:"Silah kılıfta ya da hazır pozisyonda beklesin. Bip sesiyle silahı çek, nişan al ve ateş et. Hareket başlama süresi ve ilk atış süresi ölçülür; her turdan sonra silahı kılıfa koy.",demo:"cue"},
  {id:"geritepme",g:"elit",ad:"Geri Tepme Ölçer",hedef:"Tepme kontrolü.",talimat:"Gerçek atış ya da CO2 ile çalış. Her atışta tepme şiddeti, namlu kalkışı ve nişana geri dönme (toparlanma) süresi ölçülür.",demo:"periodic"},
  {id:"serbest",g:"ant",ad:"Serbest Antrenman",hedef:"Keskin nişancılık.",talimat:"İstediğiniz hızda istediğiniz kadar atış yapın. Skorlarınızı ve takip ekranınızı gözden geçirin. Bu atış pratiğinde zaman sınırlaması yoktur.",demo:"periodic",limit:()=>dsetOf("serbest").shots||null},
- {id:"safespace",g:"ant",ad:"Safe Space",hedef:"Skor kaygısı olmadan deneme.",talimat:"Yeni bir tekniği, hızı ya da tutuşu dene. Aynı geri bildirimi alırsın ama bu atışlar skor istatistiklerine girmez; oturum Analiz'de görünür.",demo:"periodic",safe:true,limit:()=>dsetOf("safespace").shots||null},
- {id:"zamanlayici",g:"ant",ad:"Atış Zamanlayıcısı (Shot Timer)",hedef:"Hızlı ilk atış.",talimat:"Hazır ol. Rastgele bir anda bip sesi gelir. Bipten sonra mümkün olan en kısa sürede iyi bir atış yap. İlk atış süresi ve atışlar arası süre ölçülür; her turdan sonra yeni bip beklenir.",demo:"cue"},
- {id:"par",g:"ant",ad:"Par Ölçer",hedef:"Belirli sürede atış.",talimat:"İlk bipte başla. Par süresi dolunca ikinci bip çalar. Atışın ikinci bipten önce olursa başarılıdır. Par süresini DRILL düğmesinden ayarla.",demo:"cue"},
+ {id:"safespace",g:"ant",ad:"Kaygısız Deneme",hedef:"Skor kaygısı olmadan deneme.",talimat:"Yeni bir tekniği, hızı ya da tutuşu dene. Aynı geri bildirimi alırsın ama bu atışlar skor istatistiklerine girmez; oturum Analiz'de görünür.",demo:"periodic",safe:true,limit:()=>dsetOf("safespace").shots||null},
+ {id:"zamanlayici",g:"ant",ad:"Atış Zamanlayıcısı",hedef:"Hızlı ilk atış.",talimat:"Hazır ol. Rastgele bir anda bip sesi gelir. Bipten sonra mümkün olan en kısa sürede iyi bir atış yap. İlk atış süresi ve atışlar arası süre ölçülür; her turdan sonra yeni bip beklenir.",demo:"cue"},
+ {id:"par",g:"ant",ad:"Par Ölçer",hedef:"Belirli sürede atış.",talimat:"İlk bipte başla. Par süresi dolunca ikinci bip çalar. Atışın ikinci bipten önce olursa başarılıdır. Par süresini Ayar düğmesinden ayarla.",demo:"cue"},
  {id:"degerlendirme",g:"ant",ad:"Değerlendirme Testi",hedef:"Seviyeni ölçmek.",talimat:"Acele etmeden 10 atış yap. Ortalama skoruna göre seviyen hesaplanır: Başlangıç, Gelişen, Nişancı, Uzman, Usta. Haftada bir tekrarla ve gelişimini Analiz'de izle.",demo:"periodic",limit:()=>10},
  {id:"kiyas20",g:"ant",ad:"20 Saniyelik Kıyaslama",hedef:"Hız ve isabet dengesi.",talimat:"3-2-1 sayımından sonra bip çalar. 20 saniye içinde mümkün olduğunca çok ve iyi atış yap. 70 ve üzeri skorlar etkili atış sayılır.",demo:"burst",limit:null},
  {id:"zamankiyas",g:"ant",ad:"Zaman Kıyaslaması",hedef:"Belirli sayıda atışı en kısa sürede, iyi skorla yapmak.",talimat:"3-2-1 sayımından sonra bip çalar. Atışları (varsayılan 10) olabildiğince hızlı ama iyi skorla yap. Toplam süre ve ortalama skor ölçülür.",demo:"burst",limit:()=>dsetOf("zamankiyas").shots||10},
@@ -1342,7 +1452,7 @@ const DR=[
  {id:"karar",g:"ant",ad:"Karar Tatbikatları",hedef:"Doğru anda ateş etmek.",talimat:"Rastgele anlarda ekran YEŞİL (ATEŞ, iki kısa bip) ya da KIRMIZI (DUR, uzun kalın ses) olur. Yeşilde ateş et, kırmızıda tetiğe dokunma. 15 tur sürer.",demo:"cue"},
  {id:"sarjor",g:"ant",ad:"Şarjör Değiştirme Antrenmanları",hedef:"Hızlı şarjör değiştirme.",talimat:"Bir atış yap, şarjörü değiştir ve tekrar atış yap. İki atış arasındaki süre şarjör değiştirme süren olarak ölçülür. Sensör şarjör altındaysa bu alıştırma için rayda olması gerekir.",demo:"pairs"},
  {id:"ritim",g:"ant",ad:"Ritmik Antrenman",hedef:"Düzenli tetik ritmi.",talimat:"Metronom gibi düzenli bipler çalar. Her bipte bir atış yap. Ritimden sapman ölçülür. Tetiği tokatlama alışkanlığını kırmak için idealdir.",demo:"cue",limit:()=>S.ritimShots},
- {id:"rehine",g:"ant",ad:"Rehine Kurtarma Antrenmanları",hedef:"Baskı altında tek, kusursuz atış.",talimat:"Bip sesiyle silahı çek (ya da hazır pozisyondan kaldır) ve tek, çok hassas bir atış yap. Atış süre sınırı içinde ve skor eşiğinin üstündeyse rehine kurtarılır. Zorluğu DRILL düğmesinden seç.",demo:"cue"}
+ {id:"rehine",g:"ant",ad:"Rehine Kurtarma Antrenmanları",hedef:"Baskı altında tek, kusursuz atış.",talimat:"Bip sesiyle silahı çek (ya da hazır pozisyondan kaldır) ve tek, çok hassas bir atış yap. Atış süre sınırı içinde ve skor eşiğinin üstündeyse rehine kurtarılır. Zorluğu Ayar düğmesinden seç.",demo:"cue"}
 ];
 DR.forEach(d=>{ d.bilgi="Hedef: "+d.hedef+" Talimatlar: "+d.talimat; d.kisa=d.hedef; });
 const DRM=Object.fromEntries(DR.map(d=>[d.id,d]));
@@ -1356,12 +1466,12 @@ const CHALLENGES=[
  {drill:"serbest",goal:"Üst üste 5 atış 85 ve üzeri",test:s=>{let k=0,m=0;for(const q of validShots(s)){k=q.sc>=85?k+1:0;m=Math.max(m,k);}return m>=5;}},
  {drill:"kiyas20",goal:"20 saniyede 10 etkili atış (70 ve üzeri)",test:s=>validShots(s).filter(q=>q.sc>=70).length>=10},
  {drill:"par",goal:"En az 4 atış par süresi içinde",test:s=>validShots(s).filter(q=>q.x&&q.x.parOk).length>=4},
- {drill:"ritim",need:()=>(S.ritimShots||20)>=20,needTxt:"Bunun için DRILL ayarında atış sayısını en az 20 yap.",goal:"20 atış, ortalama ritim sapması 0,15 sn altında",test:s=>{const o=validShots(s).map(q=>q.x&&q.x.offset).filter(x=>x!=null);return o.length>=20&&o.reduce((a,b)=>a+Math.abs(b),0)/o.length<150;}},
+ {drill:"ritim",need:()=>(S.ritimShots||20)>=20,needTxt:"Bunun için alıştırma ayarında atış sayısını en az 20 yap.",goal:"20 atış, ortalama ritim sapması 0,15 sn altında",test:s=>{const o=validShots(s).map(q=>q.x&&q.x.offset).filter(x=>x!=null);return o.length>=20&&o.reduce((a,b)=>a+Math.abs(b),0)/o.length<150;}},
  {drill:"atiseli",goal:"10 atış, ortalama 75 ve üzeri",test:s=>{const v=validShots(s);return v.length>=10&&avgOf(v)>=75;}},
  {drill:"zamanlayici",goal:"5 tur: ilk atış ortalaması 1,5 sn altında, skor 70 ve üzeri",test:s=>{const r=validShots(s).filter(q=>q.x&&q.x.react!=null);return r.length>=5&&r.reduce((a,q)=>a+q.x.react,0)/r.length<1500&&avgOf(r)>=70;}},
- {drill:"dayaniklilik",need:()=>(S.dayanik||30)>=30,needTxt:"Bunun için DRILL ayarında atış sayısını en az 30 yap.",goal:"30 atış, son 10 atışın ortalaması 75 ve üzeri",test:s=>{const v=validShots(s);return v.length>=30&&avgOf(v.slice(-10))>=75;}},
+ {drill:"dayaniklilik",need:()=>(S.dayanik||30)>=30,needTxt:"Bunun için alıştırma ayarında atış sayısını en az 30 yap.",goal:"30 atış, son 10 atışın ortalaması 75 ve üzeri",test:s=>{const v=validShots(s);return v.length>=30&&avgOf(v.slice(-10))>=75;}},
  {drill:"destekeli",goal:"10 atış, ortalama 70 ve üzeri",test:s=>{const v=validShots(s);return v.length>=10&&avgOf(v)>=70;}},
- {drill:"rehine",need:()=>(dsetOf("rehine").rounds||10)>=7,needTxt:"Bunun için DRILL ayarında tur sayısını en az 7 yap.",goal:"En az 7 rehine kurtar",test:s=>validShots(s).filter(q=>q.x&&q.x.rehine==="kurtardi").length>=7}
+ {drill:"rehine",need:()=>(dsetOf("rehine").rounds||10)>=7,needTxt:"Bunun için alıştırma ayarında tur sayısını en az 7 yap.",goal:"En az 7 rehine kurtar",test:s=>validShots(s).filter(q=>q.x&&q.x.rehine==="kurtardi").length>=7}
 ];
 const dayNo=t=>{const d=new Date(t==null?Date.now():t);return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);};
 function todayChallenge(){ return CHALLENGES[dayNo()%CHALLENGES.length]; }
@@ -1371,7 +1481,7 @@ const whoOf=s=>s.who||"p1";
 const statSess=()=>sessions.filter(s=>!s.sample&&!s.safe&&whoOf(s)===S.prof);
 
 let cur={sess:null,run:null,review:false,sel:-1,sub:"skor"};
-let curView="alistirma";
+let curView="merkez";
 
 function newSession(drillId){
   const d=DRM[drillId]||DRM.serbest;
@@ -1700,13 +1810,20 @@ function mountChecks(r,m,q){
 }
 
 /* ---------------------------------------------------------------- arayüz: görünümler (MantisX düzeni) */
-const VIEWS=["alistirma","oturum","gecmis","sensor","ayarlar"];
+// T2: "merkez" (Kontrol Merkezi) açılış görünümü; "cihaz" (Cihaz Yönetimi), "kamera", "menu" (telefonda 7 ana menü) yeni
+const VIEWS=["merkez","alistirma","oturum","gecmis","sensor","ayarlar","cihaz","kamera","menu"];
+const HOME="merkez";
 const pages=[];   // açılan sayfalar (geri tuşuyla kapanır): {title,back,render,bind,set,noNav,onPop}
 function navHidden(){ return curView==="oturum"&&cur.from!=="gecmis"||(curView==="oturum"&&cur.run&&cur.run.active); }
+function renderView(v){
+  if(v==="alistirma") renderHome(); else if(v==="oturum") renderSession(); else if(v==="gecmis") renderHistory(); else if(v==="sensor") renderSensorView(); else if(v==="ayarlar") renderSettings();
+  else if(v==="merkez") renderMerkez(); else if(v==="cihaz") renderCihaz(); else if(v==="kamera") renderKamera(); else if(v==="menu") renderMenu();
+}
 function showView(v){
-  if(v==="dersler") v="alistirma";
+  if(v==="dersler"||v==="egitim") v="alistirma";
   if(v==="analiz") v="gecmis";
   if(v==="gruplar"){ showView("gecmis"); openGroups(); return; }        // Gruplar Analiz'in içinde
+  if(!VIEWS.includes(v)) v=HOME;
   if(v==="oturum"&&!cur.sess) cur.sess=newSession("serbest");
   curView=v; detTest=null;
   closePages();
@@ -1715,8 +1832,154 @@ function showView(v){
   for(const k of VIEWS) $("v-"+k).hidden=k!==v;
   $("nav").hidden=navHidden();
   $("main").scrollTop=0;
-  if(v==="alistirma") renderHome(); else if(v==="oturum") renderSession(); else if(v==="gecmis") renderHistory(); else if(v==="sensor") renderSensorView(); else if(v==="ayarlar") renderSettings();
+  renderView(v);
 }
+/* ---------------------------------------------------------------- T2: Kontrol Merkezi, Cihaz Yönetimi, Kamera, Menü */
+const KI=(p,sw)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||1.7}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const K_IC={
+  merkez:KI('<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',1.8),
+  kamera:KI('<path d="M3.5 8.5h3.5l2-2.5h6l2 2.5h3.5v11h-17z"/><circle cx="12" cy="13.5" r="3.5"/>'),
+  sensorler:KI('<path d="M3 12h3l2.5-6 4 12 2.5-6h6"/>'),
+  egitim:KI('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>'),
+  analiz:KI('<path d="M3.5 20h17M6.5 16.5v-5M11.5 16.5V6M16.5 16.5v-8"/>',1.8),
+  cihaz:KI('<rect x="7.5" y="4" width="9" height="16" rx="2"/><path d="M10.5 8h3M3.5 9c1.4 1.6 1.4 4.4 0 6M20.5 9c-1.4 1.6-1.4 4.4 0 6"/>'),
+  ayarlar:KI('<path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/>'),
+  lazer:KI('<circle cx="5" cy="12" r="2.2"/><path d="M8.5 12H21M17 8l4 4-4 4"/>'),
+  saat:KI('<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 9.5V12l1.5 1.5"/>'),
+  silah:KI('<path d="M3 9h14l2-2h2v4h-6l-1.5 2H11l-1.5 6H5l1.5-6H3z"/>'),
+  ok:KI('<path d="M5 12.5l4.5 4.5L19 7.5"/>',2.4), eksi:KI('<path d="M6 12h12"/>',2.4),
+  uyari:KI('<path d="M12 3.5l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5h.01"/>',2),
+  ileri:KI('<path d="M9 6l6 6-6 6"/>',2), yedek:KI('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',1.9),
+  oynat:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>'
+};
+function kRozet(d){ return `<span class="k-rozet ${d.tur}">${d.tur==="iyi"?K_IC.ok:d.tur==="uyari"?K_IC.uyari:K_IC.eksi}${esc(d.metin)}</span>`; }
+function kGit(v){ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } showView(v); }
+function kSensorDurum(){
+  if(source==="demo") return {tur:"uyari",metin:"Deneme modu",alt:"Sensörsüz, örnek veriyle"};
+  if(source==="phone") return {tur:"uyari",metin:"Telefon",alt:"Telefonun kendi sensörü"};
+  const st=ble.st;
+  if(st==="bagli") return {tur:"iyi",metin:"Bağlı",alt:ble.bat!=null?"Pil %"+ble.bat+(ble.chg?" · şarjda":""):((ble.dev&&ble.dev.name)||"Sensör")};
+  if(st==="yeniden"||st==="baglaniyor"||st==="secim"||ble.autoPending) return {tur:"uyari",metin:"Bağlanıyor",alt:S.lastSensor||"Sensör"};
+  return {tur:"kapali",metin:"Bağlı değil",alt:S.lastSensor||"Henüz eşlenmedi"};
+}
+function kLazerDurum(){
+  const L=S.lazer||{};
+  if(L.kaynak!=="sensor") return {tur:"kapali",metin:"Silahta",alt:"Silahtaki lazer"};
+  if(L.sn===false) return {tur:"kapali",metin:"Kapalı",alt:"Oturumlarda yanmıyor"};
+  const kip=L.kip==="surekli"?"Oturum boyunca yanar":"Atışta yanar";
+  if(lzSensorHazir()) return {tur:"iyi",metin:"Hazır",alt:kip};
+  if(source==="sensor"&&ble.st==="bagli") return {tur:"uyari",metin:"Yanmaz",alt:ble.kind!=="hisar"?"Bu sensör lazer süremez":"Sensör yazılımı 7 gerekir"};
+  return {tur:"kapali",metin:"Bekliyor",alt:"Sensör bağlanınca çalışır"};
+}
+function kKameraDurum(){
+  const L=S.lazer||{};
+  if(L.on&&lzHazir()) return {tur:"iyi",metin:"Açık",alt:"Hedef ayarlı"};
+  if(L.on) return {tur:"uyari",metin:"Ayar gerekli",alt:"Hedefi işaretle"};
+  return {tur:"kapali",metin:"Kapalı",alt:"Kamerayla puanlama"};
+}
+function kSonOturum(){ let son=null; for(const s of sessions) if(!s.sample&&s.shots&&s.shots.length&&(!son||s.date>son.date)) son=s; return son; }
+function kEnSikHata(s){ const n={}; for(const q of validShots(s)) if(q.c&&q.c[0]&&CAUSES[q.c[0]]&&q.sc<85) n[q.c[0]]=(n[q.c[0]]||0)+1;
+  let k=null; for(const c in n) if(!k||n[c]>n[k]) k=c; return k?CAUSES[k].ad:null; }
+function kTiles(){
+  const t=(ad,ic,d,git)=>`<button class="k-tile" data-git="${git}"><b>${ic}${ad}</b><span class="k-d ${d.tur}">${d.tur==="iyi"?K_IC.ok:d.tur==="uyari"?K_IC.uyari:K_IC.eksi}${esc(d.metin)}</span><small>${esc(d.alt||"")}</small></button>`;
+  return t("Sensör",K_IC.cihaz,kSensorDurum(),"cihaz")+t("Lazer",K_IC.lazer,kLazerDurum(),"cihaz")+t("Kamera",K_IC.kamera,kKameraDurum(),"kamera");
+}
+function kBagla(el){ el.querySelectorAll("[data-git]").forEach(b=>b.onclick=()=>kGit(b.dataset.git)); }
+function renderMerkez(){
+  const el=$("v-merkez"); if(!el) return;
+  const son=kSonOturum(), v=son?validShots(son):[], hd=son?kEnSikHata(son):null;
+  const dr=son&&DRM[son.drill]?son.drill:"serbest";
+  const diger=["zamanlayici","karar","degerlendirme"].filter(x=>x!==dr&&DRM[x]).slice(0,2), tl=kTiles();
+  el.innerHTML=`<div class="k-vh"><h1>Kontrol Merkezi</h1></div>
+  <div class="k-vb">
+    <button class="k-satir k-kutu" id="mzProf"><span class="k-ikon">${K_IC.silah}</span><span class="k-st"><b>${esc(wName({weaponName:S.weaponName,weapon:S.weapon}))} · ${S.hand==="L"?"Sol el":"Sağ el"}</b><small>${esc(curProf().ad)} · ${esc(MODE_T[S.mode]||"")}</small></span><span class="k-chev">${K_IC.ileri}</span></button>
+    <div class="k-tiles" id="mzTiles">${tl}</div>
+    <div class="k-ust">
+    <section class="k-kart" aria-labelledby="mzHb"><span class="k-bas" id="mzHb">Hızlı başlat</span><span class="k-ad">${esc(DRM[dr].ad)}</span><p class="k-not">${son?"Son kullanılan alıştırma":"Önerilen ilk alıştırma"}${DRM[dr].hedef?" · "+esc(DRM[dr].hedef):""}</p>
+      <button class="k-btn ana" data-mzd="${dr}">${K_IC.oynat}Alıştırmaya geç</button>
+      <div class="k-cips">${diger.map(id=>`<button data-mzd="${id}">${esc(DRM[id].ad)}</button>`).join("")}<button data-git="alistirma">Tümü</button></div></section>
+    <section class="k-kart" aria-labelledby="mzSo"><span class="k-bas" id="mzSo">Son oturum</span>${son?`<span class="k-ad">${esc(DRM[son.drill]?DRM[son.drill].ad:"Antrenman")}</span><p class="k-not">${esc(dateShort(son.date))}</p>
+      <div class="k-sayi"><div><b>${v.length?fx(avgOf(v),1):"–"}</b><span>ortalama skor</span></div><div><b>${v.length}</b><span>atış</span></div></div>
+      ${hd?`<span class="k-rozet uyari" style="align-self:flex-start;white-space:normal">${K_IC.uyari}En sık: ${esc(hd)}</span>`:""}
+      <button class="k-btn" id="mzAc">Oturumu ve raporu aç</button>`:`<p class="k-not">Henüz kayıtlı oturum yok. İlk alıştırmayı bitirdiğinizde özeti burada görünür.</p>`}</section>
+    </div>
+  </div>`;
+  kBagla(el); $("mzTiles")._h=tl;
+  el.querySelectorAll("[data-mzd]").forEach(b=>b.onclick=()=>{ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } openDrill(b.dataset.mzd); });
+  $("mzProf").onclick=()=>kGit("ayarlar");
+  const ac=$("mzAc"); if(ac) ac.onclick=()=>{ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } showView("gecmis"); openReview(son); };
+}
+function kCihazHtml(){
+  const sd=kSensorDurum(), ld=kLazerDurum(), kd=kKameraDurum(), bagli=source==="sensor"&&ble.st==="bagli";
+  const ad=(ble.dev&&ble.dev.name)||S.lastSensor||"HİSAR sensörü";
+  return `<div class="k-vh"><h1>Cihaz Yönetimi</h1></div><div class="k-vb">
+  <section class="k-kart" aria-label="Sensör">
+    <div class="k-satir"><span class="k-ikon">${K_IC.cihaz}</span><span class="k-st"><b>${esc(ad)}</b><small>${source==="sensor"?"Bluetooth sensör":esc(sd.alt)}</small></span>${kRozet(sd)}</div>
+    ${bagli?`<div class="k-kv"><div><span>Pil</span><b>${ble.bat!=null?"%"+ble.bat:"–"}</b></div><div><span>Yazılım</span><b>${ble.fw?esc(String(ble.fw)):"–"}</b></div><div><span>Sinyal</span><b>${ble.rssi!=null?esc(String(ble.rssi))+" dBm":"–"}</b></div></div>`:""}
+    <div class="k-iz2"><button class="k-btn" id="cyBag">${bagli?"Bağlantıyı kes":"Bağlan"}</button><button class="k-btn" id="cyBul">Sensörü bul</button>
+      <button class="k-btn" id="cyMontaj">Kalibrasyon ve yön</button><button class="k-btn" id="cyAlg">Atış algılama</button></div>
+    <button class="k-btn" id="cySensor">${K_IC.sensorler}Sensör ayrıntıları ve yazılımı</button>
+  </section>
+  <section class="k-kart" aria-label="Lazer">
+    <div class="k-satir"><span class="k-ikon">${K_IC.lazer}</span><span class="k-st"><b>Lazer</b><small>${esc(ld.alt)}</small></span>${kRozet(ld)}</div>
+    <div class="k-iz2"><button class="k-btn" id="cyLzDene">Lazeri dene</button><button class="k-btn" id="cyLzAyar">Lazer ayarları</button></div>
+  </section>
+  <section class="k-kart" aria-label="Kamera">
+    <div class="k-satir"><span class="k-ikon">${K_IC.kamera}</span><span class="k-st"><b>Kamera</b><small>${esc(kd.alt)}</small></span>${kRozet(kd)}</div>
+    <button class="k-btn" data-git="kamera">Kamera ekranı</button>
+  </section>
+  <button class="k-satir k-kutu" id="cySaat"><span class="k-ikon">${K_IC.saat}</span><span class="k-st"><b>Akıllı saat</b><small>${saatVar()?"Atış sonucunu saatte göster":"Yalnız Android uygulamasında"}</small></span><span class="k-chev">${K_IC.ileri}</span></button>
+  </div>`;
+}
+function renderCihaz(){
+  const el=$("v-cihaz"); if(!el) return; const h=kCihazHtml(); el.innerHTML=h; el._h=h; kBagla(el);
+  const bagli=source==="sensor"&&ble.st==="bagli";
+  $("cyBag").onclick=()=>{ if(bagli) sensorDisconnect(); else returnToSensor(); };
+  $("cyBul").onclick=()=>openBul();
+  $("cyMontaj").onclick=()=>{ showView("sensor"); openSetPage("montaj"); };
+  $("cyAlg").onclick=()=>openSetPage("algilama");
+  $("cySensor").onclick=()=>kGit("sensor");
+  $("cyLzDene").onclick=()=>{ if(lzSensorLazer(3)) toast("Lazer 1 saniye yanmalı. Yanmıyorsa kabloyu kontrol et.",6000); else toast(S.lazer&&S.lazer.kaynak!=="sensor"?"Lazer kaynağı silah: lazeri sensör yakmaz. Lazer ayarlarından değiştirebilirsin.":lzSensorDurum(),7000); };
+  $("cyLzAyar").onclick=()=>openSetPage("lazer");
+  $("cySaat").onclick=()=>openSetPage("saat");
+}
+function renderKamera(){
+  const el=$("v-kamera"); if(!el) return; const kd=kKameraDurum(), L=S.lazer||{};
+  el.innerHTML=`<div class="k-vh"><h1>Kamera</h1></div><div class="k-vb">
+  <section class="k-kart" aria-label="Kamerayla puanlama">
+    <div class="k-satir"><span class="k-ikon">${K_IC.kamera}</span><span class="k-st"><b>Kamerayla puanlama</b><small>Telefonun ya da bilgisayarın kamerası hedefteki lazer noktasını görür, isabeti puanlar.</small></span>${kRozet(kd)}</div>
+    <button class="k-btn ana" id="kmAc">${L.on?"Kamera ayarlarını aç":"Kamerayla puanlamayı aç"}</button>
+    <p class="k-not">Görüntü bu cihazda işlenir; internet gerekmez. Lazer gerekir: sensöre takılı lazer ya da silahtaki lazer.</p>
+  </section>
+  <section class="k-kart" aria-label="Unit CamS3">
+    <div class="k-satir"><span class="k-ikon">${K_IC.kamera}</span><span class="k-st"><b>Unit CamS3</b><small>Hedefe bakan Wi-Fi kamera</small></span><span class="k-etiket">Henüz yok</span></div>
+    <p class="k-not">CamS3 desteği sonraki geliştirme aşamasında eklenecek.</p>
+  </section></div>`;
+  $("kmAc").onclick=()=>openSetPage("lazer");
+}
+const K_MENU=[["merkez","Kontrol Merkezi","Cihaz durumu, hızlı başlat, son oturum","merkez"],["kamera","Kamera","Lazer isabetini kamerayla puanla","kamera"],
+  ["sensor","Sensörler","Canlı veri, kalibrasyon, atış algılama","sensorler"],["alistirma","Eğitim Oturumları","Alıştırmalar, dersler, eğitim programı","egitim"],
+  ["gecmis","Analiz ve Raporlar","Geçmiş, gelişim, gruplar, rapor","analiz"],["cihaz","Cihaz Yönetimi","Sensör, lazer, kamera, saat","cihaz"],["ayarlar","Ayarlar","Silah, profil, ses, görünüm, veriler","ayarlar"]];
+function renderMenu(){
+  const el=$("v-menu"); if(!el) return;
+  const kac=sessions.filter(x=>!x.sample).length, sy=S.sonYedek||0, on=navigator.onLine!==false;
+  el.innerHTML=`<div class="k-vh"><h1>Menü</h1><span class="k-sur">Sürüm ${VER}</span></div><div class="k-vb">
+  <nav class="k-liste" aria-label="Ana menüler">${K_MENU.map(([v,ad,ac,ic])=>`<button data-git="${v}"><span class="k-ikon">${K_IC[ic]}</span><span class="k-st"><b>${ad}</b><small>${ac}</small></span><span class="k-chev">${K_IC.ileri}</span></button>`).join("")}</nav>
+  <section class="k-kart${on?"":" k-yedek"}" aria-label="Bağlantı ve yedek">
+    <span style="align-self:flex-start">${on?kRozet({tur:"iyi",metin:"İnternet var"}):kRozet({tur:"uyari",metin:"Çevrimdışı"})}</span>
+    <p class="k-not">Uygulama ve kayıtlar bu cihazda çalışır; internet gerekmez. ${kac} oturum kayıtlı.${sy?" Son yedek "+esc(ago(Date.now()-sy))+".":kac?" Henüz yedek alınmadı.":""}</p>
+    <button class="k-btn" id="mnYedek">${K_IC.yedek}Şimdi yedekle (dışa aktar)</button>
+  </section></div>`;
+  kBagla(el);
+  $("mnYedek").onclick=()=>{ exportJson(); if(curView==="menu"&&!pages.length) setTimeout(renderMenu,300); };
+}
+// bağlantı durumu değişince açık olan Kontrol Merkezi ve Cihaz Yönetimi güncellenir (refreshChip'ten)
+function kDurumYenile(){ try{
+  if(pages.length) return;
+  if(curView==="merkez"){ const t=$("mzTiles"); if(t){ const h=kTiles(); if(t._h!==h){ t._h=h; t.innerHTML=h; kBagla(t); } } }
+  else if(curView==="cihaz"){ const el=$("v-cihaz"); if(el&&el._h!==kCihazHtml()) renderCihaz(); }
+}catch(e){} }
+function netDurum(){ const nb=$("netBar"); if(nb) nb.hidden=navigator.onLine!==false; if(curView==="menu"&&!pages.length) renderMenu(); }
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
   if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; }
   showView(b.dataset.view); });
@@ -1724,7 +1987,7 @@ function pushPage(pg){ pages.push(pg); showPage(); }
 function showPage(){
   const pg=pages[pages.length-1];
   if(!pg){ $("v-sayfa").hidden=true; setPage=null; for(const k of VIEWS) $("v-"+k).hidden=k!==curView; $("nav").hidden=navHidden();
-    if(curView==="ayarlar") renderSettings(); else if(curView==="sensor") renderSensorView(); else if(curView==="oturum") renderSession(); else if(curView==="gecmis") renderHistory(); else renderHome();
+    renderView(curView);
     return; }
   for(const k of VIEWS) $("v-"+k).hidden=true; $("v-sayfa").hidden=false;
   setPage=pg.set||null; detTest=null;
@@ -1860,7 +2123,7 @@ function renderSession(){
   else if(run){ sb.className="stopb"; sb.querySelector("span").textContent="Dur"; }
   else { sb.className="stopb goB"; sb.querySelector("span").textContent="Yeni oturum"; }
   $("nav").hidden=navHidden();
-  const tags=[]; if(isDemoSess(s)||(!rev&&source==="demo")) tags.push('<span class="tag demo">Deneme · kaydedilmez</span>'); if(s.safe) tags.push('<span class="tag safe">Safe Space · istatistiğe girmez</span>'); if(raw.on&&raw.sess===s) tags.push('<span class="tag rec">● Ham kayıt</span>');
+  const tags=[]; if(isDemoSess(s)||(!rev&&source==="demo")) tags.push('<span class="tag demo">Deneme · kaydedilmez</span>'); if(s.safe) tags.push('<span class="tag safe">Kaygısız deneme · istatistiğe girmez</span>'); if(raw.on&&raw.sess===s) tags.push('<span class="tag rec">● Ham kayıt</span>');
   $("sessTags").innerHTML=tags.join(" "); $("sessTags").hidden=!tags.length;
   renderPanel(); renderSub();
 }
@@ -1868,7 +2131,7 @@ function renderPre(){
   const s=cur.sess, d=DRM[s.drill]; const w=weekStats(d.id); const ch=todayChallenge();
   $("preStart").innerHTML=`<h2>${esc(d.ad)}</h2><div class="ins"><p>Hedef: ${esc(d.hedef)}</p><p>Talimatlar: ${esc(d.talimat)}</p>${ch.drill===d.id?`<p><b>Günün görevi:</b> ${esc(ch.goal)}.${ch.need&&!ch.need()?` <span class="warnt">${esc(ch.needTxt)}</span>`:""}</p>`:""}</div>
     <div class="wk"><div>Bu hafta${TROPHY}</div><div>Skor<b>${w?fx(w.avg,1):"–"}</b></div><div>ATIŞLAR<b>${w?w.n:0}</b></div></div>
-    <div class="sq"><button id="preDrill" aria-label="Alıştırma ayarları">${IC_GEAR}<span>Drill</span></button><button id="preMode" aria-label="Atış tipi: ${esc(MODE_T[S.mode])}">${MODE_IC[S.mode]}<span>${esc(MODE_T[S.mode])}</span></button><button id="preHand" aria-label="Atış eli">${HAND_IC(S.hand)}<span>${S.hand==="R"?"Sağ":"Sol"}</span></button></div>
+    <div class="sq"><button id="preDrill" aria-label="Alıştırma ayarları">${IC_GEAR}<span>Ayar</span></button><button id="preMode" aria-label="Atış tipi: ${esc(MODE_T[S.mode])}">${MODE_IC[S.mode]}<span>${esc(MODE_T[S.mode])}</span></button><button id="preHand" aria-label="Atış eli">${HAND_IC(S.hand)}<span>${S.hand==="R"?"Sağ":"Sol"}</span></button></div>
     <div class="wpn">${esc(S.weaponName||(S.weapon==="pistol"?"Tabanca":"Tüfek"))}</div>
     <button class="go" id="btnStart">${IC_CROSS}<span>Başla</span></button>`;
   $("preDrill").onclick=()=>openDrillSettings(d.id);
@@ -1950,8 +2213,8 @@ function drawHedef(){
   const last=run&&v.length?v[v.length-1]:null;
   v.forEach(q=>{ if(q===last) return; const [X,Y]=P(hdShot(q).p); hdDelik(x,X,Y,rh,Math.hypot(X-cx,Y-cy)<black,last?0.7:1); });
   if(!run&&v.length>=2){ const g=hdGrup(v), [mx,my]=P(g.m), rr=Math.max(rh*1.6,Math.max(...v.map(q=>{const [X,Y]=P(hdShot(q).p);return Math.hypot(X-mx,Y-my);}))+rh+3);
-    x.setLineDash([6,5]); x.strokeStyle="#22d3c5"; x.lineWidth=2; x.beginPath(); x.arc(mx,my,rr,0,Math.PI*2); x.stroke(); x.setLineDash([]);
-    x.strokeStyle="#22d3c5"; x.lineWidth=2; x.beginPath(); x.moveTo(mx-6,my); x.lineTo(mx+6,my); x.moveTo(mx,my-6); x.lineTo(mx,my+6); x.stroke(); }
+    x.setLineDash([6,5]); x.strokeStyle="#2CC9BA"; x.lineWidth=2; x.beginPath(); x.arc(mx,my,rr,0,Math.PI*2); x.stroke(); x.setLineDash([]);
+    x.strokeStyle="#2CC9BA"; x.lineWidth=2; x.beginPath(); x.moveTo(mx-6,my); x.lineTo(mx+6,my); x.moveTo(mx,my-6); x.lineTo(mx,my+6); x.stroke(); }
   if(!last) return;
   const a=hdShot(last), [X,Y]=P(a.p), t=now()-HD.t0, pz=clamp(t/HD_ANIM,0,1), good=last.sc>=(S.sesEsik||85);
   x.lineCap="round"; x.lineJoin="round";
@@ -2010,7 +2273,7 @@ function renderGrafik(){
   for(const val of [0,20,40,60,80,100]) g+=`<text x="${pl-8}" y="${Y(val)+5}" fill="#fff" font-size="13" text-anchor="end">${val}</text>`;
   if(v.length){const a=avgOf(v);g+=`<line x1="${pl+6}" x2="${W-pr}" y1="${Y(a)}" y2="${Y(a)}" stroke="#fff" stroke-dasharray="5 4" stroke-width="1.5"/>`;
     g+=`<polyline fill="none" stroke="#fff" stroke-width="1.6" points="${sh.map((q,i)=>X(i)+","+Y(q.sc)).join(" ")}"/>`;}
-  sh.forEach((q,i)=>{g+=`<circle cx="${X(i)}" cy="${Y(q.sc)}" r="${i===cur.sel?6:4}" fill="${i===cur.sel?"#fff":"#1e1e1e"}" stroke="#22d3c5" stroke-width="2" data-i="${i}" style="cursor:pointer"/>`;});
+  sh.forEach((q,i)=>{g+=`<circle cx="${X(i)}" cy="${Y(q.sc)}" r="${i===cur.sel?6:4}" fill="${i===cur.sel?"#fff":"#111C2B"}" stroke="#2CC9BA" stroke-width="2" data-i="${i}" style="cursor:pointer"/>`;});
   g+=`</svg>`; $("scoreChart").innerHTML=sh.length?g:`<p class="note">Henüz atış yok.</p>`;
   $("scoreChart").querySelectorAll("circle[data-i]").forEach(c=>c.onclick=()=>{cur.sel=+c.dataset.i;renderGrafik();});
   if(!sh.length){$("barChart").innerHTML="";$("grafikCauses").innerHTML="";return;}
@@ -2102,7 +2365,7 @@ function extraCols(s){const d=s.drill;
   if(d==="zamankiyas") return [["Süre",q=>q.x.react!=null?sec(q.x.react):"–"]];
   if(d==="geritepme"||s.mode!=="kuru") return [["Tepme",q=>q.pg!=null?(q.x&&q.x.sat&1?"≥":"")+fx(q.pg,1)+" g":"–"],["Kalkış",q=>q.ri!=null?ang(q.ri):"–"],["Toparlanma",q=>q.rc!=null?sec(q.rc):">0,6 sn"]];
   return [];}
-const TROPHY_S=`<svg viewBox="0 0 24 24" fill="#22d3c5" aria-label="en iyi atış"><path d="M7 3h10v3h3v2a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.4 12H8a4 4 0 0 1-4-4V6h3z"/></svg>`;
+const TROPHY_S=`<svg viewBox="0 0 24 24" fill="#2CC9BA" aria-label="en iyi atış"><path d="M7 3h10v3h3v2a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.4 12H8a4 4 0 0 1-4-4V6h3z"/></svg>`;
 function renderOzet(){
   const s=cur.sess, v=validShots(s), d=DRM[s.drill]||DRM.serbest, run=cur.run&&cur.run.active;
   const dur=run?(now()-cur.run.t0)/1000:s.dur;
@@ -2146,7 +2409,7 @@ function summaryLines(s){
 }
 
 /* ---------------------------------------------------------------- oturum raporu (görsel / PDF) */
-const RC={bg:"#202020",panel:"#2b2b2b",panel2:"#353535",line:"#3a3a3a",line2:"#4a4a4a",fg:"#ffffff",muted:"#a1a1a1",accent:"#22d3c5",good:"#4cc26b",warn:"#f2b33d",bad:"#e5484d",hold:"#3b8ff0",trig:"#f5c518"};
+const RC={bg:"#14171B",panel:"#111C2B",panel2:"#172538",line:"#24344A",line2:"#2E4560",fg:"#E9EEF3",muted:"#A9B7C6",accent:"#2CC9BA",good:"#43C97A",warn:"#F0B13C",bad:"#F0595E",hold:"#3b8ff0",trig:"#f5c518"};
 const scCol=v=>v>=85?RC.good:v>=70?RC.warn:RC.bad;
 const UP=t=>String(t).toLocaleUpperCase("tr-TR");
 async function buildReport(s){
@@ -2323,7 +2586,7 @@ function renderHistory(){
   $("hGroups").onclick=()=>openGroups(); $("hCompare").onclick=()=>openCompare();
   const t=Date.now();
   const list=sample?ss:sessions.filter(s=>!s.sample&&whoOf(s)===S.prof&&hMatch(s)&&(!hPer||s.date>=t-hPer*864e5));
-  $("sessList").innerHTML=list.length?list.map(s=>{const v=validShots(s);return `<button class="h-sess" data-id="${esc(s.id)}"><span class="sn">${esc(DRM[s.drill]?DRM[s.drill].ad:"Antrenman")} - ${v.length} Atış${s.sample?'<span class="tag">Örnek</span>':""}${s.safe?'<span class="tag safe">Safe Space</span>':""}</span><span class="sv">${v.length?fx(avgOf(v),1):"–"}</span><span class="sv">${s.dur?esc(s.dur)+"s":""}</span><span class="sd">${esc(dateShort(s.date))}</span><span class="sm">${esc(MODE_T[s.mode]||"")} · ${esc(wName(s))}${s.notes?" · 📝":""}</span></button>`;}).join(""):`<div class="empty">Bu dönemde oturum yok.</div>`;
+  $("sessList").innerHTML=list.length?list.map(s=>{const v=validShots(s);return `<button class="h-sess" data-id="${esc(s.id)}"><span class="sn">${esc(DRM[s.drill]?DRM[s.drill].ad:"Antrenman")} - ${v.length} Atış${s.sample?'<span class="tag">Örnek</span>':""}${s.safe?'<span class="tag safe">Kaygısız deneme</span>':""}</span><span class="sv">${v.length?fx(avgOf(v),1):"–"}</span><span class="sv">${s.dur?esc(s.dur)+"s":""}</span><span class="sd">${esc(dateShort(s.date))}</span><span class="sm">${esc(MODE_T[s.mode]||"")} · ${esc(wName(s))}${s.notes?" · 📝":""}</span></button>`;}).join(""):`<div class="empty">Bu dönemde oturum yok.</div>`;
   $("sessList").querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{const s=sessions.find(x=>x.id===b.dataset.id);if(s)openReview(s);});
 }
 $("hFilter").onclick=()=>openHistFilter();
@@ -2352,7 +2615,7 @@ function openCompare(){
 /* --- ANALİZ grafikleri. Her kart: başlık, tek cümlelik açıklama (sayılarla), grafik. Çizgi 2 px, nokta r=4, ızgara ince ve düz;
    iki ölçek tek grafikte yok (skor, tetik ve tutuş ayrı küçük grafikler). Dokununca değerler görünür. */
 const AN={};                                            // son çizilen grafiklerin verisi (dokunma göstergesi için)
-const AN_COL={sc:"#22d3c5",tr:"#f5c518",ho:"#3b8ff0",good:"#4cc26b",warn:"#f2b33d",bad:"#e5484d",grid:"#474747",txt:"#a1a1a1",fg:"#e4e4e4",bg:"#2e2e2e"};
+const AN_COL={sc:"#2CC9BA",tr:"#f5c518",ho:"#3b8ff0",good:"#43C97A",warn:"#F0B13C",bad:"#F0595E",grid:"#2A3A50",txt:"#A9B7C6",fg:"#E9EEF3",bg:"#111C2B"};
 const anCard=(id,title,info,sentence,body)=>`<div class="card" id="${id}"><div class="ch"><h2>${title}</h2>${infoBtn(info)}</div><p class="an-s">${sentence}</p>${body}</div>`;
 const dShort=d=>new Date(d*864e5).toLocaleDateString("tr-TR",{day:"numeric",month:"short",timeZone:"UTC"});
 const pctChg=(a,b)=>b>0?(a-b)/b*100:0;
@@ -2438,7 +2701,7 @@ function ringSvg(cnt,bad,n){
   const P=(rad,a)=>`${(C+rad*Math.cos(a)).toFixed(2)},${(C+rad*Math.sin(a)).toFixed(2)}`;
   let g=`<svg viewBox="0 0 250 250" role="img" aria-label="Hata haritası: hatalı atışların saat yönüne göre dağılımı">`;
   for(let h=1;h<=12;h++){ const a=(h*30-90)*RAD, a0=a-Math.PI/12+0.012, a1=a+Math.PI/12-0.012, c=cnt[h];
-    const fill=c?`rgba(229,72,77,${(0.14+0.86*c/mx).toFixed(3)})`:"#3a3a3a";
+    const fill=c?`rgba(229,72,77,${(0.14+0.86*c/mx).toFixed(3)})`:"#1B2738";
     g+=`<path data-h="${h}" d="M${P(R,a0)} A${R},${R} 0 0 1 ${P(R,a1)} L${P(r,a1)} A${r},${r} 0 0 0 ${P(r,a0)} Z" fill="${fill}"/>`; }
   for(const [h,t] of [[12,"12"],[3,"3"],[6,"6"],[9,"9"]]){ const a=(h*30-90)*RAD; g+=`<text x="${(C+(R+13)*Math.cos(a)).toFixed(1)}" y="${(C+(R+13)*Math.sin(a)+4).toFixed(1)}" fill="${AN_COL.txt}" font-size="11" text-anchor="middle">${t}</text>`; }
   g+=`<text x="${C}" y="${C+2}" fill="${AN_COL.fg}" font-size="26" font-weight="600" text-anchor="middle">%${Math.round(bad/Math.max(1,n)*100)}</text><text x="${C}" y="${C+20}" fill="${AN_COL.txt}" font-size="11" text-anchor="middle">85 altı</text>`;
@@ -2469,7 +2732,7 @@ function groupSvg(v,G){
   g+=`<text x="${C+R*0.72}" y="${C-R*0.72-4}" fill="${AN_COL.txt}" font-size="10" text-anchor="middle">${esc(ang(mxe))}</text>`;
   const gr=Math.max(3,G.r50/mxe*R);
   for(const q of v){ const col=q.sc>=85?AN_COL.good:q.sc>=70?AN_COL.warn:AN_COL.bad; g+=`<circle cx="${px(q.dx).toFixed(1)}" cy="${py(q.dy).toFixed(1)}" r="4" fill="${col}" fill-opacity=".8" stroke="${AN_COL.bg}" stroke-width="1"/>`; }
-  g+=`<circle cx="${px(G.mx).toFixed(1)}" cy="${py(G.my).toFixed(1)}" r="${gr.toFixed(1)}" fill="rgba(34,211,197,.12)" stroke="${AN_COL.bg}" stroke-width="5"/><circle cx="${px(G.mx).toFixed(1)}" cy="${py(G.my).toFixed(1)}" r="${gr.toFixed(1)}" fill="none" stroke="${AN_COL.sc}" stroke-width="2"/>`;
+  g+=`<circle cx="${px(G.mx).toFixed(1)}" cy="${py(G.my).toFixed(1)}" r="${gr.toFixed(1)}" fill="rgba(44,201,186,.12)" stroke="${AN_COL.bg}" stroke-width="5"/><circle cx="${px(G.mx).toFixed(1)}" cy="${py(G.my).toFixed(1)}" r="${gr.toFixed(1)}" fill="none" stroke="${AN_COL.sc}" stroke-width="2"/>`;
   g+=`<path d="M${(px(G.mx)-5).toFixed(1)},${py(G.my).toFixed(1)}h10M${px(G.mx).toFixed(1)},${(py(G.my)-5).toFixed(1)}v10" stroke="${AN_COL.sc}" stroke-width="2" stroke-linecap="round"/>`;
   g+=`<circle class="an-sel" r="7" fill="none" stroke="#fff" stroke-width="2" visibility="hidden"/>`;
   return g+`</svg>`;
@@ -2501,7 +2764,7 @@ function bindAnalysis(root){
 }
 
 /* --- dersler (ALIŞTIRMA sekmesinin altında) */
-const thumb=t=>`<svg viewBox="0 0 52 52" aria-hidden="true"><rect width="52" height="52" fill="#141414"/><g fill="none" stroke="#22d3c5" stroke-width="2.2"><circle cx="26" cy="21" r="11"/><circle cx="26" cy="21" r="4"/><path d="M26 6v7M26 29v7M11 21h7M34 21h7"/></g><text x="26" y="47" fill="#fff" font-size="8" font-weight="700" text-anchor="middle" font-family="sans-serif">${t}</text></svg>`;
+const thumb=t=>`<svg viewBox="0 0 52 52" aria-hidden="true"><rect width="52" height="52" fill="#141414"/><g fill="none" stroke="#2CC9BA" stroke-width="2.2"><circle cx="26" cy="21" r="11"/><circle cx="26" cy="21" r="4"/><path d="M26 6v7M26 29v7M11 21h7M34 21h7"/></g><text x="26" y="47" fill="#fff" font-size="8" font-weight="700" text-anchor="middle" font-family="sans-serif">${t}</text></svg>`;
 const LESSONS=[
  {ad:"HİSAR TETİK Tanıtımı",html:`<h3>Kuru tetik güvenliği</h3><ol><li><b>Silahı boşalt ve kontrol et.</b> Şarjörü çıkar; fişek yatağını gözle ve parmakla kontrol et.</li><li><b>Mühimmatı başka odaya koy.</b> Antrenman alanında hiç fişek olmasın.</li><li><b>Güvenli bir yöne nişan al.</b> Arkasında kimsenin olamayacağı, mermiyi durdurabilecek bir duvar seç.</li><li><b>Bitirince yüksek sesle "antrenman bitti" de.</b> Silahı doldurduktan sonra artık kuru tetik yapma.</li></ol>
   <h3>Sensörü takma</h3><ul><li><b>Raya (önerilen):</b> sensörü ray adaptörüne ya da kızağa bir kez yapıştır (ekran dışa baksın, USB-C açıkta kalsın). Tabancada namlunun altındaki, tetik korkuluğunun önündeki fener/lazer rayına; tüfekte alt ya da üst raya tak. Montaj yeri: alt ray ALT, üst ray ÜST.</li><li><b>Şarjör tabanına:</b> rayı olmayan silahta kızağı şarjör tabanındaki plakaya "tık" sesine kadar sür (Montaj yeri: ALT).</li><li><b>Bantla:</b> sensörü silahın altına, uzun kenarı namluya paralel gelecek şekilde koy; ince ve sert bantla (elektrik bandı) sıkıca sar. Köpüklü bant darbeyi yutar, atış kaçabilir. Ekranın aşağı ya da yukarı bakması fark etmez.</li><li>Sensörü her taktığında <b>yön testi</b> yap; yerini değiştirdiysen <b>eşiği öğren</b>'i de yap (tetiğin "tık"ı raya ve şarjöre farklı ulaşır). Başla'ya basınca uygulama hatırlatır.</li></ul>
@@ -2947,11 +3210,11 @@ function setYon(v){ const m=S.mount[montajSrc()]; if((m.yon||"ileri")!==v&&m.B) 
 function updateRootSensor(){ const md=$("md-baglanti"); if(md) md.textContent=menuDesc("baglanti"); }
 /* --- atış tipleri (Daha fazla): her tipin algılama ayarı ⚙ ile */
 function openModeList(){
-  pushPage({back:"",title:MODE_A[S.mode],render:()=>`<div class="sec" style="justify-content:center;background:#303030;font-size:13px;border-bottom:2px solid var(--acc)">Atış tipleri</div>`+["gercek","kuru","co2"].map(k=>{
+  pushPage({back:"",title:MODE_A[S.mode],render:()=>`<div class="sec" style="justify-content:center;background:var(--hdr);font-size:14px;border-bottom:2px solid var(--acc)">Atış tipleri</div>`+["gercek","kuru","co2"].map(k=>{
       const thr=(S.thr[source]||S.thr.demo)[k], lk=(S.lockout&&S.lockout[k])||(k==="kuru"?450:150);
       return `<div class="li" style="grid-template-columns:minmax(0,1fr) auto;padding-left:0;${S.mode===k?"box-shadow:inset 4px 0 0 var(--acc)":""}"><button class="ln" data-mode="${k}" style="background:none;border:0;color:var(--fg);text-align:left;font-size:17px;padding:4px 0 4px 18px"><span>${esc({gercek:"Gerçek Atış (Evrensel)",kuru:"Kuru Tetik (Evrensel)",co2:"CO2 Geri Tepme"}[k])}</span>
-        <small style="display:flex;gap:8px;margin-top:6px"><span style="background:#3a3a3a;padding:2px 6px">${MODE_IC[k].replace('<svg ','<svg width="14" height="14" ')} ${fx(thr,2)} g</span><span style="background:#3a3a3a;padding:2px 6px">⏱ ${fx(lk/1000,2)}</span></small></button>
-        <button class="pd" data-gear="${k}" aria-label="${esc(MODE_T[k])} algılama ayarları" style="width:44px;height:44px;background:#3a3a3a;border:0;color:#fff;display:grid;place-items:center">${IC_GEAR}</button></div>`; }).join(""),
+        <small style="display:flex;gap:8px;margin-top:6px"><span style="background:#1B2738;padding:2px 6px">${MODE_IC[k].replace('<svg ','<svg width="14" height="14" ')} ${fx(thr,2)} g</span><span style="background:#1B2738;padding:2px 6px">⏱ ${fx(lk/1000,2)}</span></small></button>
+        <button class="pd" data-gear="${k}" aria-label="${esc(MODE_T[k])} algılama ayarları" style="width:44px;height:44px;background:#1B2738;border:0;color:#fff;display:grid;place-items:center">${IC_GEAR}</button></div>`; }).join(""),
     bind:b=>{ b.querySelectorAll("[data-mode]").forEach(x=>x.onclick=()=>{ setMode(x.dataset.mode); popPage(); });
       b.querySelectorAll("[data-gear]").forEach(x=>x.onclick=()=>{ setMode(x.dataset.gear); openSetPage("algilama"); }); }});
 }
@@ -2993,9 +3256,9 @@ function bindGelismis(root){
 /* --- Eğitim programı */
 function pgProgram(){ const d=new Set(S.plan.days||[]); const t0=dayNo(); const wd=new Date(t0*864e5).getUTCDay(); const mon=t0-((wd+6)%7);
   const done=new Set(sessions.filter(s=>!s.sample&&whoOf(s)===S.prof).map(s=>dayNo(s.date)));
-  const week=DAYS.map(([w,t],i)=>{ const n=mon+i; const sch=!d.size||d.has(w); return `<div style="text-align:center;font-size:12px;color:${sch?"var(--fg)":"var(--dim)"}">${t}<div style="font-size:18px;margin-top:2px">${done.has(n)?"✓":n<=t0&&sch?"·":""}</div></div>`; }).join("");
+  const week=DAYS.map(([w,t],i)=>{ const n=mon+i; const sch=!d.size||d.has(w); return `<div style="text-align:center;font-size:14px;color:${sch?"var(--fg)":"var(--dim)"}">${t}<div style="font-size:18px;margin-top:2px">${done.has(n)?"✓":n<=t0&&sch?"·":""}</div></div>`; }).join("");
   return `<div class="pg"><div class="ch"><span>Antrenman günleri</span>${infoBtn("program")}</div>
-    <div class="mx-seg" id="pDays" style="gap:6px">${DAYS.map(([w,t])=>`<button data-v="${w}" aria-pressed="${d.has(w)}" style="min-height:44px;font-size:12px">${t}</button>`).join("")}</div>
+    <div class="mx-seg" id="pDays" style="gap:6px">${DAYS.map(([w,t])=>`<button data-v="${w}" aria-pressed="${d.has(w)}" style="min-height:44px;font-size:14px;padding:0 2px">${t}</button>`).join("")}</div>
     <p class="note">Hiç gün seçmezsen her gün sayılır.</p>
     <div class="ch" style="margin-top:6px"><span>Günlük atış hedefi</span></div>
     ${segHtml("pGoal",[["20","20"],["50","50"],["100","100"],["200","200"]],String(S.plan.goal||50))}
@@ -3638,7 +3901,7 @@ function askSheet(title,html,okTxt,onOk,onCancel){
 
 /* --- Montaj ve kalibrasyon */
 const LVL_SVG=`<svg viewBox="-60 -60 120 120" id="lvSvg" role="img" aria-label="Eğim göstergesi"><defs><clipPath id="lvClip"><circle r="55"/></clipPath></defs>
-  <circle r="56" fill="#1e1e1e" stroke="#4a4a4a"/><g clip-path="url(#lvClip)"><g id="lvG"><rect x="-90" y="0" width="180" height="90" fill="rgba(34,211,197,.16)"/><line x1="-90" x2="90" y1="0" y2="0" stroke="#d93a3f" stroke-width="2"/></g></g>
+  <circle r="56" fill="#0B1220" stroke="#2E4560"/><g clip-path="url(#lvClip)"><g id="lvG"><rect x="-90" y="0" width="180" height="90" fill="rgba(44,201,186,.16)"/><line x1="-90" x2="90" y1="0" y2="0" stroke="#d93a3f" stroke-width="2"/></g></g>
   <path d="M-30 0h18M12 0h18M0-6v12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle r="3" fill="#fff"/></svg>`;
 function pgMontaj(){
   const ms=montajSrc(), m=S.mount[ms], live=source===ms;
@@ -3982,7 +4245,7 @@ function initPlatform(){
 window.__hisarBack=()=>{ if(!$("sheet").hidden){closeSheet();return true;} if(splashOpen()){hideSplash();return true;}
   if(pages.length){popPage();return true;}
   if(curView==="oturum"){ $("sessBack").click(); return true; }
-  if(curView!=="alistirma"){showView("alistirma");return true;} return false; };
+  if(curView!==HOME){showView(HOME);return true;} return false; };
 window.__hisarSaved=(ok,name)=>toast(ok?(name||"Dosya")+" kaydedildi.":"Dosya kaydedilmedi.");
 // yerel kod yeni sayfayı kurdu (Android): süren oturum yoksa hemen, varsa oturum bitince yenilenir
 window.__hisarUpdateReady=v=>{ updInstalled=true; updAvail=true; sessizGuncelle(); };
@@ -4005,7 +4268,7 @@ function openFromHash(){
     else if(p[0]==="alistirma"&&DRM[p[1]]){ openDrill(p[1]); if(p[2]==="basla") setTimeout(()=>{ if(!(cur.run&&cur.run.active)) startRun(); },1500); }
     else if(p[0]==="sensor") { showView("sensor"); if(p[1]==="montaj") openSetPage("montaj"); }
     else if(p[0]==="saat"&&p[1]==="dene") saatDene();
-    else if(["alistirma","oturum","gecmis","analiz","dersler","gruplar"].includes(p[0])) showView(p[0]);
+    else if(["merkez","cihaz","kamera","menu","egitim","alistirma","oturum","gecmis","analiz","dersler","gruplar"].includes(p[0])) showView(p[0]);
   }catch(e){}
   try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
 }
@@ -4025,7 +4288,8 @@ loadAll();
 // kendiliğinden güncellendiyse bir kez söyle
 try{ const g=+localStorage.getItem("tetikGuncellendi"); if(g&&g<=VER){ localStorage.removeItem("tetikGuncellendi"); setTimeout(()=>toast(`Uygulama kendiliğinden güncellendi (sürüm ${VER}).`,4500),1800); } }catch(e){}
 if(!sessions.length) sessions.push(makeSample());
-showView("alistirma");
+showView(HOME);
+netDurum(); window.addEventListener("online",netDurum); window.addEventListener("offline",netDurum);
 selectSource("sensor",false);                       // açılışta sensör beklenir; Deneme ve Telefon: Sensör sekmesi › Sensörsüz
 if(!navigator.bluetooth) setStatus(noBtText(),true);
 initPlatform();

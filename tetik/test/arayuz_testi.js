@@ -125,7 +125,7 @@ const kucukYazi = () => { const o = [];
     const { ctx, page, errs } = await openApp(browser, { port: PORT, init: [FAKE] });
     const kucuk = {}; let metin = '';
     for (const v of ANA) { await page.evaluate(v => window.__hisar.showView(v), v); await sleep(200); const o = await page.evaluate(kucukYazi); if (o.length) kucuk[v] = o.slice(0, 5); metin += await page.evaluate(() => document.querySelector('main').innerText); }
-    const keys = ['gelismis', 'montaj', 'algilama', 'gorunum', 'veri', 'uygulama', 'program', 'ses', 'silah', 'profil', 'lazer', 'saat'];
+    const keys = ['gelismis', 'montaj', 'algilama', 'gorunum', 'veri', 'uygulama', 'program', 'ses', 'silah', 'profil', 'lazer', 'saat', 'hesap'];
     for (const k of keys) { await page.evaluate(k => window.__hisar.openSettings(k), k); await sleep(220); const o = await page.evaluate(kucukYazi); if (o.length) kucuk['ayar ' + k] = o.slice(0, 5); metin += await page.evaluate(() => document.querySelector('main').innerText); }
     await page.evaluate(() => { const s = window.__hisar.sessions.find(x => x.sample); if (s) window.__hisar.openReview(s); });
     for (const sub of ['skor', 'grafik', 'iz', 'ozet']) { await page.evaluate(s => window.__hisar.setSub(s), sub); await sleep(220); const o = await page.evaluate(kucukYazi); if (o.length) kucuk['oturum ' + sub] = o.slice(0, 5); }

@@ -25,7 +25,14 @@ jobs:
       - name: Uygulama içi güncelleme testi (masaüstü)
         run: bash tetik/android/test/pagestore_test.sh
 
+      - name: Önceki sürümü indir (emülatörde güncelleme testi için)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download tetik-android -p HisarTetik.apk -D onceki || echo "önceki sürüm indirilemedi"
+
       - name: APK derle
+        env:
+          TETIK_IMZA: ${{ secrets.TETIK_IMZA }}
         run: |
           set -o pipefail
           bash tetik/android/build.sh 2>&1 | tee build.log

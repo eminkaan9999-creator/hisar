@@ -41,9 +41,25 @@ javac -encoding UTF-8 --release 8 -Xlint:-options -classpath "$PLAT" -d "$OUT/cl
 cp "$OUT/base.apk" "$OUT/unsigned.apk"
 (cd "$OUT/dex" && zip -q -j "$OUT/unsigned.apk" classes.dex)
 "$BT/zipalign" -p -f 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
-# İmza anahtarı depoda: kişisel, mağaza dışı dağıtım için (bkz. README). Güncellemeler aynı anahtarla imzalanır.
-"$BT/apksigner" sign --ks "$HERE/hisar-tetik.p12" --ks-type PKCS12 --ks-pass pass:hisartetik --key-pass pass:hisartetik \
-  --ks-key-alias hisar --out "$OUT/HisarTetik.apk" "$OUT/aligned.apk"
-"$BT/apksigner" verify --verbose "$OUT/HisarTetik.apk" | head -6
+# İmza (bkz. README, "İmza anahtarı"). Eski anahtar (hisar-tetik.p12) depoda ve herkese açık (T1 bulgusu B-01).
+# Yeni anahtar GitHub'daki TETIK_IMZA gizli değerinde durur (PKCS12, base64). Varsa APK "anahtar döndürme" ile
+# imzalanır (APK imza şeması v3, Android 9 ve üstü): eski anahtar yeni anahtarı onaylar, kurulu uygulama silinmeden
+# güncellenir, kayıtlar kalır; eski anahtar tek başına artık güncelleme imzalayamaz. Android 7-8 eski imzaya bakar.
+# TETIK_IMZA yoksa eskisi gibi yalnız eski anahtarla imzalanır.
+ESKI=(--ks "$HERE/hisar-tetik.p12" --ks-type PKCS12 --ks-pass pass:hisartetik --key-pass pass:hisartetik --ks-key-alias hisar)
+if [ -n "${TETIK_IMZA:-}" ]; then
+  YKS="$OUT/yeni-imza.p12"; ( umask 077; printf '%s' "$TETIK_IMZA" | base64 -d > "$YKS" )
+  YENI=(--ks "$YKS" --ks-type PKCS12 --ks-pass pass:hisar-tetik-imza --key-pass pass:hisar-tetik-imza --ks-key-alias hisar2)
+  "$BT/apksigner" rotate --out "$OUT/imza-gecmisi.bin" --old-signer "${ESKI[@]}" --new-signer "${YENI[@]}"
+  "$BT/apksigner" sign "${ESKI[@]}" --next-signer "${YENI[@]}" --lineage "$OUT/imza-gecmisi.bin" \
+    --rotation-min-sdk-version 28 --out "$OUT/HisarTetik.apk" "$OUT/aligned.apk"
+  rm -f "$YKS"
+  echo "İmza: eski anahtardan yeni anahtara döndürüldü (Android 9 ve üstü yeni anahtarı kullanır)"
+else
+  echo "::warning title=imza::TETIK_IMZA tanımlı değil: APK yalnız depodaki eski anahtarla imzalandı (bulgu B-01)"
+  "$BT/apksigner" sign "${ESKI[@]}" --out "$OUT/HisarTetik.apk" "$OUT/aligned.apk"
+fi
+"$BT/apksigner" verify --verbose --print-certs "$OUT/HisarTetik.apk" > "$OUT/imza.txt"
+grep -viE "public key|modulus" "$OUT/imza.txt" | head -16 || true
 "$BT/aapt2" dump badging "$OUT/HisarTetik.apk" | grep -E "^package|sdkVersion|targetSdk|application-label:" || true
 ls -la "$OUT/HisarTetik.apk"

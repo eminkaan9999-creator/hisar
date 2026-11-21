@@ -8,7 +8,19 @@ A="com.hisar.tetik/.MainActivity"
 shot() { sleep "$2"; adb exec-out screencap -p > "$OUT/$1.png"; echo "ekran: $1"; }
 go() { adb shell am start -n "$A" --es sayfa "$1" >/dev/null; }
 adb shell settings put global window_animation_scale 0 >/dev/null 2>&1 || true
-adb install -r -g "$APK" | tail -1
+# Güncelleme testi (B-01): önce yayındaki önceki sürüm kurulup bir kez açılır; yeni APK onun üstüne silinmeden
+# kurulabilmeli (imza anahtarı döndürülse bile). Kurulamazsa telefonlardaki uygulama da güncellenemez.
+gun=0
+if [ -f onceki/HisarTetik.apk ]; then
+  adb install -g onceki/HisarTetik.apk | tail -1
+  adb shell am start -W -n "$A" >/dev/null; sleep 8; adb shell am force-stop com.hisar.tetik
+  adb install -r -g "$APK" > "$OUT/guncelleme.txt" 2>&1; tail -1 "$OUT/guncelleme.txt"
+  grep -q "^Success" "$OUT/guncelleme.txt" || gun=1
+else
+  echo "önceki sürüm yok: güncelleme testi atlandı"
+  adb install -r -g "$APK" | tail -1
+fi
+adb shell dumpsys package com.hisar.tetik > "$OUT/paket.txt" 2>/dev/null || true
 adb logcat -c
 adb shell am start -W -n "$A" | tail -3
 shot 01_acilis 12
@@ -50,5 +62,7 @@ if [ $pg = 1 ]; then
   if grep -q "sayfa güncellendi: $V" "$OUT/logcat_tam.txt"; then echo "uygulama içi güncelleme: tamam (sürüm $V indirildi ve kuruldu)"
   else echo "::error::Uygulama içi güncelleme olmadı"; grep -E "sayfa" "$OUT/logcat.txt" | tail -10; rc=1; fi
 fi
+if [ $gun = 1 ]; then echo "::error::Yeni APK önceki sürümün üstüne kurulamadı: $(tail -1 "$OUT/guncelleme.txt")"; rc=1
+elif [ -f onceki/HisarTetik.apk ]; then echo "güncelleme: yeni APK önceki sürümün üstüne silinmeden kuruldu"; fi
 grep -E "HisarTetik|HisarBle" "$OUT/logcat.txt" | tail -40
 exit $rc

@@ -6,6 +6,7 @@
 const { serve, check, section, finish, openApp, chromium, fs, path, sleep } = require('./ortak');
 const PORT = 8826;
 const FAKE = fs.readFileSync(path.join(__dirname, 'sahte_sensor.js'), 'utf8');
+const CAM = fs.readFileSync(path.join(__dirname, 'sahte_kamera.js'), 'utf8');
 const V28 = JSON.parse(fs.readFileSync(path.join(__dirname, 'veri', 'v28_kayit.json'), 'utf8'));
 const TEMA_K = 'hisarTetik.v2.tema';
 const SAYFALAR = ['gorunum', 'gelismis', 'montaj', 'algilama', 'veri', 'uygulama', 'ses', 'silah', 'profil', 'program', 'hesap', 'saat', 'lazer'];
@@ -99,12 +100,13 @@ const denetim = () => {
   for (const tema of ['acik', 'koyu']) {
     const AD = tema === 'acik' ? 'Aydınlık' : 'Karanlık';
     section(`${AD} tema: bütün ekranlarda yazılar okunur (kontrast)`);
-    const { ctx, page, errs } = await openApp(browser, { port: PORT, init: [FAKE], storage: Object.assign({}, V28.depo, { [TEMA_K]: tema }), keepSplash: true });
+    const { ctx, page, errs } = await openApp(browser, { port: PORT, init: [FAKE, CAM], storage: Object.assign({}, V28.depo, { [TEMA_K]: tema }), keepSplash: true });
     const sonuc = {}; let toplam = 0;
     const kaydet = async ad => { const d = await page.evaluate(denetim); sonuc[ad] = d.hata; toplam += d.n; };
     await sleep(300); await kaydet('açılış');
     await page.evaluate(() => window.__hisar.hideSplash()); await sleep(500);
     for (const v of ['merkez', 'alistirma', 'gecmis', 'sensor', 'ayarlar', 'cihaz', 'kamera', 'menu']) { await page.evaluate(v => window.__hisar.showView(v), v); await sleep(250); await kaydet(v); }
+    await page.evaluate(() => window.__hisar.showView('kamera')); await page.click('#kmAc'); await sleep(1200); await kaydet('kamera açık');
     await page.evaluate(() => window.__hisar.openReview(window.__hisar.sessions.find(s => !s.sample)));
     for (const sub of ['skor', 'ozet', 'grafik', 'iz']) { await page.evaluate(s => window.__hisar.setSub(s), sub); await sleep(300); await kaydet('oturum ' + sub); }
     await page.click('#grafikInfo').catch(() => {}); await sleep(250); await kaydet('alt pencere');
@@ -112,7 +114,7 @@ const denetim = () => {
     for (const p of SAYFALAR) { await page.evaluate(p => { window.__hisar.showView('ayarlar'); window.__hisar.openSetPage(p); }, p); await sleep(220); await kaydet('sayfa ' + p); }
     await page.evaluate(() => { window.__hisar.showView('merkez'); const t = document.getElementById('toast'); t.textContent = 'Deneme bildirimi'; t.hidden = false; }); await sleep(150); await kaydet('bildirim');
     await page.setViewportSize({ width: 1280, height: 800 });
-    for (const v of ['merkez', 'gecmis']) { await page.evaluate(v => { document.getElementById('toast').hidden = true; window.__hisar.showView(v); }, v); await sleep(300); await kaydet('geniş ' + v); }
+    for (const v of ['merkez', 'gecmis', 'kamera']) { await page.evaluate(v => { document.getElementById('toast').hidden = true; window.__hisar.showView(v); }, v); await sleep(300); await kaydet('geniş ' + v); }
     const kotu = Object.entries(sonuc).filter(([, h]) => h.length);
     check(toplam > 800, `Denetlenen yazı sayısı yeterli (${toplam})`, toplam);
     check(kotu.length === 0, `${AD}: ${Object.keys(sonuc).length} ekranda bütün yazılar kontrast sınırını geçiyor`, kotu.slice(0, 4).map(([k, h]) => [k, h.slice(0, 4)]));

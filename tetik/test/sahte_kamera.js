@@ -2,7 +2,7 @@
 // (10 halka, 7–10 siyah), istenen zamanlarda yeşil lazer noktası (doygun beyazımsı öz, yeşil hale).
 // Testler window.__cam üzerinden hedefi kaydırır (telefon kıpırdadı), nokta ekler, kamera iznini reddeder,
 // hedefin çevresine kamera gürültüsü (gurultu = kanal başına standart sapma) ekler; zayif nokta: güneşte soluk görünen lazer.
-// renk 'kirmizi': kırmızı lazer; sensor: true ise nokta yalnız sahte sensörün Grove lazeri yanarken görünür (yazılım 7).
+// hedef 'siluet': halkalı hedef yerine insan silüeti (baş + gövde, göğüs bölgesi çizgisi). renk 'kirmizi': kırmızı lazer; sensor: true ise nokta yalnız sahte sensörün Grove lazeri yanarken görünür (yazılım 7).
 // Nokta konumları hedef merkezine göre pikseldir: hedef kayınca nokta da onunla kayar (silah gerçek hedefe bakıyor).
 (() => {
   const W = 1920, H = 1080;
@@ -31,6 +31,11 @@
     g.fillStyle = 'rgb(160,130,90)'; g.fillRect(ox - R * 1.6, oy - R * 1.7, R * 3.2, R * 3.6);    // karton
     g.fillStyle = 'rgb(240,238,230)'; g.fillRect(ox - R * 1.25, oy - R * 1.35, R * 2.5, R * 2.8);  // kağıt
     g.fillStyle = 'rgb(60,60,60)'; g.fillRect(ox - R * 1.1, oy + R * 1.12, R * 0.9, R * 0.12);      // kağıttaki yazı
+    if (C.hedef === 'siluet') {                                                                  // insan silüeti: baş ve gövde, koyu
+      g.fillStyle = 'rgb(48,48,48)'; g.beginPath(); g.arc(ox, oy - 100, 30, 0, 7); g.fill();
+      g.beginPath(); for (const [i, [x, y]] of [[-25, -70], [25, -70], [80, -45], [90, 130], [-90, 130], [-80, -45]].entries()) i ? g.lineTo(ox + x, oy + y) : g.moveTo(ox + x, oy + y); g.closePath(); g.fill();
+      g.strokeStyle = 'rgb(210,205,195)'; g.lineWidth = 1.5; g.strokeRect(ox - 40, oy - 50, 80, 80);   // göğüs bölgesi çizgisi
+    } else
     for (let k = 10; k >= 1; k--) { const r = R * k / 10; g.beginPath(); g.arc(ox, oy, r, 0, 7);
       g.fillStyle = k <= 4 ? 'rgb(22,22,22)' : 'rgb(240,238,230)'; g.fill(); g.lineWidth = 1.2; g.strokeStyle = k <= 4 ? 'rgb(225,225,225)' : 'rgb(30,30,30)'; g.stroke(); }
     if (C.gurultu) { if (!gur || gur.key !== C.gurultu + ',' + ox + ',' + oy) gurultuHazirla(ox, oy); g.putImageData(gur.k[gur.n++ % 6], gur.x0, gur.y0); }

@@ -201,7 +201,7 @@ const DRILLS = [
     // dersler
     for (let i = 0; i < 3; i++) { await page.click(`[data-lesson="${i}"]`); await sleep(150); if (i < 2) await page.evaluate(() => window.__hisar.popPage()); }
     const ds = await page.evaluate(() => ({ n: window.__hisar.pages.length, t: document.getElementById('pgTitle').textContent, causes: document.querySelectorAll('#pgBody [data-cause]').length }));
-    check(ds.t === 'İleri Nişancılık' && ds.causes === 15, 'Dersler açılıyor; İleri Nişancılık hata rehberini (15 hata) içeriyor', ds);
+    check(ds.t === 'İleri Nişancılık' && ds.causes === 17, "Dersler açılıyor; İleri Nişancılık hata rehberini (17 hata) içeriyor", ds);
     check(errs.length === 0, 'Sayfa hatası yok', errs);
     await ctx.close();
   }

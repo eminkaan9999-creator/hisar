@@ -166,6 +166,37 @@ const kucukYazi = () => { const o = [];
     await ctx.close();
   }
 
+  section('T4: Kontrol Merkezi uyarısı ve oturum geneli tetik hatası');
+  {
+    const { ctx, page, errs } = await openApp(browser, { port: PORT });
+    // nişan dışı sarsıntılar sayılıyorsa (süzgeç kapalı) tabancada uyarı ve tek dokunuşla düzeltme
+    await page.evaluate(() => { const H = window.__hisar; H.S.weapon = 'pistol'; H.S.sarsintiSuz = false; H.showView('merkez'); }); await sleep(200);
+    const u0 = await page.evaluate(() => ({ var: !!document.getElementById('mzSuz'), t: (document.querySelector('#v-merkez .k-yedek') || {}).innerText || '' }));
+    if (u0.var) await page.click('#mzSuz'); await sleep(200);
+    const u1 = await page.evaluate(() => ({ suz: window.__hisar.S.sarsintiSuz, var: !!document.getElementById('mzSuz') }));
+    check(u0.var && /Sürgü/.test(u0.t) && u1.suz === true && !u1.var, 'Tabancada nişan dışı sarsıntılar sayılıyorsa Kontrol Merkezi uyarıyor; tek dokunuşla süzgeç açılıyor', { u0, u1 });
+    // oturum geneli: her atışta saat 7 yönüne küçük kayma; titreme baskın olduğu için tek tek atışlarda tetik hatası söylenmiyor
+    const r = await page.evaluate(() => { const H = window.__hisar;
+      let seed = 99; const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+      const g = () => { let u = 0; while (!u) u = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd()); };
+      const a = 210 * Math.PI / 180, ss = { weapon: 'pistol', diff: 'normal', hand: 'R', handMode: 'normal', drill: 'serbest', mode: 'kuru' };
+      const shots = Array.from({ length: 12 }, (_, i) => { const dx = Math.sin(a) * 0.06 + g() * 0.03, dy = Math.cos(a) * 0.06 + g() * 0.03;
+        const q = { n: i + 1, at: i * 4000, sc: 78, tr: 0.07, ho: 0.2, hx: 0.14, hy: 0.14, dx, dy, wv: 0.09, dr: 0, rv: 0.1, h: H.hourOf(dx, dy), ca: 0, po: 0.05, ri: 0, pg: 3, rc: null, x: {} };
+        q.c = H.diagnose(q, ss); return q; });
+      const s = Object.assign({ id: 'sT4', v: 2, date: Date.now(), dur: 60, src: 'sensor', weaponName: '', notes: '', extra: {}, shots }, ss);
+      H.sessions.push(s); H.showView('gecmis'); H.openReview(s);
+      return { tek: shots.filter(q => q.c.includes('tokatlama')).length, sis: H.sistematik(s) }; });
+    await sleep(400);
+    const kart = await page.evaluate(() => Array.from(document.querySelectorAll('.hd')).map(e => e.innerText).join(' | '));
+    await page.evaluate(() => window.__hisar.showView('merkez')); await sleep(200);
+    const mz = await page.evaluate(() => document.querySelector('#v-merkez [aria-labelledby="mzSo"]').innerText.replace(/\n/g, ' '));
+    check(r.sis && r.sis.c === 'tokatlama' && r.sis.saat === 7 && /OTURUM GENEL/i.test(kart) && /Tetiğe ani basma/.test(kart) && /saat 7/.test(kart),
+      `Titreme baskınken (tek tek atışta ${r.tek}/12 tetik hatası) oturum özetinde "Oturum geneli · Tetiğe ani basma, saat 7" görünüyor`, { sis: r.sis, kart: kart.slice(0, 400) });
+    check(/Oturum geneli: Tetiğe ani basma/.test(mz), 'Kontrol Merkezi\'nde son oturumun "Oturum geneli" hatası görünüyor', mz.slice(0, 220));
+    check(!errs.length, 'Sayfa hatası yok', errs.slice(0, 5));
+    await ctx.close();
+  }
+
   await browser.close(); srv.close();
   process.exit(finish('Arayüz testi') ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

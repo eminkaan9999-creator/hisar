@@ -1,7 +1,8 @@
 // Nişan hatası doğruluk testi (uçtan uca): gerçekçi silah hareketi → sensör ham verisi (ivme + jiroskop, sapma ve gürültüyle)
 // → uygulamanın kendi işlemcisi (proc.feed) → ölçüm, skor ve teşhis. Gerçek hareket bilindiği için teşhisin doğruluğu ölçülür.
 // Kapsam: 8 montaj (alt/üst/sağ/sol × ileri/arka), sağ/sol el, 3 tetik hareketi biçimi, iki titreme modeli,
-// temiz tetik + titreme, karışık atıcılar (480 atış), kanting ve takip. Rastgelelik sabit tohumlu: sonuç her çalıştırmada aynı.
+// temiz tetik + titreme, karışık atıcılar (480 atış), kanting, takip ve tetik anında silahı döndürme (T4).
+// Rastgelelik sabit tohumlu: sonuç her çalıştırmada aynı.
 'use strict';
 const { serve, check, section, finish, openApp, chromium } = require('./ortak');
 const PORT = 8789;
@@ -30,9 +31,11 @@ function pageSide() {
     const got = []; P.onShot = m => got.push(m); P.onFire = P.onSample = P.onRaw = P.onCal = P.onGap = null;
     const bias = [0.4, -0.3, 0.2], gn = 0.05;
     let t = 0, X = 0, Y = 0, lx = null, ly = null, jerkNext = 0, cant = 0;
+    let rollA = 0, lr = null;   // T4: namlu çevresinde dönme (°): tetik anında bilek dönmesi + dönme titremesi (W.r)
     const A = { x: 0, y: 0 }, E = { x: 0, y: 0 };
-    const W = { x: 0, y: 0, ox: 0, oy: 0, vx: 0, vy: 0, ph: 0, sig: 0, mod: 'ou', tau: 0.35, on: false };
+    const W = { x: 0, y: 0, ox: 0, oy: 0, vx: 0, vy: 0, ph: 0, sig: 0, mod: 'ou', tau: 0.35, on: false, r: 0, rsig: o.rollHold || 0 };
     const wobStep = () => {
+      if (W.on && W.rsig) { const kr = Math.sqrt(2 / 0.35) * W.rsig * Math.sqrt(0.001); W.r += -W.r / 0.35 * 0.001 + kr * gauss(); }   // dönme titremesi (OU)
       if (!W.on || !W.sig) return;
       if (W.mod === 'osc') {   // yumuşak salınım (~1.2 Hz) + küçük el titremesi (9 Hz)
         const w0 = 2 * Math.PI * 1.2, z = 0.6, qs = W.sig * Math.sqrt(4 * z * w0 * w0 * w0), dt = 0.001;
@@ -50,10 +53,11 @@ function pageSide() {
         X = A.x + W.x + E.x; Y = A.y + W.y + E.y;
         if ((t % 5) === 4) {
           const yawRate = lx == null ? 0 : (X - lx) / 0.005, pitchRate = ly == null ? 0 : (Y - ly) / 0.005; lx = X; ly = Y;
+          const RL = rollA + W.r, rollRate = lr == null ? 0 : (RL - lr) / 0.005; lr = RL;
           // eğim (o.incl): silah sağ eksen çevresinde kalkık/eğik; sağ-sol kayma silahın kendi "yukarı" ekseni çevresinde
           const ia = (o.incl || 0) * Math.PI / 180, Ug = rot(U, RT, ia);
-          const w = V.add(V.mul(Ug, -yawRate), V.mul(RT, pitchRate));
-          const ca = cant * Math.PI / 180, ax = [rot(xs, F, ca), rot(ys, F, ca), rot(zs, F, ca)].map(a => rot(a, RT, ia));
+          const w = V.add(V.add(V.mul(Ug, -yawRate), V.mul(RT, pitchRate)), V.mul(rot(F, RT, ia), rollRate));   // + dönme: namlu çevresinde, sağ el kuralı (üstü sağa)
+          const ca = (cant + RL) * Math.PI / 180, ax = [rot(xs, F, ca), rot(ys, F, ca), rot(zs, F, ca)].map(a => rot(a, RT, ia));
           const om = ax.map((a, k) => V.dot(w, a) + bias[k] + gauss() * gn);
           const acc = ax.map(a => V.dot(U, a) + gauss() * 0.003);
           const jerk = jerkNext || 0.02; jerkNext = 0;
@@ -74,13 +78,13 @@ function pageSide() {
       const prof = s.prof || 'yumusak';
       const f = u => prof === 'ani' ? Math.max(0, (u - 0.73) / 0.27) : prof === 'erken' ? Math.min(1, u / 0.4) : u * u * (3 - 2 * u);
       const w0 = [W.x, W.y];
-      step(150, i => { const k = f((i + 1) / 150); E.x = (s.fx || 0) * k; E.y = (s.fy || 0) * k; });   // tetik
+      step(150, i => { const k = f((i + 1) / 150); E.x = (s.fx || 0) * k; E.y = (s.fy || 0) * k; rollA = (s.roll || 0) * k; });   // tetik (+ bilek dönmesi)
       jerkNext = s.live ? 60 : 3;                          // kırılma darbesi
       truth.push({ s, wx: W.x - w0[0], wy: W.y - w0[1] });
       A.x += E.x; A.y += E.y; E.x = E.y = 0;
       const a0 = [A.x, A.y];
       step(650, i => { const k = Math.min(1, i / 120); A.x = a0[0] + (s.postx || 0) * k; A.y = a0[1] + (s.posty || 0) * k; });   // takip
-      step(250, () => { A.x *= 0.98; A.y *= 0.98; });     // sıfıra dönüş
+      step(250, () => { A.x *= 0.98; A.y *= 0.98; rollA *= 0.98; });     // sıfıra dönüş
     }
     step(800, null);
     P.flush(); P.armed = false;
@@ -91,11 +95,11 @@ function pageSide() {
   const MAPP = { 12: ['bilek_yukari', 'geri_tepme'], 1: ['avucla_itme', 'geri_tepme'], 2: ['avucla_itme', 'basparmak'], 3: ['basparmak', 'az_parmak'], 4: ['siki_tutus', 'az_parmak'], 5: ['siki_tutus', 'bilek_asagi'], 6: ['bilek_asagi', 'ileri_itme'], 7: ['tokatlama', 'bilek_asagi'], 8: ['tokatlama', 'tum_el'], 9: ['fazla_parmak', 'tokatlama'], 10: ['geri_tepme', 'fazla_parmak'], 11: ['geri_tepme', 'bilek_yukari'] };
   const scale = H.scaleFor('pistol', 'normal');
   const sess = hand => ({ weapon: 'pistol', diff: 'normal', hand, handMode: 'normal', drill: 'serbest', mode: 'kuru' });
-  const toQ = m => ({ sc: Math.max(0, Math.min(100, 100 * Math.exp(-(m.trig + 0.15 * m.hold) / scale))), h: H.hourOf(m.dx, m.dy), ca: m.cant, po: m.post, tr: m.trig, ho: m.hold, dx: m.dx, dy: m.dy, wv: m.wv == null ? null : m.wv });
+  const toQ = m => ({ sc: Math.max(0, Math.min(100, 100 * Math.exp(-(m.trig + 0.15 * m.hold) / scale))), h: H.hourOf(m.dx, m.dy), ca: m.cant, po: m.post, tr: m.trig, ho: m.hold, dx: m.dx, dy: m.dy, wv: m.wv == null ? null : m.wv, dr: m.droll, rv: m.rv });
   // her atış için düz kayıt: ölçüm + gerçek + yeni/eski teşhis
   const rec = (m, tr, hand) => {
     const q = toQ(m), s = tr.s; const F = Math.hypot(s.fx || 0, s.fy || 0);
-    return { sc: q.sc, h: q.h, d: Math.hypot(m.dx, m.dy), wv: m.wv, tr: m.trig, ho: m.hold, po: m.post, ca: m.cant, ang: Math.atan2(m.dx, m.dy) * 180 / Math.PI,
+    return { sc: q.sc, h: q.h, d: Math.hypot(m.dx, m.dy), wv: m.wv, tr: m.trig, ho: m.hold, po: m.post, ca: m.cant, dr: m.droll, rv: m.rv, roll: s.roll || 0, ang: Math.atan2(m.dx, m.dy) * 180 / Math.PI,
       F, fang: F ? Math.atan2(s.fx, s.fy) * 180 / Math.PI : null, w: Math.hypot(tr.wx, tr.wy), hold: s.hold, prof: s.prof || 'yumusak', cant: s.cant || 0,
       yeni: H.diagnose(q, sess(hand || 'R')), eski: H.diagnose(Object.assign({}, q, { wv: null }), sess(hand || 'R')),
       yeniL: H.diagnose(q, sess('L')), eskiL: H.diagnose(Object.assign({}, q, { wv: null }), sess('L')) };
@@ -137,6 +141,11 @@ function pageSide() {
     R.egim[incl] = got.length === truth.length ? got.map((m, i) => ({ dx: m.dx, dy: m.dy, tx: truth[i].s.fx + truth[i].wx, ty: truth[i].s.fy + truth[i].wy, ca: m.cant }))
       : { hata: `atış sayısı ${got.length}/${truth.length}` };
   }
+  // 8) T4: tetik anında silahı döndürme (namlu çevresinde, jiroskoptan). 3 montaj; dönme titremesi 0,15°
+  R.donme = {};
+  for (const [yer, yon] of [['alt', 'ileri'], ['sag', 'ileri'], ['ust', 'arka']])
+    R.donme[yer + '/' + yon] = run(yer, yon, [2, -2, 3, -3, 1.5, -1.5, 0, 0, 0, 0].map(d => ({ fx: 0.02, fy: 0.01, roll: d })), { hold: 0.02, rollHold: 0.15 });
+  R.donmeYok = run('alt', 'ileri', Array.from({ length: 30 }, () => ({ fx: 0.02, fy: 0.01 })), { hold: 0.05, rollHold: 0.25 });
   R.MAPP = MAPP; R.scale = scale;
   return R;
 }
@@ -233,6 +242,19 @@ function evaluate(R) {
   check(num(k.yeni.tetikHatasiniBulma) >= 60, 'Baskın tetik hataları en az %60 bulunuyor (yön ±45°)', k.yeni.tetikHatasiniBulma);
   check(num(k.yeni.titremeyiTetikSanmama) >= 85, 'Baskın titreme en az %85 tetik hatası sanılmıyor', k.yeni.titremeyiTetikSanmama);
   console.log('  eşik taraması (uygulamada 1,75): ' + Object.entries(E.esikTaramasi).map(([z, v]) => `${z} %${v.dogru}`).join(' · '));
+
+  section('T4: tetik anında silahı döndürme (jiroskoptan, 3 montaj, dönme titremesi 0,15°)');
+  for (const [m, v] of Object.entries(R.donme)) {
+    if (!Array.isArray(v)) { check(false, m + ': ' + v.hata); continue; }
+    const olc = v.map(x => ({ gercek: x.roll, olculen: +x.dr.toFixed(2), tani: x.yeni.filter(c => /donme/.test(c)) }));
+    const iyi = olc.every(x => Math.abs(x.olculen - x.gercek) <= 0.35 && (x.gercek === 0 ? !x.tani.length : x.tani[0] === (x.gercek > 0 ? 'donme_sag' : 'donme_sol')));
+    check(iyi, `${m}: 0 / ±1,5 / ±2 / ±3° dönme doğru ölçülüyor (±0,35°), yönü doğru söyleniyor, dönmeyen atışta söylenmiyor`, olc.filter(x => Math.abs(x.olculen - x.gercek) > 0.35 || (x.gercek === 0) === !!x.tani.length).slice(0, 4));
+    const ort = a => a.reduce((s, x) => s + x.d, 0) / a.length, dd = ort(v.filter(x => x.roll)), d0 = ort(v.filter(x => !x.roll));
+    check(dd <= d0 + 0.02, `${m}: dönme sahte sağ-sol / yukarı-aşağı tetik hareketi yaratmıyor (dönmeli atışta ort. ${dd.toFixed(3)}°, dönmesizde ${d0.toFixed(3)}°)`);
+  }
+  if (Array.isArray(R.donmeYok)) { const yz = R.donmeYok.filter(x => x.yeni.some(c => /donme/.test(c))).length;
+    check(yz <= 1, `Dönme titremesi 0,25° ama tetikte dönme yok: 30 atışın ${yz}'inde yanlış dönme (en çok 1)`, R.donmeYok.map(x => +x.dr.toFixed(2)).slice(0, 10)); }
+  else check(false, 'donmeYok: ' + R.donmeYok.hata);
 
   section('Kanting (yana yatırma) ölçümü');
   for (const [m, v] of Object.entries(E.kant)) check(v.every(r => Math.abs(r.olculen - r.gercek) <= 0.3 && r.uyari === (Math.abs(r.gercek) >= 2.5)), `${m}: 0 / 1,5 / ±3 / 5° doğru ölçülüyor (±0,3°), uyarı 2,5°'den itibaren`, v);

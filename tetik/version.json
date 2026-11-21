@@ -1,1 +1,1 @@
-{"v": 33, "not": "Kamera ekranı artık puanlama ekranı: kamera görüntüsü, hedefi üç dokunuşla tanıtma, lazeri deneme ve sıfırlama aynı ekranda, adım adım. Dört adım tamamlanınca oturumdaki atışlar kamerayla puanlanır. Hisar 360 görünümü (sürüm 32) de bu sürümde."}
+{"v": 34, "not": "Kamerayla puanlamada yeni hedef türü: silüet ya da başka şekil. Görüntüde hedefin kenarı boyunca dokun; noktaların arası hedef alanı olur, içine düşen lazer isabet, dışı karavana; istersen iç bölge (ör. göğüs) de çiz. Yeni lazer türü: lazer eğitim fişeği (namluda); sıfırlama gerekmez."}

@@ -1,4 +1,4 @@
-# HİSAR TETİK: Hisar 360 bağlantısı, görünüm ve Kamera ekranı (sürüm 31–33)
+# HİSAR TETİK: Hisar 360 bağlantısı, görünüm, Kamera ekranı, şekilli hedef (sürüm 31–34)
 
 Kullanıcı isteği (21 Kasım 2026): "Bu uygulamayı da Hisar 360 gibi geliştir" (seçilen yol: Hisar 360 hesaplarıyla),
 "görüntülerini temasını da değiştir", "lazer ve kamera kullanımını etkin hale getir".
@@ -39,8 +39,29 @@ Lazer sayfası ile Kamera ekranı aynı kodu kullanır (`lzKameraBagla`). Ekrand
 Test: `kamera_testi.js` 29/0 (sahte sensör ve sahte kamera): açma, önizleme, üç dokunuş, nokta görülmesi, sıfırlama,
 rozet, ekrandan çıkınca kapanma, dönünce açılma, ayarlardan dönüş, oturumda kamerayla puan (merkez 10), kapatma, izin reddi.
 
+## 4. Şekilli hedef ve lazer eğitim fişeği (sürüm 34)
+
+Kullanıcı isteği (22 Kasım 2026): hedefler dokunarak, noktaların arası çerçevelenerek tanınsın (bazı hedefler insan silüeti);
+namluya takılan lazer eğitim fişeği desteklensin (lazer doğrudan hedefe düşer; altta sensör nişan hatasını verir).
+
+- **Hedef türü:** "Halkalı yuvarlak hedef" (eskisi gibi, üç dokunuş) ya da "Silüet ya da başka şekil".
+- **Şekilli hedef:** görüntüde hedefe dokun, sonra kenarı boyunca sırayla noktalar koy (en az 3; "Son noktayı sil", "Çerçeveyi bitir").
+  İsteğe bağlı iç bölge (ör. göğüs): ikinci çokgen, hedefin içinde olmalı ("İç bölgeyi bitir" ya da "Atla"). Düğmeler önizlemenin hemen altında.
+- **Ölçek:** hedefin gerçek boyu (cm). Noktalar görüntüde ve hedef düzleminde cm olarak (merkez: çokgenin ağırlık merkezi) tutulur.
+- **Puan:** lazer çokgenin içine düşerse İSABET (iç bölgeye düşerse İSABET · İÇ BÖLGE), dışına düşerse KARAVANA. İsabet sınaması
+  atışın düzeltilmiş yerinde yapılır; kamera hedefe eğik baksa da içerde/dışarda kararı değişmez.
+- **Oturum:** hedefin şekli oturuma yazılır (`lzTip`, `lzPoly`, `lzIc`); hedef görünümünde halkalar yerine kağıtta silüet çizilir;
+  özet: "Lazer 4/5 atışta görüldü: 3 isabet (1'i iç bölgede), 1 karavana."
+- **Lazer eğitim fişeği** (lazer türü "namluda"): iğne vurunca lazer bir an yanar, namlu ekseninden çıkar; sıfırlama gerekmez (eski sıfır
+  farkı uygulanmaz). Nokta, sensöre takılı lazerdeki gibi atış anından sonra aranır.
+- Tür değişince eski tanıtma silinir (yuvarlakta çap, şekilde boy ayrı hatırlanır).
+
+Test: `hedef_testi.js` 32/0 (sahte kamerada insan silüeti; isabet, iç bölge, baş, karavana, görülmedi; fişek; sayfa hatası yok).
+
 ## Donanımla doğrulanacaklar
 
 - Gerçek telefon kamerasıyla nokta bulma (gün ışığı, kırmızı/yeşil lazer), tripod kıpırdaması.
 - Sensöre takılı M5Stack Laser TX'in "Lazeri dene" ile yanması (sensör yazılımı 7).
+- Lazer eğitim fişeğinin kısa darbesinin telefon kamerasında görülmesi (kare hızı 30/60).
+- Gerçek silüet hedefte çerçeveleme ve isabet kararı.
 - Unit CamS3: donanım gelince (T3).

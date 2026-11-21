@@ -740,7 +740,7 @@ body{font-size:16px;line-height:1.45}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=34;
+const VER=35;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -1998,7 +1998,8 @@ function kSensorDurum(){
 }
 function kLazerDurum(){
   const L=S.lazer||{};
-  if(L.kaynak!=="sensor") return {tur:"kapali",metin:"Silahta",alt:"Silahtaki lazer"};
+  if(L.kaynak==="fisek") return {tur:"kapali",metin:"Fişek",alt:"Lazer eğitim fişeği"};
+  if(L.kaynak!=="sensor") return {tur:"kapali",metin:"Rayda",alt:"Raya takılı lazer"};
   if(L.sn===false) return {tur:"kapali",metin:"Kapalı",alt:"Oturumlarda yanmıyor"};
   const kip=L.kip==="surekli"?"Oturum boyunca yanar":"Atışta yanar";
   if(lzSensorHazir()) return {tur:"iyi",metin:"Hazır",alt:kip};
@@ -2103,9 +2104,9 @@ function renderKamera(){
         `<select id="kmTip" aria-label="Hedef türü"><option value="halka" ${sk?"":"selected"}>Halkalı yuvarlak hedef</option><option value="sekil" ${sk?"selected":""}>Silüet ya da başka şekil</option></select>
         <div class="k-iz2"><label class="km-cap">${sk?"Boyu (cm)":"Çap (cm)"}<input id="kmD" type="number" inputmode="decimal" min="5" max="300" step="1" value="${fx(L.D,0)}"></label><button class="k-btn${LZ.adim||hz?"":" ana"}" id="kmTan">${LZ.adim?"Tanıtmayı bırak":hz?"Yeniden tanıt":"Hedefi tanıt"}</button></div>`)}
       ${adim(3,"Lazer",!!(LZ.goruldu&&LZ.stream),kmLazerNot(),
-        `<select id="kmKyn" aria-label="Lazer türü"><option value="sensor" ${sn?"selected":""}>Sensöre takılı lazer</option><option value="silah" ${L.kaynak==="silah"||!L.kaynak?"selected":""}>Silahtaki lazer (kendi anahtarı)</option><option value="fisek" ${fs?"selected":""}>Lazer eğitim fişeği (namluda)</option></select>
+        `<select id="kmKyn" aria-label="Lazer türü"><option value="sensor" ${sn?"selected":""}>Sensöre takılı lazer</option><option value="silah" ${L.kaynak==="silah"||!L.kaynak?"selected":""}>Raya takılı lazer (kendi anahtarıyla)</option><option value="fisek" ${fs?"selected":""}>Lazer eğitim fişeği (namluda)</option></select>
         <div class="k-iz2"><select id="kmRenk" aria-label="Noktanın rengi"><option value="yesil" ${L.renk!=="kirmizi"?"selected":""}>Yeşil nokta</option><option value="kirmizi" ${L.renk==="kirmizi"?"selected":""}>Kırmızı nokta</option></select>${sn?`<button class="k-btn" id="kmDene">Lazeri dene</button>`:`<button class="k-btn" id="kmAyar2">Lazer ayarları</button>`}</div>`)}
-      ${fs?adim(4,"Sıfırlama",true,"Lazer eğitim fişeği namlu ekseninden çıkar: sıfırlama gerekmez.",""):adim(4,"Sıfırlama",!!L.z&&!LZ.sifir,LZ.sifir?`Nişangahla merkeze nişan al, tetiği düşür: ${LZ.sifir.pts.length}/3 atış.`:L.z?`Son sıfırlama ${L.zD||"?"} m'de${L.zT?", "+ago(Date.now()-L.zT):""}. Mesafe değişirse yeniden sıfırla.`:"Lazer nişangahla aynı yere bakmaz: sensör bağlıyken nişangahla merkeze nişan al ve tetiği 3 kez düşür.",
+      ${fs?adim(4,"Sıfırlama",true,"Lazer eğitim fişeği namlu ekseninden çıkar: sıfırlama gerekmez.",""):adim(4,"Sıfırlama",!!L.z&&!LZ.sifir,LZ.sifir?`Nişangahla ${lzNisanYeri()} nişan al, tetiği düşür: ${LZ.sifir.pts.length}/3 atış.`:L.z?`Son sıfırlama ${L.zD||"?"} m'de${L.zT?", "+ago(Date.now()-L.zT):""}. Mesafe değişirse yeniden sıfırla.`:`Raya takılı lazer nişangahla aynı yere bakmaz: sensör bağlıyken nişangahla ${lzNisanYeri()} nişan al ve tetiği 3 kez düşür. Lazeri her takışta bir kez sıfırla.`,
         `<button class="k-btn${hz&&!L.z&&!LZ.sifir?" ana":""}" id="kmSif" ${hz?"":"disabled"}>${LZ.sifir?`Sıfırlanıyor… ${LZ.sifir.pts.length}/3 (bırak)`:L.z?"Yeniden sıfırla":"Sıfırlamaya başla"}</button>`)}
     </ol>
     <div class="k-iz2"><button class="k-btn${hz&&(L.z||fs)?" ana":""}" id="kmBasla" ${hz?"":"disabled"}>Alıştırmaya geç</button><button class="k-btn" id="kmAyar">Lazer ayarları</button></div>
@@ -2136,7 +2137,7 @@ function kmLazerNot(){ const L=S.lazer;
   if(LZ.goruldu&&LZ.stream) return "Lazer noktası görüldü: kamera noktayı buluyor.";
   if(L.kaynak==="sensor") return L.sn===false?"Sensördeki lazer oturumlarda kapalı (Lazer ayarları).":lzSensorHazir()?"Sensöre takılı lazer: “Lazeri dene” ile yak, kamera noktayı görsün.":lzSensorDurum();
   if(L.kaynak==="fisek") return "Lazer eğitim fişeği: tetik düşünce lazer bir an yanar. Kuru tetik yap; kamera noktayı görünce bu adım tamamlanır.";
-  return "Silahtaki lazeri kendi anahtarıyla yak; kamera noktayı görünce bu adım tamamlanır."; }
+  return "Raya takılı lazeri kendi anahtarıyla (basınç anahtarı) yak; kamera noktayı görünce bu adım tamamlanır. Sonra sıfırla."; }
 const K_MENU=[["merkez","Kontrol Merkezi","Cihaz durumu, hızlı başlat, son oturum","merkez"],["kamera","Kamera","Lazer isabetini kamerayla puanla","kamera"],
   ["sensor","Sensörler","Canlı veri, kalibrasyon, atış algılama","sensorler"],["alistirma","Eğitim Oturumları","Alıştırmalar, dersler, eğitim programı","egitim"],
   ["gecmis","Analiz ve Raporlar","Geçmiş, gelişim, gruplar, rapor","analiz"],["cihaz","Cihaz Yönetimi","Sensör, lazer, kamera, saat","cihaz"],["ayarlar","Ayarlar","Silah, profil, ses, görünüm, veriler","ayarlar"]];
@@ -3295,6 +3296,9 @@ function lzTipSec(v){ const L=S.lazer, t=v==="sekil"?"sekil":"halka"; if((L.tip|
 // lazer kaynağı: sensöre takılı, silahta (kendi anahtarı), lazer eğitim fişeği (namluda; iğne vurunca bir an yanar, namlu ekseninden çıkar)
 function lzKaynakSec(v){ const L=S.lazer; L.kaynak=v==="sensor"||v==="fisek"?v:"silah"; L.renk=L.kaynak==="silah"?"yesil":"kirmizi"; LZ.bg={}; saveMeta(); lzSensorYenile(); }
 function lzSifirGerekmez(){ return S.lazer.kaynak==="fisek"; }
+// sıfırlarken nişan alınacak nokta (hedef düzleminde cm, merkeze göre): yuvarlakta merkez; şekilde iç bölgenin ortası, yoksa şeklin ortası
+function lzNisan(){ const L=S.lazer; return L.tip==="sekil"&&L.icm&&L.icm.length>=3?poliMerkez(L.icm):[0,0]; }
+function lzNisanYeri(){ const L=S.lazer; return L.tip!=="sekil"?"hedefin tam merkezine":L.icm&&L.icm.length>=3?"iç bölgenin ortasına (önizlemede sarı artı)":"hedefin ortasına (önizlemede sarı artı)"; }
 // tanıtma sırasındaki not ve şekil düğmeleri (Lazer sayfası "lz…", Kamera ekranı "km…")
 function lzAdimNot(){ const n=LZ.adim==="sekil"?(LZ.tan.pts||[]).length:LZ.adim==="ic"?(LZ.tan.ic||[]).length:-1;
   return LZ_ADIM[LZ.adim]+(n>=0?` (${n} nokta)`:""); }
@@ -3491,7 +3495,7 @@ function lzSifirAtis(m){
   const sk=(S.lazer.kaynak==="sensor"&&S.lazer.kip!=="surekli")||S.lazer.kaynak==="fisek", ks=lzTutarli(LZ.kare.filter(f=>f.d&&f.t>=m.st-(sk?60:400)&&f.t<=m.st+(sk?260:150)));
   if(!ks.length){ toast("Lazer noktası görülmedi: kamera hedefi görüyor mu, lazer yandı mı?",5000); return; }
   let en=ks[0]; for(const f of ks) if(Math.abs(f.t-m.st)<Math.abs(en.t-m.st)) en=f;
-  Z.pts.push(lzCm(en.d,false)); tone(1320,80,0.05,"sine");
+  { const a=lzNisan(), q=lzCm(en.d,false); Z.pts.push([q[0]-a[0],q[1]-a[1]]); } tone(1320,80,0.05,"sine");
   if(Z.pts.length<3){ lzYenile(); return; }
   const mx=Z.pts.reduce((a,p)=>a+p[0],0)/Z.pts.length, my=Z.pts.reduce((a,p)=>a+p[1],0)/Z.pts.length, yay=Math.max(...Z.pts.map(p=>Math.hypot(p[0]-mx,p[1]-my)));
   S.lazer.z=[+mx.toFixed(2),+my.toFixed(2)]; S.lazer.zD=S.dist; S.lazer.zT=Date.now(); saveMeta();
@@ -3507,7 +3511,7 @@ const LZ_SURE=[[100,"0,1 sn: yalnız tetiğin düştüğü an"],[250,"0,25 sn: n
 function pgLazer(){ const L=S.lazer, hz=lzHazir(), sn=L.kaynak==="sensor";
   return `<div class="card"><div class="ch"><h2>Lazer</h2>${infoBtn("lazer")}</div>
     <p class="note">Lazer sensörün Grove girişine takılı (ör. M5Stack Laser TX). Tetik düştüğü anda sensör lazeri yakar: silahın o anda nereye baktığını hedefin üstünde sen görürsün. Kamera gerekmez.</p>
-    <div class="field"><label for="lzKyn">Lazer</label><select id="lzKyn"><option value="sensor" ${sn?"selected":""}>Sensöre takılı (Grove girişi)</option><option value="silah" ${L.kaynak==="silah"||!L.kaynak?"selected":""}>Silahta, kendi anahtarıyla</option><option value="fisek" ${L.kaynak==="fisek"?"selected":""}>Lazer eğitim fişeği (namluda)</option></select></div>
+    <div class="field"><label for="lzKyn">Lazer</label><select id="lzKyn"><option value="sensor" ${sn?"selected":""}>Sensöre takılı (Grove girişi)</option><option value="silah" ${L.kaynak==="silah"||!L.kaynak?"selected":""}>Raya takılı, kendi anahtarıyla</option><option value="fisek" ${L.kaynak==="fisek"?"selected":""}>Lazer eğitim fişeği (namluda)</option></select></div>
     ${sn?`<label class="toggle">Oturumlarda lazer yansın<input type="checkbox" id="lzSn" ${L.sn!==false?"checked":""}></label>
     <div class="field"><label for="lzKip">Ne zaman yansın</label><select id="lzKip"><option value="atis" ${L.kip!=="surekli"?"selected":""}>Tetik düşünce (kuru tetik)</option><option value="surekli" ${L.kip==="surekli"?"selected":""}>Oturum boyunca (tutuş, gerçek atış)</option></select></div>
     ${L.kip!=="surekli"?`<div class="field"><label for="lzSure">Ne kadar yansın</label><select id="lzSure">${LZ_SURE.map(([v,t])=>`<option value="${v}" ${lzSure()*10===v?"selected":""}>${t}</option>`).join("")}</select></div>
@@ -3534,7 +3538,7 @@ function pgLazer(){ const L=S.lazer, hz=lzHazir(), sn=L.kaynak==="sensor";
     <p class="note" id="lzTanN">${LZ.adim?lzAdimNot():hz?(L.tip==="sekil"?`Hedef çerçevelendi (${L.poly.length} nokta${L.ic?", iç bölge":""}, boy ${fx(L.D,0)} cm).`:`Hedef tanıtıldı (çap ${fx(L.D,0)} cm).`)+" Telefon biraz kıpırdarsa uygulama hedefi izler; çok oynarsa yeniden tanıt.":"Hedef tanıtılmadı."}</p></div>
   <div class="card"><h2>2 · Lazeri sıfırla</h2>
     ${lzSifirGerekmez()?`<p class="note">Lazer eğitim fişeği namlu ekseninden çıkar: sıfırlama gerekmez.</p>`:""}
-    <p class="note">Lazer nişangahla aynı yere bakmaz; aradaki farkı uygulama düzeltir. Sensör bağlıyken nişangahla hedefin tam merkezine nişan al ve tetiği 3 kez düşür.</p>
+    <p class="note">Lazer nişangahla aynı yere bakmaz; aradaki farkı uygulama düzeltir. Sensör bağlıyken nişangahla ${lzNisanYeri()} nişan al ve tetiği 3 kez düşür.</p>
     <button class="btn primary" id="lzSif" ${hz?"":"disabled"}>${LZ.sifir?`Sıfırlanıyor… ${LZ.sifir.pts.length}/3 atış (bırak)`:L.z?"Yeniden sıfırla":"Sıfırlamaya başla"}</button>
     <p class="note">${L.z?`Son sıfırlama ${L.zD||"?"} m'de${L.zT?", "+ago(Date.now()-L.zT):""}. Mesafe değişirse yeniden sıfırla.`:"Henüz sıfırlanmadı."}</p></div>
   <div class="card"><h2>Algılama</h2>
@@ -3601,7 +3605,8 @@ function lzKameraBagla(p,yenile){
       a.forEach((q,i)=>{ const [x,y]=P(q); i?cx.lineTo(x,y):cx.moveTo(x,y); }); if(kapa) cx.closePath(); cx.stroke(); a.forEach(q=>{ const [x,y]=P(q); cx.fillRect(x-3,y-3,6,6); }); };
     if(LZ.adim==="sekil"||LZ.adim==="ic"){ poli(LZ.tan.pts,LZ.adim==="ic","#ffcc00"); if(LZ.adim==="ic") poli(LZ.tan.ic,false,"#ff7a00"); }
     else if(LZ.adim){ if(LZ.tan.c) arti(LZ.tan.c); }
-    else if(hz&&L.tip==="sekil"){ const ky=q=>[q[0]+LZ.kay[0],q[1]+LZ.kay[1]]; poli(L.poly.map(ky),true,"#ffcc00"); if(L.ic) poli(L.ic.map(ky),true,"#ff7a00"); cx.strokeStyle="#ffcc00"; arti(lzC()); }
+    else if(hz&&L.tip==="sekil"){ const ky=q=>[q[0]+LZ.kay[0],q[1]+LZ.kay[1]], c=lzC(), k=lzK(), a=lzNisan(); poli(L.poly.map(ky),true,"#ffcc00"); if(L.ic) poli(L.ic.map(ky),true,"#ff7a00");
+      cx.strokeStyle="#ffcc00"; cx.lineWidth=LZ.sifir?3:2; arti([c[0]+a[0]*k,c[1]-a[1]*k]); }
     else if(hz){ const c=lzC(), [x,y]=P(c); arti(c); cx.beginPath(); cx.arc(x,y,lzK()*L.D/2/g.w*cv.width,0,Math.PI*2); cx.stroke(); }
     const so=LZ.son, gorunur=so&&now()-so.t<1500;
     if(gorunur){ const [x,y]=P([so.d.x,so.d.y]); cx.strokeStyle="#00ff66"; cx.lineWidth=3; cx.beginPath(); cx.arc(x,y,10,0,Math.PI*2); cx.stroke(); }

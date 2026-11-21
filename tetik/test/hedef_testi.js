@@ -101,6 +101,37 @@ const GOGUS = [[-40, -50], [40, -50], [40, 30], [-40, 30]];
   check(/Lazer 4\/5 atışta görüldü: 3 isabet \(1'i iç bölgede\), 1 karavana/.test(oz), 'Oturum özeti: 4/5 görüldü, 3 isabet (1 iç bölgede), 1 karavana', oz.slice(0, 260));
   await H(() => window.__hisar.stopRun(false)); await sleep(800);
 
+  section('Raya takılı lazer: silüette iç bölgenin ortasına nişanla sıfırlama');
+  await H(() => window.__hisar.showView('kamera')); await sleep(400);
+  await page.selectOption('#kmKyn', 'silah'); await sleep(300);
+  const ry = await H(() => ({ k: window.__hisar.S.lazer.kaynak, renk: window.__hisar.S.lazer.renk, rozet: document.querySelector('#v-kamera .k-rozet').textContent,
+    s4: document.querySelectorAll('#v-kamera .km-adim')[3].textContent, opt: document.querySelector('#kmKyn option[value="silah"]').textContent }));
+  check(ry.k === 'silah' && ry.renk === 'yesil' && /Raya takılı/.test(ry.opt), 'Lazer türü "Raya takılı lazer (kendi anahtarıyla)"; nokta yeşil', ry);
+  check(ry.rozet === 'Sıfırlanmadı' && /iç bölgenin ortasına/.test(ry.s4), 'Sıfırlama gerekli; nişan noktası "iç bölgenin ortası (sarı artı)"', ry);
+  // raya takılı lazer nişangahın 3 cm sağına, 2 cm üstüne bakıyor; nişan noktası iç bölgenin ortası (merkeze göre 0, −10 piksel)
+  const PX = 2.6, NIS = [0, -10], ZF = [3 * PX, -2 * PX];
+  const rayAtis = nokta => H(o => { const F = window.__fake, C = window.__cam, seq = F.head + 80, tb = F.t0 + seq * 5;
+    C.dots.push({ t0: tb - 500, t1: tb + 300, x: o[0], y: o[1] }); F.addShot(seq, { dx: 0, dy: 0, click: null }); }, nokta);
+  await page.click('#kmSif'); await sleep(300);
+  for (const [nx, ny] of [[0.6, -0.4], [-0.5, 0.5], [0.2, -0.2]]) { await rayAtis([NIS[0] + ZF[0] + nx, NIS[1] + ZF[1] + ny]); await sleep(1500); }
+  // beklenen sıfır: noktanın, dokunularak çizilen iç bölgenin ortasına göre farkı (dokunma pikseline bağlı küçük sapma testi bozmasın)
+  const rz = await H(([nis, zf]) => { const h = window.__hisar, L = h.S.lazer, W = 1920, kp = h.lzK() * W, ic = L.ic.map(q => [q[0] * W, q[1] * W]);
+    const n = ic.length, m = [ic.reduce((t, q) => t + q[0], 0) / n, ic.reduce((t, q) => t + q[1], 0) / n], d = [960 + nis[0] + zf[0], 540 + nis[1] + zf[1]];
+    return { z: L.z, bek: [+((d[0] - m[0]) / kp).toFixed(2), +(-(d[1] - m[1]) / kp).toFixed(2)], rozet: document.querySelector('#v-kamera .k-rozet').textContent }; }, [NIS, ZF]);
+  check(rz.z && Math.abs(rz.z[0] - rz.bek[0]) < 0.3 && Math.abs(rz.z[1] - rz.bek[1]) < 0.3 && rz.rozet === 'Hazır',
+    `Sıfırlandı: lazer nişan noktasının ${rz.z} cm sağ/üstünde (beklenen ${rz.bek}; gerçek fark 3, 2); rozet "Hazır"`, rz);
+  check(Math.abs(rz.z[0] - 3) < 0.9 && Math.abs(rz.z[1] - 2) < 0.9, 'Sıfır, lazerin gerçek farkına yakın (dokunma hassasiyeti içinde)', rz.z);
+  await H(() => { const h = window.__hisar; h.openDrill('serbest'); h.startRun(); });
+  check(await waitFor(page, () => !!window.__hisar.LZ.stream && window.__hisar.LZ.kare.length > 20, 4000), 'Oturum başladı');
+  await sleep(500);
+  await rayAtis([NIS[0] + ZF[0], NIS[1] + ZF[1]]); await sleep(1700);
+  const rq = await H(() => { const s = window.__hisar.cur.sess, q = s.shots[s.shots.length - 1]; return { kyn: s.lzKyn, lz: q && q.lz }; });
+  check(rq.kyn === 'silah' && rq.lz && rq.lz.gor && rq.lz.isabet && rq.lz.ic, 'Nişangah iç bölgenin ortasında: lazer 3 cm sağda görünse de düzeltilmiş yer İÇ BÖLGE', rq);
+  await rayAtis([NIS[0] + ZF[0] + 55, NIS[1] + ZF[1]]); await sleep(1700);
+  const rq2 = await H(() => { const s = window.__hisar.cur.sess, q = s.shots[s.shots.length - 1]; return q && q.lz; });
+  check(rq2 && rq2.gor && rq2.isabet && !rq2.ic, 'Nişangah 21 cm sağda (gövdede, iç bölge dışında): İSABET', rq2);
+  await H(() => window.__hisar.stopRun(false)); await sleep(800);
+
   section('Tür değişince eski tanıtma silinir; Lazer ayarlarında fişek');
   await H(() => window.__hisar.showView('kamera')); await sleep(400);
   await page.selectOption('#kmTip', 'halka'); await sleep(300);
@@ -109,6 +140,7 @@ const GOGUS = [[-40, -50], [40, -50], [40, 30], [-40, 30]];
   await page.selectOption('#kmTip', 'sekil'); await sleep(300);
   check(await H(() => window.__hisar.S.lazer.D === 100), 'Silüete yeniden geçince boy (100 cm) hatırlanıyor');
   await H(() => window.__hisar.openSetPage('lazer')); await sleep(400);
+  await page.selectOption('#lzKyn', 'fisek'); await sleep(400);
   const lp = await H(() => ({ opt: Array.from(document.querySelectorAll('#lzKyn option')).map(o => o.value), sec: document.getElementById('lzKyn').value, txt: document.getElementById('pgBody').innerText }));
   check(JSON.stringify(lp.opt) === '["sensor","silah","fisek"]' && lp.sec === 'fisek' && /namlu ekseninden çıkar/.test(lp.txt) && /sıfırlama gerekmez/.test(lp.txt), 'Lazer ayarları: fişek seçeneği ve açıklaması', lp.opt);
   check(await H(() => document.getElementById('lzTip').value === 'sekil' && /Hedefin boyu/.test(document.getElementById('pgBody').innerText)), 'Lazer ayarlarında da hedef türü ve boy');

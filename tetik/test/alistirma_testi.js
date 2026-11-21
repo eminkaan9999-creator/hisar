@@ -45,7 +45,10 @@ const DRIVE = async ({ id, set, maxMs, stopAfter }) => {
       else if (id === 'sarjor') { if (el - last > 1800) { last = el; fire(100); } }
       else if (el - last > 1300) { last = el; fire(100, id === 'geritepme' ? { live: true } : {}); }
       const enough = stopAfter && r.sess.shots.length >= stopAfter;
-      if (!r.active || el > maxMs || enough) { clearInterval(iv); res(); }
+      // Karar: komut türü rastgele (%60 yeşil). Sabit sürede bütün turlar kırmızı gelebiliyordu (atış yok, oturum kaydedilmez,
+      // test yanlışlıkla başarısız). En az bir yeşil ve bir kırmızı tur bitene kadar sürer (alıştırma en çok 15 tur).
+      const kararTamam = id === 'karar' && types.includes('ates') && types.includes('dur') && st.goT == null;
+      if (!r.active || el > maxMs || enough || kararTamam) { clearInterval(iv); res(); }
     }, 40);
   });
   const auto = !r.active;
@@ -62,7 +65,7 @@ const DRILLS = [
   ['serbest', {}, 9000, 6], ['safespace', {}, 7000, 4], ['degerlendirme', {}, 20000], ['dayaniklilik', { dayanik: 10 }, 20000], ['atiseli', {}, 7000, 4], ['destekeli', {}, 7000, 4],
   ['zamanlayici', {}, 22000], ['par', { par: 2.0 }, 22000], ['kiyas20', {}, 30000], ['zamankiyas', {}, 15000], ['ritim', { ritimShots: 5, ritim: 1.5 }, 20000], ['kilif', {}, 24000],
   ['surpriz', { dset: { surpriz: { rounds: 3 } } }, 40000], ['rehine', { dset: { rehine: { rounds: 3, zorluk: 'kolay' } } }, 45000],
-  ['karar', {}, 22000], ['sarjor', {}, 11000], ['geritepme', { mode: 'gercek' }, 7000, 4],
+  ['karar', {}, 130000], ['sarjor', {}, 11000], ['geritepme', { mode: 'gercek' }, 7000, 4],
 ];
 
 (async () => {
@@ -147,18 +150,19 @@ const DRILLS = [
   section('Sade düzen: Günün Görevi, ana antrenmanlar + Diğer antrenmanlar, düzenleme, dersler, neden sayfası');
   {
     const { ctx, page, errs } = await connected(browser);
+    await page.evaluate(() => window.__hisar.showView('alistirma')); await sleep(150);
     const L = await page.evaluate(() => ({ secs: Array.from(document.querySelectorAll('#drillList .sec')).map(e => e.firstChild.textContent.trim()),
       drills: Array.from(document.querySelectorAll('#drillList [data-drill]')).map(e => e.querySelector('.ln').textContent),
       lessons: Array.from(document.querySelectorAll('#drillList [data-lesson]')).map(e => e.querySelector('.ln').textContent), ch: document.getElementById('chRow').textContent,
-      nav: Array.from(document.querySelectorAll('.nav button')).map(b => b.textContent.trim()) }));
+      nav: Array.from(document.querySelectorAll('.nav button')).filter(b => getComputedStyle(b).display !== 'none').map(b => b.innerText.trim()) }));
     check(JSON.stringify(L.secs) === JSON.stringify(['Günün Görevi', 'Antrenmanlar', 'Dersler']), 'Bölümler: GÜNÜN GÖREVİ, ANTRENMANLAR, DERSLER', L.secs);
-    check(JSON.stringify(L.drills) === JSON.stringify(['Serbest Antrenman', 'Değerlendirme Testi', 'Atış Zamanlayıcısı (Shot Timer)', 'Par Ölçer', 'Ritmik Antrenman', 'Kılıf Çekiş Analizi']),
+    check(JSON.stringify(L.drills) === JSON.stringify(['Serbest Antrenman', 'Değerlendirme Testi', 'Atış Zamanlayıcısı', 'Par Ölçer', 'Ritmik Antrenman', 'Kılıf Çekiş Analizi']),
       'Ana listede sık kullanılan 6 antrenman; diğerleri kapalı "Diğer antrenmanlar" satırında', L.drills);
     await page.click('#drMore'); await sleep(150);
     const all = await page.evaluate(() => ({ n: document.querySelectorAll('#drillList [data-drill]').length, more: document.getElementById('drMore').textContent }));
     await page.click('#drMore'); await sleep(100);
     check(all.n === 17 && /11 alıştırma/.test(all.more), '"Diğer antrenmanlar" açılınca 17 alıştırmanın hepsi görünüyor (hiçbiri silinmedi)', all);
-    check(JSON.stringify(L.lessons) === JSON.stringify(['HİSAR TETİK Tanıtımı', 'Temel Nişancılık', 'İleri Nişancılık']) && JSON.stringify(L.nav) === JSON.stringify(['Alıştırma', 'Analiz', 'Sensör', 'Ayarlar']), 'Dersler (3) ve alt sekmeler: Alıştırma, Analiz, Sensör, Ayarlar', { l: L.lessons, nav: L.nav });
+    check(JSON.stringify(L.lessons) === JSON.stringify(['HİSAR TETİK Tanıtımı', 'Temel Nişancılık', 'İleri Nişancılık']) && JSON.stringify(L.nav) === JSON.stringify(['Merkez', 'Eğitim', 'Analiz', 'Cihazlar', 'Menü']), 'Dersler (3) ve alt menü: Merkez, Eğitim, Analiz, Cihazlar, Menü', { l: L.lessons, nav: L.nav });
     const ch = await page.evaluate(() => { const c = window.__hisar.todayChallenge(); return { drill: c.drill, goal: c.goal, ad: c.ad, name: window.__hisar.DR.find(d => d.id === c.drill).ad }; });
     check(L.ch.includes(ch.name) && L.ch.includes(ch.goal) && ch.ad === undefined, 'Günün Görevi satırında alıştırmanın adı ve hedefi (özel ad yok)', { row: L.ch, ch });
     const names = await page.evaluate(() => { const t = document.documentElement.innerHTML + JSON.stringify(window.__hisar.CHALLENGES.map(c => Object.keys(c))); return ['Çanakkale', 'Sakarya', 'Dumlupınar', 'Malazgirt', 'Kocatepe', 'İnönü', 'Preveze', 'Amare', 'Sarıkamış', 'Kurtuluş', 'Meydan Okuma', 'meydan okuma'].filter(w => t.includes(w)); });
@@ -265,7 +269,7 @@ const DRILLS = [
     const { ctx, page, errs } = await connected(browser);
     for (const id of ['serbest', 'degerlendirme', 'safespace']) await page.evaluate(DRIVE, { id, set: {}, maxMs: 6000, stopAfter: 3 });
     await page.evaluate(() => window.__hisar.showView('gecmis')); await sleep(500);
-    const h = await page.evaluate(() => ({ n: document.querySelectorAll('#sessList [data-id]').length, shots: +document.getElementById('hsShots').textContent, sess: +document.getElementById('hsSess').textContent, safeTag: /Safe Space/.test(document.getElementById('sessList').textContent),
+    const h = await page.evaluate(() => ({ n: document.querySelectorAll('#sessList [data-id]').length, shots: +document.getElementById('hsShots').textContent, sess: +document.getElementById('hsSess').textContent, safeTag: /Kaygısız deneme/.test(document.getElementById('sessList').textContent),
       title: document.getElementById('hTitle').textContent, streak: document.getElementById('hStreak').textContent, charts: Array.from(document.querySelectorAll('#anCards > .card h2')).map(e => e.textContent),
       sent: Array.from(document.querySelectorAll('#anCards .an-s')).map(e => e.textContent) }));
     check(h.n === 3 && h.sess === 2 && h.shots >= 6 && h.safeTag, 'Analiz\'de 3 oturum; Safe Space listede etiketli ama istatistiğe girmiyor (2 oturum)', h);
@@ -310,7 +314,7 @@ const DRILLS = [
       document.querySelectorAll('body *').forEach(e => { const r = e.getBoundingClientRect(); if (r.width && r.right > W && getComputedStyle(e).position !== 'fixed' && !clipped(e)) o.push(e.id || String(e.className && e.className.baseVal !== undefined ? e.className.baseVal : e.className) || e.tagName); });
       return o.slice(0, 4); });
     const bad = {};
-    for (const v of ['alistirma', 'gecmis', 'gruplar', 'sensor', 'ayarlar']) { await page.evaluate(v => window.__hisar.showView(v), v); await sleep(300); const o = await over(); if (o.length) bad[v] = o; }
+    for (const v of ['merkez', 'alistirma', 'gecmis', 'gruplar', 'sensor', 'ayarlar', 'cihaz', 'kamera', 'menu']) { await page.evaluate(v => window.__hisar.showView(v), v); await sleep(300); const o = await over(); if (o.length) bad[v] = o; }
     for (const sub of ['ozet', 'skor', 'grafik', 'iz']) { await page.evaluate(s => { window.__hisar.showView('oturum'); window.__hisar.setSub(s); }, sub); await sleep(300); const o = await over(); if (o.length) bad['oturum/' + sub] = o; }
     await page.evaluate(() => { window.__hisar.openDrill('rehine'); }); await sleep(300); { const o = await over(); if (o.length) bad['oturum/baslangic'] = o; }
     for (const p of ['gelismis', 'baglanti', 'montaj', 'algilama', 'gorunum', 'veri', 'uygulama', 'program', 'ses', 'silah', 'profil']) { await page.evaluate(p => window.__hisar.openSettings(p), p); await sleep(300); const o = await over(); if (o.length) bad['ayarlar/' + p] = o; }

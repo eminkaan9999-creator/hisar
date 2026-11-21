@@ -127,7 +127,8 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14.5px;padding:4px 0}
 .toggle input{width:22px;height:22px;accent-color:var(--acc);flex:0 0 auto}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-select,input[type=number],input[type=text],textarea{background:#0B1220;border:1px solid var(--line2);border-radius:2px;padding:10px;width:100%;min-width:0}
+select,input[type=number],input[type=text],input[type=password],textarea{background:#0B1220;border:1px solid var(--line2);border-radius:2px;padding:10px;width:100%;min-width:0}
+.tbl-k{overflow-x:auto;max-width:100%}
 textarea{min-height:140px;resize:vertical;line-height:1.45}
 .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .kv>div{background:var(--btn);border-radius:2px;padding:8px 10px;min-width:0}
@@ -428,7 +429,7 @@ svg text{font-family:var(--body)}
 .btn{border-radius:12px;min-height:48px}
 .btn.sm{min-height:40px}
 .card{border-radius:14px}
-select,input[type=number],input[type=text],textarea{border-radius:10px}
+select,input[type=number],input[type=text],input[type=password],textarea{border-radius:10px}
 .sheet-card{border-radius:18px 18px 0 0}
 .sheet-head .x{width:44px;height:44px;border-radius:12px}
 .s-bar .stopb{height:52px;border-radius:12px}
@@ -646,7 +647,7 @@ button.k-satir.k-kutu{background:var(--panel);border:1px solid var(--line);borde
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=30;
+const VER=31;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -1722,7 +1723,7 @@ function finishRun(r,auto){
   const s=r.sess; s.dur=Math.round((now()-r.t0)/1000);
   if(raw.on&&raw.sess===s) rawStop();
   s.extra=summarizeExtra(r);
-  if(s.shots.length&&!isDemoSess(s)){ if(!sessions.includes(s)) sessions.unshift(s); saveSession(s); }
+  if(s.shots.length&&!isDemoSess(s)){ if(!sessions.includes(s)) sessions.unshift(s); saveSession(s); h360Kuyruk(s); }   // Hisar 360: girişliyse özet gider
   cur.run=null; cur.review=s.shots.length>0; $("btnStop").disabled=false;
   if(s.shots.length){ checkChallenge(s); saatOzet(s); setSub("ozet"); if(isDemoSess(s)) toast("Deneme oturumu: sanal atıcıyla yapıldı, geçmişe kaydedilmedi."); }
   else toast("Atış algılanmadı, oturum kaydedilmedi.");
@@ -1870,7 +1871,8 @@ const K_IC={
   ok:KI('<path d="M5 12.5l4.5 4.5L19 7.5"/>',2.4), eksi:KI('<path d="M6 12h12"/>',2.4),
   uyari:KI('<path d="M12 3.5l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5h.01"/>',2),
   ileri:KI('<path d="M9 6l6 6-6 6"/>',2), yedek:KI('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',1.9),
-  oynat:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>'
+  oynat:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>',
+  hisar:KI('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>')
 };
 function kRozet(d){ return `<span class="k-rozet ${d.tur}">${d.tur==="iyi"?K_IC.ok:d.tur==="uyari"?K_IC.uyari:K_IC.eksi}${esc(d.metin)}</span>`; }
 function kGit(v){ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } showView(v); }
@@ -1917,6 +1919,7 @@ function renderMerkez(){
   <div class="k-vb">
     <button class="k-satir k-kutu" id="mzProf"><span class="k-ikon">${K_IC.silah}</span><span class="k-st"><b>${esc(wName({weaponName:S.weaponName,weapon:S.weapon}))} · ${S.hand==="L"?"Sol el":"Sağ el"}</b><small>${esc(curProf().ad)} · ${esc(MODE_T[S.mode]||"")}</small></span><span class="k-chev">${K_IC.ileri}</span></button>
     <div class="k-tiles" id="mzTiles">${tl}</div>
+    <div id="mzH3">${h360KartHtml()}</div>
     ${suzKapali?`<section class="k-kart k-yedek" aria-label="Atış algılama uyarısı"><span style="align-self:flex-start">${kRozet({tur:"uyari",metin:"Nişan dışı sarsıntılar da sayılıyor"})}</span><p class="k-not">Sürgüyü çekmek ya da silahı indirmek atış sayılabilir; skorlar ve hatalar bozulur.</p><button class="k-btn" id="mzSuz">Bu sarsıntıları sayma</button></section>`:""}
     <div class="k-ust">
     <section class="k-kart" aria-labelledby="mzHb"><span class="k-bas" id="mzHb">Hızlı başlat</span><span class="k-ad">${esc(DRM[dr].ad)}</span><p class="k-not">${son?"Son kullanılan alıştırma":"Önerilen ilk alıştırma"}${DRM[dr].hedef?" · "+esc(DRM[dr].hedef):""}</p>
@@ -1931,7 +1934,7 @@ function renderMerkez(){
   </div>`;
   kBagla(el); $("mzTiles")._h=tl;
   el.querySelectorAll("[data-mzd]").forEach(b=>b.onclick=()=>{ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } openDrill(b.dataset.mzd); });
-  $("mzProf").onclick=()=>kGit("ayarlar");
+  $("mzProf").onclick=()=>kGit("ayarlar"); h360KartBagla($("mzH3"));
   const suz=$("mzSuz"); if(suz) suz.onclick=()=>{ S.sarsintiSuz=true; saveMeta(); toast("Nişan dışı sarsıntılar artık atış sayılmayacak."); renderMerkez(); };
   const ac=$("mzAc"); if(ac) ac.onclick=()=>{ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } showView("gecmis"); openReview(son); };
 }
@@ -1990,6 +1993,7 @@ function renderMenu(){
   const el=$("v-menu"); if(!el) return;
   const kac=sessions.filter(x=>!x.sample).length, sy=S.sonYedek||0, on=navigator.onLine!==false;
   el.innerHTML=`<div class="k-vh"><h1>Menü</h1><span class="k-sur">Sürüm ${VER}</span></div><div class="k-vb">
+  <div id="mnH3">${h360KartHtml()}</div>
   <nav class="k-liste" aria-label="Ana menüler">${K_MENU.map(([v,ad,ac,ic])=>`<button data-git="${v}"><span class="k-ikon">${K_IC[ic]}</span><span class="k-st"><b>${ad}</b><small>${ac}</small></span><span class="k-chev">${K_IC.ileri}</span></button>`).join("")}</nav>
   <section class="k-kart${on?"":" k-yedek"}" aria-label="Bağlantı ve yedek">
     <span style="align-self:flex-start">${on?kRozet({tur:"iyi",metin:"İnternet var"}):kRozet({tur:"uyari",metin:"Çevrimdışı"})}</span>
@@ -1998,6 +2002,7 @@ function renderMenu(){
   </section></div>`;
   kBagla(el);
   $("mnYedek").onclick=()=>{ exportJson(); if(curView==="menu"&&!pages.length) setTimeout(renderMenu,300); };
+  h360KartBagla($("mnH3"));
 }
 // bağlantı durumu değişince açık olan Kontrol Merkezi ve Cihaz Yönetimi güncellenir (refreshChip'ten)
 function kDurumYenile(){ try{
@@ -2006,6 +2011,186 @@ function kDurumYenile(){ try{
   else if(curView==="cihaz"){ const el=$("v-cihaz"); if(el&&el._h!==kCihazHtml()) renderCihaz(); }
 }catch(e){} }
 function netDurum(){ const nb=$("netBar"); if(nb) nb.hidden=navigator.onLine!==false; if(curView==="menu"&&!pages.length) renderMenu(); }
+/* ---------------------------------------------------------------- Hisar 360 hesabı (birlik bağlantısı) */
+// Personel Hisar 360 hesabıyla (aynı telefon ya da kullanıcı adı ve şifre) giriş yapar; oturum bitince yalnız ÖZETİ Hisar 360'a
+// gider (ham sensör verisi, not ve cihaz bilgisi gitmez). Komutan, yetki kapsamındaki personelin sonuçlarını görür. Yetkiyi
+// Hisar 360 veritabanının kuralları verir (hisar_tetik_sessions, hisar_tetik_ozet); burada yalnız yayımlanabilir anahtar var.
+// İnternet yoksa özetler kuyrukta bekler (hesaba bağlı; başka hesapla gönderilmez). Hesapsız kullanım aynen çalışır.
+const H360=Object.assign({url:"https://nkaorwldiklbvhnvwtib.supabase.co",key:"sb_publishable_AJt-yr-U1b8562XtnOT27w_BghK61Be"},window.__H360||{});
+const H360_KOMUTAN=["staff","tank","kisim","takim","boluk","tabur","tugay","tumen","ordu","kuvvet"];
+const H360_ROL={personnel:"Personel",staff:"Karargâh / İdari Personel",tank:"Tank Komutanı",kisim:"Kısım Komutanı",takim:"Takım Komutanı",boluk:"Bölük Komutanı",
+  tabur:"Tabur Komutanı",tugay:"Tugay Komutanı",tumen:"Tümen Komutanı",ordu:"Ordu Komutanı",kuvvet:"Kuvvet Komutanı"};
+const H360_K=KEY+".h360", H360_Q=KEY+".h360q";
+const h360={auth:null,user:null,durum:"",hata:"",sonGonderim:0,gonderiyor:false,yenile:null};
+// Hisar 360 ile aynı giriş adı: telefon 905XXXXXXXXX (ya da 05…, 5…), kullanıcı adı küçük harf UTF-8 onaltılık + @hisar.invalid
+function h360Alias(n){ if(/^[+\d\s()-]+$/.test(n)) n=n.replace(/\D/g,""); if(n.includes("@")) return n.trim();
+  return Array.from(new TextEncoder().encode(n.trim().toLocaleLowerCase("tr")),x=>x.toString(16).padStart(2,"0")).join("")+"@hisar.invalid"; }
+function h360Adlar(g){ const e=String(g||"").trim(), d=e.replace(/\D/g,""); let a=[e];
+  if(/^[+\d\s()-]+$/.test(e)){ let n=d; if(/^05\d{9}$/.test(n)) n="90"+n.slice(1); else if(/^5\d{9}$/.test(n)) n="90"+n; if(/^905\d{9}$/.test(n)) a=[n,"0"+n.slice(2),n.slice(2)]; }
+  return [...new Set(a)]; }
+async function h360Istek(path,{method="GET",body,bearer,prefer}={}){
+  const ac=new AbortController(), tm=setTimeout(()=>ac.abort(),20000); let r;
+  try{ r=await fetch(H360.url+path,{signal:ac.signal,method,headers:{apikey:H360.key,...(bearer?{Authorization:"Bearer "+bearer}:{}),
+    ...(body!==undefined?{"Content-Type":"application/json"}:{}),...(prefer?{Prefer:prefer}:{})},body:body===undefined?undefined:JSON.stringify(body)}); }
+  catch(e){ const er=Error(e&&e.name==="AbortError"?"Hisar 360 yanıt vermedi. Biraz sonra yeniden deneyin.":"Hisar 360'a bağlanılamadı. İnternet bağlantınızı kontrol edin."); er.ag=true; throw er; }
+  finally{ clearTimeout(tm); }
+  const b=r.status===204?null:await r.json().catch(()=>null);
+  if(!r.ok){ const er=Error((b&&(b.message||b.msg||b.error_description))||"İşlem tamamlanamadı."); er.status=r.status; er.kod=b&&(b.code||b.error); throw er; }
+  return b;
+}
+function h360Kaydet(a){
+  if(a&&!a.expires_at&&a.expires_in) a=Object.assign({},a,{expires_at:Math.floor(Date.now()/1000)+Number(a.expires_in)});
+  h360.auth=a?{access_token:a.access_token,refresh_token:a.refresh_token,expires_at:a.expires_at}:null;
+  try{ if(h360.auth) localStorage.setItem(H360_K,JSON.stringify({auth:h360.auth,user:h360.user})); else localStorage.removeItem(H360_K); }catch(e){}
+}
+function h360Kullanici(u){ const m=(u&&u.app_metadata)||{};
+  if(m.hisar_active!==true||!m.hisar_unit_id||!["personnel",...H360_KOMUTAN].includes(m.hisar_role)) throw Error("Hesabınız henüz birliğe ve yetkiye atanmadı. Birlik yöneticinizle görüşün.");
+  return {id:u.id,name:String(m.hisar_name||"").slice(0,80),role:m.hisar_role,unit_name:String(m.hisar_unit_name||"").slice(0,80),komutan:H360_KOMUTAN.includes(m.hisar_role)}; }
+async function h360Token(){
+  const a=h360.auth; if(!a) return null;
+  if(!(Number(a.expires_at)*1000>Date.now()+60000)){
+    if(!h360.yenile) h360.yenile=h360Istek("/auth/v1/token?grant_type=refresh_token",{method:"POST",body:{refresh_token:a.refresh_token}})
+      .then(n=>h360Kaydet(n)).catch(e=>{ if(e.status&&[400,401,403].includes(e.status)){ h360Bitti(); } throw e; }).finally(()=>{ h360.yenile=null; });
+    await h360.yenile; }
+  return h360.auth&&h360.auth.access_token;
+}
+// oturum geçersiz (şifre değişmiş, hesap kapatılmış): sessizce çıkış, kuyruk korunur
+function h360Bitti(){ h360.user=null; h360Kaydet(null); h360.hata="Hisar 360 oturumunuz sona erdi. Yeniden giriş yapın."; h360Ekran(); }
+async function h360Giris(ad,sifre){
+  if(!String(ad||"").trim()||!String(sifre||"")) throw Error("Telefon ya da kullanıcı adı ve şifre gerekli.");
+  let a=null,hata=null;
+  for(const n of h360Adlar(ad)){ try{ a=await h360Istek("/auth/v1/token?grant_type=password",{method:"POST",body:{email:h360Alias(n),password:sifre}}); break; }
+    catch(e){ hata=e; if(e.ag||![400,401].includes(e.status)) throw e; } }
+  if(!a){ const e=Error("Telefon, kullanıcı adı ya da şifre yanlış."); e.status=hata&&hata.status; throw e; }
+  let u; try{ u=h360Kullanici(await h360Istek("/auth/v1/user",{bearer:a.access_token})); }
+  catch(e){ h360Istek("/auth/v1/logout",{method:"POST",bearer:a.access_token}).catch(()=>{}); throw e; }
+  h360.user=u; h360.hata=""; h360Kaydet(a); h360Ekran(); h360Gonder(); return u;
+}
+function h360Cikis(){ const a=h360.auth; if(a) h360Istek("/auth/v1/logout",{method:"POST",bearer:a.access_token}).catch(()=>{});
+  h360.user=null; h360.hata=""; h360.durum=""; h360Kaydet(null); toast("Hisar 360 hesabından çıkıldı."); h360Ekran(); }
+// açılışta: kayıtlı oturum geri yüklenir; internet varsa hesap ve yetki yeniden okunur (rol değişmiş olabilir)
+async function h360Yukle(){
+  try{ const k=JSON.parse(localStorage.getItem(H360_K)||"null"); if(k&&k.auth&&k.user){ h360.auth=k.auth; h360.user=k.user; } }catch(e){}
+  if(!h360.auth||navigator.onLine===false) return;
+  try{ const t=await h360Token(); if(!t) return; h360.user=h360Kullanici(await h360Istek("/auth/v1/user",{bearer:t})); h360Kaydet(h360.auth); h360Ekran(); h360Gonder(); }
+  catch(e){ if(e.status===401||e.status===403) h360Bitti(); else if(!e.ag&&!e.status){ h360.user=null; h360Kaydet(null); h360.hata=e.message; h360Ekran(); } }
+}
+// oturum özeti: yalnız bunlar gider (Hisar 360 tablosunun alanları)
+function h360Ozet(s){
+  const v=validShots(s); if(!v.length) return null;
+  const sis=sistematik(s), r1=x=>Math.round(x*10)/10;
+  return {client_id:String(s.id).replace(/[^A-Za-z0-9_-]/g,"").slice(0,64),drill:String(s.drill).slice(0,32),drill_name:String((DRM[s.drill]||{}).ad||s.drill).slice(0,80),
+    weapon:s.weapon==="rifle"?"rifle":"pistol",weapon_name:String(s.weaponName||"").slice(0,80)||null,mode:["kuru","gercek","co2"].includes(s.mode)?s.mode:"kuru",
+    hand:s.hand==="L"?"L":"R",started_at:new Date(s.date).toISOString(),duration_s:Math.round(clamp(s.dur||0,0,86400)),shot_count:v.length,
+    avg_score:r1(avgOf(v)),best_score:r1(Math.max(...v.map(q=>q.sc))),good_count:v.filter(q=>q.sc>=85).length,
+    causes:causeCounts(v).filter(([k])=>CAUSES[k]).slice(0,3).map(([k,n])=>({id:k,ad:CAUSES[k].ad,n})),
+    systematic:sis?{id:sis.c,ad:CAUSES[sis.c].ad,saat:sis.saat,n:sis.n}:null,app_version:VER};
+}
+// gönderilecek oturum: sensör ya da telefon sensörüyle, deneme ve örnek değil, Kaygısız Deneme değil (skor baskısı olmasın)
+const h360Uygun=s=>!!s&&!s.sample&&!isDemoSess(s)&&(s.src==="sensor"||s.src==="phone")&&s.drill!=="safespace"&&validShots(s).length>0;
+function h360KuyrukOku(){ try{ const q=JSON.parse(localStorage.getItem(H360_Q)||"[]"); return Array.isArray(q)?q:[]; }catch(e){ return []; } }
+function h360KuyrukYaz(q){ try{ localStorage.setItem(H360_Q,JSON.stringify(q.slice(-300))); }catch(e){} }
+function h360Bekleyen(){ return h360.user?h360KuyrukOku().filter(x=>x.u===h360.user.id).length:0; }
+function h360Kuyruk(s){
+  if(!h360.user||!h360Uygun(s)) return false; const o=h360Ozet(s); if(!o) return false;
+  const q=h360KuyrukOku().filter(x=>!(x.u===h360.user.id&&x.o.client_id===o.client_id)); q.push({u:h360.user.id,o}); h360KuyrukYaz(q); h360Gonder(); return true;
+}
+async function h360Gonder(){
+  if(!h360.user||h360.gonderiyor||navigator.onLine===false) return; h360.gonderiyor=true;
+  try{
+    for(;;){ const q=h360KuyrukOku(), x=q.find(e=>h360.user&&e.u===h360.user.id); if(!x) break;
+      let tamam=false, at=false;
+      try{ const t=await h360Token(); if(!t) break;
+        await h360Istek("/rest/v1/hisar_tetik_sessions",{method:"POST",body:x.o,bearer:t,prefer:"return=minimal"}); tamam=true; h360.sonGonderim=Date.now(); h360.durum=""; }
+      catch(e){
+        if(e.status===409){ tamam=true; }                                                    // zaten var
+        else if(e.status===404||e.kod==="PGRST205"||e.kod==="42P01"){ h360.durum="kurulmadi"; break; }   // Hisar 360'ta tablo henüz kurulmadı
+        else if(e.status===400||e.status===422||/^(22|23)/.test(String(e.kod||""))){ at=true; h360.durum="reddedildi"; }   // hiç kabul edilmeyecek özet
+        else if(e.status===401||e.status===403){ if(e.kod==="42501"){ at=true; h360.durum="yetki"; } else { h360Bitti(); break; } }
+        else break; }                                                                           // ağ: sonra yeniden
+      if(tamam||at) h360KuyrukYaz(h360KuyrukOku().filter(e=>!(e.u===x.u&&e.o.client_id===x.o.client_id)));
+    }
+  } finally { h360.gonderiyor=false; h360Ekran(); }
+}
+// kayıtlı eski oturumları kuyruğa ekler (ilk girişten sonra, isteğe bağlı)
+function h360Eskiler(){ return sessions.filter(s=>h360Uygun(s)); }
+// açık ekranları yeniler (Kontrol Merkezi, Menü, Hesap sayfası)
+function h360Ekran(){ try{
+  if(pages.length){ const p=pages[pages.length-1]; if(p&&p.set==="hesap") refreshPage(); return; }
+  if(curView==="merkez") renderMerkez(); else if(curView==="menu") renderMenu();
+}catch(e){} }
+function h360KartHtml(){
+  const u=h360.user;
+  if(!u) return `<button class="k-satir k-kutu" id="h3Kart"><span class="k-ikon">${K_IC.hisar}</span><span class="k-st"><b>Hisar 360 hesabıyla giriş yap</b><small>${h360.hata?esc(h360.hata):"Sonuçların komutanına gitsin; komutansan birliğini gör"}</small></span><span class="k-chev">${K_IC.ileri}</span></button>`;
+  const bk=h360Bekleyen();
+  return `<button class="k-satir k-kutu" id="h3Kart"><span class="k-ikon">${K_IC.hisar}</span><span class="k-st"><b>${esc(u.name||"Hisar 360")}</b><small>${esc(H360_ROL[u.role]||u.role)}${u.unit_name?" · "+esc(u.unit_name):""}${bk?` · ${bk} özet gönderilmeyi bekliyor`:h360.durum==="kurulmadi"?" · Hisar 360'ta Tetik sonuçları henüz kurulmadı":""}</small></span><span class="k-chev">${K_IC.ileri}</span></button>`;
+}
+function h360KartBagla(el){ const b=el&&el.querySelector("#h3Kart"); if(b) b.onclick=()=>{ if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; } openSetPage("hesap"); }; }
+function pgHesap(){
+  const u=h360.user;
+  if(!u) return `<div class="pg"><div class="ch"><span>Hisar 360 hesabı</span></div>
+    <p class="note">Hisar 360'ta kullandığınız telefon numarası (ya da kullanıcı adı) ve şifreyle giriş yapın. Bitirdiğiniz her oturumun özeti Hisar 360'a gider; komutanınız birliğinin sonuçlarını görür. Ham sensör verisi ve notlarınız gönderilmez. Giriş yapmadan da uygulama aynen çalışır.</p>
+    ${h360.hata?`<p class="note badt" role="alert">${esc(h360.hata)}</p>`:""}
+    <form id="h3Form" class="field" autocomplete="on" novalidate>
+      <label class="field"><span class="fl">Telefon ya da kullanıcı adı</span><input type="text" id="h3Ad" maxlength="80" autocomplete="username" inputmode="text" placeholder="05XX XXX XX XX"></label>
+      <label class="field"><span class="fl">Şifre</span><input type="password" id="h3Sifre" maxlength="128" autocomplete="current-password"></label>
+      <p class="note" id="h3Hata" role="alert" hidden></p>
+      <button class="btn primary" type="submit" id="h3Gir">Giriş yap</button>
+    </form>
+    <p class="note">Hesabınız yoksa birlik yöneticiniz Hisar 360'tan davet gönderir. Şifrenizi unuttuysanız Hisar 360'ın giriş ekranından yenileyin.</p></div>`;
+  const bk=h360Bekleyen(), es=h360Eskiler().length;
+  return `<div class="pg"><div class="ch"><span>Hisar 360 hesabı</span></div>
+    <div class="card"><h2>${esc(u.name||"Hisar 360")}</h2><p class="note">${esc(H360_ROL[u.role]||u.role)}${u.unit_name?" · "+esc(u.unit_name):""}</p></div>
+    <p class="note">Bitirdiğiniz her oturumun özeti (tarih, alıştırma, atış sayısı, skorlar, en sık hatalar) Hisar 360'a gider. Ham sensör verisi ve notlar gitmez. Kaygısız Deneme ve deneme modu oturumları gönderilmez.</p>
+    <p class="note" id="h3Durum">${h360.durum==="kurulmadi"?`<span class="warnt">Hisar 360'ta Tetik sonuçları bölümü henüz kurulmadı. Birlik yöneticisi kurunca bekleyen özetler kendiliğinden gider.</span> `:h360.durum==="reddedildi"?`<span class="warnt">Bir özet Hisar 360 tarafından kabul edilmedi ve atlandı.</span> `:h360.durum==="yetki"?`<span class="warnt">Hesabınızın özet gönderme yetkisi yok.</span> `:""}${bk?`${bk} özet gönderilmeyi bekliyor${navigator.onLine===false?" (internet gelince gidecek)":""}.`:"Bekleyen özet yok."}${h360.sonGonderim?" Son gönderim "+esc(ago(Date.now()-h360.sonGonderim))+".":""}</p>
+    ${bk?`<button class="btn" id="h3Simdi">Şimdi gönder</button>`:""}
+    ${es?`<button class="btn" id="h3Eski">Kayıtlı ${es} oturumu da gönder</button>`:""}
+    ${u.komutan?`<button class="btn primary" id="h3Birlik">Birlik sonuçları</button>`:""}
+    <button class="btn" id="h3Cik">Çıkış yap</button></div>`;
+}
+function bindHesap(root){
+  const f=root.querySelector("#h3Form");
+  if(f) f.onsubmit=async e=>{ e.preventDefault(); const hb=root.querySelector("#h3Hata"), gb=root.querySelector("#h3Gir");
+    gb.disabled=true; gb.textContent="Giriş yapılıyor…"; hb.hidden=true;
+    try{ const u=await h360Giris(root.querySelector("#h3Ad").value,root.querySelector("#h3Sifre").value); toast(`Hisar 360: ${u.name||"giriş yapıldı"}.`); }
+    catch(er){ hb.textContent=er.message; hb.hidden=false; gb.disabled=false; gb.textContent="Giriş yap"; } };
+  const b=id=>root.querySelector("#"+id);
+  if(b("h3Simdi")) b("h3Simdi").onclick=()=>{ h360Gonder(); };
+  if(b("h3Eski")) b("h3Eski").onclick=()=>{ let n=0; for(const s of h360Eskiler()) if(h360Kuyruk(s)) n++; toast(n+" oturum gönderilmek üzere sıraya alındı."); refreshPage(); };
+  if(b("h3Birlik")) b("h3Birlik").onclick=()=>openSetPage("birlik");
+  if(b("h3Cik")) b("h3Cik").onclick=()=>{ h360Cikis(); };
+}
+// Birlik sonuçları (komutan): Hisar 360'ın hisar_tetik_ozet işlevi; yalnız yetki kapsamındaki personel
+const h360Birlik={gun:30};
+function pgBirlik(){
+  return `<div class="pg"><div class="ch"><span>Birlik sonuçları</span></div>
+    <div class="seg" role="group" aria-label="Dönem">${[7,30,90].map(g=>`<button data-gun="${g}" aria-pressed="${h360Birlik.gun===g}">${g} gün</button>`).join("")}</div>
+    <div id="h3Liste"><p class="note">Yükleniyor…</p></div>
+    <p class="note">Yalnız yetki kapsamınızdaki personel görünür. Skor, atış sayısına göre ağırlıklı ortalamadır.</p></div>`;
+}
+async function bindBirlik(root){
+  root.querySelectorAll("[data-gun]").forEach(b=>b.onclick=()=>{ h360Birlik.gun=+b.dataset.gun; refreshPage(); });
+  const el=root.querySelector("#h3Liste");
+  try{ const t=await h360Token(); if(!t) throw Error("Önce Hisar 360 hesabıyla giriş yapın.");
+    const r=await h360Istek("/rest/v1/rpc/hisar_tetik_ozet",{method:"POST",body:{p_gun:h360Birlik.gun},bearer:t});
+    const L=Array.isArray(r)?r:[];
+    if(!el.isConnected) return;
+    if(!L.length){ el.innerHTML=`<p class="note">Kapsamınızda personel yok.</p>`; return; }
+    const hic=L.filter(p=>!p.oturum).length;
+    el.innerHTML=`<p class="note">${L.length} personel · ${L.length-hic} kişi son ${h360Birlik.gun} günde çalıştı${hic?`, ${hic} kişinin kaydı yok`:""}.</p>
+      <div class="tbl-k"><table><thead><tr><th>Personel</th><th>Oturum</th><th>Atış</th><th>Skor</th><th>Son</th><th>En sık hata</th></tr></thead><tbody>${L.map(p=>`<tr data-kisi="${+p.person_id}"><td style="white-space:normal"><b>${esc(p.full_name)}</b><div class="note">${esc([p.rank,p.unit].filter(Boolean).join(" · "))}</div></td><td>${+p.oturum||0}</td><td>${+p.atis||0}</td><td>${p.ortalama==null?"–":fx(+p.ortalama,1)}</td><td>${p.son?esc(dateShort(Date.parse(p.son))):"–"}</td><td style="white-space:normal">${esc(p.sik||"–")}</td></tr>`).join("")}</tbody></table></div>`;
+    el.querySelectorAll("[data-kisi]").forEach(tr=>tr.onclick=()=>{ const p=L.find(x=>+x.person_id===+tr.dataset.kisi); if(p&&p.oturum) h360Kisi(p); });
+  }catch(e){ if(!el.isConnected) return;
+    el.innerHTML=`<p class="note badt" role="alert">${e.status===404||e.kod==="PGRST202"||e.kod==="PGRST205"?"Hisar 360'ta Tetik sonuçları bölümü henüz kurulmadı. Birlik yöneticisi kurmalı.":e.kod==="42501"?"Bu ekran yalnız komutanlar içindir.":esc(e.message)}</p>`; }
+}
+async function h360Kisi(p){
+  pushPage({title:p.full_name||"Personel",back:"",render:()=>`<div class="pg"><div class="ch"><span>${esc(p.full_name||"Personel")}</span></div><div id="h3Kisi"><p class="note">Yükleniyor…</p></div></div>`,
+    bind:async root=>{ const el=root.querySelector("#h3Kisi");
+      try{ const t=await h360Token(); const r=await h360Istek("/rest/v1/hisar_tetik_sessions?select=started_at,drill_name,shot_count,avg_score,best_score,good_count,causes,systematic&person_id=eq."+(+p.person_id)+"&order=started_at.desc&limit=50",{bearer:t});
+        if(!el.isConnected) return;
+        el.innerHTML=(r||[]).length?`<div class="tbl-k"><table><thead><tr><th>Tarih</th><th>Alıştırma</th><th>Atış</th><th>Skor</th><th>Hata</th></tr></thead><tbody>${r.map(s=>`<tr><td>${esc(dateShort(Date.parse(s.started_at)))}</td><td style="white-space:normal">${esc(s.drill_name)}</td><td>${+s.shot_count}</td><td>${fx(+s.avg_score,1)}</td><td style="white-space:normal">${esc(s.systematic?"Oturum geneli: "+s.systematic.ad:((s.causes||[])[0]||{}).ad||"–")}</td></tr>`).join("")}</tbody></table></div>`:`<p class="note">Kayıt yok.</p>`;
+      }catch(e){ if(el.isConnected) el.innerHTML=`<p class="note badt" role="alert">${esc(e.message)}</p>`; } }});
+}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{
   if(cur.run&&cur.run.active){ toast("Önce süren oturumu durdur."); return; }
   showView(b.dataset.view); });
@@ -2870,7 +3055,7 @@ const SOUND_T={kapali:"Kapalı",bip:"Bip",skor:"Skoru söyle",tam:"Skor ve hata"
 const DAYS=[[1,"Pzt"],[2,"Sal"],[3,"Çar"],[4,"Per"],[5,"Cum"],[6,"Cmt"],[0,"Paz"]];
 function planDesc(){ const d=S.plan.days||[]; return (d.length?d.length+" gün":"Her gün")+" · "+(S.plan.goal||50)+" atış"; }
 const SET_T={lazer:"Lazer",gelismis:"Gelişmiş Ayarlar",baglanti:"Sensör",montaj:"Kalibrasyon ve yön",algilama:"Atış algılama",gorunum:"Görünüm",veri:"Veriler",uygulama:"Uygulama",
-  program:"Eğitim Programı",ses:"Sesli Geri Bildirim",saat:"Akıllı Saat",silah:"Silahını Seç",profil:"Profil"};
+  program:"Eğitim Programı",ses:"Sesli Geri Bildirim",saat:"Akıllı Saat",silah:"Silahını Seç",profil:"Profil",hesap:"Hisar 360 hesabı",birlik:"Birlik sonuçları"};
 const SET_PARENT={algilama:"gelismis",gorunum:"gelismis",veri:"gelismis",uygulama:"gelismis"};   // Sensör ve Kalibrasyon: Sensör sekmesinde
 const WRAP=new Set(["baglanti","montaj","algilama","gorunum","veri","uygulama","lazer"]);
 function openSetPage(p){ if(p==="baglanti"||p==="sensor"){ closePages(); showView("sensor"); return; } pushPage({set:p,back:"",title:p==="algilama"?MODE_A[S.mode]:SET_T[p],render:()=>WRAP.has(p)?`<div class="pg">${PAGES[p][0]()}</div>`:PAGES[p][0](),bind:root=>PAGES[p][1](root)}); }
@@ -2900,7 +3085,7 @@ function renderSettings(){
   root.innerHTML=pgRoot(); bindRoot(root); bindInfo(root);
 }
 const PAGES={gelismis:[pgGelismis,bindGelismis],baglanti:[pgBaglanti,bindBaglanti],montaj:[pgMontaj,bindMontaj],algilama:[pgAlgilama,bindAlgilama],
-  gorunum:[pgGorunum,bindGorunum],veri:[pgVeri,bindVeri],uygulama:[pgUygulama,bindUygulama],program:[pgProgram,bindProgram],ses:[pgSes,bindSes],saat:[pgSaat,bindSaat],silah:[pgSilah,bindSilah],profil:[pgProfil,bindProfil],lazer:[pgLazer,bindLazer]};
+  gorunum:[pgGorunum,bindGorunum],veri:[pgVeri,bindVeri],uygulama:[pgUygulama,bindUygulama],program:[pgProgram,bindProgram],ses:[pgSes,bindSes],saat:[pgSaat,bindSaat],silah:[pgSilah,bindSilah],profil:[pgProfil,bindProfil],lazer:[pgLazer,bindLazer],hesap:[pgHesap,bindHesap],birlik:[pgBirlik,bindBirlik]};
 /* --- Lazer hedef: telefon kamerası hedefteki yeşil lazer noktasını bulur, sensör tetiğin düştüğü anı verir.
    Lazer silahta, anahtarı tetiğe bağlı (yalnız tetiğe basılınca yanar). Telefon tripodda, atıcının yanından hedefe bakar.
    Kameradaki konumlar "kare genişliği" biriminde tutulur (x/W, y/W): çözünürlük değişse de aynı kalır.
@@ -4303,7 +4488,7 @@ function openFromHash(){
 window.addEventListener("hashchange",openFromHash);
 
 /* --- test kancası */
-window.__hisar={trigClear,sistematik,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
+window.__hisar={trigClear,sistematik,get h360(){return h360;},h360Giris,h360Cikis,h360Gonder,h360Ozet,h360Kuyruk,h360Alias,h360Adlar,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),
@@ -4318,6 +4503,7 @@ try{ const g=+localStorage.getItem("tetikGuncellendi"); if(g&&g<=VER){ localStor
 if(!sessions.length) sessions.push(makeSample());
 showView(HOME);
 netDurum(); window.addEventListener("online",netDurum); window.addEventListener("offline",netDurum);
+h360Yukle(); window.addEventListener("online",()=>{ h360Gonder(); });
 selectSource("sensor",false);                       // açılışta sensör beklenir; Deneme ve Telefon: Sensör sekmesi › Sensörsüz
 if(!navigator.bluetooth) setStatus(noBtText(),true);
 initPlatform();

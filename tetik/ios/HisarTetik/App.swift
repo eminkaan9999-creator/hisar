@@ -3,7 +3,7 @@ import UIKit
 /// Uygulama bilgisi ve küçük yardımcılar.
 enum App {
     /// Zemin rengi (sayfanın --bg rengi): #252525
-    static let bg = UIColor(red: 0x25 / 255.0, green: 0x25 / 255.0, blue: 0x25 / 255.0, alpha: 1)
+    static let bg = UIColor(red: 0x14 / 255.0, green: 0x26 / 255.0, blue: 0x3d / 255.0, alpha: 1)   // Hisar 360 laciverti
 
     /// Sürüm: sayfanın VER değeri (CI'da), ör. VER 8 → "8.0", kod 800 (Android ile aynı düzen)
     static var versionName: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?" }

@@ -1,1 +1,1 @@
-{"v": 34, "not": "Kamerayla puanlamada yeni hedef türü: silüet ya da başka şekil. Görüntüde hedefin kenarı boyunca dokun; noktaların arası hedef alanı olur, içine düşen lazer isabet, dışı karavana; istersen iç bölge (ör. göğüs) de çiz. Yeni lazer türü: lazer eğitim fişeği (namluda); sıfırlama gerekmez."}
+{"v": 35, "not": "Raya takılı lazer: adı netleşti; silüet hedefte sıfırlarken nişan alınacak nokta önizlemede sarı artıyla gösterilir (iç bölge çizildiyse onun ortası). Lazer eğitim fişeğinde sıfırlama gerekmez."}

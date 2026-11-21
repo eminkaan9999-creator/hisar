@@ -1,4 +1,4 @@
-# HİSAR TETİK: Hisar 360 bağlantısı, görünüm, Kamera ekranı, şekilli hedef (sürüm 31–34)
+# HİSAR TETİK: Hisar 360 bağlantısı, görünüm, Kamera ekranı, şekilli hedef, lazer türleri (sürüm 31–35)
 
 Kullanıcı isteği (21 Kasım 2026): "Bu uygulamayı da Hisar 360 gibi geliştir" (seçilen yol: Hisar 360 hesaplarıyla),
 "görüntülerini temasını da değiştir", "lazer ve kamera kullanımını etkin hale getir".
@@ -57,6 +57,23 @@ namluya takılan lazer eğitim fişeği desteklensin (lazer doğrudan hedefe dü
 - Tür değişince eski tanıtma silinir (yuvarlakta çap, şekilde boy ayrı hatırlanır).
 
 Test: `hedef_testi.js` 32/0 (sahte kamerada insan silüeti; isabet, iç bölge, baş, karavana, görülmedi; fişek; sayfa hatası yok).
+
+## 5. Raya takılı lazer ve sıfırlama (sürüm 35)
+
+Kullanıcı: "Dışarıdan raya takılan lazer türü de var, onun sıfırlamasını yapacağız."
+
+| Lazer türü | Nasıl yanar | Sıfırlama |
+|---|---|---|
+| Sensöre takılı (Laser TX, Grove) | Sensör tetik düşünce yakar | Gerekir |
+| Raya takılı, kendi anahtarıyla (ör. basınç anahtarlı) | Atıcı anahtara bastıkça | Gerekir; her takışta bir kez |
+| Lazer eğitim fişeği (namluda) | İğne vurunca bir an | Gerekmez (namlu ekseni) |
+
+Sıfırlama: sensör bağlıyken nişangahla nişan noktasına nişan alıp 3 kez tetik düşürülür; uygulama lazer ile nişan noktası arasındaki farkı
+(cm, o mesafede) saklar ve sonraki her atışta düzeltir. Nişan noktası: yuvarlak hedefte merkez; şekilli hedefte iç bölge çizildiyse onun
+ortası, çizilmediyse şeklin ortası; önizlemede sarı artıyla gösterilir. Mesafe değişince uygulama yeniden sıfırlamayı söyler.
+
+Test: `hedef_testi.js` (39/0) — raya takılı lazerle silüette iç bölgenin ortasına nişanla sıfırlama; nişangah iç bölgedeyken lazer
+3 cm sağda görünse de düzeltilmiş yer iç bölge.
 
 ## Donanımla doğrulanacaklar
 

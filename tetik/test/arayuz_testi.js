@@ -75,11 +75,16 @@ const kucukYazi = () => { const o = [];
     const geri = await page.evaluate(() => window.__hisar.curView);
     check(o.v === 'oturum' && o.d === d && geri === 'merkez', 'Hızlı başlat alıştırmayı açıyor; geri tuşu Kontrol Merkezi\'ne dönüyor', { o, d, geri });
     await page.evaluate(() => window.__hisar.showView('kamera')); await sleep(150);
-    await page.click('#kmAc'); await sleep(250);
+    await page.click('#kmAc'); await sleep(400);
+    const ka = await page.evaluate(() => ({ on: window.__hisar.S.lazer.on, cv: !!document.getElementById('kmCv'), v: window.__hisar.curView, p: window.__hisar.pages.length }));
+    check(ka.on && ka.cv && ka.v === 'kamera' && ka.p === 0, 'Kamera: puanlama Kamera ekranının kendisinde açılıyor (önizleme ve adımlar)', ka);
+    await page.click('#kmAyar'); await sleep(250);
     const k = await page.evaluate(() => ({ t: document.getElementById('pgTitle').textContent, p: window.__hisar.pages.length }));
     await page.click('#pgBack'); await sleep(200);
     const kv = await page.evaluate(() => ({ v: window.__hisar.curView, vis: !document.getElementById('v-kamera').hidden }));
-    check(k.p === 1 && /Lazer/.test(k.t) && kv.v === 'kamera' && kv.vis, 'Kamera: puanlama ayarları açılıyor, geri tuşu Kamera\'ya dönüyor', { k, kv });
+    check(k.p === 1 && /Lazer/.test(k.t) && kv.v === 'kamera' && kv.vis, 'Kamera: lazer ayarları açılıyor, geri tuşu Kamera\'ya dönüyor', { k, kv });
+    await page.click('#kmKapa'); await sleep(200);
+    check(await page.evaluate(() => !window.__hisar.S.lazer.on && !!document.getElementById('kmAc')), 'Kamera: puanlama kapatılabiliyor');
     check(!errs.length, 'Sayfa hatası yok', errs.slice(0, 5));
     await ctx.close();
   }

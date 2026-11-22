@@ -1,4 +1,4 @@
-# HİSAR TETİK: Nişan hataları, sensörün ölçebildikleri, teşhis yöntemi, ölçüm uyarıları ve grafikler (sürüm 36–38, T8)
+# HİSAR TETİK: Nişan hataları, sensörün ölçebildikleri, teşhis yöntemi, ölçüm uyarıları, grafikler ve menüler (sürüm 36–39, T8)
 
 Kullanıcı isteği (22 Kasım 2026): "Nişan hatalarını internetten araştır; sensörün ölçebileceği bütün gerçekçi nişan hataları olsun.
 Hep aynı hataları vermesin. Hassasiyetleri cihazın özelliklerine göre ayarla, uyarıları geliştir." ve "İşlevsellik de çok önemli olsun."
@@ -164,6 +164,20 @@ ve sensörün yön testindeki gibi takılı görünmediği oturumlar.
 |---|---|---|
 | Aydınlık (#ffffff) | #eb6834 / #2a78d6 / #1baf7a | Hepsi geçti. Yeşilin kontrastı 2,82; lejantta yazı ve sayı olduğu için yeterli |
 | Karanlık (#172536) | #d95926 / #3987e5 / #199e70 | Hepsi geçti |
+
+## 10. Menüler (sürüm 39)
+
+İstek: "Menüler daha anlaşılır olsun." Ana menünün yedi maddesi ve sırası kullanıcının talimatıyla belirlendiği için korunur. Değişenler:
+
+| Yer | Değişiklik |
+|---|---|
+| Eğitim | Her alıştırmanın altında amacı (ör. "Atış Zamanlayıcısı — Hızlı ilk atış.") |
+| Eğitim, en üstte | **Sana önerilen**: son 30 günde bu atıcının en sık hatası (en az 3 düşük skorlu atışta birinci neden) için o hatanın önerilen alıştırması; altında hata ve atış sayısı |
+| Kontrol Merkezi › Hızlı başlat | İlk seçenek "Önerilen: …"; altında "En sık hatan son 30 günde: …" |
+| Ayarlar | Satırlar büyük harfle değil; açıklama satırın altında ve kesilmeden (önceden sağda, kısaltılmış) |
+| Gelişmiş ayarlar | "Görünüm" iki yerde birden vardı, kaldırıldı (Ayarlar'da duruyor); açıklama içindekini söylüyor: atış algılama, zorluk, veriler, uygulama |
+
+Test: `menu_testi.js`: alıştırma amaçları, kayıt yokken öneri yok, 60 gün önceki oturum sayılmıyor, öneriye dokununca alıştırma açılıyor, Kontrol Merkezi'nde öneri, Ayarlar satırlarının okunurluğu (büyük harf, açıklama altta, taşma yok), Gelişmiş ayarlar.
 
 ## Kaynaklar
 

@@ -129,9 +129,10 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 .prof .pe{background:none;border:0;padding:0;color:var(--acc);font-size:14px;display:block}
 .prof .pd{width:46px;height:42px;background:var(--btn2);border:0;border-radius:12px;color:var(--fg);display:grid;place-items:center}
 .sl{display:flex;flex-direction:column;padding:0 max(14px,env(safe-area-inset-right,0px)) 18px max(14px,env(safe-area-inset-left,0px))}
-.sl button{display:flex;align-items:center;gap:14px;background:none;border:0;border-bottom:1px solid var(--line2);color:var(--fg);padding:14px 4px;font-size:16px;text-transform:uppercase;text-align:left;letter-spacing:.01em}
-.sl button svg{width:22px;height:22px;flex:none}
-.sl button small{margin-left:auto;font-size:14px;color:var(--muted);text-transform:none;letter-spacing:0;text-align:right;max-width:46%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl button{display:grid;grid-template-columns:22px minmax(0,1fr);column-gap:14px;align-items:center;background:none;border:0;border-bottom:1px solid var(--line2);color:var(--fg);padding:13px 4px;font-size:16px;font-weight:600;text-align:left;letter-spacing:0}
+.sl button svg{width:22px;height:22px;flex:none;grid-row:1 / span 2}
+.sl button small{grid-column:2;grid-row:2;margin-top:2px;font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;text-align:left;line-height:1.35}
+.sl.yalin button{grid-template-columns:minmax(0,1fr)} .sl.yalin button small{grid-column:1}
 /* genel öğeler (ayar sayfaları) */
 .pg{display:flex;flex-direction:column;gap:12px;padding:14px max(14px,env(safe-area-inset-right,0px)) 22px max(14px,env(safe-area-inset-left,0px))}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -761,7 +762,7 @@ body{font-size:16px;line-height:1.45}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=38;
+const VER=39;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -2219,7 +2220,7 @@ function renderMerkez(){
   // T4: tabancada nişan dışı sarsıntılar sayılıyorsa (süzgeç kapalı) sürgü çekmek atış sayılır; uyarı ve tek dokunuşla düzeltme
   const suzKapali=S.sarsintiSuz===false&&S.weapon!=="rifle";
   const dr=son&&DRM[son.drill]?son.drill:"serbest";
-  const diger=["zamanlayici","karar","degerlendirme"].filter(x=>x!==dr&&DRM[x]).slice(0,2), tl=kTiles();
+  const on=oneriAl(), diger=["zamanlayici","karar","degerlendirme"].filter(x=>x!==dr&&DRM[x]&&(!on||x!==on.drill)).slice(0,2), tl=kTiles();
   el.innerHTML=`<div class="k-vh"><h1>Kontrol Merkezi</h1></div>
   <div class="k-vb">
     <button class="k-satir k-kutu" id="mzProf"><span class="k-ikon">${K_IC.silah}</span><span class="k-st"><b>${esc(wName({weaponName:S.weaponName,weapon:S.weapon}))} · ${S.hand==="L"?"Sol el":"Sağ el"}</b><small>${esc(curProf().ad)} · ${esc(MODE_T[S.mode]||"")}</small></span><span class="k-chev">${K_IC.ileri}</span></button>
@@ -2229,7 +2230,8 @@ function renderMerkez(){
     <div class="k-ust">
     <section class="k-kart" aria-labelledby="mzHb"><span class="k-bas" id="mzHb">Hızlı başlat</span><span class="k-ad">${esc(DRM[dr].ad)}</span><p class="k-not">${son?"Son kullanılan alıştırma":"Önerilen ilk alıştırma"}${DRM[dr].hedef?" · "+esc(DRM[dr].hedef):""}</p>
       <button class="k-btn ana" data-mzd="${dr}">${K_IC.oynat}Alıştırmaya geç</button>
-      <div class="k-cips">${diger.map(id=>`<button data-mzd="${id}">${esc(DRM[id].ad)}</button>`).join("")}<button data-git="alistirma">Tümü</button></div></section>
+      <div class="k-cips">${on&&on.drill!==dr?`<button data-mzd="${on.drill}" id="mzOneri" title="En sık hatan: ${esc(on.causeAd)}">Önerilen: ${esc(on.ad)}</button>`:""}${diger.map(id=>`<button data-mzd="${id}">${esc(DRM[id].ad)}</button>`).join("")}<button data-git="alistirma">Tümü</button></div>
+      ${on?`<p class="k-not">En sık hatan son 30 günde: <b>${esc(on.causeAd)}</b> (${on.n} atış).${on.drill!==dr?"":` Bu alıştırma onun için de önerilir.`}</p>`:""}</section>
     <section class="k-kart" aria-labelledby="mzSo"><span class="k-bas" id="mzSo">Son oturum</span>${son?`<span class="k-ad">${esc(DRM[son.drill]?DRM[son.drill].ad:"Antrenman")}</span><p class="k-not">${esc(dateShort(son.date))}</p>
       <div class="k-sayi"><div><b>${v.length?fx(avgOf(v),1):"–"}</b><span>ortalama skor</span></div><div><b>${v.length}</b><span>atış</span></div></div>
       ${hd?`<span class="k-rozet uyari" style="align-self:flex-start;white-space:normal">${K_IC.uyari}En sık: ${esc(hd)}</span>`:""}
@@ -2628,12 +2630,22 @@ const MAIN_DEF=["serbest","degerlendirme","zamanlayici","par","ritim","kilif"];
 const mainSet=()=>new Set(Array.isArray(S.mainDrills)?S.mainDrills:MAIN_DEF);
 function weekStats(drill){ const t=Date.now()-7*864e5; const v=statSess().filter(s=>s.drill===drill&&s.date>=t).flatMap(validShots); return v.length?{avg:avgOf(v),n:v.length}:null; }
 function chDoneToday(){ return (S.chDone[String(dayNo())]||[]).includes(S.prof); }
+// Sürüm 39: son 30 günde (bu atıcının) en sık hatası en az 3 düşük skorlu atışta birinci nedense, o hatanın önerilen alıştırması
+function oneriAl(){
+  const t0=Date.now()-30*864e5, say={}; let n=0;
+  for(const s of sessions){ if(s.sample||isDemoSess(s)||s.date<t0||whoOf(s)!==S.prof) continue;
+    for(const q of validShots(s)) if(q.sc<85&&q.c&&q.c[0]&&CAUSES[q.c[0]]){ say[q.c[0]]=(say[q.c[0]]||0)+1; n++; } }
+  const en=Object.entries(say).sort((a,b)=>b[1]-a[1])[0]; if(!en||en[1]<3) return null;
+  const c=CAUSES[en[0]], d=DRM[c.al]; return d?{drill:d.id,ad:d.ad,cause:en[0],causeAd:c.ad,n:en[1]}:null;
+}
 function renderHome(){
   const main=mainSet(), ed=!!cur.editDrills;
   const row=d=>{ const w=ed?null:weekStats(d.id);
-    return `<button class="li" data-drill="${d.id}"><span class="ln">${esc(d.ad)}</span>${ed?`<span class="sw"><input type="checkbox" class="chk" ${main.has(d.id)?"checked":""} tabindex="-1" aria-hidden="true"></span>`:w?`<span class="st"><span>Skor<b>${fx(w.avg,1)}</b></span><span>ATIŞLAR<b>${w.n}</b></span></span>`:"<span></span>"}</button>`; };
+    return `<button class="li" data-drill="${d.id}"><span class="ln">${esc(d.ad)}${d.hedef?`<small>${esc(d.hedef)}</small>`:""}</span>${ed?`<span class="sw"><input type="checkbox" class="chk" ${main.has(d.id)?"checked":""} tabindex="-1" aria-hidden="true"></span>`:w?`<span class="st"><span>Skor<b>${fx(w.avg,1)}</b></span><span>ATIŞLAR<b>${w.n}</b></span></span>`:"<span></span>"}</button>`; };
   const ch=todayChallenge(), done=chDoneToday();
-  let h=`<div class="sec">Günün Görevi</div><button class="li" id="chRow"><span class="ln">${esc(DRM[ch.drill].ad)}<small>${esc(ch.goal)}</small></span><span class="badge">${done?"<b>✓ Tamam</b>":IC_24}</span></button>`;
+  const on=oneriAl();
+  let h=on?`<div class="sec">Sana önerilen</div><button class="li" id="oneriRow" data-oneri="${on.drill}"><span class="ln">${esc(on.ad)}<small>En sık hatan: ${esc(on.causeAd)} (son 30 günde ${on.n} atış)</small></span><span class="note">›</span></button>`:"";
+  h+=`<div class="sec">Günün Görevi</div><button class="li" id="chRow"><span class="ln">${esc(DRM[ch.drill].ad)}<small>${esc(ch.goal)}</small></span><span class="badge">${done?"<b>✓ Tamam</b>":IC_24}</span></button>`;
   h+=`<div class="sec">Antrenmanlar<button class="ed" id="drEdit" aria-label="${ed?"Düzenlemeyi bitir":"Antrenman listesini düzenle"}">${ed?'<span style="font-size:14px">BİTTİ</span>':IC_ED}</button></div>`;
   if(ed) h+=`<p class="note" style="padding:10px 18px 4px;margin:0">İşaretli alıştırmalar listede görünür; işaretsizler “Diğer antrenmanlar”da kalır.</p>`+DR.map(row).join("");
   else{ const rest=DR.filter(d=>!main.has(d.id)); h+=[...main].map(id=>DRM[id]).filter(Boolean).map(row).join("");
@@ -2646,6 +2658,7 @@ function renderHome(){
     if(cur.editDrills){ const set=mainSet(); if(set.has(id)) set.delete(id); else set.add(id); S.mainDrills=[...set].filter(x=>DRM[x]); saveMeta(); renderHome(); return; }
     openDrill(id); });
   $("chRow").onclick=()=>openDrill(ch.drill);
+  const or=$("oneriRow"); if(or) or.onclick=()=>openDrill(or.dataset.oneri);
   $("drEdit").onclick=()=>{ cur.editDrills=!cur.editDrills; renderHome(); };
   const mo=$("drMore"); if(mo) mo.onclick=()=>{ cur.moreDrills=!cur.moreDrills; renderHome(); };
   $("drillList").querySelectorAll("[data-lesson]").forEach(b=>b.onclick=()=>openLesson(+b.dataset.lesson));
@@ -3931,7 +3944,7 @@ function pgRoot(){
     <button id="rtProgram">${IC_BELL}Eğitim programı<small>${esc(planDesc())}</small></button>
     <button id="rtGorunum">${K_IC.tema}Görünüm<small>${esc(menuDesc("gorunum"))}</small></button>
     <button id="rtH3">${K_IC.hisar}Hisar 360 hesabı<small>${esc(h360.user?(h360.user.name||"Giriş yapıldı"):"Giriş yapılmadı")}</small></button>
-    <button id="rtAdv">${IC_SLD}Gelişmiş ayarlar<small>Algılama, görünüm, veriler</small></button>
+    <button id="rtAdv">${IC_SLD}Gelişmiş ayarlar<small>Atış algılama, zorluk, veriler, uygulama</small></button>
   </div>`;
 }
 function bindRoot(root){
@@ -3991,7 +4004,7 @@ function openDrillSettings(id){
 /* --- Gelişmiş Ayarlar */
 function pgGelismis(){
   const row=(p,t)=>`<button data-p="${p}">${t}<small id="md-${p}">${esc(menuDesc(p))}</small></button>`;
-  return `<div class="sl" style="padding-top:6px">${row("algilama","Atış algılama")}${row("gorunum","Görünüm")}${row("veri","Veriler")}${row("uygulama","Uygulama")}</div>
+  return `<div class="sl yalin" style="padding-top:6px">${row("algilama","Atış algılama")}${row("veri","Veriler")}${row("uygulama","Uygulama")}</div>
     <div class="mx" style="padding-top:0"><div class="mx-l"><span>Zorluk</span>${infoBtn("zorluk")}</div>${mxSeg("sDiff",[["kolay","Kolay"],["normal","Normal"],["zor","Zor"]],S.diff)}</div>`;
 }
 function bindGelismis(root){
@@ -5022,7 +5035,7 @@ function openFromHash(){
 window.addEventListener("hashchange",openFromHash);
 
 /* --- test kancası */
-window.__hisar={zamanHtml,zamanDagilim,renderGrafik,olcumUyari,olcumNotlari,toastSon:()=>(toast.son||[]).slice(),toastSil:()=>{toast.son=[];},get ble(){return ble;},trigClear,sistematik,hedefMetin,TESHIS_V,dinamik,tetikSinif,oturumGozlem,teshisKanit,nisanNoktasi,encTrace,decTrace,TMAP_P,TMAP_R,SAAT_C,SENS_TABAN,get h360(){return h360;},h360Giris,h360Cikis,h360Gonder,h360Ozet,h360Kuyruk,h360Alias,h360Adlar,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
+window.__hisar={oneriAl,renderHome,renderMerkez,zamanHtml,zamanDagilim,renderGrafik,olcumUyari,olcumNotlari,toastSon:()=>(toast.son||[]).slice(),toastSil:()=>{toast.son=[];},get ble(){return ble;},trigClear,sistematik,hedefMetin,TESHIS_V,dinamik,tetikSinif,oturumGozlem,teshisKanit,nisanNoktasi,encTrace,decTrace,TMAP_P,TMAP_R,SAAT_C,SENS_TABAN,get h360(){return h360;},h360Giris,h360Cikis,h360Gonder,h360Ozet,h360Kuyruk,h360Alias,h360Adlar,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),

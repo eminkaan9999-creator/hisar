@@ -152,7 +152,7 @@ const DRILLS = [
     const { ctx, page, errs } = await connected(browser);
     await page.evaluate(() => window.__hisar.showView('alistirma')); await sleep(150);
     const L = await page.evaluate(() => ({ secs: Array.from(document.querySelectorAll('#drillList .sec')).map(e => e.firstChild.textContent.trim()),
-      drills: Array.from(document.querySelectorAll('#drillList [data-drill]')).map(e => e.querySelector('.ln').textContent),
+      drills: Array.from(document.querySelectorAll('#drillList [data-drill]')).map(e => e.querySelector('.ln').firstChild.textContent),   // sürüm 39: altında amacı yazar
       lessons: Array.from(document.querySelectorAll('#drillList [data-lesson]')).map(e => e.querySelector('.ln').textContent), ch: document.getElementById('chRow').textContent,
       nav: Array.from(document.querySelectorAll('.nav button')).filter(b => getComputedStyle(b).display !== 'none').map(b => b.innerText.trim()) }));
     check(JSON.stringify(L.secs) === JSON.stringify(['Günün Görevi', 'Antrenmanlar', 'Dersler']), 'Bölümler: GÜNÜN GÖREVİ, ANTRENMANLAR, DERSLER', L.secs);

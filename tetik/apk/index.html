@@ -257,6 +257,7 @@ td.m{font-family:var(--mono)}
 .hd-kart.temiz{border-left-color:var(--good)}
 .hd-kart small.hd-olc{font-size:13px;color:var(--muted);line-height:1.4;text-wrap:pretty}
 .hd-kart.gozlem{border-left-color:var(--acc-bg)} div.hd-kart.gozlem{cursor:default}
+.hd-kart.olcum{border-left-color:var(--warn);cursor:default}
 .hd-lej{display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:center;font-size:14px;color:var(--muted);margin:0}
 .hd-lej i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
 .hd-in{animation:hdIn .45s ease-out both;animation-delay:.6s}
@@ -742,7 +743,7 @@ body{font-size:16px;line-height:1.45}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=36;
+const VER=37;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -956,8 +957,9 @@ const SENS_TABAN=0.02, HIZ_TABAN=0.1;
 // kol düşmesi) ile rastgele sallanmayı ayırır
 const DIKEY_K=8;   // benzetimde: nefeste oran 6–30, rastgele titremede çoğunlukla 8 altı
 const izI=ms=>Math.round((ms-TR0)/TRS), dinBel=new WeakMap();
+const HZ_EN_AZ=120;   // örnek/sn: bunun altında son 50 ms'de 6'dan az ölçüm kalır, zamanlama ayrımı güvenilmez (telefon sensörü ≈60/sn)
 function dinamik(q){
-  if(!q||!q.tz) return null; if(dinBel.has(q)) return dinBel.get(q);
+  if(!q||!q.tz||(q.x&&q.x.hz&&q.x.hz<HZ_EN_AZ)) return null; if(dinBel.has(q)) return dinBel.get(q);
   let r=null; const a=decTrace(q.tz);
   if(a&&a.length>=TRN*2){
     const X=i=>a[i*2], Y=i=>a[i*2+1], sn=k=>k*TRS/1000, i0=izI(-10), i50=izI(-60), i150=izI(-150), i300=izI(-300), i25=izI(-250), i1=izI(-1000), ib=izI(0);
@@ -1204,6 +1206,7 @@ Proc.prototype.finalize=function(st){
   let rec=null; if(peakD>0.3){const lim=Math.max(0.25,peakD*0.2);for(const s of b){if(s[0]>peakT&&s[0]<=st+600&&Math.hypot(s[1]-p0[0],s[2]-p0[1])<lim){rec=s[0]-st;break;}}}
   let cs=0,cn=0,sat=0; for(const s of b){if(s[0]>=st-300&&s[0]<=st){cs+=s[3];cn++;} if(s[0]>=st-10&&s[0]<=st+300) sat|=s[6]||0;}
   const gap=this.gaps.some(g=>g[1]>st-1000&&g[0]<st+600);
+  let hz=0; for(let i=b.length-1;i>=0&&b[i][0]>=st-1000;i--) if(b[i][0]<=st) hz++;   // örnek hızı: tetikten önceki 1 sn'deki ölçüm sayısı
   // tetik düşmesi denetimi: tutuşta (-600..-180 ms, tetik hareketinden önce) ve son 150 ms'de en büyük doğrusal ivme (g),
   // atıştan hemen önce silahın duruşu (yerçekiminin sensöre göre yönü)
   let lHold=0,l150=0,lPost=0,ux=0,uy=0,uz=0;
@@ -1221,7 +1224,7 @@ Proc.prototype.finalize=function(st){
   // T8: nişan süresi: tetikten en az 200 ms önceki son büyük hareketten (silah nişana geldi) atışa kadar; hareket yoksa bilinmez
   let nt=null; for(let i=this.mvT.length-1;i>=0;i--) if(this.mvT[i]<=st-200){ nt=st-this.mvT[i]; break; }
   let elev=null; if(this.aSlow&&this.cfg&&this.cfg.B){ elev=Math.asin(clamp(dot(norm(this.cfg.B),norm(this.aSlow)),-1,1))*DEG; }   // namlunun yatayla açısı
-  if(this.onShot)this.onShot({st,trig,hold:Math.hypot(hx,hy),hx,hy,dx:p0[0]-p150[0],dy:p0[1]-p150[1],wv,droll,rv,cant:cn?cs/cn:0,post,rise,fall,peakD,pg,rec,xy,sat,gap,elev,lHold,l150,lPost,up,nt,impCh:!!this.impCh});
+  if(this.onShot)this.onShot({st,trig,hold:Math.hypot(hx,hy),hx,hy,dx:p0[0]-p150[0],dy:p0[1]-p150[1],wv,droll,rv,cant:cn?cs/cn:0,post,rise,fall,peakD,pg,rec,xy,sat,gap,elev,lHold,l150,lPost,up,nt,hz,impCh:!!this.impCh});
 };
 
 /* ---------------------------------------------------------------- sanal atıcı (deneme modu) */
@@ -1932,6 +1935,8 @@ function startRun(){
   cur.run=r;
   applyCfg(); proc.startRef(); proc.armed=true; proc.pending=[]; proc.lastShot=-1e9; proc.quietUntil=0; proc.strictOff=false; proc.rejectRun=0; proc.cand=null;
   if(s.lzKyn==="sensor") lzSensorKip(s);                          // sensöre takılı lazer (kamerasız da): eşikle birlikte kip
+  // Sürüm 37: jiroskobun sıfırı (sapması) hiç ölçülmediyse (kayıtlı sıfır yok, sensör 1,5 sn hiç durmadı) ilk atışlarda nişan kayar
+  if((source==="sensor"||source==="phone")&&!proc.bias0&&proc.lastCal<0) toast("Sensörün sıfırı henüz ölçülmedi. İlk atıştan önce silahı 2–3 saniye kıpırdatmadan bırak (ya da masaya koy).",8000);
   if(S.rawRec) rawStart(r);
   if(eng.start) eng.start(r);
   if(d.demo==="periodic"&&source==="demo"&&S.autoShot) demoPeriodic(r);
@@ -2036,10 +2041,11 @@ proc.onShot=m=>{
   if(s.lzR) q.lz=lzAtis(s,m,q);                                   // lazer hedef: atışın kağıtta gerçek yeri
   if(prevT!=null) q.x.split=Math.round(m.st-prevT);
   if(m.gap) q.x.gap=1;
+  if(m.hz&&m.hz<180) q.x.hz=m.hz;                                   // düşük örnek hızı (HİSAR sensörü 200/sn)
   if(m.sat) q.x.sat=m.sat;
   r.shotT.push(m.st);
   q.c=diagnose(q,s);
-  mountChecks(r,m,q);
+  if(!mountChecks(r,m,q)) olcumUyari(r,q);                          // montaj uyarısı çıktıysa onu örtmesin
   if(r.eng.onShot) r.eng.onShot(r,q,m.st);
   s.shots.push(q); cur.sel=s.shots.length-1;
   const [vt,vc]=verdict(q.sc); setFeedback(q.c.length&&q.sc<85?CAUSES[q.c[0]].ad:vt,vc);
@@ -2053,13 +2059,41 @@ proc.onShot=m=>{
 
 // Montaj denetimleri: yön testinden sonra sensör farklı takıldıysa (çok büyük yatıklık) ya da gerçek atışta / CO2'de
 // namlu atış sonrası aşağı kalkıyor ölçülüyorsa (yön ters ayarlı) bir kez uyarır; oturum "yön şüpheli" işaretlenir.
+// Sürüm 37: cihaza göre ölçüm uyarıları (her biri oturumda bir kez): örnek hızı, Bluetooth veri kaybı, sensör sıfırının kayması,
+// lazerin art arda görülmemesi. Sıfır kayması: insan kolu her atıştan önce aynı yöne aynı hızda kaymaz; art arda 4 atışta düzgün,
+// en az 0,3 °/sn ve aynı yönde (kosinüs > 0,9) kayma çoğunlukla jiroskop sıfırının (ısınma) kaymasıdır
+const SIFIR_KAY=0.3;
+function olcumUyari(r,q){
+  const s=r.sess, u=r.uy||(r.uy={}); if(s.src!=="sensor"&&s.src!=="phone") return;
+  if(q.x.hz&&q.x.hz<HZ_EN_AZ&&!u.hz){ u.hz=1; toast(`Ölçüm hızı düşük (saniyede ${q.x.hz}): tetiğin zamanı (son anda mı, yavaş mı) ölçülemiyor, yalnız yönü kullanılıyor.${s.src==="phone"?" Tetik zamanlaması için HİSAR sensörünü kullan.":" Telefonu sensöre yaklaştır."}`,9000); return; }
+  if(s.src==="sensor"&&!u.kayip){ const lp=lossPct(); if(lp!=null&&lp>=3){ u.kayip=1; toast(`Bluetooth'ta veri kaybı %${fx(lp,1)}. Telefonu sensöre yaklaştır; kayıp olan atışlarda değerler yaklaşık olur.`,8000); return; } }
+  const d=dinamik(q), L=u.kay||(u.kay=[]);
+  if(d&&d.duz&&Math.hypot(d.kx,d.ky)>=SIFIR_KAY){ L.push([d.kx,d.ky]); if(L.length>4) L.shift(); } else L.length=0;
+  if(L.length>=4&&!u.sifir){ const a=L[0], na=Math.hypot(a[0],a[1]);
+    if(L.every(v=>(v[0]*a[0]+v[1]*a[1])/(Math.hypot(v[0],v[1])*na)>0.9)){ u.sifir=1; s.sifirSupheli=1;
+      toast(`Son 4 atışta nişan her seferinde aynı yöne, aynı hızda kaydı (saniyede ${ang(na)}). Kolun yorulduysa dinlen. Kol sabitken de oluyorsa sensörün sıfırı kaymıştır: silahı 3 saniye masaya koy, sıfır yeniden ölçülür.`,10000); return; } }
+  if(s.lzR&&q.lz){ u.lzYok=q.lz.gor?0:(u.lzYok||0)+1;
+    if(u.lzYok>=3&&!u.lzMsg){ u.lzMsg=1; toast(q.lz.kam===false?"Kamera kapalı, lazer görülemiyor. Kamera ekranından aç.":"Lazer son 3 atışta kamerada görülmedi. Kamera hedefi görüyor mu, lazer yanıyor mu? Kamera ekranından kontrol et.",9000); } }
+}
+// Sürüm 37: oturum özetinde ölçüm notları (sonuçları etkileyen cihaz durumları)
+function olcumNotlari(s){
+  const v=s.shots, n=f=>v.filter(f).length, out=[];
+  const g=n(q=>q.x&&q.x.gap); if(g) out.push(`${g} atışta Bluetooth veri boşluğu vardı; bu atışların değerleri yaklaşık.`);
+  const h=n(q=>q.x&&q.x.hz&&q.x.hz<HZ_EN_AZ); if(h) out.push(`${h} atışta ölçüm hızı düşüktü; tetiğin zamanı ölçülemedi, yalnız yönü kullanıldı.`);
+  const st=n(q=>q.x&&q.x.sat); if(st) out.push(`${st} atışta tepme sensörün ölçüm sınırını aştı; tepme en az gösterilen kadardır.`);
+  if(s.yonSupheli) out.push("Sensör yön testindeki gibi takılı görünmüyordu; yön ve kanting yanlış olabilir. Yön testini yap.");
+  if(s.sifirSupheli) out.push("Nişan her atıştan önce aynı yöne kaydı: sensörün sıfırı kaymış olabilir. Silahı 3 saniye masaya koy.");
+  if(s.lzR){ const ly=n(q=>q.lz&&!q.lz.gor); if(ly) out.push(`Lazer ${ly} atışta kamerada görülmedi; bu atışlarda yer yalnız sensörden.`); }
+  return out;
+}
 function mountChecks(r,m,q){
-  const s=r.sess; if(s.src!=="sensor"&&s.src!=="phone") return;
-  if(Math.abs(m.cant)>25&&!r.mountMsg){ r.mountMsg=true; proc.mountWarn=true; s.yonSupheli=1;
+  const s=r.sess; if(s.src!=="sensor"&&s.src!=="phone") return false; let uy=false;
+  if(Math.abs(m.cant)>25&&!r.mountMsg){ r.mountMsg=true; proc.mountWarn=true; s.yonSupheli=1; uy=true;
     toast(`Sensör yön testindeki gibi takılı değil (yaklaşık ${Math.round(Math.abs(m.cant))}° farklı). Oturum bitince Sensör sekmesi › Yön testi'ni yap.`,9000); }
   if((s.mode==="gercek"||s.mode==="co2")&&m.peakD>=1.5){ const f=r.flip||(r.flip={n:0,dn:0}); f.n++; if(m.fall>=1&&m.fall>2*m.rise) f.dn++;
-    if(!r.flipMsg&&f.dn>=2&&f.dn>=0.6*f.n){ r.flipMsg=true; s.yonSupheli=1;
+    if(!r.flipMsg&&f.dn>=2&&f.dn>=0.6*f.n){ r.flipMsg=true; s.yonSupheli=1; uy=true;
       toast("Atış sonrası namlu aşağı kalkıyor ölçüldü: sensörün yönü ters ayarlı olabilir, yukarı-aşağı yönler yanlış çıkar. Oturum bitince Yön testi'ni yap.",9000); } }
+  return uy;
 }
 
 /* ---------------------------------------------------------------- arayüz: görünümler (MantisX düzeni) */
@@ -2503,7 +2537,7 @@ function popPage(){ const pg=pages.pop(); if(pg&&pg.onPop) pg.onPop(); showPage(
 function closePages(){ while(pages.length){ const pg=pages.pop(); if(pg.onPop) pg.onPop(); } $("v-sayfa").hidden=true; setPage=null; }
 $("pgBack").onclick=()=>popPage();
 
-function toast(msg,ms){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,ms||3200);}
+function toast(msg,ms){const g=toast.son||(toast.son=[]);g.push(String(msg));if(g.length>30)g.shift();const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,ms||3200);}
 function setFeedback(){}   // MantisX'te büyük yazılı geri bildirim yok; olası nedenler listelenir
 
 /* --- alt pencere */
@@ -2767,7 +2801,8 @@ function teshisKanit(q,s){
   const hz=SPEED.has(s.drill), d=hz?null:dinamik(q), dm=s.dist||S.dist||25, uz=deg=>`${ang(deg)} (${fx(dm,dm%1?1:0)} m'de ${fx(Math.tan(Math.abs(deg)*RAD)*dm*100,1)} cm)`;
   if(SAAT_C.has(c)||c==="kovalama"){ const k=tetikSinif(d), m=Math.hypot(q.dx||0,q.dy||0), h=q.h;
     const z=k==="ani"?` Hareketin %${Math.round(clamp(d.son50,0,1)*100)} kadarı son 50 ms'de oldu: ani.`:k==="onceden"?" Kayma tetik baskısından önce başlamıştı.":k==="surekli"?" Hareket baskı boyunca yavaş yavaş oldu.":"";
-    return `Tetik düşmeden önceki 150 ms'de namlu saat ${h} yönüne ${uz(m)} kaydı.${z}`; }
+    const hz=q.x&&q.x.hz&&q.x.hz<HZ_EN_AZ?` Ölçüm hızı düşük (saniyede ${q.x.hz}): hareketin zamanı ölçülemedi.`:"";
+    return `Tetik düşmeden önceki 150 ms'de namlu saat ${h} yönüne ${uz(m)} kaydı.${z}${hz}`; }
   if(c==="dikey_kayma"&&d) return `Atıştan önceki saniyede nişan saniyede ${ang(Math.abs(d.ky))} ${d.ky<0?"aşağı":"yukarı"} kaydı.`;
   if(c==="gezinme") return d?`Son saniyede nişan hızı ${ang(d.v1)}/sn, tetik anında ${ang(d.v25)}/sn: hareket tetikten değil nişandan.`
     :`Nişan titremesi ${ang(q.ho||0)}; tetik anındaki hareket bundan ayırt edilemedi.`;
@@ -2778,6 +2813,8 @@ function teshisKanit(q,s){
   if(c==="takip"&&q.po!=null) return `Tetik düştükten sonraki 150 ms'de namlu ${uz(q.po)} kaydı.`;
   return "";
 }
+// Sürüm 37: ölçüm notları kartı
+function olcumKart(s){ const n=olcumNotlari(s); return n.length?`<div class="hd-kart olcum"><span class="hd-k">Ölçüm notları</span>${n.map(t=>`<span>⚠ ${esc(t)}</span>`).join("")}</div>`:""; }
 // T8: oturum gözlemi kartı
 function gozlemKart(g,s){
   const k=(c,b,t)=>c?`<button class="hd-kart gozlem" data-cause="${c}" data-list="${c}"><span class="hd-k">Oturum geneli</span><b>${esc(b)}</b><span>${esc(t)}</span><i>Nasıl düzeltilir ›</i></button>`
@@ -2802,7 +2839,7 @@ function hedefMetin(s,v,q,run,rev,yeni){
     // T4: oturum geneli tetik hatası (atışların ortalamasında aynı yöne kayma) en üstte
     const sis=sistematik(s), sisK=sis?`<button class="hd-kart" data-cause="${sis.c}" data-list="${sis.c},${sis.c2}"><span class="hd-k">Oturum geneli · ${sis.n} atışın ortalaması</span><b>${esc(CAUSES[sis.c].ad)}</b><span>Tetik anında namlu çoğunlukla saat ${sis.saat} yönüne kayıyor${sis.sn?` (${TSINIF_AD[sis.sn]})`:""}. Tek tek atışlarda titreme bunu gizleyebilir; atışların ortalamasında belirgin.</span><i>Nasıl düzeltilir ›</i></button>`:"";
     return `<div class="hd"><div class="hd-son"><div class="hd-skor ${vc}"><b>${fx(Math.floor(avg),0)}</b><small>Ortalama</small></div><div class="hd-ne"><b>${esc(vt.replace("ATIŞ","OTURUM"))}</b><span>${v.length} atış, ${iyi} tanesi ${S.sesEsik||85} ve üzeri.${grup}${lzt}</span></div></div>
-      ${sisK}${oturumGozlem(s).map(g=>gozlemKart(g,s)).join("")}${ids.filter(id=>!sis||id!==sis.c).map((id,i)=>kart(id,ids,i>0,cc[ids.indexOf(id)][1])).join("")}</div>`; }
+      ${sisK}${oturumGozlem(s).map(g=>gozlemKart(g,s)).join("")}${ids.filter(id=>!sis||id!==sis.c).map((id,i)=>kart(id,ids,i>0,cc[ids.indexOf(id)][1])).join("")}${olcumKart(s)}</div>`; }
   const [vt,vc]=verdict(q.sc), yon=hdYon(hdShot(q).p,rw), ids=(q.c||[]).filter(k=>CAUSES[k]), sw=silahBul(s.weaponName), lz=s.lzR&&q.lz;
   const ilk=run&&q.n===1&&sw&&sw.tetik==="da_sa"?`<p class="note" style="margin:0">${esc(sw.ad)}: ilk atış çift hareketlidir, tetik ağır ve uzundur. Tetiğe sürekli ve düz bas.</p>`:"";
   const lej=run&&hdShot(q).iz?`<p class="hd-lej"><span><i style="background:var(--hold)"></i>Atıştan önce nişanın</span><span><i style="background:var(--trig)"></i>Tetiği çekerken kayma</span></p>`:"";
@@ -2853,6 +2890,7 @@ $("grafikInfo").onclick=()=>openSheet("Grafik",`<p><b>Üstteki çizgi:</b> atı�
 let replayRAF=null;
 function shotNotes(q){ const x=q.x||{}; const out=[];
   if(x.gap) out.push("Bu atışta sensör verisinde kısa bir boşluk vardı; değerler yaklaşık.");
+  if(x.hz&&x.hz<HZ_EN_AZ) out.push(`Ölçüm hızı düşüktü (saniyede ${x.hz}); tetiğin zamanı ölçülemedi.`);
   if(x.sat&1) out.push("Tepme ivmesi sensörün ±16 g ölçüm sınırını aştı; tepme değeri en az bu kadardır.");
   if(x.sat&2) out.push("Atış sonrası namlu dönüşü sensör sınırını (2000 °/sn) aştı; kalkış ve toparlanma yaklaşık.");
   const s=cur.sess; if(s&&s.yonSupheli) out.push("Bu oturumda sensör yön testindeki gibi takılı görünmüyordu: yön ve kanting yanlış olabilir. Sensörü taktıktan sonra yön testini yap.");
@@ -4909,7 +4947,7 @@ function openFromHash(){
 window.addEventListener("hashchange",openFromHash);
 
 /* --- test kancası */
-window.__hisar={trigClear,sistematik,hedefMetin,TESHIS_V,dinamik,tetikSinif,oturumGozlem,teshisKanit,nisanNoktasi,encTrace,decTrace,TMAP_P,TMAP_R,SAAT_C,SENS_TABAN,get h360(){return h360;},h360Giris,h360Cikis,h360Gonder,h360Ozet,h360Kuyruk,h360Alias,h360Adlar,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
+window.__hisar={olcumUyari,olcumNotlari,toastSon:()=>(toast.son||[]).slice(),toastSil:()=>{toast.son=[];},get ble(){return ble;},trigClear,sistematik,hedefMetin,TESHIS_V,dinamik,tetikSinif,oturumGozlem,teshisKanit,nisanNoktasi,encTrace,decTrace,TMAP_P,TMAP_R,SAAT_C,SENS_TABAN,get h360(){return h360;},h360Giris,h360Cikis,h360Gonder,h360Ozet,h360Kuyruk,h360Alias,h360Adlar,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),

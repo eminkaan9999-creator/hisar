@@ -992,6 +992,7 @@ const TSINIF_AD={ani:"son anda ani",surekli:"baskı boyunca yavaş yavaş",onced
 // Hızlı alıştırmalarda (önceki saniye çekiş/geçişle hareketli) ve eski kayıtlarda (titreme ölçüsü yok) yön her zaman kullanılır.
 function trigClear(q,s,d){
   if(SPEED.has(s.drill)) return true;
+  if(d===undefined) d=dinamik(q);                                  // çağıran izi vermediyse
   const taban=Math.max(SENS_TABAN,0.1*scaleFor(s.weapon,s.diff));
   if(d&&d.w!=null) return d.dn>=TRIG_SNR*d.w&&d.dn>=taban;
   if(q.wv==null) return true;

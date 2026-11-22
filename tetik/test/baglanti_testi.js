@@ -338,6 +338,16 @@ const statusText = page => page.evaluate(() => document.getElementById('srcStatu
       'Sol el: 3:00 → fazla parmak, 9:00 → başparmak (aynalanmış şema)', left);
     await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1200);
     await page.evaluate(() => { const c = document.querySelector('#sheet [data-close]'); if (c) c.click(); window.__hisar.S.hand = 'R'; });
+    // sürüm 36: aynı yön (saat 7), farklı zamanlama → farklı neden (Bluetooth yolundan, uygulamanın kendi işlemcisiyle)
+    await page.evaluate(() => { window.__hisar.openDrill('serbest'); window.__hisar.startRun(); });
+    h0 = await fake(page, () => window.__fake.head);
+    await fake(page, (h0) => { const a = 210 * Math.PI / 180; window.__fake.addShot(h0 + 400, { dx: 0.3 * Math.sin(a), dy: 0.3 * Math.cos(a), prof: 'ani' }); window.__fake.addShot(h0 + 860, { dx: 0.3 * Math.sin(a), dy: 0.3 * Math.cos(a) }); }, h0);
+    await sleep(400 * 5 + 2 * 460 * 5 + 1200);
+    const zm = await page.evaluate(() => window.__hisar.cur.sess.shots.map(q => ({ h: q.h, c: q.c })));
+    check(zm.length === 2 && zm[0].h === 7 && zm[0].c[0] === 'tokatlama' && zm[1].h === 7 && zm[1].c[0] === 'tum_el',
+      'Sürüm 36: saat 7, son 50 ms\'de ani → "Tetiğe ani basma"; 150 ms boyunca → "Bütün parmakları kapatma"', zm);
+    await page.evaluate(() => window.__hisar.stopRun(false)); await sleep(1200);
+    await page.evaluate(() => { const c = document.querySelector('#sheet [data-close]'); if (c) c.click(); });
     // kanting (yön testi yapılmış, sensör düz takılı: sıfır = U)
     await page.evaluate(() => { const m = window.__hisar.S.mount.sensor; m.B = [0, 1, 0]; m.U = [0, 0, 1]; m.at = Date.now(); window.__hisar.openDrill('serbest'); window.__hisar.startRun(); });
     h0 = await fake(page, () => window.__fake.head);

@@ -131,6 +131,7 @@
   }
   setInterval(tick, 10);
   // Atış hareketi: seq'de tetik; öncesindeki 150 ms'de namlu (dx sağ, dy yukarı derece) kayar.
+  // prof (sürüm 36): 'ani' son 50 ms'de, 'onceden' 450 ms'de (pencereden önce başlar); verilmezse 150 ms boyunca
   // click: tetiğin "tık" sesi (dB, null = ses yok), clickAt: darbeye göre ölçüm kayması (5 ms birim)
   F.shots = [];
   // Grove lazeri (yazılım 7): atış kipinde darbe eşiği geçilince 'sure' ms yanar; sürekli kipte hep; dene: bir kez
@@ -153,7 +154,8 @@
       if (s.tilt && d >= -500 && d <= 150) { const a = s.tilt * Math.PI / 180; acc = [Math.sin(a), 0, Math.cos(a)]; }
       if (s.elev != null && d >= -700 && d <= 300) {                 // namlu açısı (y ekseni namlu): yavaşça iner, atıştan sonra yavaşça kalkar
         const f = d < -500 ? (d + 700) / 200 : d > 100 ? (300 - d) / 200 : 1, e = s.elev * f * Math.PI / 180; acc = [0, Math.sin(e), Math.cos(e)]; }
-      if (d >= -30 && d < 0) { om = [0.4 + s.dy / 0.15, -0.3, 0.2 - s.dx / 0.15]; }
+      const N = s.prof === 'ani' ? 10 : s.prof === 'onceden' ? 90 : 30;
+      if (d >= -N && d < 0) { om = [0.4 + s.dy / (N * 0.005), -0.3, 0.2 - s.dx / (N * 0.005)]; }
       if (d === 0 || d === 1) { jerk = s.spike; if (s.live) { acc = [0, 16, 1]; jerk = 60; } }
       if (s.click != null && d === s.clickAt) snd = s.live ? 90 : s.click;
       if (s.live && d >= 2 && d < 5) om = [2100, -0.3, 0.2];

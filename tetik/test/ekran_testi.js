@@ -67,7 +67,7 @@ async function crawl(browser, vp) {
     const r = await crawl(browser, vp);
     console.log(`  ${r.screens} ekran · ${r.drills} alıştırma · ${r.causes} hata sayfası · ${r.lessons} ders · ${r.infos} ⓘ açıklaması`);
     check(r.selfOk, 'Denetim çalışıyor: bilerek eklenen taşan öge ve "NaN" yazısı yakalandı');
-    check(r.screens === 15 + r.drills + r.causes + r.lessons + 11 && r.drills >= 15 && r.causes === 17 && r.lessons >= 3, `Bütün ekranlar açıldı (${r.screens})`, { screens: r.screens, drills: r.drills, causes: r.causes, lessons: r.lessons });
+    check(r.screens === 15 + r.drills + r.causes + r.lessons + 11 && r.drills >= 15 && r.causes === 21 && r.lessons >= 3, `Bütün ekranlar açıldı (${r.screens})`, { screens: r.screens, drills: r.drills, causes: r.causes, lessons: r.lessons });
     check(!r.fails.some(f => f.words.length), 'Hiçbir ekranda "undefined / NaN / null" yazısı yok', r.fails.filter(f => f.words.length).slice(0, 5));
     check(!r.fails.some(f => f.over.length || f.docW > f.W + 1), 'Hiçbir öge ekrandan taşmıyor', r.fails.filter(f => f.over.length || f.docW > f.W + 1).slice(0, 5));
     check(r.infos >= 15 && !r.emptyInfo.length, `Her ⓘ açıklaması açılıyor ve dolu (${r.infos})`, r.emptyInfo);

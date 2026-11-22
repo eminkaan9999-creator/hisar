@@ -1,1 +1,1 @@
-{"v": 37, "not": "Ölçüm uyarıları: düşük ölçüm hızı, Bluetooth veri kaybı, sensörün sıfırının kayması, sıfır ölçülmeden başlama ve lazerin art arda görülmemesi oturum sırasında bir kez söylenir; oturum özetinde ölçüm notları."}
+{"v": 38, "not": "Grafikler yenilendi: skor çizgisinde bölgeler ve ortalama yazıyla, tetik ve nişan çubukları daha net, seçili atışın özeti. Yeni: atışın tetik zamanlaması (nişan hızı zamana göre: son anda ani, baskı boyunca, önceden) ve Analiz'de tetik hatalarının zamanı."}

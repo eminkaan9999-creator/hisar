@@ -2,6 +2,8 @@
 // → uygulamanın kendi işlemcisi (proc.feed) → ölçüm, skor ve teşhis. Gerçek hareket bilindiği için teşhisin doğruluğu ölçülür.
 // Kapsam: 8 montaj (alt/üst/sağ/sol × ileri/arka), sağ/sol el, 3 tetik hareketi biçimi, iki titreme modeli,
 // temiz tetik + titreme, karışık atıcılar (480 atış), kanting, takip ve tetik anında silahı döndürme (T4).
+// T8 (sürüm 36): teşhis izden zamanlamayı da kullanır (son anda ani / baskı boyunca / önceden başlamış); nefesle dikey kayma,
+// nişan süresi (silahı kaldırmadan atışa) ve önceden başlayan hareket (kovalama) da ölçülür.
 // Rastgelelik sabit tohumlu: sonuç her çalıştırmada aynı.
 'use strict';
 const { serve, check, section, finish, openApp, chromium } = require('./ortak');
@@ -50,7 +52,8 @@ function pageSide() {
     const step = (ms, fn) => {
       for (let i = 0; i < ms; i++) {
         wobStep(); if (fn) fn(i);
-        X = A.x + W.x + E.x; Y = A.y + W.y + E.y;
+        const NF = o.nefes ? o.nefes * Math.sin(2 * Math.PI * t / 4000) : 0;      // T8: nefes (4 sn periyot, ° genlik)
+        X = A.x + W.x + E.x; Y = A.y + W.y + E.y + NF;
         if ((t % 5) === 4) {
           const yawRate = lx == null ? 0 : (X - lx) / 0.005, pitchRate = ly == null ? 0 : (Y - ly) / 0.005; lx = X; ly = Y;
           const RL = rollA + W.r, rollRate = lr == null ? 0 : (RL - lr) / 0.005; lr = RL;
@@ -74,9 +77,12 @@ function pageSide() {
     for (const s of shots) {
       if (s.hold != null) W.sig = s.hold;
       if ((s.cant || 0) !== cant) { cant = s.cant || 0; step(900, null); }
-      step(1300, null);                                   // nişan alma
+      // T8: kaldir: silah 4° aşağıdan 120 ms'de nişana kalkar (33 °/sn), kaldir ms nişanda kalır (tetik penceresi hariç)
+      if (s.kaldir) { const y0 = A.y; step(120, i => { A.y = y0 - 4 * (1 - (i + 1) / 120); }); A.y = y0; step(s.kaldir - 1300, null); }
       const prof = s.prof || 'yumusak';
-      const f = u => prof === 'ani' ? Math.max(0, (u - 0.73) / 0.27) : prof === 'erken' ? Math.min(1, u / 0.4) : u * u * (3 - 2 * u);
+      if (prof === 'onceden') { step(1000, null); step(300, i => { const k = (i + 1) / 450; E.x = (s.fx || 0) * k; E.y = (s.fy || 0) * k; }); }   // T8: 450 ms önceden
+      else step(1300, null);                                   // nişan alma
+      const f = u => prof === 'ani' ? Math.max(0, (u - 0.73) / 0.27) : prof === 'erken' ? Math.min(1, u / 0.4) : prof === 'onceden' ? (300 + u * 150) / 450 : u * u * (3 - 2 * u);
       const w0 = [W.x, W.y];
       step(150, i => { const k = f((i + 1) / 150); E.x = (s.fx || 0) * k; E.y = (s.fy || 0) * k; rollA = (s.roll || 0) * k; });   // tetik (+ bilek dönmesi)
       jerkNext = s.live ? 60 : 3;                          // kırılma darbesi
@@ -95,14 +101,16 @@ function pageSide() {
   const MAPP = { 12: ['bilek_yukari', 'geri_tepme'], 1: ['avucla_itme', 'geri_tepme'], 2: ['avucla_itme', 'basparmak'], 3: ['basparmak', 'az_parmak'], 4: ['siki_tutus', 'az_parmak'], 5: ['siki_tutus', 'bilek_asagi'], 6: ['bilek_asagi', 'ileri_itme'], 7: ['tokatlama', 'bilek_asagi'], 8: ['tokatlama', 'tum_el'], 9: ['fazla_parmak', 'tokatlama'], 10: ['geri_tepme', 'fazla_parmak'], 11: ['geri_tepme', 'bilek_yukari'] };
   const scale = H.scaleFor('pistol', 'normal');
   const sess = hand => ({ weapon: 'pistol', diff: 'normal', hand, handMode: 'normal', drill: 'serbest', mode: 'kuru' });
-  const toQ = m => ({ sc: Math.max(0, Math.min(100, 100 * Math.exp(-(m.trig + 0.15 * m.hold) / scale))), h: H.hourOf(m.dx, m.dy), ca: m.cant, po: m.post, tr: m.trig, ho: m.hold, dx: m.dx, dy: m.dy, wv: m.wv == null ? null : m.wv, dr: m.droll, rv: m.rv });
+  const toQ = m => ({ sc: Math.max(0, Math.min(100, 100 * Math.exp(-(m.trig + 0.15 * m.hold) / scale))), h: H.hourOf(m.dx, m.dy), ca: m.cant, po: m.post, tr: m.trig, ho: m.hold, dx: m.dx, dy: m.dy, wv: m.wv == null ? null : m.wv, dr: m.droll, rv: m.rv,
+    tz: H.encTrace(m.xy), nt: m.nt == null ? null : Math.round(m.nt / 100) * 100 });   // T8: iz (zamanlama) ve nişan süresi, uygulamadaki gibi
   // her atış için düz kayıt: ölçüm + gerçek + yeni/eski teşhis
   const rec = (m, tr, hand) => {
     const q = toQ(m), s = tr.s; const F = Math.hypot(s.fx || 0, s.fy || 0);
     return { sc: q.sc, h: q.h, d: Math.hypot(m.dx, m.dy), wv: m.wv, tr: m.trig, ho: m.hold, po: m.post, ca: m.cant, dr: m.droll, rv: m.rv, roll: s.roll || 0, ang: Math.atan2(m.dx, m.dy) * 180 / Math.PI,
       F, fang: F ? Math.atan2(s.fx, s.fy) * 180 / Math.PI : null, w: Math.hypot(tr.wx, tr.wy), hold: s.hold, prof: s.prof || 'yumusak', cant: s.cant || 0,
-      yeni: H.diagnose(q, sess(hand || 'R')), eski: H.diagnose(Object.assign({}, q, { wv: null }), sess(hand || 'R')),
-      yeniL: H.diagnose(q, sess('L')), eskiL: H.diagnose(Object.assign({}, q, { wv: null }), sess('L')) };
+      yeni: H.diagnose(q, sess(hand || 'R')), eski: H.diagnose(Object.assign({}, q, { wv: null, tz: null }), sess(hand || 'R')),
+      yeniL: H.diagnose(q, sess('L')), eskiL: H.diagnose(Object.assign({}, q, { wv: null, tz: null }), sess('L')),
+      sinif: H.tetikSinif(H.dinamik(q)), clear: H.trigClear(q, sess('R'), H.dinamik(q)), nt: q.nt };
   };
   const run = (yer, yon, shots, o) => { const { got, truth } = session(yer, yon, shots, o); return got.length === truth.length ? got.map((m, i) => rec(m, truth[i])) : { hata: `atış sayısı ${got.length}/${truth.length}` }; };
   const dirShots = (mag, n, extra) => { const out = []; for (let i = 0; i < n; i++) { const h = 1 + (i % 12); const a = (h * 30 + (rnd() - 0.5) * 20) * Math.PI / 180; out.push(Object.assign({ fx: Math.sin(a) * mag, fy: Math.cos(a) * mag, hour: h }, extra)); } return out; };
@@ -146,7 +154,14 @@ function pageSide() {
   for (const [yer, yon] of [['alt', 'ileri'], ['sag', 'ileri'], ['ust', 'arka']])
     R.donme[yer + '/' + yon] = run(yer, yon, [2, -2, 3, -3, 1.5, -1.5, 0, 0, 0, 0].map(d => ({ fx: 0.02, fy: 0.01, roll: d })), { hold: 0.02, rollHold: 0.15 });
   R.donmeYok = run('alt', 'ileri', Array.from({ length: 30 }, () => ({ fx: 0.02, fy: 0.01 })), { hold: 0.05, rollHold: 0.25 });
-  R.MAPP = MAPP; R.scale = scale;
+  // 9) T8: tetik hareketinin zamanı → sınıf (yumuşak/erken: baskı boyunca, ani: son anda, önceden: pencereden önce başlamış)
+  R.zaman = {};
+  for (const hold of [0.01, 0.03]) for (const prof of ['yumusak', 'ani', 'erken', 'onceden']) R.zaman[prof + ' ' + hold] = run('alt', 'ileri', dirShots(prof === 'onceden' ? 0.3 : 0.2, 12, { prof }), { hold });
+  // 10) T8: nefes (dikey salınım 0,2° / 0,4°, 4 sn), tetik temiz
+  R.nefes = {}; for (const nefes of [0.2, 0.4]) R.nefes[nefes] = run('alt', 'ileri', Array.from({ length: 16 }, () => ({ fx: 0, fy: 0 })), { hold: 0.02, nefes });
+  // 11) T8: nişan süresi: silah kaldırılır, 3 / 6 / 9 / 12 sn nişanda kalınır
+  R.sure = run('alt', 'ileri', [3000, 6000, 9000, 12000].map(k => ({ fx: 0.15, fy: -0.1, kaldir: k })), { hold: 0.02 });
+  R.MAPP = MAPP; R.scale = scale; R.TMAP = H.TMAP_P; R.SAAT = [...H.SAAT_C];
   return R;
 }
 
@@ -155,8 +170,12 @@ const hourOfDeg = a => { if (a < 0) a += 360; const h = Math.round(a / 30) % 12;
 const angDiff = (a, b) => { let d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
 const mirror = h => (12 - h) % 12 || 12;
 const pct = (a, b) => b ? Math.round(a / b * 1000) / 10 : null;
+const SINIF = { yumusak: 'surekli', erken: 'surekli', ani: 'ani', onceden: 'onceden' };
+let isClockT = () => false;
 function evaluate(R) {
-  const MAPP = R.MAPP, CLOCK = new Set(Object.values(MAPP).flat()); const isClock = c => c && CLOCK.has(c);
+  const CLOCK = new Set(R.SAAT); const isClock = c => c && CLOCK.has(c); isClockT = isClock;
+  // T8: beklenen birinci neden, hareketin gerçek zamanlamasına göre (yumuşak ve pencere içinde erken: baskı boyunca)
+  const MAPP = new Proxy({}, { get: (o, h) => R.TMAP.surekli[h] }), bek = (prof, h) => R.TMAP[SINIF[prof || 'yumusak']][h];
   const E = { yon: {}, bicim: {}, titreme: {}, karisik: {}, kant: {}, takip: [] };
   // 1) yön ve neden (sağ/sol el)
   let all = { n: 0, saat: 0, saat1: 0, neden: 0, nedenL: 0, maxHata: 0 };
@@ -173,19 +192,19 @@ function evaluate(R) {
     all.n += e.n; all.saat += e.saat; all.saat1 += e.saat1; all.neden += e.nedenR; all.nedenL += e.nedenL; all.maxHata = Math.max(all.maxHata, e.maxAci);
   }
   E.yonOzet = { atis: all.n, saatTamYuzde: pct(all.saat, all.n), birSaatIcindeYuzde: pct(all.saat1, all.n), nedenSagElYuzde: pct(all.neden, all.n), nedenSolElYuzde: pct(all.nedenL, all.n), enBuyukAciHatasi: all.maxHata };
-  for (const [k, v] of Object.entries(R.profiles)) E.bicim[k] = { atis: v.length, saatTam: v.filter(r => r.h === hourOfDeg(r.fang)).length, birSaat: v.filter(r => angDiff(r.ang, r.fang) <= 30).length, nedenDogru: v.filter(r => r.sc >= 85 || r.yeni[0] === MAPP[hourOfDeg(r.fang)][0]).length };
+  for (const [k, v] of Object.entries(R.profiles)) E.bicim[k] = { atis: v.length, saatTam: v.filter(r => r.h === hourOfDeg(r.fang)).length, birSaat: v.filter(r => angDiff(r.ang, r.fang) <= 30).length, nedenDogru: v.filter(r => r.sc >= 85 || r.yeni[0] === bek(k, hourOfDeg(r.fang))[0]).length };
   // 3) temiz tetik + titreme: saat yönüne dayalı (yanlış) tetik hatası söylenme oranı
   for (const [k, v] of Object.entries(R.titreme)) {
     const low = v.filter(r => r.sc < 85);
     E.titreme[k] = { atis: v.length, skorOrt: +(v.reduce((a, r) => a + r.sc, 0) / v.length).toFixed(1), skor85alti: low.length,
       eskiYanlisTetik: low.filter(r => isClock(r.eski[0])).length, yeniYanlisTetik: low.filter(r => isClock(r.yeni[0])).length,
-      yeniGezinme: low.filter(r => r.yeni[0] === 'gezinme').length, wvOrt: +(v.reduce((a, r) => a + (r.wv || 0), 0) / v.length).toFixed(4) };
+      yeniGezinme: low.filter(r => r.yeni[0] === 'gezinme').length, yeniDikey: low.filter(r => r.yeni.includes('dikey_kayma')).length, wvOrt: +(v.reduce((a, r) => a + (r.wv || 0), 0) / v.length).toFixed(4) };
   }
   // 4) karışık: her atışın gerçek "baskın sorunu" — tetik penceresindeki hareketi tetik hatası mı (F ≥ 1.5·|titreme|) yoksa titreme mi (F ≤ 0.5·|titreme|) belirledi
   const mixed = Object.values(R.karisik).flat().filter(r => r && r.sc != null);
   const lab = r => r.F >= 1.5 * r.w && r.F >= 0.03 ? 'tetik' : r.F <= 0.5 * r.w ? 'titreme' : 'belirsiz';
   const judge = (r, c) => { const L = lab(r); if (L === 'belirsiz') return null;
-    if (L === 'tetik') return isClock(c[0]) && angDiff(r.ang, r.fang) <= 45 && c[0] === MAPP[r.h][0] ? (r.h === hourOfDeg(r.fang) ? 2 : 1) : 0;
+    if (L === 'tetik') return isClock(c[0]) && angDiff(r.ang, r.fang) <= 45 && c[0] === bek(r.prof, r.h)[0] ? (r.h === hourOfDeg(r.fang) ? 2 : 1) : 0;
     return isClock(c[0]) ? 0 : 2; };
   const low = mixed.filter(r => r.sc < 85);
   const sum = key => { let n = 0, ok = 0, ok1 = 0, byL = { tetik: [0, 0], titreme: [0, 0] };
@@ -222,7 +241,30 @@ function evaluate(R) {
   check(yo.nedenSagElYuzde >= 95 && yo.nedenSolElYuzde >= 95, 'Doğru neden (sağ el ve sol el şeması) en az %95', [yo.nedenSagElYuzde, yo.nedenSolElYuzde]);
 
   section('Tetik hareketinin biçimi: yumuşak, son anda ani, erken');
-  for (const [k, e] of Object.entries(E.bicim)) check(e.atis === 12 && e.birSaat === 12 && e.nedenDogru >= 11, `${k}: 12 yönün hepsi bir saat içinde, neden en az 11/12`, e);
+  for (const [k, e] of Object.entries(E.bicim)) check(e.atis === 12 && e.birSaat === 12 && e.nedenDogru >= 11, `${k}: 12 yönün hepsi bir saat içinde, neden en az 11/12`,
+    Object.assign({}, e, { yanlis: R.profiles[k].filter(r => !(r.sc >= 85 || r.yeni[0] === R.TMAP[SINIF[k]][hourOfDeg(r.fang)][0])).map(r => ({ h: r.h, gercek: hourOfDeg(r.fang), aci: Math.round(r.fang), sinif: r.sinif, c: r.yeni })) }));
+
+  section('T8: tetik hareketinin zamanı (son anda ani / baskı boyunca / önceden başlamış)');
+  for (const [k, v] of Object.entries(R.zaman)) {
+    if (!Array.isArray(v)) { check(false, k + ': ' + v.hata); continue; }
+    const prof = k.split(' ')[0], cl = v.filter(r => r.clear), ok = cl.filter(r => r.sinif === SINIF[prof]).length, neden = cl.filter(r => r.sc >= 85 || r.yeni[0] === R.TMAP[SINIF[prof]][r.h][0]).length;
+    const enAz = prof === 'onceden' ? 0.6 : 0.9;
+    check(cl.length >= enAz * v.length && ok >= 0.9 * cl.length && neden >= 0.9 * cl.length,
+      `${prof} (titreme ${k.split(' ')[1]}°): tetik hareketi ${cl.length}/${v.length} atışta ayırt edildi, zamanı ${ok}/${cl.length} doğru, neden ${neden}/${cl.length}`, v.filter(r => r.clear && r.sinif !== SINIF[prof]).slice(0, 3).map(r => ({ sinif: r.sinif, c: r.yeni })));
+  }
+  section('T8: nefes (nişan 4 sn\'de bir 0,2° / 0,4° aşağı-yukarı), tetik temiz');
+  for (const [k, v] of Object.entries(R.nefes)) {
+    if (!Array.isArray(v)) { check(false, k + ': ' + v.hata); continue; }
+    // nefes nişanla ilgili bir hatadır: aşağı-yukarı kayma, sallanma ya da nişan kayarken atış (kovalama) doğru sayılır
+    const low = v.filter(r => r.sc < 85), dik = low.filter(r => r.yeni.includes('dikey_kayma')).length, nis = low.filter(r => ['dikey_kayma', 'gezinme', 'kovalama'].includes(r.yeni[0])).length, tet = low.filter(r => isClockT(r.yeni[0])).length;
+    check(low.length >= 4 && dik >= 0.4 * low.length && nis >= 0.8 * low.length && tet <= 0.15 * low.length,
+      `${k}°: skoru 85 altı ${low.length} atışın ${nis}'inde nişan hatası (${dik}'inde "aşağı-yukarı kayma"), ${tet}'inde (yanlış) tetik hatası`, low.map(r => r.yeni));
+  }
+  if (Array.isArray(R.sure)) {
+    const s = R.sure.map((r, i) => ({ gercek: [3000, 6000, 9000, 12000][i] + 150, olculen: r.nt, uzun: r.yeni.includes('uzun_nisan'), sc: Math.round(r.sc) }));
+    check(s.every(x => x.olculen != null && Math.abs(x.olculen - x.gercek) <= 200), 'T8: nişan süresi (silahı kaldırmadan atışa) ±0,2 sn doğru ölçülüyor: 3 / 6 / 9 / 12 sn', s);
+    check(!s[0].uzun && !s[1].uzun && s[2].uzun && s[3].uzun, 'T8: 8 sn\'yi geçen nişanda "Nişanı uzatma" söyleniyor, kısa nişanda söylenmiyor (tabanca)', s);
+  } else check(false, 'Nişan süresi: ' + R.sure.hata);
 
   section('Tetik temiz, yalnız nişan titremesi (iki titreme modeli, 0,03°–0,2°)');
   let low = 0, yanlis = 0, eskiYanlis = 0;
@@ -231,6 +273,8 @@ function evaluate(R) {
     check(e.yeniYanlisTetik <= Math.max(1, 0.2 * e.skor85alti), `${k}°: skoru 85 altı ${e.skor85alti} atışın ${e.yeniYanlisTetik}'inde tetik hatası söylendi (eski yöntem: ${e.eskiYanlisTetik})`);
   }
   check(yanlis <= 0.12 * low, `Toplam: titremeyi tetik hatası sanma %${Math.round(yanlis / low * 100)} (eski yöntem %${Math.round(eskiYanlis / low * 100)})`, { yanlis, low });
+  const dikey = Object.values(E.titreme).reduce((a, e) => a + e.yeniDikey, 0);
+  check(dikey <= 0.08 * low, `T8: rastgele titremede "aşağı-yukarı kayma" (nefes/yorgunluk) yanlış söylenme oranı %${Math.round(dikey / low * 100)} (en çok %8)`, { dikey, low });
 
   section('Karışık atıcılar: 24 oturum, 480 atış (temiz tetik, küçük–büyük tetik hataları, farklı titremeler)');
   const k = E.karisik;

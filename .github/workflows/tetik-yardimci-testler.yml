@@ -1,0 +1,29 @@
+name: HİSAR Tetik yardımcı araç testleri
+on:
+  push:
+    paths:
+      - 'tetik/tools/**'
+      - 'tetik/test/yedek_dogrula_testi.js'
+      - '.github/workflows/tetik-yardimci-testler.yml'
+  pull_request:
+    paths:
+      - 'tetik/tools/**'
+      - 'tetik/test/yedek_dogrula_testi.js'
+      - '.github/workflows/tetik-yardimci-testler.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Yedek doğrulama regresyon testleri
+        run: node --test tetik/test/yedek_dogrula_testi.js
+      - name: Güvenlik kontrolü (bilgilendirme, bilinen bulgular engellemez)
+        run: node tetik/tools/guvenlik-kontrol.js --json > /tmp/tetik-security.json || true
+      - name: Güvenlik kontrol sonucu
+        run: node -e "const a=require('/tmp/tetik-security.json'); console.log(a.total+' kontrol, '+a.failures+' açık bulgu')"

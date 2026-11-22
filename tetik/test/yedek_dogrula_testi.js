@@ -1,0 +1,11 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {test}=require('node:test');
+const {validate}=require('../tools/yedek-dogrula.js');
+const base=()=>({app:'hisar-tetik',v:2,settings:{},sessions:[{id:'s1',date:1790000000000,shots:[{n:1,at:1000,sc:88,tr:0.5,ho:0.2}]}]});
+test('sağlam v2 yedeği',()=>assert.equal(validate(base()).valid,true));
+test('yanlış uygulama reddedilir',()=>{const a=base();a.app='other';assert.equal(validate(a).valid,false)});
+test('bozuk skor reddedilir',()=>{const a=base();a.sessions[0].shots[0].sc=Infinity;assert.equal(validate(a).valid,false)});
+test('tekrarlanan oturum reddedilir',()=>{const a=base();a.sessions.push({...a.sessions[0]});assert.equal(validate(a).valid,false)});
+test('bozuk tarih reddedilir',()=>{const a=base();a.sessions[0].date='2026';assert.equal(validate(a).valid,false)});
+test('çok büyük atış listesi reddedilir',()=>{const a=base();a.sessions[0].shots=new Array(10001).fill({});assert.equal(validate(a).valid,false)});

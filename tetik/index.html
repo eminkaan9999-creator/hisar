@@ -27,6 +27,7 @@
   --red:#b3261e; --red2:#c0392b; --green:#1b7a43; --green-bg:#1b7a43; --blue:#1f63c4;
   --hold:#1f63c4; --trig:#b07800; --recoil:#c0392b; --good:#1b7a43; --warn:#8a5a00; --bad:#b3261e;
   --panel:#ffffff; --panel2:#f8fafc;
+  --zm-ani:#eb6834; --zm-sur:#2a78d6; --zm-onc:#1baf7a;   /* tetik zamanlaması: ani / baskı boyunca / önceden (doğrulandı, beyaz zemin) */
   --acc:#077682; --acc-bg:#087e8b; --acc-ink:#ffffff; --acc-soft:#e3f3f5;   /* vurgu: yazı ve çizgi (--acc), dolgu (--acc-bg) */
   --sel-bg:#bce9eb; --sel-ink:#075965; --input:#ffffff; --track:#e3e9f0; --tip:#ffffff; --toast:#14263d;
   --good-bg:#e6f4ec; --good-line:#b7dec7; --warn-bg:#fff8e9; --warn-line:#e5d5ab; --warn-ink:#72571e;
@@ -44,6 +45,7 @@ html[data-tema="koyu"]{
   --red:#b62126; --red2:#ff7b7b; --green:#43c97a; --green-bg:#1e7d45; --blue:#6aa8ff;
   --hold:#6aa8ff; --trig:#f5c518; --recoil:#ff7b7b; --good:#79dfa6; --warn:#f0c062; --bad:#ff9eaa;
   --panel:#172536; --panel2:#1c2c40;
+  --zm-ani:#d95926; --zm-sur:#3987e5; --zm-onc:#199e70;   /* koyu zemin için adımlar (doğrulandı, #172536) */
   --acc:#83d9df; --acc-bg:#087e8b; --acc-ink:#ffffff; --acc-soft:#15353f;
   --sel-bg:#15535b; --sel-ink:#ffffff; --input:#203247; --track:#0b1220; --tip:#0b1119; --toast:#2a3f57;
   --good-bg:#12301f; --good-line:#1e4a30; --warn-bg:#2a2412; --warn-line:#4a3b16; --warn-ink:#e2d3ae;
@@ -260,6 +262,14 @@ td.m{font-family:var(--mono)}
 .hd-kart i{font-style:normal;color:var(--acc);font-size:14px;font-weight:600;margin-top:3px}
 .hd-kart.iki{border-left-color:var(--warn);padding:9px 14px} .hd-kart.iki b{font-size:15px}
 .hd-kart.temiz{border-left-color:var(--good)}
+.g-bas{font-size:14px;font-weight:600;color:var(--fg);margin:10px 0 2px;letter-spacing:.02em}
+.g-sec{font-size:14px;color:var(--fg2);margin:4px 0 0;line-height:1.45}
+.g-sec b{color:var(--fg)}
+.zm-seg{display:flex;gap:2px;height:28px;margin:6px 0 4px}
+.zm-seg i{display:block;min-width:2px;border-radius:4px}
+.zm-lej{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--fg2)}
+.zm-lej span{display:inline-flex;align-items:center;gap:6px}
+.zm-lej i{width:12px;height:12px;border-radius:3px;display:inline-block;flex:none}
 .hd-kart small.hd-olc{font-size:13px;color:var(--muted);line-height:1.4;text-wrap:pretty}
 .hd-kart.gozlem{border-left-color:var(--acc-bg)} div.hd-kart.gozlem{cursor:default}
 .hd-kart.olcum{border-left-color:var(--warn);cursor:default}
@@ -663,6 +673,8 @@ body{font-size:16px;line-height:1.45}
           <div id="scoreChart"></div>
           <div class="legend"><span><i style="background:var(--trig)"></i>Tetiği Çekme Hareketi</span><span><i style="background:var(--hold)"></i>Nişan Hattı Gezinmesi</span></div>
           <div id="barChart"></div>
+          <div id="grafikSecili"></div>
+          <div id="grafikZaman"></div>
           <div id="grafikCauses"></div>
         </div>
         <div id="sv-iz" class="view" style="gap:8px" hidden>
@@ -673,6 +685,7 @@ body{font-size:16px;line-height:1.45}
               <button class="del" id="btnDelShot" aria-label="Atışı sil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div></div>
           <div class="shotchips" id="shotChips"></div>
           <div class="ss-l">Atış skoru</div><div class="ss-v" id="izScore">–</div>
+          <div id="izZaman"></div>
           <div class="kv" id="izKv"></div>
           <div id="izCauses"></div>
         </div>
@@ -748,7 +761,7 @@ body{font-size:16px;line-height:1.45}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=37;
+const VER=38;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -2135,7 +2148,7 @@ function temaSecim(){ const v=lsGet(TEMA_K); return v==="koyu"||v==="sistem"?v:"
 function temaEtkin(){ const v=temaSecim(); return v==="sistem"?(temaMq&&temaMq.matches?"koyu":"acik"):v; }
 let tcOn=null;
 function TC(){ if(tcOn) return tcOn; const cs=getComputedStyle(document.documentElement); tcOn={};
-  for(const k of ["bg","bar","panel","panel2","btn2","line","line2","fg","fg2","muted","dim","acc","acc-bg","acc-soft","good","warn","bad","hold","trig","recoil","red","logo","body","mono"])
+  for(const k of ["bg","bar","panel","panel2","btn2","line","line2","fg","fg2","muted","dim","acc","acc-bg","acc-soft","good","warn","bad","hold","trig","recoil","red","logo","body","mono","zm-ani","zm-sur","zm-onc"])
     tcOn[k.replace(/-(\w)/g,(m,c)=>c.toUpperCase())]=cs.getPropertyValue("--"+k).trim();
   return tcOn; }
 function temaUygula(ciz){ const t=temaEtkin(); document.documentElement.setAttribute("data-tema",t); tcOn=null;
@@ -2864,32 +2877,78 @@ function loop(){
 }
 
 /* --- grafik: atış skorları ve her atışta tetik hareketi (sarı) / nişan hattı gezinmesi (mavi) */
+// Sürüm 38: oturum grafikleri. Skor çizgisi (bölgeler yazıyla, ortalama etiketli), atış başına tetik ve nişan hareketi
+// (yukarı / aşağı, aynı birim tek eksen), seçili atışın özeti ve tetik zamanlaması. Noktaya ya da çubuğa dokununca o atış seçilir.
 function renderGrafik(){
   const s=cur.sess; const sh=s.shots; const v=validShots(s); const T=TC();
   if(cur.sel<0||cur.sel>=sh.length) cur.sel=sh.length-1;
-  const W=340,H=210,pl=34,pr=12,pt=10,pb=14;
-  const X=i=>pl+(sh.length<=1?(W-pl-pr)/2:i*(W-pl-pr)/(sh.length-1)), Y=val=>pt+(1-val/100)*(H-pt-pb);
-  let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Atış skorları"><line x1="${pl}" x2="${pl}" y1="${pt}" y2="${H-pb}" stroke="${T.line2}" stroke-width="2"/>`;
-  for(const val of [0,20,40,60,80,100]) g+=`<text x="${pl-8}" y="${Y(val)+5}" fill="${T.muted}" font-size="13" text-anchor="end">${val}</text>`;
-  if(v.length){const a=avgOf(v);g+=`<line x1="${pl+6}" x2="${W-pr}" y1="${Y(a)}" y2="${Y(a)}" stroke="${T.muted}" stroke-dasharray="5 4" stroke-width="1.5"/>`;
-    g+=`<polyline fill="none" stroke="${T.fg2}" stroke-width="1.6" points="${sh.map((q,i)=>X(i)+","+Y(q.sc)).join(" ")}"/>`;}
-  sh.forEach((q,i)=>{g+=`<circle cx="${X(i)}" cy="${Y(q.sc)}" r="${i===cur.sel?6:4}" fill="${i===cur.sel?T.acc:T.panel}" stroke="${T.acc}" stroke-width="2" data-i="${i}" style="cursor:pointer"/>`;});
-  g+=`</svg>`; $("scoreChart").innerHTML=sh.length?g:`<p class="note">Henüz atış yok.</p>`;
-  $("scoreChart").querySelectorAll("circle[data-i]").forEach(c=>c.onclick=()=>{cur.sel=+c.dataset.i;renderGrafik();});
-  if(!sh.length){$("barChart").innerHTML="";$("grafikCauses").innerHTML="";return;}
-  const mxv=Math.max(0.05,...sh.map(q=>Math.max(q.tr,q.ho)));
-  const nice=[0.05,0.1,0.15,0.2,0.3,0.5,0.75,1,1.5,2,3,5,10]; const top=nice.find(n=>n>=mxv*1.05)||mxv;
-  const BW=340,BH=230,mid=BH/2,bl=34,br=12; const bw=Math.min(36,(BW-bl-br)/sh.length*0.9); const step=(BW-bl-br)/Math.max(1,sh.length);
-  const yv=val=>val/top*(mid-12);
-  let b=`<svg viewBox="0 0 ${BW} ${BH}" width="100%" role="img" aria-label="Atış başına tetik ve nişan hareketi"><line x1="${bl}" x2="${bl}" y1="8" y2="${BH-8}" stroke="${T.line2}" stroke-width="2"/>`;
-  const ku=S.unit==="moa"?60:S.unit==="mil"?17.7778:1; for(const f of [1/3,2/3,1]){ const t=top*f; b+=`<text x="${bl-6}" y="${mid-yv(t)+4}" fill="${T.muted}" font-size="11" text-anchor="end">${fx(t*ku,t*ku<1?2:1)}</text><text x="${bl-6}" y="${mid+yv(t)+4}" fill="${T.muted}" font-size="11" text-anchor="end">${fx(t*ku,t*ku<1?2:1)}</text>`; }
-  sh.forEach((q,i)=>{ const x0=bl+i*step+(step-bw)/2; const ht=yv(q.tr), hh=yv(q.ho), sel=i===cur.sel;
-    b+=`<g data-i="${i}" style="cursor:pointer"><rect x="${x0}" y="${mid-ht}" width="${bw}" height="${Math.max(1,ht)}" fill="${T.trig}" stroke="${sel?T.fg:T.panel}" stroke-width="${sel?2:1}"/><rect x="${x0}" y="${mid}" width="${bw}" height="${Math.max(1,hh)}" fill="${T.hold}" stroke="${sel?T.fg:T.panel}" stroke-width="${sel?2:1}"/></g>`; });
-  b+=`<line x1="${bl}" x2="${BW-br}" y1="${mid}" y2="${mid}" stroke="${T.line2}" stroke-width="1"/></svg><p class="note">Yukarı: tetik çekme hareketi · aşağı: nişan hattı gezinmesi (${esc(S.unit==="deg"?"derece":S.unit==="moa"?"MOA":"milyem")}).</p>`;
-  $("barChart").innerHTML=b; $("barChart").querySelectorAll("g[data-i]").forEach(g2=>g2.onclick=()=>{cur.sel=+g2.dataset.i;renderGrafik();});
-  const q=sh[cur.sel]; const el=$("grafikCauses"); el.innerHTML=q&&q.c&&q.c.length?causeButtons(q.c):`<p class="note">${q&&q.sc>=85?"Bu atışta belirgin bir hata yok.":""}</p>`; bindCauses(el);
+  const n=sh.length, sel=cur.sel;
+  if(!n){ $("scoreChart").innerHTML=`<p class="note">Henüz atış yok.</p>`; $("barChart").innerHTML=""; $("grafikSecili").innerHTML=""; $("grafikZaman").innerHTML=""; $("grafikCauses").innerHTML=""; return; }
+  // 1) skor çizgisi
+  { const lo=Math.max(0,Math.min(50,Math.floor((Math.min(...sh.map(q=>q.sc))-5)/10)*10));
+    const W=340,H=206,L=32,R=48,TP=12,B=24, X=i=>L+(n<=1?(W-L-R)/2:i*(W-L-R)/(n-1)), Y=val=>TP+(1-(val-lo)/(100-lo))*(H-TP-B), ay=v.length?Y(avgOf(v)):-99;
+    let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Atış skorları, ${n} atış${v.length?", ortalama "+fx(avgOf(v),0):""}">`;
+    for(const [val,ad] of [[100,""],[85,"harika"],[70,"iyi"],[50,""],[lo,""]].filter((x,i,a)=>x[0]>=lo&&a.findIndex(y=>y[0]===x[0])===i)){
+      g+=`<line x1="${L}" x2="${W-R}" y1="${Y(val)}" y2="${Y(val)}" stroke="${T.line}" stroke-width="1"/><text x="${L-6}" y="${Y(val)+4}" fill="${T.muted}" font-size="11" text-anchor="end">${val}</text>`;
+      if(ad&&Math.abs(Y(val)-5-ay)>13) g+=`<text x="${W-R+9}" y="${Y(val)-5}" fill="${T.muted}" font-size="11">${ad}</text>`; }
+    const k=Math.max(1,Math.ceil(n/8)); for(let i=0;i<n;i++) if(i%k===0||i===n-1) g+=`<text x="${X(i)}" y="${H-B+16}" fill="${T.muted}" font-size="11" text-anchor="middle">${i+1}</text>`;
+    if(v.length){ const a=avgOf(v); g+=`<line x1="${L}" x2="${W-R}" y1="${Y(a)}" y2="${Y(a)}" stroke="${T.fg2}" stroke-width="1"/><text x="${W-R+9}" y="${Y(a)+4}" fill="${T.fg}" font-size="11" font-weight="600">ort. ${fx(a,0)}</text>`; }
+    if(n>1) g+=`<polyline fill="none" stroke="${T.acc}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${sh.map((q,i)=>X(i).toFixed(1)+","+Y(q.sc).toFixed(1)).join(" ")}"/>`;
+    sh.forEach((q,i)=>{ const on=i===sel; g+=`<circle cx="${X(i)}" cy="${Y(q.sc)}" r="${on?6:4}" fill="${on?T.acc:T.panel}" stroke="${on?T.panel:T.acc}" stroke-width="2"/>`; });
+    if(sel>=0){ const q=sh[sel], ty=Y(q.sc)>TP+18?Y(q.sc)-11:Y(q.sc)+21; g+=`<text x="${clamp(X(sel),L+10,W-R-10)}" y="${ty}" fill="${T.fg}" font-size="12" font-weight="700" text-anchor="middle">${fx(Math.floor(q.sc),0)}</text>`; }
+    const hw=Math.max(12,n>1?(W-L-R)/(n-1)/2:24); sh.forEach((q,i)=>{ g+=`<rect data-i="${i}" x="${X(i)-hw}" y="0" width="${2*hw}" height="${H-B}" fill="transparent" style="cursor:pointer" aria-label="Atış ${i+1}: ${fx(Math.floor(q.sc),0)}"><title>Atış ${i+1}: ${fx(Math.floor(q.sc),0)}</title></rect>`; });
+    g+=`</svg>`; $("scoreChart").innerHTML=g;
+    $("scoreChart").querySelectorAll("rect[data-i]").forEach(c=>c.onclick=()=>{cur.sel=+c.dataset.i;renderGrafik();}); }
+  // 2) tetik (yukarı) ve nişan (aşağı) hareketi: aynı birim, tek eksen; çubuk ≤24 px, uç 4 px yuvarlak, aralarında 2 px boşluk
+  { const mxv=Math.max(0.05,...sh.map(q=>Math.max(q.tr||0,q.ho||0)));
+    const nice=[0.05,0.1,0.15,0.2,0.3,0.5,0.75,1,1.5,2,3,5,10]; const top=nice.find(x=>x>=mxv*1.05)||mxv;
+    const BW=340,BH=220,mid=BH/2,bl=36,br=10, step=(BW-bl-br)/Math.max(1,n), bw=Math.max(3,Math.min(24,step-2)), yv=val=>Math.min(val,top)/top*(mid-14);
+    const ku=S.unit==="moa"?60:S.unit==="mil"?17.7778:1, uad=S.unit==="deg"?"derece":S.unit==="moa"?"MOA":"milyem";
+    let b=`<svg viewBox="0 0 ${BW} ${BH+10}" width="100%" role="img" aria-label="Atış başına tetik ve nişan hareketi (${uad})">`;
+    for(const f of [1/2,1]){ const t=top*f, lab=fx(t*ku,t*ku<1?2:1); b+=`<line x1="${bl}" x2="${BW-br}" y1="${mid-yv(t)}" y2="${mid-yv(t)}" stroke="${T.line}" stroke-width="1"/><line x1="${bl}" x2="${BW-br}" y1="${mid+yv(t)}" y2="${mid+yv(t)}" stroke="${T.line}" stroke-width="1"/>`;
+      b+=`<text x="${bl-6}" y="${mid-yv(t)+4}" fill="${T.muted}" font-size="11" text-anchor="end">${lab}</text><text x="${bl-6}" y="${mid+yv(t)+4}" fill="${T.muted}" font-size="11" text-anchor="end">${lab}</text>`; }
+    b+=`<text x="2" y="${mid-yv(top)-8}" fill="${T.muted}" font-size="11">tetik ↑</text><text x="2" y="${mid+yv(top)+16}" fill="${T.muted}" font-size="11">nişan ↓</text><line x1="${bl}" x2="${BW-br}" y1="${mid}" y2="${mid}" stroke="${T.line2}" stroke-width="1"/>`;
+    const cubuk=(x0,y0,h,up,c,on)=>{ const r=Math.min(4,h/2,bw/2); return h<1?`<rect x="${x0}" y="${up?y0-1:y0}" width="${bw}" height="1" fill="${c}"/>`
+      :up?`<path d="M${x0} ${y0}V${y0-h+r}Q${x0} ${y0-h} ${x0+r} ${y0-h}H${x0+bw-r}Q${x0+bw} ${y0-h} ${x0+bw} ${y0-h+r}V${y0}Z" fill="${c}" opacity="${on?1:0.85}"/>`
+      :`<path d="M${x0} ${y0}V${y0+h-r}Q${x0} ${y0+h} ${x0+r} ${y0+h}H${x0+bw-r}Q${x0+bw} ${y0+h} ${x0+bw} ${y0+h-r}V${y0}Z" fill="${c}" opacity="${on?1:0.85}"/>`; };
+    sh.forEach((q,i)=>{ const x0=bl+i*step+(step-bw)/2, on=i===sel; b+=`<g>${cubuk(x0,mid-1,yv(q.tr||0),true,T.trig,on)}${cubuk(x0,mid+1,yv(q.ho||0),false,T.hold,on)}</g>`;
+      if(on) b+=`<rect x="${x0-3}" y="${mid-yv(top)-3}" width="${bw+6}" height="${2*yv(top)+6}" rx="4" fill="none" stroke="${T.fg2}" stroke-width="1"/>`;
+      b+=`<rect data-i="${i}" x="${bl+i*step}" y="0" width="${Math.max(step,1)}" height="${BH}" fill="transparent" style="cursor:pointer" aria-label="Atış ${i+1}: tetik ${ang(q.tr||0)}, nişan ${ang(q.ho||0)}"><title>Atış ${i+1}: tetik ${ang(q.tr||0)}, nişan ${ang(q.ho||0)}</title></rect>`; });
+    b+=`</svg>`;                                                    // dokunma hedefleri en üstte: çizgi dokunmayı yutmasın
+    $("barChart").innerHTML=b; $("barChart").querySelectorAll("rect[data-i]").forEach(g2=>g2.onclick=()=>{cur.sel=+g2.dataset.i;renderGrafik();}); }
+  // 3) seçili atışın özeti, tetik zamanlaması ve nedenleri
+  const q=sh[sel];
+  $("grafikSecili").innerHTML=q?`<p class="g-sec"><b>Atış ${sel+1}</b> · skor ${fx(Math.floor(q.sc),0)} · tetik hareketi ${ang(q.tr||0)} · nişan gezinmesi ${ang(q.ho||0)}${q.nt!=null?` · nişan süresi ${fx(q.nt/1000,1)} sn`:""}</p>`:"";
+  $("grafikZaman").innerHTML=q?zamanHtml(q,s):"";
+  const el=$("grafikCauses"); el.innerHTML=q&&q.c&&q.c.length?causeButtons(q.c):`<p class="note">${q&&q.sc>=85?"Bu atışta belirgin bir hata yok.":""}</p>`; bindCauses(el);
 }
-$("grafikInfo").onclick=()=>openSheet("Grafik",`<p><b>Üstteki çizgi:</b> atış skorları (0–100). Kesikli çizgi ortalama. Bir noktaya dokununca o atış seçilir.</p><p><b>Alttaki çubuklar:</b> her atışta tetiği çekme hareketi (sarı, yukarı) ve atıştan önceki nişan hattı gezinmesi (mavi, aşağı). Sarı uzunsa sorun tetikte, mavi uzunsa tutuşta ve duruşta.</p><button class="btn" data-close>Tamam</button>`);
+// Sürüm 38: tetik zamanlaması: seçili atışta nişanın hızı zamana göre (−1000..+600 ms). Arka planda evreler yazıyla: tutuş, tetik
+// (son 150 ms; son 50 ms daha koyu), takip. Tek seri, lejant yok; başlık ve alttaki cümle ne çizildiğini söyler.
+function zamanHtml(q,s){
+  const a=q&&q.tz?decTrace(q.tz):null; if(!a||a.length<TRN*2) return "";
+  const T=TC(), hz=SPEED.has(s.drill), d=hz?null:dinamik(q), k=tetikSinif(d);
+  const W=340,H=178,L=36,R=10,TP=26,B=30, x=t=>L+(t-TR0)/(TR1-TR0)*(W-L-R);
+  const v=[]; for(let i=1;i<TRN;i++) v.push([TR0+i*TRS,Math.hypot(a[i*2]-a[i*2-2],a[i*2+1]-a[i*2-1])/(TRS/1000)]);
+  const pre=v.filter(p=>p[0]<=40).map(p=>p[1]), mx=Math.max(0.2,...pre)*1.15, nice=[0.25,0.5,1,2,3,5,10,20,50,100,200,500], top=nice.find(n=>n>=mx)||mx;
+  const y=val=>TP+(1-Math.min(val,top)/top)*(H-TP-B), ku=S.unit==="moa"?60:S.unit==="mil"?17.7778:1;
+  let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Tetik zamanlaması: nişan hızı zamana göre${k?", "+TSINIF_AD[k]:""}">`;
+  const bant=(t0,t1,c,o)=>`<rect x="${x(t0)}" y="${TP}" width="${x(t1)-x(t0)}" height="${H-TP-B}" fill="${c}" fill-opacity="${o}"/>`;
+  g+=bant(TR0,-150,T.hold,0.07)+bant(-150,0,T.trig,0.12)+bant(-60,-10,T.trig,0.16)+bant(0,TR1,T.recoil,0.07);
+  for(const [t0,t1,ad] of [[TR0,-150,"tutuş"],[-150,0,"tetik"],[0,TR1,"takip"]]) g+=`<text x="${(x(t0)+x(t1))/2}" y="${TP-9}" fill="${T.muted}" font-size="11" text-anchor="middle">${ad}</text>`;
+  for(const f of [0,0.5,1]){ const val=top*f; g+=`<line x1="${L}" x2="${W-R}" y1="${y(val)}" y2="${y(val)}" stroke="${T.line}" stroke-width="1"/><text x="${L-5}" y="${y(val)+4}" fill="${T.muted}" font-size="11" text-anchor="end">${val?fx(val*ku,val*ku<1?2:val*ku<10?1:0):"0"}</text>`; }
+  for(const t of [-1000,-500,-150,0,300,600]) g+=`<text x="${x(t)}" y="${H-B+16}" fill="${T.muted}" font-size="11" text-anchor="${t===TR1?"end":t===TR0?"start":"middle"}">${t>0?"+"+t:t}</text>`;
+  g+=`<text x="${W-R}" y="${H-3}" fill="${T.muted}" font-size="11" text-anchor="end">ms · 0: tetik düştü · hız: ${S.unit==="deg"?"°":S.unit==="moa"?"MOA":"mil"}/sn</text>`;
+  g+=`<line x1="${x(0)}" x2="${x(0)}" y1="${TP}" y2="${H-B}" stroke="${T.fg2}" stroke-width="1"/>`;
+  g+=`<polyline fill="none" stroke="${T.fg}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${v.map(p=>x(p[0]).toFixed(1)+","+y(p[1]).toFixed(1)).join(" ")}"/>`;
+  if(v.some(p=>p[0]>40&&p[1]>top)) g+=`<text x="${x(TR1)-3}" y="${TP+12}" fill="${T.muted}" font-size="11" text-anchor="end">↑ ölçek dışı</text>`;
+  g+=`</svg>`;
+  const ne=!d?(hz?"Hızlı alıştırmada zamanlama aranmaz.":"Bu atışta zamanlama ölçülemedi."):!trigClear(q,s,d)?"Tetik anındaki hareket nişan titremesi düzeyinde; zamanlamadan neden çıkarılmadı."
+    :k==="ani"?"Hız tetik düşmeden hemen önce (son 50 ms) sıçradı: <b>son anda ani</b>. Parmak ya da irkilme."
+    :k==="onceden"?"Hız tetik penceresinden önce yükseldi ve atışa kadar sürdü: <b>önceden başlamış</b>. Nişan kayarken atış."
+    :"Hız tetik penceresi boyunca yükseldi: <b>baskı boyunca</b>. Tutuş baskısı.";
+  return `<p class="g-bas">Tetik zamanlaması</p><div class="zm-g">${g}</div><p class="g-sec">${ne}${d?` Son 1 sn ortalama hız ${ang(d.v1)}/sn, son 0,25 sn ${ang(d.v25)}/sn.`:""}</p>`;
+}
+$("grafikInfo").onclick=()=>openSheet("Grafik",`<p><b>Skor çizgisi:</b> atış skorları (0–100). 85 üstü harika, 70–85 iyi; düz çizgi ortalama. Bir noktaya dokununca o atış seçilir.</p><p><b>Çubuklar:</b> her atışta tetiği çekme hareketi (yukarı) ve atıştan önceki nişan gezinmesi (aşağı), aynı birimde. Yukarısı uzunsa sorun tetikte, aşağısı uzunsa tutuşta ve duruşta.</p><p><b>Tetik zamanlaması:</b> seçili atışta nişanın hızı. Hız son 50 ms'de sıçradıysa hareket ani (parmak, irkilme); tetik penceresi boyunca yükseldiyse yavaş (tutuş baskısı); daha önce başladıysa nişan kayarken atış.</p><button class="btn" data-close>Tamam</button>`);
 
 /* --- iz */
 let replayRAF=null;
@@ -2909,8 +2968,8 @@ function renderIz(){
   $("izScore").textContent=q?fx(q.sc,1):"–";
   $("cantTxt").textContent=q?sgn(q.ca,1)+"°":"–"; $("cantLine").setAttribute("transform",q?`rotate(${(-(q.ca||0)).toFixed(1)} 30 6)`:"");
   $("btnDelShot").hidden=!q||!!(cur.run&&cur.run.active)||!!s.sample;
-  if(!q){ $("izKv").innerHTML=`<p class="note" style="grid-column:1/-1">Henüz atış yok.</p>`; $("izCauses").innerHTML=""; drawTrace(null,1); return; }
-  $("izKv").innerHTML=shotNotes(q);
+  if(!q){ $("izKv").innerHTML=`<p class="note" style="grid-column:1/-1">Henüz atış yok.</p>`; $("izCauses").innerHTML=""; $("izZaman").innerHTML=""; drawTrace(null,1); return; }
+  $("izKv").innerHTML=shotNotes(q); $("izZaman").innerHTML=zamanHtml(q,s);
   const el=$("izCauses"); el.innerHTML=(q.c&&q.c.length)?causeButtons(q.c):""; bindCauses(el);
   drawTrace(q,1);
 }
@@ -3295,7 +3354,18 @@ function anFaults(ss,cmp){
     const mx=Math.max(...cnt), h=cnt.indexOf(mx); if(dirN>=4&&mx/dirN>=0.3) txt+=` Hatalı atışlar en çok <b>saat ${h}</b> yönüne kayıyor.`; }
   const trend=t=>{ if(t.b==null) return ""; const d=(t.a-t.b)*100; return Math.abs(d)<3?"aynı":d<0?"▼ azalıyor":"▲ artıyor"; };
   const list=top.length?`<div class="an-top">${top.map((t,i)=>`<button data-cause="${t.k}"><span class="rk">${i+1}</span><span>${esc(CAUSES[t.k].ad)}<small>atışların ${pctT(t.sh*100,true)}</small></span><span class="tr">${trend(t)} ›</span></button>`).join("")}</div>`:"";
-  return anCard("anFaults","Hata haritası","an_hata",txt,all.length?`<div class="an-c an-ring" data-an="ring">${ringSvg(cnt,bad,all.length)}</div><p class="an-cap" id="anRingCap">Dilim: hatalı atışların kaydığı yön (12 yukarı, 3 sağ). Dokun: sayısı.</p>${list}`:"");
+  return anCard("anFaults","Hata haritası","an_hata",txt,all.length?`<div class="an-c an-ring" data-an="ring">${ringSvg(cnt,bad,all.length)}</div><p class="an-cap" id="anRingCap">Dilim: hatalı atışların kaydığı yön (12 yukarı, 3 sağ). Dokun: sayısı.</p>${zamanDagilim(all)}${list}`:"");
+}
+// Sürüm 38: tetik hatalarının zamanı (bölümlü çubuk): son anda ani / baskı boyunca / önceden. Paylar çubukta, adlar ve sayılar lejantta
+function zamanDagilim(all){
+  const say={ani:0,surekli:0,onceden:0}; let n=0;
+  for(const {q,s} of all){ if(q.sc>=85||SPEED.has(s.drill)||!q.c||!(SAAT_C.has(q.c[0])||q.c[0]==="kovalama")) continue; const k=tetikSinif(dinamik(q)); if(k){ say[k]++; n++; } }
+  if(n<4) return "";
+  const T=TC(), parca=[["ani","Son anda ani",T.zmAni],["surekli","Baskı boyunca",T.zmSur],["onceden","Önceden",T.zmOnc]].filter(p=>say[p[0]]);
+  const pay=k=>Math.round(say[k]/n*100), en=parca.slice().sort((a,b)=>say[b[0]]-say[a[0]])[0];
+  const ne={ani:"Çoğu son anda ani: parmak ya da irkilme. Tetiğe yavaş ve sürekli bas, ne zaman düşeceğini bilmemeye çalış.",surekli:"Çoğu baskı boyunca yavaş: tutuş baskısı. Tutuşu önceden kur, tetik çekerken öbür parmakları oynatma.",onceden:"Çoğu tetikten önce başlamış: nişan kayarken atış. Nişan toparlanmadan tetiği bitirme."}[en[0]];
+  return `<p class="g-bas">Tetik hatalarının zamanı</p><div class="zm-seg" role="img" aria-label="${parca.map(p=>p[1]+" %"+pay(p[0])).join(", ")}">${parca.map(p=>`<i style="flex:${say[p[0]]};background:${p[2]}" title="${p[1]}: ${say[p[0]]} atış (%${pay(p[0])})"></i>`).join("")}</div>
+    <div class="zm-lej">${parca.map(p=>`<span><i style="background:${p[2]}"></i>${p[1]} · ${say[p[0]]} atış (%${pay(p[0])})</span>`).join("")}</div><p class="g-sec">${ne}</p>`;
 }
 function ringSvg(cnt,bad,n){
   const C=125, R=98, r=56, mx=Math.max(1,...cnt);
@@ -4952,7 +5022,7 @@ function openFromHash(){
 window.addEventListener("hashchange",openFromHash);
 
 /* --- test kancası */
-window.__hisar={olcumUyari,olcumNotlari,toastSon:()=>(toast.son||[]).slice(),toastSil:()=>{toast.son=[];},get ble(){return ble;},trigClear,sistematik,hedefMetin,TESHIS_V,dinamik,tetikSinif,oturumGozlem,teshisKanit,nisanNoktasi,encTrace,decTrace,TMAP_P,TMAP_R,SAAT_C,SENS_TABAN,get h360(){return h360;},h360Giris,h360Cikis,h360Gonder,h360Ozet,h360Kuyruk,h360Alias,h360Adlar,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
+window.__hisar={zamanHtml,zamanDagilim,renderGrafik,olcumUyari,olcumNotlari,toastSon:()=>(toast.son||[]).slice(),toastSil:()=>{toast.son=[];},get ble(){return ble;},trigClear,sistematik,hedefMetin,TESHIS_V,dinamik,tetikSinif,oturumGozlem,teshisKanit,nisanNoktasi,encTrace,decTrace,TMAP_P,TMAP_R,SAAT_C,SENS_TABAN,get h360(){return h360;},h360Giris,h360Cikis,h360Gonder,h360Ozet,h360Kuyruk,h360Alias,h360Adlar,wizardAxis,applyCfg,wizardSensor,startGuard,mountPrompt,get S(){return S;},proc,get sim(){return sim;},get cur(){return cur;},get sessions(){return sessions;},parseBle,selectSource,openDrill,openReview,startRun,stopRun,showView,setSub,returnToSensor,sensorPaired,isDemoSess,sensorTone,get source(){return source;},raw,rawCsv,openRawExport,micState,micStatusText,decSnd,
   feedPhone:(acc,rot)=>{if(phoneH)phoneH({accelerationIncludingGravity:{x:acc[0],y:acc[1],z:acc[2]},rotationRate:{alpha:rot[2],beta:rot[0],gamma:rot[1]}});},
   ble, CAUSES, DR, diagnose, verdict, scaleFor, hourOf, openSettings, renderSettings, get setPage(){return setPage;}, updateLinkUi, bleWatch,
   sensorDisconnect, connectNow, autoConnect, lossPct, startSensor, decJerk, stopSources, flash, shareSession:(id,kind)=>shareSession(sessions.find(x=>x.id===id)||cur.sess,kind), buildReport:(s)=>buildReport(s||cur.sess),

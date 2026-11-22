@@ -1,4 +1,4 @@
-# HİSAR TETİK: Nişan hataları, sensörün ölçebildikleri, teşhis yöntemi ve ölçüm uyarıları (sürüm 36–37, T8)
+# HİSAR TETİK: Nişan hataları, sensörün ölçebildikleri, teşhis yöntemi, ölçüm uyarıları ve grafikler (sürüm 36–38, T8)
 
 Kullanıcı isteği (22 Kasım 2026): "Nişan hatalarını internetten araştır; sensörün ölçebileceği bütün gerçekçi nişan hataları olsun.
 Hep aynı hataları vermesin. Hassasiyetleri cihazın özelliklerine göre ayarla, uyarıları geliştir." ve "İşlevsellik de çok önemli olsun."
@@ -145,6 +145,25 @@ Hepsi oturum özetinde "Ölçüm notları" kartında sayılarıyla toplanır.
 
 Oturum özetindeki ölçüm notları ayrıca şunları sayar: veri boşluğu olan atışlar, tepmenin sensör sınırını (±16 g, ±2000 °/sn) aştığı atışlar
 ve sensörün yön testindeki gibi takılı görünmediği oturumlar.
+
+## 9. Grafikler (sürüm 38)
+
+İstek: "Grafikler daha net ve anlaşılır olsun." Kurallar: ince işaretler (2 px çizgi, ≥8 px nokta, 2 px yüzey halkası), düz ve ince ızgara, tek eksen (iki ölçekli grafik yok), iki ve daha çok seride lejant, seçici etiket, ≥24 px dokunma hedefi, yazılar metin renginde.
+
+| Grafik | Ne gösteriyor | Yenilik |
+|---|---|---|
+| Skor çizgisi (Grafik) | Atış skorları 0–100 | 85 "harika" ve 70 "iyi" bölgeleri yazıyla; ortalama düz çizgi ve etiketli; seçili atışın skoru yazılı; her atışın geniş dokunma hedefi |
+| Tetik / nişan çubukları (Grafik) | Atış başına tetik hareketi (yukarı) ve nişan gezinmesi (aşağı), aynı birim | Çubuk en çok 24 px, ucu 4 px yuvarlak, aralarında boşluk; seçili atış çerçeveli; dokununca değer |
+| Seçili atışın özeti | Skor, tetik, nişan, nişan süresi | Yeni satır |
+| Tetik zamanlaması (Grafik ve İz) | Seçili atışta nişanın hızı, −1000..+600 ms | Yeni. Evreler arka planda yazıyla (tutuş, tetik, takip); son 50 ms koyu; altında sınıf (son anda ani / baskı boyunca / önceden) ve SCATT'ın iki hızı |
+| Tetik hatalarının zamanı (Analiz) | Dönemdeki tetik hatalarının son anda ani / baskı boyunca / önceden payları | Yeni. Bölümlü çubuk, lejantta ad, sayı ve pay, en sık olana göre öneri |
+
+**Zamanlama renkleri:** doğrulayıcıyla denetlendi (renk körlüğü ayrımı, normal görüş, zemin kontrastı).
+
+| Tema | Ani / baskı boyunca / önceden | Sonuç |
+|---|---|---|
+| Aydınlık (#ffffff) | #eb6834 / #2a78d6 / #1baf7a | Hepsi geçti. Yeşilin kontrastı 2,82; lejantta yazı ve sayı olduğu için yeterli |
+| Karanlık (#172536) | #d95926 / #3987e5 / #199e70 | Hepsi geçti |
 
 ## Kaynaklar
 

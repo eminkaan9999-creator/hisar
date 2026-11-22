@@ -131,19 +131,19 @@ const denetim = () => {
     const oku = () => page.evaluate(async () => {
       const cs = getComputedStyle(document.documentElement), v = n => cs.getPropertyValue('--' + n).trim().toLowerCase();
       const hex = p => '#' + [p[0], p[1], p[2]].map(n => n.toString(16).padStart(2, '0')).join('');
-      const l = document.querySelector('#scoreChart svg line'), r = document.querySelector('#barChart rect'), c = document.getElementById('trace');
+      const l = document.querySelector('#scoreChart svg line'), r = document.querySelector('#barChart g > :first-child'), c = document.getElementById('trace');   // sürüm 38: ızgara çizgisi, atışın tetik çubuğu
       const iz = c && c.offsetParent ? hex(c.getContext('2d').getImageData(3, 3, 1, 1).data) : null;
       const rapor = await window.__hisar.buildReport();
       return { tema: document.documentElement.dataset.tema, eksen: l ? l.getAttribute('stroke').toLowerCase() : null, cubuk: r ? r.getAttribute('fill').toLowerCase() : null, iz,
-        rapor: hex(rapor.getContext('2d').getImageData(2, 2, 1, 1).data), line2: v('line2'), trig: v('trig'), panel2: v('panel2'), bg: v('bg') };
+        rapor: hex(rapor.getContext('2d').getImageData(2, 2, 1, 1).data), line: v('line'), line2: v('line2'), trig: v('trig'), panel2: v('panel2'), bg: v('bg') };
     });
     await page.evaluate(() => window.__hisar.setSub('grafik')); await sleep(250);
     const a = await oku();
-    check(a.tema === 'acik' && a.eksen === a.line2 && a.cubuk === a.trig, 'Aydınlık: grafik ekseni ve tetik çubuğu tema renginde', a);
+    check(a.tema === 'acik' && a.eksen === a.line && a.cubuk === a.trig, 'Aydınlık: grafik ızgarası ve tetik çubuğu tema renginde', a);
     check(a.rapor === a.bg, 'Aydınlık: paylaşım resminin zemini tema renginde', a);
     await page.emulateMedia({ colorScheme: 'dark' }); await sleep(350);
     const b = await oku();
-    check(b.tema === 'koyu' && b.eksen === b.line2 && b.cubuk === b.trig && b.line2 !== a.line2, 'Tema değişince açık grafik kendiliğinden karanlık renklerle yeniden çizildi', b);
+    check(b.tema === 'koyu' && b.eksen === b.line && b.cubuk === b.trig && b.line !== a.line, 'Tema değişince açık grafik kendiliğinden karanlık renklerle yeniden çizildi', b);
     check(b.rapor === b.bg && b.bg === '#0d1622', 'Karanlık: paylaşım resmi karanlık zeminde', b);
     await page.evaluate(() => window.__hisar.setSub('iz')); await sleep(300);
     const c = await oku();

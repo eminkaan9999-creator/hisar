@@ -1,4 +1,4 @@
-# HİSAR TETİK: Nişan hataları, sensörün ölçebildikleri ve teşhis yöntemi (sürüm 36, T8)
+# HİSAR TETİK: Nişan hataları, sensörün ölçebildikleri, teşhis yöntemi ve ölçüm uyarıları (sürüm 36–37, T8)
 
 Kullanıcı isteği (22 Kasım 2026): "Nişan hatalarını internetten araştır; sensörün ölçebileceği bütün gerçekçi nişan hataları olsun.
 Hep aynı hataları vermesin. Hassasiyetleri cihazın özelliklerine göre ayarla, uyarıları geliştir." ve "İşlevsellik de çok önemli olsun."
@@ -129,6 +129,22 @@ zamanlama, ölçüm satırı, oturum gözlemleri, lazerle nişan noktası (şeki
 - **Gerçek nefes ve kol yorgunluğu:** benzetimdeki eşiklerin (dikey kayma oranı 8) gerçek kayıtta tutup tutmadığı.
 - **Nişan süresi:** sürgü çekme ve silahı indirme hareketlerinin 20 °/sn eşiğini her zaman aştığı.
 - **Kamera ve lazerle nişan noktası:** gerçek lazer sıfırıyla.
+
+## 8. Ölçüm uyarıları (sürüm 37)
+
+Teşhisin güvenilirliğini bozan cihaz durumları oturum sırasında söylenir. Her biri bir oturumda bir kez söylenir ve bir atışta en çok bir uyarı çıkar.
+Hepsi oturum özetinde "Ölçüm notları" kartında sayılarıyla toplanır.
+
+| Uyarı | Ne zaman | Neden önemli |
+|---|---|---|
+| Ölçüm hızı düşük | Tetikten önceki 1 sn'de 120'den az ölçüm (HİSAR sensörü 200/sn, telefon sensörü ≈60/sn) | Son 50 ms'de 6'dan az ölçüm kalır; zamanlama ayrımı yapılmaz, yalnız yön kullanılır |
+| Bluetooth veri kaybı | Son 10 sn'de kayıp %3 ve üstü | Kayıp olan atışlarda iz ve değerler yaklaşık olur |
+| Sensörün sıfırı kaymış olabilir | Art arda 4 atışta, tutuşta aynı yöne (kosinüs > 0,9) düzgün ve en az 0,3 °/sn kayma | İnsan kolu her atıştan önce aynı yöne aynı hızda kaymaz; bu çoğunlukla jiroskop sıfırının (ısınma) kaymasıdır ve her atışta aynı sahte hatayı üretir |
+| Sıfır ölçülmeden başlama | Kayıtlı sıfır yok ve sensör bağlandıktan sonra 1,5 sn hiç durmadı | MPU-6886'nın sıfır sapması ±1 °/sn'ye kadar çıkar; 150 ms'de 0,15°'lik sahte hareket |
+| Lazer görülmüyor | Lazerli oturumda art arda 3 atışta nokta kamerada yok | Kamera hedefi görmüyor ya da lazer yanmıyor |
+
+Oturum özetindeki ölçüm notları ayrıca şunları sayar: veri boşluğu olan atışlar, tepmenin sensör sınırını (±16 g, ±2000 °/sn) aştığı atışlar
+ve sensörün yön testindeki gibi takılı görünmediği oturumlar.
 
 ## Kaynaklar
 

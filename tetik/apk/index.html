@@ -2578,7 +2578,7 @@ function causeArt(k,good){
   const sol=(cur.sess?effHand(cur.sess):S.hand)==="L", cx=60+(sol?-1:1)*Math.cos(a)*off, cy=52+Math.sin(a)*off; const spread=k==="gezinme"&&!good?15:k==="takip"&&!good?9:5;
   // T8: yeni hataların izi: kovalama çapraz bir hatta, dikey kayma dikey, uzun nişan geniş, nişan noktası sıkı ama kayık grup
   const sx=good?1:k==="dikey_kayma"?0.25:k==="kovalama"?1.4:1, sy=good?1:k==="dikey_kayma"?2.6:k==="kovalama"?1.4:1, kk=!good&&k==="kovalama";
-  const sp=!good&&k==="uzun_nisan"?14:!good&&k==="nisan_noktasi"?4:spread, ox=!good&&k==="nisan_noktasi"?-22:0, oy=!good&&k==="nisan_noktasi"?-16:0;
+  const sp=!good&&k==="uzun_nisan"?14:!good&&k==="nisan_noktasi"?4:!good&&k==="kovalama"?11:spread, ox=!good&&k==="nisan_noktasi"?-22:0, oy=!good&&k==="nisan_noktasi"?-16:0;
   let dots=""; const pts=[[0,0],[1,-.6],[-.8,.7],[.5,1],[-1,-.8],[.2,-1.1]]; pts.forEach(([x,y])=>{ const X=kk?(x+y)/2:x, Y=kk?(x+y)/2:y; dots+=`<circle cx="${(cx+ox+X*sp*sx).toFixed(1)}" cy="${(cy+oy+Y*sp*sy).toFixed(1)}" r="3.2" fill="#1d1d1d"/>`;});
   const tilt=k==="kanting"&&!good?`transform="rotate(14 60 52)"`:"";
   return `<svg viewBox="0 0 120 112" role="img" aria-label="${good?"Doğru":"Hatalı"}"><rect width="120" height="112" fill="#f2f2f2"/><g ${tilt}>${[44,32,20,9].map((r,i)=>`<circle cx="60" cy="52" r="${r}" fill="${i===3?"#d93a3f":"none"}" stroke="#b5b5b5" stroke-width="1.2"/>`).join("")}<path d="M60 4v96M12 52h96" stroke="#c9c9c9" stroke-width=".8"/></g>${dots}
@@ -2800,7 +2800,7 @@ function teshisKanit(q,s){
   const c=q&&q.c&&q.c[0]; if(!c||!s) return "";
   const hz=SPEED.has(s.drill), d=hz?null:dinamik(q), dm=s.dist||S.dist||25, uz=deg=>`${ang(deg)} (${fx(dm,dm%1?1:0)} m'de ${fx(Math.tan(Math.abs(deg)*RAD)*dm*100,1)} cm)`;
   if(SAAT_C.has(c)||c==="kovalama"){ const k=tetikSinif(d), m=Math.hypot(q.dx||0,q.dy||0), h=q.h;
-    const z=k==="ani"?` Hareketin %${Math.round(clamp(d.son50,0,1)*100)} kadarı son 50 ms'de oldu: ani.`:k==="onceden"?" Kayma tetik baskısından önce başlamıştı.":k==="surekli"?" Hareket baskı boyunca yavaş yavaş oldu.":"";
+    const z=k==="ani"?(d.son50>=0.95?" Hareketin tamamı son 50 ms'de oldu: ani.":` Hareketin %${Math.round(clamp(d.son50,0,1)*100)} kadarı son 50 ms'de oldu: ani.`):k==="onceden"?" Kayma tetik baskısından önce başlamıştı.":k==="surekli"?" Hareket baskı boyunca yavaş yavaş oldu.":"";
     const hz=q.x&&q.x.hz&&q.x.hz<HZ_EN_AZ?` Ölçüm hızı düşük (saniyede ${q.x.hz}): hareketin zamanı ölçülemedi.`:"";
     return `Tetik düşmeden önceki 150 ms'de namlu saat ${h} yönüne ${uz(m)} kaydı.${z}${hz}`; }
   if(c==="dikey_kayma"&&d) return `Atıştan önceki saniyede nişan saniyede ${ang(Math.abs(d.ky))} ${d.ky<0?"aşağı":"yukarı"} kaydı.`;

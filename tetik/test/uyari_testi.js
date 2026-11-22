@@ -64,7 +64,7 @@ const FAKE = fs.readFileSync(path.join(__dirname, 'sahte_sensor.js'), 'utf8');
   check(R.notlar.length === 6 && /veri boşluğu/.test(R.notlar[0]) && /hızı düşük/.test(R.notlar[1]) && /ölçüm sınırını/.test(R.notlar[2]) && /yön testindeki/.test(R.notlar[3]) && /sıfırı kaymış/.test(R.notlar[4]) && /Lazer 1 atışta/.test(R.notlar[5]),
     'Veri boşluğu, düşük hız, doyma, yön, sıfır ve lazer notları sayılarıyla', R.notlar);
   check(R.notYok.length === 0, 'Sorun yoksa not yok', R.notYok);
-  check(/ÖLÇÜM NOTLARI/i.test(R.kart) && !/ÖLÇÜM NOTLARI/i.test(R.kartYok), 'Özet kartında "Ölçüm notları" yalnız sorun varsa görünüyor', R.kart.slice(-400));
+  check(/Ölçüm notları/i.test(R.kart) && !/Ölçüm notları/i.test(R.kartYok), 'Özet kartında "Ölçüm notları" yalnız sorun varsa görünüyor', { kart: R.kart.slice(0, 300), yok: R.kartYok.slice(0, 200) });
 
   section('Başlarken: sensörün sıfırı ölçülmemiş');
   {

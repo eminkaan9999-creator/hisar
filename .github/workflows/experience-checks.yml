@@ -5,6 +5,9 @@ on:
     paths: ['index.html', 'sw.js', 'version.json', 'manifest.webmanifest', 'oyun/**', 'komuta/**', 'santiye-250888c5/**', 'experience/**', 'scripts/restore-*', 'three.min.js', '.github/workflows/experience-checks.yml']
   pull_request:
     paths: ['index.html', 'sw.js', 'version.json', 'manifest.webmanifest', 'oyun/**', 'komuta/**', 'santiye-250888c5/**', 'experience/**', 'scripts/restore-*', 'three.min.js', '.github/workflows/experience-checks.yml']
+concurrency:
+  group: restored-games-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

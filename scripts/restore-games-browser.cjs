@@ -41,6 +41,7 @@ async function upgrade(page,cache){
   await page.waitForFunction(async name=>{
     const keys=await caches.keys();return keys.includes(name)&&!keys.some(k=>(k.startsWith('hisar-main-')||k.startsWith('hisar-santiye-'))&&k!==name);
   },cache,{timeout:120000});
+  await page.waitForFunction(name=>new Promise(resolve=>{const c=navigator.serviceWorker.controller;if(!c)return resolve(false);const ch=new MessageChannel();const t=setTimeout(()=>resolve(false),500);ch.port1.onmessage=e=>{clearTimeout(t);resolve(e.data?.cache===name);};c.postMessage('VERSION',[ch.port2]);}),cache,{timeout:120000});
   const values=await page.evaluate(async()=>({tank:JSON.parse(localStorage.getItem('m60v2')),site:JSON.parse(localStorage.getItem('hs-proj')),legacy:localStorage.getItem('hisar-santiye-29'),marker:localStorage.getItem('hs-test-preserve'),other:(await caches.keys()).includes('hisar-tetik-preserve')}));
   assert.equal(values.tank.xp,321);assert.equal(values.site.money,7654);assert.equal(values.marker,'original-value');assert.equal(values.other,true);assert.equal(values.legacy,'{"preserve":"rejected-shell-save"}');
 }

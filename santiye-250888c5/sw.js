@@ -25,8 +25,9 @@ self.addEventListener('fetch',event=>{
   const operation=(async()=>{
     const cache=await caches.open(CACHE);
     if(!page){const hit=await cache.match(key);if(hit)return hit;}
-    try{const response=await fetch(request,{cache:page?'no-cache':'default'});if(response.ok)await cache.put(key,response.clone());return response;}
+    try{const response=await fetch(request,{cache:page?'reload':'default'});if(response.ok)await cache.put(key,response.clone());return response;}
     catch(error){const hit=await cache.match(key);if(hit)return hit;throw error;}
   })();
   event.respondWith(operation);event.waitUntil(operation.catch(()=>{}));
 });
+self.addEventListener('message',event=>{if(event.data==='VERSION'&&event.ports?.[0])event.ports[0].postMessage({cache:CACHE});});

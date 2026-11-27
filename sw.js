@@ -17,8 +17,8 @@ const ignore=promise=>Promise.resolve(promise).catch(()=>undefined);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
-  /* no-cache: her dosya sunucuyla doğrulanır (eski kopya kullanılmaz) ama sayfanın az önce indirdiği dosya yeniden indirilmez */
-  await cache.addAll(CORE.map(p=>new Request(url(p),{cache:'no-cache'})));
+  /* Reload bypasses fresh HTTP entries from the rejected release during restoration. */
+  await cache.addAll(CORE.map(p=>new Request(url(p),{cache:'reload'})));
   await Promise.all(OPTIONAL.map(p=>ignore(cache.add(url(p)))));
   await self.skipWaiting();
  })());
@@ -40,12 +40,12 @@ self.addEventListener('fetch',event=>{
   const key=pageKey(r.url);if(!key)return;
   const operation=(async()=>{
    const cache=await caches.open(CACHE);
-   try{const response=await fetch(r);if(response.ok){await ignore(cache.put(key,response.clone()));return response;}return (await cache.match(key))||response;}
+   try{const response=await fetch(r,{cache:'reload'});if(response.ok){await ignore(cache.put(key,response.clone()));return response;}return (await cache.match(key))||response;}
    catch{return (await cache.match(key))||new Response('Bu sayfa çevrimdışı kullanım için henüz hazır değil. İnternet bağlantısıyla yeniden aç.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});}
   })();event.respondWith(operation);event.waitUntil(ignore(operation));return;
  }
  const key=assetKey(r.url);if(!key)return;
- const operation=(async()=>{const cache=await caches.open(CACHE),hit=await cache.match(key);if(hit)return hit;const response=await fetch(r);if(response.ok)await ignore(cache.put(key,response.clone()));return response;})();
+ const operation=(async()=>{const cache=await caches.open(CACHE),hit=await cache.match(key);if(hit)return hit;const response=await fetch(r,{cache:'reload'});if(response.ok)await ignore(cache.put(key,response.clone()));return response;})();
  event.respondWith(operation);event.waitUntil(ignore(operation));
 });
 // VERSION: sayfa kendisini yöneten işçinin önbellek adını sorar; kendi sürümüyle aynı değilse işçiyi bırakıp yeniden yüklenir (index.html)

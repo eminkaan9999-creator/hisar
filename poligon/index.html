@@ -419,7 +419,7 @@ select.inp{font-size:13px;}
 <script src="../shared/kurulus-core.js?v=1"></script>
 <script src="../shared/kurulus-runtime.js?v=1"></script>
 <script>if(window.HisarKurulus){document.write('<script src="../shared/radio-tr.js?v=1"><\/script>');}</script>
-<link rel="stylesheet" href="arena.css?v=29">
+<link rel="stylesheet" href="arena.css?v=30">
 <script defer src="arena-ui.js?v=28"></script>
 </head>
 <body>
@@ -583,6 +583,12 @@ select.inp{font-size:13px;}
       <div class="lbl" style="margin:14px 0 6px">Toplam</div><div class="statsg" id="stats"></div><button class="linkbtn" id="resetStats">Kayıtları sıfırla</button>
     </section>
     <section id="arena-appearance" class="arena-panel" hidden>
+      <fieldset class="arena-pref finish-picker"><legend>Silah kaplaması</legend>
+        <canvas id="finish-preview" width="680" height="180" aria-label="Seçili silahın kaplama önizlemesi"></canvas>
+        <label><input type="radio" name="gunFinish" value="graphite" checked><span>Fırçalı grafit</span></label>
+        <label><input type="radio" name="gunFinish" value="bronze"><span>Saten bronz</span></label>
+        <label><input type="radio" name="gunFinish" value="indigo"><span>Gece indigosu</span></label>
+      </fieldset>
       <fieldset class="arena-pref"><legend>Tema</legend>
         <label><input type="radio" name="arenaContrast" value="standard" checked><span>Gece mavisi</span></label>
         <label><input type="radio" name="arenaContrast" value="high"><span>Yüksek kontrast</span></label>
@@ -594,7 +600,7 @@ select.inp{font-size:13px;}
     </section>
     <footer class="arena-footer">
       <div><span>Geliştirici</span><strong>Emin Kaan Boyacı</strong></div>
-      <div><span id="verTxt">Sürüm 29</span><button type="button" id="upd2" title="Güncellemeyi denetle">Güncelle</button></div>
+      <div><span id="verTxt">Sürüm 30</span><button type="button" id="upd2" title="Güncellemeyi denetle">Güncelle</button></div>
     </footer>
   </div>
 </div>
@@ -2103,18 +2109,47 @@ function drawIron(type,o,cant){
   else{const P=IRON_SPEC.pistol,pw=P.post*pm;
     ctx.fillStyle=metalFill(fx-pw,fy,fx+pw,fy+R,base,hi);ctx.fillRect(fx-pw/2,fy,pw,R*.5);
     ctx.fillStyle=night?'rgba(170,255,150,.95)':'rgba(240,244,236,.95)';ctx.beginPath();ctx.arc(fx,fy+pw*.62,Math.max(2,pm*.75),0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=base;ctx.beginPath();ctx.moveTo(fx-pw*2.6,fy+R*.48);ctx.lineTo(fx+pw*2.6,fy+R*.48);ctx.lineTo(fx+pw*3.2,cy+R*1.4);ctx.lineTo(fx-pw*3.2,cy+R*1.4);ctx.fill();}
+    ctx.fillStyle=finishGradient(ctx,fx-pw*3,fy+R*.48,fx+pw*3,fy+R*.48);ctx.beginPath();ctx.moveTo(fx-pw*2.6,fy+R*.48);ctx.lineTo(fx+pw*2.6,fy+R*.48);ctx.lineTo(fx+pw*3.2,cy+R*1.4);ctx.lineTo(fx-pw*3.2,cy+R*1.4);ctx.fill();}
   // arka gez (odak dışı, bulanık) — önbellekten
   const rc=ironRear(t,W,H,cx,cy,R,pm);ctx.drawImage(rc,0,0,W,H);
   ctx.restore();
 }
 function fpHand(x,y,w,h,rot,glove){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.fillStyle=glove?'#4b5134':'#b98d68';ctx.beginPath();ctx.ellipse(0,0,w,h,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=glove?'#3d4229':'#a57b58';for(let i=0;i<4;i++){ctx.beginPath();ctx.ellipse(-w*.55+i*w*.38,-h*.75,w*.17,h*.42,0,0,Math.PI*2);ctx.fill();}ctx.restore();}
+const finishes={
+  graphite:{edge:'#a6b5c2',mid:'#566471',dark:'#252c35',rough:.40},
+  bronze:{edge:'#dfbd91',mid:'#987449',dark:'#423226',rough:.56},
+  indigo:{edge:'#bbb2df',mid:'#686189',dark:'#302e48',rough:.32}
+};
+function finishKey(){
+  const key=document.documentElement.dataset.gunFinish;
+  return Object.hasOwn(finishes,key)?key:'graphite';
+}
+function finishGradient(c,x,y,endX,endY,f=finishes[finishKey()]){
+  const g=c.createLinearGradient(x,y,endX,endY);
+  g.addColorStop(0,f.dark);g.addColorStop(.22,f.mid);g.addColorStop(.29,f.edge);
+  g.addColorStop(.34,f.mid);g.addColorStop(.78,f.dark);g.addColorStop(1,f.mid);
+  return g;
+}
+function previewFinish(){
+  const canvas=$('finish-preview'),c=canvas.getContext('2d'),key=S.rifle;
+  c.clearRect(0,0,canvas.width,canvas.height);
+  if(isPistol(key))drawPistol(c,[210,76],[457,76],650,key);
+  else drawRifle(c,[52,73],[626,73],420,key,{cb:previewFinish});
+}
+$('arena-appearance').addEventListener('change',e=>{
+  if(e.target.name==='gunFinish'){previewFinish();if(!$('menu').hidden)buildMenu();}
+});
+document.querySelector('[data-arena-open="appearance"]').addEventListener('click',previewFinish);
 function drawFPGun(){
   const cx=W/2,cy=VCY(),R=Math.min(W,VH())*.44,top=cy+R*1.02;if(top>H)return;
   ctx.save();
-  const g=ctx.createLinearGradient(0,top,0,H);g.addColorStop(0,'#2b2e24');g.addColorStop(.25,'#1b1d16');g.addColorStop(1,'#101109');
+  const g=finishGradient(ctx,cx-R*.6,top,cx+R*.65,H);
   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(cx-R*.26,top);ctx.lineTo(cx+R*.26,top);ctx.lineTo(cx+R*.85,H+20);ctx.lineTo(cx-R*.85,H+20);ctx.closePath();ctx.fill();
+  ctx.save();ctx.clip();
+  ctx.strokeStyle=finishes[finishKey()].edge;ctx.globalAlpha=.18;ctx.lineWidth=1;
+  for(let i=-5;i<=5;i++){ctx.beginPath();ctx.moveTo(cx+i*R*.10,top);ctx.lineTo(cx+i*R*.27,H+20);ctx.stroke();}
+  ctx.restore();
   ctx.strokeStyle='rgba(120,124,100,.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-R*.25,top+1);ctx.lineTo(cx+R*.25,top+1);ctx.stroke();
   ctx.fillStyle='rgba(0,0,0,.55)';for(let i=0;i<4;i++){const yy=top+(H-top)*(.18+i*.2),ww=R*(.3+i*.12);ctx.fillRect(cx-ww*.7,yy,ww*.35,R*.06);ctx.fillRect(cx+ww*.35,yy,ww*.35,R*.06);}
   ctx.fillStyle='#4f5c33';ctx.beginPath();ctx.moveTo(cx-R*.95,H+20);ctx.quadraticCurveTo(cx-R*.75,top+R*.55,cx-R*.42,top+R*.42);ctx.lineTo(cx-R*.1,top+R*.62);ctx.quadraticCurveTo(cx-R*.35,H*.98,cx-R*.25,H+20);ctx.fill();
@@ -2462,7 +2497,7 @@ function drawFig(dt,t){
 function drawPistol(c,b,m,sc,key,noMag){
   const dx=m[0]-b[0],dy=m[1]-b[1],L=Math.hypot(dx,dy),a=Math.atan2(dy,dx);
   c.save();c.translate(b[0],b[1]);c.rotate(a);
-  const u=v=>v*L,h=v=>v*sc*.55,mt='#1a1b16',poly=key==='yavuz16'?'#2a2b24':'#3a3d33';
+  const u=v=>v*L,h=v=>v*sc*.55,mt=finishGradient(c,0,-h(.07),0,h(.02)),poly=key==='yavuz16'?'#2a2b24':'#3a3d33';
   c.fillStyle=mt;c.beginPath();c.moveTo(-u(.08),-h(.07));c.lineTo(u(1),-h(.07));c.lineTo(u(1),h(.02));c.lineTo(-u(.08),h(.02));c.closePath();c.fill();
   c.fillStyle='rgba(255,255,255,.12)';for(let i=0;i<4;i++)c.fillRect(-u(.02)+i*u(.04),-h(.06),u(.015),h(.07));
   c.fillStyle=poly;c.beginPath();c.moveTo(-u(.02),h(.02));c.lineTo(u(.35),h(.02));c.lineTo(u(.28),h(.08));c.lineTo(u(.22),h(.08));c.lineTo(u(.16),h(.2));c.lineTo(u(-.04),h(.2));c.closePath();c.fill();
@@ -2478,7 +2513,7 @@ function drawRifle(c,b,m,sc,key,o){
   if(o.cb)o.cb=null;
   const R=RIFLES[key],dx=m[0]-b[0],dy=m[1]-b[1],L=Math.hypot(dx,dy),a=Math.atan2(dy,dx);
   c.save();c.translate(b[0],b[1]);c.rotate(a);
-  const u=v=>v*L,h=v=>v*sc,ms=R.magStyle,wood=R.wood?'#6b4a2b':'#16170f',mt='#16170f';
+  const u=v=>v*L,h=v=>v*sc,ms=R.magStyle,wood=R.wood?'#6b4a2b':'#16170f',mt=finishGradient(c,0,-h(.05),0,h(.055));
   c.fillStyle=wood;c.beginPath();c.moveTo(0,-h(.035));c.lineTo(u(.27),-h(.04));c.lineTo(u(.27),h(.03));c.lineTo(0,h(.06));c.fill();
   c.fillStyle=mt;c.fillRect(u(.25),-h(.05),u(.32),h(.08));
   c.fillStyle=wood;c.beginPath();c.moveTo(u(.33),h(.02));c.lineTo(u(.38),h(.02));c.lineTo(u(.35),h(.11));c.lineTo(u(.31),h(.1));c.fill();
@@ -2922,11 +2957,18 @@ ${G('onpim',fp,C(fp[0],fp[1],3.3,{f:'url(#gB)',z:[-16.6,16.6],m:'bright'})+C(fp[
 const isAR=k=>k==='mpt76'||k==='mpt55';
 // gerçek çizimi tuvale (kart, sınav, şarjör değiştirme) aktarmak için resim: sağ yüz (namlu sağda)
 const RIMG={};
-function rifImg(k,mode,cb){if(!isAR(k)&&k!=='hk33'&&k!=='g3')return null;const id=k+'|'+(mode||'f');let o=RIMG[id];
+function rifImg(k,mode,cb){if(!isAR(k)&&k!=='hk33'&&k!=='g3')return null;const id=k+'|'+(mode||'f')+'|'+finishKey();let o=RIMG[id];
   if(!o){o=RIMG[id]={img:new Image(),ok:false,cbs:[]};
     const st='<style>[data-side="L"],.no2{display:none}'+(mode==='b'?'[data-p="sarjor"]{display:none}':'')+(mode==='m'?'#lrifle>g:not([data-p="sarjor"]){display:none}':'')+'</style>';
-    const sv=labSvg(k).replace(MAT,'').replace('<svg viewBox="0 40 1000 475" xmlns="http://www.w3.org/2000/svg">','<svg viewBox="70 52 860 290" width="1720" height="580" xmlns="http://www.w3.org/2000/svg">'+st).replace(' filter="url(#lsh)"','');
-    o.img.onload=()=>{o.ok=true;const c=o.cbs;o.cbs=[];c.forEach(f=>{try{f();}catch(e){}});};o.img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sv);}
+    const coat=finishes[finishKey()];
+    const sv=labSvg(k).replace(/(<linearGradient id="gA"[^>]*>)[\s\S]*?(<\/linearGradient>)/,(_,a,b)=>a+'<stop stop-color="'+coat.edge+'"/><stop offset=".28" stop-color="'+coat.mid+'"/><stop offset=".78" stop-color="'+coat.dark+'"/><stop offset="1" stop-color="'+coat.mid+'"/>'+b).replace(MAT,'').replace('<svg viewBox="0 40 1000 475" xmlns="http://www.w3.org/2000/svg">','<svg viewBox="70 52 860 290" width="1720" height="580" xmlns="http://www.w3.org/2000/svg">'+st).replace(' filter="url(#lsh)"','');
+    o.img.onload=()=>{
+      const plate=document.createElement('canvas');plate.width=o.img.naturalWidth;plate.height=o.img.naturalHeight;
+      const paint=plate.getContext('2d');paint.drawImage(o.img,0,0);
+      paint.globalCompositeOperation='source-atop';paint.globalAlpha=.48;
+      paint.fillStyle=finishGradient(paint,0,0,plate.width*.18,plate.height,coat);
+      paint.fillRect(0,0,plate.width,plate.height);
+      o.img=plate;o.ok=true;const c=o.cbs;o.cbs=[];c.forEach(f=>{try{f();}catch(e){}});};o.img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sv);}
   if(o.ok)return o.img;if(cb)o.cbs.push(cb);return null;}
 function drawRifImg(c,img,k,b,m){const L=Math.hypot(m[0]-b[0],m[1]-b[1]),a=Math.atan2(m[1]-b[1],m[0]-b[0]),s=L/840,y0=RIF_Y0[k]||197;c.save();c.translate(b[0],b[1]);c.rotate(a);c.drawImage(img,-10*s,-(y0-52)*s,860*s,290*s);c.restore();}
 const labSvg=(k,extra)=>(isAR(k)?svgAR:svgHK)(k,extra);
@@ -3337,7 +3379,8 @@ function l3Build(svg){
   const partOf=el=>{for(let a=el;a&&a.tagName!=='svg';a=a.parentNode)if(a.dataset&&a.dataset.p)return a.dataset.p;return null;};
   const matFor=(el,pid)=>{let key=el.dataset.mat;const f=el.getAttribute('fill')||'',gm=f.match(/url\(#(\w+)\)/);if(!key&&gm&&L3G[gm[1]])key=L3G[gm[1]];
     if(key&&L3M[key]){const p=L3M[key],ck=pid+'|'+key;if(cache[ck])return cache[ck];
-      const mat=new T.MeshStandardMaterial({color:p[0],metalness:p[1],roughness:p[2],envMapIntensity:p[1]>.5?1.15:.7,side:T.DoubleSide,transparent:true,opacity:p[4]||1});
+      const coat=key==='paint'||key==='alu'?finishes[finishKey()]:null;
+      const mat=new T.MeshStandardMaterial({color:coat?coat.mid:p[0],metalness:p[1],roughness:coat?coat.rough:p[2],envMapIntensity:p[1]>.5?1.15:.7,side:T.DoubleSide,transparent:true,opacity:p[4]||1});
       if(p[3]){mat.bumpMap=l3Noise();mat.bumpScale=.3;}if(el.dataset.tex){const per=+el.dataset.tex,t=new T.CanvasTexture(cvTex(4,32,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);g.fillStyle='#5a4320';g.fillRect(0,h*.78,w,h*.22);}));t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1,1/per);mat.map=t;}mat.userData.op=p[4]||1;mats.push(mat);return cache[ck]=mat;}
     const col=l3Color(el);if(!col)return null;const ck=pid+'|'+col.c+'|'+(el.getAttribute('opacity')||1);if(cache[ck])return cache[ck];
     const steel=col.m>.5,mat=new T.MeshStandardMaterial({color:col.c,metalness:steel?.7:col.m,roughness:col.r,envMapIntensity:.7,side:T.DoubleSide,transparent:true,opacity:+(el.getAttribute('opacity')||1)});
@@ -3894,7 +3937,7 @@ if(window.HisarKurulus){
 
 <script>
 (()=>{
-const VER=29,btns=['upd','upd2'].map(i=>document.getElementById(i)).filter(Boolean),vt=document.getElementById('verTxt');
+const VER=30,btns=['upd','upd2'].map(i=>document.getElementById(i)).filter(Boolean),vt=document.getElementById('verTxt');
 const say=t=>{if(vt)vt.innerHTML=t;};say('Sürüm '+VER);
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();

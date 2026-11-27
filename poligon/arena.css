@@ -248,3 +248,8 @@
 #arena-bests>div {padding:12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;}
 #arena-bests dt {font:550 13px/1.4 var(--display);}
 #arena-bests dd {margin:4px 0 0;color:var(--fg);font:700 19px/1.25 var(--display);overflow-wrap:anywhere;}
+
+.finish-picker canvas {grid-column:1/-1;width:100%;height:auto;background:radial-gradient(ellipse at 50% 58%,#363c4b,#10141e 75%);border-radius:11px;}
+.finish-picker label::after {content:"";margin-left:auto;width:22px;height:14px;border-radius:4px;background:linear-gradient(125deg,#252c35,#a6b5c2,#566471);}
+.finish-picker label:has([value=bronze])::after {background:linear-gradient(125deg,#423226,#dfbd91,#987449);}
+.finish-picker label:has([value=indigo])::after {background:linear-gradient(125deg,#302e48,#bbb2df,#686189);}

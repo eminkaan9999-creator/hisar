@@ -1,7 +1,7 @@
 {
   "name": "ÇELİK BÖRÜ",
   "short_name": "ÇELİK BÖRÜ",
-  "description": "Kış koşullarında yardım sevki ve teslimat oyunu",
+  "description": "ÇELİK BÖRÜ: M60A3 tankı ve Uçangöz ile zırhlı birlik oyunu",
   "lang": "tr",
   "start_url": "./",
   "scope": "./",
@@ -11,8 +11,8 @@
     "standalone"
   ],
   "orientation": "any",
-  "background_color": "#081527",
-  "theme_color": "#081527",
+  "background_color": "#12140f",
+  "theme_color": "#1a1c18",
   "icons": [
     {
       "src": "icon-192.png?v=86",

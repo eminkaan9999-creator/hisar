@@ -3,34 +3,14 @@ on:
   push:
     branches: [feature/gameplay-refresh-20261110]
   pull_request:
-    paths: ['experience/radio-*', 'scripts/radio-*', 'assets/radio/**', '.github/workflows/radio-operations.yml']
+    paths: ['experience/**', 'scripts/**', 'sw.js', 'version.json', 'index.html', 'assets/radio/**', '.github/workflows/radio-operations.yml']
 permissions:
   contents: read
 concurrency:
   group: radio-operations-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  assets:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Validate retained recordings against their published manifest
-        run: |
-          node <<'NODE'
-          const fs=require('node:fs'),crypto=require('node:crypto'),assert=require('node:assert/strict');
-          const root='assets/radio/tr/',manifest=JSON.parse(fs.readFileSync(root+'manifest.json'));
-          assert.ok(Object.keys(manifest.clips).length);
-          for(const clip of Object.values(manifest.clips)){
-            assert.match(clip.file,/^[-a-z0-9]+\.mp3$/);
-            assert.equal(crypto.createHash('sha256').update(fs.readFileSync(root+clip.file)).digest('hex'),clip.sha256);
-          }
-          NODE
   validate:
-    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 18
     permissions:

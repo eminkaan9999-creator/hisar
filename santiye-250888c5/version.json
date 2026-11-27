@@ -1,27 +1,13 @@
 {
   "name": "HİSAR Şantiye",
-  "v": "29.0",
-  "theme": "HİSAR Akademi",
-  "eras": [
-    2026,
-    2045
-  ],
-  "missions": [
-    "tarama",
-    "yol",
-    "ikmal",
-    "teslim"
-  ],
+  "v": "20261127-restored-30",
+  "note": "Özgün Şantiye oyunu ve menüleri geri getirildi; kayıtlar korunur.",
+  "restoredFrom": "e2eb419ec8057b681086ccf56e4c9a896c2c8f9b",
   "assets": [
     "index.html",
-    "tema.css",
-    "oyun.mjs",
-    "model.mjs",
-    "sahne.css",
+    "sw.js",
     "manifest.webmanifest",
     "version.json",
-    "sw.js",
-    "simulator.html",
     "sohbetler.txt",
     "assets/barrier.json",
     "assets/barrier_t0.jpg",

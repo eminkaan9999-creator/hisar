@@ -1,8 +1,8 @@
 {
   "name": "HİSAR: KOMUTA",
-  "v": "2.0.0",
+  "v": "2.1.0",
   "independent": true,
-  "scenario": "Gece Nöbeti",
+  "scenario": "Gece Nöbeti ve İlk Işık Vardiyası",
   "theme": "HİSAR Akademi",
   "assets": [
     "index.html",

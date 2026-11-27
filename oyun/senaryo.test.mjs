@@ -1,10 +1,12 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newRun,valid,stops,chooseStop,preparation,handover,command,occupied} from '../komuta/ortak/senaryo.mjs';
+import {newRun,valid,stops,chooseStop,preparation,handover,command,occupied,needsRoute,pickRoute,routePoint,passMarker,startMorning,requestsFor,durationFor,followUpPriority,clock} from '../komuta/ortak/senaryo.mjs';
 test('Beyaz Geçit requires a stationary handover at both distinct destinations before returning',()=>{
   for(const first of [1,2]){
     const s=newRun('boru');assert.equal(chooseStop(s,first),false);
     assert.equal(handover(s),false);preparation(s,'crewChecked');assert.equal(handover(s),false);preparation(s,'loadChecked');assert.equal(handover(s),true);assert.equal(chooseStop(s,first),true);
-    for(const target of [first,3-first,0]){assert.equal(s.target,target);assert.equal(handover(s),false);Object.assign(s,{x:stops[target].x,z:stops[target].z});assert.equal(handover(s,4),false);if(target)assert.equal(handover(s,0,3-target),false);assert.equal(handover(s,0,target),true);}
+    for(const target of [first,3-first,0]){
+      if(needsRoute(s)){assert.ok(pickRoute(s,'creek'));let point;while((point=routePoint(s))){[s.x,s.z]=point;assert.ok(passMarker(s));}}
+      assert.equal(s.target,target);assert.equal(handover(s),false);Object.assign(s,{x:stops[target].x,z:stops[target].z});assert.equal(handover(s,4),false);if(target)assert.equal(handover(s,0,3-target),false);assert.equal(handover(s,0,target),true);}
     assert.ok(s.done);assert.equal(s.receipts.length,2);assert.ok(valid(JSON.parse(JSON.stringify(s)),'boru'));assert.equal(handover(s),false);
   }
 });
@@ -39,13 +41,32 @@ test('release receipts, worker caches and both HTML entry points match the shipp
   }
 });
 import {drive} from './surus.mjs';
-test('both delivery orders and the return leg remain drivable with route assistance',()=>{
-  for(const first of [1,2]){
+test('both roads can be driven in both directions and the receipts show the actual trip',()=>{
+  for(const first of [1,2])for(const route of ['creek','ridge']){
     const s=newRun('boru'),held=new Set(['go']);preparation(s,'crewChecked');preparation(s,'loadChecked');handover(s);chooseStop(s,first);
     for(const dest of [first,3-first,0]){
+      if(needsRoute(s)){assert.ok(pickRoute(s,route));assert.equal(pickRoute(s,'creek'),false);}
       let speed=0,accepted=false;
       for(let i=0;i<1800&&!accepted;i++){speed=drive(s,speed,held,.025,true);accepted=handover(s,speed,dest);}
-      assert.ok(accepted,'stop '+dest+' in order '+first);
-    }assert.ok(s.done);
+      assert.ok(accepted,'stop '+dest+' in order '+first+' via '+route);
+    }
+    assert.ok(s.done);assert.ok(s.passage.seconds>0);assert.ok(s.passage.metres>90);
   }
+});
+test('the new route gates cannot be bypassed and a v121 delivery remains resumable',()=>{
+  const s=newRun('boru');s.loaded=true;s.receipts=[1];s.target=2;
+  Object.assign(s,{x:stops[2].x,z:stops[2].z});assert.equal(handover(s,0,2),false);assert.ok(pickRoute(s,'ridge'));
+  assert.equal(handover(s,0,2),false);assert.equal(passMarker(s),false);assert.ok(valid(JSON.parse(JSON.stringify(s)),'boru'));
+  delete s.passage;assert.ok(valid(s,'boru'));assert.ok(handover(s,0,2));
+});
+test('the night handover selects a morning preconfirmation; late work takes an extra turn',()=>{
+  const n=newRun('komuta');assert.equal(startMorning(n),null);
+  n.turn=8;n.jobs=n.jobs.map((_,i)=>({stage:'closed',closed:[4,6,7][i],finish:2,crew:0}));
+  assert.equal(followUpPriority(n),1);assert.ok(command(n,'priority',2));assert.ok(command(n,'finish'));
+  const s=startMorning(n);assert.equal(s.jobs[2].stage,'confirmed');assert.deepEqual(s.late,[1]);assert.equal(durationFor(s,1),3);
+  assert.equal(clock(1,s),'06.10');assert.equal(requestsFor(s)[2].arrives,0);assert.ok(valid(JSON.parse(JSON.stringify(s)),'komuta'));
+  assert.ok(command(s,'verify',1));assert.ok(command(s,'assign',1,1));command(s,'tick');command(s,'tick');assert.equal(s.jobs[1].stage,'busy');
+  command(s,'tick');assert.equal(s.jobs[1].stage,'arrived');
+  assert.equal(startMorning({...s,done:true}),null);
+  delete n.priority;assert.equal(startMorning(n).priority,1);
 });

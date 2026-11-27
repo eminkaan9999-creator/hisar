@@ -17,8 +17,14 @@ try{
  await p.getByRole('button',{name:'Duraklat',exact:true}).click();await p.reload();await p.getByRole('button',{name:/Göreve devam et/}).click();
  assert.match(await p.locator('.objective').innerText(),/Çamlıova/);
  await p.setViewportSize({width:844,height:390});await assertFit();await p.locator('.terrain[data-ready="3d"]').waitFor();await shot('boru-surus');
+ await p.locator('.map-toggle').tap();await p.getByRole('dialog').waitFor();await p.keyboard.press('Escape');
+ assert.equal(await p.locator('.map-dialog').isVisible(),false);assert.ok(await p.locator('.terrain').isVisible());
  for(const label of ['Teslim fişini al','Teslim fişini al','Seferi kapat']){
    // Drive through normal keyboard input; the vehicle's position and game clock remain entirely in game control.
+   if(await p.locator('[data-route="ridge"]').isVisible()){
+     await p.locator('[data-route="ridge"]').click();await p.reload();await p.getByRole('button',{name:/Göreve devam et/}).click();
+     await p.locator('.road-progress').filter({hasText:'Sırt yolu'}).waitFor();
+   }
    const action=p.locator('.deliver');await action.waitFor();assert.equal(await action.innerText(),label);
    await p.keyboard.down('ArrowUp');
    try{await p.waitForFunction(()=>!document.querySelector('.deliver').disabled,null,{timeout:105000});}finally{await p.keyboard.up('ArrowUp');}
@@ -31,8 +37,14 @@ try{
  await p.getByRole('button',{name:/Görev emrini aç/}).click();await p.getByRole('button',{name:/Nöbeti devral/}).click();await assertFit();await shot('komuta-masa');
  const site=i=>p.locator('.ticket[data-site="'+i+'"]').click(),act=a=>p.locator('[data-order="'+a+'"]').click(),send=t=>p.locator('[data-team="'+t+'"]').click();
  await site(1);await act('verify');await send(1);await site(0);await act('verify');assert.equal(await p.locator('[data-team="1"]').isDisabled(),true);await send(0);
- await act('tick');await act('tick');await site(2);await act('verify');await send(0);await site(0);await act('close');await site(1);await act('close');await act('tick');await act('tick');await site(2);await act('close');await act('finish');await p.getByRole('heading',{name:'Nöbet devir raporu'}).waitFor();
- console.log('PASS command: overlapping requests, crew capacity, late incoming case, receipts and handover');
+ await act('tick');await act('tick');await site(2);await act('verify');await send(0);await site(0);await act('close');await site(1);await act('close');await act('tick');await act('tick');await site(2);await act('close');await p.locator('[data-priority="2"]').click();await act('finish');await p.getByRole('heading',{name:'Nöbet devir raporu'}).waitFor();
+ await p.locator('[data-morning]').click();await p.getByRole('button',{name:/Sabah görev masasına geç/}).click();
+ await p.getByRole('heading',{name:'İlk Işık Vardiyası'}).waitFor();await send(0);await p.reload();await p.getByRole('button',{name:/Göreve devam et/}).click();
+ await site(1);await act('verify');await send(1);await act('tick');await site(2);await act('close');await site(0);await act('verify');await send(0);
+ await act('tick');await site(1);await act('close');await act('tick');await site(0);await act('close');await act('finish');
+ await p.getByRole('heading',{name:'Sabah vardiya raporu'}).waitFor();
+ assert.equal(await p.locator('.stats .stage').filter({hasText:'Devir saati'}).locator('strong').innerText(),'06.30');
+ console.log('PASS command: night handover, chosen priority, morning save/reload, crew returns and second report');
  await p.setViewportSize({width:320,height:568});await assertFit();await p.locator('header [data-theme]').click();assert.equal(await p.locator('html').getAttribute('data-hisar-theme'),'light');
  for(const route of ['/','/komuta/']){await p.goto(base+route);await p.evaluate(()=>navigator.serviceWorker.ready);await p.waitForFunction(()=>!!navigator.serviceWorker.controller);}
  await c.setOffline(true);for(const [route,title] of [['/','Beyaz Geçit'],['/komuta/','Gece Nöbeti']]){await p.goto(base+route);await p.getByRole('heading',{name:title}).waitFor();await assertFit();await p.locator('header [data-nav=history]').click();await p.locator('[data-record="0"]').click();assert.ok(await p.locator('.stats').isVisible());}

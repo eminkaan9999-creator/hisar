@@ -8,11 +8,11 @@
   "ortak/cevrimdisi.js": "a9587c940d132a9ca041ce567346aa24e2a94a0e9b203465d1c2a13bf7d5c732",
   "ortak/fonts/inter-latin-tr.4.001.woff2": "6e2ca196cb2e8e8f9a1a71f6c1af833346cb089fd416a527b38ae0f88ad5834a",
   "ortak/komuta.webp": "6572960160c697884bfd394b74504259405145bd663cc479032de589ab09cc28",
-  "ortak/masa.mjs": "671f47c2f2466f191b8523254c0c0af040ede134bd33f0e5f08fb46c7a7a900e",
-  "ortak/oyun.css": "a6d3edf1981d59f4f74e49b17e9b511c5ac75a1c3c93fa10cf3b9bb7d06a6b60",
-  "ortak/oyun.mjs": "ba6ccd362071fe22330722c945c93ed9d6c2140bb31efff2d4777f845ae5095c",
-  "ortak/senaryo.mjs": "ea08a4e373e8a9f430ac3672aa056f217755ce71a4863cfb97a9c41e15aa9287",
+  "ortak/masa.mjs": "c2833c6069207a8d60945b68b559824301db2ef8e9c14a3571c4a777dd2009e5",
+  "ortak/oyun.css": "76c94ce70410b7860afdf8c61a2244708e7562b50a4333db61cd61808cdb4ebf",
+  "ortak/oyun.mjs": "f1847956c06dd731ff447436e33abefa96d84bbbb104fe82244e1e7a6ad069a0",
+  "ortak/senaryo.mjs": "daa46ecdba109399f2deaaf4aaa4f8e803328a5c9026f5d32057f74acb7e50e4",
   "ortak/tokens.css": "c5217f85e8b2a50b1b32d4dfbbf1630d78ffbfc9326a7b63f9485ba92501d645",
-  "sw.js": "a047f8cd92223402e2a418e2b0de36c53387753a5836bcdce15258e26c0ee4c0",
-  "version.json": "541ab0000f4ccf1f456ff35753dccb12d6b23a640ce84ede72ced42ede06cd9a"
+  "sw.js": "c4de10d0d8ee5892d55f782f1a2a222e43ec7f801818118a18a550e288ad5c32",
+  "version.json": "9b37391defdef513fcd84d4ce6cfd6217b7add59a95492cb29b6fa79110cc250"
 }

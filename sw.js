@@ -1,5 +1,5 @@
 self.gameCache='hisar-main';
-self.gameRevision='121';
+self.gameRevision='122';
 self.gameFiles=[
   "index.html",
   "manifest.webmanifest",

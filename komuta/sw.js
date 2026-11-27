@@ -1,5 +1,5 @@
 self.gameCache='hisar-komuta-site';
-self.gameRevision='2.0.0';
+self.gameRevision='2.1.0';
 self.gameFiles=[
   "index.html",
   "manifest.webmanifest",

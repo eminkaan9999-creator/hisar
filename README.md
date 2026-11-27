@@ -1,17 +1,19 @@
 # HİSAR oyunları
 
-**Çelik Börü — Beyaz Geçit** ana adreste açılır. Araç komutanı çıkış yoklamasını ve yük çizelgesini kontrol eder. Oyuncu vadide iki teslimat yapar, fişleri alır ve üsse döner. Ok tuşları ve ekrandaki kumanda aracı sürer. Yön yardımı ilk açılışta etkindir. İlk teslimden sonra oyuncu sisli dere yolunu veya daha uzun sırt yolunu seçer. Seçilen yolun işaretleri arazide ve büyütülebilen haritada görünür.
+Çelik Börü ve HİSAR KOMUTA, 2186 yılında geçen bilimkurgu savaş alanında açılır. Ortak koyu arayüz, görev seçimi, sonuç arşivi ve çevrimdışı kullanım bulunur.
 
-**HİSAR: KOMUTA — Gece Nöbeti** `komuta/` adresinde açılır. Oyuncu taşkın sonrası nöbeti devralır, talepleri doğrular ve iki destek ekibini görevlendirir. Vardiya on dakikalık turlarla ilerler. Ekipten gelen sonucu kayda geçirmek ve devir raporunu tamamlamak oyuncunun sorumluluğundadır. Gece raporundan açılan İlk Işık Vardiyası saat 06.00’da başlar. Öncelikli noktanın teyidi sabaha aktarılır. Gece geciken teslimlerin takibi bir tur daha sürer.
+**Çelik Börü** enerji darbesi, geçici kalkan ve hedef kilidiyle yönetilen bir hover zırhlı araç oyunudur. Neon Kuşatma üç, Tutulma Hattı dört dalga içerir. W A S D / ok tuşları ile sürüş, Boşluk ile enerji darbesi, Q ile kalkan ve E ile hedef değişimi yapılır. Telefonda ekran düğmeleri kullanılır.
 
-Seferler menüsünden Çelik Börü’de kar sonrası, giderek güçlenen yağmur ve gece sürüşü seçilir. Yükler senaryoya göre değişir. Süre ve yük durumu sefer raporunda üç açık ölçütle değerlendirilir. Yüksek hızla yol dışında sürüş yük durumunu düşürür. Kabin ve takip kamerası, sessiz başlayan ve ayarlardan açılan motor/yağmur sesleri bulunur.
+**HİSAR KOMUTA** üç enerji çekirdeğinin savunulduğu filo oyunudur. Yörünge Kalkanı sekiz, İyon Fırtınası on dalga sürer. Öncü ve Koruyucu filoların görev aralığı ile onarım sürülerinin enerji maliyeti oyun sonucunu etkiler.
 
-KOMUTA’da Dağıtım Günü dört talep içerir. 10.20’deki yağmur bildiriminde merkez dağıtımı veya mahalle servisi seçilir. Seçim son teslimin ekibini, süresini ve ulaşılan hane sayısını belirler. Ekip takvimi ve hedef saatler görev boyunca görünür. Görev seçimi, ses ve kamera tercihi cihazda saklanır.
-
-İki kurgu oyunda görev emri, kayıt ve teslim aşamaları kullanılır. Afet koordinasyonu için genel çerçeve [AFAD Türkiye Afet Müdahale Planı](https://www.afad.gov.tr/turkiye-afet-mudahale-plani), personel ve malzeme nakli için örnek [MSB afet desteği duyurusudur](https://www.msb.gov.tr/SlaytHaber/822023-37583). Yerler, süreler ve karar kuralları oyun için tasarlanmıştır.
+İlk başarılı ağ yüklemesinin ardından oyunlar çevrimdışı açılır. İlerleme ve son 18 sonuç cihazda saklanır. Görevler ve teknoloji özellikleri kurgu oyun kurallarıdır.
 
 ## Çalıştırma
 
-Depo kökünde `python3 -m http.server 8080` çalıştırın. Çelik Börü için `/`, KOMUTA için `/komuta/` yolunu açın. İki oyunun çevrimdışı kurulumu ilk başarılı ağ yüklemesinden sonra hazır olur. Güncel görev ve son on iki rapor kullanılan cihazda saklanır.
+Depo kökünde `python3 -m http.server 8080` çalıştırın. Çelik Börü için `/`, KOMUTA için `/komuta/` adresini açın.
 
-`node --test oyun/*.test.mjs` görev kurallarını ve yayın dosyalarını doğrular. Playwright Chromium kurulduğunda `node oyun/tarayici.cjs` normal oyun girişlerinden iki senaryoyu oynar, kayıtları ve çevrimdışı dönüşü sınar.
+`node --test oyun/*.test.mjs experience/model.test.cjs` kuralları ve yayın dosyalarını denetler. Playwright kurulu olduğunda `node oyun/gelecek-tarayici.cjs` yeni görevleri normal girişlerinden oynar. `node oyun/tarayici.cjs` önceki görevlerin kayıt ve çevrimdışı uyumluluğunu kontrol eder.
+
+## Önceki görevler
+
+Kayıtlar bölümündeki arşiv bağlantısı `?arsiv=1` parametresini açar. Beyaz Geçit, Yağmur Hattı, Gece Sevki, Gece Nöbeti, İlk Işık Vardiyası ve Dağıtım Günü eski kayıtlarıyla buradan kullanılabilir.

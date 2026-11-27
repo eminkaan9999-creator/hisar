@@ -22,6 +22,7 @@ const server=http.createServer((req,res)=>{
   }catch{res.writeHead(404).end();}
 });
 async function seed(page,base,cache){
+  await page.bringToFront();
   await page.goto(base+'upgrade-check.html');
   await page.evaluate(async()=>{
     localStorage.setItem('m60v2',JSON.stringify({xp:321,kr:200,U:{},best:{}}));
@@ -32,16 +33,18 @@ async function seed(page,base,cache){
     await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;
   });
   await page.waitForFunction(async name=>(await caches.keys()).includes(name),cache,{timeout:120000});
-  await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  await page.waitForFunction(()=>navigator.serviceWorker.controller?.state==='activated');
   assert.ok(await page.evaluate(async name=>!!await(await caches.open(name)).match(new URL('index.html',location.href).href),cache));
 }
 async function upgrade(page,cache){
+  await page.bringToFront();
   await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});
   await page.waitForFunction(async name=>(await caches.keys()).includes(name),cache,{timeout:120000});
   await page.waitForFunction(async name=>{
     const keys=await caches.keys();return keys.includes(name)&&!keys.some(k=>(k.startsWith('hisar-main-')||k.startsWith('hisar-santiye-'))&&k!==name);
   },cache,{timeout:120000});
   await page.waitForFunction(name=>new Promise(resolve=>{const c=navigator.serviceWorker.controller;if(!c)return resolve(false);const ch=new MessageChannel();const t=setTimeout(()=>resolve(false),500);ch.port1.onmessage=e=>{clearTimeout(t);resolve(e.data?.cache===name);};c.postMessage('VERSION',[ch.port2]);}),cache,{timeout:120000});
+  await page.waitForFunction(async name=>{if(navigator.serviceWorker.controller?.state!=='activated')return false;const r=await(await caches.open(name)).match(new URL('index.html',location.href));if(!r)return false;const html=await r.text();return html.includes(name.startsWith('hisar-main-')?'var BUILD=126':'20261127-restored-30');},cache,{timeout:120000});
   const values=await page.evaluate(async()=>({tank:JSON.parse(localStorage.getItem('m60v2')),site:JSON.parse(localStorage.getItem('hs-proj')),legacy:localStorage.getItem('hisar-santiye-29'),marker:localStorage.getItem('hs-test-preserve'),other:(await caches.keys()).includes('hisar-tetik-preserve')}));
   assert.equal(values.tank.xp,321);assert.equal(values.site.money,7654);assert.equal(values.marker,'original-value');assert.equal(values.other,true);assert.equal(values.legacy,'{"preserve":"rejected-shell-save"}');
 }
@@ -58,7 +61,7 @@ async function upgrade(page,cache){
   restored=true;
   await upgrade(tp,'hisar-main-v126-original-restored');await upgrade(sp,'hisar-santiye-30-original');
   console.log('PASS both workers upgrade without clearing saves or sibling caches');
-  console.log('CHECK original tank navigation');
+  await tp.bringToFront();console.log('CHECK original tank navigation');
   await tank.addInitScript(()=>{const raf=window.requestAnimationFrame;let primed=false;window.requestAnimationFrame=fn=>raf.call(window,t=>{if(!primed){try{if(typeof setQ==='function'){setQ('dusuk');primed=true;}}catch{}}fn(t);});});
   await tp.goto(base,{waitUntil:'domcontentloaded',timeout:120000});
   console.log('CHECK tank DOM ready');
@@ -74,7 +77,7 @@ async function upgrade(page,cache){
   await tp.screenshot({path:'/tmp/restored-boru.png'});
   console.log('PASS original tank game opens and driving input moves the tank');
   await tp.close();
-  await sp.goto(base+'santiye-250888c5/',{waitUntil:'domcontentloaded',timeout:120000});
+  await sp.bringToFront();await sp.goto(base+'santiye-250888c5/',{waitUntil:'domcontentloaded',timeout:120000});
   await sp.waitForFunction(()=>window.__hs?.vehicles?.length>=10,{},{timeout:120000});
   assert.equal(await sp.locator('iframe').count(),0);
   assert.ok(await sp.locator('#cards .card').count()>=1);

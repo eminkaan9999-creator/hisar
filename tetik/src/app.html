@@ -1,40 +1,62 @@
 <title>Hisar Tetik</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<script>/* tema ilk çizimden önce (Hisar 360 görünümü; Ayarlar › Görünüm) */(function(){var t="acik";try{var v=localStorage.getItem("hisarTetik.v2.tema");if(v==="koyu"||(v==="sistem"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches))t="koyu";}catch(e){}document.documentElement.setAttribute("data-tema",t);})();</script>
+<script>
+/* İlk çizim ve Ayarlar aynı cihaz tercihini kullanır. */
+function tetikTemaSecimi() {
+  try {
+    const secim = localStorage.getItem("hisarTetik.v2.tema");
+    if (secim === "acik" || secim === "sistem") return secim;
+  } catch (_) {}
+  return "koyu";
+}
+function tetikEtkinTema() {
+  const secim = tetikTemaSecimi();
+  if (secim !== "sistem") return secim;
+  return window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "koyu" : "acik";
+}
+document.documentElement.dataset.tema = tetikEtkinTema();
+</script>
 <style>
-/* T5 görünümü: Hisar 360 ile aynı dil. Aydınlık tema varsayılan (açık gri zemin, beyaz kartlar, lacivert, turkuaz,
-   Times New Roman); karanlık tema Hisar 360'ın karanlık renkleri. Seçim: Ayarlar › Görünüm (html[data-tema]).
-   Telefonda alt menü (Merkez, Eğitim, Analiz, Cihazlar, Menü), 900 px ve üstünde solda lacivert menü. En küçük yazı 14 px. */
+/* HİSAR 360 Cosmos paleti ve Akademi'nin ortak Türkçe Inter yazı tipi. */
+@font-face {
+  font-family: "Hisar Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("fonts/inter-latin-tr.4.001.woff2") format("woff2");
+}
 :root{
-  --bg:#f3f6fa; --bar:#ffffff; --hdr:#e9f0f6; --btn:#ffffff; --btn2:#edf1f5; --line:#dce4ee; --line2:#c4d2e2;
-  --fg:#182b43; --fg2:#294057; --muted:#53657b; --dim:#566a80;
+  --bg:#eef1fa; --bar:#f4f6fe; --hdr:#e7ecf8; --btn:#fafbff; --btn2:#e7ecf8; --line:#cbd5eb; --line2:#b7c3db;
+  --fg:#18243f; --fg2:#344462; --muted:#4c5c79; --dim:#50607b;
   --red:#b3261e; --red2:#c0392b; --green:#1b7a43; --green-bg:#1b7a43; --blue:#1f63c4;
   --hold:#1f63c4; --trig:#b07800; --recoil:#c0392b; --good:#1b7a43; --warn:#8a5a00; --bad:#b3261e;
-  --panel:#ffffff; --panel2:#f8fafc;
+  --panel:#fafbff; --panel2:#f4f6fe;
   --zm-ani:#eb6834; --zm-sur:#2a78d6; --zm-onc:#1baf7a;   /* tetik zamanlaması: ani / baskı boyunca / önceden (doğrulandı, beyaz zemin) */
-  --acc:#077682; --acc-bg:#087e8b; --acc-ink:#ffffff; --acc-soft:#e3f3f5;   /* vurgu: yazı ve çizgi (--acc), dolgu (--acc-bg) */
-  --sel-bg:#bce9eb; --sel-ink:#075965; --input:#ffffff; --track:#e3e9f0; --tip:#ffffff; --toast:#14263d;
+  --acc:#4b3baf; --acc-bg:#5b4bc3; --acc-ink:#ffffff; --acc-soft:#e8e4ff;   /* vurgu: yazı ve çizgi (--acc), dolgu (--acc-bg) */
+  --sel-bg:#e8e4ff; --sel-ink:#4b3baf; --input:#ffffff; --track:#e3e9f0; --tip:#ffffff; --toast:#14263d;
   --good-bg:#e6f4ec; --good-line:#b7dec7; --warn-bg:#fff8e9; --warn-line:#e5d5ab; --warn-ink:#72571e;
   --bad-bg:#fdecea; --bad-line:#f0c4c0; --off-bg:#eef2f6; --off-line:#d5dee8; --blue-line:#b9cdee;
-  --ust:#14263d; --nav-bg:#14263d; --nav-ink:#c9d6e4; --nav-sel:rgba(255,255,255,.12);
+  --ust:#f4f6fe; --nav-bg:#f4f6fe; --nav-ink:#4c5c79; --nav-sel:var(--acc-soft);
+  --glow:#8171e51c; --cyan:#097f91;
   --overlay:rgba(20,38,61,.45); --shadow:0 3px 12px rgba(24,43,67,.06);
-  --logo:"Times New Roman",Times,"Liberation Serif",serif;
-  --body:"Times New Roman",Times,"Liberation Serif",serif;
+  --body:"Hisar Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --logo:var(--body);
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   color-scheme:light;
 }
 html[data-tema="koyu"]{
-  --bg:#0d1622; --bar:#101d2b; --hdr:#172536; --btn:#1c2c40; --btn2:#203247; --line:#2b3d52; --line2:#34475d;
-  --fg:#edf3fa; --fg2:#d5e0eb; --muted:#b5c3d2; --dim:#a3b3c5;
+  --bg:#080e20; --bar:#0d152b; --hdr:#18233f; --btn:#18233f; --btn2:#23304d; --line:#2e3d60; --line2:#475775;
+  --fg:#edf2ff; --fg2:#d6def2; --muted:#b0bedb; --dim:#aab8d1;
   --red:#b62126; --red2:#ff7b7b; --green:#43c97a; --green-bg:#1e7d45; --blue:#6aa8ff;
   --hold:#6aa8ff; --trig:#f5c518; --recoil:#ff7b7b; --good:#79dfa6; --warn:#f0c062; --bad:#ff9eaa;
-  --panel:#172536; --panel2:#1c2c40;
+  --panel:#111a31; --panel2:#18233f;
   --zm-ani:#d95926; --zm-sur:#3987e5; --zm-onc:#199e70;   /* koyu zemin için adımlar (doğrulandı, #172536) */
-  --acc:#83d9df; --acc-bg:#087e8b; --acc-ink:#ffffff; --acc-soft:#15353f;
-  --sel-bg:#15535b; --sel-ink:#ffffff; --input:#203247; --track:#0b1220; --tip:#0b1119; --toast:#2a3f57;
+  --acc:#c9bcff; --acc-bg:#b2a2ff; --acc-ink:#17122e; --acc-soft:#2a2450;
+  --sel-bg:#2a2450; --sel-ink:#c9bcff; --input:#18233f; --track:#0b1220; --tip:#0b1119; --toast:#2a3f57;
   --good-bg:#12301f; --good-line:#1e4a30; --warn-bg:#2a2412; --warn-line:#4a3b16; --warn-ink:#e2d3ae;
   --bad-bg:#2c1416; --bad-line:#5a2226; --off-bg:#1b2533; --off-line:#2a3a50; --blue-line:#1f3d63;
-  --ust:#101d2b; --nav-bg:#101d2b; --nav-ink:#c9d4df; --nav-sel:#172536;
+  --ust:#0d152b; --nav-bg:#0d152b; --nav-ink:#b0bedb; --nav-sel:var(--acc-soft);
+  --glow:#8261ee20; --cyan:#79e6ea;
   --overlay:rgba(0,0,0,.6); --shadow:none;
   color-scheme:dark;
 }
@@ -512,6 +534,7 @@ button.k-satir.k-kutu{background:var(--panel);border:1px solid var(--line);borde
 .k-rozet.iyi{background:var(--good-bg);border-color:var(--good-line);color:var(--good)}
 .k-rozet.uyari{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
 .k-rozet.kapali{background:var(--off-bg);border-color:var(--off-line);color:var(--muted)}
+.k-ust{display:grid;gap:12px}
 .k-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .k-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:100px;padding:12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);color:var(--fg);text-align:left;font:inherit;min-width:0}
 .k-tile b{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
@@ -546,7 +569,7 @@ button.k-satir.k-kutu{background:var(--panel);border:1px solid var(--line);borde
 .k-yedek{background:var(--warn-bg);border-color:var(--warn-line)}
 .k-yedek .k-not{color:var(--warn-ink)}
 .k-ayrac{border-top:1px solid var(--line);padding-top:12px}
-@media (min-width:900px){.k-vh,.k-vb{padding-left:24px;padding-right:24px}.k-tiles{gap:12px}.k-ust{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}}
+@media (min-width:900px){.k-vh,.k-vb{padding-left:24px;padding-right:24px}.k-tiles{gap:12px}.k-ust{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
 /* açılış ekranı */
 .splash{background:var(--ust)}
 .splash .sp-logo{width:124px;height:124px;color:#5fd0d6}
@@ -575,36 +598,79 @@ button.k-satir.k-kutu{background:var(--panel);border:1px solid var(--line);borde
 .km-sekil{margin-top:2px}.km-sekil .btn{flex:1 1 110px}
 .gizli{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* ---------------------------------------------------------------- T5: Hisar 360 görünümü */
-html{background:linear-gradient(var(--ust) 0 50%,var(--bar) 50% 100%)}
-body{font-size:16px;line-height:1.45}
-.splash .status{color:#c5d3e2}.splash .status b{color:#fff}
-/* kartlar: beyaz, ince çerçeve, yumuşak gölge, yuvarlak köşe */
+/* HİSAR uygulama kabuğu */
+html{background:var(--bar)}
+body{
+  font-size:16px;line-height:1.45;
+  background-image:radial-gradient(ellipse 90% 440px at 95% -80px,var(--glow),transparent 75%);
+}
+.splash{
+  overflow-y:auto;
+  background:radial-gradient(ellipse at 50% 33%,var(--glow),transparent 63%),var(--bg);
+  color:var(--fg);
+}
+.splash .sp-logo{
+  flex-shrink:0;width:116px;height:116px;padding:20px;color:var(--cyan);
+  border-radius:50%;border:1px solid var(--line2);background:var(--panel);
+  box-shadow:0 0 0 7px var(--bg),0 0 0 8px var(--line),0 0 40px var(--glow);
+}
+.splash .sp-name{margin-top:12px;letter-spacing:.065em;font-size:clamp(27px,7vw,36px)}
+.splash .sp-skip{color:var(--fg);border:1px solid var(--line2);background:var(--panel)}
+.splash .sp-go,.splash .sp-skip{width:min(100%,270px);min-width:0}
+.splash .sp-sub,.splash .sp-dev span{color:var(--muted)}
+.splash .sp-dev b{color:var(--fg)}
+@media(max-height:620px){
+  .splash{justify-content:safe center;gap:8px}
+  .splash .sp-logo{width:72px;height:72px;padding:12px}
+  .splash .sp-sub{margin-bottom:4px}
+}
+.splash .status{color:var(--muted)}.splash .status b{color:var(--fg)}
+/* Kart ve pencere yüzeyleri. */
 .card,.k-kart,.k-tile,button.k-satir.k-kutu,.k-liste,.hd-kart,.sheet-card{box-shadow:var(--shadow)}
 .card{border-radius:16px}.k-kart{border-radius:18px}
-/* düğmeler: beyaz zemin, ince çerçeve; ana düğme turkuaz */
+/* Düğme yüzeyleri ve ana eylem vurgusu. */
 .btn,.mx-btn{background:var(--btn);border:1px solid var(--line2);color:var(--fg);border-radius:12px}
 .btn.primary,.mx-btn.red{border-color:var(--acc-bg)}
 .btn.stop{border-color:var(--red)}
 .btn.ghost,.btn.danger{background:none}
 .k-btn,.k-cips button{background:var(--btn);border:1px solid var(--line2)}
-.k-btn.ana{box-shadow:0 3px 10px rgba(8,126,139,.2)}
+.k-btn.ana{box-shadow:var(--shadow)}
 .mx-btn{min-height:50px}
-/* bölümlü seçim: seçili olan açık turkuaz (Hisar 360'taki gibi) */
+/* Bölümlü seçim. */
 .mx-seg{gap:8px}
 .mx-seg button,.seg button{border:1px solid var(--line2);border-radius:12px}
 .mx-seg button[aria-pressed="true"],.seg button[aria-pressed="true"]{border-color:var(--sel-bg)}
 .kv>div,.kv3>div{background:var(--panel2);border:1px solid var(--line);border-radius:10px}
 .prof .pd{border:1px solid var(--line2)}
 /* başlıklar */
-.k-vh h1{font-size:28px;letter-spacing:-.01em;color:var(--fg)}
-.k-vh h1::before{content:"HİSAR TETİK";display:block;font-size:14px;font-weight:700;letter-spacing:.16em;color:var(--muted);margin-bottom:2px}
 .sec,.h-top{color:var(--fg2);font-weight:700;letter-spacing:.1em}
 .ph{border-bottom:1px solid var(--line)}
 .ph h1{font-weight:700}
 .logo{letter-spacing:.14em}
 .k-bas,.lbl,.card h2,.sheet h2,details.card>summary{letter-spacing:.1em}
-/* telefonda alt menü: beyaz, seçili olan turkuaz */
+/* Akademi kartlarındaki ince kenarlıklar ve HİSAR 360 gezinme vurgusu. */
+.k-vh{margin:14px 16px 4px;padding:14px 16px;min-height:78px;
+  border:1px solid var(--line);border-radius:20px;
+  background:radial-gradient(ellipse at 100% 0,var(--glow),transparent 70%),var(--panel)}
+.k-vh h1{font-size:clamp(22px,3vw,28px);letter-spacing:-.035em}
+.k-vh h1::before{content:"HİSAR TETİK";display:block;font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--acc);margin-bottom:2px}
+.k-ikon{border:1px solid var(--line);border-radius:14px}
+.k-tile,.k-liste,button.k-satir.k-kutu{border-radius:16px}
+.k-tile{background-image:linear-gradient(150deg,var(--glow),transparent 75%)}
+.k-bas,.lbl,.card h2,.sheet h2,details.card>summary{letter-spacing:.035em}
+.btn,.mx-btn,.mx-seg button{letter-spacing:normal;text-transform:none}
+input[type=text],input[type=password],input[type=number],select,textarea{font-size:max(16px,1rem)}
+@media(min-width:900px){
+  .k-vh{margin:20px 24px 8px}
+  .nav{border-right:1px solid var(--line)}
+  .nav .nlogo{color:var(--fg);letter-spacing:.05em}
+  .nav button[aria-selected="true"]{color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}
+}
+@media(max-width:899px){
+  .app{max-width:none}
+  main>.view{max-width:680px;margin-inline:auto}
+  .nav{background:var(--bar);padding-inline:max(4px,env(safe-area-inset-left)) max(4px,env(safe-area-inset-right))}
+}
 @media (max-width:899px){
   .nav{box-shadow:0 -3px 18px rgba(18,52,72,.07)}
   .nav button{color:var(--muted)}
@@ -706,7 +772,7 @@ body{font-size:16px;line-height:1.45}
   <!-- ana menü: telefonda alttaki 5 düğme (.w gizli), 900 px ve üstünde solda 7 ana menü (.n gizli) -->
   <nav class="nav" id="nav" role="tablist" aria-label="Ana menü">
     <div class="netbar" id="netBar" role="status" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 5-2.7M22 8.5A15 15 0 0 0 10.5 5M9 15.5a5 5 0 0 1 6 0M12 19.5h.01M3 3l18 18"/></svg><span>Çevrimdışı · uygulama bu cihazda çalışıyor</span></div>
-    <div class="nlogo" aria-hidden="true"><svg viewBox="0 0 92 92" fill="none"><path d="M46 6L80 20V48C80 66 64 80 46 86C28 80 12 66 12 48V20Z" stroke="#5fd0d6" stroke-width="5" stroke-linejoin="round"/><circle cx="46" cy="46" r="17" stroke="#ffffff" stroke-width="4.5"/><circle cx="46" cy="46" r="4" fill="#5fd0d6"/></svg>HİSAR TETİK</div>
+    <div class="nlogo" aria-hidden="true"><svg viewBox="0 0 92 92" fill="none"><path d="M46 6L80 20V48C80 66 64 80 46 86C28 80 12 66 12 48V20Z" stroke="var(--cyan)" stroke-width="5" stroke-linejoin="round"/><circle cx="46" cy="46" r="17" stroke="var(--fg)" stroke-width="4.5"/><circle cx="46" cy="46" r="4" fill="var(--cyan)"/></svg>HİSAR TETİK</div>
     <button role="tab" data-view="merkez" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg><span class="ln">Kontrol Merkezi</span><span class="sn">Merkez</span></button>
     <button role="tab" class="w" data-view="kamera" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5h3.5l2-2.5h6l2 2.5h3.5v11h-17z"/><circle cx="12" cy="13.5" r="3.5"/></svg><span>Kamera</span></button>
     <button role="tab" class="w" data-view="sensor" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h3l2.5-6 4 12 2.5-6h6"/></svg><span>Sensörler</span></button>
@@ -719,7 +785,7 @@ body{font-size:16px;line-height:1.45}
 </div>
 
 <div class="splash" id="splash" lang="tr">
-  <svg class="sp-logo" viewBox="0 0 92 92" fill="none" aria-hidden="true"><path d="M46 6L80 20V48C80 66 64 80 46 86C28 80 12 66 12 48V20Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="46" cy="46" r="17" stroke="#ffffff" stroke-width="2"/><path d="M46 22v12M46 58v12M22 46h12M58 46h12" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><circle cx="46" cy="46" r="3.2" fill="currentColor"/></svg>
+  <svg class="sp-logo" viewBox="0 0 92 92" fill="none" aria-hidden="true"><path d="M46 6L80 20V48C80 66 64 80 46 86C28 80 12 66 12 48V20Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><circle cx="46" cy="46" r="17" stroke="var(--fg)" stroke-width="2"/><path d="M46 22v12M46 58v12M22 46h12M58 46h12" stroke="var(--fg)" stroke-width="2" stroke-linecap="round"/><circle cx="46" cy="46" r="3.2" fill="currentColor"/></svg>
   <div class="sp-name">HİSAR TETİK</div>
   <div class="sp-sub">Atış ve tetik analizi</div>
   <button class="sp-go" id="spConnect">Bağlan</button>
@@ -746,7 +812,7 @@ body{font-size:16px;line-height:1.45}
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=39;
+const VER=40;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";
@@ -2125,19 +2191,19 @@ function showView(v){
   renderView(v);
 }
 /* ---------------------------------------------------------------- T5: tema (Hisar 360 görünümü) */
-// Aydınlık (varsayılan, Hisar 360 gibi), karanlık ya da cihaza göre. Seçim yalnız bu cihazda tutulur; yedeğe girmez.
+// Karanlık (varsayılan), aydınlık ya da cihaza göre. Seçim yalnız bu cihazda tutulur; yedeğe girmez.
 // Grafikler ve tuvaller renklerini CSS değişkenlerinden alır (TC); tema değişince açık ekran yeniden çizilir.
 const TEMA_K=KEY+".tema", TEMA_T={acik:"Aydınlık",koyu:"Karanlık",sistem:"Cihaza göre"};
 const temaMq=window.matchMedia?matchMedia("(prefers-color-scheme: dark)"):null;
-function temaSecim(){ const v=lsGet(TEMA_K); return v==="koyu"||v==="sistem"?v:"acik"; }
-function temaEtkin(){ const v=temaSecim(); return v==="sistem"?(temaMq&&temaMq.matches?"koyu":"acik"):v; }
+const temaSecim = tetikTemaSecimi;
+const temaEtkin = tetikEtkinTema;
 let tcOn=null;
 function TC(){ if(tcOn) return tcOn; const cs=getComputedStyle(document.documentElement); tcOn={};
   for(const k of ["bg","bar","panel","panel2","btn2","line","line2","fg","fg2","muted","dim","acc","acc-bg","acc-soft","good","warn","bad","hold","trig","recoil","red","logo","body","mono","zm-ani","zm-sur","zm-onc"])
     tcOn[k.replace(/-(\w)/g,(m,c)=>c.toUpperCase())]=cs.getPropertyValue("--"+k).trim();
   return tcOn; }
 function temaUygula(ciz){ const t=temaEtkin(); document.documentElement.setAttribute("data-tema",t); tcOn=null;
-  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content",t==="koyu"?"#101d2b":"#14263d");
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content",getComputedStyle(document.documentElement).getPropertyValue("--bar").trim());
   if(ciz){ renderView(curView); if(pages.length) refreshPage(); } }
 function temaSec(v){ if(!TEMA_T[v]) return; lsSet(TEMA_K,v); temaUygula(true); }
 if(temaMq){ const f=()=>{ if(temaSecim()==="sistem") temaUygula(true); }; if(temaMq.addEventListener) temaMq.addEventListener("change",f); else if(temaMq.addListener) temaMq.addListener(f); }
@@ -4749,7 +4815,7 @@ function settingsMeter(){ updMic(); if(!$("mFill2")) return; const thr=proc.cfg.
 
 /* --- Ses ve görünüm */
 function pgGorunum(){ return `<div class="card">
-    <div class="field"><span class="fl">Tema</span>${segHtml("sTema",Object.entries(TEMA_T),temaSecim())}<p class="note" style="margin:0">Aydınlık, Hisar 360'ın görünümüdür. Cihaza göre: telefonun gece/gündüz ayarını izler.</p></div>
+    <div class="field"><span class="fl">Tema</span>${segHtml("sTema",Object.entries(TEMA_T),temaSecim())}<p class="note" style="margin:0">“Cihaza göre” seçeneği cihazın açık veya koyu görünümünü izler.</p></div>
     <div class="field"><span class="fl">Açı birimi</span>${segHtml("sUnit",[["deg","Derece"],["moa","MOA"],["mil","Milyem"]],S.unit)}</div>
     <div class="field"><label for="sDist">Hedef mesafesi (m), kaymanın santim karşılığı için</label><input type="number" id="sDist" min="3" max="1000" step="1" value="${S.dist}"></div>
     <label class="toggle">Zamanlı alıştırmalarda ekranda büyük uyarı (ATEŞ, PAR)<input type="checkbox" id="sVis" ${S.visualCue?"checked":""}></label>

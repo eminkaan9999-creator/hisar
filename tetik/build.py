@@ -8,6 +8,7 @@ Kullanim:
 Her calismada Android sayfasi apk/index.html'ye de yazilir: GitHub Pages'ten yayinlanir, Android uygulamasi
 yeni surumu buradan kendi icinden indirir (PageStore.java; yazi tiplerini APK'dakilere kendisi baglar).
 """
+import base64
 import sys, pathlib, shutil
 
 here = pathlib.Path(__file__).resolve().parent
@@ -20,13 +21,20 @@ if args:
         src_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(given, src_path)
 src = src_path.read_text(encoding='utf-8')
+# The native updaters download a single HTML file, including its offline font and license.
+font = here / 'src' / 'fonts' / 'inter-latin-tr.4.001.woff2'
+font_url = 'url("fonts/' + font.name + '")'
+embedded_font = base64.b64encode(font.read_bytes()).decode('ascii')
+license_text = (font.parent / 'OFL.txt').read_text(encoding='utf-8')
+src = src.replace(font_url, f'url("data:font/woff2;base64,{embedded_font}")')
+src = src.replace('@font-face {', f'/* {license_text} */\n@font-face {{', 1)
 
 head = '''<!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#14263d">
+<meta name="theme-color" content="#0d152b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -34,7 +42,7 @@ head = '''<!doctype html>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html,body{margin:0}body{font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html,body{margin:0}body{font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
 '''
@@ -50,9 +58,9 @@ apk_head = '''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#14263d">
+<meta name="theme-color" content="#0d152b">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
-<style>:root{color-scheme:light}html,body{margin:0}body{font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:dark}html,body{margin:0}body{font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="bridge.js"></script>
 </head>
 <body>

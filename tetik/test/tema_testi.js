@@ -1,4 +1,4 @@
-// Tema testi (T5, Hisar 360 görünümü): aydınlık varsayılan; karanlık ve "cihaza göre" seçimi; seçimin ilk çizimden önce
+// Tema testi (T5, Hisar 360 görünümü): karanlık varsayılan; aydınlık ve "cihaza göre" seçimi; seçimin ilk çizimden önce
 // uygulanması ve yeniden açılışta kalması; bütün ekranlarda ve ayar sayfalarında yazı/zemin kontrastı (normal yazı ≥ 4,5,
 // büyük yazı ≥ 3; devre dışı ögeler hariç, WCAG gibi); grafiklerin, izin ve paylaşım resminin temanın renkleriyle çizilmesi.
 // Sahte sensörle ve sürüm 28'de kaydedilmiş gerçek depoyla çalışır.
@@ -46,28 +46,33 @@ const denetim = () => {
 (async () => {
   const srv = await serve(PORT); const browser = await chromium.launch();
 
-  section('Varsayılan: aydınlık (Hisar 360) tema; tema ilk çizimden önce uygulanır');
+  section('İlk çizimde ortak HİSAR teması ve kayıtlı seçim');
   {
-    const ilk = () => { new MutationObserver((ms, o) => { if (document.querySelector('.app')) { window.__ilkTema = document.documentElement.getAttribute('data-tema'); o.disconnect(); } }).observe(document, { childList: true, subtree: true }); };
-    const { ctx, page, errs } = await openApp(browser, { port: PORT, init: [FAKE, ilk], storage: V28.depo });
-    const a = await page.evaluate(() => ({ t: document.documentElement.dataset.tema, ilk: window.__ilkTema, bg: getComputedStyle(document.body).backgroundColor, font: getComputedStyle(document.body).fontFamily, meta: document.querySelector('meta[name="theme-color"]').content }));
-    check(a.t === 'acik' && a.ilk === 'acik', 'Kayıtlı seçim yokken aydınlık tema', a);
-    check(a.bg === 'rgb(243, 246, 250)', 'Zemin Hisar 360 açık grisi (#f3f6fa)', a.bg);
-    check(/Times New Roman/.test(a.font), 'Yazı tipi Hisar 360 ile aynı (Times New Roman)', a.font);
-    check(a.meta.toLowerCase() === '#14263d', 'Tarayıcı çubuğu rengi Hisar 360 laciverti', a.meta);
-    check(errs.length === 0, 'Sayfa hatası yok', errs);
-    await ctx.close();
-    const k = await openApp(browser, { port: PORT, init: [FAKE, ilk], storage: Object.assign({}, V28.depo, { [TEMA_K]: 'koyu' }) });
-    const b = await k.page.evaluate(() => ({ t: document.documentElement.dataset.tema, ilk: window.__ilkTema, bg: getComputedStyle(document.body).backgroundColor, meta: document.querySelector('meta[name="theme-color"]').content }));
-    check(b.t === 'koyu' && b.ilk === 'koyu', 'Karanlık seçimi uygulama kodu çalışmadan, ilk çizimden önce uygulanıyor (yanıp sönme yok)', b);
-    check(b.bg === 'rgb(13, 22, 34)', 'Karanlık zemin Hisar 360 karanlık rengi (#0d1622)', b.bg);
-    check(b.meta.toLowerCase() === '#101d2b', 'Karanlıkta tarayıcı çubuğu rengi', b.meta);
-    await k.ctx.close();
+    const ilk = () => { new MutationObserver((ms, o) => { if (document.querySelector('.app')) { window.__ilkTema = document.documentElement.dataset.tema; o.disconnect(); } }).observe(document, { childList: true, subtree: true }); };
+    for (const [secim, tema, zemin, cubuk] of [
+      [null, 'koyu', 'rgb(8, 14, 32)', '#0d152b'],
+      ['acik', 'acik', 'rgb(238, 241, 250)', '#f4f6fe']
+    ]) {
+      const storage = { ...V28.depo };
+      if (secim) storage[TEMA_K] = secim;
+      const { ctx, page, errs } = await openApp(browser, { port: PORT, init: [ilk], storage });
+      const state = await page.evaluate(async () => {
+        const fonts = await document.fonts.load('16px "Hisar Inter"', 'İıŞşĞğÇçÖöÜü');
+        return { tema: document.documentElement.dataset.tema, ilk: window.__ilkTema,
+          zemin: getComputedStyle(document.body).backgroundColor, cubuk: document.querySelector('meta[name="theme-color"]').content,
+          embedded: fonts.some(f => f.status === 'loaded'), family: getComputedStyle(document.body).fontFamily };
+      });
+      check(state.tema === tema && state.ilk === tema, 'İlk çizimde beklenen tema: ' + tema, state);
+      check(state.zemin === zemin && state.cubuk === cubuk, 'Sayfa ve tarayıcı çubuğu HİSAR paletinde', state);
+      check(state.embedded && state.family.startsWith('"Hisar Inter"'), 'Türkçe Inter paket içinden yükleniyor', state);
+      check(errs.length === 0, 'Sayfa hatası yok', errs);
+      await ctx.close();
+    }
   }
 
   section('Ayarlar › Görünüm: seçim, kalıcılık, "Cihaza göre"');
   {
-    const { ctx, page, errs } = await openApp(browser, { port: PORT, init: [FAKE], storage: V28.depo });
+    const { ctx, page, errs } = await openApp(browser, { port: PORT, init: [FAKE, () => { if (!localStorage.getItem('hisarTetik.v2.tema')) localStorage.setItem('hisarTetik.v2.tema', 'acik'); }], storage: V28.depo });
     await page.evaluate(() => window.__hisar.showView('ayarlar')); await sleep(200);
     const kok = await page.evaluate(() => ({ g: !!document.getElementById('rtGorunum'), h: !!document.getElementById('rtH3'), t: (document.getElementById('rtGorunum') || {}).textContent }));
     check(kok.g && kok.h && /Aydınlık/.test(kok.t), 'Ayarlar\'da Görünüm (tema adıyla) ve Hisar 360 hesabı satırları', kok);
@@ -76,7 +81,7 @@ const denetim = () => {
     check(JSON.stringify(seg) === JSON.stringify([['Aydınlık', 'true'], ['Karanlık', 'false'], ['Cihaza göre', 'false']]), 'Tema seçenekleri: Aydınlık (seçili), Karanlık, Cihaza göre', seg);
     await page.click('#sTema [data-v="koyu"]'); await sleep(300);
     const k = await page.evaluate(k => ({ t: document.documentElement.dataset.tema, kayit: localStorage.getItem(k), bg: getComputedStyle(document.body).backgroundColor, sayfa: !!document.getElementById('sTema'), basili: document.querySelector('#sTema [aria-pressed="true"]').dataset.v }), TEMA_K);
-    check(k.t === 'koyu' && k.kayit === 'koyu' && k.bg === 'rgb(13, 22, 34)', 'Karanlık seçilince hemen uygulanıyor ve kaydediliyor', k);
+    check(k.t === 'koyu' && k.kayit === 'koyu' && k.bg === 'rgb(8, 14, 32)', 'Karanlık seçilince hemen uygulanıyor ve kaydediliyor', k);
     check(k.sayfa && k.basili === 'koyu', 'Görünüm sayfası açık kalıyor, seçili düğme güncel', k);
     await page.reload(); await page.waitForFunction(() => !!window.__hisar); await page.evaluate(() => window.__hisar.hideSplash());
     check(await page.evaluate(() => document.documentElement.dataset.tema) === 'koyu', 'Yeniden açılışta karanlık kalıyor');
@@ -144,7 +149,7 @@ const denetim = () => {
     await page.emulateMedia({ colorScheme: 'dark' }); await sleep(350);
     const b = await oku();
     check(b.tema === 'koyu' && b.eksen === b.line && b.cubuk === b.trig && b.line !== a.line, 'Tema değişince açık grafik kendiliğinden karanlık renklerle yeniden çizildi', b);
-    check(b.rapor === b.bg && b.bg === '#0d1622', 'Karanlık: paylaşım resmi karanlık zeminde', b);
+    check(b.rapor === b.bg && b.bg === '#080e20', 'Karanlık: paylaşım resmi karanlık zeminde', b);
     await page.evaluate(() => window.__hisar.setSub('iz')); await sleep(300);
     const c = await oku();
     check(c.iz === c.panel2, 'Karanlık: iz tuvalinin zemini tema renginde', c);

@@ -31,7 +31,32 @@ test('host: new menu loads no scene and has no construction route',()=>{const x=
 test('host: stale cancelled frame cannot replace current adapter',()=>{const x=shell(),old=x.start();x.el('cancel-load').onclick();const fresh=x.start();const stale=x.connect(old);assert.equal(x.ctx.KomutaHost.diagnostics().loading,true);x.connect(fresh);assert.equal(x.ctx.KomutaHost.diagnostics().loading,false);assert.equal(stale.calls.pause.length,0);});
 test('host: repeated hidden events pause once; resume restores keyboard focus',()=>{const x=shell(),f=x.start(),a=x.connect(f);x.ctx.document.hidden=true;x.docEvents.visibilitychange();x.docEvents.visibilitychange();assert.deepEqual(a.calls.pause,[true]);x.ctx.document.hidden=false;x.el('resume').onclick();assert.deepEqual(a.calls.pause,[true,false]);assert.equal(f.contentWindow.focuses,2);});
 test('host: snapshot errors do not skip disposal',()=>{const x=shell(),f=x.start(),a=x.connect(f);a.api.snapshot=()=>{throw Error('storage unavailable');};x.el('back').onclick();assert.equal(a.calls.disposed,1);assert.equal(x.ctx.KomutaHost.diagnostics().frames,0);});
-test('host: slow load has a warning then a retry action, not a fake percentage',()=>{const x=shell();x.start();[...x.timers.values()].find(t=>t.ms===12000).fn();assert.match(x.el('load-message').textContent,/İlk açılış/);[...x.timers.values()].find(t=>t.ms===35000).fn();assert.equal(x.ctx.KomutaHost.diagnostics().failed,true);assert.equal(x.el('retry').hidden,false);assert.equal(x.el('stage')['aria-busy'],'false');});
+test('host: slow load has a warning then a retry action, not a fake percentage',()=>{const x=shell();x.start();[...x.timers.values()].find(t=>t.ms===12000).fn();assert.match(x.el('load-message').textContent,/İlk açılış/);assert.equal(x.el('retry').hidden,false);[...x.timers.values()].find(t=>t.ms===35000).fn();assert.equal(x.ctx.KomutaHost.diagnostics().failed,true);assert.equal(x.el('retry').hidden,false);assert.equal(x.el('stage')['aria-busy'],'false');});
 test('host: context loss accepts only current owner and exposes retry',()=>{const x=shell(),f=x.start();x.connect(f);assert.equal(x.ctx.KomutaHost.fail('tank',{},'old'),false);assert.equal(x.ctx.KomutaHost.fail('tank',f.contentWindow,'recover'),true);assert.equal(x.el('load-message').textContent,'recover');x.el('retry').onclick();assert.equal(x.ctx.KomutaHost.diagnostics().failed,false);assert.equal(f.removed,true);});
 test('host: back/forward cache pagehide pauses but does not destroy the scene',()=>{const x=shell(),f=x.start(),a=x.connect(f);x.events.pagehide();assert.equal(a.calls.disposed,0);assert.equal(f.removed,undefined);assert.equal(x.ctx.KomutaHost.diagnostics().paused,true);});
 test('host: menu stays blocked while Uçangöz is active, unless renderer failed',()=>{const x=shell(),f=x.start(),a=x.connect(f);a.api.canLeave=()=>false;assert.equal(x.el('back').onclick(),false);assert.equal(a.calls.disposed,0);x.ctx.KomutaHost.fail('tank',f.contentWindow,'recover');assert.equal(x.el('cancel-load').onclick(),true);assert.equal(a.calls.disposed,1);});
+
+test('loading budgets count only time in the foreground, including back/forward cache',()=>{
+ const x=shell();let now=0;x.ctx.performance.now=()=>now;
+ const frame=x.start();now=5000;x.ctx.document.hidden=true;
+ x.docEvents.visibilitychange();x.events.pagehide();assert.equal(x.timers.size,0);
+ now=65000;x.events.pageshow();assert.equal(x.timers.size,0);
+ x.ctx.document.hidden=false;x.docEvents.visibilitychange();x.events.pageshow();
+ assert.deepEqual([...x.timers.values()].map(t=>t.ms),[7000,30000]);
+ now+=7000;const [id,warning]=[...x.timers].find(([,t])=>t.ms===7000);
+ x.timers.delete(id);warning.fn();
+ assert.equal(x.el('retry').hidden,false);
+ x.ctx.document.hidden=true;x.docEvents.visibilitychange();now+=40000;
+ x.ctx.document.hidden=false;x.docEvents.visibilitychange();
+ assert.deepEqual([...x.timers.values()].map(t=>t.ms),[23000]);
+ x.connect(frame);assert.equal(x.timers.size,0);
+});
+test('retry after a slow load replaces the old scene and ignores its delayed callbacks',()=>{
+ const x=shell(),first=x.start(),pending=[...x.timers.values()];
+ pending.find(t=>t.ms===12000).fn();x.el('retry').onclick();
+ assert.equal(first.removed,true);assert.equal(x.el('retry').hidden,true);
+ for(const t of pending)t.fn();x.connect(first);
+ assert.equal(x.ctx.KomutaHost.diagnostics().failed,false);
+ assert.equal(x.ctx.KomutaHost.diagnostics().loading,true);
+ x.connect(x.el('stage').children[0]);assert.equal(x.ctx.KomutaHost.diagnostics().loading,false);
+});

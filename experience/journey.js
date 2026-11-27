@@ -286,14 +286,16 @@
     const button=make('button','journey-undo','Son düzenlemeyi geri al');
     button.id='journey-undo';button.type='button';button.hidden=true;list.after(button);
     let last=null;
+    const snapshots=new WeakMap();
     pane.addEventListener('click',event=>{
-      if(!event.target.closest('[data-ld],[data-f],[data-pre]')||typeof SV==='undefined')return;
-      const before={form:SV.form,load:SV.load.slice()};
-      root.queueMicrotask(()=>{
-        if(before.form===SV.form && before.load.every((x,i)=>SV.load[i]===x))return;
-        last=before;button.hidden=false;
-      });
+      if(event.target.closest('[data-ld],[data-f],[data-pre]') && typeof SV!=='undefined')
+        snapshots.set(event,{form:SV.form,load:SV.load.slice()});
     },true);
+    pane.addEventListener('click',event=>{
+      const before=snapshots.get(event);
+      if(!before || (before.form===SV.form && before.load.every((x,i)=>SV.load[i]===x)))return;
+      last=before;button.hidden=false;
+    });
     button.onclick=()=>{
       if(!last)return;
       SV.form=last.form;SV.load=last.load.slice();last=null;button.hidden=true;
@@ -306,6 +308,7 @@
     root.HisarCampaign?.render();
   }
   root.HisarJourney={version:'1.0.0',route,archive,garage,profile,end,pause,install};
+  doc.addEventListener('hisar:settings-ready',preferencesUI);
   doc.addEventListener('DOMContentLoaded',install);doc.addEventListener('hisar:ui-ready',install);
   if(doc.readyState!=='loading')install();
 })(typeof window !== 'undefined' ? window : globalThis);

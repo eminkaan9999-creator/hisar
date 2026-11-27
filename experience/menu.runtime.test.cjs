@@ -56,3 +56,19 @@ test('initial menu shown by CSS also skips hidden scene rendering',()=>{
  const r=runtime({state:'menu'});r.menu.style.display='';r.ctx.HisarCommandMenu={staticBackground:true};
  r.ctx.R.render({},{});assert.equal(r.draws,0);assert.equal(r.ctx.HisarMenu.diagnostics().menu,true);
 });
+test('static headquarters limits scene work and immediately restores the gameplay clock',()=>{
+ const html=fs.readFileSync(__dirname+'/../index.html','utf8');
+ const block=html.slice(html.indexOf('let idleMenu=false'),html.indexOf('// grafik bellegi kaybi'));
+ let callbacks=0,hookCalls=0;const updates=[];
+ const menu={style:{display:'flex'}},dmg={style:{}};
+ const ctx={game:'menu',last:0,fpsA:0,fpsN:0,shake:0,dmgA:0,HisarCommandMenu:{staticBackground:true},
+  $:name=>name==='menu'?menu:dmg,requestAnimationFrame(){callbacks++;},update(dt){updates.push(dt);},
+  hud(){},skyUp(){},camUpdate(){},R:{render(){}},S:{},CAM:{},FRAME_HOOKS:[()=>hookCalls++],err(tag,e){throw e;}};
+ ctx.window=ctx;vm.createContext(ctx);vm.runInContext(block,ctx);
+ for(let i=0;i<60;i++)ctx.loop(i*1000/60);
+ assert.equal(callbacks,60);assert.equal(hookCalls,20);assert.equal(ctx.fpsN,0);
+ ctx.game='play';menu.style.display='none';ctx.loop(1000);
+ assert.equal(hookCalls,21);assert.equal(updates.length,1);assert.ok(Math.abs(updates[0]-1/60)<1e-6);
+ ctx.loop(1016);assert.equal(updates.length,2);
+ ctx.game='pause';menu.style.display='flex';ctx.loop(1032);ctx.loop(1048);assert.equal(hookCalls,23);
+});

@@ -5142,8 +5142,18 @@ window.HERR={LOG,err};
 addEventListener('error',e=>err('olay',e.error||e.message));addEventListener('unhandledrejection',e=>err('söz',e.reason));
 // bolmeli dongu: bir parca hata verse de goruntu ve diger parcalar calismaya devam eder
 const HN=h=>{const s=String(h);return s.slice(0,48).replace(/\s+/g,' ')};
+let idleMenu=false,previousCallback=last;
 window.loop=function(t){requestAnimationFrame(loop);
- const realDt=Math.max(0,(t-last)/1000)||0;const dr=Math.min(.05,realDt);last=t;fpsA+=Math.min(realDt,1);fpsN++;if(fpsA>2){try{perfAdapt(fpsN/fpsA)}catch(e){}fpsA=fpsN=0}
+ const frameGap=Math.max(0,(t-previousCallback)/1000)||0;
+ previousCallback=t;
+ const idle=game!=='play' && window.HisarCommandMenu?.staticBackground && $('menu').style.display!=='none';
+ // Keep the headquarters responsive to input while limiting hidden scene work to 20 Hz.
+ if(idle && idleMenu && t-last<1000/20-1)return;
+ const resumed=idleMenu && !idle;
+ const realDt=resumed?Math.min(.05,frameGap):Math.max(0,(t-last)/1000)||0;
+ const dr=Math.min(.05,realDt);last=t;idleMenu=idle;
+ if(idle){fpsA=fpsN=0;}
+ else{fpsA+=Math.min(realDt,1);fpsN++;if(fpsA>2){try{perfAdapt(fpsN/fpsA)}catch(e){}fpsA=fpsN=0}}
  /* Kare hızı saniyede 20'nin altına düşerse oyun ağır çekime girmez: geçen gerçek süre en çok üç adıma bölünür (her adım en çok 50 ms; uzun
     duraklamadan sonra en çok 150 ms işlenir). Tankın hızı telefonun kare hızına bağlı kalmaz. SIM_MAX adım sayısının tavanıdır (sınama kapısı
     zamanı kendi adımlarıyla yürütür, 1 yapar). */

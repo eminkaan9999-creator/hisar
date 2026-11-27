@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0d152b">
+<meta name="theme-color" content="#090e1b">
 <link rel="icon" href="favicon-32.png" sizes="32x32">
 <style>:root{color-scheme:dark}html,body{margin:0}body{font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="bridge.js"></script>
@@ -149,17 +149,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   color-scheme:light;
 }
 html[data-tema="koyu"]{
-  --bg:#080e20; --bar:#0d152b; --hdr:#18233f; --btn:#18233f; --btn2:#23304d; --line:#2e3d60; --line2:#475775;
+  --bg:#040710; --bar:#090e1b; --hdr:#18233f; --btn:#18233f; --btn2:#23304d; --line:#2e3d60; --line2:#475775;
   --fg:#edf2ff; --fg2:#d6def2; --muted:#b0bedb; --dim:#aab8d1;
   --red:#b62126; --red2:#ff7b7b; --green:#43c97a; --green-bg:#1e7d45; --blue:#6aa8ff;
   --hold:#6aa8ff; --trig:#f5c518; --recoil:#ff7b7b; --good:#79dfa6; --warn:#f0c062; --bad:#ff9eaa;
-  --panel:#111a31; --panel2:#18233f;
+  --panel:#0c1221; --panel2:#111a2c;
   --zm-ani:#d95926; --zm-sur:#3987e5; --zm-onc:#199e70;   /* koyu zemin için adımlar (doğrulandı, #172536) */
   --acc:#c9bcff; --acc-bg:#b2a2ff; --acc-ink:#17122e; --acc-soft:#2a2450;
   --sel-bg:#2a2450; --sel-ink:#c9bcff; --input:#18233f; --track:#0b1220; --tip:#0b1119; --toast:#2a3f57;
   --good-bg:#12301f; --good-line:#1e4a30; --warn-bg:#2a2412; --warn-line:#4a3b16; --warn-ink:#e2d3ae;
   --bad-bg:#2c1416; --bad-line:#5a2226; --off-bg:#1b2533; --off-line:#2a3a50; --blue-line:#1f3d63;
-  --ust:#0d152b; --nav-bg:#0d152b; --nav-ink:#b0bedb; --nav-sel:var(--acc-soft);
+  --ust:#090e1b; --nav-bg:#090e1b; --nav-ink:#b0bedb; --nav-sel:var(--acc-soft);
   --glow:#8261ee20; --cyan:#79e6ea;
   --overlay:rgba(0,0,0,.6); --shadow:none;
   color-scheme:dark;
@@ -786,6 +786,26 @@ input[type=text],input[type=password],input[type=number],select,textarea{font-si
 .go{box-shadow:var(--shadow)}
 .go:not(:disabled):active{background:var(--good-bg)}
 .cantbox{box-shadow:var(--shadow)}
+/* Koyu menüde sabit ufuk çizgileri ve ince ışık vurguları. */
+html[data-tema="koyu"] .k-vh{
+  background-color:var(--panel);
+  background-image:linear-gradient(112deg,#0c1221 40%,transparent 78%),
+    repeating-linear-gradient(135deg,transparent 0 15px,#8296e516 15px 16px),
+    linear-gradient(110deg,#11182b,#202749 75%,#123942);
+  border-color:#34445f;
+  box-shadow:inset 2px 0 var(--cyan);
+}
+html[data-tema="koyu"] .k-vh h1::before{color:var(--cyan);letter-spacing:.14em}
+html[data-tema="koyu"] .k-tile{
+  background-color:var(--panel);
+  background-image:linear-gradient(145deg,#1a2540,transparent 60%);
+  border-color:#2d3953;
+}
+html[data-tema="koyu"] .k-ikon{border-color:#415475;box-shadow:inset 0 1px #afc9ff22}
+html[data-tema="koyu"] .nav button[aria-selected="true"]{color:var(--cyan)}
+@media(min-width:900px){
+  html[data-tema="koyu"] .nav button[aria-selected="true"]{box-shadow:inset 3px 0 var(--cyan)}
+}
 </style>
 
 <div class="app" lang="tr">
@@ -916,7 +936,7 @@ input[type=text],input[type=password],input[type=number],select,textarea{font-si
    Kaynaklar: deneme (sanal atıcı), telefon hareket sensörü, BLE sensör
    (M5StickC Plus2 / HISAR-SENSOR ya da WitMotion WT901BLE).
    ===================================================================== */
-const VER=40;
+const VER=41;
 const $=id=>document.getElementById(id);
 const DEG=180/Math.PI, RAD=Math.PI/180;
 const SVC="0000ffe5-0000-1000-8000-00805f9a34fb";

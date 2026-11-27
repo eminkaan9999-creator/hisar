@@ -50,7 +50,7 @@ const denetim = () => {
   {
     const ilk = () => { new MutationObserver((ms, o) => { if (document.querySelector('.app')) { window.__ilkTema = document.documentElement.dataset.tema; o.disconnect(); } }).observe(document, { childList: true, subtree: true }); };
     for (const [secim, tema, zemin, cubuk] of [
-      [null, 'koyu', 'rgb(8, 14, 32)', '#0d152b'],
+      [null, 'koyu', 'rgb(4, 7, 16)', '#090e1b'],
       ['acik', 'acik', 'rgb(238, 241, 250)', '#f4f6fe']
     ]) {
       const storage = { ...V28.depo };
@@ -81,7 +81,7 @@ const denetim = () => {
     check(JSON.stringify(seg) === JSON.stringify([['Aydınlık', 'true'], ['Karanlık', 'false'], ['Cihaza göre', 'false']]), 'Tema seçenekleri: Aydınlık (seçili), Karanlık, Cihaza göre', seg);
     await page.click('#sTema [data-v="koyu"]'); await sleep(300);
     const k = await page.evaluate(k => ({ t: document.documentElement.dataset.tema, kayit: localStorage.getItem(k), bg: getComputedStyle(document.body).backgroundColor, sayfa: !!document.getElementById('sTema'), basili: document.querySelector('#sTema [aria-pressed="true"]').dataset.v }), TEMA_K);
-    check(k.t === 'koyu' && k.kayit === 'koyu' && k.bg === 'rgb(8, 14, 32)', 'Karanlık seçilince hemen uygulanıyor ve kaydediliyor', k);
+    check(k.t === 'koyu' && k.kayit === 'koyu' && k.bg === 'rgb(4, 7, 16)', 'Karanlık seçilince hemen uygulanıyor ve kaydediliyor', k);
     check(k.sayfa && k.basili === 'koyu', 'Görünüm sayfası açık kalıyor, seçili düğme güncel', k);
     await page.reload(); await page.waitForFunction(() => !!window.__hisar); await page.evaluate(() => window.__hisar.hideSplash());
     check(await page.evaluate(() => document.documentElement.dataset.tema) === 'koyu', 'Yeniden açılışta karanlık kalıyor');
@@ -149,7 +149,7 @@ const denetim = () => {
     await page.emulateMedia({ colorScheme: 'dark' }); await sleep(350);
     const b = await oku();
     check(b.tema === 'koyu' && b.eksen === b.line && b.cubuk === b.trig && b.line !== a.line, 'Tema değişince açık grafik kendiliğinden karanlık renklerle yeniden çizildi', b);
-    check(b.rapor === b.bg && b.bg === '#080e20', 'Karanlık: paylaşım resmi karanlık zeminde', b);
+    check(b.rapor === b.bg && b.bg === '#040710', 'Karanlık: paylaşım resmi karanlık zeminde', b);
     await page.evaluate(() => window.__hisar.setSub('iz')); await sleep(300);
     const c = await oku();
     check(c.iz === c.panel2, 'Karanlık: iz tuvalinin zemini tema renginde', c);

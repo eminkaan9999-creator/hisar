@@ -1,5 +1,5 @@
 self.gameCache='hisar-komuta-site';
-self.gameRevision='2.1.0';
+self.gameRevision='2.2.0';
 self.gameFiles=[
   "index.html",
   "manifest.webmanifest",
@@ -14,6 +14,7 @@ self.gameFiles=[
   "ortak/senaryo.mjs",
   "ortak/masa.mjs",
   "ortak/fonts/inter-latin-tr.4.001.woff2",
-  "ortak/komuta.webp"
+  "ortak/komuta.webp",
+  "ortak/ses.mjs"
 ];
 importScripts('ortak/cevrimdisi.js');

@@ -1,6 +1,6 @@
 import '../three.min.js';
 import '../experience/model.js';
-import {stops,stopDistance,routes,needsRoute,routePoint,passMarker} from '../komuta/ortak/senaryo.mjs';
+import {stops,stopDistance,routes,needsRoute,routePoint,passMarker,drivingConditions} from '../komuta/ortak/senaryo.mjs';
 
 const road=[[0,0],[-13,32],[-41,65],[-46,96],[-16,118],[12,134],[58,150],[52,100],[33,52],[0,0]];
 const ridge=[[stops[1].x,stops[1].z],...routes.ridge.points,[stops[2].x,stops[2].z]];
@@ -29,10 +29,11 @@ function guide(s){
 }
 const ground=(x,z)=>2.3*Math.sin(z/37)+1.2*Math.sin(x/25+z/53)+.8*Math.cos(x/23);
 export function drive(s,speed,keys,dt,assist){
-  if(needsRoute(s))return 0;
+  if(needsRoute(s)||!s.loaded||s.done)return 0;
   const marker=routePoint(s),target=marker?{x:marker[0],z:marker[1]}:stops[s.target];
   const gap=Math.hypot(target.x-s.x,target.z-s.z),onCrossing=s.receipts.length===1&&!!s.passage;
-  const roadSpeed=onCrossing&&s.passage.route==='creek'?9:roadGap(s.x,s.z)<7?19:13;
+  const conditions=drivingConditions(s),offRoad=roadGap(s.x,s.z)>7;
+  const roadSpeed=offRoad?Math.min(conditions.speed,13):conditions.speed;
   const steer=Number(keys.has('right'))-Number(keys.has('left')),gas=keys.has('go'),reverse=keys.has('back');
   const desired=gas?roadSpeed:reverse?-8:0,rate=gas?9:reverse?15:20;
   speed+=clamp(desired-speed,-rate*dt,rate*dt);
@@ -46,6 +47,10 @@ export function drive(s,speed,keys,dt,assist){
   }
   const x=clamp(s.x+Math.sin(s.yaw)*speed*dt,-110,112),z=clamp(s.z+Math.cos(s.yaw)*speed*dt,-37,192);
   if(buildings.some(p=>Math.abs(x-p.x)<4.4&&Math.abs(z-p.z)<3.4)){s.elapsed+=dt;return 0;}
+  if(s.evaluation===1&&offRoad&&Math.abs(speed)>9) {
+    s.offroad+=dt;
+    s.cargoHealth=Math.max(0,s.cargoHealth-dt*(Math.abs(speed)-9)*.8);
+  }
   s.distance+=Math.hypot(x-s.x,z-s.z);s.elapsed+=dt;s.x=x;s.z=z;
   passMarker(s);return speed;
 }
@@ -74,25 +79,29 @@ export function drawMap(canvas,state,labels=false){
   }
   ctx.save();ctx.translate(X(state.x),Y(state.z));ctx.rotate(state.yaw);ctx.fillStyle='#75f2d9';ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(5,6);ctx.lineTo(0,3);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.restore();
 }
-function worldView(canvas){
+function worldView(canvas,state){
   const T=window.THREE;if(!T)throw Error('3D kullanılamıyor');
   const renderer=new T.WebGLRenderer({canvas,antialias:false,alpha:false,powerPreference:'low-power'});
   renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
   const scene=new T.Scene();scene.background=new T.Color(0xadc4d2);scene.fog=new T.FogExp2(0xc3d1d3,.0048);
+  const isNight=state.mission==='night',isRain=state.mission==='rain';
   const cam=new T.PerspectiveCamera(58,1,.2,900),sun=new T.DirectionalLight(0xffdeb1,1.35);
-  sun.position.set(-90,100,40);scene.add(new T.HemisphereLight(0xe1f0ff,0x465b61,1.1),sun);
+  sun.position.set(-90,100,40);
+  sun.intensity=isNight?.08:isRain?.65:1.35;
+  const ambient=new T.HemisphereLight(0xe1f0ff,0x465b61,isNight?.16:isRain?.7:1.1);
+  scene.add(ambient,sun);
   const mat=(color)=>new T.MeshLambertMaterial({color,flatShading:true});
   const mesh=(geom,material,x,y,z,parent=scene)=>{const m=new T.Mesh(geom,material);m.position.set(x,y,-z);parent.add(m);return m;};
   const skyTexture=new T.TextureLoader().load(new URL('../assets/tex/sky_kapali.jpg',import.meta.url).href);
-  const sky=new T.Mesh(new T.SphereGeometry(700,32,16),new T.MeshBasicMaterial({map:skyTexture,side:T.BackSide,fog:false}));scene.add(sky);
+  const sky=new T.Mesh(new T.SphereGeometry(700,32,16),new T.MeshBasicMaterial({map:skyTexture,side:T.BackSide,fog:false}));sky.material.color.setHex(isNight?0x15263d:isRain?0x74848b:0xffffff);scene.add(sky);
   const terrain=new T.PlaneGeometry(700,700,64,64);terrain.rotateX(-Math.PI/2);
   const pts=terrain.attributes.position;
   for(let i=0;i<pts.count;i++)pts.setY(i,ground(pts.getX(i),-pts.getZ(i)));
   terrain.computeVertexNormals();
   const snow=new T.TextureLoader().load(new URL('../assets/tex/t_tas.jpg',import.meta.url).href);
   snow.wrapS=snow.wrapT=T.RepeatWrapping;snow.repeat.set(60,60);
-  const groundMat=mat(0xc3cfd5);groundMat.map=snow;groundMat.emissive.setHex(0x45525b);mesh(terrain,groundMat,0,0,0);
+  const groundMat=mat(isRain?0x73837d:isNight?0x7a8b8e:0xc3cfd5);groundMat.map=snow;groundMat.emissive.setHex(isNight?0x030709:isRain?0x1b2424:0x45525b);mesh(terrain,groundMat,0,0,0);
   const strip=[],ind=[];
   for(const path of roads)for(let i=1;i<path.length;i++){
     const [x,z]=path[i-1],[x1,z1]=path[i],n=Math.ceil(Math.hypot(x1-x,z1-z)/3);
@@ -104,7 +113,7 @@ function worldView(canvas){
     }
   }
   const rg=new T.BufferGeometry();rg.setAttribute('position',new T.Float32BufferAttribute(strip,3));rg.setIndex(ind);rg.computeVertexNormals();
-  const gravel=new T.MeshBasicMaterial({color:0x89949b});gravel.side=T.DoubleSide;mesh(rg,gravel,0,0,0);
+  const gravel=new T.MeshLambertMaterial({color:isNight?0x65747d:0x89949b});gravel.side=T.DoubleSide;mesh(rg,gravel,0,0,0);
   let seed=42;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
   const trees=[],dummy=new T.Object3D();
   for(let i=0;i<235;i++){const x=random()*310-155,z=random()*305-64;if(roadGap(x,z)>12&&stops.every(p=>Math.hypot(p.x-x,p.z-z)>16))trees.push([x,z,3+random()*5]);}
@@ -150,29 +159,62 @@ function worldView(canvas){
   }).catch(()=>{});
   const marker=mesh(new T.TorusGeometry(2,.16,8,36),new T.MeshBasicMaterial({color:0xffb94e}),0,0,0);marker.rotation.x=-Math.PI/2;
   let lastW=0,lastH=0;
-  function render(s){const w=canvas.clientWidth,h=canvas.clientHeight;if(w<1||h<1)return;
+  const lamps=new T.SpotLight(0xffeccb,isNight?5:0,80,.7,.7,1);
+  lamps.castShadow=false;
+  scene.add(lamps,lamps.target);
+  let drops;
+  if(isRain) {
+    const positions=new Float32Array(180*3);
+    for(let i=0;i<180;i++) {
+      positions[i*3]=random()*50-25;
+      positions[i*3+1]=random()*22;
+      positions[i*3+2]=random()*50-25;
+    }
+    const geometry=new T.BufferGeometry();
+    geometry.setAttribute('position',new T.BufferAttribute(positions,3));
+    drops=new T.Points(geometry,new T.PointsMaterial({color:0xbad1dd,size:.13,transparent:true,opacity:.65,depthWrite:false}));
+    scene.add(drops);
+  }
+  function render(s,cameraMode){const w=canvas.clientWidth,h=canvas.clientHeight;if(w<1||h<1)return;
     if(w!==lastW||h!==lastH){renderer.setSize(w,h,false);lastW=w;lastH=h;cam.aspect=w/h;cam.updateProjectionMatrix();}
     const y=ground(s.x,s.z);vehicle.position.set(s.x,y,-s.z);vehicle.rotation.y=-s.yaw;
     vehicle.rotation.x=Math.atan2(ground(s.x+Math.sin(s.yaw),s.z+Math.cos(s.yaw))-ground(s.x-Math.sin(s.yaw),s.z-Math.cos(s.yaw)),2);
     const tx=Math.sin(s.yaw),tz=Math.cos(s.yaw),p=stops[s.target],gate=routePoint(s);
     const [mx,mz]=gate||[p.x,p.z];marker.position.set(mx,ground(mx,mz)+.45,-mz);
     marker.material.color.setHex(gate?0x65ded2:0xffb94e);
-    scene.fog.density=s.receipts.length===1&&s.passage?.route==='creek'?.025:.0048;
-    cam.position.set(s.x-tx*10+tz*2,y+4.5,-s.z+tz*10+tx*2);cam.lookAt(s.x+tx*5,y+1.4,-s.z-tz*5);
+    const conditions=drivingConditions(s);
+    scene.fog.density=conditions.fog;
+    scene.fog.color.setHex(isNight?0x081321:isRain?0x899da7:0xc3d1d3);
+    if(drops) {
+      drops.position.set(s.x,0,-s.z);
+      const positions=drops.geometry.attributes.position;
+      for(let i=0;i<positions.count;i++)positions.setY(i,y+((i*7.31-s.elapsed*18)%22+22)%22);
+      positions.needsUpdate=true;
+      drops.material.opacity=conditions.precipitation*.7;
+    }
+    lamps.position.set(s.x+tx*2,y+1.6,-s.z-tz*2);
+    lamps.target.position.set(s.x+tx*24,y-1,-s.z-tz*24);
+    if(cameraMode==='cab') {
+      cam.position.set(s.x+tx*2.2,y+2.7,-s.z-tz*2.2);
+      cam.lookAt(s.x+tx*20,y+1.4,-s.z-tz*20);
+    } else {
+      cam.position.set(s.x-tx*10+tz*2,y+4.5,-s.z+tz*10+tx*2);
+      cam.lookAt(s.x+tx*5,y+1.4,-s.z-tz*5);
+    }
     renderer.render(scene,cam);
   }
   return {render,close(){closed=true;const geometries=new Set(),materials=new Set();scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);if(o.isInstancedMesh)o.dispose?.();});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());truckTexture?.dispose();forestTexture.dispose();snow.dispose();skyTexture.dispose();renderer.dispose();renderer.forceContextLoss();}};
 }
-export function attachDrive(host,s,{assist,save,onAction}){
+export function attachDrive(host,s,{assist,save,onAction,sound,camera}){
   let canvas=host.querySelector('.terrain'),view=null;
   const map=host.querySelector('.minimap'),keys=new Set(),mapped={ArrowUp:'go',w:'go',ArrowDown:'back',s:'back',ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right'};
   function fallback(){canvas.replaceWith(canvas=Object.assign(document.createElement('canvas'),{className:'terrain',width:650,height:300}));canvas.setAttribute('aria-label','Vadi yol haritası');view=null;}
-  try{view=worldView(canvas);}catch{fallback();}
+  try{view=worldView(canvas,s);}catch{fallback();}
   const lost=e=>{e.preventDefault();fallback();};canvas.addEventListener('webglcontextlost',lost);
   const key=e=>{if(dialog.open||e.target?.closest?.('select,input,textarea')||e.ctrlKey||e.altKey||e.metaKey||!Object.hasOwn(mapped,e.key))return;e.preventDefault();if(e.type==='keydown')keys.add(mapped[e.key]);else keys.delete(mapped[e.key]);};
   const dialog=host.querySelector('.map-dialog'),openMap=host.querySelector('.map-toggle');
   openMap.onclick=()=>{
-    keys.clear();dialog.showModal();drawMap(dialog.querySelector('canvas'),s,true);
+    keys.clear();sound?.silence();dialog.showModal();drawMap(dialog.querySelector('canvas'),s,true);
     dialog.querySelector('.map-status').textContent=s.receipts.length===1&&s.passage?routes[s.passage.route].name+' · '+stops[s.target].name:needsRoute(s)?'İki yol seçeneği açık.':stops[s.target].name;
   };
   dialog.querySelector('.close-map').onclick=()=>dialog.close();
@@ -184,12 +226,19 @@ export function attachDrive(host,s,{assist,save,onAction}){
     const dt=clamp((now-last)/1000,0,.08);last=now;
     if(dialog.open){id=requestAnimationFrame(frame);return;}
     speed=drive(s,speed,keys,dt,assist());
-    if(view)view.render(s);else drawMap(canvas,s);
+    if(view)view.render(s,camera?.());else drawMap(canvas,s);
     if(!canvas.dataset.ready){canvas.dataset.ready=view?'3d':'map';host.querySelector('.scene-load')?.remove();}
     if(now-lastHud>=100){lastHud=now;drawMap(map,s);const gap=stopDistance(s),p=stops[s.target],gate=routePoint(s),[x,z]=gate||[p.x,p.z];
       const route=s.receipts.length===1&&s.passage?routes[s.passage.route]:null;
       progressEl.textContent=route?(gate?route.name+' · İşaret '+(s.passage.step+1)+'/'+route.points.length:route.name+' · Teslim noktası'):'';
       progressEl.hidden=!route;
+      const conditions=drivingConditions(s);
+      const cargo=host.querySelector('.cargo-status');
+      if(cargo)cargo.textContent='Yük %'+Math.round(s.cargoHealth);
+      const seconds=Math.floor(s.elapsed);
+      host.querySelector('.drive-clock').textContent=Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+      host.querySelector('.weather-status').textContent=conditions.label;
+      sound?.engine(speed,conditions.precipitation);
       speedEl.textContent=Math.round(Math.abs(speed)*3.6)+' km/sa';distance.textContent=Math.round(Math.hypot(x-s.x,z-s.z))+' m';
       bearing.style.transform='rotate('+(Math.atan2(x-s.x,z-s.z)-s.yaw)+'rad)';button.disabled=needsRoute(s)||!!gate||gap>9||Math.abs(speed)>1||(!s.loaded&&(!s.crewChecked||!s.loadChecked));}
     if(now-lastSave>=2000){lastSave=now;save();}
@@ -197,5 +246,5 @@ export function attachDrive(host,s,{assist,save,onAction}){
   }
   button.onclick=()=>onAction(speed);
   id=requestAnimationFrame(frame);
-  return ()=>{cancelAnimationFrame(id);canvas.removeEventListener('webglcontextlost',lost);window.removeEventListener('keydown',key);window.removeEventListener('keyup',key);window.removeEventListener('blur',release);view?.close();};
+  return ()=>{sound?.silence();cancelAnimationFrame(id);canvas.removeEventListener('webglcontextlost',lost);window.removeEventListener('keydown',key);window.removeEventListener('keyup',key);window.removeEventListener('blur',release);view?.close();};
 }

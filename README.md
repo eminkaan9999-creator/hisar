@@ -4,6 +4,10 @@
 
 **HİSAR: KOMUTA — Gece Nöbeti** `komuta/` adresinde açılır. Oyuncu taşkın sonrası nöbeti devralır, talepleri doğrular ve iki destek ekibini görevlendirir. Vardiya on dakikalık turlarla ilerler. Ekipten gelen sonucu kayda geçirmek ve devir raporunu tamamlamak oyuncunun sorumluluğundadır. Gece raporundan açılan İlk Işık Vardiyası saat 06.00’da başlar. Öncelikli noktanın teyidi sabaha aktarılır. Gece geciken teslimlerin takibi bir tur daha sürer.
 
+Seferler menüsünden Çelik Börü’de kar sonrası, giderek güçlenen yağmur ve gece sürüşü seçilir. Yükler senaryoya göre değişir. Süre ve yük durumu sefer raporunda üç açık ölçütle değerlendirilir. Yüksek hızla yol dışında sürüş yük durumunu düşürür. Kabin ve takip kamerası, sessiz başlayan ve ayarlardan açılan motor/yağmur sesleri bulunur.
+
+KOMUTA’da Dağıtım Günü dört talep içerir. 10.20’deki yağmur bildiriminde merkez dağıtımı veya mahalle servisi seçilir. Seçim son teslimin ekibini, süresini ve ulaşılan hane sayısını belirler. Ekip takvimi ve hedef saatler görev boyunca görünür. Görev seçimi, ses ve kamera tercihi cihazda saklanır.
+
 İki kurgu oyunda görev emri, kayıt ve teslim aşamaları kullanılır. Afet koordinasyonu için genel çerçeve [AFAD Türkiye Afet Müdahale Planı](https://www.afad.gov.tr/turkiye-afet-mudahale-plani), personel ve malzeme nakli için örnek [MSB afet desteği duyurusudur](https://www.msb.gov.tr/SlaytHaber/822023-37583). Yerler, süreler ve karar kuralları oyun için tasarlanmıştır.
 
 ## Çalıştırma

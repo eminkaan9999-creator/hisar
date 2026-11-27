@@ -70,3 +70,89 @@ test('the night handover selects a morning preconfirmation; late work takes an e
   assert.equal(startMorning({...s,done:true}),null);
   delete n.priority;assert.equal(startMorning(n).priority,1);
 });
+
+import {drivingConditions, resultFor, pendingDecision, configFor} from '../komuta/ortak/senaryo.mjs';
+test('all three driving missions complete through both routes and retain their cargo and weather', () => {
+  for (const mission of ['snow', 'rain', 'night']) {
+    for (const route of ['creek', 'ridge']) {
+      const s = newRun('boru', mission);
+      preparation(s, 'crewChecked');
+      preparation(s, 'loadChecked');
+      handover(s);
+      for (const target of [1, 2, 0]) {
+        if (needsRoute(s)) pickRoute(s, route);
+        let speed = 0, accepted = false;
+        for (let frame = 0; frame < 2400 && !accepted; frame++) {
+          speed = drive(s, speed, new Set(['go']), .025, true);
+          accepted = handover(s, speed, target);
+        }
+        assert.ok(accepted, mission + ' via ' + route + ' at ' + target);
+      }
+      assert.ok(valid(JSON.parse(JSON.stringify(s)), 'boru'));
+      assert.ok(resultFor(s).stars >= 1);
+      assert.ok(s.log.some(line => line.includes(configFor('boru', s).cargo[0])));
+      if (mission === 'rain') {
+        s.elapsed = 24;
+        const before = drivingConditions(s);
+        s.elapsed = 26;
+        const after = drivingConditions(s);
+        assert.ok(after.speed < before.speed);
+        assert.ok(after.fog > before.fog);
+      }
+    }
+  }
+});
+test('unloaded vehicles stay in the depot and driving off the road changes the reported load condition', () => {
+  const s = newRun('boru', 'night');
+  drive(s, 0, new Set(['go']), .1, false);
+  assert.equal(s.distance, 0);
+  preparation(s, 'crewChecked');
+  preparation(s, 'loadChecked');
+  handover(s);
+  Object.assign(s, {x: 90, z: 10});
+  drive(s, 12, new Set(['go']), .1, false);
+  assert.ok(s.cargoHealth < 100);
+  assert.ok(s.offroad > 0);
+  s.done = true;
+  s.elapsed = 115;
+  s.cargoHealth = 80;
+  assert.equal(resultFor(s).stars, 1);
+  assert.equal(valid({...s, cargoHealth: NaN}, 'boru'), false);
+  assert.equal(valid({...s, mission: 'missing'}, 'boru'), false);
+  const legacy = {...s};
+  delete legacy.evaluation;
+  delete legacy.mission;
+  assert.ok(valid(legacy, 'boru'));
+  assert.equal(resultFor(legacy), null);
+});
+test('day shift pauses for a rain decision; both choices alter the real fourth job and can finish', () => {
+  for (const choice of ['central', 'local']) {
+    const s = newRun('komuta', 'day');
+    assert.equal(requestsFor(s).length, 4);
+    assert.equal(command(s, 'distribution', choice), false);
+    command(s, 'tick');
+    command(s, 'tick');
+    assert.ok(pendingDecision(s));
+    assert.equal(command(s, 'tick'), false);
+    assert.equal(command(s, 'distribution', 'missing'), false);
+    assert.ok(command(s, 'distribution', choice));
+    assert.equal(command(s, 'distribution', choice), false);
+    assert.equal(pendingDecision(s), false);
+    assert.equal(requestsFor(s)[3].households, choice === 'central' ? 20 : 28);
+    assert.equal(durationFor(s, 3), choice === 'central' ? 1 : 3);
+    assert.ok(command(s, 'tick'));
+    for (let i = 0; i < 4; i++) {
+      const r = requestsFor(s)[i];
+      assert.ok(command(s, 'verify', i));
+      assert.ok(command(s, 'assign', i, r.teams[0]));
+      for (let t = 0; t < r.time; t++) command(s, 'tick');
+      assert.ok(command(s, 'close', i));
+      assert.ok(valid(JSON.parse(JSON.stringify(s)), 'komuta'));
+    }
+    assert.ok(command(s, 'finish'));
+    assert.equal(startMorning(s), null);
+    assert.equal(resultFor(s).stars, 1);
+    assert.equal(clock(1, s), '10.10');
+    assert.equal(valid({...s, jobs: s.jobs.slice(0, 3)}, 'komuta'), false);
+  }
+});

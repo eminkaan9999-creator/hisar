@@ -1,9 +1,9 @@
-const CACHE = 'poligon-v27';
+const CACHE = 'poligon-v28';
 const PHOTOS = CACHE + '-foto';
 const shell = [
-  './', './index.html', './salon.css?v=27', './salon.js?v=27', './arcade.mjs?v=27',
-  './arena-cover.webp','./arena-mark.webp', './manifest.webmanifest', './version.json',
-  './klasik.html', './arena.css', './arena-ui.js', '../three.min.js', '../shared/kurulus.css?v=1',
+  './', './index.html',
+  './arena-mark.webp', './manifest.webmanifest', './version.json',
+  './klasik.html', './arena.css?v=28', './arena-ui.js?v=28', '../three.min.js', '../shared/kurulus.css?v=1',
   '../shared/kurulus-core.js?v=1', '../shared/kurulus-runtime.js?v=1',
   './icon-192.png?v=26','./icon-512.png?v=26','./icon-maskable-512.png?v=26',
   './apple-touch-icon.png?v=26','./favicon-32.png?v=26'

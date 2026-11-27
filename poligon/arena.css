@@ -214,3 +214,31 @@
 #arena-content .sec :is(.lcard,.mcard,.rcard), #arena-records :is(.badge,.sbox) {background:var(--panel2);border-radius:12px;}
 #arena-content details.more>summary {text-transform:none;letter-spacing:0;color:var(--fg);min-height:44px;line-height:1.5;}
 .sheet,.sheet2 {border-radius:18px 18px 0 0;border-top:2px solid var(--line);}
+
+.arena-profile {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0;
+  border:1px solid var(--line); background:var(--panel); border-radius:15px; padding:14px 0;
+}
+.arena-profile>div {display:grid; align-content:start; gap:5px; min-width:0; padding:0 16px;}
+.arena-profile>div+div {border-left:1px solid var(--line);}
+.arena-profile span,.arena-result-summary dt {font:500 12px/1.4 var(--display);color:var(--muted);}
+.arena-profile b {color:var(--fg);font:650 16px/1.3 var(--display);overflow-wrap:anywhere;}
+.arena-log-head,.arena-result-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.arena-log-head {margin-top:12px;}
+.arena-log-head h3 {margin:0;font:650 18px/1.25 var(--display);}
+.arena-log-head label {color:var(--muted);font:500 13px var(--display);}
+.arena-log-head select {min-height:44px;padding:5px 8px;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:8px;}
+.arena-records .loglist {max-height:min(45vh,380px);overflow:auto;overscroll-behavior:contain;}
+.arena-empty {font:500 13px/1.5 var(--display);color:var(--muted);}
+.arena-result-summary {color:var(--fg);font-family:var(--display);}
+.arena-result-heading b {font-size:16px;}
+.arena-result-heading>span {padding:3px 8px;background:var(--panel2);color:var(--accent);border-radius:5px;font-weight:650;}
+.arena-result-summary dl {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0;}
+.arena-result-summary dl>div {padding:9px 10px;border-radius:9px;background:var(--panel2);}
+.arena-result-summary dd {margin:4px 0 0;font-size:17px;font-weight:700;overflow-wrap:anywhere;}
+@media(max-width:440px){
+  .arena-profile>div {padding:0 9px;}
+  .arena-profile span {font-size:11px;}
+  .arena-profile b {font-size:13px;}
+  .arena-records .lrow {grid-template-columns:minmax(60px,.7fr) minmax(75px,1.3fr) minmax(40px,1fr);overflow-wrap:anywhere;}
+}

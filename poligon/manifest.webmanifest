@@ -1,7 +1,7 @@
 {
  "name": "HİSAR Arena",
  "short_name": "HİSAR Arena",
- "description": "Hafıza, bağlantı ve ritim oyunları, günlük parkur ve klasik poligon.",
+ "description": "HİSAR Arena poligon simülatörü.",
  "lang": "tr",
  "start_url": "./",
  "scope": "./",

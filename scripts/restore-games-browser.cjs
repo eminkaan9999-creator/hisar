@@ -21,6 +21,18 @@ const server=http.createServer((req,res)=>{
     res.end(data);
   }catch{res.writeHead(404).end();}
 });
+async function waitForState(page, check, arg) {
+  const deadline = Date.now() + 120000;
+  while (Date.now() < deadline) {
+    try {
+      if (await page.evaluate(check,arg)) return;
+    } catch (error) {
+      if (!error.message.includes('Execution context was destroyed')) throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve,150));
+  }
+  throw Error('Timed out waiting for offline installation at '+page.url());
+}
 async function seed(page,base,cache){
   await page.bringToFront();
   await page.goto(base+'upgrade-check.html');
@@ -32,36 +44,48 @@ async function seed(page,base,cache){
     await caches.open('hisar-tetik-preserve');
     await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;
   });
-  await page.waitForFunction(async name=>(await caches.keys()).includes(name),cache,{timeout:120000});
+  await waitForState(page, async name=>(await caches.keys()).includes(name),cache);
   await page.waitForFunction(()=>navigator.serviceWorker.controller?.state==='activated');
   assert.ok(await page.evaluate(async name=>!!await(await caches.open(name)).match(new URL('index.html',location.href).href),cache));
 }
 async function upgrade(page,cache){
   await page.bringToFront();
   await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});
-  await page.waitForFunction(async name=>(await caches.keys()).includes(name),cache,{timeout:120000});
-  await page.waitForFunction(async name=>{
-    const keys=await caches.keys();return keys.includes(name)&&!keys.some(k=>(k.startsWith('hisar-main-'))&&k!==name);
-  },cache,{timeout:120000});
-  await page.waitForFunction(name=>new Promise(resolve=>{const c=navigator.serviceWorker.controller;if(!c)return resolve(false);const ch=new MessageChannel();const t=setTimeout(()=>resolve(false),500);ch.port1.onmessage=e=>{clearTimeout(t);resolve(e.data?.cache===name);};c.postMessage('VERSION',[ch.port2]);}),cache,{timeout:120000});
-  await page.waitForFunction(async name=>{if(navigator.serviceWorker.controller?.state!=='activated')return false;const r=await(await caches.open(name)).match(new URL('index.html',location.href));if(!r)return false;const html=await r.text();return html.includes('var BUILD=126');},cache,{timeout:120000});
+  await waitForState(page, async name=>(await caches.keys()).includes(name),cache);
+  await waitForState(page, async name => {
+    const controller = navigator.serviceWorker.controller;
+    if (controller?.state !== 'activated' || (await caches.keys()).includes('hisar-main-125')) return false;
+    const ch = new MessageChannel();
+    const activeCache = await new Promise(resolve => {
+      const timer = setTimeout(() => resolve(null),500);
+      ch.port1.onmessage = e => { clearTimeout(timer); resolve(e.data?.cache); };
+      controller.postMessage('VERSION',[ch.port2]);
+    });
+    ch.port1.close();
+    if (activeCache !== name) return false;
+    const html = await (await caches.open(name)).match(new URL('index.html',location.href));
+    return html && (await html.text()).includes('var BUILD=126');
+  },cache);
   const values=await page.evaluate(async()=>({tank:JSON.parse(localStorage.getItem('m60v2')),site:JSON.parse(localStorage.getItem('hs-proj')),legacy:localStorage.getItem('hisar-santiye-29'),marker:localStorage.getItem('hs-test-preserve'),other:(await caches.keys()).includes('hisar-tetik-preserve')}));
   assert.equal(values.tank.xp,321);assert.equal(values.site.money,7654);assert.equal(values.marker,'original-value');assert.equal(values.other,true);assert.equal(values.legacy,'{"preserve":"rejected-shell-save"}');
 }
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const base='http://127.0.0.1:'+server.address().port+'/hisar/';
-  browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROME||undefined,args:['--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader','--disable-dev-shm-usage']});
+  browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROME||undefined,args:['--use-gl=angle','--ignore-gpu-blocklist','--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader','--disable-dev-shm-usage']});
   const tank=await browser.newContext({viewport:{width:640,height:360}}),site=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true});
   const tp=await tank.newPage(),sp=await site.newPage(),errors=[];
   for(const p of [tp,sp]){p.setDefaultTimeout(90000);p.on('pageerror',e=>{errors.push(e.message);console.error('PAGE_ERROR',e.message);});}
+  await tank.addInitScript(()=>{const raf=window.requestAnimationFrame;let primed=false;window.requestAnimationFrame=fn=>raf.call(window,t=>{if(!primed){try{if(typeof setQ==='function'){setQ('dusuk');primed=true;}}catch{}}fn(t);});});
   await seed(tp,base,'hisar-main-125');
   await seed(sp,base+'santiye-250888c5/','hisar-santiye-30-original');
+  await tp.goto(base, {waitUntil:'domcontentloaded'});
+  assert.equal(await tp.locator('[data-game="boru"]').count(),1);
   console.log('PASS previous workers and cached replacement entries installed');
   restored=true;
   await upgrade(tp,'hisar-main-v126-original-restored');
   await sp.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
-  await sp.waitForFunction(async () => !await navigator.serviceWorker.getRegistration() &&
+  await waitForState(sp, async () => !await navigator.serviceWorker.getRegistration() &&
     !(await caches.keys()).some(k => k.startsWith('hisar-santiye-')));
   assert.ok(await sp.evaluate(() => caches.has('hisar-tetik-preserve')));
   assert.equal(await sp.evaluate(() => JSON.parse(localStorage.getItem('m60v2')).xp),321);
@@ -71,8 +95,7 @@ async function upgrade(page,cache){
   }
   console.log('PASS both workers upgrade without clearing saves or sibling caches');
   await tp.bringToFront();console.log('CHECK original tank navigation');
-  await tank.addInitScript(()=>{const raf=window.requestAnimationFrame;let primed=false;window.requestAnimationFrame=fn=>raf.call(window,t=>{if(!primed){try{if(typeof setQ==='function'){setQ('dusuk');primed=true;}}catch{}}fn(t);});});
-  await tp.goto(base,{waitUntil:'domcontentloaded',timeout:120000});
+  await tp.waitForURL(u => u.searchParams.get('v') === '126', {timeout:120000,waitUntil:'domcontentloaded'});
   console.log('CHECK tank DOM ready');
   await tp.waitForFunction(()=>window.HisarSimpleSettings?.diagnostics().ready,{},{timeout:120000});
   console.log('CHECK tank settings ready');

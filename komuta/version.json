@@ -1,13 +1,10 @@
 {
   "name": "HİSAR: KOMUTA",
-  "v": "1.2.1",
+  "v": "1.2.2",
   "independent": true,
   "changes": [
-    "İnşaat oyunu kaldırılmış olarak kalır",
-    "Tekrarlanan duraklatma ve ekrana dönüşte kontrol düzeltmesi",
-    "Takılı hareket, dokunma ve tetik girişlerini bırakma",
-    "Tank görüntü bağlantısı koptuğunda yeniden deneme",
-    "Sahne değişiminde grafik ve ses kaynaklarını serbest bırakma"
+    "Yavaş açılan sahnede 12 saniye sonra yeniden deneme",
+    "Yükleme bekleme süresi yalnızca oyun ekranda açıkken işler"
   ],
   "sourceCommit": "1de116f4055da9d8845554d05cd688df3736efa7",
   "publication": "standalone-pages",

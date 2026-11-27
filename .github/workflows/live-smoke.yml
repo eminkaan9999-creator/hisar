@@ -2,7 +2,7 @@ name: HİSAR published smoke check
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'version.json', 'sw.js', 'experience/**', 'assets/radio/**', '.github/workflows/live-smoke.yml']
+    paths: ['index.html', 'version.json', 'sw.js', 'oyun/**', 'komuta/ortak/**', 'three.min.js', 'experience/model.js', 'assets/tex/**', 'assets/mdl/**', '.github/workflows/live-smoke.yml']
   workflow_dispatch:
   workflow_run:
     workflows: ['pages build and deployment']
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify live version, game modules and Microsoft recordings
+      - name: Verify active releases and game assets
         env:
           VERIFIED_COMMIT: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
@@ -34,20 +34,8 @@ jobs:
           const fs=require('node:fs'),crypto=require('node:crypto');
           const base='https://eminkaan9999-creator.github.io/hisar/';
           const expected=JSON.parse(fs.readFileSync('version.json','utf8')).v;
-          const paths=['index.html','version.json','sw.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-missions.js','experience/radio-sound.js','experience/simple-settings.js','experience/crew-orders.js','experience/field.js','experience/battle.js','experience/swarm.js','experience/realism.js','experience/sinir.js','experience/harekat.js','experience/safak.js','experience/modern.js','experience/modern.css','experience/checkpoint.js','experience/tank-feel.js','experience/tank-feel.css','experience/command-menu.js','experience/command-menu.css','experience/interface.js','experience/interface.css','experience/campaign.js','experience/campaign.css','experience/mobility.js','experience/atis.js','experience/harita.js','experience/carpisma.js','experience/koy.js','experience/destek.js','experience/menu.js','experience/arazi.js','experience/ortam.js','experience/model.js','experience/sivil.js','experience/cevre.js','experience/mahalle.js','experience/militan.js','experience/agac.js','experience/hat.js','experience/ejderha.js','assets/tex/arac2_col.jpg','assets/tex/arac2_nrm.jpg','assets/tex/d_alb.jpg','assets/tex/d_nrm.jpg','assets/tex/f_nrm.jpg','assets/tex/f_orm.jpg','assets/tex/m60x_col.jpg','assets/tex/m60x_nrm.jpg','assets/tex/sky_aksam.jpg','assets/tex/sky_gece.jpg','assets/tex/sky_gunduz.jpg','assets/tex/sky_kapali.jpg','assets/tex/t_cim.jpg','assets/tex/t_kuru.jpg','assets/tex/t_tas.jpg','assets/mdl/asker.bin','assets/mdl/asker_uzak.bin','assets/mdl/duvar.bin','assets/mdl/duvar_orta.bin','assets/mdl/ejderha_canak.bin','assets/mdl/ejderha_canak_uzak.bin','assets/mdl/ejderha_govde.bin','assets/mdl/ejderha_govde_uzak.bin','assets/mdl/kamyon.bin','assets/mdl/kamyon_uzak.bin','assets/mdl/kirpi.bin','assets/mdl/kirpi_uzak.bin','assets/mdl/kule.bin','assets/mdl/kule_uzak.bin','assets/mdl/mahalle.bin','assets/mdl/mahalle_uzak.bin','assets/mdl/militan1.bin','assets/mdl/militan1_uzak.bin','assets/mdl/militan2.bin','assets/mdl/militan2_uzak.bin','assets/mdl/militan3.bin','assets/mdl/militan3_uzak.bin','assets/mdl/pikap.bin','assets/mdl/pikap_uzak.bin','assets/mdl/traktor.bin','assets/mdl/traktor_uzak.bin','assets/mdl/zeytin.bin','assets/mdl/zeytin_orta.bin','assets/mdl/zirhli.bin','assets/mdl/zirhli_uzak.bin','assets/tex/mahalle_col.jpg','assets/tex/pikap_col.jpg','assets/tex/traktor_col.jpg','assets/tex/kamyon_col.jpg','assets/tex/militan_col.jpg','assets/tex/asker_col.jpg','assets/tex/zeytin_col.jpg','assets/tex/zeytin_uzak.png','assets/tex/hat_col.jpg','assets/tex/duvar_uzak.png','assets/tex/kirpi_col.jpg','assets/tex/kule_col.jpg','assets/tex/ejderha_col.jpg','assets/tex/t_toprak.jpg','assets/tex/w_nrm.jpg','experience/skin.css','experience/fonts/hisar-dar-700.woff','experience/fonts/hisar-dar-400.woff','assets/brand/celik-boru.jpg','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','assets/radio/ack.mp3'].filter(p=>fs.existsSync(p));
-          const manifestPath='assets/radio/tr/manifest.json';
+          const paths=JSON.parse(fs.readFileSync('version.json','utf8')).assets;
           const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
-          if(fs.existsSync(manifestPath)){
-            const m=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
-            if(m.voice!=='tr-TR-AhmetNeural'||m.rate!=='+0%'||m.pitch!=='+0Hz'||m.playbackRate!==1)throw Error('Unexpected voice bank');
-            paths.push(manifestPath);
-            for(const c of Object.values(m.clips)){
-              if(!/^[-a-z0-9]+\.mp3$/.test(c.file))throw Error('Invalid clip filename');
-              const p='assets/radio/tr/'+c.file;
-              if(digest(fs.readFileSync(p))!==c.sha256)throw Error('Local voice checksum mismatch: '+p);
-              paths.push(p);
-            }
-          }
           async function read(path,attempt){
             const u=new URL(path,base);
             u.searchParams.set('deployment',String(expected));
@@ -75,7 +63,7 @@ jobs:
                 fs.mkdirSync('release-reports',{recursive:true});
                 fs.writeFileSync('release-reports/live-verification.json',JSON.stringify(report,null,2)+'\n');
                 console.log('LIVE_VERIFIED',JSON.stringify(report,null,2));
-                fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'## ÇELİK BÖRÜ live verification\n\nVersion **'+expected+'** served successfully. **'+results.length+'** game, module, worker and voice files match the checked-out release byte-for-byte.\n');
+                fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'## ÇELİK BÖRÜ live verification\n\nVersion **'+expected+'** served successfully. **'+results.length+'** game files match the checked-out release byte-for-byte.\n');
                 return;
               }catch(e){
                 lastError=e;

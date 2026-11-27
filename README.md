@@ -1,21 +1,13 @@
-# ÇELİK BÖRÜ
+# HİSAR oyunları
 
-M60A3 tankı ve Uçangöz ile oynanan tank savaşı. 1,6 km × 1,6 km haritada takımlar dağılır, güvenli alan aşama aşama daralır, son kalan takım kazanır. Rakipler yapay zekâdır. Tarayıcıda çalışır; telefona uygulama gibi kurulur.
+**Çelik Börü — Beyaz Geçit** ana adreste açılır. Araç komutanı çıkış yoklamasını ve yük çizelgesini kontrol eder. Oyuncu vadide iki teslimat yapar, fişleri alır ve üsse döner. Ok tuşları ve ekrandaki kumanda aracı sürer. Yön yardımı ilk açılışta etkindir.
 
-**Oyna:** https://eminkaan9999-creator.github.io/hisar/
+**HİSAR: KOMUTA — Gece Nöbeti** `komuta/` adresinde açılır. Oyuncu taşkın sonrası nöbeti devralır, talepleri doğrular ve iki destek ekibini görevlendirir. Vardiya on dakikalık turlarla ilerler. Ekipten gelen sonucu kayda geçirmek ve devir raporunu tamamlamak oyuncunun sorumluluğundadır.
 
-**Poligon (piyade tüfeği atış simülatörü):** https://eminkaan9999-creator.github.io/hisar/poligon/ — ayrı uygulama olarak ana ekrana eklenir.
+İki kurgu oyunda görev emri, kayıt ve teslim aşamaları kullanılır. Afet koordinasyonu için genel çerçeve [AFAD Türkiye Afet Müdahale Planı](https://www.afad.gov.tr/turkiye-afet-mudahale-plani), personel ve malzeme nakli için örnek [MSB afet desteği duyurusudur](https://www.msb.gov.tr/SlaytHaber/822023-37583). Yerler, süreler ve karar kuralları oyun için tasarlanmıştır.
 
-## Telefona kurulum
-- **iPhone:** bağlantıyı Safari'de aç → Paylaş → **Ana Ekrana Ekle**.
-- **Android:** Chrome'da aç → menü → **Uygulamayı yükle**.
+## Çalıştırma
 
-## Güncelleme
-Yeni sürüm yayınlandığında oyun menüsündeki **GÜNCELLE** tuşu "YENİ SÜRÜM" diye yanıp söner. Dokununca yeni sürüm yüklenir; krediler, rütbe ve tanklar korunur.
+Depo kökünde `python3 -m http.server 8080` çalıştırın. Çelik Börü için `/`, KOMUTA için `/komuta/` yolunu açın. İki oyunun çevrimdışı kurulumu ilk başarılı ağ yüklemesinden sonra hazır olur. Güncel görev ve son on iki rapor kullanılan cihazda saklanır.
 
-## Dosyalar
-- `index.html` — oyun motoru, araçlar, arazi, garaj
-- `experience/` — savaş kipi (`battle.js`), telsiz emirleri, görünüm, ayarlar ve sınamalar
-- `three.min.js` — 3B kütüphane (r128)
-- `manifest.webmanifest`, `sw.js` — uygulama kurulumu ve internetsiz çalışma
-- `version.json` — güncelleme kontrolü
+`node --test oyun/*.test.mjs` görev kurallarını ve yayın dosyalarını doğrular. Playwright Chromium kurulduğunda `node oyun/tarayici.cjs` normal oyun girişlerinden iki senaryoyu oynar, kayıtları ve çevrimdışı dönüşü sınar.

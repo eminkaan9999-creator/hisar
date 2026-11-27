@@ -3,14 +3,24 @@ on:
   push:
     branches: [feature/gameplay-refresh-20261110]
   pull_request:
-    paths: ['experience/**', 'scripts/gameplay-*', '.github/workflows/gameplay-refresh.yml']
+    paths: ['experience/gameplay*', 'scripts/gameplay-*', '.github/workflows/gameplay-refresh.yml']
 permissions:
   contents: read
 concurrency:
   group: gameplay-refresh-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  module:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test experience/gameplay.test.cjs
   validate:
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     permissions:

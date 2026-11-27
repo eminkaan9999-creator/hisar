@@ -9,7 +9,6 @@
   "operationNotes": "Telsiz emirleri: on emir, düğmeyle ya da sesle; dost tanklar çağrı adıyla yanıt verir. Harekât ve Şafak Hattı görevleri korunur. Mikrofon yalnız açık kullanım ve gerekiyorsa çevrimiçi tanıma izniyle çalışır.",
   "battle": "1.1.1",
   "battleNotes": "Son Takım: 2 × 2 km harita, takım büyüklüğüne göre 4, 7 ya da 14 rakip takım, altı aşamalı güvenli alan, sıralama ve ödül. Her aşamada bir ikmal sandığı, arada bir topçu bölgesi. Rakipler yapay zekâdır; çok oyunculu değildir.",
-  "previousReleaseNotes": "HİSAR Kuruluş: tek hikâye ve üç tam oyun alanı; özgün tanklar, kabinler, şantiye araçları, poligon hedefleri korunur. Ortak Uçangöz, araç/görüş kataloğu, yatay iki elli kontrol ve Türkçe Ahmet sesi. Alanlar geçişle yüklenir; kesintisiz tek arazi değildir.",
   "simpleSettings": "1.0.1",
   "radioVoice": "Microsoft Ahmet (tr-TR) Neural",
   "radioSpeed": 1,

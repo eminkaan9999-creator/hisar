@@ -1,8 +1,17 @@
-self.gameCache='hisar-komuta-site';
-self.gameRevision='3.2.0';
-self.gameFiles=['index.html','manifest.webmanifest','version.json'];
-const CACHE=self.gameCache+'-'+self.gameRevision,TARGET=new URL('../santiye-250888c5/',self.location.href).href;
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(self.gameFiles)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith(self.gameCache+'-')&&key!==CACHE)await caches.delete(key);await self.clients.claim();const clients=await self.clients.matchAll({type:'window'});for(const client of clients)if(new URL(client.url).pathname.startsWith(new URL('./',self.location.href).pathname))await client.navigate(TARGET).catch(()=>{});})()));
-self.addEventListener('fetch',e=>{if(e.request.mode==='navigate'&&new URL(e.request.url).pathname.startsWith(new URL('./',self.location.href).pathname)){e.respondWith(Promise.resolve(Response.redirect(TARGET,302)));}});
-self.addEventListener('message',e=>{if(e.data==='VERSION'&&e.ports[0])e.ports[0].postMessage({cache:CACHE});});
+// Retire the offline installation on its next online update.
+'use strict';
+self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const cachesToRemove = (await caches.keys()).filter(key => key.startsWith('hisar-komuta-site-'));
+    await Promise.all(cachesToRemove.map(key => caches.delete(key)));
+    await self.clients.claim();
+    const windows = await self.clients.matchAll({type: 'window'});
+    await self.registration.unregister();
+    await Promise.all(windows.filter(client => client.url.startsWith(self.registration.scope)).map(client => {
+      const url = new URL(client.url);
+      url.searchParams.set('retired', '1');
+      return client.navigate(url.href).catch(() => {});
+    }));
+  })());
+});

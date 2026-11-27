@@ -9,12 +9,12 @@ const server=http.createServer((req,res)=>{
   let name=new URL(req.url,'http://test').pathname;
   if(!name.startsWith('/hisar/')){res.writeHead(404).end();return;}
   name=name.slice(7);if(name.endsWith('/')||!name)name+='index.html';
-  if(name==='upgrade-check.html'||name==='santiye-250888c5/upgrade-check.html'){res.setHeader('Content-Type','text/html');res.end('<!doctype html><title>Upgrade fixture</title>');return;}
+  if(name.endsWith('upgrade-check.html')){res.setHeader('Content-Type','text/html');res.end('<!doctype html><title>Upgrade fixture</title>');return;}
   const file=path.resolve(root,name);if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}
   try{
     let data;
     if(restored)data=fs.readFileSync(file);
-    else{if(!old.has(name))old.set(name,cp.execFileSync('git',['show',previous+':'+name],{cwd:root,maxBuffer:40*1024*1024,stdio:['ignore','pipe','ignore']}));data=old.get(name);}
+    else{const revision = /^(komuta|santiye-250888c5)\//.test(name) ? '477095a6617160fa36d7c04413f3210f1045d601' : previous; if(!old.has(name))old.set(name,cp.execFileSync('git',['show',revision+':'+name],{cwd:root,maxBuffer:40*1024*1024,stdio:['ignore','pipe','ignore']}));data=old.get(name);}
     res.setHeader('Content-Type',types[path.extname(name)]||'application/octet-stream');
     if(name.endsWith('index.html'))res.setHeader('Cache-Control','public,max-age=3600');
     else res.setHeader('Cache-Control','no-store');
@@ -41,10 +41,10 @@ async function upgrade(page,cache){
   await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});
   await page.waitForFunction(async name=>(await caches.keys()).includes(name),cache,{timeout:120000});
   await page.waitForFunction(async name=>{
-    const keys=await caches.keys();return keys.includes(name)&&!keys.some(k=>(k.startsWith('hisar-main-')||k.startsWith('hisar-santiye-'))&&k!==name);
+    const keys=await caches.keys();return keys.includes(name)&&!keys.some(k=>(k.startsWith('hisar-main-'))&&k!==name);
   },cache,{timeout:120000});
   await page.waitForFunction(name=>new Promise(resolve=>{const c=navigator.serviceWorker.controller;if(!c)return resolve(false);const ch=new MessageChannel();const t=setTimeout(()=>resolve(false),500);ch.port1.onmessage=e=>{clearTimeout(t);resolve(e.data?.cache===name);};c.postMessage('VERSION',[ch.port2]);}),cache,{timeout:120000});
-  await page.waitForFunction(async name=>{if(navigator.serviceWorker.controller?.state!=='activated')return false;const r=await(await caches.open(name)).match(new URL('index.html',location.href));if(!r)return false;const html=await r.text();return html.includes(name.startsWith('hisar-main-')?'var BUILD=126':'20261127-restored-30');},cache,{timeout:120000});
+  await page.waitForFunction(async name=>{if(navigator.serviceWorker.controller?.state!=='activated')return false;const r=await(await caches.open(name)).match(new URL('index.html',location.href));if(!r)return false;const html=await r.text();return html.includes('var BUILD=126');},cache,{timeout:120000});
   const values=await page.evaluate(async()=>({tank:JSON.parse(localStorage.getItem('m60v2')),site:JSON.parse(localStorage.getItem('hs-proj')),legacy:localStorage.getItem('hisar-santiye-29'),marker:localStorage.getItem('hs-test-preserve'),other:(await caches.keys()).includes('hisar-tetik-preserve')}));
   assert.equal(values.tank.xp,321);assert.equal(values.site.money,7654);assert.equal(values.marker,'original-value');assert.equal(values.other,true);assert.equal(values.legacy,'{"preserve":"rejected-shell-save"}');
 }
@@ -56,10 +56,19 @@ async function upgrade(page,cache){
   const tp=await tank.newPage(),sp=await site.newPage(),errors=[];
   for(const p of [tp,sp]){p.setDefaultTimeout(90000);p.on('pageerror',e=>{errors.push(e.message);console.error('PAGE_ERROR',e.message);});}
   await seed(tp,base,'hisar-main-125');
-  await seed(sp,base+'santiye-250888c5/','hisar-santiye-29.0');
+  await seed(sp,base+'santiye-250888c5/','hisar-santiye-30-original');
   console.log('PASS previous workers and cached replacement entries installed');
   restored=true;
-  await upgrade(tp,'hisar-main-v126-original-restored');await upgrade(sp,'hisar-santiye-30-original');
+  await upgrade(tp,'hisar-main-v126-original-restored');
+  await sp.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
+  await sp.waitForFunction(async () => !await navigator.serviceWorker.getRegistration() &&
+    !(await caches.keys()).some(k => k.startsWith('hisar-santiye-')));
+  assert.ok(await sp.evaluate(() => caches.has('hisar-tetik-preserve')));
+  assert.equal(await sp.evaluate(() => JSON.parse(localStorage.getItem('m60v2')).xp),321);
+  for (const route of ['santiye-250888c5/', 'santiye-250888c5/simulator.html', 'komuta/', 'komuta/tank/', 'komuta/poligon/']) {
+    const response = await sp.request.get(base + route);
+    assert.equal(response.status(), 404, route);
+  }
   console.log('PASS both workers upgrade without clearing saves or sibling caches');
   await tp.bringToFront();console.log('CHECK original tank navigation');
   await tank.addInitScript(()=>{const raf=window.requestAnimationFrame;let primed=false;window.requestAnimationFrame=fn=>raf.call(window,t=>{if(!primed){try{if(typeof setQ==='function'){setQ('dusuk');primed=true;}}catch{}}fn(t);});});
@@ -74,27 +83,12 @@ async function upgrade(page,cache){
   const before=await tp.evaluate(()=>({x:P.x,z:P.z}));await tp.keyboard.down('w');
   try{await tp.waitForFunction(start=>Math.hypot(P.x-start.x,P.z-start.z)>.05,before,{timeout:60000});}finally{await tp.keyboard.up('w');}
   const after=await tp.evaluate(()=>({x:P.x,z:P.z}));assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.05,'original tank responds to W');
-  await tp.screenshot({path:'/tmp/restored-boru.png'});
+
   console.log('PASS original tank game opens and driving input moves the tank');
-  await tp.close();
-  await sp.bringToFront();await sp.goto(base+'santiye-250888c5/',{waitUntil:'domcontentloaded',timeout:120000});
-  await sp.waitForFunction(()=>window.__hs?.vehicles?.length>=10,{},{timeout:120000});
-  assert.equal(await sp.locator('iframe').count(),0);
-  assert.ok(await sp.locator('#cards .card').count()>=1);
-  await sp.evaluate(()=>__hs.stop());
-  await sp.screenshot({path:'/tmp/restored-santiye-menu.png'});
-  // Enter the existing vehicle controller; then apply ordinary keyboard input.
-  await sp.evaluate(()=>__hs.start('gr'));
-  const sb=await sp.evaluate(()=>{const v=__hs.vehicles.find(v=>v.type==='gr');return{x:v.x,z:v.z};});
-  await sp.keyboard.down('w');await sp.evaluate(()=>__hs.frame(90,1/30,true));await sp.keyboard.up('w');
-  const sa=await sp.evaluate(()=>{const v=__hs.vehicles.find(v=>v.type==='gr');return{x:v.x,z:v.z};});
-  assert.ok(Math.hypot(sa.x-sb.x,sa.z-sb.z)>.05,'original grader responds to W');
-  await sp.evaluate(()=>__hs.frame(1,1/30));await sp.screenshot({path:'/tmp/restored-santiye.png'});
-  console.log('PASS original construction menu and grader controls restored');
-  await site.setOffline(true);await sp.reload({waitUntil:'domcontentloaded',timeout:120000});
-  await sp.waitForFunction(()=>window.__hs?.vehicles?.length>=10,{},{timeout:120000});
-  assert.equal(await sp.evaluate(()=>localStorage.getItem('hs-test-preserve')),'original-value');
-  assert.equal(await sp.locator('iframe').count(),0);
+  await tank.setOffline(true);
+  await tp.reload({waitUntil:'domcontentloaded',timeout:120000});
+  await tp.waitForFunction(()=>window.HisarSimpleSettings?.diagnostics().ready);
+  assert.equal(await tp.evaluate(()=>SV.xp),321);
   assert.deepEqual(errors,[]);
-  console.log('PASS offline reopening serves original construction game; no runtime errors');
+  console.log('PASS original tank reopens offline and retired game URLs are gone');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();server.closeAllConnections();server.close();});

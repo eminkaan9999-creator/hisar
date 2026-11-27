@@ -6,14 +6,10 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,Number.isFinite(n)?n:a));
 const num=(n,d=0)=>Number.isFinite(n)?n:d;
 const copy=o=>JSON.parse(JSON.stringify(o));
 const CHAPTERS=Object.freeze([
- {id:'ilk-sabah',scene:'site',title:'İlk Sabah',brief:'Ekibinle tanış. Uçangözü kaldır, sekiz saniye uçur ve geri getir.',goal:'Uçangözü kaldır ve kamerayı dene.',reward:20},
- {id:'ilk-iz',scene:'site',title:'İlk İz',brief:'Greyderle işaretli yolun ilk altı bölümünü düzelt. Yaptığın çalışma şantiye kaydında kalır.',goal:'Bıçağı indir; işaretli yolda yavaşça ilerle.',reward:30},
  {id:'birlik-olmak',scene:'range',title:'Birlik Olmak',brief:'Sakin poligonda beş oyun atışı yap. İsabet zorunluluğu ve süre baskısı yok.',goal:'Beş oyun atışı ile kontrolleri tanı.',reward:20},
  {id:'ilk-konvoy',scene:'tank',mission:1,title:'İlk Konvoy',brief:'İkmal aracına eşlik et. Telsizden takip emri ver; kontrol noktalarını birlikte geç.',goal:'İKMAL 1’e takip emri ver.',reward:40},
- {id:'kesilen-baglanti',scene:'site',title:'Kesilen Bağlantı',brief:'Uçangöz ile sarı işareti bul. Uçangözü geri getir; hizmet aracını buluşma noktasına götür.',goal:'Uçangöz kamerasıyla sarı işareti incele.',reward:30},
  {id:'gece-vardiyasi',scene:'tank',mission:0,title:'Gece Vardiyası',brief:'Aynı Uçangöz ile ekibin işaretini bul. Tankla ekibi al, birliğinle üsse dön.',goal:'Kayıp ekibin işaretini uçangöz ile incele.',reward:40},
- {id:'son-konvoy',scene:'tank',mission:5,title:'Son Konvoy',brief:'Birliğinle buluş, sırayla gelen kara araçlarını karşıla ve hayatta kalan dostlarını geri getir.',goal:'Birliğinle buluşma alanına ilerle.',reward:50},
- {id:'eve-donus',scene:'site',title:'Eve Dönüş',brief:'Tankı işaretli üs alanına park et. Uçangözü bakım yerine teslim ederek hikâyeyi tamamla.',goal:'Tankla yeşil park alanına ilerle.',reward:20}
+ {id:'son-konvoy',scene:'tank',mission:5,title:'Son Konvoy',brief:'Birliğinle buluş, sırayla gelen kara araçlarını karşıla ve hayatta kalan dostlarını geri getir.',goal:'Birliğinle buluşma alanına ilerle.',reward:50}
 ].map(Object.freeze));
 function vector(v){v=v||{};return {x:clamp(num(v.x),-10000,10000),y:clamp(num(v.y),-100,1000),z:clamp(num(v.z),-10000,10000)};}
 function camera(v){v=v||{};return {yaw:clamp(num(v.yaw),-Math.PI*2,Math.PI*2),pitch:clamp(num(v.pitch,-.3),-1.5,.5),zoom:clamp(num(v.zoom,1),1,3),view:['fpv','follow','down'].includes(v.view)?v.view:'fpv'};}

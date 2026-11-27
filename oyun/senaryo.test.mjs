@@ -26,19 +26,16 @@ test('invalid and old save formats are rejected without touching legacy keys',()
   for(const x of [null,{},newRun('boru'),{...newRun('komuta'),jobs:[null]}])assert.equal(valid(x,'komuta'),false);
 });
 import {readFile} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
-import vm from 'node:vm';
-test('release receipts, worker caches and both HTML entry points match the shipped files',async()=>{
-  for(const [app,id] of [['','boru'],['komuta/','santiye-redirect']]){
-    const base=new URL('../'+app,import.meta.url);
-    const file=name=>readFile(new URL(name,base));
-    const version=JSON.parse(await file('version.json')),ctx={self:{location:{href:'https://example.test/komuta/sw.js'},addEventListener(){}},URL,importScripts(){}};
-    vm.runInNewContext(String(await file('sw.js')),ctx);
-    assert.equal(String(version.v),ctx.self.gameRevision);assert.match(String(await file('index.html')),new RegExp('data-game="'+id+'"'));
-    const receipts=id==='santiye-redirect'?JSON.parse(await file('publication-hashes.json')):null;
-    for(const name of version.assets){const data=await file(name);assert.ok(data.length);if(receipts)assert.equal(createHash('sha256').update(data).digest('hex'),receipts[name]);}
-    for(const path of ctx.self.gameFiles)assert.ok(version.assets.includes(path));
+test('the original game ships its listed assets and opens the tank menu', async () => {
+  const base = new URL('../', import.meta.url);
+  const version = JSON.parse(await readFile(new URL('version.json', base)));
+  for (const asset of version.assets) {
+    const data = await readFile(new URL(asset, base));
+    assert.ok(data.length, asset);
   }
+  const html = await readFile(new URL('index.html', base), 'utf8');
+  assert.match(html, /id="go"/);
+  assert.match(html, /assets\/brand\/celik-boru\.jpg/);
 });
 import {drive} from './surus.mjs';
 test('both roads can be driven in both directions and the receipts show the actual trip',()=>{

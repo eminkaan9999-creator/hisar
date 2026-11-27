@@ -1,8 +1,8 @@
 {
   "name": "Çelik Börü",
-  "v": 122,
+  "v": 123,
   "independent": true,
-  "scenario": "Beyaz Geçit",
+  "scenario": "Beyaz Geçit, Yağmur Hattı, Gece Sevki",
   "theme": "HİSAR Akademi",
   "assets": [
     "index.html",
@@ -31,6 +31,7 @@
     "iti/iti-assistant.js",
     "icon-maskable-512.png",
     "komuta/ortak/cevrimdisi.js",
-    "sw.js"
+    "sw.js",
+    "komuta/ortak/ses.mjs"
   ]
 }

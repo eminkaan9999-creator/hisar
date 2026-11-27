@@ -1,52 +1,30 @@
-/* ÇELİK BÖRÜ (hisar) game 63 / experience 63.1. Independent app caches stay isolated. */
-'use strict';
-const CACHE='hisar-main-v119-eve-donus';
-const BASE=new URL('./',self.location.href);
-const url=p=>new URL(p,BASE).href;
-const CORE=['assets/radio/tr/manifest.json','assets/radio/tr/drone-camera.mp3','assets/radio/tr/contact-rear.mp3','assets/radio/tr/contact-left.mp3','assets/radio/tr/contact-right.mp3','assets/radio/tr/contact-front.mp3','assets/radio/tr/point-needed.mp3','assets/radio/tr/unclear.mp3','assets/radio/tr/blocked.mp3','assets/radio/tr/arrived.mp3','assets/radio/tr/move.mp3','assets/radio/tr/address-convoy.mp3','assets/radio/tr/address-four.mp3','assets/radio/tr/address-three.mp3','assets/radio/tr/address-two.mp3','assets/radio/tr/address-all.mp3','assets/radio/tr/cmd-move.mp3','assets/radio/tr/cmd-regroup.mp3','assets/radio/tr/cmd-status.mp3','assets/radio/tr/cmd-back.mp3','assets/radio/tr/cmd-spread.mp3','assets/radio/tr/cmd-cease.mp3','assets/radio/tr/cmd-free.mp3','assets/radio/tr/cmd-target.mp3','assets/radio/tr/cmd-hold.mp3','assets/radio/tr/cmd-follow.mp3','assets/radio/tr/return.mp3','assets/radio/tr/record.mp3','assets/radio/tr/fog.mp3','assets/radio/tr/relay.mp3','assets/radio/tr/convoy.mp3','assets/radio/tr/rescue.mp3','assets/radio/tr/damage.mp3','assets/radio/tr/failure.mp3','assets/radio/tr/success.mp3','assets/radio/tr/hit.mp3','assets/radio/tr/reload.mp3','assets/radio/tr/drone.mp3','assets/radio/tr/air.mp3','assets/radio/tr/ground.mp3','assets/radio/tr/rest.mp3','assets/radio/tr/phase.mp3','assets/radio/tr/ready.mp3','assets/radio/tr/status.mp3','assets/radio/tr/convoy-go.mp3','assets/radio/tr/convoy-wait.mp3','assets/radio/tr/regroup.mp3','assets/radio/tr/back.mp3','assets/radio/tr/spread.mp3','assets/radio/tr/cease.mp3','assets/radio/tr/free.mp3','assets/radio/tr/target.mp3','assets/radio/tr/hold.mp3','assets/radio/tr/follow.mp3','assets/radio/tr/ack.mp3','index.html','three.min.js','manifest.webmanifest','iti/index.html','iti/iti-assistant.js','experience/guard.js','experience/core.js','experience/bridge.js','experience/ui.js','experience/ui.css','experience/polish.js','experience/controls.js','experience/immersive.js','experience/gameplay.js','experience/radio-sound.js','experience/radio-missions.js','experience/crew-orders.js','experience/field.js','experience/battle.js','experience/swarm.js','experience/realism.js','experience/sinir.js','experience/harekat.js','experience/atis.js','experience/harita.js','experience/carpisma.js','experience/koy.js','experience/destek.js','experience/menu.js','experience/command-menu.js','experience/command-menu.css','experience/safak.js','experience/modern.js','experience/modern.css','experience/checkpoint.js','experience/tank-feel.js','experience/tank-feel.css','experience/interface.js','experience/interface.css','experience/campaign.js','experience/campaign.css','experience/mobility.js','experience/arazi.js','experience/ortam.js','experience/model.js','experience/sivil.js','experience/cevre.js','experience/mahalle.js','experience/militan.js','experience/agac.js','experience/hat.js','experience/ejderha.js','assets/tex/arac2_col.jpg?v=96','assets/tex/arac2_nrm.jpg?v=96','assets/tex/d_alb.jpg?v=96','assets/tex/d_nrm.jpg?v=96','assets/tex/f_nrm.jpg?v=96','assets/tex/f_orm.jpg?v=96','assets/tex/m60x_col.jpg?v=96','assets/tex/m60x_nrm.jpg?v=96','assets/tex/sky_aksam.jpg?v=96','assets/tex/sky_gece.jpg?v=96','assets/tex/sky_gunduz.jpg?v=96','assets/tex/sky_kapali.jpg?v=96','assets/tex/t_cim.jpg?v=96','assets/tex/t_kuru.jpg?v=96','assets/tex/t_tas.jpg?v=96','assets/mdl/asker.bin?v=1','assets/mdl/asker_uzak.bin?v=1','assets/mdl/duvar.bin?v=1','assets/mdl/duvar_orta.bin?v=1','assets/mdl/ejderha_canak.bin?v=1','assets/mdl/ejderha_canak_uzak.bin?v=1','assets/mdl/ejderha_govde.bin?v=1','assets/mdl/ejderha_govde_uzak.bin?v=1','assets/mdl/kamyon.bin?v=1','assets/mdl/kamyon_uzak.bin?v=1','assets/mdl/kirpi.bin?v=1','assets/mdl/kirpi_uzak.bin?v=1','assets/mdl/kule.bin?v=1','assets/mdl/kule_uzak.bin?v=1','assets/mdl/mahalle.bin?v=1','assets/mdl/mahalle_uzak.bin?v=1','assets/mdl/militan1.bin?v=1','assets/mdl/militan1_uzak.bin?v=1','assets/mdl/militan2.bin?v=1','assets/mdl/militan2_uzak.bin?v=1','assets/mdl/militan3.bin?v=1','assets/mdl/militan3_uzak.bin?v=1','assets/mdl/pikap.bin?v=1','assets/mdl/pikap_uzak.bin?v=1','assets/mdl/traktor.bin?v=1','assets/mdl/traktor_uzak.bin?v=1','assets/mdl/zeytin.bin?v=1','assets/mdl/zeytin_orta.bin?v=1','assets/mdl/zirhli.bin?v=1','assets/mdl/zirhli_uzak.bin?v=1','assets/tex/mahalle_col.jpg?v=1','assets/tex/pikap_col.jpg?v=1','assets/tex/traktor_col.jpg?v=1','assets/tex/kamyon_col.jpg?v=1','assets/tex/militan_col.jpg?v=1','assets/tex/asker_col.jpg?v=1','assets/tex/zeytin_col.jpg?v=1','assets/tex/zeytin_uzak.png?v=1','assets/tex/hat_col.jpg?v=1','assets/tex/duvar_uzak.png?v=1','assets/tex/kirpi_col.jpg?v=1','assets/tex/kule_col.jpg?v=1','assets/tex/ejderha_col.jpg?v=1','assets/tex/t_toprak.jpg?v=96','assets/tex/w_nrm.jpg?v=96','experience/simple-settings.js','experience/skin.css','experience/fonts/hisar-dar-700.woff','experience/fonts/hisar-dar-400.woff','assets/brand/celik-boru.jpg','assets/radio/ack.mp3'];
-const OPTIONAL=['icon-192.png','icon-512.png','apple-touch-icon.png','favicon-32.png'];
-// Keep the original precache key (including its asset revision), indexed by pathname.
-const STATIC=new Map([...CORE,...OPTIONAL].map(p=>{const u=new URL(p,BASE);return [u.pathname,u.href];}));
-function pageKey(input){const u=new URL(input);if(u.origin!==BASE.origin)return null;const p=u.pathname;
- if(p===BASE.pathname||p===BASE.pathname+'index.html')return url('index.html');
- if(p===BASE.pathname+'iti'||p===BASE.pathname+'iti/'||p===BASE.pathname+'iti/index.html')return url('iti/index.html');
- return null;
-}
-function assetKey(input){const u=new URL(input);return u.origin===BASE.origin?(STATIC.get(u.pathname)||null):null;}
-const ignore=promise=>Promise.resolve(promise).catch(()=>undefined);
-self.addEventListener('install',event=>{
- event.waitUntil((async()=>{
-  const cache=await caches.open(CACHE);
-  /* no-cache: her dosya sunucuyla doğrulanır (eski kopya kullanılmaz) ama sayfanın az önce indirdiği dosya yeniden indirilmez */
-  await cache.addAll(CORE.map(p=>new Request(url(p),{cache:'no-cache'})));
-  await Promise.all(OPTIONAL.map(p=>ignore(cache.add(url(p)))));
-  await self.skipWaiting();
- })());
-});
-self.addEventListener('activate',event=>{
- event.waitUntil((async()=>{
-  const keys=await caches.keys();
-  await Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('hisar-main-')||k.startsWith('hisar-cache-hisar-m60-ucangoz-'))).map(k=>caches.delete(k)));
-  await self.clients.claim();
- })());
-});
-self.addEventListener('fetch',event=>{
- const r=event.request,u=new URL(r.url);
- if(r.method!=='GET'||u.origin!==BASE.origin)return;
- if(u.pathname===BASE.pathname+'version.json'){
-  event.respondWith(fetch(r,{cache:'no-store'}).catch(()=>new Response('{"offline":true}',{status:503,headers:{'Content-Type':'application/json'}})));return;
- }
- if(r.mode==='navigate'){
-  const key=pageKey(r.url);if(!key)return;
-  const operation=(async()=>{
-   const cache=await caches.open(CACHE);
-   try{const response=await fetch(r);if(response.ok){await ignore(cache.put(key,response.clone()));return response;}return (await cache.match(key))||response;}
-   catch{return (await cache.match(key))||new Response('Bu sayfa çevrimdışı kullanım için henüz hazır değil. İnternet bağlantısıyla yeniden aç.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});}
-  })();event.respondWith(operation);event.waitUntil(ignore(operation));return;
- }
- const key=assetKey(r.url);if(!key)return;
- const operation=(async()=>{const cache=await caches.open(CACHE),hit=await cache.match(key);if(hit)return hit;const response=await fetch(r);if(response.ok)await ignore(cache.put(key,response.clone()));return response;})();
- event.respondWith(operation);event.waitUntil(ignore(operation));
-});
-// VERSION: sayfa kendisini yöneten işçinin önbellek adını sorar; kendi sürümüyle aynı değilse işçiyi bırakıp yeniden yüklenir (index.html)
-self.addEventListener('message',event=>{if(event.data==='SKIP_WAITING')event.waitUntil(self.skipWaiting());else if(event.data==='VERSION'&&event.ports&&event.ports[0])event.ports[0].postMessage({cache:CACHE});});
+self.gameCache='hisar-main';
+self.gameRevision='121';
+self.gameFiles=[
+  "index.html",
+  "manifest.webmanifest",
+  "version.json",
+  "favicon-32.png",
+  "apple-touch-icon.png",
+  "icon-192.png",
+  "icon-512.png",
+  "komuta/ortak/oyun.css",
+  "komuta/ortak/tokens.css",
+  "komuta/ortak/oyun.mjs",
+  "komuta/ortak/senaryo.mjs",
+  "komuta/ortak/masa.mjs",
+  "komuta/ortak/fonts/inter-latin-tr.4.001.woff2",
+  "oyun/boru.webp",
+  "oyun/surus.mjs",
+  "three.min.js",
+  "assets/tex/sky_kapali.jpg",
+  "assets/mdl/kamyon.bin",
+  "assets/tex/kamyon_col.jpg",
+  "assets/tex/t_tas.jpg",
+  "assets/tex/zeytin_uzak.png",
+  "experience/model.js",
+  "iti/index.html",
+  "iti/iti-assistant.js",
+  "icon-maskable-512.png"
+];
+importScripts('komuta/ortak/cevrimdisi.js');

@@ -3,7 +3,7 @@ on:
   push:
     branches: [feature/gameplay-refresh-20261110]
   pull_request:
-    paths: ['experience/**', 'scripts/**', 'sw.js', 'version.json', 'index.html', 'assets/radio/**', '.github/workflows/radio-operations.yml']
+    paths: ['experience/**', 'scripts/**', 'assets/radio/**', '.github/workflows/radio-operations.yml']
 permissions:
   contents: read
 concurrency:

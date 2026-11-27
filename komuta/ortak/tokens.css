@@ -1,0 +1,476 @@
+/*
+ * HİSAR 360 — hisar-ui tasarım token'ları (tek kaynak). Renk sabiti yalnız burada; adlar --hx- önekli. Tema
+ * otoritesi premium/ui.js (html[data-hisar-theme|text|density|motion|quality]). Koyu tema iki blokta (açık seçim +
+ * ilk boyama); test ikisini birebir karşılaştırır. Kırılma noktaları 640/1024 px.
+ */
+
+/* Inter 4.001 değişken (OFL-1.1), latin + Türkçe alt küme, wght 400–700, opsz 14–32.
+   Aile adı bilerek "Hisar Inter": premium/ui.css'teki "Inter" yığınını ele geçirmez. */
+@font-face {
+  font-family: "Hisar Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: optional;
+  src: url("fonts/inter-latin-tr.4.001.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0100-017F, U+0152-0153, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+2000-206F, U+20AC, U+20BA, U+2122, U+2190-2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* ── Ham palet (karar §3.2) ── */
+  --hx-obsidian-900: #0b0d10;
+  --hx-obsidian-800: #12161c;
+  --hx-obsidian-700: #19202a;
+  --hx-obsidian-600: #222b36;
+  --hx-navy-950: #070d18;
+  --hx-navy-900: #0a1220;
+  --hx-navy-850: #0e1a2e;
+  --hx-navy-800: #13233b;
+  --hx-navy-700: #1a2940;
+  --hx-steel-50: #f4f6f8;
+  --hx-steel-100: #eef1f4;
+  --hx-steel-200: #e3e8ed;
+  --hx-steel-300: #d9dfe6;
+  --hx-steel-400: #a9b4c0;
+  --hx-steel-500: #8d99a6;
+  --hx-steel-600: #66768a;
+  --hx-steel-blue-450: #7893ae;
+  --hx-steel-700: #4a5868;
+  --hx-steel-800: #2a323d;
+  --hx-steel-900: #0e1621;
+  --hx-teal-300: #6fdccf;
+  --hx-teal-400: #3cc4b5;
+  --hx-teal-600: #0b7c74;
+  --hx-teal-700: #0a6c65;
+  --hx-teal-800: #0a6560;
+  --hx-gold-400: #d4b06a;
+  /* Karar belgesindeki #a5823e surface-3 üzerinde 2,91:1 kaldığı için bir ton koyulaştırıldı (s3 3,16; beyaz 3,89). */
+  --hx-gold-600: #9e7c3a;
+  --hx-gold-700: #7f6029;
+  --hx-white: #ffffff;
+
+  /* ── Yazı (karar §2) ── */
+  --hx-font: "Hisar Inter", system-ui, -apple-system, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  --hx-font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --hx-font-serif: Georgia, "Times New Roman", serif;
+  /* Baskı yazısı sahip kararını bekliyor (karar, açık soru 8); şimdilik ekran yazısı. */
+  --hx-font-print: var(--hx-font);
+  --hx-weight-regular: 400;
+  --hx-weight-medium: 500;
+  --hx-weight-semibold: 600;
+  --hx-weight-bold: 700;
+  --hx-text-scale: 1;
+  /* Ölçek (§2.5): telefon değerleri; ≥1024 px aşağıda büyür. Satır yüksekliği birimsiz. */
+  --hx-fs-display: calc(2rem * var(--hx-text-scale));
+  --hx-lh-display: 1.1;
+  --hx-ls-display: -0.02em;
+  --hx-fs-h1: calc(1.625rem * var(--hx-text-scale));
+  --hx-lh-h1: 1.2;
+  --hx-ls-h1: -0.015em;
+  --hx-fs-h2: calc(1.25rem * var(--hx-text-scale));
+  --hx-lh-h2: 1.25;
+  --hx-ls-h2: -0.01em;
+  --hx-fs-h3: calc(1.0625rem * var(--hx-text-scale));
+  --hx-lh-h3: 1.3;
+  --hx-fs-body: calc(1rem * var(--hx-text-scale));
+  --hx-lh-body: 1.5;
+  --hx-fs-sm: calc(0.875rem * var(--hx-text-scale));
+  --hx-lh-sm: 1.45;
+  --hx-fs-label: calc(0.875rem * var(--hx-text-scale));
+  --hx-lh-label: 1.3;
+  --hx-fs-overline: calc(0.75rem * var(--hx-text-scale));
+  --hx-lh-overline: 1.35;
+  --hx-ls-overline: 0.06em;
+  --hx-fs-cell: calc(0.9375rem * var(--hx-text-scale));
+  --hx-lh-cell: 1.4;
+  --hx-fs-th: calc(0.75rem * var(--hx-text-scale));
+  --hx-lh-th: 1.3;
+  --hx-ls-th: 0.04em;
+  --hx-fs-button: calc(1rem * var(--hx-text-scale));
+  --hx-lh-button: 1.25;
+  /* iOS odak yakınlaştırmasını önler: form alanı hiçbir koşulda 16 px altına inmez. */
+  --hx-fs-input: max(16px, calc(1rem * var(--hx-text-scale)));
+  --hx-lh-input: 1.4;
+  --hx-fs-badge: calc(0.8125rem * var(--hx-text-scale));
+  --hx-lh-badge: 1.2;
+  --hx-ls-badge: 0.01em;
+  --hx-fs-code: calc(0.9375rem * var(--hx-text-scale));
+  --hx-lh-code: 1.4;
+  /* En küçük yazı 12 px */
+  --hx-fs-min: max(12px, calc(0.75rem * var(--hx-text-scale)));
+
+  /* ── Ölçü: 4 px ızgara; sıkı yerleşimde boşluklar daralır, kontrol yüksekliği daralmaz ── */
+  --hx-density: 1;
+  --hx-space-1: calc(4px * var(--hx-density));
+  --hx-space-2: calc(8px * var(--hx-density));
+  --hx-space-3: calc(12px * var(--hx-density));
+  --hx-space-4: calc(16px * var(--hx-density));
+  --hx-space-5: calc(20px * var(--hx-density));
+  --hx-space-6: calc(24px * var(--hx-density));
+  --hx-space-8: calc(32px * var(--hx-density));
+  --hx-space-10: calc(40px * var(--hx-density));
+  --hx-space-12: calc(48px * var(--hx-density));
+  --hx-radius-sm: 6px;
+  --hx-radius-md: 10px;
+  --hx-radius-lg: 14px;
+  --hx-radius-xl: 20px;
+  --hx-radius-pill: 999px;
+  /* Dokunma hedefi (WCAG 2.5.8): dokunmatikte 44 px; farede aşağıda 40/32 px */
+  --hx-control-h: 44px;
+  --hx-control-h-sm: 44px;
+  --hx-sidebar-w: 264px;
+  --hx-sidebar-w-collapsed: 76px;
+  --hx-topbar-h: 64px;
+  --hx-bottom-nav-h: 64px;
+  --hx-content-max: 1440px;
+  /* Güvenli alan: dört kenar (iPhone çentiği ve ana ekran çubuğu) */
+  --hx-safe-top: env(safe-area-inset-top, 0px);
+  --hx-safe-right: env(safe-area-inset-right, 0px);
+  --hx-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --hx-safe-left: env(safe-area-inset-left, 0px);
+
+  /* ── Katman sırası: tek ölçek ── */
+  --hx-z-sticky: 10;
+  --hx-z-nav: 20;
+  --hx-z-overlay: 40;
+  --hx-z-dialog: 50;
+  --hx-z-toast: 60;
+
+  /* ── Hareket (§3.6): yalnız transform ve opacity canlandırılır ── */
+  --hx-dur-instant: 0ms;
+  --hx-dur-press: 90ms;
+  --hx-dur-fast: 140ms;
+  --hx-dur-base: 200ms;
+  --hx-dur-slow: 280ms;
+  --hx-dur-emphasis: 360ms;
+  --hx-dur-exit-base: 140ms;
+  --hx-dur-exit-slow: 200ms;
+  --hx-dur-spin: 800ms;
+  --hx-dur-shimmer: 1400ms;
+  --hx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --hx-ease-enter: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --hx-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --hx-ease-spring: cubic-bezier(0.34, 1.26, 0.64, 1);
+  /* Hareket mesafesi çarpanı: low kalitede ve hareket azaltmada 0 (yalnız opaklık kalır) */
+  --hx-motion-distance: 1;
+  --hx-skeleton-animation: hx-shimmer;
+
+  /* ── Açık tema: porselen (varsayılan) ── */
+  color-scheme: light;
+  --hx-bg: var(--hx-steel-50);
+  --hx-surface: var(--hx-white);
+  --hx-surface-2: var(--hx-steel-100);
+  --hx-surface-3: var(--hx-steel-200);
+  --hx-text: var(--hx-steel-900);
+  --hx-text-muted: var(--hx-steel-700);
+  --hx-text-subtle: #5a6878;
+  --hx-accent: var(--hx-teal-600);
+  --hx-accent-hover: var(--hx-teal-800);
+  --hx-on-accent: var(--hx-white);
+  --hx-accent-text: var(--hx-teal-700);
+  --hx-accent-soft: #e1f2f0;
+  --hx-accent-ring: rgb(11 124 116 / 0.25);
+  --hx-row-hover: rgb(11 124 116 / 0.05);
+  --hx-brand-gold: var(--hx-gold-700);
+  --hx-brand-gold-line: var(--hx-gold-600);
+  --hx-control-border: var(--hx-steel-600);
+  --hx-control-border-hover: var(--hx-steel-700);
+  --hx-hairline: var(--hx-steel-300);
+  --hx-focus: var(--hx-teal-600);
+  --hx-success: #18794e;
+  --hx-success-soft: #e6f4ec;
+  --hx-warning: #9a4500;
+  --hx-warning-soft: #fbeee4;
+  --hx-danger: #b4232c;
+  --hx-danger-soft: #fbe7e8;
+  --hx-danger-ring: rgb(180 35 44 / 0.22);
+  --hx-on-danger: var(--hx-white);
+  --hx-info: #1f5fa3;
+  --hx-info-soft: #e5eef9;
+  /* Kenar çubuğu ve üst bant her iki temada derin lacivert */
+  --hx-nav-bg: var(--hx-navy-850);
+  --hx-nav-surface: var(--hx-navy-800);
+  --hx-nav-active: var(--hx-navy-700);
+  --hx-nav-border: #1c2b43;
+  --hx-nav-text: #c3cfdc;
+  --hx-nav-text-strong: var(--hx-white);
+  --hx-nav-label: #9fb0c3;
+  --hx-nav-accent: var(--hx-teal-300);
+  /* Lacivert ray her iki temada aynı olduğundan marka altını rayda her zaman açık tondur (açık temada #7f6029 rayda 2,99:1 kalır). */
+  --hx-nav-brand: var(--hx-gold-400);
+  --hx-nav-count-bg: rgb(111 220 207 / 0.16);
+  --hx-brand-mark-bg: var(--hx-white);
+  --hx-chart-1: #0b7c74;
+  --hx-chart-2: #3b6fb6;
+  --hx-chart-3: #b4570f;
+  --hx-chart-4: #8b5cb8;
+  --hx-chart-grid: var(--hx-steel-200);
+  --hx-scrim: rgb(7 13 24 / 0.55);
+  /* Derinlik (§3.5): öğe başına en fazla 2 gölge katmanı; renkli parıltı yok */
+  --hx-shadow-1: 0 1px 2px rgb(14 22 33 / 0.06), 0 1px 1px rgb(14 22 33 / 0.04);
+  --hx-shadow-2: 0 6px 16px -6px rgb(14 22 33 / 0.14), 0 2px 4px rgb(14 22 33 / 0.06);
+  --hx-shadow-3: 0 24px 60px -16px rgb(10 18 32 / 0.30);
+  /* balanced kalitede tek katmanlı karşılıklar */
+  --hx-shadow-1-single: 0 1px 2px rgb(14 22 33 / 0.08);
+  --hx-shadow-2-single: 0 6px 16px -6px rgb(14 22 33 / 0.16);
+  --hx-elevated-border: var(--hx-hairline);
+  /* Cam (§3.5): yalnız üst çubuk, alt gezinme, diyalog ve palet örtüsü */
+  --hx-glass-bg: rgb(255 255 255 / 0.88);
+  --hx-glass-solid: rgb(255 255 255 / 0.96);
+  --hx-glass-filter: blur(16px) saturate(1.3);
+  --hx-scrim-filter: blur(2px);
+}
+
+/* ── Koyu tema: obsidyen (açık seçim) ── */
+html[data-hisar-theme="dark"] {
+  color-scheme: dark;
+  --hx-bg: var(--hx-obsidian-900);
+  --hx-surface: var(--hx-obsidian-800);
+  --hx-surface-2: var(--hx-obsidian-700);
+  --hx-surface-3: var(--hx-obsidian-600);
+  --hx-text: var(--hx-steel-100);
+  --hx-text-muted: var(--hx-steel-400);
+  --hx-text-subtle: var(--hx-steel-500);
+  --hx-accent: var(--hx-teal-400);
+  --hx-accent-hover: var(--hx-teal-300);
+  --hx-on-accent: #04201c;
+  --hx-accent-text: var(--hx-teal-300);
+  --hx-accent-soft: #0f2a2a;
+  --hx-accent-ring: rgb(60 196 181 / 0.30);
+  --hx-row-hover: rgb(60 196 181 / 0.07);
+  --hx-brand-gold: var(--hx-gold-400);
+  --hx-brand-gold-line: var(--hx-gold-400);
+  --hx-control-border: var(--hx-steel-blue-450);
+  --hx-control-border-hover: var(--hx-steel-400);
+  --hx-hairline: var(--hx-steel-800);
+  --hx-focus: var(--hx-teal-300);
+  --hx-success: #4cc98d;
+  --hx-success-soft: #11281d;
+  --hx-warning: #f2a65a;
+  --hx-warning-soft: #2e1f12;
+  --hx-danger: #f2777b;
+  --hx-danger-soft: #33191b;
+  --hx-danger-ring: rgb(242 119 123 / 0.28);
+  --hx-on-danger: #2a0a0c;
+  --hx-info: #7db3ea;
+  --hx-info-soft: #142338;
+  --hx-nav-bg: var(--hx-navy-900);
+  --hx-nav-surface: var(--hx-navy-800);
+  --hx-nav-active: var(--hx-navy-700);
+  --hx-nav-border: #16233a;
+  --hx-brand-mark-bg: var(--hx-white);
+  --hx-chart-1: #3cc4b5;
+  --hx-chart-2: #7db3ea;
+  --hx-chart-3: #f2a65a;
+  --hx-chart-4: #b48ae0;
+  --hx-chart-grid: var(--hx-steel-800);
+  --hx-scrim: rgb(0 0 0 / 0.66);
+  --hx-shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --hx-shadow-2: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --hx-shadow-3: 0 28px 70px -18px rgb(0 0 0 / 0.75);
+  --hx-shadow-1-single: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --hx-shadow-2-single: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --hx-elevated-border: var(--hx-steel-800);
+  --hx-glass-bg: rgb(18 22 28 / 0.86);
+  --hx-glass-solid: rgb(18 22 28 / 0.96);
+}
+
+/* ── Koyu tema: seçim yazılmadan önceki ilk boyama (yukarıdaki blokla birebir aynı) ── */
+@media (prefers-color-scheme: dark) {
+  html:not([data-hisar-theme]) {
+    color-scheme: dark;
+    --hx-bg: var(--hx-obsidian-900);
+    --hx-surface: var(--hx-obsidian-800);
+    --hx-surface-2: var(--hx-obsidian-700);
+    --hx-surface-3: var(--hx-obsidian-600);
+    --hx-text: var(--hx-steel-100);
+    --hx-text-muted: var(--hx-steel-400);
+    --hx-text-subtle: var(--hx-steel-500);
+    --hx-accent: var(--hx-teal-400);
+    --hx-accent-hover: var(--hx-teal-300);
+    --hx-on-accent: #04201c;
+    --hx-accent-text: var(--hx-teal-300);
+    --hx-accent-soft: #0f2a2a;
+    --hx-accent-ring: rgb(60 196 181 / 0.30);
+    --hx-row-hover: rgb(60 196 181 / 0.07);
+    --hx-brand-gold: var(--hx-gold-400);
+    --hx-brand-gold-line: var(--hx-gold-400);
+    --hx-control-border: var(--hx-steel-blue-450);
+    --hx-control-border-hover: var(--hx-steel-400);
+    --hx-hairline: var(--hx-steel-800);
+    --hx-focus: var(--hx-teal-300);
+    --hx-success: #4cc98d;
+    --hx-success-soft: #11281d;
+    --hx-warning: #f2a65a;
+    --hx-warning-soft: #2e1f12;
+    --hx-danger: #f2777b;
+    --hx-danger-soft: #33191b;
+    --hx-danger-ring: rgb(242 119 123 / 0.28);
+    --hx-on-danger: #2a0a0c;
+    --hx-info: #7db3ea;
+    --hx-info-soft: #142338;
+    --hx-nav-bg: var(--hx-navy-900);
+    --hx-nav-surface: var(--hx-navy-800);
+    --hx-nav-active: var(--hx-navy-700);
+    --hx-nav-border: #16233a;
+    --hx-brand-mark-bg: var(--hx-white);
+    --hx-chart-1: #3cc4b5;
+    --hx-chart-2: #7db3ea;
+    --hx-chart-3: #f2a65a;
+    --hx-chart-4: #b48ae0;
+    --hx-chart-grid: var(--hx-steel-800);
+    --hx-scrim: rgb(0 0 0 / 0.66);
+    --hx-shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    --hx-shadow-2: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+    --hx-shadow-3: 0 28px 70px -18px rgb(0 0 0 / 0.75);
+    --hx-shadow-1-single: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    --hx-shadow-2-single: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+    --hx-elevated-border: var(--hx-steel-800);
+    --hx-glass-bg: rgb(18 22 28 / 0.86);
+    --hx-glass-solid: rgb(18 22 28 / 0.96);
+  }
+}
+
+/* ── Masaüstü yazı ölçeği (≥1024 px) ── */
+@media (min-width: 1024px) {
+  :root {
+    --hx-fs-display: calc(2.75rem * var(--hx-text-scale));
+    --hx-fs-h1: calc(2rem * var(--hx-text-scale));
+    --hx-fs-h2: calc(1.5rem * var(--hx-text-scale));
+    --hx-fs-h3: calc(1.125rem * var(--hx-text-scale));
+    --hx-fs-cell: calc(0.875rem * var(--hx-text-scale));
+    --hx-fs-button: calc(0.9375rem * var(--hx-text-scale));
+    --hx-fs-code: calc(0.875rem * var(--hx-text-scale));
+  }
+}
+
+/* ── Fare ile kullanımda kontrol yüksekliği (WCAG 2.5.8 ≥24 px); dokunmatikte 44 px kalır ── */
+@media (pointer: fine) {
+  :root {
+    --hx-control-h: 40px;
+    --hx-control-h-sm: 32px;
+  }
+}
+
+/* ── Uygulama tercihleri (premium/ui.js yazar) ── */
+html[data-hisar-text="large"] { --hx-text-scale: 1.125; }
+/* iOS Dinamik Yazı (karar §2.4): boyut iOS'tan, aile Inter'den; panel seçeneği ilk ekran PR'ında */
+@supports (font: -apple-system-body) {
+  html[data-hisar-text="system"] { font: -apple-system-body; font-family: var(--hx-font); }
+}
+html[data-hisar-density="compact"] { --hx-density: 0.8; }
+
+/* ── Hareket azaltma: sistem tercihi YA DA uygulama tercihi ── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --hx-dur-press: 0ms;
+    --hx-dur-fast: 0ms;
+    --hx-dur-base: 0ms;
+    --hx-dur-slow: 0ms;
+    --hx-dur-emphasis: 0ms;
+    --hx-dur-exit-base: 0ms;
+    --hx-dur-exit-slow: 0ms;
+    --hx-motion-distance: 0;
+    --hx-skeleton-animation: none;
+  }
+}
+html[data-hisar-motion="reduced"] {
+  --hx-dur-press: 0ms;
+  --hx-dur-fast: 0ms;
+  --hx-dur-base: 0ms;
+  --hx-dur-slow: 0ms;
+  --hx-dur-emphasis: 0ms;
+  --hx-dur-exit-base: 0ms;
+  --hx-dur-exit-slow: 0ms;
+  --hx-motion-distance: 0;
+  --hx-skeleton-animation: none;
+}
+
+/* ── Görsel kalite (§3.7): premium/ui.js otomatik belirler, kullanıcı geçersiz kılabilir ── */
+html[data-hisar-quality="balanced"] {
+  --hx-glass-bg: var(--hx-glass-solid);
+  --hx-glass-filter: none;
+  --hx-scrim-filter: none;
+  --hx-ease-spring: var(--hx-ease-enter);
+  --hx-shadow-1: var(--hx-shadow-1-single);
+  --hx-shadow-2: var(--hx-shadow-2-single);
+}
+html[data-hisar-quality="low"] {
+  --hx-glass-bg: var(--hx-surface);
+  --hx-glass-filter: none;
+  --hx-scrim-filter: none;
+  --hx-ease-spring: var(--hx-ease-standard);
+  --hx-shadow-1: none;
+  --hx-shadow-2: none;
+  --hx-shadow-3: none;
+  --hx-dur-fast: 120ms;
+  --hx-dur-base: 120ms;
+  --hx-dur-slow: 120ms;
+  --hx-dur-emphasis: 120ms;
+  --hx-dur-exit-base: 100ms;
+  --hx-dur-exit-slow: 100ms;
+  --hx-motion-distance: 0;
+  --hx-skeleton-animation: none;
+}
+/* Hareket azaltma kaliteden önce gelir: low seçiliyken de süreler 0 kalır. */
+html[data-hisar-quality="low"][data-hisar-motion="reduced"] {
+  --hx-dur-fast: 0ms;
+  --hx-dur-base: 0ms;
+  --hx-dur-slow: 0ms;
+  --hx-dur-emphasis: 0ms;
+  --hx-dur-exit-base: 0ms;
+  --hx-dur-exit-slow: 0ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-hisar-quality="low"] {
+    --hx-dur-fast: 0ms;
+    --hx-dur-base: 0ms;
+    --hx-dur-slow: 0ms;
+    --hx-dur-emphasis: 0ms;
+    --hx-dur-exit-base: 0ms;
+    --hx-dur-exit-slow: 0ms;
+  }
+}
+
+/* Aşağıdaki bloklar html:root (0,1,1) ve dosya sonunda: tema özniteliği yokken de koyu/kalite bloklarını ezer */
+/* ── Cam desteklenmiyorsa ya da saydamlık azaltılmışsa opak yüzey ── */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html:root {
+    --hx-glass-bg: var(--hx-glass-solid);
+    --hx-glass-filter: none;
+    --hx-scrim-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html:root {
+    --hx-glass-bg: var(--hx-surface);
+    --hx-glass-filter: none;
+    --hx-scrim-filter: none;
+  }
+}
+
+/* ── Yüksek kontrast isteği: kılçizgi kontrol sınırına döner, cam ve gölge kapanır ── */
+@media (prefers-contrast: more) {
+  html:root {
+    --hx-hairline: var(--hx-control-border);
+    --hx-elevated-border: var(--hx-control-border);
+    --hx-text-subtle: var(--hx-text-muted);
+    --hx-glass-bg: var(--hx-surface);
+    --hx-glass-filter: none;
+    --hx-scrim-filter: none;
+    --hx-shadow-1: none;
+    --hx-shadow-2: none;
+    --hx-shadow-3: none;
+  }
+}
+
+/* ── Zorunlu renk (Windows yüksek kontrast): sistem renklerine bırak ── */
+@media (forced-colors: active) {
+  html:root {
+    --hx-focus: Highlight;
+    --hx-hairline: CanvasText;
+    --hx-control-border: CanvasText;
+    --hx-elevated-border: CanvasText;
+    --hx-glass-bg: Canvas;
+    --hx-glass-filter: none;
+  }
+}

@@ -1,19 +1,25 @@
 {
   "name": "HİSAR: KOMUTA",
-  "v": "1.2.1",
+  "v": "2.0.0",
   "independent": true,
-  "changes": [
-    "İnşaat oyunu kaldırılmış olarak kalır",
-    "Tekrarlanan duraklatma ve ekrana dönüşte kontrol düzeltmesi",
-    "Takılı hareket, dokunma ve tetik girişlerini bırakma",
-    "Tank görüntü bağlantısı koptuğunda yeniden deneme",
-    "Sahne değişiminde grafik ve ses kaynaklarını serbest bırakma"
-  ],
-  "sourceCommit": "1de116f4055da9d8845554d05cd688df3736efa7",
-  "publication": "standalone-pages",
-  "construction": false,
-  "availableScenes": [
-    "tank",
-    "range"
+  "scenario": "Gece Nöbeti",
+  "theme": "HİSAR Akademi",
+  "assets": [
+    "index.html",
+    "manifest.webmanifest",
+    "version.json",
+    "favicon-32.png",
+    "apple-touch-icon.png",
+    "icon-192.png",
+    "icon-512.png",
+    "ortak/oyun.css",
+    "ortak/tokens.css",
+    "ortak/oyun.mjs",
+    "ortak/senaryo.mjs",
+    "ortak/masa.mjs",
+    "ortak/fonts/inter-latin-tr.4.001.woff2",
+    "ortak/komuta.webp",
+    "ortak/cevrimdisi.js",
+    "sw.js"
   ]
 }

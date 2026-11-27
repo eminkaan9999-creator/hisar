@@ -28,6 +28,17 @@ self.addEventListener('activate',event=>{
   const keys=await caches.keys();
   await Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('hisar-main-')||k.startsWith('hisar-cache-hisar-m60-ucangoz-'))).map(k=>caches.delete(k)));
   await self.clients.claim();
+  // A redesigned screen that is already open keeps running until it navigates.
+  if (keys.some(key => /^hisar-main-12[1-5]$/.test(key))) {
+    const windows = await self.clients.matchAll({type:'window'});
+    for (const client of windows) {
+      if (pageKey(client.url) === url('index.html')) {
+        const destination = new URL(client.url);
+        destination.searchParams.set('v','126');
+        client.navigate(destination.href).catch(() => {});
+      }
+    }
+  }
  })());
 });
 self.addEventListener('fetch',event=>{
@@ -40,7 +51,14 @@ self.addEventListener('fetch',event=>{
   const key=pageKey(r.url);if(!key)return;
   const operation=(async()=>{
    const cache=await caches.open(CACHE);
-   try{const response=await fetch(r,{cache:'reload'});if(response.ok){await ignore(cache.put(key,response.clone()));return response;}return (await cache.match(key))||response;}
+   try {
+     // The installed game and its modules must come from the same release.
+     const installed = await cache.match(key);
+     if (key === url('index.html') && installed) return installed;
+     const response = await fetch(new Request(key, {cache:'no-store'}));
+     if (response.ok) await ignore(cache.put(key,response.clone()));
+     return response.ok ? response : installed || response;
+   }
    catch{return (await cache.match(key))||new Response('Bu sayfa çevrimdışı kullanım için henüz hazır değil. İnternet bağlantısıyla yeniden aç.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});}
   })();event.respondWith(operation);event.waitUntil(ignore(operation));return;
  }

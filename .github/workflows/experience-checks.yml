@@ -6,7 +6,7 @@ on:
   pull_request:
     paths: ['index.html', 'sw.js', 'version.json', 'manifest.webmanifest', 'oyun/**', 'komuta/**', 'santiye-250888c5/**', 'experience/**', 'scripts/restore-*', 'three.min.js', '.github/workflows/experience-checks.yml']
 concurrency:
-  group: restored-games-${{ github.ref }}
+  group: original-game-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Restore both games from previously installed workers
+      - name: Verify tank graphics and offline retirement
         run: node scripts/restore-games-browser.cjs
       - name: Existing desktop and mobile game regressions
         run: node scripts/experience-browser.cjs

@@ -1,6 +1,6 @@
 // POLİGON servis çalışanı: sayfa ve sürüm bilgisi ağdan (yoksa önbellekten), ikonlar ve yazı tipleri önbellekten
-const C='poligon-v25';
-const STATIC=['../three.min.js','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon-32.png','./manifest.webmanifest'];
+const C='poligon-v26';
+const STATIC=['../three.min.js','../shared/kurulus.css?v=1','../shared/kurulus-core.js?v=1','../shared/kurulus-runtime.js?v=1','./arena.css','./arena-ui.js','./arena-mark.webp','./icon-192.png?v=26','./icon-512.png?v=26','./icon-maskable-512.png?v=26','./apple-touch-icon.png?v=26','./favicon-32.png?v=26','./manifest.webmanifest'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(STATIC.concat(['./','./index.html'])).catch(()=>{})))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('poligon-')&&k!==C&&k!==C+'-foto'&&!k.endsWith('-foto')).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{

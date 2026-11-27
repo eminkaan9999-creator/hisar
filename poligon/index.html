@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#060809">
+<meta name="theme-color" content="#0a0e19">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="HİSAR Poligon">
+<meta name="apple-mobile-web-app-title" content="HİSAR Arena">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=26">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=26">
 <style>*,*::before,*::after{box-sizing:border-box}html{padding-top:env(safe-area-inset-top,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>HİSAR Poligon</title><meta name="author" content="Emin Kaan Boyacı">
+<title>HİSAR Arena</title><meta name="author" content="Emin Kaan Boyacı">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
@@ -419,13 +419,15 @@ select.inp{font-size:13px;}
 <script src="../shared/kurulus-core.js?v=1"></script>
 <script src="../shared/kurulus-runtime.js?v=1"></script>
 <script>if(window.HisarKurulus){document.write('<script src="../shared/radio-tr.js?v=1"><\/script>');}</script>
+<link rel="stylesheet" href="arena.css">
+<script defer src="arena-ui.js"></script>
 </head>
 <body>
 
 <div class="app">
   <header class="top wrap">
     <button class="iconbtn" id="btnMenu">Menü</button>
-    <span class="brandS" role="img" aria-label="HİSAR Poligon">HİSAR P<svg class="ox" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13.5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M20 0v11M20 29v11M0 20h11M29 20h11" stroke="currentColor" stroke-width="3.4"/><circle cx="20" cy="20" r="2.8" fill="currentColor"/></svg>ligon</span>
+    <span class="brandS"><img src="arena-mark.webp" alt="" width="24" height="24"> HİSAR Arena</span>
     <button class="modechip" id="modeChip">Serbest atış</button>
     <div class="spacer"></div>
     <button class="iconbtn" id="upd" title="Güncellemeyi denetle">Güncelle</button>
@@ -520,25 +522,73 @@ select.inp{font-size:13px;}
   </div>
 </div>
 
-<div class="splash" id="splash"><svg class="spx" viewBox="0 0 200 200"><circle cx="100" cy="100" r="78" class="sp1"/><circle cx="100" cy="100" r="40" class="sp2"/><path d="M100 6v52M100 142v52M6 100h52M142 100h52" class="sp3"/><circle cx="100" cy="100" r="5" class="sp4"/></svg><div class="spt0">HİSAR</div><div class="spt" role="img" aria-label="Poligon"><span>P</span><span class="acc"><svg class="ox" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13.5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M20 0v11M20 29v11M0 20h11M29 20h11" stroke="currentColor" stroke-width="3.4"/><circle cx="20" cy="20" r="2.8" fill="currentColor"/></svg></span><span>ligon</span></div><div class="sps">HK33 · MPT-76 · ATIŞ EĞİTİMİ</div><div class="spdev"><span>GELİŞTİRİCİ</span><b>EMİN KAAN BOYACI</b></div></div>
+<div class="splash" id="splash">
+  <img class="arena-splash-mark" src="arena-mark.webp" width="128" height="128" alt="">
+  <div class="arena-splash-name">HİSAR <strong>Arena</strong></div>
+</div>
 <div class="lab" id="lab" hidden><div class="labtop"><button class="iconbtn" id="labX">Kapat</button><b id="labT"></b><button class="iconbtn" id="labPh" hidden>Fotoğraflar</button><span id="labP"></span></div><div class="labstage" id="labStage"></div><div class="labtxt"><div class="lbl" id="labK"></div><h4 id="labH"></h4><p id="labD"></p><div class="labbtns"><button class="secondary" id="labSay" hidden>Tekrar dinle</button><button class="primary" id="labNext">Göster</button></div></div></div>
 <div class="menu" id="menu">
   <div class="menu-in wrap">
-    <div class="mhead">
-      <div><div class="brand" role="img" aria-label="HİSAR Poligon"><span class="bh">HİSAR</span> P<svg class="ox" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13.5" fill="none" stroke="currentColor" stroke-width="5"/><path d="M20 0v11M20 29v11M0 20h11M29 20h11" stroke="currentColor" stroke-width="3.4"/><circle cx="20" cy="20" r="2.8" fill="currentColor"/></svg>ligon</div><div class="sub">Piyade tüfeği nişancılık ve atış simülatörü</div><div class="mdev">Geliştirici · <b>Emin Kaan Boyacı</b></div><div class="mver"><span id="verTxt">Sürüm 25</span><button class="iconbtn" id="upd2" title="Güncellemeyi denetle">Güncelle</button></div></div>
-      <button class="primary" id="menuClose">Atışa başla</button>
+    <div id="arena-home" class="arena-home">
+      <header class="arena-hero">
+        <div class="arena-hero-art" aria-hidden="true"><img src="arena-mark.webp" alt="" width="384" height="384"></div>
+        <div class="arena-hero-copy">
+          <h1><span>HİSAR</span>Arena</h1>
+          <p>Poligon simülatörü</p>
+          <button type="button" class="arena-play" id="menuClose"><span class="arena-play-icon" aria-hidden="true"></span>Başlat</button>
+        </div>
+      </header>
+      <nav class="arena-tiles" aria-label="Ana menü">
+        <button type="button" class="arena-tile" data-arena-open="content" aria-controls="arena-content">
+          <span class="arena-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-5 9 5-9 5z M3 12l9 5 9-5 M3 17l9 5 9-5"/></svg></span>
+          <span class="arena-tile-copy"><strong>İçerik</strong><small>Uygulama bölümleri</small></span>
+          <span class="arena-chevron" aria-hidden="true">›</span>
+        </button>
+        <button type="button" class="arena-tile" data-arena-open="records" aria-controls="arena-records">
+          <span class="arena-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h17 M8 15v-4 M13 15V7 M18 15v-6"/></svg></span>
+          <span class="arena-tile-copy"><strong>Kayıtlarım</strong><small>Geçmiş ve rozetler</small></span>
+          <span class="arena-chevron" aria-hidden="true">›</span>
+        </button>
+        <button type="button" class="arena-tile" data-arena-open="appearance" aria-controls="arena-appearance">
+          <span class="arena-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="3"/><path d="M8 21h8 M12 18v3"/><circle cx="12" cy="11" r="3.5"/></svg></span>
+          <span class="arena-tile-copy"><strong>Görünüm</strong><small>Tema ve hareket</small></span>
+          <span class="arena-chevron" aria-hidden="true">›</span>
+        </button>
+      </nav>
     </div>
+    <div class="arena-subhead" id="arena-subhead" hidden>
+      <button type="button" class="arena-back" id="arena-back"><span aria-hidden="true">‹</span> Ana menü</button>
+      <h2 tabindex="-1" id="arena-heading"></h2>
+    </div>
+    <div id="arena-content" class="arena-panel" hidden>
     <section class="sec rankrow" id="rankCard"></section>
     <section class="sec"><h3>Uygulamalı eğitim</h3><div class="labs" id="labs"></div></section>
     <section class="sec"><h3>Tüfek</h3><div class="rifles" id="rifles"></div></section>
     <section class="sec"><h3>Atışlar</h3><div class="modes" id="modes"></div><details class="more"><summary>Diğer görevler</summary><div class="modes" id="modes2"></div></details></section>
     <section class="sec"><details class="more"><summary>Eğitim programı <span class="muted small">isteğe bağlı · kısa</span></summary><div id="eduBox"></div></details></section>
-    <section class="sec"><details class="more"><summary>Kayıtlar, rapor ve rozetler</summary>
+      <button type="button" class="arena-action" id="arena-content-play">Başlat</button>
+      <p class="foot">Balistik değerler oyun için yaklaşık ayarlanmıştır. Gerçek atış cetveli yerine geçmez.</p>
+    </div>
+    <section id="arena-records" class="arena-panel arena-records" hidden>
       <div class="btns" style="margin-bottom:4px"><button class="secondary" id="repBtn">Kişisel atış raporunu aç</button></div><span class="small muted" id="repInfo"></span>
       <div class="lbl" style="margin:14px 0 6px">Atış defteri</div><div id="logBox"></div>
       <div class="lbl" style="margin:14px 0 6px">Rozetler</div><div class="badges" id="badges"></div>
-      <div class="lbl" style="margin:14px 0 6px">Toplam</div><div class="statsg" id="stats"></div><button class="linkbtn" id="resetStats">Kayıtları sıfırla</button></details></section>
-    <p class="foot">Balistik değerler oyun için yaklaşık ayarlanmıştır; gerçek atış cetveli yerine geçmez. <a class="hlink" href="https://eminkaan9999-creator.github.io/hisar/" target="_blank" rel="noopener">HİSAR SİMÜLATÖR</a></p>
+      <div class="lbl" style="margin:14px 0 6px">Toplam</div><div class="statsg" id="stats"></div><button class="linkbtn" id="resetStats">Kayıtları sıfırla</button>
+    </section>
+    <section id="arena-appearance" class="arena-panel" hidden>
+      <fieldset class="arena-pref"><legend>Tema</legend>
+        <label><input type="radio" name="arenaContrast" value="standard" checked><span>Gece mavisi</span></label>
+        <label><input type="radio" name="arenaContrast" value="high"><span>Yüksek kontrast</span></label>
+      </fieldset>
+      <fieldset class="arena-pref"><legend>Animasyonlar</legend>
+        <label><input type="radio" name="arenaMotion" value="system" checked><span>Cihaz ayarını kullan</span></label>
+        <label><input type="radio" name="arenaMotion" value="reduce"><span>Hareketi azalt</span></label>
+      </fieldset>
+    </section>
+    <footer class="arena-footer">
+      <div><span>Geliştirici</span><strong>Emin Kaan Boyacı</strong></div>
+      <div><span id="verTxt">Sürüm 26</span><button type="button" id="upd2" title="Güncellemeyi denetle">Güncelle</button></div>
+    </footer>
   </div>
 </div>
 
@@ -973,7 +1023,7 @@ function challengeLink(){
   const v=S.lastRes?S.lastRes.v:0;
   const parts=['mo',S.mode,S.rifle,curSeed,v,S.target,S.dist,S.pos,S.sup];
   const url=BASE_URL+'#'+parts.join('-');
-  showLink('Meydan oku',`Arkadaşın aynı rüzgâr ve aynı hedeflerle oynayacak. Senin puanın: ${v}.`,url,`Poligon'da ${TASKS[S.mode].name} · ${RIFLES[S.rifle].name} ile ${v} puan yaptım. Geçebilir misin?`);
+  showLink('Meydan oku',`Arkadaşın aynı rüzgâr ve aynı hedeflerle oynayacak. Senin puanın: ${v}.`,url,`HİSAR Arena’da ${TASKS[S.mode].name} · ${RIFLES[S.rifle].name} ile ${v} puan yaptım. Geçebilir misin?`);
 }
 function planForm(){
   const sel=new Set(['ogretim','sifirlama','guc']);let rf='mpt76';
@@ -982,7 +1032,7 @@ function planForm(){
     <div class="lbl" style="margin-top:8px">Tüfek</div><div class="chips" id="plR">${Object.keys(RIFLES).filter(k=>k!=='knt76').map(k=>`<button data-v="${k}" aria-pressed="${k===rf}">${RIFLES[k].name}</button>`).join('')}</div>`;
   modal({eye:'Eğitmen',title:'Görev planı oluştur',intro:'Seçtiğin görevler bir bağlantıya dönüşür. Askerler bağlantıyı açınca plan menülerine gelir; bitirdiklerinde sana sonuç bağlantısı gönderirler.',html,
     buttons:[{label:'Bağlantıyı oluştur',primary:true,keep:1,fn:()=>{const n=($('plN').value||'Atış planı').trim();const t=PLAN_MODES.filter(m=>sel.has(m));if(!t.length){toast('En az bir görev seç',1000);return;}
-      const url=BASE_URL+'#plan-'+b64e({n,t,r:rf,id:Math.floor(rnd()*1e9).toString(36)});showLink('Plan bağlantısı','Bu bağlantıyı askerlerine gönder.',url,'Poligon eğitim planı: '+n);}},{label:'Vazgeç',fn:()=>{$('modal').hidden=true;}}]});
+      const url=BASE_URL+'#plan-'+b64e({n,t,r:rf,id:Math.floor(rnd()*1e9).toString(36)});showLink('Plan bağlantısı','Bu bağlantıyı askerlerine gönder.',url,'HİSAR Arena eğitim planı: '+n);}},{label:'Vazgeç',fn:()=>{$('modal').hidden=true;}}]});
   $('plT').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const v=b.dataset.v;sel.has(v)?sel.delete(v):sel.add(v);b.setAttribute('aria-pressed',sel.has(v));});
   $('plR').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;rf=b.dataset.v;[...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed',x===b));});
 }
@@ -3784,7 +3834,7 @@ document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.c
   const game=b.closest('#ctls');if(!game&&!b.closest('.kgrid')&&!b.closest('#ttr')){audio();uiTap();if(OPT.vib)try{navigator.vibrate&&navigator.vibrate(8);}catch(x){}}
   if(OPT.gq==='dusuk')return;const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,sp=document.createElement('span');sp.className='rip';sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
   if(getComputedStyle(b).position==='static')b.style.position='relative';b.style.overflow='hidden';b.appendChild(sp);setTimeout(()=>sp.remove(),650);},true);
-(()=>{const sp=$('splash');if(!sp)return;const end=()=>{if(sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),600);};sp.addEventListener('pointerdown',()=>{audio();end();});setTimeout(end,3400);})();window.addEventListener('online',()=>wLoadAll(false));
+(()=>{const sp=$('splash');if(!sp)return;const end=()=>{if(sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),240);};sp.addEventListener('pointerdown',()=>{audio();end();});setTimeout(end,850);})();window.addEventListener('online',()=>wLoadAll(false));
 // Retain all original range models, targets and modes. Story completion observes actual game shots only.
 if(window.HisarKurulus){
  const H=window.HisarKurulus.host,free=H.chapter().mode==='free';let paused=false,wasStarted=true,done=false;
@@ -3805,7 +3855,7 @@ if(window.HisarKurulus){
 
 <script>
 (()=>{
-const VER=25,btns=['upd','upd2'].map(i=>document.getElementById(i)).filter(Boolean),vt=document.getElementById('verTxt');
+const VER=26,btns=['upd','upd2'].map(i=>document.getElementById(i)).filter(Boolean),vt=document.getElementById('verTxt');
 const say=t=>{if(vt)vt.innerHTML=t;};say('Sürüm '+VER);
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();

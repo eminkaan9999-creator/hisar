@@ -2,9 +2,9 @@ name: HİSAR experience checks
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'sw.js', 'version.json', 'manifest.webmanifest', 'oyun/**', 'komuta/**', 'experience/model.js', 'three.min.js', '.github/workflows/experience-checks.yml']
+    paths: ['index.html', 'sw.js', 'version.json', 'manifest.webmanifest', 'oyun/**', 'komuta/**', 'experience/model*', 'three.min.js', '.github/workflows/experience-checks.yml']
   pull_request:
-    paths: ['index.html', 'sw.js', 'version.json', 'manifest.webmanifest', 'oyun/**', 'komuta/**', 'experience/model.js', 'three.min.js', '.github/workflows/experience-checks.yml']
+    paths: ['index.html', 'sw.js', 'version.json', 'manifest.webmanifest', 'oyun/**', 'komuta/**', 'experience/model*', 'three.min.js', '.github/workflows/experience-checks.yml']
 permissions:
   contents: read
 jobs:
@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: '22'
       - name: Validate both scenarios, asset lists and the shared model reader
-        run: node --test oyun/*.test.mjs
+        run: node --test oyun/*.test.mjs experience/model.test.cjs
       - name: Install browser
         run: |
           npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1

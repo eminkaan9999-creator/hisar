@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert'),fs=require('fs');
-const M=require('./model.js'),html=fs.readFileSync(__dirname+'/../index.html','utf8'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8'),yml=fs.readFileSync(__dirname+'/../.github/workflows/live-smoke.yml','utf8'),src=fs.readFileSync(__dirname+'/model.js','utf8');
+const M=require('./model.js'),sw=fs.readFileSync(__dirname+'/../sw.js','utf8'),yml=fs.readFileSync(__dirname+'/../.github/workflows/live-smoke.yml','utf8'),src=fs.readFileSync(__dirname+'/model.js','utf8');
 const dir=__dirname+'/../assets/mdl/',files=fs.readdirSync(dir).filter(f=>f.endsWith('.bin')).sort();
 const rd=f=>{const b=fs.readFileSync(dir+f);return M.parse(b.buffer.slice(b.byteOffset,b.byteOffset+b.length));};
 test('every supplied model is shipped as a small binary with its own normals and stays within a phone budget',()=>{assert.equal(files.length,30);
@@ -17,10 +17,13 @@ test('parts cut from one model keep their place: the parser reports where each b
  assert.ok(d.off[1]>b.off[1]+.2,'the dish sits toward the rear of the trailer '+d.off[1]+' '+b.off[1]);assert.ok(Math.abs(b.min[0]+b.size[0]/2)<1e-6&&Math.abs(b.min[2]+b.size[2]/2)<1e-6,'x and z are centred on the box');});
 test('helpers: wheel axis, move and scale, normals follow a non-uniform scale',()=>{const pos=new Float32Array([0,0,0, 2,0,0, 1,10,5]);const a=M.axis(pos,0,.1);assert.equal(a.x,1);assert.equal(a.z,0);assert.equal(a.n,2);
  M.move(pos,-1,0,0,2,3,4);assert.deepEqual(Array.from(pos),[-2,0,0,2,0,0,0,30,20]);const n=M.scaleNormals(new Float32Array([1,1,0]),1,2,1);assert.ok(Math.abs(Math.hypot(n[0],n[1],n[2])-1)<1e-6&&n[0]>n[1]);});
-test('loaded before every module that draws a model; every model file is precached and checked by the live smoke test',()=>{const at=f=>html.indexOf('experience/'+f+'.js?v=');assert.ok(at('model')>0);
- for(const f of['sivil','mahalle','militan','agac','hat','ejderha'])assert.ok(at('model')<at(f),f+' after model.js');assert.ok(sw.includes("'experience/model.js'")&&yml.includes("'experience/model.js'"));
- for(const f of files){assert.ok(sw.includes("'assets/mdl/"+f+"?v=1'"),'sw '+f);assert.ok(yml.includes("'assets/mdl/"+f+"'"),'smoke '+f);}
- for(const m of sw.match(/assets\/(mdl|tex)\/[a-z0-9_]+\.(bin|jpg|png)/g))assert.ok(fs.existsSync(__dirname+'/../'+m),m+' exists');
+test('driving scene imports the model reader and all active models and textures are available offline',()=>{
+ const driving=fs.readFileSync(__dirname+'/../oyun/surus.mjs','utf8'),release=JSON.parse(fs.readFileSync(__dirname+'/../version.json','utf8'));
+ assert.ok(driving.includes("import '../experience/model.js'"));
+ assert.ok(yml.includes("readFileSync('version.json'"));
+ for(const match of driving.matchAll(/new URL\('\.\.\/(assets\/[^']+)'/g)){
+  const asset=match[1];assert.ok(fs.existsSync(__dirname+'/../'+asset));assert.ok(release.assets.includes(asset));assert.ok(sw.includes(JSON.stringify(asset)));
+ }
  assert.ok(src.includes('p.gone&&(p.seen||++p.age>600)'),'props of removed infantry are dropped');assert.ok(src.includes('if(p.force){p.isHi=true;nh++;continue;}'));});
 
 // Exercise actual prop creation: distant models do not add shadow casters.

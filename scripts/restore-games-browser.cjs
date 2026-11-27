@@ -67,8 +67,9 @@ async function upgrade(page,cache){
   assert.equal(await tp.evaluate(()=>window.APP_VER),126);
   assert.equal(await tp.evaluate(()=>SV.xp),321);
   assert.ok(await tp.locator('#go').isVisible());assert.equal(await tp.locator('[data-game="boru"]').count(),0);
-  console.log('CHECK starting restored campaign');await tp.locator('#go').click();await tp.locator('.hk-go').click();await tp.waitForFunction(()=>game==='play');
-  const before=await tp.evaluate(()=>({x:P.x,z:P.z}));await tp.keyboard.down('w');await tp.waitForTimeout(1800);await tp.keyboard.up('w');
+  await tp.bringToFront();console.log('CHECK starting restored campaign');await tp.locator('#go').click();await tp.locator('.hk-go').click();await tp.waitForFunction(()=>game==='play');
+  const before=await tp.evaluate(()=>({x:P.x,z:P.z}));await tp.keyboard.down('w');
+  try{await tp.waitForFunction(start=>Math.hypot(P.x-start.x,P.z-start.z)>.05,before,{timeout:60000});}finally{await tp.keyboard.up('w');}
   const after=await tp.evaluate(()=>({x:P.x,z:P.z}));assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.05,'original tank responds to W');
   await tp.screenshot({path:'/tmp/restored-boru.png'});
   console.log('PASS original tank game opens and driving input moves the tank');

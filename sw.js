@@ -1,5 +1,5 @@
 self.gameCache='hisar-main';
-self.gameRevision='124';
+self.gameRevision='125';
 self.gameFiles=[
   "index.html",
   "manifest.webmanifest",
@@ -34,6 +34,8 @@ self.gameFiles=[
   "komuta/gelecek/harita.mjs",
   "komuta/gelecek/boru.webp",
   "komuta/gelecek/model.mjs",
-  "komuta/gelecek/oyun.css"
+  "komuta/gelecek/oyun.css",
+  "komuta/gelecek/performans.mjs",
+  "komuta/gelecek/ufuk.webp"
 ];
 importScripts('komuta/ortak/cevrimdisi.js');

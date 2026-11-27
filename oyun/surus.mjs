@@ -1,13 +1,15 @@
 import '../three.min.js';
 import '../experience/model.js';
-import {stops,stopDistance} from '../komuta/ortak/senaryo.mjs';
+import {stops,stopDistance,routes,needsRoute,routePoint,passMarker} from '../komuta/ortak/senaryo.mjs';
 
 const road=[[0,0],[-13,32],[-41,65],[-46,96],[-16,118],[12,134],[58,150],[52,100],[33,52],[0,0]];
+const ridge=[[stops[1].x,stops[1].z],...routes.ridge.points,[stops[2].x,stops[2].z]];
+const roads=[road,ridge];
 const buildings=stops.map((p,i)=>({x:p.x+[-13,-14,15][i],z:p.z+[1,0,0][i]}));
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
 function roadGap(x,z){
-  let best=Infinity;for(let i=1;i<road.length;i++){
-    const [a,b]=road[i-1],[c,d]=road[i],u=clamp(((x-a)*(c-a)+(z-b)*(d-b))/((c-a)**2+(d-b)**2),0,1);
+  let best=Infinity;for(const path of roads)for(let i=1;i<path.length;i++){
+    const [a,b]=path[i-1],[c,d]=path[i],u=clamp(((x-a)*(c-a)+(z-b)*(d-b))/((c-a)**2+(d-b)**2),0,1);
     best=Math.min(best,Math.hypot(x-a-u*(c-a),z-b-u*(d-b)));
   }return best;
 }
@@ -27,32 +29,49 @@ function guide(s){
 }
 const ground=(x,z)=>2.3*Math.sin(z/37)+1.2*Math.sin(x/25+z/53)+.8*Math.cos(x/23);
 export function drive(s,speed,keys,dt,assist){
-  const target=stops[s.target],gap=stopDistance(s),roadSpeed=roadGap(s.x,s.z)<7?19:13;
+  if(needsRoute(s))return 0;
+  const marker=routePoint(s),target=marker?{x:marker[0],z:marker[1]}:stops[s.target];
+  const gap=Math.hypot(target.x-s.x,target.z-s.z),onCrossing=s.receipts.length===1&&!!s.passage;
+  const roadSpeed=onCrossing&&s.passage.route==='creek'?9:roadGap(s.x,s.z)<7?19:13;
   const steer=Number(keys.has('right'))-Number(keys.has('left')),gas=keys.has('go'),reverse=keys.has('back');
   const desired=gas?roadSpeed:reverse?-8:0,rate=gas?9:reverse?15:20;
   speed+=clamp(desired-speed,-rate*dt,rate*dt);
   if(steer)s.yaw+=steer*(speed<-.5?-1:1)*dt*1.65;
   else if(assist&&gas&&gap>2){
-    const aim=gap<13?target:guide(s);
+    const aim=onCrossing||gap<13?target:guide(s);
     const targetAngle=Math.atan2(aim.x-s.x,aim.z-s.z);
     const diff=Math.atan2(Math.sin(targetAngle-s.yaw),Math.cos(targetAngle-s.yaw));
     s.yaw+=clamp(diff,-dt*1.65,dt*1.65);
-    if(gap<16)speed=Math.min(speed,Math.max(0,gap-3));
+    if(!marker&&gap<16)speed=Math.min(speed,Math.max(0,gap-3));
   }
   const x=clamp(s.x+Math.sin(s.yaw)*speed*dt,-110,112),z=clamp(s.z+Math.cos(s.yaw)*speed*dt,-37,192);
   if(buildings.some(p=>Math.abs(x-p.x)<4.4&&Math.abs(z-p.z)<3.4)){s.elapsed+=dt;return 0;}
   s.distance+=Math.hypot(x-s.x,z-s.z);s.elapsed+=dt;s.x=x;s.z=z;
-  return speed;
+  passMarker(s);return speed;
 }
 const mapX=x=>(x+112)/228, mapY=z=>(185-z)/222;
-export function drawMap(canvas,state){
+export function drawMap(canvas,state,labels=false){
   const ctx=canvas.getContext('2d');if(!ctx)return;
   const w=canvas.width,h=canvas.height,X=x=>mapX(x)*w,Y=z=>mapY(z)*h;
   ctx.fillStyle='#152d36';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#28424b';ctx.lineWidth=1;
   for(let x=0;x<w;x+=24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
   for(let y=0;y<h;y+=24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
   ctx.lineJoin='round';ctx.beginPath();road.forEach(([x,z],i)=>i?ctx.lineTo(X(x),Y(z)):ctx.moveTo(X(x),Y(z)));ctx.strokeStyle='#6e8588';ctx.lineWidth=3;ctx.stroke();
+  const line=(points,color,width)=>{ctx.beginPath();points.forEach(([x,z],i)=>i?ctx.lineTo(X(x),Y(z)):ctx.moveTo(X(x),Y(z)));ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();};
+  line(ridge,'#69898c',2);
+  if(state.receipts.length===1){
+    for(const [key,route] of Object.entries(routes)){
+      if(state.passage&&state.passage.route!==key)continue;
+      line([[stops[1].x,stops[1].z],...route.points,[stops[2].x,stops[2].z]],route.color,3);
+    }
+    const point=routePoint(state);if(point){ctx.fillStyle='#fff';ctx.fillRect(X(point[0])-3,Y(point[1])-3,6,6);}
+  }
   stops.forEach((p,i)=>{ctx.beginPath();ctx.arc(X(p.x),Y(p.z),i===state.target?7:4,0,Math.PI*2);ctx.fillStyle=i===state.target?'#efbc70':'#83b5b6';ctx.fill();});
+  if(labels){
+    ctx.font='600 16px system-ui';ctx.textBaseline='bottom';
+    for(const p of stops){ctx.lineWidth=4;ctx.strokeStyle='#152d36';ctx.strokeText(p.short,X(p.x)+9,Y(p.z)-2);ctx.fillStyle='#e6f1ef';ctx.fillText(p.short,X(p.x)+9,Y(p.z)-2);}
+    ctx.textAlign='right';ctx.fillStyle='#c3dbda';ctx.fillText('K ↑',w-12,26);ctx.textAlign='left';
+  }
   ctx.save();ctx.translate(X(state.x),Y(state.z));ctx.rotate(state.yaw);ctx.fillStyle='#75f2d9';ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(5,6);ctx.lineTo(0,3);ctx.lineTo(-5,6);ctx.closePath();ctx.fill();ctx.restore();
 }
 function worldView(canvas){
@@ -75,8 +94,8 @@ function worldView(canvas){
   snow.wrapS=snow.wrapT=T.RepeatWrapping;snow.repeat.set(60,60);
   const groundMat=mat(0xc3cfd5);groundMat.map=snow;groundMat.emissive.setHex(0x45525b);mesh(terrain,groundMat,0,0,0);
   const strip=[],ind=[];
-  for(let i=1;i<road.length;i++){
-    const [x,z]=road[i-1],[x1,z1]=road[i],n=Math.ceil(Math.hypot(x1-x,z1-z)/3);
+  for(const path of roads)for(let i=1;i<path.length;i++){
+    const [x,z]=path[i-1],[x1,z1]=path[i],n=Math.ceil(Math.hypot(x1-x,z1-z)/3);
     const angle=Math.atan2(x1-x,z1-z),dx=Math.cos(angle)*3.8,dz=-Math.sin(angle)*3.8;
     for(let j=0;j<=n;j++){
       const a=x+(x1-x)*j/n,b=z+(z1-z)*j/n,k=strip.length/3;
@@ -96,6 +115,15 @@ function worldView(canvas){
   trees.forEach(([x,z,h],i)=>{dummy.position.set(x,ground(x,z),-z);dummy.rotation.y=i*2.4;dummy.scale.setScalar(h);dummy.updateMatrix();forest.setMatrixAt(i,dummy.matrix);});scene.add(forest);
   const box=new T.BoxGeometry(1,1,1);
   const block=(parent,color,x,y,z,w,h,d)=>{const m=mesh(box,mat(color),x,y,z,parent);m.scale.set(w,h,d);return m;};
+  // Reflective posts identify each pass even when the next ground ring is out of sight.
+  for(const r of Object.values(routes)){
+    for(const [x,z] of r.points){
+      for(const side of [-1,1]){
+        const px=x+side*5,y=ground(px,z);block(scene,0x455e61,px,y+1.05,z,.18,2.1,.18);
+        block(scene,r.color,px,y+1.9,z,.32,.48,.32);
+      }
+    }
+  }
   buildings.forEach((p,i)=>{const g=new T.Group();g.position.set(p.x,ground(p.x,p.z),-p.z);scene.add(g);block(g,0x6f8585,0,1.5,0,6,3,4);block(g,0xc7d5d7,0,3.2,0,7,.45,5);block(g,0xffce7c,-2,1.55,2.04,1.2,1.1,.08);block(g,0x456569,1,1,2.04,1.3,2,.08);if(i===0)block(g,0x9b7045,-4,.6,-3,2,1.2,2);});
   const vehicle=new T.Group();scene.add(vehicle);
   block(vehicle,0x314646,0,1.03,0,2.4,1.1,4.5);block(vehicle,0x517270,0,2.05,1.05,2.18,1.08,1.65);
@@ -126,7 +154,10 @@ function worldView(canvas){
     if(w!==lastW||h!==lastH){renderer.setSize(w,h,false);lastW=w;lastH=h;cam.aspect=w/h;cam.updateProjectionMatrix();}
     const y=ground(s.x,s.z);vehicle.position.set(s.x,y,-s.z);vehicle.rotation.y=-s.yaw;
     vehicle.rotation.x=Math.atan2(ground(s.x+Math.sin(s.yaw),s.z+Math.cos(s.yaw))-ground(s.x-Math.sin(s.yaw),s.z-Math.cos(s.yaw)),2);
-    const tx=Math.sin(s.yaw),tz=Math.cos(s.yaw),p=stops[s.target];marker.position.set(p.x,ground(p.x,p.z)+.45,-p.z);
+    const tx=Math.sin(s.yaw),tz=Math.cos(s.yaw),p=stops[s.target],gate=routePoint(s);
+    const [mx,mz]=gate||[p.x,p.z];marker.position.set(mx,ground(mx,mz)+.45,-mz);
+    marker.material.color.setHex(gate?0x65ded2:0xffb94e);
+    scene.fog.density=s.receipts.length===1&&s.passage?.route==='creek'?.025:.0048;
     cam.position.set(s.x-tx*10+tz*2,y+4.5,-s.z+tz*10+tx*2);cam.lookAt(s.x+tx*5,y+1.4,-s.z-tz*5);
     renderer.render(scene,cam);
   }
@@ -138,16 +169,29 @@ export function attachDrive(host,s,{assist,save,onAction}){
   function fallback(){canvas.replaceWith(canvas=Object.assign(document.createElement('canvas'),{className:'terrain',width:650,height:300}));canvas.setAttribute('aria-label','Vadi yol haritası');view=null;}
   try{view=worldView(canvas);}catch{fallback();}
   const lost=e=>{e.preventDefault();fallback();};canvas.addEventListener('webglcontextlost',lost);
-  const key=e=>{if(e.ctrlKey||e.altKey||e.metaKey||!Object.hasOwn(mapped,e.key))return;e.preventDefault();if(e.type==='keydown')keys.add(mapped[e.key]);else keys.delete(mapped[e.key]);};
+  const key=e=>{if(dialog.open||e.target?.closest?.('select,input,textarea')||e.ctrlKey||e.altKey||e.metaKey||!Object.hasOwn(mapped,e.key))return;e.preventDefault();if(e.type==='keydown')keys.add(mapped[e.key]);else keys.delete(mapped[e.key]);};
+  const dialog=host.querySelector('.map-dialog'),openMap=host.querySelector('.map-toggle');
+  openMap.onclick=()=>{
+    keys.clear();dialog.showModal();drawMap(dialog.querySelector('canvas'),s,true);
+    dialog.querySelector('.map-status').textContent=s.receipts.length===1&&s.passage?routes[s.passage.route].name+' · '+stops[s.target].name:needsRoute(s)?'İki yol seçeneği açık.':stops[s.target].name;
+  };
+  dialog.querySelector('.close-map').onclick=()=>dialog.close();
   const release=()=>keys.clear();window.addEventListener('keydown',key);window.addEventListener('keyup',key);window.addEventListener('blur',release);
   for(const b of host.querySelectorAll('[data-drive]')){b.onpointerdown=e=>{b.setPointerCapture(e.pointerId);keys.add(b.dataset.drive);};b.onlostpointercapture=b.onpointerup=b.onpointercancel=()=>keys.delete(b.dataset.drive);}
   let id,speed=0,last=performance.now(),lastHud=-1000,lastSave=last;
-  const speedEl=host.querySelector('.speed'),distance=host.querySelector('.distance'),button=host.querySelector('.deliver'),bearing=host.querySelector('.bearing');
+  const progressEl=host.querySelector('.road-progress'),speedEl=host.querySelector('.speed'),distance=host.querySelector('.distance'),button=host.querySelector('.deliver'),bearing=host.querySelector('.bearing');
   function frame(now){
-    const dt=clamp((now-last)/1000,0,.08);last=now;speed=drive(s,speed,keys,dt,assist());
+    const dt=clamp((now-last)/1000,0,.08);last=now;
+    if(dialog.open){id=requestAnimationFrame(frame);return;}
+    speed=drive(s,speed,keys,dt,assist());
     if(view)view.render(s);else drawMap(canvas,s);
     if(!canvas.dataset.ready){canvas.dataset.ready=view?'3d':'map';host.querySelector('.scene-load')?.remove();}
-    if(now-lastHud>=100){lastHud=now;drawMap(map,s);const gap=stopDistance(s);speedEl.textContent=Math.round(Math.abs(speed)*3.6)+' km/sa';distance.textContent=Math.round(gap)+' m';const p=stops[s.target];bearing.style.transform='rotate('+(Math.atan2(p.x-s.x,p.z-s.z)-s.yaw)+'rad)';button.disabled=gap>9||Math.abs(speed)>1||(!s.loaded&&(!s.crewChecked||!s.loadChecked));}
+    if(now-lastHud>=100){lastHud=now;drawMap(map,s);const gap=stopDistance(s),p=stops[s.target],gate=routePoint(s),[x,z]=gate||[p.x,p.z];
+      const route=s.receipts.length===1&&s.passage?routes[s.passage.route]:null;
+      progressEl.textContent=route?(gate?route.name+' · İşaret '+(s.passage.step+1)+'/'+route.points.length:route.name+' · Teslim noktası'):'';
+      progressEl.hidden=!route;
+      speedEl.textContent=Math.round(Math.abs(speed)*3.6)+' km/sa';distance.textContent=Math.round(Math.hypot(x-s.x,z-s.z))+' m';
+      bearing.style.transform='rotate('+(Math.atan2(x-s.x,z-s.z)-s.yaw)+'rad)';button.disabled=needsRoute(s)||!!gate||gap>9||Math.abs(speed)>1||(!s.loaded&&(!s.crewChecked||!s.loadChecked));}
     if(now-lastSave>=2000){lastSave=now;save();}
     id=requestAnimationFrame(frame);
   }

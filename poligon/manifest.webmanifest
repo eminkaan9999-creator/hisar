@@ -1,7 +1,7 @@
 {
  "name": "HİSAR Arena",
  "short_name": "HİSAR Arena",
- "description": "Piyade tüfeği nişancılık ve atış simülatörü",
+ "description": "Hafıza, bağlantı ve ritim oyunları, günlük parkur ve klasik poligon.",
  "lang": "tr",
  "start_url": "./",
  "scope": "./",
@@ -10,7 +10,7 @@
   "fullscreen",
   "standalone"
  ],
- "orientation": "portrait",
+ "orientation": "any",
  "background_color": "#0a0e19",
  "theme_color": "#0a0e19",
  "icons": [

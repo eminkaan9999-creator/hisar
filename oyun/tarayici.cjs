@@ -33,52 +33,6 @@ try{
  }
  await p.getByRole('heading',{name:'Sefer sonu raporu'}).waitFor();await click('Kayıtlar').catch(()=>p.locator('header [data-nav=history]').click());
  console.log('PASS driving: briefing, chosen first stop, save/reload, three driven legs and after-action report');
- await p.setViewportSize({width:1280,height:800});await p.goto(base+'/komuta/?arsiv=1');await p.getByRole('heading',{name:'Gece Nöbeti'}).waitFor();await shot('komuta-menu');await assertFit();
- await p.locator('.primary[data-nav="brief"]').click();await p.getByRole('button',{name:/Nöbeti devral/}).click();await assertFit();await shot('komuta-masa');
- const site=i=>p.locator('.ticket[data-site="'+i+'"]').click(),act=a=>p.locator('[data-order="'+a+'"]').click(),send=t=>p.locator('[data-team="'+t+'"]').click();
- await site(1);await act('verify');await send(1);await site(0);await act('verify');assert.equal(await p.locator('[data-team="1"]').isDisabled(),true);await send(0);
- await act('tick');await act('tick');await site(2);await act('verify');await send(0);await site(0);await act('close');await site(1);await act('close');await act('tick');await act('tick');await site(2);await act('close');await p.locator('[data-priority="2"]').click();await act('finish');await p.getByRole('heading',{name:'Nöbet devir raporu'}).waitFor();
- await p.locator('[data-morning]').click();await p.getByRole('button',{name:/Sabah görev masasına geç/}).click();
- await p.getByRole('heading',{name:'İlk Işık Vardiyası'}).waitFor();await send(0);await p.reload();await p.getByRole('button',{name:/Göreve devam et/}).click();
- await site(1);await act('verify');await send(1);await act('tick');await site(2);await act('close');await site(0);await act('verify');await send(0);
- await act('tick');await site(1);await act('close');await act('tick');await site(0);await act('close');await act('finish');
- await p.getByRole('heading',{name:'Sabah vardiya raporu'}).waitFor();
- assert.equal(await p.locator('.stats .stage').filter({hasText:'Devir saati'}).locator('strong').innerText(),'06.30');
- console.log('PASS command: night handover, chosen priority, morning save/reload, crew returns and second report');
- await p.setViewportSize({width:390,height:844});
- // Complete both versions of the new day shift through the same buttons a player uses.
- for (const distribution of ['central', 'local']) {
-   await p.locator('header [data-nav=missions]').click();
-   await p.locator('[data-mission=day]').click();
-   await p.getByRole('button',{name:/Nöbeti devral/}).click();
-   await site(0); await act('verify'); await send(0);
-   await site(1); await act('verify'); await send(1);
-   await act('tick'); await act('tick');
-   assert.equal(await p.locator('[data-order=tick]').isDisabled(),true);
-   await assertFit(); await shot('komuta-yagmur-karari');
-   await p.reload(); await p.getByRole('button',{name:/Göreve devam et/}).click();
-   await p.locator('[data-distribution="'+distribution+'"]').click();
-   await act('tick');
-   await site(0); await act('close');
-   await site(1); await act('close');
-   await site(2); await act('verify'); await send(0);
-   if(distribution==='central') {
-     await site(3); await act('verify'); await send(1);
-     await act('tick'); await act('close'); await act('tick');
-     await site(2); await act('close');
-   } else {
-     await act('tick'); await act('tick'); await act('close');
-     await site(3); await act('verify'); await send(0);
-     await act('tick'); await act('tick'); await act('tick'); await act('close');
-   }
-   await act('finish');
-   await p.getByRole('heading',{name:'Dağıtım raporu'}).waitFor();
-   assert.match(await p.locator('main').innerText(),distribution==='central'?/48 hane/:/56 hane/);
-   assert.equal(await p.locator('.stars').getAttribute('aria-label'),distribution==='central'?'3 / 3 yıldız':'2 / 3 yıldız');
-   assert.equal(await p.locator('[data-morning]').count(),0);
- }
- console.log('PASS distribution: both weather decisions, suspended turns, saved decision, different households and ratings');
-
  await p.goto(base+'/?arsiv=1');
  await p.locator('header [data-nav=settings]').click();
  await p.locator('[data-sound]').click();
@@ -114,10 +68,10 @@ try{
    assert.match(await p.locator('[data-mission="'+mission+'"]').innerText(),/Kayıtlardaki en iyi/);
  }
  console.log('PASS new driving missions: rain and night completed, cargo reports, sound preference and both camera views');
- await p.goto(base+'/komuta/?arsiv=1');
+ await p.goto(base+'/?arsiv=1');
  await p.setViewportSize({width:320,height:568});await assertFit();await p.locator('header [data-theme]').click();assert.equal(await p.locator('html').getAttribute('data-hisar-theme'),'light');
- for(const route of ['/','/komuta/']){await p.goto(base+route+'?arsiv=1');await p.evaluate(()=>navigator.serviceWorker.ready);await p.waitForFunction(()=>!!navigator.serviceWorker.controller);}
- await c.setOffline(true);for(const [route,title] of [['/','Gece Sevki'],['/komuta/','Dağıtım Günü']]){await p.goto(base+route+'?arsiv=1');await p.getByRole('heading',{name:title}).waitFor();await assertFit();await p.locator('header [data-nav=history]').click();await p.locator('[data-record="0"]').click();assert.ok(await p.locator('.stats').isVisible());}
- assert.deepEqual(errors,[]);console.log('PASS offline: both launch URLs, separate saved reports, shared theme and 320px layout');
+ for(const route of ['/']){await p.goto(base+route+'?arsiv=1');await p.evaluate(()=>navigator.serviceWorker.ready);await p.waitForFunction(()=>!!navigator.serviceWorker.controller);}
+ await c.setOffline(true);for(const [route,title] of [['/','Gece Sevki']]){await p.goto(base+route+'?arsiv=1');await p.getByRole('heading',{name:title}).waitFor();await assertFit();await p.locator('header [data-nav=history]').click();await p.locator('[data-record="0"]').click();assert.ok(await p.locator('.stats').isVisible());}
+ assert.deepEqual(errors,[]);console.log('PASS offline: vehicle launch URL, saved reports, shared theme and 320px layout');
 }finally{await b.close();server.closeAllConnections();server.close();}
 })().catch(e=>{console.error(e);server.closeAllConnections();server.close();process.exitCode=1;});

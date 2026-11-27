@@ -110,7 +110,7 @@ async function listen(){
  safe(()=>root.HisarImmersive.stop(),null);safe(()=>root.HisarRadioSound.stop(),null);r.start();if(micButton)micButton.textContent='Dinleniyor · durdur';micTimer=root.setTimeout(cancelMic,8000);
  }catch{cancelMic();warn('Mikrofon bu cihazda başlatılamadı; telsiz düğmeleri çalışıyor.');}
 }
-function paintFeed(){if(!log)return;log.replaceChildren();for(const m of feed.slice(-6)){const p=doc.createElement('p'),b=doc.createElement('b');b.textContent=m.who+' ';p.append(b,doc.createTextNode(m.text));log.appendChild(p);}log.scrollTop=log.scrollHeight;}
+function paintFeed(){if(!log)return;const atEnd=log.scrollHeight-log.clientHeight-log.scrollTop<5;const position=log.scrollTop;log.replaceChildren();for(const m of feed.slice(-6)){const p=doc.createElement('p'),b=doc.createElement('b');b.textContent=m.who+' ';p.append(b,doc.createTextNode(m.text));log.appendChild(p);}log.scrollTop=atEnd?log.scrollHeight:position;}
 let rosterSignature='';
 function paintRoster(){if(!roster)return;const signature=units().map(u=>u.cs+':'+Math.round(clamp(u.hp/(u.mx||100),0,1)*100)).join('|');if(signature===rosterSignature&&roster.options.length)return;rosterSignature=signature;const old=selected;roster.replaceChildren();const all=doc.createElement('option');all.value='all';all.textContent='Tüm dost tanklar';roster.appendChild(all);for(const u of units()){const o=doc.createElement('option');o.value=u.cs;o.textContent=u.cs+' · %'+Math.round(clamp(u.hp/(u.mx||100),0,1)*100);roster.appendChild(o);}selected=old==='all'||units().some(u=>u.cs===old)?old:'all';roster.value=selected;}
 const coarse=()=>safe(()=>root.matchMedia('(pointer:coarse)').matches,false);

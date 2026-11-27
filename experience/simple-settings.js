@@ -132,6 +132,7 @@
         '<p id="hs-credit">Gökyüzü fotoğrafları: Poly Haven (CC0) · Zemin dokuları: BabylonJS Assets (CC BY 4.0), OpenGameArt “dark grass” (CC BY 3.0) · Yazı tipleri: TeX Gyre Heros Cn (GUST), Chakra Petch (SIL OFL)</p>';
       for (const input of panel.querySelectorAll('[data-simple]')) input.addEventListener('change', () => save({ [input.dataset.simple]: input.type === 'checkbox' ? input.checked : input.value }));
       parent.prepend(panel);
+      doc.dispatchEvent(new Event('hisar:settings-ready'));
     }
     const entry = doc.getElementById('hisar-experience-entry'); if (entry && !entry.querySelector('svg')) entry.textContent = 'AYARLAR';
     const title = doc.getElementById('hx-title'); if (title) title.textContent = 'Oyun Ayarları';

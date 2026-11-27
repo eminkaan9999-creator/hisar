@@ -44,6 +44,8 @@ function render(){const box=doc.getElementById('sf-campaign');if(!box)return fal
  doc.body.dataset.operationView=primary?'continuous':'archive';
  const toggle=by('sf-archive');if(toggle){toggle.textContent=primary?'Görev arşivi':'Eve Dönüş’e dön';toggle.setAttribute('aria-pressed',String(!primary));}
  let plan=by('operation-plan');if(!plan){plan=doc.createElement('ol');plan.id='operation-plan';plan.setAttribute('aria-label','Harekâtın sırası');for(const ph of OP.phases.slice(0,-1)){const li=doc.createElement('li');li.textContent=ph.n;plan.append(li);}box.insertBefore(plan,box.querySelector('.sf-campaign-actions'));}plan.hidden=!primary;
+ const cards=by('hkCard');
+ if(cards&&root.HisarJourney)root.HisarJourney.archive(cards,hk);
  if(!primary)return false;
  const title=by('ci-mission');if(title)title.textContent=OP.n;
  by('sf-title').textContent='Tek harekât · tek amaç';
@@ -57,6 +59,7 @@ function render(){const box=doc.getElementById('sf-campaign');if(!box)return fal
  if(by('sf-result'))by('sf-result').hidden=true;
  const readButton=box.querySelector('.sf-campaign-actions>button');if(readButton)readButton.textContent='Harekât planı';
  const mt=by('mt');if(mt)mt.textContent='Konvoyu bul. Takımını koru. Birlikte geri dön.';
+ if(root.HisarJourney)root.HisarJourney.route(plan,OP,hk,cp,active);
  return true;
 }
 function install(){if(!doc.body||!doc.getElementById('sf-archive'))return false;

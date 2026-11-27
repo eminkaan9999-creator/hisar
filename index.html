@@ -129,13 +129,13 @@ body.th>canvas{filter:grayscale(1) contrast(1.4) brightness(.95) sepia(1) hue-ro
 #scn{position:absolute;left:50%;bottom:calc(50% - 43vmin);transform:translateX(-50%);font:700 13px monospace;color:#c8e8a0;text-shadow:0 0 4px #000;white-space:nowrap}
 body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:.45}body.cv #vg{display:block}
 </style>
-<script src="experience/guard.js?v=119"></script>
+<script src="experience/guard.js?v=120"></script>
 <script>
 /* Sürüm tutarlılığı. Yeni sürümün ilk açılışında sayfa ağdan yeni gelir ama eski hizmet işçisi bölümleri (experience/*.js) kendi önbelleğinden,
    eski hâlleriyle verir: yeni sayfa eski bölümlerle karışık çalışır, düzeltmeler ancak ikinci açılışta görünür. Bunu önlemek için sayfa, yüklenen
    bölümlerin yapı damgasına ve kendisini yöneten hizmet işçisinin önbellek adına bakar; biri eskiyse eski işçiyi ve önbelleğini bırakır, kendini
    bir kez yeniden yükler (bölümler ağdan, sayfayla aynı sürümden gelir). İki dakika içinde yinelenmez (döngü olmaz). */
-(function(){'use strict';var BUILD=119,SWC='hisar-main-v119-eve-donus';window.HISAR_PAGE={build:BUILD,cache:SWC,healed:''};
+(function(){'use strict';var BUILD=120,SWC='hisar-main-v120-yol-defteri';window.HISAR_PAGE={build:BUILD,cache:SWC,healed:''};
  if(!/^https?:/.test(location.protocol)||!('serviceWorker' in navigator))return;var done=false;
  function heal(why){if(done)return;done=true;try{var k='hisar-heal',t=+sessionStorage.getItem(k)||0;if(Date.now()-t<120000)return;sessionStorage.setItem(k,String(Date.now()));}catch(e){return;}
   window.HISAR_PAGE.healed=why;var root=new URL('./',location.href).href;
@@ -149,11 +149,11 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
  /* yanıt gelmezse (eski işçi bu soruyu tanımaz): ana iş parçacığı meşgulken yanıtı kaçırmamak için süre tek sayaçla değil, on iki ayrı turda beklenir */
  var n=0;(function tick(){if(got||done)return;if(++n>12){heal('yanit');return;}setTimeout(tick,300);})();})();
 </script>
-<link rel="stylesheet" href="experience/ui.css?v=119">
+<link rel="stylesheet" href="experience/ui.css?v=120">
 <link rel="preload" href="assets/brand/celik-boru.jpg" as="image">
 <link rel="preload" href="experience/fonts/hisar-dar-700.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="experience/fonts/hisar-dar-400.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="experience/skin.css?v=119">
+<link rel="stylesheet" href="experience/skin.css?v=120">
 
 <style id="spl-style">
 #spl{position:fixed;inset:0;z-index:100;overflow:hidden;background:#12140f;transition:opacity .6s;font-family:var(--sf,system-ui,sans-serif)}#spl.out{opacity:0;pointer-events:none}
@@ -165,11 +165,12 @@ body.sv #scope{display:block}body.sv #cross{display:none}body.cv #cross{opacity:
 @media (orientation:landscape) and (max-height:520px){#spl .art{left:auto;right:0;top:-9vh;margin-left:0;width:118vh;height:118vh;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34%);mask-image:linear-gradient(90deg,transparent 0,#000 34%)}#spl .tx{left:env(safe-area-inset-left,0px);right:auto;width:calc(100vw - 96vh - env(safe-area-inset-left,0px));box-sizing:border-box;bottom:auto;top:50%;transform:translateY(-50%)}#spl h1{font-size:min(7.4vw,calc((100vw - 96vh)/6.4))}}
 @media (prefers-reduced-motion:reduce){#spl .art,#spl i:after{animation:none}}
 </style>
-<link rel="stylesheet" href="experience/command-menu.css?v=119">
-<link rel="stylesheet" href="experience/modern.css?v=119">
-<link rel="stylesheet" href="experience/tank-feel.css?v=119">
-<link rel="stylesheet" href="experience/interface.css?v=119">
-<link rel="stylesheet" href="experience/campaign.css?v=119">
+<link rel="stylesheet" href="experience/command-menu.css?v=120">
+<link rel="stylesheet" href="experience/modern.css?v=120">
+<link rel="stylesheet" href="experience/tank-feel.css?v=120">
+<link rel="stylesheet" href="experience/interface.css?v=120">
+<link rel="stylesheet" href="experience/campaign.css?v=120">
+<link rel="stylesheet" href="experience/journey.css?v=120">
 </head>
 <body>
 <div id="spl"><div class="art"></div><div class="tx"><h1>ÇELİK BÖRÜ</h1><small>GELİŞTİRİCİ · <b>EMİN KAAN BOYACI</b></small><small id="splV">YÜKLENİYOR</small><i></i></div></div>
@@ -1460,10 +1461,11 @@ function renderGar(){
  $('gsub').querySelectorAll('[data-gs]').forEach(b=>b.onclick=()=>{gG=b.dataset.gs;renderGar()});
  const[sa,sm]=lvlSum(gG);$('gtl').innerHTML='<b>'+({t:'M60A3 PATTON',d:'UÇANGÖZ FPV',b:'BİRLİK TANKLARI'})[gG]+'</b><span>SEVİYE '+(1+sa)+' · '+sa+'/'+sm+'</span>';
  $('upl').innerHTML=UPX.filter(u=>u.g===gG).map(u=>{const lv=SV.U[u.k]|0,mx=lv>=u.max,cur=lv?u.e(lv):'—',nx=mx?'':u.e(lv+1),c=mx?0:u.cost[lv];let pips='';for(let i=0;i<u.max;i++)pips+='<i class="'+(i<lv?'on':'')+'"></i>';
-  return'<div class="uc'+(mx?' mx':'')+'" data-uc="'+u.k+'"><div class="ui">'+u.ic+'</div><div class="ut"><b>'+u.n+'</b><small>'+u.d+'</small><div class="lv"><div class="pips">'+pips+'</div><div class="ef">'+(mx?'<em>'+cur+'</em>':lv?'<s>'+cur+'</s> → <em>'+nx+'</em>':'<em>'+nx+'</em>')+'</div></div></div><button data-u="'+u.k+'"'+(mx?' disabled':'')+'>'+(mx?'MAKS':c+' kr')+'</button></div>'}).join('');
+  return'<div class="uc'+(mx?' mx':'')+'" data-uc="'+u.k+'" data-cost="'+c+'"><div class="ui">'+u.ic+'</div><div class="ut"><b>'+u.n+'</b><small>'+u.d+'</small><div class="lv"><div class="pips">'+pips+'</div><div class="ef">'+(mx?'<em>'+cur+'</em>':lv?'<s>'+cur+'</s> → <em>'+nx+'</em>':'<em>'+nx+'</em>')+'</div></div></div><button data-u="'+u.k+'"'+(mx?' disabled':'')+'>'+(mx?'MAKS':c+' kr')+'</button></div>'}).join('');
  $('upl').querySelectorAll('button[data-u]:not([disabled])').forEach(b=>b.onclick=()=>{const u=UPX.find(x=>x.k===b.dataset.u),lv=SV.U[u.k]|0,c=u.cost[lv],card=b.closest('.uc');
   if(SV.kr>=c){SV.kr-=c;SV.U[u.k]++;save();if(typeof AC!=='undefined'&&AC)sndBip();renderGar();const n=$('upl').querySelector('[data-uc="'+u.k+'"]');if(n)n.classList.add('bought')}
-  else{card.classList.remove('no');void card.offsetWidth;card.classList.add('no')}})}
+  else{card.classList.remove('no');void card.offsetWidth;card.classList.add('no')}});
+ window.HisarJourney?.garage($('upl'),SV.kr);}
 renderGar();
 
 
@@ -3905,6 +3907,11 @@ const _eg=window.endGame;window.endGame=function(ok,txt){const was=game==='play'
   (ST.meds.length?'<div class="md">'+ST.meds.map(m=>'<span><i>'+m.ic+'</i>'+m.n+'</span>').join('')+'</div>':'')+
   '<div class="bt"><button class="a" data-r="again">YENİ SAVAŞ</button><button class="b" data-r="menu">MENÜ</button></div></div>';
  rep.classList.add('on');
+ if(br&&window.HisarJourney){
+  const at=Date.now();
+  window.HisarJourney.end({id:'son-takim-'+at,at,mission:'son-takim',name:'Son Takım',won:!!ok,
+   difficulty:lvKey,elapsed:dur,step:0,last:br.place+'. sıra / '+br.teams+' takım'});
+ }
  setTimeout(()=>{const s=rep.querySelector('.rk u s');if(s)s.style.width=pf+'%'},250);
  rep.querySelectorAll('[data-cnt]').forEach(b=>{const v=+b.dataset.cnt,pre=b.dataset.pre||'';const t0=performance.now();const f=()=>{const k=Math.min(1,(performance.now()-t0)/1100);b.textContent=pre+Math.round(v*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)};f()});
  rep.querySelector('[data-r="again"]').onclick=()=>{rep.classList.remove('on');reset(lvSel)};rep.querySelector('[data-r="menu"]').onclick=()=>rep.classList.remove('on');
@@ -3921,6 +3928,7 @@ function openProf(){const{cur,nx}=nextRank(),pf=nx?Math.min(100,(SV.xp-cur[0])/(
   '<div class="ps">'+[['Tank imhası',T.tk],['Zafer',T.win],['Savaş',T.mis],['İsabet',T.shots?Math.round(T.hits/T.shots*100)+'%':'—'],['En uzak',T.longest+' m'],['Sürülen',T.km.toFixed(1)+' km']].map(q=>'<div><b>'+q[1]+'</b>'+q[0]+'</div>').join('')+'</div>'+
   '<h3>Madalyalar</h3><div class="ml">'+MED.map(m=>'<div class="'+(SV.med[m.id]?'':'no')+'"><i>'+m.ic+'</i><span><b>'+m.n+'</b><small>'+m.d+' · '+m.kr+' kr</small></span></div>').join('')+'</div>'+
   '<div class="bk"><button data-bk="copy">KAYDI YEDEKLE</button><button data-bk="open">YEDEK KODU GİR</button></div><div class="bkb" hidden><textarea rows="3" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Yedek kodunu buraya yapıştır"></textarea><button data-bk="load">GERİ YÜKLE</button></div><p class="bkm" role="status"></p></div></div>';
+ window.HisarJourney?.profile(prof.querySelector('#prof .c'));
  prof.style.display='flex';prof.querySelector('[data-x]').onclick=()=>prof.style.display='none';prof.onclick=e=>{if(e.target===prof)prof.style.display='none'};
  const box=prof.querySelector('.bkb'),ta=box.querySelector('textarea'),msg=prof.querySelector('.bkm');
  prof.querySelector('[data-bk="copy"]').onclick=()=>{const c=backupCode();box.hidden=false;ta.value=c;ta.focus();ta.select();const done=()=>{msg.textContent='Yedek kodu kopyalandı. Notlara yapıştırıp sakla; başka bir cihazda ya da yeni kurulumda bu kodla geri yüklersin.'};
@@ -4575,7 +4583,7 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
 '#fmC{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));min-width:min(420px,92vw);max-width:92vw;display:none;padding:12px 14px;border-radius:14px;background:rgba(10,14,8,.92);border:1px solid rgba(242,177,52,.55);box-shadow:0 8px 24px rgba(0,0,0,.5)}#fmC.on{display:block}#fmC b{font-size:16px}#fmC p{margin:3px 0 10px;font-size:12.5px;opacity:.8}#fmC .r{display:flex;gap:8px;flex-wrap:wrap}#fmC button{flex:1;min-width:120px;padding:11px;border-radius:11px;border:0;font:900 13px system-ui;cursor:pointer}#fmC .go{background:linear-gradient(180deg,#ffd27a,#e48a1e);color:#1d1406}#fmC .sec{background:rgba(255,255,255,.12);color:#eef5e2}'+
 '#fmK{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));font:600 11px system-ui;opacity:.6;text-align:right;pointer-events:none}@media (max-width:700px){#fmK{display:none}}'+
 '</style>');
-const F=document.createElement('div');F.id='fmap';F.innerHTML='<canvas></canvas><div id="fmT"><b>HARİTA</b><small></small></div><button id="fmX" aria-label="Kapat">✕</button><div id="fmZ"><button data-z="1">+</button><button data-z="-1">−</button><button data-z="0" title="Tankı ortala">⌖</button></div><button id="fmLB">YERLER</button><div id="fmL"></div><div id="fmC"></div><div id="fmK">Sürükle: kaydır · Tekerlek/iki parmak: yakınlaştır · Dokun: yer seç · G / Esc: kapat</div>';
+const F=document.createElement('div');F.id='fmap';F.innerHTML='<canvas></canvas><div id="fmT"><b>HARİTA</b><small></small></div><button id="fmX" aria-label="Kapat">✕</button><div id="fmZ"><button data-z="1" aria-label="Haritayı yakınlaştır">+</button><button data-z="-1" aria-label="Haritayı uzaklaştır">−</button><button data-z="0" aria-label="Tankı ortala" title="Tankı ortala">⌖</button><button data-z="all" aria-label="Tüm haritayı göster" title="Tüm haritayı göster">⤢</button></div><button id="fmLB">YERLER</button><div id="fmL"></div><div id="fmC"></div><div id="fmK">Sürükle: kaydır · Tekerlek/iki parmak: yakınlaştır · Dokun: yer seç · G / Esc: kapat</div>';
 document.body.appendChild(F);
 const cvs=F.querySelector('canvas'),cx=cvs.getContext('2d'),card=F.querySelector('#fmC'),list=F.querySelector('#fmL'),ttl=F.querySelector('#fmT small');
 let W=0,H=0,DPR=1,vx=0,vz=0,s=1,s0=1,sel=null,dirty=1;
@@ -4587,7 +4595,7 @@ function close(){F.classList.remove('on');window.mapOpen=false}
 window.toggleMap=()=>{window.mapOpen?close():open()};
 F.querySelector('#fmX').onclick=close;
 F.querySelector('#fmLB').onclick=()=>list.classList.toggle('open');
-F.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{const z=+b.dataset.z;if(z===0){vx=P.x;vz=P.z}else zoomAt(W/2,H/2,z>0?1.5:1/1.5);draw()});
+F.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{if(b.dataset.z==='all'){vx=0;vz=0;s=s0;draw();return;}const z=+b.dataset.z;if(z===0){vx=P.x;vz=P.z}else zoomAt(W/2,H/2,z>0?1.5:1/1.5);draw()});
 function zoomAt(px,py,k){const wx=WX(px),wz=WZ(py);s=clamp(s*k,s0*.9,s0*40);vx=wx-(px-W/2)/s;vz=wz-(py-H/2)/s;clampView()}
 function clampView(){vx=clamp(vx,-WS,WS);vz=clamp(vz,-WS,WS)}
 addEventListener('keydown',e=>{if((e.key==='g'||e.key==='G')&&!e.repeat&&(game==='play'||window.mapOpen)){window.toggleMap();e.preventDefault();e.stopImmediatePropagation();return}
@@ -4657,7 +4665,7 @@ let tt=0;FRAME_HOOKS.push(dr=>{if(!window.mapOpen)return;if(game!=='play'&&game!
 // ===== m_app =====
 // ============ HISAR: logo, acilis ekrani, surum, GUNCELLE (yeni surumu ceker), PWA guncelleme kontrolu ============
 (function(){
-const VER=119,LOGO=window.HISAR_LOGO;
+const VER=120,LOGO=window.HISAR_LOGO;
 document.head.insertAdjacentHTML('beforeend','<style>'+
 '#menu .hd .logo{background:none!important;box-shadow:none!important}#menu .hd .logo img{width:100%;height:100%;object-fit:cover}'+
 '#updBox{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 12px}'+
@@ -4746,8 +4754,8 @@ document.head.insertAdjacentHTML('beforeend','<style>'+
 const ORD=[0,1,3,2],COL=['#9aa3ad','#e8822a','#e8e8e8','#e8c23a'],NM=['APDS · Zırh delici','HEAT · Çok amaçlı','WP · Beyaz fosfor','HEP · Plastik patlayıcı'],DS=['Tank, zırhlı araç, topçu','Tank, sığınak, bina','Sis perdesi + yangın · piyade','Bina, sığınak, piyade'];
 const capN=()=>63+8*SV.U.cap;
 window.ldRender=function(){const el=document.getElementById('ld');if(!el)return;const tot=SV.load.reduce((a,b)=>a+b,0),cap=capN();
- el.innerHTML=ORD.map((i,n)=>'<div class="am2"><i style="background:'+COL[i]+'"></i><div class="tx"><b>'+(n+1)+' · '+NM[i]+'</b><small>'+DS[i]+'</small></div><div class="st"><button data-ld="'+i+':-2">−</button><span>'+SV.load[i]+'</span><button data-ld="'+i+':2">+</button></div></div>').join('')+
-  '<div class="tot">Toplam <b>'+tot+' / '+cap+'</b> mermi<u><s style="width:'+Math.min(100,tot/cap*100)+'%"></s></u></div>';
+ el.innerHTML=ORD.map((i,n)=>'<div class="am2"><i style="background:'+COL[i]+'"></i><div class="tx"><b>'+(n+1)+' · '+NM[i]+'</b><small>'+DS[i]+'</small></div><div class="st"><button data-ld="'+i+':-2" aria-label="'+NM[i]+' azalt" '+(SV.load[i]<=0?'disabled':'')+'>−</button><span>'+SV.load[i]+'</span><button data-ld="'+i+':2" aria-label="'+NM[i]+' artır" '+(tot>=cap?'disabled':'')+'>+</button></div></div>').join('')+
+  '<div class="tot">Toplam <b>'+tot+' / '+cap+'</b> mermi · '+(cap>tot?(cap-tot)+' boş yer':'Yük dolu')+'<u><s style="width:'+Math.min(100,tot/cap*100)+'%"></s></u></div>';
  el.querySelectorAll('[data-ld]').forEach(b=>b.onclick=()=>{const[i,d]=b.dataset.ld.split(':').map(Number);const t=SV.load.reduce((a,b)=>a+b,0);let k=d>0?Math.min(d,cap-t):Math.max(d,-SV.load[i]);if(!k)return;SV.load[i]+=k;save();ldRender()});
  document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('sel',+b.dataset.f===SV.form));const fd=document.getElementById('fdesc');if(fd)fd.textContent={0:'Yalnız hareket edersin.',1:'Kısım: seninle birlikte 2 tank. KAPLAN 1-2 yanında gelir.',3:'Takım: 4 tank. KAPLAN 1-2, 1-3 ve 1-4; tek tek ya da topluca komut verebilirsin (T).'}[SV.form]||''};
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{SV.form=+b.dataset.f;save();ldRender()});
@@ -5134,8 +5142,18 @@ window.HERR={LOG,err};
 addEventListener('error',e=>err('olay',e.error||e.message));addEventListener('unhandledrejection',e=>err('söz',e.reason));
 // bolmeli dongu: bir parca hata verse de goruntu ve diger parcalar calismaya devam eder
 const HN=h=>{const s=String(h);return s.slice(0,48).replace(/\s+/g,' ')};
+let idleMenu=false,previousCallback=last;
 window.loop=function(t){requestAnimationFrame(loop);
- const realDt=Math.max(0,(t-last)/1000)||0;const dr=Math.min(.05,realDt);last=t;fpsA+=Math.min(realDt,1);fpsN++;if(fpsA>2){try{perfAdapt(fpsN/fpsA)}catch(e){}fpsA=fpsN=0}
+ const frameGap=Math.max(0,(t-previousCallback)/1000)||0;
+ previousCallback=t;
+ const idle=game!=='play' && window.HisarCommandMenu?.staticBackground && $('menu').style.display!=='none';
+ // Keep the headquarters responsive to input while limiting hidden scene work to 20 Hz.
+ if(idle && idleMenu && t-last<1000/20-1)return;
+ const resumed=idleMenu && !idle;
+ const realDt=resumed?Math.min(.05,frameGap):Math.max(0,(t-last)/1000)||0;
+ const dr=Math.min(.05,realDt);last=t;idleMenu=idle;
+ if(idle){fpsA=fpsN=0;}
+ else{fpsA+=Math.min(realDt,1);fpsN++;if(fpsA>2){try{perfAdapt(fpsN/fpsA)}catch(e){}fpsA=fpsN=0}}
  /* Kare hızı saniyede 20'nin altına düşerse oyun ağır çekime girmez: geçen gerçek süre en çok üç adıma bölünür (her adım en çok 50 ms; uzun
     duraklamadan sonra en çok 150 ms işlenir). Tankın hızı telefonun kare hızına bağlı kalmaz. SIM_MAX adım sayısının tavanıdır (sınama kapısı
     zamanı kendi adımlarıyla yürütür, 1 yapar). */
@@ -7496,27 +7514,28 @@ const b=document.createElement('div');b.id='mpBody';for(const ch of [...mp.child
 <script defer src="experience/bridge.js?v=63"></script>
 <script defer src="experience/ui.js?v=63"></script>
 
-<script src="experience/crew-orders.js?v=119"></script>
-<script src="experience/field.js?v=119"></script>
-<script src="experience/battle.js?v=119"></script>
-<script src="experience/swarm.js?v=119"></script>
-<script src="experience/realism.js?v=119"></script>
-<script src="experience/sinir.js?v=119"></script>
-<script src="experience/checkpoint.js?v=119"></script>
-<script src="experience/harekat.js?v=119"></script>
-<script src="experience/atis.js?v=119"></script>
-<script src="experience/harita.js?v=119"></script>
-<script src="experience/carpisma.js?v=119"></script>
-<script src="experience/koy.js?v=119"></script>
-<script src="experience/destek.js?v=119"></script>
-<script src="experience/menu.js?v=119"></script>
-<script src="experience/arazi.js?v=119"></script><script src="experience/ortam.js?v=119"></script><script src="experience/model.js?v=119"></script><script src="experience/sivil.js?v=119"></script><script src="experience/cevre.js?v=119"></script><script src="experience/mahalle.js?v=119"></script><script src="experience/militan.js?v=119"></script><script src="experience/agac.js?v=119"></script><script src="experience/hat.js?v=119"></script><script src="experience/ejderha.js?v=119"></script>
-<script defer src="experience/command-menu.js?v=119"></script>
-<script defer src="experience/safak.js?v=119"></script>
-<script defer src="experience/modern.js?v=119"></script>
-<script defer src="experience/tank-feel.js?v=119"></script>
-<script defer src="experience/interface.js?v=119"></script>
-<script defer src="experience/campaign.js?v=119"></script>
-<script defer src="experience/mobility.js?v=119"></script>
+<script src="experience/crew-orders.js?v=120"></script>
+<script src="experience/field.js?v=120"></script>
+<script src="experience/battle.js?v=120"></script>
+<script src="experience/swarm.js?v=120"></script>
+<script src="experience/realism.js?v=120"></script>
+<script src="experience/sinir.js?v=120"></script>
+<script src="experience/checkpoint.js?v=120"></script>
+<script src="experience/harekat.js?v=120"></script>
+<script src="experience/atis.js?v=120"></script>
+<script src="experience/harita.js?v=120"></script>
+<script src="experience/carpisma.js?v=120"></script>
+<script src="experience/koy.js?v=120"></script>
+<script src="experience/destek.js?v=120"></script>
+<script src="experience/menu.js?v=120"></script>
+<script src="experience/arazi.js?v=120"></script><script src="experience/ortam.js?v=120"></script><script src="experience/model.js?v=120"></script><script src="experience/sivil.js?v=120"></script><script src="experience/cevre.js?v=120"></script><script src="experience/mahalle.js?v=120"></script><script src="experience/militan.js?v=120"></script><script src="experience/agac.js?v=120"></script><script src="experience/hat.js?v=120"></script><script src="experience/ejderha.js?v=120"></script>
+<script defer src="experience/command-menu.js?v=120"></script>
+<script defer src="experience/safak.js?v=120"></script>
+<script defer src="experience/modern.js?v=120"></script>
+<script defer src="experience/tank-feel.js?v=120"></script>
+<script defer src="experience/interface.js?v=120"></script>
+<script defer src="experience/campaign.js?v=120"></script>
+<script defer src="experience/mobility.js?v=120"></script>
+<script defer src="experience/journey.js?v=120"></script>
 </body>
 </html>

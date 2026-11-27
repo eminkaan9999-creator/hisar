@@ -419,7 +419,7 @@ select.inp{font-size:13px;}
 <script src="../shared/kurulus-core.js?v=1"></script>
 <script src="../shared/kurulus-runtime.js?v=1"></script>
 <script>if(window.HisarKurulus){document.write('<script src="../shared/radio-tr.js?v=1"><\/script>');}</script>
-<link rel="stylesheet" href="arena.css?v=28">
+<link rel="stylesheet" href="arena.css?v=29">
 <script defer src="arena-ui.js?v=28"></script>
 </head>
 <body>
@@ -576,6 +576,7 @@ select.inp{font-size:13px;}
     </div>
     <section id="arena-records" class="arena-panel arena-records" hidden>
       <div class="btns" style="margin-bottom:4px"><button class="secondary" id="repBtn">Kişisel atış raporunu aç</button></div><span class="small muted" id="repInfo"></span>
+      <section aria-labelledby="best-heading"><h3 id="best-heading">Kişisel rekorlar</h3><dl id="arena-bests"></dl></section>
       <div class="arena-log-head"><h3>Oyun geçmişi</h3><label>Dönem <select id="arena-log-period"><option value="all">Tüm kayıtlar</option><option value="7">Son 7 gün</option><option value="30">Son 30 gün</option></select></label></div>
       <div id="logBox"></div>
       <div class="lbl" style="margin:14px 0 6px">Rozetler</div><div class="badges" id="badges"></div>
@@ -593,7 +594,7 @@ select.inp{font-size:13px;}
     </section>
     <footer class="arena-footer">
       <div><span>Geliştirici</span><strong>Emin Kaan Boyacı</strong></div>
-      <div><span id="verTxt">Sürüm 28</span><button type="button" id="upd2" title="Güncellemeyi denetle">Güncelle</button></div>
+      <div><span id="verTxt">Sürüm 29</span><button type="button" id="upd2" title="Güncellemeyi denetle">Güncelle</button></div>
     </footer>
   </div>
 </div>
@@ -945,6 +946,17 @@ function buildMenu(){
   buildEdu();
   // rozetler
   $('badges').innerHTML=BADGES.map(b=>`<div class="badge ${ST.badges[b.k]?'on':''}" title="${b.d}"><span class="bi">${ST.badges[b.k]?'★':'☆'}</span><b>${b.n}</b><span>${b.d}</span></div>`).join('');
+  const bestList=$('arena-bests');
+  bestList.replaceChildren();
+  for(const [mode,record] of Object.entries(ST.best||{})){
+    if(record?.t==null)continue;
+    const row=document.createElement('div'), label=document.createElement('dt'), value=document.createElement('dd');
+    label.textContent=TASKS[mode]?.name||mode;
+    value.textContent=String(record.t);
+    row.append(label,value);
+    bestList.append(row);
+  }
+  if(!bestList.children.length)bestList.textContent='İlk rekorun burada görünecek.';
   renderHistory();
   $('profile-rank').textContent=rk.n;
   $('profile-xp').textContent=(ST.xp||0).toLocaleString('tr-TR')+' XP';
@@ -3882,7 +3894,7 @@ if(window.HisarKurulus){
 
 <script>
 (()=>{
-const VER=28,btns=['upd','upd2'].map(i=>document.getElementById(i)).filter(Boolean),vt=document.getElementById('verTxt');
+const VER=29,btns=['upd','upd2'].map(i=>document.getElementById(i)).filter(Boolean),vt=document.getElementById('verTxt');
 const say=t=>{if(vt)vt.innerHTML=t;};say('Sürüm '+VER);
 try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 async function check(){if(!/^https?:/.test(location.protocol))return;try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();

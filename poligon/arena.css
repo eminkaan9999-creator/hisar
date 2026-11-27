@@ -242,3 +242,9 @@
   .arena-profile b {font-size:13px;}
   .arena-records .lrow {grid-template-columns:minmax(60px,.7fr) minmax(75px,1.3fr) minmax(40px,1fr);overflow-wrap:anywhere;}
 }
+
+#best-heading {margin:10px 0;font:650 18px var(--display);}
+#arena-bests {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:8px;margin:0;color:var(--muted);}
+#arena-bests>div {padding:12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;}
+#arena-bests dt {font:550 13px/1.4 var(--display);}
+#arena-bests dd {margin:4px 0 0;color:var(--fg);font:700 19px/1.25 var(--display);overflow-wrap:anywhere;}

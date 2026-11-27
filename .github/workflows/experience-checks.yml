@@ -24,6 +24,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Play both games from briefing to handover and reopen offline
         run: |
+          node santiye-250888c5/cache-tarayici.cjs
           node santiye-250888c5/tarayici.cjs
           node oyun/ufuk-uyumluluk.cjs
           node oyun/gelecek-tarayici.cjs

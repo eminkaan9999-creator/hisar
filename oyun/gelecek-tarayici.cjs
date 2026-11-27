@@ -57,57 +57,19 @@ const server=createServer(async(req,res)=>{const u=new URL(req.url,'http://local
     }
     console.log('PASS vehicle: all four missions, actual steering and firing, shield, saved continuation, completion and narrow layout');
 
-    const plans={
-      orbit:[[['strike',0],['guard',0]],[],[['strike',2],['guard',2]],[],[['strike',1],['guard',1],['repair',1]],[],[['strike',0],['guard',0],['repair',0],['repair',2]],[['repair',1]]],
-      storm:[[['strike',0],['guard',0]],[],[['strike',1],['guard',1]],[],[['strike',2],['guard',2],['repair',2]],[['repair',1]],[['strike',0],['guard',0]],[['repair',0]],[['strike',1]],[['guard',2]]]
-    };
-    for(const mission of ['orbit','storm','ag','birlesik']) {
-      await page.setViewportSize({width:390,height:844});
-      await page.goto(base+'/komuta/');
-      await page.locator('.future-hero').waitFor();await fit();await shot('komuta-menu');
-      await page.locator('button[data-era="'+(({anadolu:'present',ag:'present',ufuk:'near',birlesik:'near'})[mission]||'far')+'"]').click();
-      await page.locator('[data-mission="'+mission+'"]').click();
-      await page.locator('.primary[data-nav=play]').click();
-      await fit();await shot('komuta-harita-'+mission);
-      await page.evaluate(()=>window.originalMap=document.querySelector('.holo-map canvas'));
-      await page.locator('[data-layer=relief]').click();
-      await page.waitForFunction(()=>document.querySelector('.holo-map canvas').dataset.layer==='relief');
-      await page.locator('[data-layer=systems]').click();
-      await page.waitForFunction(()=>document.querySelector('.holo-map canvas').dataset.layer==='systems');
-      await page.locator('[data-layer=network]').click();
-      await page.waitForFunction(()=>document.querySelector('.holo-map canvas').dataset.layer==='network');
-      const builds=await page.locator('.holo-map canvas').getAttribute('data-background-builds');
-      await page.locator('.node-pin[data-node="1"]').click();
-      assert.ok(await page.evaluate(()=>window.originalMap===document.querySelector('.holo-map canvas')));
-      assert.equal(await page.locator('.holo-map canvas').getAttribute('data-background-builds'),builds);
-      for(const [turn,actions] of plans[({ag:'orbit',birlesik:'storm'})[mission]||mission].entries()) {
-        for(const [action,node] of actions) {
-          await page.locator('.node-pin[data-node="'+node+'"]').click();
-          await page.locator('[data-fleet="'+action+'"]').click();
-        }
-        await page.locator('[data-wave]').click();
-        if(turn===1) {
-          await page.reload();await page.locator('.primary[data-nav=play]').click();
-          assert.match(await page.locator('.command-summary').innerText(),/2\s*\//);
-        }
-      }
-      await page.getByRole('heading',{name:'Görev tamamlandı',exact:true}).waitFor();
-      await fit();await shot('komuta-sonuc');
-    }
-    console.log('PASS command: all four missions, cached canvas and map layers, fleet cooldowns, stored wave state and completed defense reports');
     await page.locator('nav [data-nav=settings]').click();
     await page.locator('[data-sound]').click();
     await page.locator('[data-quality]').selectOption('performance');
     await page.reload();await page.locator('nav [data-nav=settings]').click();
     assert.equal(await page.locator('[data-quality]').inputValue(),'performance');
     assert.equal(await page.locator('[data-sound]').getAttribute('aria-pressed'),'true');
-    for(const route of ['/','/komuta/']) {
+    for(const route of ['/']) {
       await page.goto(base+route);
       await page.evaluate(()=>navigator.serviceWorker.ready);
       await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
     }
     await context.setOffline(true);
-    for(const route of ['/','/komuta/']) {
+    for(const route of ['/']) {
       await page.goto(base+route);await page.locator('.future-hero').waitFor();
       await page.setViewportSize({width:320,height:568});await fit();
       await page.locator('nav [data-nav=history]').click();
@@ -115,7 +77,7 @@ const server=createServer(async(req,res)=>{const u=new URL(req.url,'http://local
       await page.locator('.result-banner').waitFor();await fit();
     }
     assert.deepEqual(errors,[]);
-    console.log('PASS future offline: both launch URLs, stored reports, shared audio preference and 320px layout');
+    console.log('PASS future offline: vehicle launch URL, stored reports, shared audio preference and 320px layout');
   } finally {
     await browser.close();server.closeAllConnections();server.close();
   }

@@ -1,0 +1,30 @@
+build-tools: /usr/local/lib/android/sdk/build-tools/37.0.0
+platform: /usr/local/lib/android/sdk/platforms/android-35/android.jar
+sürüm: 41.0 (4100)
+yazı tipleri: 16
+yazildi: /home/runner/work/hisar/hisar/tetik/index.html 606656 bayt
+yazildi: /home/runner/work/hisar/hisar/tetik/apk/index.html
+yazildi: /home/runner/work/hisar/hisar/tetik/android/app/src/main/assets/www/index.html 606224 bayt
+Note: /home/runner/work/hisar/hisar/tetik/android/app/src/main/java/com/hisar/tetik/MainActivity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+::warning title=imza::TETIK_IMZA tanımlı değil: APK yalnız depodaki eski anahtarla imzalandı (bulgu B-01)
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+V3.0 Signer: certificate DN: CN=HISAR TETIK, O=HISAR, C=TR
+V3.0 Signer: certificate SHA-256 digest: 1424d6937e14392aee242fb5070f78610bdc4f633ab5ae8eb08b601d0c92221c
+V3.0 Signer: certificate SHA-1 digest: 814a8d161a8318acf226ed3453ad0619f0df7c03
+V3.0 Signer: certificate MD5 digest: dc4c28bb0e62ad6a647411a11725f875
+V3.0 Signer: key algorithm: RSA
+V3.0 Signer: key size (bits): 3072
+package: name='com.hisar.tetik' versionCode='4100' versionName='41.0' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+targetSdkVersion:'35'
+application-label:'Hisar Tetik'
+  uses-implied-feature: name='android.hardware.bluetooth' reason='requested android.permission.BLUETOOTH permission, requested android.permission.BLUETOOTH_ADMIN permission, and targetSdkVersion > 4'
+-rw-r--r-- 1 runner runner 711716 Nov 27 07:03 /home/runner/work/hisar/hisar/tetik/android/build/HisarTetik.apk

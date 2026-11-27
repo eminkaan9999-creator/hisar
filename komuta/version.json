@@ -1,8 +1,8 @@
 {
   "name": "HİSAR: KOMUTA",
-  "v": "2.2.0",
+  "v": "3.0.0",
   "independent": true,
-  "scenario": "Gece Nöbeti, İlk Işık Vardiyası, Dağıtım Günü",
+  "scenario": "Yörünge Kalkanı ve İyon Fırtınası",
   "theme": "HİSAR Akademi",
   "assets": [
     "index.html",
@@ -21,6 +21,14 @@
     "ortak/komuta.webp",
     "ortak/cevrimdisi.js",
     "sw.js",
-    "ortak/ses.mjs"
+    "ortak/ses.mjs",
+    "gelecek/komuta.webp",
+    "gelecek/arena.mjs",
+    "gelecek/oyun.mjs",
+    "gelecek/baslat.mjs",
+    "gelecek/harita.mjs",
+    "gelecek/boru.webp",
+    "gelecek/model.mjs",
+    "gelecek/oyun.css"
   ]
 }

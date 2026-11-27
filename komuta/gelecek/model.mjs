@@ -1,15 +1,25 @@
+export const eras = [
+  {key:'present',year:2026,title:'Günümüz',subtitle:'Sayısal muharebe sahası',vehicle:'Paletli zırhlı araç',system:'Sayısal görev ağı'},
+  {key:'near',year:2045,title:'Yakın gelecek',subtitle:'Türk ordusu · Gelecek vizyonu',vehicle:'Otonom destekli zırhlı araç',system:'Birleşik sensör ağı'},
+  {key:'far',year:2186,title:'Uzak gelecek',subtitle:'Türk ordusu · Bilimkurgu vizyonu',vehicle:'Hover zırhlı araç',system:'Yörünge ve çekirdek ağı'}
+];
+export const eraFor = m => eras.find(e=>e.key===m.era)||eras[2];
 export const missions = {
   boru: [
     {key:'neon',title:'Neon Kuşatma',tag:'ARK-7 · ZIRHLI MUHAREBE',description:'Otonom sürüler sınır kubbesine ulaştı. Çelik Börü ile enerji sahasına gir, üç dalgayı durdur ve kalkan ağını yeniden aç.',waves:3,bots:3,pressure:5,region:'Kırık Yörünge',target:100},
-    {key:'eclipse',title:'Tutulma Hattı',tag:'ARK-7 · GECE MUHAREBESİ',description:'Yörünge halkası karanlıkta. Dört dalga boyunca hareketli makinelere karşı enerji rezervini ve araç kalkanını yönet.',waves:4,bots:4,pressure:6,region:'Kızıl Ufuk',target:150}
+    {key:'eclipse',title:'Tutulma Hattı',tag:'ARK-7 · GECE MUHAREBESİ',description:'Yörünge halkası karanlıkta. Dört dalga boyunca hareketli makinelere karşı enerji rezervini ve araç kalkanını yönet.',waves:4,bots:4,pressure:6,region:'Kızıl Ufuk',target:150},
+    {key:'anadolu',era:'present',title:'Anadolu Hattı',tag:'2026 · SAYISAL SAHA',description:'Kurgusal Anadolu tatbikat sahasında paletli aracın kontrolünü al. Sayısal gösterge ve çevre ekranıyla üç robot dalgasını tamamla.',waves:3,bots:3,pressure:5,region:'Bozkır Tatbikat Sahası'},
+    {key:'ufuk',era:'near',title:'Ufuk 2045',tag:'2045 · GELECEK VİZYONU',description:'Geleceğin Türk ordusunu hayal et. İnsansız destek birimleri, bağlantılı zırhlı araç ve birleşik sensör görünümüyle dört dalgalık oyun görevine katıl.',waves:4,bots:4,pressure:6,region:'Ufuk Teknoloji Sahası'}
   ],
   komuta: [
     {key:'orbit',title:'Yörünge Kalkanı',tag:'HİSAR AĞI · ÜS SAVUNMASI',description:'Üç enerji çekirdeği, iki drone filosu. Yaklaşan sürüleri holografik haritada izle. Filoları gönder, kalkanları güçlendir ve sekiz dalgayı karşıla.',waves:8,pressure:1,region:'Atlas İstasyonu'},
-    {key:'storm',title:'İyon Fırtınası',tag:'HİSAR AĞI · KRİTİK SAVUNMA',description:'İyon cephesi istasyona yaklaşıyor. On dalga boyunca azalan enerjiyle drone filolarını ve onarım sürülerini koordine et.',waves:10,pressure:1.1,region:'Vega İstasyonu'}
+    {key:'storm',title:'İyon Fırtınası',tag:'HİSAR AĞI · KRİTİK SAVUNMA',description:'İyon cephesi istasyona yaklaşıyor. On dalga boyunca azalan enerjiyle drone filolarını ve onarım sürülerini koordine et.',waves:10,pressure:1.1,region:'Vega İstasyonu'},
+    {key:'ag',era:'present',title:'Sayısal Karargâh',tag:'2026 · TATBİKAT AĞI',description:'Kurgusal tatbikatta üç bağlantı merkezini açık tut. Harita katmanlarıyla alanı izle, robot ekiplerini ve ortak kaynakları yönet.',waves:8,pressure:1,region:'Anadolu Tatbikat Ağı'},
+    {key:'birlesik',era:'near',title:'Birleşik Ufuk',tag:'2045 · GELECEK VİZYONU',description:'Geleceğin Türk ordusu için kurgusal komuta masası. Yer birimleri, insansız destek ve sensör bağlantılarını aynı görünümde yönet.',waves:10,pressure:1.1,region:'Ufuk Birleşik Ağı'}
   ]
 };
 export const nodeNames = ['Kuzey çekirdeği','Merkez kubbe','Doğu rölesi'];
-export const fleetNames = ['Öncü filosu','Koruyucu filo'];
+export const nodeLabels = s => eraFor(config(s)).key==='far'?nodeNames:['Kuzey bağlantısı','Merkez istasyon','Doğu bağlantısı'];
 export const config = s => missions[s.id].find(m => m.key === s.mission);
 export const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
 export const distance = (a,b) => Math.hypot(a.x-b.x,a.z-b.z);
@@ -21,7 +31,7 @@ export function createRun(id,key) {
       wave:1,kills:0,shots:0,nextShot:0,lastHit:-10,domeUntil:0,nextDome:0,target:0,enemies:[]});
     spawnWave(s);
   } else {
-    Object.assign(s,{turn:0,energy:100,nodes:nodeNames.map(name=>({name,shield:100,threat:12,guardUntil:-1})),
+    Object.assign(s,{turn:0,energy:100,nodes:nodeLabels(s).map(name=>({name,shield:100,threat:12,guardUntil:-1})),
       fleets:[0,0],deployments:[],selected:0});
     note(s,'Kalkan ağı çevrimiçi. Filolar göreve hazır.');
   }
@@ -42,7 +52,9 @@ function spawnWave(s) {
   note(s,s.wave+'. dalga · '+m.bots+' otonom birim algılandı.');
 }
 export function nearestEnemy(s) {
-  return s.enemies.filter(e=>e.hp>0).sort((a,b)=>distance(s,a)-distance(s,b))[0];
+  let nearest,best=Infinity;
+  for(const enemy of s.enemies)if(enemy.hp>0){const d=(s.x-enemy.x)**2+(s.z-enemy.z)**2;if(d<best){best=d;nearest=enemy;}}
+  return nearest;
 }
 export function lockedEnemy(s) {
   return s.enemies.find(e=>e.id===s.target&&e.hp>0)||nearestEnemy(s);
@@ -120,7 +132,7 @@ export function stepVehicle(s,controls,dt) {
   if(controls.has('fire'))fire(s);
 }
 export function forecast(s) {
-  return s.nodes.map((_,i)=>Math.round((7+((s.turn*7+i*11+(s.mission==='storm'?4:0))%16))*config(s).pressure));
+  return s.nodes.map((_,i)=>Math.round((7+((s.turn*7+i*11+(config(s).pressure>1?4:0))%16))*config(s).pressure));
 }
 export function fleetAction(s,action,nodeIndex) {
   if(s.done||!s.nodes[nodeIndex]||s.nodes[nodeIndex].shield<=0)return false;
@@ -151,7 +163,7 @@ export function advanceWave(s) {
     n.threat=Math.max(0,n.threat-9);
   });
   s.turn++;
-  s.energy=Math.min(100,s.energy+(s.mission==='storm'?20:22));
+  s.energy=Math.min(100,s.energy+(config(s).pressure>1?20:22));
   s.deployments=[];
   note(s,s.turn+'. dalga karşılandı. Çekirdek kalkanları güncellendi.');
   if(s.nodes.some(n=>n.shield===0)){s.done=true;s.won=false;note(s,'Kalkan ağı koptu. İstasyon bağlantısı kesildi.');}

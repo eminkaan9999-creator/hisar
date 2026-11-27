@@ -1,8 +1,8 @@
 {
   "name": "HİSAR: KOMUTA",
-  "v": "3.0.0",
+  "v": "3.1.0",
   "independent": true,
-  "scenario": "Yörünge Kalkanı ve İyon Fırtınası",
+  "scenario": "Sayısal Karargâh, Birleşik Ufuk, Yörünge Kalkanı ve İyon Fırtınası",
   "theme": "HİSAR Akademi",
   "assets": [
     "index.html",
@@ -29,6 +29,8 @@
     "gelecek/harita.mjs",
     "gelecek/boru.webp",
     "gelecek/model.mjs",
-    "gelecek/oyun.css"
+    "gelecek/oyun.css",
+    "gelecek/performans.mjs",
+    "gelecek/ufuk.webp"
   ]
 }

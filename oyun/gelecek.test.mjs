@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRun,config,stepVehicle,activateDome,fire,canFire,advanceWave,fleetAction,validRun,rating,forecast} from '../komuta/gelecek/model.mjs';
-test('both fictional vehicle missions can be completed with normal controls and resumed state',()=>{
-  for(const mission of ['neon','eclipse']){
+test('all four fictional vehicle missions can be completed with normal controls and resumed state',()=>{
+  for(const mission of ['neon','eclipse','anadolu','ufuk']){
     let s=createRun('boru',mission);
     for(let frame=0;frame<7000&&!s.done;frame++){
       if(s.shield<45)activateDome(s);
@@ -26,8 +26,8 @@ test('vehicle energy, heat, shield costs and cooldowns cannot be bypassed',()=>{
   assert.equal(validRun({...s,mission:'unknown'},'boru'),false);
   assert.equal(validRun({...s,enemies:[null]},'boru'),false);
 });
-test('both command missions can be won by managing the shared fleet and energy pool',()=>{
-  for(const mission of ['orbit','storm']){
+test('all four command missions can be won by managing the shared fleet and energy pool',()=>{
+  for(const mission of ['orbit','storm','ag','birlesik']){
     let s=createRun('komuta',mission);
     for(let turn=0;turn<config(s).waves&&!s.done;turn++){
       const worst=s.nodes.map((n,i)=>({n,i})).sort((a,b)=>b.n.threat-a.n.threat)[0].i;
@@ -55,4 +55,31 @@ test('an undefended command network can fail; resources and cooldowns remain aut
   assert.equal(fleetAction(s,'repair',0),false);
   assert.equal(validRun({...s,selected:99},'komuta'),false);
   assert.equal(validRun({...s,nodes:[null]},'komuta'),false);
+});
+
+import {FrameBudget,fixedClock} from '../komuta/gelecek/performans.mjs';
+test('automatic quality adapts to sustained load, recovers slowly and respects explicit choices',()=>{
+  const auto=new FrameBudget('auto',3);
+  assert.equal(auto.ratio,1.15);
+  auto.sample(5000);assert.equal(auto.level,1);
+  for(let i=0;i<100;i++)auto.sample(34);
+  assert.equal(auto.level,0);assert.equal(auto.ratio,.85);
+  for(let i=0;i<500;i++)auto.sample(16.67);
+  assert.equal(auto.level,0);
+  for(let i=0;i<400;i++)auto.sample(16.67);
+  assert.equal(auto.level,1);
+  for(const [mode,level] of [['performance',0],['quality',2]]){
+    const fixed=new FrameBudget(mode,2);for(let i=0;i<1000;i++)fixed.sample(40);
+    assert.equal(fixed.level,level);
+  }
+});
+test('vehicle clock preserves simulation time across 30, 60 and 120 Hz and bounds long stalls',()=>{
+  const results=[];
+  for(const rate of [30,60,120]){
+    const state=createRun('boru','anadolu'),tick=fixedClock(dt=>stepVehicle(state,new Set(['go']),dt));
+    for(let i=0;i<rate*4;i++)tick(1/rate);
+    results.push([state.elapsed,state.z,state.energy,state.hull]);
+  }
+  assert.deepEqual(results[0],results[1]);assert.deepEqual(results[1],results[2]);
+  let elapsed=0;const tick=fixedClock(dt=>elapsed+=dt);tick(30);assert.ok(elapsed<=.151);
 });

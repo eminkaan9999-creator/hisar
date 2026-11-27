@@ -1,8 +1,8 @@
 {
   "name": "Çelik Börü",
-  "v": 124,
+  "v": 125,
   "independent": true,
-  "scenario": "Neon Kuşatma ve Tutulma Hattı",
+  "scenario": "Anadolu Hattı, Ufuk 2045, Neon Kuşatma ve Tutulma Hattı",
   "theme": "HİSAR Akademi",
   "assets": [
     "index.html",
@@ -40,6 +40,8 @@
     "komuta/gelecek/harita.mjs",
     "komuta/gelecek/boru.webp",
     "komuta/gelecek/model.mjs",
-    "komuta/gelecek/oyun.css"
+    "komuta/gelecek/oyun.css",
+    "komuta/gelecek/performans.mjs",
+    "komuta/gelecek/ufuk.webp"
   ]
 }
